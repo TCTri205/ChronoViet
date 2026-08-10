@@ -1,0 +1,184 @@
+{
+  "title": "[TÊN DỰ ÁN / TÊN SỰ KIỆN LỊCH SỬ IN HOA]",
+  "subtitle": "ChronoViet Historical Series • Biên Tập & Dựng Video Bởi ChronoViet",
+  "templateId": "HISTORICAL_DOCUMENTARY",
+  "videoType": "BIOGRAPHY",
+  "aspectRatio": "16:9",
+  "theme": {
+    "primaryColor": "#D4AF37",
+    "secondaryColor": "#2563eb",
+    "backgroundColor": "#090d14",
+    "fontFamily": "Georgia, serif",
+    "accentGlow": "rgba(212, 175, 55, 0.35)"
+  },
+  "audioUrl": "assets/voiceover.wav",
+  "bgmUrl": "assets/bgm.wav",
+  "bgmVolume": 0.25,
+  "defaultLayoutMode": "BLUR_BG",
+  "defaultFilterStyle": "HISTORICAL",
+  "defaultTransition": "FADE_TO_BLACK",
+  "timeline": [
+    {
+      "id": "scene-01-intro",
+      "startTime": 0,
+      "endTime": 15,
+      "text": "[Lời dẫn nhập mở đầu cuốn hút về sự kiện hoặc nhân vật lịch sử...]",
+      "layoutMode": "ARTICLE_UI",
+      "overlayType": "ARTICLE_INTRO",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "title": "[TÊN TIÊU ĐỀ BÀI VIẾT NỔI BẬT]",
+        "author": "Ban Biên Tập ChronoViet"
+      }
+    },
+    {
+      "id": "scene-02-hook-portrait",
+      "startTime": 15,
+      "endTime": 30,
+      "text": "[Giới thiệu chân dung nhân vật chính hoặc quy mô tổng quan của sự kiện...]",
+      "assetUrl": "assets/sample_portrait.jpg",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "layoutMode": "BLUR_BG",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_LEFT",
+      "overlayType": "EVENT_BADGE",
+      "overlayData": {
+        "title": "[Tên Nhân Vật / Tên Sự Kiện]",
+        "subtitle": "[Chức danh / Niên đại lịch sử]"
+      }
+    },
+    {
+      "id": "scene-03-chapter-1",
+      "startTime": 30,
+      "endTime": 40,
+      "text": "Chương I: Bối Cảnh & Thách Thức Lịch Sử",
+      "layoutMode": "CHAPTER_CARD",
+      "overlayType": "CHAPTER_TITLE",
+      "transition": "LIGHT_LEAK",
+      "overlayData": {
+        "chapterNumber": "I",
+        "title": "BỐI CẢNH & THÁCH THỨC",
+        "subtitle": "Mô tả ngắn gọn nguyên nhân hoặc tình thế đất nước lúc bấy giờ"
+      }
+    },
+    {
+      "id": "scene-04-context-detail",
+      "startTime": 40,
+      "endTime": 55,
+      "text": "[Chi tiết diễn biến bối cảnh, âm mưu của địch hoặc nguy cơ đối với dân tộc...]",
+      "assetUrl": "assets/sample_context.jpg",
+      "effect": "KEN_BURNS_PAN_RIGHT",
+      "layoutMode": "HISTORICAL_FRAME",
+      "filterStyle": "SEPIA",
+      "rotateDeg": -1.2,
+      "transition": "CROSS_ZOOM",
+      "overlayType": "BIO_CARD",
+      "overlayData": {
+        "name": "[Tên Sự Kiện / Mốc Thời Gian]",
+        "role": "[Tóm tắt tình thế lịch sử]"
+      }
+    },
+    {
+      "id": "scene-05-chapter-2",
+      "startTime": 55,
+      "endTime": 65,
+      "text": "Chương II: Mưu Lược & Chuẩn Bị Chiến Trận",
+      "layoutMode": "CHAPTER_CARD",
+      "overlayType": "CHAPTER_TITLE",
+      "transition": "SLIDE_RIGHT",
+      "overlayData": {
+        "chapterNumber": "II",
+        "title": "MƯU LƯỢC & CHUẨN BỊ",
+        "subtitle": "Quá trình xây dựng lực lượng, tập hợp quân sĩ và hoạch định diệu kế"
+      }
+    },
+    {
+      "id": "scene-06-strategy-quote",
+      "startTime": 65,
+      "endTime": 80,
+      "text": "[Câu nói nổi tiếng, tuyên ngôn hoặc trích dẫn lịch sử thể hiện ý chí quyết chiến...]",
+      "assetUrl": "assets/sample_quote_bg.jpg",
+      "layoutMode": "QUOTE_CANVAS",
+      "overlayType": "QUOTE",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "quoteText": "[Nội dung trích dẫn câu nói / câu hịch hào hùng]",
+        "author": "[TÊN TÁC GIẢ / VỊ TƯỚNG/ HOÀNG ĐẾ]",
+        "subtitle": "[Bối cảnh phát ngôn]"
+      }
+    },
+    {
+      "id": "scene-07-chapter-3",
+      "startTime": 80,
+      "endTime": 90,
+      "text": "Chương III: Diễn Biến & Đỉnh Điểm Trận Đánh",
+      "layoutMode": "CHAPTER_CARD",
+      "overlayType": "CHAPTER_TITLE",
+      "transition": "SLIDE_UP",
+      "overlayData": {
+        "chapterNumber": "III",
+        "title": "DIỄN BIẾN & ĐỈNH ĐIỂM",
+        "subtitle": "Cuộc tiến công thần tốc, bẻ gãy phòng tuyến địch"
+      }
+    },
+    {
+      "id": "scene-08-decisive-battle",
+      "startTime": 90,
+      "endTime": 105,
+      "text": "[Mô tả sự dũng mãnh, thế trận áp đảo và thắng lợi quyết định...]",
+      "assetUrl": "assets/sample_battle.jpg",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "layoutMode": "BLUR_BG",
+      "filterStyle": "HISTORICAL",
+      "transition": "GLITCH",
+      "overlayType": "EVENT_BADGE",
+      "overlayData": {
+        "title": "[Tên Trận Đánh Quyết Định]",
+        "subtitle": "[Thời gian & Địa danh lịch sử]"
+      }
+    },
+    {
+      "id": "scene-09-chapter-4",
+      "startTime": 105,
+      "endTime": 115,
+      "text": "Chương IV: Di Sản & Ý Nghĩa Lịch Sử",
+      "layoutMode": "CHAPTER_CARD",
+      "overlayType": "CHAPTER_TITLE",
+      "transition": "CLOCK_WIPE",
+      "overlayData": {
+        "chapterNumber": "IV",
+        "title": "DI SẢN & Ý NGHĨA",
+        "subtitle": "Tầm vóc vĩ đại và bài học sử học để lại cho đời sau"
+      }
+    },
+    {
+      "id": "scene-10-legacy-summary",
+      "startTime": 115,
+      "endTime": 130,
+      "text": "[Tổng kết di sản, công ơn và giá trị lịch sử sống mãi cùng dân tộc...]",
+      "assetUrl": "assets/sample_monument.jpg",
+      "effect": "KEN_BURNS_ZOOM_OUT",
+      "layoutMode": "BLUR_BG",
+      "filterStyle": "HISTORICAL",
+      "transition": "LINEAR_BLUR",
+      "overlayType": "BIO_CARD",
+      "overlayData": {
+        "name": "[Tên Di Sản / Tên Tượng Đài]",
+        "role": "[Tầm vóc lịch sử]"
+      }
+    },
+    {
+      "id": "scene-11-outro",
+      "startTime": 130,
+      "endTime": 145,
+      "text": "Tổng kết tư liệu lịch sử — Nền tảng số hóa & giáo dục lịch sử ChronoViet.",
+      "layoutMode": "OUTRO_CARD",
+      "overlayType": "OUTRO_CARD",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "quoteText": "[Câu thơ hoặc câu đúc kết tri ân anh hùng dân tộc]",
+        "ctaText": "DỰ ÁN SỐ HÓA & GIÁO DỤC LỊCH SỬ CHRONOVIET"
+      }
+    }
+  ]
+}

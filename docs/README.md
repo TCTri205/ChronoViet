@@ -1,0 +1,127 @@
+# CHRONOVIET DOCUMENTATION PORTAL (TRUNG TÂM TÀI LIỆU DỰ ÁN)
+
+Chào mừng bạn đến với Trung tâm Tài liệu Kỹ thuật và Kiến trúc của dự án **ChronoViet** — Nền tảng EdTech tự động hóa video lịch sử và Chatbot RAG tương tác.
+
+---
+
+## 🗂️ 1. Cấu Trúc & Phân Nhóm Tài Liệu (Documentation Directory)
+
+Tài liệu dự án được tổ chức thành 4 nhóm chính theo tầng kiến trúc, được đánh dấu rõ rệt giữa **[✅ ĐÃ IMPLEMENTED]** (Code Engine đã hoàn thiện) và **[📐 THIẾT KẾ KẾ HOẠCH / ROADMAP]**:
+
+```
+d:\Persional_Projects\ChronoViet\docs\
+├── 🏛️ architecture/                           [KIẾN TRÚC HỆ THỐNG & HẠ TẦNG KỸ THUẬT]
+│   ├── architecture/README.md                 [Tổng quan Kiến trúc Hệ thống & Hạ tầng]
+│   ├── architecture/01_ARCHITECTURAL_STYLE.md [Kiểu Kiến trúc: Event-Driven + Decoupled Pipeline]
+│   ├── architecture/02_COMMUNICATION_AND_QUEUES.md [Giao tiếp IPC, Message Queue (BullMQ/RabbitMQ)]
+│   ├── architecture/03_DATA_STORAGE_AND_CACHE.md [Cơ sở dữ liệu (Qdrant, Postgres, Neo4j) & Cache (Redis)]
+│   ├── architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md [Quản lý State (LangGraph.js), Docker Compose Deploy]
+│   └── architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md [Tối ưu Sản xuất & VieNeu TTS Engine]
+│
+├── ⚙️ modules/                                [CHI TIẾT 4 MÔ-ĐUN XỬ LÝ PIPELINE]
+│   ├── modules/README.md                      [Tổng quan 4 Mô-đun Xử lý Dữ liệu]
+│   ├── modules/01_CHRONO_RAG_ENGINE.md        [Mô-đun 1: Knowledge Retrieval & Anti-Hallucination [📐]]
+│   ├── modules/02_MULTI_AGENT_ORCHESTRATOR.md [Mô-đun 2: Small LLM & Long-Form Script Pipeline v3.2 [📐]]
+│   ├── modules/03_VLM_INSPECTOR_AGENT.md      [Mô-đun 3: Visual Quality Control & Fallback System [📐]]
+│   └── modules/04_REMOTION_RENDER_ENGINE.md   [Mô-đun 4: 100% Data-Driven Video Pipeline [✅]]
+│
+├── 📘 SystemOverview.md                       [Kiến trúc RAG + Multi-Agent + VLM + Remotion [✅ Engine / 📐 Agent Roadmap]]
+│
+├── ⚙️ EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 18 LayoutMode, 15 Transition, Zod Schema, 8 Compositions [✅]]
+└── REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v3.0, Lego Components [✅]]
+│
+├── 🎨 3. HƯỚNG DẪN THIẾT KẾ & VISUAL DESIGN
+│   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md          [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]
+│
+└── 📜 4. KỊCH BẢN MẪU & RESEARCH LOG
+    ├── RESEARCH_PROMPTS_LOG.md                [Nhật ký audit ảnh tư liệu Wikimedia (Phase 1: Quang Trung 15 scenes) [🟡 Audit In Progress]]
+    └── script_examples/                      [Tất cả 8 kịch bản chuẩn Schema v3.0 [✅]]
+        ├── KICH_BAN_BIOGRAPHY_TRAN_HUNG_DAO.md [Kịch bản Domain BIOGRAPHY: Trần Hưng Đạo (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
+        ├── KICH_BAN_BATTLE_BACH_DANG_938.md     [Kịch bản Domain BATTLE: Trận Bạch Đằng 938 (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
+        ├── KICH_BAN_DYNASTY_TRIEU_LY.md          [Kịch bản Domain DYNASTY: Triều Đại Nhà Lý (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
+        ├── KICH_BAN_MYSTERY_LE_CHI_VIEN.md      [Kịch bản Domain MYSTERY: Vụ Án Lệ Chi Viên (19 scenes, 375s)]
+        ├── KICH_BAN_ARTIFACT_TRONG_DONG_NGOC_LU.md [Kịch bản Domain ARTIFACT: Trống Đồng Ngọc Lũ (18 nội dung + 1 brand intro = 19 JSON scenes, 375s)]
+        ├── KICH_BAN_QUANG_TRUNG.md              [Kịch bản Legacy: Hoàng đế Quang Trung (24 scenes)]
+        ├── KICH_BAN_HAI_BA_TRUNG.md              [Kịch bản Legacy: Khởi nghĩa Hai Bà Trưng (28 scenes)]
+        └── KICH_BAN_MONG_CO_DAI_VIET_LAN_2.md   [Kịch bản Legacy: Chống Nguyên Mông Lần 2 (25 scenes, 18 phút)]
+```
+
+---
+
+## 📖 2. Tóm Tắt Nhanh Nội Dung Từng Tài Liệu
+
+### 2.1. [SystemOverview.md](file:///D:/Persional_Projects/ChronoViet/docs/SystemOverview.md) — Kiến Trúc Hệ Thống Tổng Quan
+- **Mục đích:** Cung cấp cái nhìn toàn cảnh về dự án ChronoViet.
+- **Trạng thái:** 
+  - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation, 13 Components, 18 LayoutModes, 8 Compositions trong `Root.tsx`.
+  - **[📐 ROADMAP]:** RAG Engine, Multi-Agent Orchestrator, VLM Inspector Agent (mô hình thiết kế kiến trúc chuẩn bị kết nối với Remotion Engine).
+
+### 2.2. [EVAL_REMOTION_TECHNICAL_SPEC.md](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) — ★ Quy Chuẩn Kỹ Thuật (Source of Truth)
+- **Mục đích:** Tài liệu tham chiếu kỹ thuật chi tiết và chính xác nhất cho `eval-remotion/src/`.
+- **Trọng tâm:**
+  - Mô hình 3 Lớp Rendering (`HistoryBackground` + `HistoryForeground` + `Persistent Overlays`) & cơ chế `TransitionSeries` trong `ChronoVideo.tsx`
+  - **18 `LayoutMode`** đầy đủ (7 Pure Image + 11 Pure Code)
+  - **15 `TransitionType`**, **4 `FilterStyle`**, **6 `KenBurnsEffect`**
+  - Zod Schema (`ChronoVideoSchema`, `TimelineSceneSchema`, `OverlayDataSchema`)
+  - **8 Composition** đã đăng ký trong `Root.tsx` (BIOGRAPHY 21 scenes, BATTLE 21 scenes, DYNASTY 21 scenes, MYSTERY 19 scenes, ARTIFACT 19 scenes, + 3 Legacy)
+
+### 2.3. [REMOTION_CONTENT_FORMATS_SPEC.md](file:///D:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md) — Quy Chuẩn Định Dạng Nội Dung v3.0
+- **Mục đích:** Quy định ranh giới cho AI Agent khi lập kịch bản video.
+- **Trọng tâm:** Triết lý "1 Scene = 1 Trạng thái", Bảng mapping 5 Domain lịch sử với Component flow bắt buộc, Schema JSON Production mẫu cho cả 5 domain.
+- **Lưu ý Âm thanh:** Trường `sfxUrl` & `sceneAudioUrl` được hỗ trợ 100% trong Zod Schema và `ChronoVideo.tsx` render pipeline. Thư viện file âm thanh SFX gốc (`.wav`/`.mp3`) được cấu hình nạp qua `scripts/setup_assets.js`.
+
+### 2.4. [TEMPLATE_GUIDE_VIDEO_ESSAY.md](file:///D:/Persional_Projects/ChronoViet/docs/TEMPLATE_GUIDE_VIDEO_ESSAY.md) — Hướng Dẫn Thiết Kế Format Video Essay
+- **Mục đích:** Hướng dẫn quy chuẩn đồ họa cho format Video Essay phân tích dài (Spiderum style).
+- **Trạng thái:** **[📐 DESIGN SPECIFICATION]** Định hướng thiết kế cho các component mở rộng tương lai (`VideoEssayTitleCard`, `HistoricalQuoteCard`), tuân thủ quy tắc không override code lõi.
+
+### 2.5. [RESEARCH_PROMPTS_LOG.md](file:///D:/Persional_Projects/ChronoViet/docs/RESEARCH_PROMPTS_LOG.md) — Nhật Ký Audit Ảnh Tư Liệu
+- **Trạng thái:** **[🟡 PHASE 1 VERIFIED AUDIT]** Chứa bảng kiểm định 15 ảnh tư liệu cốt lõi cho kịch bản Quang Trung. Phụ lục chứa template audit cho các phân cảnh và kịch bản còn lại trong lộ trình Phase 2.
+
+### 2.6. [script_examples/](file:///D:/Persional_Projects/ChronoViet/docs/script_examples) — Kịch Bản Mẫu
+- 5 kịch bản chuẩn domain (BIOGRAPHY, BATTLE, DYNASTY, MYSTERY, ARTIFACT) + 3 kịch bản legacy (Quang Trung, Hai Bà Trưng, Mông Cổ lần 2) — **tất cả 8/8 file đều có JSON template chuẩn Schema v3.0**.
+
+---
+
+## ⚡ 3. Quickstart: Lệnh Render Video Remotion Nhanh
+
+```bash
+# Di chuyển vào thư mục engine
+cd D:\Persional_Projects\ChronoViet\eval-remotion
+
+# Xem preview trực tiếp (Remotion Studio)
+npm start
+
+# Kiểm tra type safety (0 lỗi TypeScript)
+npx tsc --noEmit
+
+# Render 5 kịch bản domain chuẩn
+npm run render:biography   # → out/biography.mp4 (Trần Quốc Tuấn 21 scenes, ~6.75 phút)
+npm run render:battle      # → out/battle.mp4 (Bạch Đằng 938 21 scenes)
+npm run render:dynasty     # → out/dynasty.mp4 (Nhà Lý 21 scenes)
+npm run render:mystery     # → out/mystery.mp4 (Lệ Chi Viên 19 scenes)
+npm run render:artifact    # → out/artifact.mp4 (Trống Đồng Ngọc Lũ 19 scenes)
+
+# Render legacy compositions
+npm run render:quangtrung   # → out/quangtrung_full.mp4
+npm run render:haibatrung   # → out/haibatrung_full.mp4
+npm run render:mongolviet2  # → out/mongolviet2_full.mp4 (Chống Mông Cổ lần 2, 18 phút)
+
+# Render tùy chỉnh với JSON bất kỳ
+npx remotion render src/index.ts BiographyVideo out/custom.mp4 --props=src/data/templateGeneralTimeline.json
+```
+
+---
+
+## 🗺️ 4. Bản Đồ Tham Chiếu Nhanh (Quick Reference)
+
+| Tôi muốn biết... | Đọc tại |
+| :--- | :--- |
+| `LayoutMode` nào cần dùng cho scene này? | [EVAL_REMOTION_TECHNICAL_SPEC.md §4.1](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Cách 3 Layer Rendering phối hợp trong `ChronoVideo.tsx`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §2](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Trường nào trong `overlayData` cho `STAT_CARD`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §5.3](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Domain `BATTLE` cần flow component nào? | [REMOTION_CONTENT_FORMATS_SPEC.md §III](file:///D:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md) |
+| JSON mẫu đầy đủ cho video BIOGRAPHY? | [REMOTION_CONTENT_FORMATS_SPEC.md §IV.1](file:///D:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md) |
+| Cách dùng `startTime`/`endTime` vs `durationInFrames`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §5.4](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Composition IDs thực tế trong `Root.tsx`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §7](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Color palette & font cho Video Essay style? | [TEMPLATE_GUIDE_VIDEO_ESSAY.md](file:///D:/Persional_Projects/ChronoViet/docs/TEMPLATE_GUIDE_VIDEO_ESSAY.md) |
+| Trạng thái hiện tại: Đã implement vs Thiết kế tương lai? | [SystemOverview.md §1 & §2](file:///D:/Persional_Projects/ChronoViet/docs/SystemOverview.md) |

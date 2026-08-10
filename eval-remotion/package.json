@@ -1,0 +1,33 @@
+{
+  "name": "eval-remotion",
+  "version": "1.0.0",
+  "description": "ChronoViet Remotion Video Rendering & Evaluation Engine",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "remotion preview src/index.ts",
+    "build": "remotion render src/index.ts QuangTrungVideo out/quangtrung_full.mp4",
+    "render": "remotion render src/index.ts QuangTrungVideo out/quangtrung_full.mp4",
+    "render:quangtrung": "remotion render src/index.ts QuangTrungVideo out/quangtrung_full.mp4",
+    "render:haibatrung": "remotion render src/index.ts HaiBaTrungVideo out/haibatrung_full.mp4",
+    "render:mongolviet2": "remotion render src/index.ts MongolViet2Video out/mongolviet2_full.mp4",
+    "render:biography": "remotion render src/index.ts BiographyVideo out/biography.mp4",
+    "render:battle": "remotion render src/index.ts BattleVideo out/battle.mp4",
+    "render:dynasty": "remotion render src/index.ts DynastyVideo out/dynasty.mp4",
+    "render:mystery": "remotion render src/index.ts MysteryVideo out/mystery.mp4",
+    "render:artifact": "remotion render src/index.ts ArtifactVideo out/artifact.mp4",
+    "setup-assets": "node scripts/setup_assets.js"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.260",
+    "@remotion/google-fonts": "^4.0.507",
+    "@remotion/media-utils": "^4.0.260",
+    "@remotion/transitions": "^4.0.507",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.260"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "typescript": "^5.7.3"
+  }
+}
