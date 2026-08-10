@@ -16,12 +16,8 @@ eval/
 └── reports/          # Báo cáo theo dõi RAM / CPU / Failover (JSON / Markdown)
 ```
 
-## 🚀 How to Run Evaluation
+## 🚀 How to Run Evaluation (Chạy từ Root Monorepo)
 ```bash
-# Từ thư mục gốc monorepo:
+# Thực thi từ root monorepo:
 pnpm --filter @chronoviet/render-worker eval
-
-# Hoặc chạy trực tiếp trong app:
-cd apps/render-worker
-pnpm eval
 ```

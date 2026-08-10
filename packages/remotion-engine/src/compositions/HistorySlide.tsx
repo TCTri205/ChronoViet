@@ -28,12 +28,19 @@ interface HistorySlideProps {
 export const HistoryBackground: React.FC<HistorySlideProps> = ({
   scene,
   durationInFrames,
+  theme,
 }) => {
+  const isPureCode = scene.type === 'PURE_CODE' || (!scene.assetUrl && !scene.secondaryAssetUrl);
+  const bgColor = theme?.backgroundColor || '#090d14';
+  const glowColor = theme?.accentGlow || 'rgba(212, 175, 55, 0.2)';
+
   return (
-    <AbsoluteFill style={{ backgroundColor: '#090807', overflow: 'hidden' }}>
-      {scene.assetUrl ? (
+    <AbsoluteFill style={{ backgroundColor: bgColor, overflow: 'hidden' }}>
+      {!isPureCode && (scene.assetUrl || scene.secondaryAssetUrl) ? (
         <SlideImage
-          src={scene.assetUrl}
+          src={scene.assetUrl || ''}
+          secondaryAssetUrl={scene.secondaryAssetUrl}
+          layoutMode={scene.layoutMode}
           durationInFrames={durationInFrames}
           zoomType={scene.effect || 'KEN_BURNS_ZOOM_IN'}
           customKenBurns={scene.customKenBurns}
@@ -41,7 +48,11 @@ export const HistoryBackground: React.FC<HistorySlideProps> = ({
           rotateDeg={scene.rotateDeg}
         />
       ) : (
-        <AbsoluteFill style={{ backgroundColor: '#0c0f17' }} />
+        <AbsoluteFill
+          style={{
+            background: `radial-gradient(circle at 50% 50%, ${glowColor} 0%, ${bgColor} 80%)`,
+          }}
+        />
       )}
     </AbsoluteFill>
   );
@@ -105,7 +116,7 @@ export const HistoryForeground: React.FC<HistorySlideProps> = ({
     );
   }
 
-  if (layoutMode === 'VERSUS_CARD' || layoutMode === 'SPLIT_COMPARE' || (Boolean(od?.leftSide) && Boolean(od?.rightSide))) {
+  if (layoutMode === 'VERSUS_CARD' || (Boolean(od?.leftSide) && Boolean(od?.rightSide))) {
     return (
       <VersusCard
         title={od?.title}

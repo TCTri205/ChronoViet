@@ -2,8 +2,8 @@
 
 Tài liệu này đóng gói toàn bộ **Kiến trúc Tổng thể**, **Bộ Ranh giới An toàn cho AI**, **Ma trận Mapping 5 Dạng Nội dung Lịch sử**, và **Schema JSON Production v3.2 (bao gồm License & Attribution Metadata)** dành cho hệ thống tự động hóa video lịch sử **ChronoViet**.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** `eval-remotion/src/types/index.ts` + `eval-remotion/src/types/schema.ts`  
-> 📄 **Template JSON chuẩn:** `eval-remotion/src/data/templateGeneralTimeline.json`
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** `packages/shared-spec/src/schema.ts` + `packages/remotion-engine/src/types/index.ts`  
+> 📄 **Template JSON chuẩn & Evaluation Test Cases:** `packages/remotion-engine/eval/test-cases/`
 
 ---
 

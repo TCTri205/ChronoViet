@@ -49,3 +49,41 @@ export const TEMPLATE_THEMES = {
   },
 };
 
+export const DOMAIN_THEMES = {
+  BIOGRAPHY: {
+    primaryColor: '#D4AF37',   // Imperial Amber Gold
+    secondaryColor: '#8B0000', // Deep Royal Red
+    backgroundColor: '#090d14',
+    fontFamily: '"Merriweather", serif',
+    accentGlow: 'rgba(212, 175, 55, 0.4)',
+  },
+  BATTLE: {
+    primaryColor: '#DC2626',   // Fierce War Red
+    secondaryColor: '#F59E0B', // Fire Amber
+    backgroundColor: '#0F172A',
+    fontFamily: '"Merriweather", serif',
+    accentGlow: 'rgba(220, 38, 38, 0.45)',
+  },
+  DYNASTY: {
+    primaryColor: '#EAB308',   // Crown Gold
+    secondaryColor: '#6366F1', // Royal Indigo
+    backgroundColor: '#090D16',
+    fontFamily: '"Merriweather", serif',
+    accentGlow: 'rgba(234, 179, 8, 0.4)',
+  },
+  MYSTERY: {
+    primaryColor: '#10B981',   // Cryptic Emerald
+    secondaryColor: '#06B6D4', // Deep Cyan
+    backgroundColor: '#050B14',
+    fontFamily: '"Merriweather", serif',
+    accentGlow: 'rgba(16, 185, 129, 0.4)',
+  },
+  ARTIFACT: {
+    primaryColor: '#D97706',   // Ancient Bronze
+    secondaryColor: '#B45309', // Relic Copper
+    backgroundColor: '#0C0A09',
+    fontFamily: '"Merriweather", serif',
+    accentGlow: 'rgba(217, 119, 6, 0.4)',
+  },
+};
+

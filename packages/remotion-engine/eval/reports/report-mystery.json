@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-08-10T09:55:16.687Z",
+  "testCaseName": "mystery.json",
+  "isValidSchema": true,
+  "totalScenes": 19,
+  "layoutModesCovered": [
+    "ARTICLE_UI",
+    "TITLE_CARD",
+    "STAT_CARD",
+    "BLUR_BG",
+    "SPLIT_THEORY",
+    "QUOTE_CANVAS",
+    "OUTRO_CARD"
+  ],
+  "transitionsCovered": [
+    "FADE_TO_BLACK",
+    "SLIDE_LEFT",
+    "CROSS_ZOOM",
+    "LIGHT_LEAK",
+    "SLIDE_RIGHT",
+    "GLITCH",
+    "CLOCK_WIPE",
+    "LINEAR_BLUR",
+    "SLIDE_UP"
+  ],
+  "calculatedTotalFrames": 10980,
+  "durationSeconds": 366,
+  "fps": 30,
+  "aspectRatio": "16:9",
+  "evalDurationMs": 1
+}

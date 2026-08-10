@@ -94,3 +94,36 @@ Dịch vụ Redis được sử dụng làm bộ nhớ đệm đa tầng để t
 3. **Session & Rate-limiting Store (TTL: 1 giờ):**
    * Lưu Token JWT, số lượt tạo video còn lại của User (Free vs Premium tier).
 
+---
+
+## 4. Tầng Dữ Liệu Đánh Giá & Thử Nghiệm (Dev & Hybrid Evaluation Data Architecture)
+
+Trong môi trường phát triển (Development) và kiểm thử tự động (CI/CD), dữ liệu không nằm trên Database production mà được quản lý theo **Mô hình Hybrid (2 Tầng)** ngay trong repository:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                        HYBRID EVALUATION DATA ARCHITECTURE                              │
+│                                                                                         │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ 1. Tầng Độc Lập / Unit Eval (Nằm tại từng mô-đun: packages/<module>/eval/)        │  │
+│  │ - rag-engine/eval/data/      : Ground-truth chunks & test query vectors          │  │
+│  │ - vlm-inspector/eval/        : Test images & ground-truth licenses               │  │
+│  │ - vieneu-tts/eval/           : Test prompts & reference WAV audio                │  │
+│  │ - remotion-engine/eval/      : Test JSON specs (v3.0/v3.2) & sample assets      │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+│                                           │                                             │
+│                                           ▼                                             │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ 2. Tầng Tập Trung / End-to-End Eval (Nằm tại Root: /eval hoặc apps/eval-suite/)   │  │
+│  │ - eval/datasets/             : Golden Benchmark Datasets cho toàn bộ Pipeline     │  │
+│  │ - eval/golden_outputs/       : Output kỳ vọng chuẩn E2E (RAG -> Script -> MP4)   │  │
+│  │ - eval/e2e_runner.ts         : Script chạy Integration Benchmark toàn hệ thống    │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Nguyên Tắc Quản Lý Dữ Liệu Eval:
+1. **Phân biệt rạch ròi môi trường:** Dữ liệu trong Codebase chỉ là Mock/Benchmark. Mọi dữ liệu thực tế phát sinh của người dùng đều lưu ở Postgres/Redis/Volume `/media`.
+2. **Unit Benchmark Nhanh:** Dev làm việc ở module nào chỉ cần chạy eval độc lập ở module đó (`pnpm --filter @chronoviet/rag-engine eval`) mà không bị phình dung lượng repo hay phụ thuộc môi trường ngoài.
+3. **E2E Regression Test:** Thư mục `/eval` tập trung tại Root chịu trách nhiệm chạy test tích hợp toàn pipeline từ A-Z để đảm bảo 0 lỗi phát sinh khi kết hợp các module lại với nhau trước khi release.
+

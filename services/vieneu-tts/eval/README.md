@@ -17,12 +17,8 @@ eval/
 └── reports/          # Báo cáo kết quả đánh giá (JSON / Markdown)
 ```
 
-## 🚀 How to Run Evaluation
+## 🚀 How to Run Evaluation (Chạy từ Root Monorepo)
 ```bash
-# Từ thư mục gốc monorepo:
+# Thực thi từ root monorepo:
 pnpm --filter @chronoviet/vieneu-tts eval
-
-# Hoặc chạy trực tiếp trong service:
-cd services/vieneu-tts
-pnpm eval
 ```

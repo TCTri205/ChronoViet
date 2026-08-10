@@ -372,20 +372,18 @@ Engine đã đăng ký sẵn 5 Compositions chuẩn theo domain nội dung và 3
 
 ---
 
-## 5. Lệnh Render MP4 Từ Tool Executable (CLI)
+## 5. Lệnh Render MP4 Từ Tool Executable (CLI) (Chạy tại Root Monorepo)
 
-Khi Orchestrator kích hoạt Tool qua Command Line Interface (CLI):
+Khi Orchestrator hoặc Render Worker kích hoạt CLI từ **Root Monorepo**:
 
 ```bash
-cd D:\Persional_Projects\ChronoViet\eval-remotion
+# Render MP4 theo props từ file JSON kịch bản do Multi-Agent tạo ra:
+pnpm --filter @chronoviet/remotion-engine cli render -i tmp/battle_scene_v3.json -o media/rendered-videos/battle_output.mp4
 
-# Render theo props từ file JSON kịch bản do Multi-Agent tạo ra:
-npx remotion render src/index.ts BattleVideo out/battle_output.mp4 --props=../tmp/battle_scene_v3.json
-
-# Hoặc dùng các lệnh npm scripts có sẵn:
-npm run render:biography   # Out: out/biography.mp4
-npm run render:battle      # Out: out/battle.mp4
-npm run render:dynasty     # Out: out/dynasty.mp4
-npm run render:mystery     # Out: out/mystery.mp4
-npm run render:artifact    # Out: out/artifact.mp4
+# Render các kịch bản domain chuẩn:
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/rendered-videos/biography.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/rendered-videos/battle.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/mystery_le_chi_vien.json -o media/rendered-videos/mystery.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/artifact_trong_dong_ngoc_lu.json -o media/rendered-videos/artifact.mp4
 ```

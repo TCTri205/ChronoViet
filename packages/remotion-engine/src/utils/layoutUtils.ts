@@ -44,14 +44,14 @@ export function useResponsiveLayout(): ResponsiveLayout {
  */
 export function isFullscreenLayout(layoutMode?: LayoutMode): boolean {
   if (!layoutMode) return false;
-  return [
+  return ([
     'ARTICLE_UI',
     'CHAPTER_CARD',
     'QUOTE_CANVAS',
     'SPONSOR_UI',
     'OUTRO_CARD',
     'TITLE_CARD',
-  ].includes(layoutMode);
+  ] as LayoutMode[]).includes(layoutMode);
 }
 
 /**

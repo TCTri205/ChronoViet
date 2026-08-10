@@ -26,6 +26,7 @@ const getTransitionPresentation = (type?: TransitionType): any => {
   const canUseCanvasShader = isHtmlInCanvasSupported();
 
   switch (type) {
+    case 'FADE':
     case 'FADE_TO_BLACK':
     case 'DISSOLVE':
       return fade();
@@ -43,16 +44,21 @@ const getTransitionPresentation = (type?: TransitionType): any => {
       return flip({});
     case 'CLOCK_WIPE':
       return clockWipe({ width: 1920, height: 1080 });
+    case 'FILM_BURN':
     case 'LIGHT_LEAK':
       return canUseCanvasShader ? filmBurn({}) : wipe({ direction: 'from-top-left' });
     case 'GLITCH':
       return canUseCanvasShader ? pushCut({}) : slide({ direction: 'from-right' });
+    case 'ZOOM_IN':
+    case 'ZOOM_OUT':
     case 'ZOOM_DREAMY':
       return canUseCanvasShader ? dreamyZoom({}) : flip({});
     case 'CROSS_ZOOM':
       return canUseCanvasShader ? crossZoom({}) : clockWipe({ width: 1920, height: 1080 });
     case 'LINEAR_BLUR':
       return canUseCanvasShader ? linearBlur({}) : slide({ direction: 'from-bottom' });
+    case 'NONE':
+      return null;
     default:
       return fade();
   }
@@ -78,11 +84,12 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
   defaultTransition = 'FADE_TO_BLACK',
   enableTransitions = true,
   timeline = [],
+  videoType,
   templateId,
   theme,
 }) => {
   const { fps, durationInFrames } = useVideoConfig();
-  const effectiveTheme = getMergedTheme(templateId, theme);
+  const effectiveTheme = getMergedTheme(templateId, theme, videoType);
 
   return (
     <div

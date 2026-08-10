@@ -1,0 +1,324 @@
+{
+  "title": "BÍ ẨN THẢM ÁN LỆ CHI VIÊN & NGUYỄN TRÃI (1442)",
+  "subtitle": "ChronoViet Deep Research Series • Phim Tài Liệu Khảo Cứu Thảm Án Lệ Chi Viên (1442)",
+  "videoType": "MYSTERY",
+  "aspectRatio": "16:9",
+  "audioUrl": "assets/quang-trung/voiceover.wav",
+  "bgmUrl": "assets/quang-trung/bgm.wav",
+  "bgmVolume": 0.25,
+  "defaultLayoutMode": "BLUR_BG",
+  "defaultFilterStyle": "HISTORICAL",
+  "defaultTransition": "LIGHT_LEAK",
+  "timeline": [
+    {
+      "id": "scene_00_brand_intro",
+      "startTime": 0,
+      "endTime": 15,
+      "durationInFrames": 450,
+      "text": "ChronoViet Documentary Series — Dự án Phim tài liệu & Số hóa Lịch sử Việt Nam.",
+      "layoutMode": "ARTICLE_UI",
+      "overlayType": "ARTICLE_INTRO",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "title": "THẢM ÁN LỆ CHI VIÊN (1442)",
+        "author": "ChronoViet Research Team"
+      }
+    },
+    {
+      "id": "scene_01",
+      "startTime": 15,
+      "endTime": 35,
+      "durationInFrames": 600,
+      "text": "Đêm ngày 27 tháng 7 năm Nhâm Tuất 1442, tại khu vườn vải Lệ Chi Viên... một cái chết đột ngột của vị vua trẻ đã châm ngòi cho thảm án tàn khốc và bí ẩn bậc nhất trong lịch sử phong kiến Việt Nam. Thảm án trút xuống đầu gia tộc Nguyễn Trãi – khai quốc công thần và là Danh nhân văn hóa thế giới.",
+      "assetUrl": "assets/mystery/scene_01_garden_night.jpg",
+      "layoutMode": "TITLE_CARD",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "chapterNumber": "PHẦN I",
+        "title": "THẢM ÁN LỆ CHI VIÊN",
+        "subtitle": "Bí Ẩn Cái Chết Của Vua Lê Thái Tông & Oan Khuất Nguyễn Trãi (1442)"
+      }
+    },
+    {
+      "id": "scene_02",
+      "startTime": 35,
+      "endTime": 55,
+      "durationInFrames": 600,
+      "text": "Nguyễn Trãi (1380 - 1442) – người đã dốc trọn tâm huyết soạn 'Bình Ngô Đại Cáo' dựng xây triều Lê Sơ. Bên cạnh ông là Nguyễn Thị Lộ – một người phụ nữ tài sắc vẹn toàn, được Vua Lê Thái Tông tin yêu bổ dụng làm Lễ nghi quan chuyên dạy bảo cung nữ.",
+      "assetUrl": "assets/mystery/scene_02_nguyen_trai_portrait.jpg",
+      "layoutMode": "STAT_CARD",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_LEFT",
+      "overlayData": {
+        "title": "NHÂN VẬT TRONG THẢM ÁN LỆ CHI VIÊN",
+        "name": "Vua Lê Thái Tông & Ức Trai Nguyễn Trãi",
+        "role": "Lệ Chi Viên (Gia Bình, Bắc Ninh) • Năm 1442",
+        "statItems": [
+          {
+            "label": "Ngày xảy ra thảm án",
+            "value": "27/07/Nhâm Tuất (01/09/1442)",
+            "color": "#D4AF37"
+          },
+          {
+            "label": "Tuổi đời Vua băng hà",
+            "value": "20 Tuổi (Lê Nguyên Long)",
+            "color": "#2563eb"
+          },
+          {
+            "label": "Hình phạt oan khuất",
+            "value": "Tru di 3 họ (19/09/1442)",
+            "color": "#8B0000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene_03",
+      "startTime": 55,
+      "endTime": 75,
+      "durationInFrames": 600,
+      "text": "Vua Lê Thái Tông – vị vua trẻ 20 tuổi đầy hoài bảo – trên đường đi duyệt quân ở Chí Linh đã ghé thăm nơi ở ẩn của Nguyễn Trãi tại Côn Sơn. Khi trở về đến Lệ Chi Viên (Gia Bình, Bắc Ninh), vua thức suốt đêm với Nguyễn Thị Lộ rồi đột ngột trút hơi thở cuối cùng.",
+      "assetUrl": "assets/mystery/scene_03_le_thai_tong.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_RIGHT",
+      "filterStyle": "HISTORICAL",
+      "transition": "CROSS_ZOOM",
+      "overlayData": {
+        "title": "BỐI CẢNH TRIỀU LÊ SƠ NĂM 1442"
+      }
+    },
+    {
+      "id": "scene_04",
+      "startTime": 75,
+      "endTime": 95,
+      "durationInFrames": 600,
+      "text": "Ngay lập tức, triều đình quy tội cho Nguyễn Thị Lộ mưu sát Vua. Nguyễn Trãi bị khép vào tội mưu phản. Án phạt tàn khốc nhất lịch sử – Tru di tam tộc (chém sạch ba họ) – được thi hành thần tốc, lấy đi mạng sống của hơn một trăm con người vô tội.",
+      "assetUrl": "assets/mystery/scene_04_execution.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_OUT",
+      "filterStyle": "HISTORICAL",
+      "transition": "LIGHT_LEAK",
+      "overlayData": {
+        "title": "HẬU QUẢ TÀN KHỐC CỦA VỤ ÁN OAN"
+      }
+    },
+    {
+      "id": "scene_05",
+      "startTime": 95,
+      "endTime": 115,
+      "durationInFrames": 600,
+      "text": "Nhưng đằng sau bản án vội vã ấy là gì? Liệu Nguyễn Thị Lộ có thực sự đầu độc vua, hay đây là một âm mưu chính trị được dàn dựng tỉ mỉ nhằm thanh tiêu diệt công thần kiệt xuất nhất triều đình?",
+      "assetUrl": "assets/mystery/scene_05_investigation.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_LEFT",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_RIGHT"
+    },
+    {
+      "id": "scene_06",
+      "startTime": 115,
+      "endTime": 135,
+      "durationInFrames": 600,
+      "text": "Để hiểu thảm án, phải nhìn vào cuộc đấu tranh quyền lực triều chính lúc bấy giờ. Hoàng thái hậu Nguyễn Thị Anh – mẹ của Hoàng tử Lê Nhân Tông 2 tuổi – đang lo sợ ngôi báu bị đe dọa bởi Hoàng tử Lê Tư Thành, người vốn được Nguyễn Trãi và phe trung lập ủng hộ.",
+      "assetUrl": "assets/mystery/scene_06_court_factions.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "CROSS_ZOOM"
+    },
+    {
+      "id": "scene_07",
+      "startTime": 135,
+      "endTime": 165,
+      "durationInFrames": 900,
+      "text": "Sử gia hiện đại phân tích 2 giả thuyết chính: GIẢ THUYẾT 1 (Đạt 65% nghi vấn) – Âm mưu ám sát chính trị do Tuyên Cực Thái hậu Nguyễn Thị Anh đứng sau chỉ đạo để diệt trừ Nguyễn Trãi; GIẢ THUYẾT 2 (Đạt 35% nghi vấn) – Vua qua đời đột ngột vì đột quỵ hoặc bùng phát cảm sốt ác tính.",
+      "assetUrl": "assets/mystery/scene_07_theories.jpg",
+      "layoutMode": "SPLIT_THEORY",
+      "transition": "GLITCH",
+      "overlayData": {
+        "title": "2 GIẢ THUYẾT LỊCH SỬ VỀ THẢM ÁN LỆ CHI VIÊN",
+        "theories": [
+          {
+            "title": "Giả thuyết 1: Mưu đồ Thái hậu Nguyễn Thị Anh",
+            "desc": "Sợ bị phế bỏ, hạ độc giết vua để giữ ngai cho con Lê Nhân Tông",
+            "probability": "65%"
+          },
+          {
+            "title": "Giả thuyết 2: Bệnh lý / Đột quỵ y học",
+            "desc": "Vua co giật, đột quỵ hoặc sốt rét sau chuyến đi xa kiệt sức",
+            "probability": "35%"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene_08",
+      "startTime": 165,
+      "endTime": 185,
+      "durationInFrames": 600,
+      "text": "Sau thảm án, Tuyên Cực Thái hậu nhanh chóng buông rèm xí xóa điều tra. Di sản của Nguyễn Trãi – từ tác phẩm Bình Ngô Đại Cáo đến toàn bộ tập thơ 'Ức Trai tập' – đều bị tiêu hủy, cấm đoán lưu hành. Đêm trường u tối phủ lên tên tuổi ông suốt 20 năm.",
+      "assetUrl": "assets/mystery/scene_08_burning_books.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_RIGHT",
+      "filterStyle": "HISTORICAL",
+      "transition": "CLOCK_WIPE"
+    },
+    {
+      "id": "scene_09",
+      "startTime": 185,
+      "endTime": 205,
+      "durationInFrames": 600,
+      "text": "Bên cạnh các giả thuyết lịch sử, dân gian còn thêu dệt nên huyền thoại 'Xà báo oán' – câu chuyện con rắn bị Nguyễn Trãi vô tình diệt tộc hóa thân thành Nguyễn Thị Lộ để trả thù. Dù mang màu sắc hoang đường, huyền thoại ấy phản ánh niềm thương xót vô hạn của nhân dân trước nỗi oan ngút trời của ông.",
+      "assetUrl": "assets/mystery/scene_09_snake_legend.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_OUT",
+      "filterStyle": "HISTORICAL",
+      "transition": "LINEAR_BLUR"
+    },
+    {
+      "id": "scene_10",
+      "startTime": 205,
+      "endTime": 225,
+      "durationInFrames": 600,
+      "text": "Năm 1460, Hoàng tử Lê Tư Thành lên ngôi, trở thành Vua Lê Thánh Tông – vị vua vĩ đại nhất triều Lê. Ngay sau khi nắm trọn quyền lực, nhà vua lập tức cho mở lại hồ sơ thảm án Lệ Chi Viên để tìm lại sự thật.",
+      "assetUrl": "assets/mystery/scene_10_le_thanh_tong.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_LEFT"
+    },
+    {
+      "id": "scene_11",
+      "startTime": 225,
+      "endTime": 245,
+      "durationInFrames": 600,
+      "text": "Năm 1464, Vua Lê Thánh Tông chính thức ban sắc minh oan cho Nguyễn Trãi, truy tặng ông tước Tán Trù Bá, cho tìm lại con cháu còn sống sót ra làm quan, và ra lệnh thu thập lại toàn bộ di văn thơ thơ bị cấm đoán.",
+      "assetUrl": "assets/mystery/scene_11_vindication.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_LEFT",
+      "filterStyle": "HISTORICAL",
+      "transition": "CROSS_ZOOM"
+    },
+    {
+      "id": "scene_12",
+      "startTime": 245,
+      "endTime": 265,
+      "durationInFrames": 600,
+      "text": "Thẻ trích dẫn lời đánh giá bất hủ của Vua Lê Thánh Tông: 'Ức Trai tâm thượng quang khuê táo' – Lòng Ức Trai Nguyễn Trãi sáng như sao Khuê chiếu sáng lịch sử dân tộc!",
+      "assetUrl": "assets/mystery/scene_12_khue_star_quote.jpg",
+      "layoutMode": "QUOTE_CANVAS",
+      "effect": "KEN_BURNS_ZOOM_OUT",
+      "filterStyle": "HISTORICAL",
+      "transition": "FADE_TO_BLACK",
+      "overlayType": "QUOTE",
+      "overlayData": {
+        "quoteText": "Ức Trai tâm thượng quang khuê táo (Lòng Ức Trai sáng như sao Khuê)",
+        "author": "Vua Lê Thánh Tông (Lời minh oan năm 1464)",
+        "subtitle": "Lời ngợi ca giải oan thiên cổ"
+      }
+    },
+    {
+      "id": "scene_13",
+      "startTime": 265,
+      "endTime": 285,
+      "durationInFrames": 600,
+      "text": "Các tác phẩm kiệt tác như Bình Ngô Đại Cáo, Quân Trung Từ Mệnh Tập, Quốc Âm Thi Tập nhờ đó mà sống lại, trở thành di sản văn hóa bất tử của dân tộc Việt Nam và nhân loại.",
+      "assetUrl": "assets/mystery/scene_13_binh_ngo_dai_cao.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_RIGHT",
+      "filterStyle": "HISTORICAL",
+      "transition": "LIGHT_LEAK"
+    },
+    {
+      "id": "scene_14",
+      "startTime": 285,
+      "endTime": 305,
+      "durationInFrames": 600,
+      "text": "Năm 1980, nhân kỷ niệm 600 năm ngày sinh của ông, tổ chức UNESCO đã chính thức công nhận Nguyễn Trãi là Danh nhân Văn hóa Thế giới – tôn vinh một tư tưởng nhân văn vĩ đại: 'Việc nghĩa trước hết để yên dân / Quân làm gian tà phải trừ tiêu diệt'.",
+      "assetUrl": "assets/mystery/scene_14_unesco.jpg",
+      "layoutMode": "STAT_CARD",
+      "transition": "SLIDE_UP",
+      "overlayData": {
+        "title": "TẦM VÓC DANH NHÂN VĂN HÓA THẾ GIỚI",
+        "name": "Nguyễn Trãi (1380 - 1442)",
+        "role": "Danh nhân Văn hóa Thế giới UNESCO (1980)",
+        "statItems": [
+          {
+            "label": "Tuyên ngôn độc lập",
+            "value": "Bình Ngô Đại Cáo (1428)",
+            "color": "#D4AF37"
+          },
+          {
+            "label": "Tác phẩm địa lý",
+            "value": "Dư Địa Chí",
+            "color": "#2563eb"
+          },
+          {
+            "label": "Tôn vinh quốc tế",
+            "value": "UNESCO Công Nhận 1980",
+            "color": "#8B0000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene_15",
+      "startTime": 305,
+      "endTime": 325,
+      "durationInFrames": 600,
+      "text": "Thảm án Lệ Chi Viên là một bài học đắt giá về sự tàn khốc của quyền lực triều chính phong kiến, nhưng đồng thời là bằng chứng chứng minh: Sự thật và lòng trung trinh có thể bị vùi lấp trong chốc khảnh, nhưng giá trị vĩ đại sẽ mãi mãi trường tồn.",
+      "assetUrl": "assets/mystery/scene_15_le_chi_vien_today.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_LEFT"
+    },
+    {
+      "id": "scene_16",
+      "startTime": 325,
+      "endTime": 345,
+      "durationInFrames": 600,
+      "text": "Trái tim yêu nước thương dân của Nguyễn Trãi và nỗi oan khuất Lệ Chi Viên sẽ mãi mãi là trang sử bi hùng nhói đau nhưng vô cùng kiêu hãnh của dân tộc.",
+      "assetUrl": "assets/mystery/scene_16_con_son.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_LEFT",
+      "filterStyle": "HISTORICAL",
+      "transition": "CROSS_ZOOM"
+    },
+    {
+      "id": "scene_17",
+      "startTime": 345,
+      "endTime": 360,
+      "durationInFrames": 450,
+      "text": "Nguyễn Trãi – Danh nhân Văn hóa Thế giới, Trái tim trường tồn cùng sông núi Việt Nam.",
+      "assetUrl": "assets/mystery/scene_17_heritage.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_OUT",
+      "filterStyle": "HISTORICAL",
+      "transition": "LIGHT_LEAK"
+    },
+    {
+      "id": "scene_18",
+      "startTime": 360,
+      "endTime": 375,
+      "durationInFrames": 450,
+      "text": "Bí ẩn vụ án Lệ Chi Viên – Trang sử bi hùng của Danh nhân Nguyễn Trãi.",
+      "assetUrl": "assets/mystery/scene_17_heritage.jpg",
+      "layoutMode": "OUTRO_CARD",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "title": "BÍ ẨN LỆ CHI VIÊN & DI SẢN NGUYỄN TRÃI",
+        "quoteText": "“Ức Trai tâm thượng quang Khuê táo,\nTrái tim trung trinh soi sáng ngàn thu.”",
+        "ctaText": "CHRONOVIET DOCUMENTARY SERIES • CHUYÊN ĐỀ BÍ ẨN LỊCH SỬ",
+        "bulletPoints": [
+          "ỨC TRAI NGUYỄN TRÃI",
+          "BÍ ẨN THIÊN THU",
+          "MINH OAN VÀNG THAU"
+        ]
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và Engine Render Remotion (v3.0 - Data-Driven)** của dự án **ChronoViet**. Engine này đảm bảo khả năng linh hoạt 100%, trong đó toàn bộ nội dung, kịch bản, phương thức hiển thị (layout), chuyển cảnh (transitions), hình ảnh/âm thanh, cũng như **phong cách thiết kế (Theme: Màu sắc, Phông chữ, Glow)** đều được điều khiển **hoàn toàn bằng JSON Input** mà không bao giờ cần phải chỉnh sửa hay biên dịch lại mã nguồn React.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`eval-remotion/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src/types/index.ts) và [`eval-remotion/src/types/schema.ts`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src/types/schema.ts)
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/interfaces.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/interfaces.ts) và [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts)
 > 🔗 **Quy chuẩn Tích hợp TTS & Tối ưu Sản xuất:** [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](file:///D:/Persional_Projects/ChronoViet/docs/architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md) (Quy đổi VieNeu Word Timestamps sang Remotion Captions Karaoke).
 
 ---
@@ -412,22 +412,21 @@ eval-remotion/src/
 
 ---
 
-## 8. Hướng Dẫn Render Video Bằng Remotion CLI
+## 8. Hướng Dẫn Render Video Bằng Remotion CLI (Chạy tại Root Monorepo)
 
-### Xem preview trực tiếp (Remotion Studio):
+### Xem preview trực tiếp (Remotion Studio GUI):
 ```bash
-cd eval-remotion
-npm start
+pnpm remotion:studio
 # → Mở http://localhost:3000
 ```
 
-### Render các kịch bản 5 Domain:
+### Render các kịch bản 5 Domain từ Root Monorepo:
 ```bash
-npm run render:biography   # → out/biography.mp4 (Trần Hưng Đạo 21 scenes, ~6.75 phút)
-npm run render:battle      # → out/battle.mp4 (Bạch Đằng 938 21 scenes)
-npm run render:dynasty     # → out/dynasty.mp4 (Nhà Lý 21 scenes)
-npm run render:mystery     # → out/mystery.mp4 (Lệ Chi Viên 19 scenes)
-npm run render:artifact    # → out/artifact.mp4 (Trống Đồng Ngọc Lũ 19 scenes)
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/rendered-videos/biography.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/rendered-videos/battle.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/mystery_le_chi_vien.json -o media/rendered-videos/mystery.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/artifact_trong_dong_ngoc_lu.json -o media/rendered-videos/artifact.mp4
 ```
 
 ### Render Legacy Compositions:

@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-08-10T09:59:48.398Z",
+  "testCaseName": "domain_05_artifact.json",
+  "isValidSchema": true,
+  "totalScenes": 19,
+  "layoutModesCovered": [
+    "ARTICLE_UI",
+    "TITLE_CARD",
+    "MUSEUM_TAG",
+    "STAT_CARD",
+    "BLUR_BG",
+    "VERSUS_CARD",
+    "QUOTE_CANVAS",
+    "OUTRO_CARD"
+  ],
+  "transitionsCovered": [
+    "FADE_TO_BLACK",
+    "SLIDE_LEFT",
+    "SLIDE_RIGHT",
+    "LIGHT_LEAK",
+    "CROSS_ZOOM",
+    "CLOCK_WIPE",
+    "SLIDE_UP"
+  ],
+  "calculatedTotalFrames": 10980,
+  "durationSeconds": 366,
+  "fps": 30,
+  "aspectRatio": "16:9",
+  "evalDurationMs": 1
+}

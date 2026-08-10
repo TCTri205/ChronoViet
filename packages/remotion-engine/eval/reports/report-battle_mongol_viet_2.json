@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-08-10T10:07:37.519Z",
+  "testCaseName": "battle_mongol_viet_2.json",
+  "isValidSchema": true,
+  "totalScenes": 25,
+  "layoutModesCovered": [
+    "ARTICLE_UI",
+    "BLUR_BG",
+    "QUOTE_CANVAS",
+    "CHAPTER_CARD",
+    "HISTORICAL_FRAME",
+    "OUTRO_CARD"
+  ],
+  "transitionsCovered": [
+    "GLITCH"
+  ],
+  "calculatedTotalFrames": 3390,
+  "durationSeconds": 113,
+  "fps": 30,
+  "aspectRatio": "16:9",
+  "evalDurationMs": 2
+}

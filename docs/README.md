@@ -18,8 +18,9 @@ d:\Persional_Projects\ChronoViet\docs\
 │   ├── architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md [Quản lý State (LangGraph.js), VPS Docker Compose Caddy Deploy]
 │   └── architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md [Tối ưu Sản xuất & VieNeu TTS Engine]
 │
-├── ⚙️ modules/                                [CHI TIẾT 4 MÔ-ĐUN XỬ LÝ PIPELINE]
-│   ├── modules/README.md                      [Tổng quan 4 Mô-đun Xử lý Dữ liệu]
+├── ⚙️ modules/                                [CHI TIẾT 5 MÔ-ĐUN XỬ LÝ PIPELINE]
+│   ├── modules/README.md                      [Tổng quan 5 Mô-đun Xử lý Dữ liệu]
+│   ├── modules/00_DATA_PREPROCESSING_AND_INGESTION.md [Mô-đun 0: Data Preprocessing & Ingestion Engine [📐]]
 │   ├── modules/01_CHRONO_RAG_ENGINE.md        [Mô-đun 1: Knowledge Retrieval & Anti-Hallucination [📐]]
 │   ├── modules/02_MULTI_AGENT_ORCHESTRATOR.md [Mô-đun 2: Small LLM & Long-Form Script Pipeline v3.2 [📐]]
 │   ├── modules/03_VLM_INSPECTOR_AGENT.md      [Mô-đun 3: Visual Quality Control & Fallback System [📐]]
@@ -87,27 +88,25 @@ d:\Persional_Projects\ChronoViet\docs\
 
 ---
 
-## ⚡ 3. Quickstart: Lệnh Render Video Remotion Nhanh
+## ⚡ 3. Quickstart: Lệnh Render Video Remotion Nhanh (Chạy tại Root Monorepo)
 
 ```bash
-# Di chuyển vào thư mục engine
-cd D:\Persional_Projects\ChronoViet\packages\remotion-engine
+# Xem preview trực tiếp (Remotion Studio GUI)
+pnpm remotion:studio
 
-# Xem preview trực tiếp (Remotion Studio)
-npm start
+# Kiểm tra type safety toàn bộ monorepo (0 lỗi TypeScript)
+pnpm typecheck
 
-# Kiểm tra type safety (0 lỗi TypeScript)
-npx tsc --noEmit
+# Chạy suite kiểm định tự động Remotion Engine & mở Studio GUI
+pnpm --filter @chronoviet/remotion-engine eval
 
-# Render 5 kịch bản domain chuẩn
-npm run render:biography   # → out/biography.mp4 (Trần Quốc Tuấn 21 scenes, ~6.75 phút)
-npm run render:battle      # → out/battle.mp4 (Bạch Đằng 938 21 scenes)
-npm run render:dynasty     # → out/dynasty.mp4 (Nhà Lý 21 scenes)
-npm run render:mystery     # → out/mystery.mp4 (Lệ Chi Viên 19 scenes)
-npm run render:artifact    # → out/artifact.mp4 (Trống Đồng Ngọc Lũ 19 scenes)
-
-# Render legacy compositions
-npm run render:quangtrung   # → out/quangtrung_full.mp4
+# Render các kịch bản domain chuẩn ra MP4 từ root monorepo
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/rendered-videos/biography.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/rendered-videos/battle.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/mystery_le_chi_vien.json -o media/rendered-videos/mystery.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/artifact_trong_dong_ngoc_lu.json -o media/rendered-videos/artifact.mp4
+```
 npm run render:haibatrung   # → out/haibatrung_full.mp4
 npm run render:mongolviet2  # → out/mongolviet2_full.mp4 (Chống Mông Cổ lần 2, 18 phút)
 
@@ -129,6 +128,7 @@ npx remotion render src/index.ts BiographyVideo out/custom.mp4 --props=src/data/
 | Cách dùng `startTime`/`endTime` vs `durationInFrames`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §5.4](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
 | Composition IDs thực tế trong `Root.tsx`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §7](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
 | Color palette & font cho Video Essay style? | [TEMPLATE_GUIDE_VIDEO_ESSAY.md](file:///D:/Persional_Projects/ChronoViet/docs/TEMPLATE_GUIDE_VIDEO_ESSAY.md) |
+| Quy trình tiền xử lý, nạp dữ liệu offline & chuẩn hóa địa danh/nhân vật? | [00_DATA_PREPROCESSING_AND_INGESTION.md](file:///D:/Persional_Projects/ChronoViet/docs/modules/00_DATA_PREPROCESSING_AND_INGESTION.md) |
 | Trạng thái hiện tại: Đã implement vs Thiết kế tương lai? | [SystemOverview.md §1 & §2](file:///D:/Persional_Projects/ChronoViet/docs/SystemOverview.md) |
 | Lộ trình triển khai 5 giai đoạn & phân tích song song? | [IMPLEMENTATION_PLAN.md §2 & §3](file:///D:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md) |
 | Ma trận đánh giá KPI & quản trị rủi ro hệ thống? | [IMPLEMENTATION_PLAN.md §4 & §5](file:///D:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md) |
