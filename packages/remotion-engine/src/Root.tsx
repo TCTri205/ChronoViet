@@ -13,29 +13,39 @@ import artifactTimeline from './data/artifactTimeline.json';
 import templateGeneralTimeline from './data/templateGeneralTimeline.json';
 import { ChronoVideoProps, ChronoVideoSchema } from './types';
 
+interface CompositionDef {
+  id: string;
+  defaultProps: ChronoVideoProps;
+  durationInFrames: number;
+  width?: number;
+  height?: number;
+}
+
+const COMPOSITION_DEFS: CompositionDef[] = [
+  { id: 'ChronoVideo', defaultProps: templateGeneralTimeline as unknown as ChronoVideoProps, durationInFrames: 4500 },
+  { id: 'BiographyVideo', defaultProps: biographyTimeline as unknown as ChronoVideoProps, durationInFrames: 12150 },
+  { id: 'BattleVideo', defaultProps: battleTimeline as unknown as ChronoVideoProps, durationInFrames: 12150 },
+  { id: 'DynastyVideo', defaultProps: dynastyTimeline as unknown as ChronoVideoProps, durationInFrames: 12150 },
+  { id: 'MysteryVideo', defaultProps: mysteryTimeline as unknown as ChronoVideoProps, durationInFrames: 11250 },
+  { id: 'ArtifactVideo', defaultProps: artifactTimeline as unknown as ChronoVideoProps, durationInFrames: 11250 },
+  {
+    id: 'QuickShortsVideo',
+    defaultProps: { ...(templateGeneralTimeline as unknown as ChronoVideoProps), templateId: 'QUICK_SHORTS', aspectRatio: '9:16' },
+    durationInFrames: 4350,
+    width: 1080,
+    height: 1920,
+  },
+  {
+    id: 'ModernNewsVideo',
+    defaultProps: { ...(templateGeneralTimeline as unknown as ChronoVideoProps), templateId: 'MODERN_NEWS', aspectRatio: '16:9' },
+    durationInFrames: 4350,
+  },
+  { id: 'QuangTrungVideo', defaultProps: quangTrungTimeline as unknown as ChronoVideoProps, durationInFrames: 7350 },
+  { id: 'MongolViet2Video', defaultProps: mongolViet2Timeline as unknown as ChronoVideoProps, durationInFrames: 34200 },
+  { id: 'HaiBaTrungVideo', defaultProps: haiBaTrungTimeline as unknown as ChronoVideoProps, durationInFrames: 13500 },
+];
+
 export const RemotionRoot: React.FC = () => {
-  const quangTrungProps = quangTrungTimeline as unknown as ChronoVideoProps;
-  const mongolViet2Props = mongolViet2Timeline as unknown as ChronoVideoProps;
-  const haiBaTrungProps = haiBaTrungTimeline as unknown as ChronoVideoProps;
-
-  const biographyProps = biographyTimeline as unknown as ChronoVideoProps;
-  const battleProps = battleTimeline as unknown as ChronoVideoProps;
-  const dynastyProps = dynastyTimeline as unknown as ChronoVideoProps;
-  const mysteryProps = mysteryTimeline as unknown as ChronoVideoProps;
-  const artifactProps = artifactTimeline as unknown as ChronoVideoProps;
-
-  const quickShortsProps: ChronoVideoProps = {
-    ...(templateGeneralTimeline as unknown as ChronoVideoProps),
-    templateId: 'QUICK_SHORTS',
-    aspectRatio: '9:16',
-  };
-
-  const modernNewsProps: ChronoVideoProps = {
-    ...(templateGeneralTimeline as unknown as ChronoVideoProps),
-    templateId: 'MODERN_NEWS',
-    aspectRatio: '16:9',
-  };
-
   const calculateMetadataHelper = async ({ props }: { props: any }) => {
     // Validate schema with Zod at runtime
     const parsedProps = ChronoVideoSchema.safeParse(props);
@@ -84,137 +94,19 @@ export const RemotionRoot: React.FC = () => {
 
   return (
     <>
-      {/* 0. Primary Dynamic Engine Composition (Accepts ANY JSON via --props) */}
-      <Composition
-        id="ChronoVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={4500}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={templateGeneralTimeline as unknown as ChronoVideoProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      {/* 5 Domain Compositions Spec v3.0 (5-Minute Longform Documentaries) */}
-
-      {/* 1. Domain: BIOGRAPHY */}
-      <Composition
-        id="BiographyVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={12150}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={biographyProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      {/* 2. Domain: BATTLE */}
-      <Composition
-        id="BattleVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={12150}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={battleProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      {/* 3. Domain: DYNASTY */}
-      <Composition
-        id="DynastyVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={12150}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={dynastyProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      {/* 4. Domain: MYSTERY */}
-      <Composition
-        id="MysteryVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={11250}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={mysteryProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      {/* 5. Domain: ARTIFACT */}
-      <Composition
-        id="ArtifactVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={11250}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={artifactProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      {/* 6. Template: QUICK_SHORTS (9:16 Vertical Video) */}
-      <Composition
-        id="QuickShortsVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={4350}
-        fps={DEFAULT_FPS}
-        width={1080}
-        height={1920}
-        defaultProps={quickShortsProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      {/* 7. Template: MODERN_NEWS (16:9 Modern News Style) */}
-      <Composition
-        id="ModernNewsVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={4350}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={modernNewsProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      {/* Legacy Video Compositions */}
-      <Composition
-        id="QuangTrungVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={7350}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={quangTrungProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      <Composition
-        id="MongolViet2Video"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={34200}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={mongolViet2Props}
-        calculateMetadata={calculateMetadataHelper}
-      />
-
-      <Composition
-        id="HaiBaTrungVideo"
-        component={ChronoVideo as React.ComponentType<any>}
-        durationInFrames={13500}
-        fps={DEFAULT_FPS}
-        width={1920}
-        height={1080}
-        defaultProps={haiBaTrungProps}
-        calculateMetadata={calculateMetadataHelper}
-      />
+      {COMPOSITION_DEFS.map((comp) => (
+        <Composition
+          key={comp.id}
+          id={comp.id}
+          component={ChronoVideo as React.ComponentType<any>}
+          durationInFrames={comp.durationInFrames}
+          fps={DEFAULT_FPS}
+          width={comp.width || 1920}
+          height={comp.height || 1080}
+          defaultProps={comp.defaultProps}
+          calculateMetadata={calculateMetadataHelper}
+        />
+      ))}
     </>
   );
 };

@@ -6,7 +6,7 @@
     "remotion-engine": "src/cli.ts"
   },
   "scripts": {
-    "start": "remotion preview src/index.ts",
+    "start": "remotion preview src/index.ts --port=9876",
     "preview": "remotion preview src/index.ts",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",

@@ -3,7 +3,7 @@
  * Single Source of Truth for Inter-Module Communication
  */
 
-import { ChronoVideoProps, LicenseTypeSchema } from './schema.js';
+import { ChronoVideoProps, LicenseType } from './schema.js';
 
 // ============================================================================
 // 1. Chrono-RAG Engine Interface (`packages/rag-engine`)
@@ -87,7 +87,7 @@ export interface VlmScoringResult {
 
 export interface LicenseCheckResult {
   isWhitelisted: boolean;
-  licenseType: typeof LicenseTypeSchema._type;
+  licenseType: LicenseType;
   author?: string;
   sourceUrl?: string;
 }

@@ -122,7 +122,7 @@ Options:
   const parseResult = ChronoVideoSchema.safeParse(jsonContent);
   if (!parseResult.success) {
     console.error(`❌ Schema Validation Failed for [${absoluteInputPath}]:`);
-    parseResult.error.errors.forEach((err) => {
+    parseResult.error.issues.forEach((err: any) => {
       console.error(`   - [${err.path.join('.')}]: ${err.message}`);
     });
     process.exit(1);

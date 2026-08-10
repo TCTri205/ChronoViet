@@ -1,7 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
-import { ChronoVideoSchema, ChronoVideoProps, TimelineScene } from '../src/types';
+import { ChronoVideoSchema, ChronoVideoProps, TimelineScene, LayoutModeSchema, TransitionTypeSchema } from '../src/types';
+
+const TOTAL_LAYOUT_MODES = LayoutModeSchema.options.length;
+const TOTAL_TRANSITIONS = TransitionTypeSchema.options.filter((t) => t !== 'NONE').length;
 
 interface EvalReport {
   timestamp: string;
@@ -27,23 +30,29 @@ function parseEvalArgs(args: string[]) {
   let outDir = path.join(__dirname, 'out');
   let openStudio = true;
   let verbose = false;
+  let forceNew = false;
+  let port = process.env.REMOTION_PORT || process.env.PORT || '9876';
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '-t' || arg === '--testCasesDir') {
+    if ((arg === '-t' || arg === '--testCasesDir') && i + 1 < args.length) {
       testCasesDir = path.resolve(process.cwd(), args[++i]);
-    } else if (arg === '-o' || arg === '--outDir') {
+    } else if ((arg === '-o' || arg === '--outDir') && i + 1 < args.length) {
       outDir = path.resolve(process.cwd(), args[++i]);
-    } else if (arg === '-r' || arg === '--reportsDir') {
+    } else if ((arg === '-r' || arg === '--reportsDir') && i + 1 < args.length) {
       reportsDir = path.resolve(process.cwd(), args[++i]);
     } else if (arg === '--no-studio' || arg === '--ci') {
       openStudio = false;
     } else if (arg === '-v' || arg === '--verbose') {
       verbose = true;
+    } else if (arg === '-f' || arg === '--force-new') {
+      forceNew = true;
+    } else if ((arg === '-p' || arg === '--port') && i + 1 < args.length) {
+      port = args[++i];
     }
   }
 
-  return { testCasesDir, reportsDir, outDir, openStudio, verbose };
+  return { testCasesDir, reportsDir, outDir, openStudio, verbose, forceNew, port };
 }
 
 function formatRow(file: string, status: string, scenes: number, duration: string, aspect: string, layouts: number, transitions: number, timeMs: number) {
@@ -59,13 +68,85 @@ function formatRow(file: string, status: string, scenes: number, duration: strin
   return `│ ${colFile} │ ${colStatus} │ ${colScenes} │ ${colDuration} │ ${colAspect} │ ${colLayouts} │ ${colTrans} │ ${colTime} │`;
 }
 
+function isPortInUseSync(port: number): boolean {
+  try {
+    execSync(
+      `node -e "const net = require('net'); const s = net.createServer(); s.once('error', () => process.exit(1)); s.listen(${port}, () => { s.close(); process.exit(0); });"`,
+      { stdio: 'ignore' }
+    );
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+function killPortProcessSync(port: number): boolean {
+  if (!isPortInUseSync(port)) return true;
+
+  try {
+    if (process.platform === 'win32') {
+      const netstatOutput = execSync(`netstat -ano | findstr LISTENING | findstr :${port}`, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'ignore'],
+      });
+      const lines = netstatOutput.trim().split('\n');
+      const pidsToKill = new Set<string>();
+
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        const localAddr = parts[1];
+        const pid = parts[parts.length - 1];
+        if (localAddr && localAddr.endsWith(`:${port}`) && pid && pid !== '0') {
+          pidsToKill.add(pid);
+        }
+      }
+
+      for (const pid of pidsToKill) {
+        try {
+          execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
+        } catch {
+          // Process already terminated
+        }
+      }
+    } else {
+      try {
+        execSync(`fuser -k ${port}/tcp`, { stdio: 'ignore' });
+      } catch {
+        try {
+          execSync(`lsof -t -i:${port} | xargs kill -9`, { stdio: 'ignore' });
+        } catch {
+          // Process already terminated
+        }
+      }
+    }
+
+    const waitTill = Date.now() + 350;
+    while (Date.now() < waitTill) {}
+
+    return !isPortInUseSync(port);
+  } catch {
+    return false;
+  }
+}
+
+function findAvailablePortSync(startPort: number): number {
+  let port = startPort;
+  while (port < startPort + 50) {
+    if (!isPortInUseSync(port)) {
+      return port;
+    }
+    port++;
+  }
+  return startPort;
+}
+
 function runEvaluation() {
   const startTime = Date.now();
   console.log('\n┌──────────────────────────────────────────────────────────────────────────┐');
   console.log('│   🚀 ChronoViet Remotion Render Engine - Real Evaluation Suite (v3.2)     │');
   console.log('└──────────────────────────────────────────────────────────────────────────┘\n');
 
-  const { testCasesDir, reportsDir, outDir, openStudio, verbose } = parseEvalArgs(process.argv.slice(2));
+  const { testCasesDir, reportsDir, outDir, openStudio, verbose, forceNew, port: requestedPortStr } = parseEvalArgs(process.argv.slice(2));
 
   console.log(` 📁 Test Cases Folder : ${testCasesDir}`);
   console.log(` 📁 Output Folder     : ${outDir}`);
@@ -123,7 +204,7 @@ function runEvaluation() {
     if (!parseResult.success) {
       console.log(formatRow(file, 'FAIL', 0, 'N/A', 'N/A', 0, 0, Date.now() - fileStartTime));
       console.error(`   └─ ❌ Schema Validation Failed for ${file}:`);
-      parseResult.error.errors.forEach((err) => {
+      parseResult.error.issues.forEach((err: any) => {
         console.error(`      • Path [${err.path.join('.')}]: ${err.message}`);
       });
       overallPassed = false;
@@ -221,8 +302,8 @@ function runEvaluation() {
 * **Timestamp**: ${timestamp}
 * **Total Test Cases Evaluated**: ${reports.length}
 * **Overall Automated Eval Status**: ${overallPassed ? '✅ ALL AUTOMATED EVALS PASSED' : '❌ FAILED'}
-* **Unique Layout Modes Covered**: ${globalLayoutModes.size} / 18 Core Modes
-* **Unique Transitions Covered**: ${globalTransitions.size} / 15 Core Types
+* **Unique Layout Modes Covered**: ${globalLayoutModes.size} / ${TOTAL_LAYOUT_MODES} Core Modes
+* **Unique Transitions Covered**: ${globalTransitions.size} / ${TOTAL_TRANSITIONS} Core Types
 * **Evaluation Suite Execution Time**: ${Date.now() - startTime}ms
 
 ## 📊 Programmatic Benchmark Test Cases Summary
@@ -256,27 +337,55 @@ ${Array.from(globalTransitions).sort().map((t) => `- \`${t}\``).join('\n')}
   console.log(` 🎉 ALL AUTOMATED EVALUATION METRICS PASSED SUCCESSFULLY! (${totalSuiteTime}ms)`);
   console.log(` 📄 Master Evaluation Report: ${mdReportPath}`);
   console.log(` 📊 Total Test Cases        : ${reports.length}`);
-  console.log(` 📐 Layout Modes Coverage   : ${globalLayoutModes.size} / 18 Core Layout Modes`);
-  console.log(` 🔀 Transitions Coverage    : ${globalTransitions.size} / 15 Core Transitions`);
+  console.log(` 📐 Layout Modes Coverage   : ${globalLayoutModes.size} / ${TOTAL_LAYOUT_MODES} Core Layout Modes`);
+  console.log(` 🔀 Transitions Coverage    : ${globalTransitions.size} / ${TOTAL_TRANSITIONS} Core Transitions`);
   console.log('============================================================================\n');
 
   if (openStudio) {
     console.log('────────────────────────────────────────────────────────────────────────────');
     console.log(' 📌 PHASE 3: LAUNCHING REMOTION STUDIO FOR HUMAN EVALUATION');
     console.log('────────────────────────────────────────────────────────────────────────────\n');
-    console.log('🚀 Đang khởi chạy giao diện Remotion Studio để Human đánh giá trực quan...\n');
+
+    const requestedPort = parseInt(requestedPortStr, 10) || 9876;
+    let targetPort = requestedPort;
+    if (isPortInUseSync(targetPort)) {
+      console.log(`ℹ️ Port ${requestedPort} đang bị chiếm giữ bởi một tiến trình cũ.`);
+      console.log(`🧹 Đang tiến hành giải phóng Port ${requestedPort}...`);
+      const killed = killPortProcessSync(targetPort);
+      if (killed) {
+        console.log(`✅ Đã giải phóng thành công Port ${requestedPort}.\n`);
+      } else {
+        targetPort = findAvailablePortSync(requestedPort);
+        console.log(`⚠️ Không thể giải phóng Port ${requestedPort}. Tự động chuyển sang Cổng tự do: ${targetPort}...\n`);
+      }
+    }
+
+    console.log(`🚀 Đang khởi chạy giao diện Remotion Studio (Port ${targetPort}) để Human đánh giá trực quan...\n`);
 
     const packageRoot = path.join(__dirname, '..');
+    const cmd = `pnpm exec remotion preview src/index.ts --port=${targetPort}`;
+
+    if (verbose) {
+      console.log(` 🛠️ Executing Command: ${cmd}`);
+      console.log(` 📁 Working Directory : ${packageRoot}\n`);
+    }
+
     try {
-      execSync('pnpm exec remotion preview src/index.ts', {
+      execSync(cmd, {
         cwd: packageRoot,
         stdio: 'inherit',
       });
-    } catch (e) {
-      console.log('\n👋 Remotion Studio closed.');
+    } catch (e: any) {
+      if (e.signal === 'SIGINT' || e.signal === 'SIGTERM' || e.status === 130 || e.status === 0) {
+        console.log('\n👋 Remotion Studio closed by user.');
+      } else {
+        console.log('\n👋 Remotion Studio process finished.');
+      }
+    } finally {
+      // Ensure clean exit and release port binding
+      killPortProcessSync(targetPort);
     }
   }
 }
 
 runEvaluation();
-

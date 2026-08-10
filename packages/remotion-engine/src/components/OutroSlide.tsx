@@ -72,38 +72,13 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: '#05070a',
+        backgroundColor: 'transparent',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden',
       }}
     >
-      {/* 0. Optional Background Image with blur & vignette */}
-      {bgImageSrc && !hasBgError && (
-        <AbsoluteFill style={{ overflow: 'hidden' }}>
-          <Img
-            src={bgImageSrc.startsWith('http') ? bgImageSrc : staticFile(bgImageSrc)}
-            onError={() => setHasBgError(true)}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              filter: 'blur(12px) brightness(0.28) contrast(1.1)',
-              transform: `scale(${bgScale}) translateZ(0)`,
-              willChange: 'transform',
-            }}
-          />
-        </AbsoluteFill>
-      )}
-
-      {/* Dark Ambient Background Gradient */}
-      <AbsoluteFill
-        style={{
-          background:
-            'radial-gradient(circle at center, rgba(17, 26, 36, 0.75) 0%, rgba(8, 11, 15, 0.92) 70%, #030406 100%)',
-        }}
-      />
 
       {/* Primary Glow Accent */}
       <AbsoluteFill

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AbsoluteFill, Audio, interpolate, Loop, staticFile, useVideoConfig } from 'remotion';
-import { TransitionSeries, linearTiming, filmBurn, pushCut, dreamyZoom, crossZoom, linearBlur } from '@remotion/transitions';
+import { TransitionSeries, linearTiming } from '@remotion/transitions';
 import { fade } from '@remotion/transitions/fade';
 import { slide } from '@remotion/transitions/slide';
 import { wipe } from '@remotion/transitions/wipe';
@@ -12,56 +12,69 @@ import { DocumentaryHeader } from '../components/DocumentaryHeader';
 import { DocumentarySubtitle } from '../components/DocumentarySubtitle';
 import { getMergedTheme } from '../utils/themeUtils';
 
-const isHtmlInCanvasSupported = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  try {
-    const ctx = document.createElement('canvas').getContext('2d');
-    return Boolean(ctx && 'drawElement' in (ctx as any));
-  } catch (e) {
-    return false;
-  }
-};
+const transitionPresentationCache = new Map<string, any>();
 
 const getTransitionPresentation = (type?: TransitionType): any => {
-  const canUseCanvasShader = isHtmlInCanvasSupported();
+  const cacheKey = type || 'DEFAULT';
+  if (transitionPresentationCache.has(cacheKey)) {
+    return transitionPresentationCache.get(cacheKey);
+  }
+
+  let presentation: any;
 
   switch (type) {
-    case 'FADE':
     case 'FADE_TO_BLACK':
+    case 'FADE':
     case 'DISSOLVE':
-      return fade();
+      presentation = fade();
+      break;
     case 'SLIDE_LEFT':
-      return slide({ direction: 'from-right' });
+      presentation = slide({ direction: 'from-right' });
+      break;
     case 'SLIDE_RIGHT':
-      return slide({ direction: 'from-left' });
+      presentation = slide({ direction: 'from-left' });
+      break;
     case 'SLIDE_UP':
-      return slide({ direction: 'from-bottom' });
+      presentation = slide({ direction: 'from-bottom' });
+      break;
     case 'SLIDE_DOWN':
-      return slide({ direction: 'from-top' });
+      presentation = slide({ direction: 'from-top' });
+      break;
     case 'WIPE':
-      return wipe({ direction: 'from-left' });
+      presentation = wipe({ direction: 'from-left' });
+      break;
     case 'FLIP':
-      return flip({});
+      presentation = flip({});
+      break;
     case 'CLOCK_WIPE':
-      return clockWipe({ width: 1920, height: 1080 });
+    case 'CROSS_ZOOM':
+      presentation = clockWipe({ width: 1920, height: 1080 });
+      break;
     case 'FILM_BURN':
     case 'LIGHT_LEAK':
-      return canUseCanvasShader ? filmBurn({}) : wipe({ direction: 'from-top-left' });
+      presentation = wipe({ direction: 'from-top-left' });
+      break;
     case 'GLITCH':
-      return canUseCanvasShader ? pushCut({}) : slide({ direction: 'from-right' });
+      presentation = slide({ direction: 'from-right' });
+      break;
     case 'ZOOM_IN':
     case 'ZOOM_OUT':
     case 'ZOOM_DREAMY':
-      return canUseCanvasShader ? dreamyZoom({}) : flip({});
-    case 'CROSS_ZOOM':
-      return canUseCanvasShader ? crossZoom({}) : clockWipe({ width: 1920, height: 1080 });
+      presentation = flip({});
+      break;
     case 'LINEAR_BLUR':
-      return canUseCanvasShader ? linearBlur({}) : slide({ direction: 'from-bottom' });
+      presentation = slide({ direction: 'from-bottom' });
+      break;
     case 'NONE':
-      return null;
+      presentation = null;
+      break;
     default:
-      return fade();
+      presentation = fade();
+      break;
   }
+
+  transitionPresentationCache.set(cacheKey, presentation);
+  return presentation;
 };
 
 const getSceneDurationInFrames = (scene: TimelineScene, fps: number): number => {
@@ -179,8 +192,12 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
                       <AbsoluteFill style={{ pointerEvents: 'none', zIndex: 100 }}>
                         {!shouldHideHeader && (
                           <DocumentaryHeader
-                            seriesTitle={scene.overlayData?.seriesTitle || title || subtitle}
-                            chapterTitle={scene.overlayData?.chapterNumber ? `PHẦN ${scene.overlayData.chapterNumber}` : scene.overlayData?.title}
+                            seriesTitle={scene.overlayData?.seriesTitle || 'CHRONOVIET DOCUMENTARY'}
+                            chapterTitle={
+                              scene.overlayData?.chapterNumber
+                                ? `PHẦN ${scene.overlayData.chapterNumber}${scene.overlayData?.title ? ` • ${scene.overlayData.title}` : ''}`
+                                : scene.overlayData?.title
+                            }
                             theme={effectiveTheme}
                           />
                         )}

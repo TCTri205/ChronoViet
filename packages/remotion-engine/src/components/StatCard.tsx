@@ -40,8 +40,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   const cleanRole = normalizeVietnameseText(role);
   const cleanDetails = normalizeVietnameseText(details);
 
-  // Delay card entrance by 20 frames (0.66s) so background media & overlay headers establish first
-  const cardDelay = 20;
+  // Animate card entrance in sync with scene start
+  const cardDelay = 0;
   const containerScale = spring({
     frame: Math.max(0, frame - cardDelay),
     fps,

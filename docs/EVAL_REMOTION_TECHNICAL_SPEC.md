@@ -417,7 +417,7 @@ eval-remotion/src/
 ### Xem preview trực tiếp (Remotion Studio GUI):
 ```bash
 pnpm remotion:studio
-# → Mở http://localhost:3000
+# → Mở http://localhost:9876
 ```
 
 ### Render các kịch bản 5 Domain từ Root Monorepo:

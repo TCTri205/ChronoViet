@@ -63,36 +63,11 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Deep Cinematic Background Radial */}
+      {/* Lightweight Edge Vignette Accent */}
       <AbsoluteFill
         style={{
-          background:
-            'radial-gradient(circle at center, #111a28 0%, #090d14 60%, #040609 100%)',
-        }}
-      />
-
-      {/* Chrono Blue Ambient Glow */}
-      <AbsoluteFill
-        style={{
-          background: `radial-gradient(circle at center, ${activeTheme.accentGlow} 0%, transparent 65%)`,
-          opacity: 0.6 * glowPulse,
-        }}
-      />
-
-      {/* Gold Glow Accent */}
-      <AbsoluteFill
-        style={{
-          background: `radial-gradient(circle at center, ${activeTheme.accentGlow} 0%, transparent 45%)`,
-          opacity: 0.35 * glowPulse,
-        }}
-      />
-
-      {/* Decorative Grid Lines Accent */}
-      <AbsoluteFill
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(37, 99, 235, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 99, 235, 0.06) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.7) 100%)',
+          pointerEvents: 'none',
         }}
       />
 

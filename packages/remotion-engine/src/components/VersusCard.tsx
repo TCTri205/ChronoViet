@@ -89,31 +89,6 @@ export const VersusCard: React.FC<VersusCardProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Background image */}
-      {bgImageSrc && !hasBgError && (
-        <AbsoluteFill style={{ overflow: 'hidden' }}>
-          <Img
-            src={bgImageSrc.startsWith('http') ? bgImageSrc : staticFile(bgImageSrc)}
-            onError={() => setHasBgError(true)}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              filter: 'blur(14px) brightness(0.32) contrast(1.1)',
-              opacity: 0.65,
-            }}
-          />
-        </AbsoluteFill>
-      )}
-
-      {/* Background Gradient */}
-      <AbsoluteFill
-        style={{
-          background:
-            'radial-gradient(circle at 50% 50%, #1a0b12 0%, #0c080d 60%, #030205 100%)',
-          opacity: bgImageSrc ? 0.75 : 1.0,
-        }}
-      />
 
       {/* Dynamic Background Split Glow */}
       <AbsoluteFill

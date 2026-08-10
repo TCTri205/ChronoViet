@@ -55,6 +55,33 @@ export function isFullscreenLayout(layoutMode?: LayoutMode): boolean {
 }
 
 /**
+ * Checks whether a given layout mode is a pure code / UI component layout
+ * where the primary visual component is code UI (e.g. ChapterTitle, StatCard, QuoteSlide).
+ */
+export function isPureCodeLayout(layoutMode?: LayoutMode): boolean {
+  if (!layoutMode) return false;
+  return ([
+    'ARTICLE_UI',
+    'CHAPTER_CARD',
+    'QUOTE_CANVAS',
+    'QUOTE_SLIDE',
+    'SPONSOR_UI',
+    'OUTRO_CARD',
+    'TITLE_CARD',
+    'VERSUS_CARD',
+    'SPLIT_THEORY',
+    'POEM_RECITING',
+    'DOCUMENTARY_GRID',
+    'NEWSPAPER_ARCHIVE',
+    'TIMELINE_CHRONO',
+    'MAP_TACTICAL',
+    'ARMY_STRENGTH',
+    'CHARACTER_PROFILE',
+    'ROYAL_DECREE',
+  ] as LayoutMode[]).includes(layoutMode);
+}
+
+/**
  * Resolves CSS positioning properties dynamically for overlay cards.
  * If position is explicit ('LEFT', 'RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT', 'CENTER'), uses it.
  * If position is not specified, auto-alternates between LEFT and RIGHT based on scene index.

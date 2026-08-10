@@ -64,31 +64,13 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: '#070605',
+        backgroundColor: 'transparent',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden',
       }}
     >
-      {/* 1. Background image */}
-      {bgImageSrc && !hasBgError && (
-        <AbsoluteFill style={{ overflow: 'hidden' }}>
-          <Img
-            src={bgImageSrc.startsWith('http') ? bgImageSrc : staticFile(bgImageSrc)}
-            onError={() => setHasBgError(true)}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              filter: 'blur(10px) brightness(0.38) contrast(1.1)',
-              transform: `scale(${bgScale}) translateZ(0)`,
-              willChange: 'transform',
-              opacity: bgOpacity,
-            }}
-          />
-        </AbsoluteFill>
-      )}
 
       {/* Decorative Canvas Texture */}
       <AbsoluteFill
@@ -100,13 +82,6 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
         }}
       />
 
-      {/* Edge Vignette */}
-      <AbsoluteFill
-        style={{
-          background: 'radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.88) 100%)',
-          pointerEvents: 'none',
-        }}
-      />
 
       {/* 2. Main Quote Card Container */}
       <div

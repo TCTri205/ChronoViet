@@ -2,6 +2,7 @@ import React from 'react';
 import { AbsoluteFill, Img, staticFile, useCurrentFrame } from 'remotion';
 import { calculateKenBurnsTransform, getFilterCss } from '../utils/animationUtils';
 import { CustomKenBurns, FilterStyle, KenBurnsEffect, LayoutMode } from '../types';
+import { isPureCodeLayout } from '../utils/layoutUtils';
 
 interface SlideImageProps {
   src: string;
@@ -12,7 +13,16 @@ interface SlideImageProps {
   customKenBurns?: CustomKenBurns;
   filterStyle?: FilterStyle;
   rotateDeg?: number;
+  isPureCodeScene?: boolean;
 }
+
+const FALLBACK_SRC = staticFile('assets/battle/bach_dang_river.jpg');
+
+const resolveUrl = (url?: string, isError?: boolean) => {
+  if (isError || !url) return FALLBACK_SRC;
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  return staticFile(url);
+};
 
 export const SlideImage: React.FC<SlideImageProps> = ({
   src,
@@ -23,6 +33,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   customKenBurns,
   filterStyle = 'HISTORICAL',
   rotateDeg = 0,
+  isPureCodeScene = false,
 }) => {
   const frame = useCurrentFrame();
   const progress = frame / Math.max(durationInFrames, 1);
@@ -44,21 +55,43 @@ export const SlideImage: React.FC<SlideImageProps> = ({
     customKenBurns
   );
 
-  const filterCss = getFilterCss(filterStyle);
+  const filterCss = React.useMemo(() => getFilterCss(filterStyle), [filterStyle]);
 
   const [hasPrimaryError, setHasPrimaryError] = React.useState(false);
   const [hasSecondaryError, setHasSecondaryError] = React.useState(false);
 
-  const fallbackSrc = staticFile('assets/battle/bach_dang_river.jpg');
-
-  const resolveUrl = (url?: string, isError?: boolean) => {
-    if (isError || !url) return fallbackSrc;
-    if (url.startsWith('http') || url.startsWith('data:')) return url;
-    return staticFile(url);
-  };
-
   const resolvedSrc = resolveUrl(src, hasPrimaryError);
   const resolvedSecondarySrc = resolveUrl(secondaryAssetUrl, hasSecondaryError);
+
+  // 0. Pure Code / UI Component Scenes: Image is rendered purely as full-screen blurred background wallpaper (same blur as Type 1, no sharp image component)
+  if (isPureCodeScene || isPureCodeLayout(layoutMode)) {
+    return (
+      <AbsoluteFill style={{ backgroundColor: '#07090e', overflow: 'hidden' }}>
+        {/* Fullscreen Blurred Cover Background Image with Ken Burns motion */}
+        <Img
+          src={resolvedSrc}
+          onError={() => setHasPrimaryError(true)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: `${filterCss} blur(22px) brightness(0.32) saturate(0.85)`,
+            transform: `rotate(${rotateDeg}deg) scale(${scale * 1.25}) translate(${translateX * 0.3}%, ${translateY * 0.3}%) translateZ(0)`,
+            willChange: 'transform',
+            opacity: 0.95,
+          }}
+        />
+        {/* Darkening & Radial Vignette Overlay for Crisp UI Contrast */}
+        <AbsoluteFill
+          style={{
+            background:
+              'radial-gradient(circle at 50% 50%, rgba(9, 13, 20, 0.4) 0%, rgba(7, 9, 14, 0.85) 75%, rgba(4, 5, 8, 0.95) 100%)',
+            pointerEvents: 'none',
+          }}
+        />
+      </AbsoluteFill>
+    );
+  }
 
   // 1. SPLIT_COMPARE: Dual Image Side-by-Side Comparison
   if (layoutMode === 'SPLIT_COMPARE') {

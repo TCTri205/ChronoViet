@@ -20,11 +20,11 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { scale, safeMarginX, safeMarginY } = useResponsiveLayout();
-  const activeTheme = resolveTheme(theme);
-  const activeFont = getSafeFontFamily(theme?.fontFamily);
+  const activeTheme = React.useMemo(() => resolveTheme(theme), [theme]);
+  const activeFont = React.useMemo(() => getSafeFontFamily(theme?.fontFamily), [theme?.fontFamily]);
 
-  const cleanSeriesTitle = toVietnameseUpperCase(seriesTitle);
-  const cleanChapterTitle = toVietnameseUpperCase(chapterTitle);
+  const cleanSeriesTitle = React.useMemo(() => toVietnameseUpperCase(seriesTitle), [seriesTitle]);
+  const cleanChapterTitle = React.useMemo(() => toVietnameseUpperCase(chapterTitle), [chapterTitle]);
 
   // Stagger header entrance slightly (frame delay = 4) to let background visual establish first
   const entranceDelay = 4;
@@ -37,10 +37,16 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
   const opacity = interpolate(entrance, [0, 1], [0, 1]);
   const translateY = interpolate(entrance, [0, 1], [-20, 0]);
 
-  const fontSize = Math.round(13 * scale);
-  const paddingY = Math.round(7 * scale);
-  const paddingX = Math.round(18 * scale);
-  const dotSize = Math.round(8 * scale);
+  const layoutMetrics = React.useMemo(() => {
+    return {
+      fontSize: Math.round(13 * scale),
+      paddingY: Math.round(7 * scale),
+      paddingX: Math.round(18 * scale),
+      dotSize: Math.round(8 * scale),
+    };
+  }, [scale]);
+
+  const { fontSize, paddingY, paddingX, dotSize } = layoutMetrics;
 
   return (
     <div
@@ -73,12 +79,14 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
             borderRadius: `${Math.round(20 * scale)}px`,
             padding: `${paddingY}px ${paddingX}px`,
             boxShadow: '0 6px 20px rgba(0, 0, 0, 0.5)',
+            maxWidth: '45%',
           }}
         >
           <span
             style={{
               width: `${dotSize}px`,
               height: `${dotSize}px`,
+              minWidth: `${dotSize}px`,
               borderRadius: '50%',
               backgroundColor: activeTheme.primaryColor,
               boxShadow: `0 0 8px ${activeTheme.primaryColor}`,
@@ -91,15 +99,20 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
               fontSize: `${fontSize}px`,
               fontWeight: 800,
               letterSpacing: '1.4px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {cleanSeriesTitle}
           </span>
         </div>
-      ) : <div />}
+      ) : (
+        <div />
+      )}
 
       {/* Chapter Title Badge */}
-      {cleanChapterTitle && (
+      {cleanChapterTitle && cleanChapterTitle !== cleanSeriesTitle && (
         <div
           style={{
             backgroundColor: 'rgba(10, 14, 22, 0.92)',
@@ -113,6 +126,10 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
             fontSize: `${fontSize}px`,
             fontWeight: 700,
             letterSpacing: '0.8px',
+            maxWidth: '45%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
           {cleanChapterTitle}

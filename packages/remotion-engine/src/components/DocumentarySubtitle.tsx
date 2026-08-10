@@ -20,11 +20,24 @@ export const DocumentarySubtitle: React.FC<DocumentarySubtitleProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { scale, safeMarginX, height, isLandscape } = useResponsiveLayout();
-  const activeTheme = resolveTheme(theme);
-  const activeFont = getSafeFontFamily(theme?.fontFamily);
-  const cleanText = normalizeVietnameseText(text);
+  const activeTheme = React.useMemo(() => resolveTheme(theme), [theme]);
+  const activeFont = React.useMemo(() => getSafeFontFamily(theme?.fontFamily), [theme?.fontFamily]);
+  const cleanText = React.useMemo(() => normalizeVietnameseText(text), [text]);
 
-  if (!cleanText) return null;
+  const layoutStyles = React.useMemo(() => {
+    if (!cleanText) return null;
+    const bottomOffset = Math.round(height * 0.05);
+    const baseSize = isLandscape ? 24 : 22;
+    const fontDynamicScale = cleanText.length > 140 ? 0.85 : cleanText.length > 90 ? 0.92 : 1.0;
+    const fontSize = Math.round(baseSize * scale * fontDynamicScale);
+    const paddingY = Math.round(12 * scale);
+    const paddingX = Math.round(26 * scale);
+    const borderRadius = Math.round(14 * scale);
+
+    return { bottomOffset, fontSize, paddingY, paddingX, borderRadius };
+  }, [height, isLandscape, cleanText, scale]);
+
+  if (!cleanText || !layoutStyles) return null;
 
   // Stagger subtitle entrance (frame delay = 10) following background & header
   const entranceDelay = 10;
@@ -37,15 +50,7 @@ export const DocumentarySubtitle: React.FC<DocumentarySubtitleProps> = ({
   const translateY = interpolate(entrance, [0, 1], [25, 0]);
   const opacity = interpolate(entrance, [0, 1], [0, 1]);
 
-  const bottomOffset = Math.round(height * 0.05);
-
-  // Dynamic font sizing based on caption text length
-  const baseSize = isLandscape ? 24 : 22;
-  const fontDynamicScale = cleanText.length > 140 ? 0.85 : cleanText.length > 90 ? 0.92 : 1.0;
-  const fontSize = Math.round(baseSize * scale * fontDynamicScale);
-
-  const paddingY = Math.round(12 * scale);
-  const paddingX = Math.round(26 * scale);
+  const { bottomOffset, fontSize, paddingY, paddingX, borderRadius } = layoutStyles;
 
   return (
     <div

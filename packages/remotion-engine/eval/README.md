@@ -6,7 +6,7 @@ Bộ công cụ đánh giá chuyên biệt dành cho **Remotion Render Engine** 
 Bộ đánh giá hoạt động theo 3 giai đoạn:
 1. **Phase 1: Programmatic Automated Metrics Evaluation**: Kiểm định hợp lệ Zod JSON Schema v3.0 / v3.2, tính toán thời lượng tổng theo khung hình (`calculatedTotalFrames`), thống kê số lượng phân cảnh (`totalScenes`), đo lường độ bao phủ các `layoutModes` và `transitions`.
 2. **Phase 2: Artifact Integrity & Zero Image Capture Policy**: Đảm bảo tuyệt đối **không chụp/sinh file ảnh tĩnh vào thư mục `eval/out`** (Zero Image Capture Policy), giữ thư mục dự án hoàn toàn sạch sẽ.
-3. **Phase 3: Launch Remotion Studio for Human Evaluation**: Tự động mở giao diện trực quan **Remotion Studio** (`http://localhost:3000`) để người dùng (Human) xem kết quả video thực tế, tương tác kéo tua timeline, kiểm tra âm thanh và hiệu ứng visual.
+3. **Phase 3: Launch Remotion Studio for Human Evaluation**: Tự động mở giao diện trực quan **Remotion Studio** (`http://localhost:9876`) để người dùng (Human) xem kết quả video thực tế, tương tác kéo tua timeline, kiểm tra âm thanh và hiệu ứng visual.
 
 ---
 

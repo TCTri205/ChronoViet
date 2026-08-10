@@ -132,7 +132,7 @@ pnpm --filter @chronoviet/remotion-engine setup-assets
 ```bash
 pnpm remotion:studio
 ```
-*Trình duyệt sẽ tự động mở Remotion Studio tại `http://localhost:3000` để bạn xem trực quan 18 LayoutModes, 15 Transitions và hiệu ứng chuyển cảnh real-time.*
+*Trình duyệt sẽ tự động mở Remotion Studio tại `http://localhost:9876` để bạn xem trực quan 18 LayoutModes, 15 Transitions và hiệu ứng chuyển cảnh real-time.*
 
 #### 2. Chạy Suite Kiểm Định & Đánh Giá Kịch Bản Mẫu (Eval Runner):
 ```bash

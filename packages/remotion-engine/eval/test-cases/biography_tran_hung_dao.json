@@ -192,10 +192,13 @@
       "durationInFrames": 600,
       "text": "Mùa hè năm 1285, quân giặc sa lầy, đói khát và kiệt sức vì chướng khí. Thượng phụ Tiết chế phát lệnh tổng phản công thần tốc! Các chiến thắng dồn dập tại Tây Kết, Hàm Tử, Chương Dương đã đập tan 50 vạn quân Nguyên, buộc Thoát Hoan chui ống đồng tháo chạy.",
       "assetUrl": "assets/biography/scene_10_counter_attack.jpg",
-      "layoutMode": "FULL_COVER",
+      "layoutMode": "BLUR_BG",
       "effect": "KEN_BURNS_PAN_RIGHT",
       "filterStyle": "HISTORICAL",
-      "transition": "GLITCH"
+      "transition": "GLITCH",
+      "overlayData": {
+        "title": "TỔNG PHẢN CÔNG MÙA HÈ 1285"
+      }
     },
     {
       "id": "scene_11",

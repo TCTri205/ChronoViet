@@ -56,13 +56,6 @@ export const SponsorSlide: React.FC<SponsorSlideProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Dynamic Bright Modern Background Gradient */}
-      <AbsoluteFill
-        style={{
-          background:
-            'radial-gradient(circle at center, #1e3a5f 0%, #0d1e32 60%, #050b12 100%)',
-        }}
-      />
 
       {/* Chrono Blue Glow Accent */}
       <AbsoluteFill

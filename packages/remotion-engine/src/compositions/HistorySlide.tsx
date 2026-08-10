@@ -12,8 +12,6 @@ import { MuseumTag } from '../components/MuseumTag';
 import { SplitTheory } from '../components/SplitTheory';
 import { SponsorSlide } from '../components/SponsorSlide';
 import { ChronoIntro } from '../components/ChronoIntro';
-import { DocumentarySubtitle } from '../components/DocumentarySubtitle';
-import { DocumentaryHeader } from '../components/DocumentaryHeader';
 
 interface HistorySlideProps {
   scene: TimelineScene;
@@ -30,13 +28,13 @@ export const HistoryBackground: React.FC<HistorySlideProps> = ({
   durationInFrames,
   theme,
 }) => {
-  const isPureCode = scene.type === 'PURE_CODE' || (!scene.assetUrl && !scene.secondaryAssetUrl);
+  const hasAsset = Boolean(scene.assetUrl || scene.secondaryAssetUrl);
   const bgColor = theme?.backgroundColor || '#090d14';
   const glowColor = theme?.accentGlow || 'rgba(212, 175, 55, 0.2)';
 
   return (
     <AbsoluteFill style={{ backgroundColor: bgColor, overflow: 'hidden' }}>
-      {!isPureCode && (scene.assetUrl || scene.secondaryAssetUrl) ? (
+      {hasAsset ? (
         <SlideImage
           src={scene.assetUrl || ''}
           secondaryAssetUrl={scene.secondaryAssetUrl}
@@ -46,6 +44,7 @@ export const HistoryBackground: React.FC<HistorySlideProps> = ({
           customKenBurns={scene.customKenBurns}
           filterStyle={scene.filterStyle || 'HISTORICAL'}
           rotateDeg={scene.rotateDeg}
+          isPureCodeScene={scene.type === 'PURE_CODE'}
         />
       ) : (
         <AbsoluteFill
@@ -58,15 +57,12 @@ export const HistoryBackground: React.FC<HistorySlideProps> = ({
   );
 };
 
-/**
- * Layer 2 Component — Render Specific Foreground UI Cards (StatCard, QuoteSlide, ChapterTitle, etc.)
- */
-export const HistoryForeground: React.FC<HistorySlideProps> = ({
-  scene,
-  durationInFrames,
-  index = 0,
-  theme,
-}) => {
+const getForegroundContent = (
+  scene: TimelineScene,
+  durationInFrames: number,
+  index: number,
+  theme?: ThemeConfig
+) => {
   const layoutMode = scene.layoutMode || 'BLUR_BG';
   const od = scene.overlayData;
 
@@ -209,35 +205,23 @@ export const HistoryForeground: React.FC<HistorySlideProps> = ({
 };
 
 /**
- * Universal Scene Router — Combined 3-Layer Slide (for backwards compatibility)
+ * Layer 2 Component — Render Specific Foreground UI Cards (StatCard, QuoteSlide, ChapterTitle, etc.)
  */
-export const HistorySlide: React.FC<HistorySlideProps> = ({
+export const HistoryForeground: React.FC<HistorySlideProps> = ({
   scene,
   durationInFrames,
-  index,
+  index = 0,
   theme,
 }) => {
-  const od = scene.overlayData;
+  const content = getForegroundContent(scene, durationInFrames, index, theme);
+
+  if (!content) return null;
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#090807', overflow: 'hidden' }}>
-      <HistoryBackground scene={scene} durationInFrames={durationInFrames} index={index} theme={theme} />
-      <HistoryForeground scene={scene} durationInFrames={durationInFrames} index={index} theme={theme} />
-      
-      {/* Top Header */}
-      <DocumentaryHeader
-        seriesTitle="CHRONOVIET DOCUMENTARY"
-        chapterTitle={od?.title}
-        theme={theme}
-      />
-
-      {/* Bottom Subtitle */}
-      <DocumentarySubtitle
-        text={scene.text || ''}
-        durationInFrames={durationInFrames}
-        theme={theme}
-      />
+    <AbsoluteFill>
+      {content}
     </AbsoluteFill>
   );
 };
+
 

@@ -57,28 +57,11 @@ export const ChapterTitle: React.FC<ChapterTitleProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Background Subtle Gradient & Grid Accent */}
+      {/* Lightweight Edge Vignette Accent */}
       <AbsoluteFill
         style={{
-          background:
-            'radial-gradient(circle at center, #111a28 0%, #090d14 50%, #040609 100%)',
-        }}
-      />
-
-      {/* Chrono Blue Ambient Glow */}
-      <AbsoluteFill
-        style={{
-          background: `radial-gradient(circle at center, ${activeTheme.accentGlow} 0%, transparent 65%)`,
-          opacity: 0.6,
-        }}
-      />
-
-      {/* Decorative Grid Lines */}
-      <AbsoluteFill
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.7) 100%)',
+          pointerEvents: 'none',
         }}
       />
 

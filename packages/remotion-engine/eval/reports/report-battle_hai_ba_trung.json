@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-10T10:07:37.516Z",
+  "timestamp": "2026-08-10T16:26:38.937Z",
   "testCaseName": "battle_hai_ba_trung.json",
   "isValidSchema": true,
   "totalScenes": 27,
@@ -17,5 +17,5 @@
   "durationSeconds": 132,
   "fps": 30,
   "aspectRatio": "16:9",
-  "evalDurationMs": 2
+  "evalDurationMs": 3
 }
