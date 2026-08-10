@@ -11,7 +11,7 @@
 * **Bài toán giải quyết:** Lịch sử Việt Nam có kho tàng dữ liệu đồ sộ nhưng văn bản khô khan, dễ bị sai lệch khi AI sinh nội dung (hallucination), và thiếu các công cụ trực quan hóa dạng video ngắn cho thế hệ trẻ.
 * **Giải pháp:** Sử dụng **Hybrid GraphRAG** để đảm bảo tính chuẩn xác sử liệu → **Multi-Agent Orchestrator (LangGraph.js - Node.js/TS)** chia nhỏ kịch bản & chọn layout → **Gemini 2.5 Flash VLM** kiểm định hình ảnh → **Remotion Engine** render video tự động từ file JSON.
 * **Trạng thái Triển khai Hệ thống:**
-  - **[✅ IMPLEMENTED CORE ENGINE]:** Engine Render Remotion 100% JSON-Driven (`eval-remotion/src/`), 18 `LayoutMode`, 15 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 13 UI Components, 8 Compositions đã đăng ký (`Root.tsx`), 8 file kịch bản mẫu v3.0.
+  - **[✅ IMPLEMENTED CORE ENGINE]:** Engine Render Remotion 100% JSON-Driven (`packages/remotion-engine/src/`), 18 `LayoutMode`, 15 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 13 UI Components, 8 Compositions đã đăng ký (`Root.tsx`), 8 file kịch bản mẫu v3.0.
   - **[📐 ARCHITECTURE DESIGN / ROADMAP]:** Tầng xử lý tri thức Hybrid GraphRAG, Multi-Agent Orchestrator với Postgres Checkpointer và VLM Inspector Agent (Mô hình thiết kế kiến trúc chuẩn bị kết nối với Remotion Engine).
 
 ---
@@ -22,7 +22,7 @@
 | --- | --- | :---: | --- |
 | **Engine Render (Remotion)** | React 18 + Remotion v4, Ken Burns, 18 LayoutMode, Zod Validation, 13 Components | **[✅ IMPLEMENTED]** (100% Codebase) | Engine cốt lõi đã hoàn thiện, nhận JSON schema v3.2 để render MP4 mượt mà 0% vỡ layout. |
 | **Tạo Giọng Đọc (TTS)** | Self-Hosted VieNeu Neural TTS (`vieneu.io`), ONNX Runtime, Word Timestamps | **[📐 ARCHITECTURE DESIGN]** (Spec v1.0) | Giọng thuyết minh lịch sử truyền cảm, ngắt nghỉ chuẩn, sinh Word Timestamps làm chữ Karaoke. |
-| **Dữ liệu & Tri thức (RAG)** | Hybrid GraphRAG (Qdrant Vector BGE-M3 1024d + Neo4j Graph Database), SGK & Sử liệu cổ. | **[📐 ARCHITECTURE DESIGN]** (Roadmap) | Thiết kế truy vấn sử liệu chuẩn xác. Kết nối quan hệ dòng tộc, triều đại và diễn biến chiến dịch. |
+| **Dữ liệu & Tri thức (RAG)** | PostgreSQL-Powered GraphRAG (`pgvector` Dense BGE-M3 1024d + Relational Graph CTEs), SGK & Sử liệu cổ. | **[📐 ARCHITECTURE DESIGN]** (Roadmap) | Thiết kế truy vấn sử liệu chuẩn xác. Kết nối quan hệ dòng tộc, triều đại và diễn biến chiến dịch. |
 | **Đội ngũ Agent (Multi-Agent)** | LangGraph.js Agentic Orchestrator (Node.js/TS) + PostgreSQL State Checkpointer. | **[📐 ARCHITECTURE DESIGN]** (v3.2 Spec) | Quy trình Chaptering & 5 Micro-Steps kịch bản (kèm Narrative Context & Duration Reconcile), Hybrid Fact-Checker (Alias Table & 4-Tier Escalation Path), Whitelisted License & Postgres Checkpoint. |
 | **Thẩm định Hình ảnh (VLM)** | Hybrid VLM (Google Gemini 2.5 Flash Cloud + Local CLIP ONNX Fallback) + Dual-Layer Cache. | **[📐 ARCHITECTURE DESIGN]** (v3.2 Spec) | Thẩm định bối cảnh lịch sử theo Chiến lược 3+3 Candidates, lọc giấy phép Whitelisted (`Public Domain`, `CC0`, `CC-BY`), tự động chọn Fallback Pure Code Layout Rotation. |
 
@@ -30,7 +30,7 @@
 
 ---
 
-## 3. Kiến trúc Hệ thống (System Architecture v3.2)
+## 3. Kiến trúc Hệ thống (System Architecture v3.4)
 
 ```
                        ┌──────────────────────────────┐
@@ -40,8 +40,8 @@
                                       │
                                       ▼
                        ┌──────────────────────────────┐
-                       │    Hybrid GraphRAG Engine    │
-                       │ (Qdrant Vector + Neo4j Graph)│
+                       │     Chrono-RAG Engine        │
+                       │   (PostgreSQL pgvector DB)   │
                        └──────────────┬───────────────┘
                                       │
              ┌────────────────────────┴────────────────────────┐

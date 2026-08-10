@@ -1,0 +1,13 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+  - 'services/*'
+
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
+  onnxruntime-node: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - msgpackr-extract

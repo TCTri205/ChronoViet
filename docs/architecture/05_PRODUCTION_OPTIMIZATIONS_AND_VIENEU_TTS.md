@@ -17,13 +17,13 @@ Tài liệu này giải quyết triệt để **4 Thách Thức Kỹ Thuật Th�
 Mỗi process render Remotion sử dụng Puppeteer (Headless Chrome) để chụp từng khung hình. Nếu gọi URL asset từ internet trực tiếp trong khi render hoặc giữ Chrome instance quá lâu, 1 job render video 16:9 60fps 5 phút có thể ngốn tới 4GB RAM và gây crash server.
 
 #### *Giải pháp hoàn chỉnh:*
-1. **Pre-download Media Assets về MinIO/Local Disk:**
-   * Trước khi khởi chạy `npx remotion render`, Remotion Render Worker tải trước toàn bộ file Audio (`.wav`), Images và Fonts về thư mục làm việc cục bộ. Remotion components chỉ đọc file local (`file://`), giảm độ trễ render từ 30s xuống 8s.
+1. **Pre-download Media Assets về Host Volume (`/media`):**
+   * Trước khi khởi chạy `npx remotion render`, Remotion Render Worker tải trước toàn bộ file Audio (`.wav`), Images và Fonts về thư mục làm việc cục bộ `/media/raw-assets/`. Remotion components chỉ đọc file local (`file://`), giảm độ trễ render từ 30s xuống 8s.
 2. **Puppeteer Process Isolation & Recycling:**
-   * Cấu hình `--concurrency = Math.max(1, Math.floor(availableCpus / 2))`.
+   * Cấu hình `--concurrency = 1` trên Single-Host VPS để đảm bảo tài nguyên ổn định.
    * Khởi chạy fresh Chromium instance cho mỗi job render và giải phóng tuyệt đối process (`browser.close()`) cũng như xóa sạch thư mục temp ngay sau khi hoàn thành.
-3. **BullMQ Multi-Worker Scaling (Docker Compose):**
-   * Tùy thuộc vào số lượng CPU/RAM của server, Docker Compose tự động khởi chạy và scale thêm các Render Worker Containers để xử lý song song các công việc trong `remotion-render-queue`.
+3. **BullMQ Worker Pool (Docker Compose):**
+   * Lắng nghe `remotion-render-queue` từ Redis container duy nhất trên VPS, thực hiện render MP4 an toàn mà không làm ảnh hưởng tới API Monolith Server hay Caddy Proxy.
 
 ---
 
@@ -33,13 +33,14 @@ Mỗi process render Remotion sử dụng Puppeteer (Headless Chrome) để ch�
 Việc thẩm định 20 bức ảnh trong 1 kịch bản qua mô hình Vision-Language (VLM) cục bộ có thể tốn GPU đắt đỏ và tạo ra độ trễ từ 15s – 30s. Đồng thời, nếu phụ thuộc hoàn toàn vào Cloud VLM API sẽ rủi ro ngắt kết nối/rate-limit (HTTP 429).
 
 #### *Giải pháp hoàn chỉnh:*
-1. **Lớp 0 - Whitelisted License Filter (`Public Domain`, `CC0`, `CC-BY`):**
-   * Lọc bỏ ngay từ đầu các ảnh không thuộc nhãn giấy phép minh bạch, đính kèm `attribution` metadata.
-2. **Hybrid Cloud/Offline VLM Dual-Tier:**
+1. **Lớp 0 - Whitelisted License Filter & Snapshotting (`Public Domain`, `CC0`, `CC-BY`):**
+   * Lọc bỏ ngay từ đầu các ảnh không thuộc nhãn giấy phép minh bạch.
+   * Lưu snapshot file ảnh + raw header + metadata bản quyền vào `/media/license-snapshots/` để minh bạch thông tin và bảo vệ pháp lý.
+2. **Hybrid Cloud/Offline VLM Dual-Tier & Circuit Breaker:**
    * *Primary:* Offload sang **Gemini 2.5 Flash API** với độ trễ sub-second (< 500ms/ảnh), loại bỏ chi phí GPU local.
-   * *Offline Fallback:* Khi Gemini API gặp rate-limit HTTP 429 hoặc rớt mạng, tự động kích hoạt **Local CLIP/SigLIP Cosine Similarity Scorer** (ONNX model local) để chấm điểm tương đồng ảnh - text mà không dừng pipeline.
-3. **Bộ Đệm Chấm Điểm 2 Lớp (Dual-Layer VLM Score Cache):**
-   * **Lớp 1 (Exact URL Hash):** Hash SHA-256 của URL ảnh được lưu trong Redis (TTL 30 ngày). Nếu ảnh đã được audit ở dự án khác, lấy ngay kết quả VLM Score trong 1ms.
+   * *Circuit Breaker Protection:* Tích hợp Circuit Breaker ở Orchestrator. Nếu gặp 3 lỗi HTTP 429 trong 5 phút ➔ Chuyển trạng thái `OPEN` (5 phút Cooldown) ➔ Auto failover sang **Local CLIP/SigLIP Cosine Similarity Scorer** (ONNX model local) để chấm điểm mà không làm gián đoạn pipeline.
+3. **Bộ Đệm Chấm Điểm 2 Lớp (Dual-Layer VLM Score Cache trong Unified Redis):**
+   * **Lớp 1 (Exact URL Hash):** Hash SHA-256 của URL ảnh được lưu trong Unified Redis (TTL 30 ngày). Nếu ảnh đã được audit ở dự án khác, lấy ngay kết quả VLM Score trong 1ms.
    * **Lớp 2 (Perceptual Image Hash - pHash):** Sử dụng pHash để phát hiện ảnh cùng nội dung nhưng khác URL. Nếu `pHash_distance < 5`, tái sử dụng kết quả audit cũ.
 
 ---
@@ -70,16 +71,16 @@ ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS c
 
 ---
 
-## 3. Cấu Hình Triển Khai Docker VieNeu TTS API (ONNX Engine)
+## 3. Cấu Hình Triển Khai VieNeu TTS API (Node.js ONNX Engine)
 
-Service VieNeu được đóng gói dưới dạng Python FastAPI microservice:
+Service VieNeu được đóng gói dưới dạng TypeScript / Node.js microservice hoặc gói Monorepo chạy trực tiếp qua `onnxruntime-node` trên CPU:
 
 ```yaml
 version: '3.8'
 
 services:
   vieneu-tts-service:
-    image: chronoviet/vieneu-tts-onnx:v1.0
+    image: chronoviet/vieneu-tts-onnx-node:v1.0
     container_name: vieneu_tts_engine
     restart: always
     environment:

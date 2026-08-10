@@ -1,11 +1,69 @@
-.agent/
-.commandcode/
+# Dependencies & Package Managers
 node_modules/
-out/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build & Compilation Outputs
 dist/
 build/
+out/
+.next/
+.remotion/
+.turbo/
+.output/
+coverage/
+*.tsbuildinfo
+*.cache
+
+# Environment & Local Configuration
 .env
 .env.local
 .env.*.local
+!.env.example
+
+# IDE & AI Agent Directories
+.agent/
+.agents/
+.commandcode/
+.gemini/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Python & AI Models (if applicable)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.pytest_cache/
+
+# OS Specific
 .DS_Store
-Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Media Volume Storage (Keep directory structures via .gitkeep, ignore generated/raw media)
+media/raw-assets/*
+!media/raw-assets/.gitkeep
+media/license-snapshots/*
+!media/license-snapshots/.gitkeep
+media/rendered-videos/*
+!media/rendered-videos/.gitkeep
+media/cache/*
+!media/cache/.gitkeep

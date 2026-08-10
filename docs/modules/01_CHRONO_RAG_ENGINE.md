@@ -9,10 +9,10 @@ Mô-đun **Chrono-RAG Engine** đóng vai trò là "Bộ nào Tri thức" (Knowl
 
 RAG truyền thống (chỉ dùng Vector Search) thường gặp phải tình trạng **"râu ông nọ chắp cằm bà kia"** do chỉ dựa vào độ tương đồng ngữ nghĩa mà không nắm được cấu trúc quan hệ chặt chẽ giữa các thực thể lịch sử. 
 
-Chrono-RAG giải quyết triệt để bài toán này bằng kiến trúc **Hybrid GraphRAG (Knowledge Graph + Vector Database + Local Search)**:
-* **Knowledge Graph (Đồ thị Tri thức):** Đảm bảo tính chính xác tuyệt đối về mốc thời gian, nhân vật, triều đại, quan hệ dòng tộc và sự đổi tên địa danh qua các thời kỳ.
-* **Vector Database (Cơ sở Dữ liệu Vector):** Bảo tồn trọn vẹn sắc thái miêu tả chi tiết, văn phong nguyên văn và bối cảnh lịch sử từ các tài liệu gốc.
-* **Local Search (Duyệt đồ thị cục bộ):** Truy vấn khu vực tri thức xung quanh các thực thể được nhắc tới trong câu hỏi (k-hop expansion) thay vì duyệt toàn cục tốn kém.
+Chrono-RAG giải quyết triệt để bài toán này bằng kiến trúc **GraphRAG (Knowledge Graph + Vector Search + Local Search)** được triển khai tinh gọn trên **PostgreSQL (`pgvector` + Relational Graph Schema)**:
+* **Knowledge Graph (Đồ thị Tri thức):** Đảm bảo tính chính xác tuyệt đối về mốc thời gian, nhân vật, triều đại, quan hệ dòng tộc và sự đổi tên địa danh qua các bảng `entities` & `relationships`.
+* **Vector Search (`pgvector`):** Bảo tồn trọn vẹn sắc thái miêu tả chi tiết, văn phong nguyên văn và bối cảnh lịch sử từ các tài liệu gốc qua HNSW Vector Index (1024d BGE-M3).
+* **Local Search ($k$-Hop Expansion):** Truy vấn khu vực tri thức xung quanh các thực thể được nhắc tới trong câu hỏi qua thuật toán **PostgreSQL Recursive CTEs** ($k=1$ hoặc $k=2$) với tốc độ sub-millisecond mà không ngốn tài nguyên RAM.
 
 ---
 
@@ -101,7 +101,7 @@ Hệ thống Chrono-RAG vận hành qua 2 chu trình riêng biệt: **Offline In
  │         VECTOR BRANCH         │ │         GRAPH BRANCH          │
  │ - Dense Embedding (bge-m3)    │ │ - LLM Triple Extraction       │
  │ - Sparse Encoding (BM25)      │ │   (Entity - Relation - Entity)│
- │ - Store in Qdrant / ChromaDB  │ │ - Knowledge Graph (Neo4j)     │
+ │ - Store in PostgreSQL pgvector│ │ - Relational Graph Schema     │
  └───────────────┬───────────────┘ └───────────────┬───────────────┘
                  │                                 │
                  └───────────► [MENTIONED_IN] ◄────┘
@@ -122,9 +122,9 @@ Hệ thống Chrono-RAG vận hành qua 2 chu trình riêng biệt: **Offline In
          ┌───────┴─────────────────────────┐
          ▼                                 ▼
  ┌───────────────────────────────┐ ┌───────────────────────────────┐
- │ 2. LOCAL GRAPH SEARCH (Neo4j) │ │ 3. DENSE + SPARSE VECTOR SEARCH│
+ │ 2. LOCAL GRAPH SEARCH (CTEs)  │ │ 3. DENSE + SPARSE VECTOR SEARCH│
  │ - Query 1-hop / 2-hop Subgraph│ │ - bge-m3 Semantic Similarity  │
- │ - Retrieve exact relationships│ │ - BM25 Keyword Matching       │
+ │ - PostgreSQL Recursive CTEs   │ │ - BM25 Keyword Matching       │
  └───────────────┬───────────────┘ └───────────────┬───────────────┘
                  │                                 │
                  └────────────────┬────────────────┘
@@ -161,10 +161,10 @@ Hệ thống Chrono-RAG vận hành qua 2 chu trình riêng biệt: **Offline In
      }
      ```
 2. **Song song hóa nhánh xử lý (Dual-Branch Indexing):**
-   * **Nhánh Vector (Semantic Layer):** Chuyển đổi các đoạn văn bản thô thành Embedding vectors bằng mô hình `bge-m3` (kết hợp Dense Vectors & BM25 Sparse Vectors) và lưu trữ vào Vector DB.
-   * **Nhánh Đồ thị (Structured Knowledge Layer):** Sử dụng LLM chạy trích xuất bộ ba (Entity - Relation - Entity) dựa trên Schema Ontology Lịch sử đã định nghĩa, đẩy dữ liệu vào Graph DB.
+   * **Nhánh Vector (Semantic Layer):** Chuyển đổi các đoạn văn bản thô thành Embedding vectors bằng mô hình `bge-m3` (kết hợp Dense Vectors & BM25 Sparse Vectors) và lưu trữ vào PostgreSQL `pgvector`.
+   * **Nhánh Đồ thị (Structured Knowledge Layer):** Sử dụng LLM chạy trích xuất bộ ba (Entity - Relation - Entity) dựa trên Schema Ontology Lịch sử đã định nghĩa, đẩy dữ liệu vào PostgreSQL `entities` & `relationships`.
 3. **Liên kết chéo (Cross-Linking Graph & Vector):**
-   * Tạo quan hệ `MENTIONED_IN` giữa các Nút thực thể trên Knowledge Graph và `chunk_id` tương ứng trong Vector DB.
+   * Tạo quan hệ `MENTIONED_IN` giữa các Nút thực thể trên Knowledge Graph và `chunk_id` tương ứng trong bảng `entity_chunks`.
 
 ### 4.2. Chu Trình Online Retrieval (Duyệt Cục Bộ Local Search)
 
@@ -172,10 +172,10 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 
 1. **Step 1 - Trích xuất thực thể câu hỏi:** LLM/NER Engine nhận diện thực thể trung tâm: `[Trận Tốt Động - Chúc Động]` và `[Nguyễn Chích]`.
 2. **Step 2 - Local Graph Search (Duyệt đồ thị cục bộ):**
-   * Định vị các nút tương ứng trên Neo4j.
-   * Mở rộng 1-hop hoặc 2-hop (k-hop neighborhood expansion) để rút ra Subgraph xung quanh: Ai chỉ huy? Xảy ra thời gian nào? Kết quả ra sao? Mối liên kết trực tiếp/gián tiếp giữa Nguyễn Chích và trận đánh là gì?
+   * Định vị các nút tương ứng trên PostgreSQL Graph Tables (`entities`).
+   * Mở rộng 1-hop hoặc 2-hop (k-hop neighborhood expansion) qua thuật toán **PostgreSQL Recursive CTEs** để rút ra Subgraph xung quanh: Ai chỉ huy? Xảy ra thời gian nào? Kết quả ra sao? Mối liên kết trực tiếp/gián tiếp giữa Nguyễn Chích và trận đánh là gì?
 3. **Step 3 - Dense & Sparse Vector Search:**
-   * Embed câu hỏi và truy vấn Top-K đoạn văn bản có độ tương đồng ngữ nghĩa cao nhất từ Vector DB.
+   * Embed câu hỏi và truy vấn Top-K đoạn văn bản có độ tương đồng ngữ nghĩa cao nhất từ `pgvector`.
 4. **Step 4 - Graph-Guided Chunk Retrieval:**
    * Dựa vào Subgraph ở Step 2, truy vết các `chunk_id` được nối qua quan hệ `MENTIONED_IN` để đảm bảo lấy đủ văn bản gốc chứa thông tin chi tiết.
 5. **Step 5 - Reranking & Context Fusion:**
@@ -207,11 +207,11 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
   * **`bkai-foundation-models/vietnamese-bi-encoder`:** Mô hình do BKAI huấn luyện chuyên biệt cho tiếng Việt, hoạt động mượt với văn bản thuần Việt.
   * **`text-embedding-3-large` (OpenAI):** Chất lượng biểu diễn ngữ nghĩa cao (trả phí API).
 * **Thuật toán Tìm kiếm Vector & Hybrid Search:**
-  * **HNSW (Hierarchical Navigable Small World):** Thuật toán indexing mặc định trên các Vector DB (Qdrant, Milvus) cho tốc độ tìm kiếm lân cận cực nhanh.
+  * **HNSW (Hierarchical Navigable Small World):** Thuật toán indexing mặc định trên PostgreSQL `pgvector` và các Vector DB cho tốc độ tìm kiếm lân cận cực nhanh.
   * **RRF (Reciprocal Rank Fusion):** Thuật toán kết hợp kết quả xếp hạng giữa **Sparse Search (BM25)** (tìm từ khóa chính xác tên tướng/địa danh) và **Dense Search (Vector Embedding)** (tìm ngữ nghĩa câu hỏi).
 
 ### 5.3. Công đoạn Duyệt Đồ thị & Gom nhóm (Graph Traversal & Community Detection)
-*Các thuật toán chạy trực tiếp trên Graph Database (Neo4j / Memgraph).*
+*Các thuật toán chạy trực tiếp trên PostgreSQL Relational Graph Schema qua Recursive CTEs (hoặc Neo4j khi Scale-Out).*
 
 * **Thuật toán Duyệt Đồ thị (Traversal & Reasoning):**
   * **k-Hop Neighborhood / Subgraph Expansion:** Từ thực thể được nhận diện trong câu hỏi, mở rộng bán kính $k$ bước (thường $k=1$ hoặc $k=2$) để lấy toàn bộ mạng lưới ngữ cảnh xung quanh.
@@ -250,14 +250,16 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 
 ## 7. Bảng Tóm Tắt Tech Stack, Model & Thuật Toán Đề Xuất
 
+> 💡 **Ghi chú Triển khai VPS Tinh Gọn (Single-Host Deployment):** Ở giai đoạn MVP trên 1 VPS, toàn bộ Vector Embeddings và Graph Metadata được lưu trữ tập trung ngay trên **PostgreSQL 15+ (`pgvector`)** để tiết kiệm RAM. Qdrant và Neo4j sẵn sàng mở rộng độc lập trong giai đoạn Scale-Out khi dung lượng dữ liệu tăng cao.
+
 | Công đoạn | Model / Thuật toán Đề xuất | Công cụ / Library hỗ trợ |
 | :--- | :--- | :--- |
-| **NER & Relation Extraction** | Qwen3.8-27B / Gemini 2.5 Flash / model llama 3.3 70b versatile + Few-shot JSON Prompt | LlamaIndex (`PropertyGraphIndex`), Instructor, FastCoref |
-| **Graph DB & Traversal** | Cypher Query Language + k-Hop Expansion / Dijkstra / Leiden | Neo4j / Memgraph |
+| **NER & Relation Extraction** | Qwen3.8-27B / Gemini 2.5 Flash / Llama 3.3 70B + Few-shot JSON Prompt | LlamaIndex (`PropertyGraphIndex`), Instructor, FastCoref |
+| **Graph DB & Traversal** | Relational Graph Schema / Cypher Query + k-Hop Expansion | PostgreSQL (MVP) / Neo4j (Scale-Out) |
 | **Text Embedding** | `BAAI/bge-m3` | Sentence-Transformers, HuggingFace |
-| **Hybrid Vector Search** | HNSW + BM25 + Reciprocal Rank Fusion (RRF) | Qdrant / ChromaDB |
+| **Hybrid Vector Search** | pgvector HNSW Index + BM25 + Reciprocal Rank Fusion (RRF) | PostgreSQL `pgvector` (MVP) / Qdrant (Scale-Out) |
 | **Context Reranking** | `BAAI/bge-reranker-v2-m3` | FlagEmbedding, FlashRank |
-| **Final Answer Generation** | Gemini 1.5 Pro / GPT-4o / Qwen2.5-72B | LangChain / LlamaIndex |
+| **Final Answer Generation** | Gemini 1.5 Pro / GPT-4o / Qwen2.5-72B | LangChain / LangGraph.js |
 
 ---
 

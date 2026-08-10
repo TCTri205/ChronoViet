@@ -9,16 +9,16 @@ Mô-đun **Remotion Render Engine** là **Công cụ Thực thi (Agent Tool)** c
 
 Trong sơ đồ tổng thể:
 * Input của Remotion Render Engine là file **JSON Production Schema v3.0** (`ChronoVideoProps`) được đóng gói và thẩm định từ **Module 2 (Multi-Agent Orchestrator)**.
-* Trước khi gọi CLI `npx remotion render`, Render Worker **pre-download toàn bộ media assets** (Audio `.wav`, Images, Fonts) về thư mục làm việc cục bộ/MinIO để đảm bảo 0% gián đoạn do mạng.
+* Trước khi gọi CLI `npx remotion render`, Render Worker **pre-download toàn bộ media assets** (Audio `.wav`, Images, Fonts) về thư mục làm việc cục bộ Host Volume `/media/raw-assets/` để đảm bảo 0% gián đoạn do mạng.
 * Remotion hoạt động như một Tool nhận diện lệnh CLI hoặc API wrapper, khởi tạo Chromium Process riêng biệt và giải phóng toàn bộ tài nguyên process (`browser.close()`) ngay sau khi xuất xong MP4.
-* Engine này đã được **triển khai hoàn thiện 100%** tại thư mục codebase [`eval-remotion/src/`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src).
+* Engine này đã được **triển khai hoàn thiện 100%** tại thư mục codebase [`packages/remotion-engine/src/`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src).
 
 
 ---
 
 ## 2. Mô Tả Chi Tiết & 100% Chính Xác Format JSON Input Schema v3.0
 
-Cấu trúc file JSON input truyền vào Remotion Render Engine tuân thủ 100% chuẩn Zod Schema quy định tại [`eval-remotion/src/types/schema.ts`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src/types/schema.ts) và TypeScript definitions tại [`eval-remotion/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src/types/index.ts).
+Cấu trúc file JSON input truyền vào Remotion Render Engine tuân thủ 100% chuẩn Zod Schema quy định tại [`packages/remotion-engine/src/types/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/schema.ts) và TypeScript definitions tại [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts).
 
 Dưới đây là bảng tra cứu đầy đủ 100% không bỏ sót bất kỳ trường dữ liệu hay enum nào:
 

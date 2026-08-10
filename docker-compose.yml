@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./media:/app/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+  postgres:
+    image: pgvector/pgvector:pg15
+    restart: always
+    environment:
+      POSTGRES_DB: chronoviet_db
+      POSTGRES_USER: chronoviet
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-chronoviet_secret}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy noeviction
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
+      - REDIS_URL=redis://redis:6379
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./media:/app/media
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 4000M
+    environment:
+      - NODE_ENV=production
+      - CONCURRENCY=1
+      - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./media:/app/media
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

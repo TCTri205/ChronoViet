@@ -1,0 +1,20 @@
+{
+  "name": "@chronoviet/agent-orchestrator",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chronoviet/shared-spec": "workspace:*",
+    "@chronoviet/rag-engine": "workspace:*",
+    "@chronoviet/vlm-inspector": "workspace:*",
+    "@langchain/langgraph": "^0.0.19"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -14,8 +14,8 @@ d:\Persional_Projects\ChronoViet\docs\
 │   ├── architecture/README.md                 [Tổng quan Kiến trúc Hệ thống & Hạ tầng]
 │   ├── architecture/01_ARCHITECTURAL_STYLE.md [Kiểu Kiến trúc: Event-Driven + Decoupled Pipeline]
 │   ├── architecture/02_COMMUNICATION_AND_QUEUES.md [Giao tiếp IPC, Message Queue (BullMQ/RabbitMQ)]
-│   ├── architecture/03_DATA_STORAGE_AND_CACHE.md [Cơ sở dữ liệu (Qdrant, Postgres, Neo4j) & Cache (Redis)]
-│   ├── architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md [Quản lý State (LangGraph.js), Docker Compose Deploy]
+│   ├── architecture/03_DATA_STORAGE_AND_CACHE.md [Cơ sở dữ liệu (Postgres pgvector SSOT) & Cache (Redis)]
+│   ├── architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md [Quản lý State (LangGraph.js), VPS Docker Compose Caddy Deploy]
 │   └── architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md [Tối ưu Sản xuất & VieNeu TTS Engine]
 │
 ├── ⚙️ modules/                                [CHI TIẾT 4 MÔ-ĐUN XỬ LÝ PIPELINE]
@@ -26,6 +26,7 @@ d:\Persional_Projects\ChronoViet\docs\
 │   └── modules/04_REMOTION_RENDER_ENGINE.md   [Mô-đun 4: 100% Data-Driven Video Pipeline [✅]]
 │
 ├── 📘 SystemOverview.md                       [Kiến trúc RAG + Multi-Agent + VLM + Remotion [✅ Engine / 📐 Agent Roadmap]]
+├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai, Phân tích Song song & Khung Đánh giá [📐 Roadmap]]
 │
 ├── ⚙️ EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 18 LayoutMode, 15 Transition, Zod Schema, 8 Compositions [✅]]
 └── REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v3.0, Lego Components [✅]]
@@ -56,8 +57,12 @@ d:\Persional_Projects\ChronoViet\docs\
   - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation, 13 Components, 18 LayoutModes, 8 Compositions trong `Root.tsx`.
   - **[📐 ROADMAP]:** RAG Engine, Multi-Agent Orchestrator, VLM Inspector Agent (mô hình thiết kế kiến trúc chuẩn bị kết nối với Remotion Engine).
 
+### 2.2. [IMPLEMENTATION_PLAN.md](file:///D:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md) — Kế Hoạch Triển Khai v1.1, Phân Tích Song Song & Khung Đánh Giá `eval/`
+- **Mục đích:** Kế hoạch thực thi dự án chi tiết, lộ trình 5 giai đoạn, phân tích khả năng phát triển song song của 4 mô-đun, quy tắc bắt buộc có thư mục `eval/` riêng cho từng mô-đun và bộ hợp đồng giao tiếp Type-Safe giữa các mô-đun (`packages/shared-spec`).
+- **Trạng thái:** **[📐 ROADMAP SPECIFICATION v1.1]** Đã xác định rõ Workstream A (RAG), B (VieNeu TTS), C (VLM Inspector) triển khai và tự đánh giá song song bằng bộ `eval/` riêng trước khi hợp nhất ở Workstream D (Orchestrator).
+
 ### 2.2. [EVAL_REMOTION_TECHNICAL_SPEC.md](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) — ★ Quy Chuẩn Kỹ Thuật (Source of Truth)
-- **Mục đích:** Tài liệu tham chiếu kỹ thuật chi tiết và chính xác nhất cho `eval-remotion/src/`.
+- **Mục đích:** Tài liệu tham chiếu kỹ thuật chi tiết và chính xác nhất cho `packages/remotion-engine/src/`.
 - **Trọng tâm:**
   - Mô hình 3 Lớp Rendering (`HistoryBackground` + `HistoryForeground` + `Persistent Overlays`) & cơ chế `TransitionSeries` trong `ChronoVideo.tsx`
   - **18 `LayoutMode`** đầy đủ (7 Pure Image + 11 Pure Code)
@@ -86,7 +91,7 @@ d:\Persional_Projects\ChronoViet\docs\
 
 ```bash
 # Di chuyển vào thư mục engine
-cd D:\Persional_Projects\ChronoViet\eval-remotion
+cd D:\Persional_Projects\ChronoViet\packages\remotion-engine
 
 # Xem preview trực tiếp (Remotion Studio)
 npm start
@@ -125,3 +130,5 @@ npx remotion render src/index.ts BiographyVideo out/custom.mp4 --props=src/data/
 | Composition IDs thực tế trong `Root.tsx`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §7](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
 | Color palette & font cho Video Essay style? | [TEMPLATE_GUIDE_VIDEO_ESSAY.md](file:///D:/Persional_Projects/ChronoViet/docs/TEMPLATE_GUIDE_VIDEO_ESSAY.md) |
 | Trạng thái hiện tại: Đã implement vs Thiết kế tương lai? | [SystemOverview.md §1 & §2](file:///D:/Persional_Projects/ChronoViet/docs/SystemOverview.md) |
+| Lộ trình triển khai 5 giai đoạn & phân tích song song? | [IMPLEMENTATION_PLAN.md §2 & §3](file:///D:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md) |
+| Ma trận đánh giá KPI & quản trị rủi ro hệ thống? | [IMPLEMENTATION_PLAN.md §4 & §5](file:///D:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md) |

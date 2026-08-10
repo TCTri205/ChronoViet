@@ -1,0 +1,324 @@
+{
+  "title": "TRẬN BẠCH ĐẰNG 938 – CỘT MỐC MỞ ĐẦU KỶ NGUYÊN ĐỘC LẬP",
+  "subtitle": "ChronoViet Deep Research Series • Phim Tài Liệu Khảo Cứu Trận Bạch Đằng Năm 938",
+  "videoType": "BATTLE",
+  "aspectRatio": "16:9",
+  "audioUrl": "assets/quang-trung/voiceover.wav",
+  "bgmUrl": "assets/quang-trung/bgm.wav",
+  "bgmVolume": 0.3,
+  "defaultLayoutMode": "BLUR_BG",
+  "defaultFilterStyle": "HISTORICAL",
+  "defaultTransition": "LIGHT_LEAK",
+  "timeline": [
+    {
+      "id": "scene_00_brand_intro",
+      "startTime": 0,
+      "endTime": 15,
+      "durationInFrames": 450,
+      "text": "ChronoViet Documentary Series — Dự án Phim tài liệu & Số hóa Lịch sử Việt Nam.",
+      "layoutMode": "ARTICLE_UI",
+      "overlayType": "ARTICLE_INTRO",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "title": "TRẬN BẠCH ĐẰNG 938",
+        "author": "ChronoViet Research Team"
+      }
+    },
+    {
+      "id": "scene_01",
+      "startTime": 15,
+      "endTime": 35,
+      "durationInFrames": 600,
+      "text": "Hơn một nghìn năm Bắc thuộc – một thiên niên kỷ chìm trong lầm than và máu lệ dưới ách thống trị tàn bạo của các triều đại phương Bắc. Nhưng người Việt chưa bao giờ khuất phục. Và đến năm 938, một trận thủy chiến vô tiền khoáng hậu tại sông Bạch Đằng đã vĩnh viễn chấm dứt đêm trường nô lệ.",
+      "assetUrl": "assets/battle/scene_01_bach_dang_mist.jpg",
+      "layoutMode": "TITLE_CARD",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "chapterNumber": "PHẦN I",
+        "title": "TRẬN BẠCH ĐẰNG 938",
+        "subtitle": "Trận Chiến Vĩ Đại Chấm Dứt 1058 Năm Bắc Thuộc (179 TCN - 938 SCN)"
+      }
+    },
+    {
+      "id": "scene_02",
+      "startTime": 35,
+      "endTime": 55,
+      "durationInFrames": 600,
+      "text": "Ngô Quyền – sinh năm 896 tại làng Đường Lâm (Hà Nội ngày nay). Ông là người có tướng mạo phi thường, mắt sáng như chớp, bước đi như hổ. Là con rể của Tiết độ sứ Dương Đình Nghệ, ông nắm giữ vùng đất Ái Châu giàu có và lòng dân.",
+      "assetUrl": "assets/battle/scene_02_ngo_quyen_portrait.jpg",
+      "layoutMode": "STAT_CARD",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_LEFT",
+      "overlayData": {
+        "title": "HỒ SƠ THÂN THẾ NGÔ QUYỀN",
+        "name": "Ngô Quyền (896 - 944)",
+        "role": "Tiền Ngô Vương • Đường Lâm Sơn Tây",
+        "statItems": [
+          { "label": "Niên đại trận đánh", "value": "Mùa thu năm 938", "color": "#D4AF37" },
+          { "label": "Địa danh chiến trường", "value": "Sông Bạch Đằng", "color": "#2563eb" },
+          { "label": "Bắc thuộc chấm dứt", "value": "1058 Năm (179 TCN - 938)", "color": "#8B0000" }
+        ]
+      }
+    },
+    {
+      "id": "scene_03",
+      "startTime": 55,
+      "endTime": 75,
+      "durationInFrames": 600,
+      "text": "Năm 937, sóng gió nổi lên. Tên phản quốc Kiều Công Tiễn sát hại Dương Đình Nghệ để đoạt chức Tiết độ sứ. Hoảng sợ trước sự trừng phạt của Ngô Quyền, Công Tiễn đã rước voi về giày mả tổ, rước quân Nam Hán sang xâm lược đất nước ta.",
+      "assetUrl": "assets/battle/scene_03_kieu_cong_tien.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_RIGHT",
+      "filterStyle": "HISTORICAL",
+      "transition": "CROSS_ZOOM",
+      "overlayData": {
+        "title": "NGUYÊN NHÂN & TÌNH THẾ CHÍNH TRỊ 937-938"
+      }
+    },
+    {
+      "id": "scene_04",
+      "startTime": 75,
+      "endTime": 95,
+      "durationInFrames": 600,
+      "text": "Nắm lấy cơ hội ngàn năm, Vua Nam Hán Lưu Cung phong con trai là Lưu Hoằng Tháo làm Bình Nam vương, chỉ huy hạm đội vạn chiến thuyền vượt biển tràn xuống miền Nam, tham vọng nuốt chửng Đại Việt lần nữa.",
+      "assetUrl": "assets/battle/scene_04_nam_han_armada.jpg",
+      "layoutMode": "VERSUS_CARD",
+      "transition": "SLIDE_RIGHT",
+      "overlayData": {
+        "title": "TƯƠNG QUAN LỰC LƯỢNG CHIẾN TRƯỜNG",
+        "leftSide": {
+          "name": "NGÔ QUYỀN",
+          "stat": "Thủy quân Đại Việt tinh nhuệ • Trận địa cọc gỗ bọc sắt nhọn • Am hiểu thủy triều",
+          "color": "#2563eb"
+        },
+        "rightSide": {
+          "name": "HOẰNG THÁO",
+          "stat": "Hạm đội thuyền lớn Nam Hán • Hung hãn ngạo mạn • Xâm lược bằng đường biển",
+          "color": "#8B0000"
+        }
+      }
+    },
+    {
+      "id": "scene_05",
+      "startTime": 95,
+      "endTime": 115,
+      "durationInFrames": 600,
+      "text": "Tháng 10 năm 938, Ngô Quyền thần tốc cất quân ra Bắc, hạ thành Đại La, trừng trị đích đáng kẻ phản quốc Kiều Công Tiễn. Diệt xong nội phản, ông lập tức hành quân ra vùng cửa biển Quảng Ninh - Hải Phòng để chuẩn bị nghênh chiến.",
+      "assetUrl": "assets/battle/scene_05_dai_la_citadel.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_LEFT",
+      "filterStyle": "HISTORICAL",
+      "transition": "LIGHT_LEAK"
+    },
+    {
+      "id": "scene_06",
+      "startTime": 115,
+      "endTime": 135,
+      "durationInFrames": 600,
+      "text": "Nhận định tình hình đối phương, Ngô Quyền dứt khoát tuyên bố với các tướng sĩ: 'Hoằng Tháo là một đứa trẻ ranh, dẫn quân từ xa đến, quân sĩ mệt mỏi, lại nghe tin Công Tiễn đã chết, không có người làm nội ứng. Nếu ta chuẩn bị trước, quân giặc nhất định phải thua!'",
+      "assetUrl": "assets/battle/scene_06_ngo_quyen_quote.jpg",
+      "layoutMode": "QUOTE_CANVAS",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "FADE_TO_BLACK",
+      "overlayType": "QUOTE",
+      "overlayData": {
+        "quoteText": "Hoằng Tháo là một đứa trẻ ranh, dẫn quân từ xa đến, quân sĩ mệt mỏi... Nếu ta chuẩn bị trước, quân giặc nhất định phải thua!",
+        "author": "Ngô Quyền (Nhận định chiến lược năm 938)",
+        "subtitle": "Lời nhận định sắc bén định đoạt chiến lược trận đánh"
+      }
+    },
+    {
+      "id": "scene_07",
+      "startTime": 135,
+      "endTime": 155,
+      "durationInFrames": 600,
+      "text": "Hiểu rõ quy luật thủy triều vùng cửa sông Bạch Đằng – nơi nước dâng rút chênh lệch tới 3 đến 4 mét mỗi ngày – Ngô Quyền đã sáng tạo ra một trận đồ thủy chiến độc nhất vô nhị trong lịch sử quân sự thế giới.",
+      "assetUrl": "assets/battle/scene_07_tide_map.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_RIGHT",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_UP",
+      "overlayData": {
+        "title": "QUY LUẬT THỦY TRIỀU SÔNG BẠCH ĐẰNG"
+      }
+    },
+    {
+      "id": "scene_08",
+      "startTime": 155,
+      "endTime": 175,
+      "durationInFrames": 600,
+      "text": "Hàng vạn quân dân được huy động vào rừng đẽo gọt hàng nghìn cây gỗ lim, gỗ sến cổ thụ thành những cọc nhọn vạt đầu, đút sắt nhọn, rồi đem cắm ngầm xuống lòng sông tại các cửa lạch hiểm yếu.",
+      "assetUrl": "assets/battle/scene_08_wooden_stakes.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_OUT",
+      "filterStyle": "HISTORICAL",
+      "transition": "LINEAR_BLUR",
+      "overlayData": {
+        "title": "TRẬN ĐỊA CỌC GỖ BỌC SẮT VỊ ĐẠI"
+      }
+    },
+    {
+      "id": "scene_09",
+      "startTime": 175,
+      "endTime": 195,
+      "durationInFrames": 600,
+      "text": "Khi nước triều dâng cao, toàn bộ bãi cọc nhọn chìm sâu dưới lòng sông, mặt nước lại phẳng lặng như không hề có bẫy chết người. Một chiếc bẫy rồng vĩ đại đã giăng sẵn chờ hạm đội Nam Hán!",
+      "assetUrl": "assets/battle/scene_09_river_calm.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_LEFT",
+      "filterStyle": "HISTORICAL",
+      "transition": "CLOCK_WIPE"
+    },
+    {
+      "id": "scene_10",
+      "startTime": 195,
+      "endTime": 215,
+      "durationInFrames": 600,
+      "text": "Cuối năm 938, hạm đội thuyền lớn của Lưu Hoằng Tháo hung hãn tiến vào cửa biển Bạch Đằng. Ngô Quyền sai các thuyền nhẹ ra khiêu chiến, vừa đánh vừa giả vờ thua chạy rút lui vào sâu trong lạch sông.",
+      "assetUrl": "assets/battle/scene_10_luring_enemy.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_LEFT"
+    },
+    {
+      "id": "scene_11",
+      "startTime": 215,
+      "endTime": 235,
+      "durationInFrames": 600,
+      "text": "Hoằng Tháo trúng kế! Đầy tự mãn, hắn hạ lệnh cho toàn bộ chiến thuyền lầu cao húc thẳng vào lòng sông mà không hề biết thủy triều đang bắt đầu đạt đỉnh và sắp rút nhanh.",
+      "assetUrl": "assets/battle/scene_11_trap_set.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_RIGHT",
+      "filterStyle": "HISTORICAL",
+      "transition": "CROSS_ZOOM"
+    },
+    {
+      "id": "scene_12",
+      "startTime": 235,
+      "endTime": 255,
+      "durationInFrames": 600,
+      "text": "Đúng thời điểm thủy triều rút mạnh, Ngô Quyền đứng trên thuyền chỉ huy phất cờ hiệu. Trống trận rền vang sấm dội! Quân Đại Việt từ hai bên ngách sông lao ra khép chặt vòng vây, tổng phản công dữ dội.",
+      "assetUrl": "assets/battle/scene_12_counter_attack.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_OUT",
+      "filterStyle": "HISTORICAL",
+      "transition": "GLITCH"
+    },
+    {
+      "id": "scene_13",
+      "startTime": 255,
+      "endTime": 275,
+      "durationInFrames": 600,
+      "text": "Hoảng loạn trước sức tấn công vũ bão, Hoằng Tháo vội vã vung kiếm hạ lệnh quay đầu rút chạy ra biển. Nhưng đã quá muộn!",
+      "assetUrl": "assets/battle/scene_13_enemy_retreat.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_LEFT",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_RIGHT"
+    },
+    {
+      "id": "scene_14",
+      "startTime": 275,
+      "endTime": 295,
+      "durationInFrames": 600,
+      "text": "Thủy triều rút nhanh như thác đổ! Bãi cọc lim bịt sắt nhọn hoắt nhô lên khỏi mặt nước như nghìn chông gai thép. Thuyền lớn Nam Hán bị nước cuốn húc mạnh vào bãi cọc, mạn thuyền đâm thủng vỡ tan tành!",
+      "assetUrl": "assets/battle/scene_14_climax_stakes.jpg",
+      "layoutMode": "FULL_COVER",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "GLITCH"
+    },
+    {
+      "id": "scene_15",
+      "startTime": 295,
+      "endTime": 315,
+      "durationInFrames": 600,
+      "text": "Quân Đại Việt trên thuyền nhẹ thừa thắng lao tới dùng giáo dài, nỏ liên châu tiêu diệt địch. Quân Nam Hán chết đuối và tử trận đến hơn một nửa. Lưu Hoằng Tháo bị đâm chết tại trận giữa dòng nước đỏ quạch máu giặc.",
+      "assetUrl": "assets/battle/scene_15_hoang_thao_defeated.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_PAN_RIGHT",
+      "filterStyle": "HISTORICAL",
+      "transition": "CROSS_ZOOM"
+    },
+    {
+      "id": "scene_16",
+      "startTime": 315,
+      "endTime": 335,
+      "durationInFrames": 600,
+      "text": "Vua Nam Hán Lưu Cung đang dẫn quân tiếp viện ở biên giới nghe tin con trai tử trận, quân sĩ đại bại hoảng sợ khóc than, đành ngậm ngùi thu gom tàn quân tháo chạy về nước, vĩnh viễn từ bỏ dã tâm xâm lược.",
+      "assetUrl": "assets/battle/scene_16_king_grief.jpg",
+      "layoutMode": "STAT_CARD",
+      "transition": "SLIDE_LEFT",
+      "overlayData": {
+        "title": "TỔNG KẾT THẮNG LỢI OANH LIỆT 938",
+        "name": "Bạch Đằng Giang - Thiên Thu Hùng Khí",
+        "statItems": [
+          { "label": "Tướng địch bị tiêu diệt", "value": "Bình Nam Vương Lưu Hoằng Tháo", "color": "#8B0000" },
+          { "label": "Thiệt hại hạm đội giặc", "value": "Tổn thất quá bán thuyền trận", "color": "#2563eb" },
+          { "label": "Kết quả lịch sử", "value": "Thành lập Triều Ngô (939)", "color": "#D4AF37" }
+        ]
+      }
+    },
+    {
+      "id": "scene_17",
+      "startTime": 335,
+      "endTime": 355,
+      "durationInFrames": 600,
+      "text": "Nhà sử học Lê Văn Hưu đã hết lời ca ngợi: 'Ngô Quyền mưu giỏi đánh giỏi, làm cho người Hán không dám ngó ngàng sang nước ta nữa. Công đức ấy trùm lấp cả các vua trước, dựng lại cơ đồ độc lập.'",
+      "assetUrl": "assets/battle/scene_17_le_van_huu_quote.jpg",
+      "layoutMode": "QUOTE_CANVAS",
+      "effect": "KEN_BURNS_PAN_LEFT",
+      "filterStyle": "HISTORICAL",
+      "transition": "FADE_TO_BLACK",
+      "overlayType": "QUOTE",
+      "overlayData": {
+        "quoteText": "Ngô Quyền mưu giỏi đánh giỏi, cứu dân khỏi khổ, dựng lại cơ đồ, công đức ấy trùm lấp cả các vua trước.",
+        "author": "Đại Sử Học Lê Văn Hưu",
+        "subtitle": "Trích Đại Việt Sử Ký Toàn Thư"
+      }
+    },
+    {
+      "id": "scene_18",
+      "startTime": 355,
+      "endTime": 375,
+      "durationInFrames": 600,
+      "text": "Mùa xuân năm 939, Ngô Quyền chính thức xưng Vương, bãi bỏ chức Tiết độ sứ của phong kiến phương Bắc, chọn Cổ Loa làm kinh đô – khẳng định sự nối tiếp truyền thống tự chủ từ thời Hùng Vương.",
+      "assetUrl": "assets/battle/scene_18_co_loa_coronation.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_OUT",
+      "filterStyle": "HISTORICAL",
+      "transition": "SLIDE_LEFT"
+    },
+    {
+      "id": "scene_19",
+      "startTime": 375,
+      "endTime": 390,
+      "durationInFrames": 450,
+      "text": "Trận Bạch Đằng 938 không chỉ là một chiến thắng quân sự lẫy lừng, mà còn là cột mốc vĩ đại chấm dứt 1058 năm Bắc thuộc, mở ra kỷ nguyên độc lập tự cường vạn đại cho dân tộc Việt Nam.",
+      "assetUrl": "assets/battle/scene_19_monument.jpg",
+      "layoutMode": "BLUR_BG",
+      "effect": "KEN_BURNS_ZOOM_IN",
+      "filterStyle": "HISTORICAL",
+      "transition": "LIGHT_LEAK"
+    },
+    {
+      "id": "scene_20",
+      "startTime": 390,
+      "endTime": 405,
+      "durationInFrames": 450,
+      "text": "Ngô Quyền – Vị Tổ Trung Hưng vĩ đại của dân tộc Việt Nam. Khí phách Bạch Đằng Giang sẽ mãi mãi ngân vang cùng sông núi!",
+      "assetUrl": "assets/battle/scene_19_monument.jpg",
+      "layoutMode": "OUTRO_CARD",
+      "transition": "FADE_TO_BLACK",
+      "overlayData": {
+        "quoteText": "“Giúp dân dựng nước xiết bao công trình,\nHùng khí Bạch Đằng vạn đại quang vinh.”",
+        "ctaText": "CHRONOVIET DOCUMENTARY SERIES • CHUYÊN ĐỀ BẠCH ĐẰNG 938"
+      }
+    }
+  ]
+}

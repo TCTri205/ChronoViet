@@ -28,11 +28,11 @@ Hệ thống kết hợp 3 phương thức giao tiếp tùy theo tính chất đ
 
 Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài nguyên và thời gian (Long-Running Tasks), ChronoViet sử dụng **BullMQ (Node.js)** trên nền **Redis**.
 
-### 2.1. Phân Loại Các Hàng Đợi (Queue Segmentation)
+### 2.1. Phân Loại Các Hàng Đợi (Queue Segmentation trên Unified Redis)
 
 ```
                             ┌───────────────────────────┐
-                            │    Redis Message Broker   │
+                            │    Unified Redis (AOF)    │
                             └─────────────┬─────────────┘
                                           │
        ┌──────────────────────────────────┼──────────────────────────────────┐
@@ -40,7 +40,7 @@ Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài n
 ┌─────────────────────────┐    ┌─────────────────────────┐    ┌─────────────────────────┐
 │   1. tts-gen-queue      │    │  2. vlm-inspect-queue   │    │  3. remotion-render-q  │
 │ - Tác vụ: VieNeu ONNX   │    │ - Gemini 2.5 Flash API  │    │ - Remotion Local Render │
-│ - Concurrency: 10 jobs  │    │ - Strategy 3+3 Candidates│    │ - Concurrency: 2/worker │
+│ - Concurrency: 10 jobs  │    │ - Strategy 3+3 Candidates│    │ - Concurrency: 1 MAX    │
 │ - Priority: High        │    │ - Priority: Medium      │    │ - Priority: Normal      │
 └────────────┬────────────┘    └────────────┬────────────┘    └────────────┬────────────┘
              │                              │                              │
@@ -55,14 +55,14 @@ Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài n
    * *Priority:* Cao (Cần hoàn thành sớm để tính độ dài khung hình `durationInFrames` cho từng cảnh).
    * *Quy chuẩn Kỹ thuật:* Xem chi tiết tại [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](file:///D:/Persional_Projects/ChronoViet/docs/architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md).
 
-2. **`vlm-inspect-queue` (Thẩm Định Thị Giác & Bản Quyền - Hybrid VLM v3.2):**
-   * *Nhiệm vụ:* Đưa các đợt ảnh crawl qua Whitelisted License Filter (`Public Domain`, `CC0`, `CC-BY`) và thực hiện chấm điểm qua **Gemini 2.5 Flash Cloud API** (hoặc **Local CLIP ONNX Scorer** khi offline/HTTP 429).
-   * *Caching:* Kiểm tra SHA-256 / pHash trong Redis (TTL 30 ngày). Nếu trùng ảnh cũ, trả về kết quả VLM Score trong 1ms mà không gọi API.
+2. **`vlm-inspect-queue` (Thẩm Định Thị Giác, License Snapshot & Circuit Breaker):**
+   * *Nhiệm vụ:* Đưa các đợt ảnh crawl qua Whitelisted License Filter (`Public Domain`, `CC0`, `CC-BY`), snapshot file ảnh + license metadata vào Host Volume `/media/license-snapshots/` và thực hiện chấm điểm qua **Gemini 2.5 Flash Cloud API** (kèm **Circuit Breaker** trip khi 3x HTTP 429 trong 5m ➔ auto failover sang **Local CLIP ONNX Scorer**).
+   * *Caching:* Kiểm tra SHA-256 / pHash trong Unified Redis Cache (TTL 30 ngày). Nếu trùng ảnh cũ, trả về kết quả VLM Score trong 1ms mà không gọi API.
    * *Strategy 3+3 & Fallback Handling:* Thực hiện thẩm định theo chiến lược 3+3 Candidates. Nếu cả 6 ảnh < 60 điểm, tự động chuyển sang PURE_CODE Layout Rotation Engine.
 
-3. **`remotion-render-queue` (Render Video MP4 & Isolation):**
-   * *Nhiệm vụ:* Nhận file JSON Schema v3.2 (chứa cả License & Attribution metadata), pre-download toàn bộ Audio (.wav) & Images về MinIO/Local Temp Storage, chạy lệnh CLI `npx remotion render` để xuất file `.mp4`.
-   * *Process Isolation:* Chromium process được giải phóng tuyệt đối và temp directory được dọn dẹp sạch sau từng render job để bảo vệ RAM server.
+3. **`remotion-render-queue` (Render Video MP4, Isolation & SSOT Verification):**
+   * *Nhiệm vụ:* Nhận task từ Redis Queue mang `idempotency_key = md5(json_spec_v3)`, **query lại Postgres Checkpoint SSOT** để đảm bảo project chưa bị hủy, pre-download toàn bộ Audio (.wav) & Images về Host Volume `/media/raw-assets/`, chạy lệnh CLI `npx remotion render` với `CONCURRENCY=1` để xuất file `.mp4`.
+   * *Process Isolation & Resource Limits:* Chromium process được giới hạn max 2.0 CPUs / 4GB RAM, giải phóng tuyệt đối process (`browser.close()`) và temp directory ngay sau từng render job.
 
 ---
 

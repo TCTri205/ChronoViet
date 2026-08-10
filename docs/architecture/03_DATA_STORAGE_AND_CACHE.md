@@ -3,24 +3,26 @@
 
 ---
 
-## 1. Tổng Quan Tầng Lưu Trữ (Polyglot Persistence Architecture)
+## 1. Tổng Quan Tầng Lưu Trữ (Streamlined Single-VPS Storage Architecture)
 
-Hệ thống **ChronoViet** sử dụng mô hình **Polyglot Persistence** — mỗi loại dữ liệu được lưu trữ trong một công nghệ cơ sở dữ liệu tối ưu nhất cho mục đích sử dụng đó. Ở giai đoạn MVP, toàn bộ các data stores này được đóng gói và vận hành trong **Docker Compose**:
+Hệ thống **ChronoViet** áp dụng chiến lược lưu trữ tối giản hóa tối đa cho môi trường **Single-Host VPS Deployment** (tối ưu memory footprint và khả năng vận hành):
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        POLYGLOT PERSISTENCE LAYER (DOCKER COMPOSE)                     │
+│                   STREAMLINED VPS STORAGE ARCHITECTURE (DOCKER COMPOSE)                │
 │                                                                                        │
-│ ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────────┐ │
-│ │ 1. Qdrant Vector DB    │  │ 2. PostgreSQL          │  │ 3. Neo4j Graph DB          │ │
-│ │ - Semantic Embeddings  │  │ - Core Data & Billing  │  │ - Family Tree (Dòng tộc)   │ │
-│ │ - BGE-M3 (1024d)       │  │ - LangGraph Checkpoint │  │ - Event & Person Graph     │ │
-│ └────────────────────────┘  └────────────────────────┘  └────────────────────────────┘ │
-│ ┌────────────────────────┐  ┌────────────────────────┐                                 │
-│ │ 4. Redis Cluster       │  │ 5. MinIO / AWS S3      │                                 │
-│ │ - BullMQ Queues & Cache│  │ - Raw Assets (.wav)    │                                 │
-│ │ - Multi-Layer LLM Cache│  │ - Rendered MP4 Videos  │                                 │
-│ └────────────────────────┘  └────────────────────────┘                                 │
+│ ┌──────────────────────────────────────┐  ┌──────────────────────────────────────────┐ │
+│ │ 1. PostgreSQL 15+ (pgvector) DB SSOT │  │ 2. Unified Redis Database                │ │
+│ │ - Core Data, Users, Projects & Auth  │  │ - BullMQ Task Queues (AOF Persistence)   │ │
+│ │ - LangGraph State Checkpointer Blobs │  │ - Multi-Layer Caching (Prompt & VLM)     │ │
+│ │ - Vector Embeddings Search (pgvector)│  │ - Real-time WebSocket PubSub Channel     │ │
+│ └──────────────────────────────────────┘  └──────────────────────────────────────────┘ │
+│ ┌────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │ 3. Local Host Media Volume Storage (/media)                                        │ │
+│ │ - s3:// /media/raw-assets/ (Ảnh thô & VieNeu Audio WAV)                            │ │
+│ │ - /media/license-snapshots/ (Bằng chứng bản quyền Whitelisted & Response Headers) │ │
+│ │ - /media/rendered-videos/ (Video MP4 đầu ra cho client tải xuống)                  │ │
+│ └────────────────────────────────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -28,33 +30,30 @@ Hệ thống **ChronoViet** sử dụng mô hình **Polyglot Persistence** — m
 
 ## 2. Chi Tiết Các Cơ Sở Dữ Liệu
 
-### 2.1. Vector Database — Qdrant (Dữ liệu Tri thức RAG)
-* **Nhiệm vụ:** Lưu trữ hàng triệu vector đại diện cho các đoạn văn bản lịch sử đã chunking.
-* **Vector Configuration:**
-  * Model: `BAAI/bge-m3` (Dense: 1024 dimensions + Lexical Sparse BM25 + Multi-Vector) hoặc `bkai-foundation-models/vietnamese-bi-encoder`.
-  * Metric: Cosine Similarity.
-  * HNSW Indexing parameters: `m=16`, `ef_construct=100` giúp truy vấn dưới 10ms.
-* **Payload Fields:** `chunk_id`, `source_book`, `dynasty`, `year_start`, `year_end`, `key_figures`, `location`, `text_content`.
-
-### 2.2. Relational Database — PostgreSQL (Dữ liệu Core & LangGraph Checkpointer)
-* **Nhiệm vụ:** Quản lý người dùng, phân quyền, cấu hình dự án video, lưu trữ LangGraph State Checkpoints và logs render.
-* **Các bảng chính (Main Tables):**
+### 2.1. PostgreSQL + pgvector (SSOT Duy Nhất Cho Data, State Checkpoint & Vector Search)
+* **Nhiệm vụ:** Đóng vai trò cơ sở dữ liệu quan hệ trung tâm (SSOT) cho toàn bộ hệ thống, lưu vết trạng thái 12 bước LangGraph, đồng thời thực hiện tìm kiếm vector tri thức RAG thông qua plugin `pgvector`.
+* **Cấu hình Vector Search (`pgvector`):**
+  * Extension: `CREATE EXTENSION IF NOT EXISTS vector;`
+  * Model Embedding: `BAAI/bge-m3` (1024d) hoặc `vietnamese-bi-encoder`.
+  * Indexing: `HNSW` index với `m=16`, `ef_construction=64` trên vector column `embedding vector(1024)` giúp truy vấn similarity k-NN dưới 5ms ngay trong Postgres.
+* **Các Bảng Chính (Main Tables):**
   * `users` (`id`, `email`, `password_hash`, `role`, `created_at`)
   * `video_projects` (`id`, `user_id`, `title`, `video_type`, `template_id`, `status`, `json_spec_v3`, `created_at`)
-  * `checkpoint_blobs` & `checkpoints` (LangGraph State Checkpointer - Lưu vết 100% biến trạng thái từng bước agent)
+  * `document_chunks` (`id`, `title`, `text_content`, `dynasty`, `key_figures`, `embedding vector(1024)`)
+  * `checkpoints` & `checkpoint_blobs` (LangGraph State Checkpointer - Lưu vết 100% biến trạng thái từng bước agent)
   * `render_jobs` (`id`, `project_id`, `status`, `duration_seconds`, `output_url`, `error_log`, `started_at`, `finished_at`)
-  * `audit_assets` (`id`, `scene_id`, `asset_url`, `vlm_score`, `verdict`, `reasons`)
+  * `audit_assets` (`id`, `scene_id`, `asset_url`, `vlm_score`, `license_type`, `reasons`)
 
-### 2.3. Graph Database — Neo4j (Đồ thị Lịch sử GraphRAG)
-* **Nhiệm vụ:** Biểu diễn các mối quan hệ phức tạp giữa nhân vật, triều đại và địa danh cho Hybrid GraphRAG Local Search.
-* **Nodes:** `:Person`, `:Event`, `:Location`, `:Dynasty`, `:TimePeriod`, `:DocumentChunk`.
-* **Relationships:** `PART_OF`, `LED_BY`, `HAPPENED_IN`, `HAPPENED_AT`, `SAME_AS_LOCATION` (đổi tên địa danh), `ALIAS_OF` (tên húy/niên hiệu), `ROYAL_LINEAGE` (dòng tộc), `MENTIONED_IN` (liên kết chéo Node Đồ thị & Chunk Vector ID).
+### 2.2. Unified Redis Database (Broker Queue & Multi-Layer Cache)
+* **Nhiệm vụ:** Đảm nhận đồng thời việc lưu vết hàng đợi BullMQ Jobs (với `appendonly yes`), lưu trữ bộ đệm (Prompt Cache, Asset VLM Scores), và truyền thông điệp real-time qua PubSub.
+* **Max Memory & Policy:** Giới hạn max 1GB RAM (`maxmemory 1gb`), cơ chế không tự hủy queue (`noeviction` cho DB queue, LRU cho DB cache).
 
-### 2.4. Object Storage — MinIO / AWS S3 (Tư Liệu Số & Video MP4)
-* **Nhiệm vụ:** Lưu trữ file tĩnh (Audio voiceover, BGM, SFX, hình ảnh crawl được, và file video MP4 sau khi render xong).
-* **Bucket Layout:**
-  * `s3://chronoviet-raw-assets/`: Chứa ảnh thô crawl được và file audio TTS.
-  * `s3://chronoviet-rendered-videos/`: Chứa file MP4 đầu ra cho người dùng tải xuống.
+### 2.3. Local Host Media Storage (Tư Liệu Số, License Snapshots & Video MP4)
+* **Nhiệm vụ:** Lưu trữ các tệp phương tiện dưới dạng file system cục bộ tại Mount Volume `/media`, được Caddy Reverse Proxy serve static trực tiếp đến client với tốc độ cao.
+* **Cấu trúc Thư mục `/media`:**
+  * `/media/raw-assets/`: Chứa hình ảnh crawl và file âm thanh VieNeu TTS `.wav`.
+  * `/media/license-snapshots/`: Chứa file ảnh snapshot + JSON response headers để đối soát giấy phép thương mại (`Public Domain`, `CC0`, `CC-BY`).
+  * `/media/rendered-videos/`: Chứa file video MP4 hoàn thành.
 
 ---
 

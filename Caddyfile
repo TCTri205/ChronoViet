@@ -1,0 +1,15 @@
+localhost {
+    # 1. Serve trực tiếp file media (Video MP4, Audio, License Snapshots)
+    handle /media/* {
+        root * /app
+        file_server
+    }
+
+    # 2. Forward toàn bộ API & Web Dashboard & WebSockets đến App Monolith
+    handle {
+        reverse_proxy app:3000
+    }
+
+    # 3. Tự động nén dữ liệu HTTP
+    encode zstd gzip
+}

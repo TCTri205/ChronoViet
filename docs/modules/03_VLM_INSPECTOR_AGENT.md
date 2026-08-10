@@ -132,6 +132,14 @@ VLM Inspector Sub-Agent phối hợp cùng Orchestrator theo chiến lược 3+3
 | **Cả 6 ảnh ứng viên đều < 60 điểm (hoặc nhầm bối cảnh văn hóa)** | Loại bỏ hoàn toàn hình ảnh, kích hoạt **PURE_CODE Layout Rotation Engine** | Xóa `assetUrl`, Code Rules Engine tự chọn layout xoay vòng (`STAT_CARD`, `QUOTE_SLIDE`, `TIMELINE_CHRONO`...) |
 | **Crawl 404 / Không có dữ liệu mạng** | Ép chuyển thẳng sang **Pure Code LayoutMode** (Render 100% bằng Code) | Xóa `assetUrl`, chọn trong 11 Pure Code LayoutModes mà KHÔNG cần tốn token gọi lại LLM |
 
+### 4.1. Cơ Chế Hoạt Động & Cơ Sở Kỹ Thuật Của Pure Code Fallback Engine
+Khi cả 6 ảnh ứng viên đợt 1 & đợt 2 đều không đạt ngưỡng 60 điểm, hệ thống **không nhắm mắt sử dụng ảnh kém chất lượng** (để tránh rủi ro vi phạm bản quyền, dính watermark VTV/K+, nhầm trang phục phim cổ trang Trung Quốc/Hàn Quốc). 
+
+Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao cho Remotion Render Engine xử lý dựa trên các nguyên tắc:
+1. **Thiết kế sẵn 11 Pure Code Components:** Remotion đã xây dựng sẵn 11 mẫu Layout UI bằng React (`STAT_CARD`, `QUOTE_SLIDE`, `TIMELINE_CHRONO`, `VERSUS_CARD`, `BULLET_HIGHLIGHT`, `MUSEUM_TAG`, `SPLIT_THEORY`...).
+2. **Code Rules Engine Mapping:** Master Orchestrator tự động trích xuất thuộc tính `overlayData` của phân cảnh (trích dẫn, mốc năm, quân số, điểm diễn biến) để ánh xạ 1:1 sang Layout Pure Code tương ứng mà không tốn thêm token gọi LLM.
+3. **Tiêu chuẩn thẩm mỹ Documentary:** Xen kẽ các phân cảnh Data Visualization / Motion Graphics giúp duy trì nhịp độ thị giác chuyên nghiệp (tương tự phong cách các kênh tin tức / tài liệu lớn như Vox, Kurzgesagt).
+
 ---
 
 ## 5. Tương Tác Giữa VLM Sub-Agent Và Multi-Agent Orchestrator

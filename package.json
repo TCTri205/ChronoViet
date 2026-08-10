@@ -1,0 +1,22 @@
+{
+  "name": "chronoviet-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChronoViet - Automated Historical EdTech & Interactive GraphRAG Video Platform",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm --recursive run build",
+    "lint": "pnpm --recursive run lint",
+    "test": "pnpm --recursive run test",
+    "typecheck": "pnpm --recursive run typecheck",
+    "eval:all": "pnpm --recursive run eval",
+    "remotion:studio": "pnpm --filter @chronoviet/remotion-engine start",
+    "remotion:render": "pnpm --filter @chronoviet/remotion-engine build"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
