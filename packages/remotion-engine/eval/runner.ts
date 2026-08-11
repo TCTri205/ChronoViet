@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { ChronoVideoSchema, ChronoVideoProps, TimelineScene, LayoutModeSchema, TransitionTypeSchema } from '../src/types';
+import { cleanEvalArtifacts, isPortInUseSync, killPortProcessSync } from '../../../eval/utils/cleaner';
 
 const TOTAL_LAYOUT_MODES = LayoutModeSchema.options.length;
 const TOTAL_TRANSITIONS = TransitionTypeSchema.options.filter((t) => t !== 'NONE').length;
@@ -32,6 +33,8 @@ function parseEvalArgs(args: string[]) {
   let verbose = false;
   let forceNew = false;
   let port = process.env.REMOTION_PORT || process.env.PORT || '9876';
+  let cleanOnly = false;
+  let fresh = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -49,10 +52,14 @@ function parseEvalArgs(args: string[]) {
       forceNew = true;
     } else if ((arg === '-p' || arg === '--port') && i + 1 < args.length) {
       port = args[++i];
+    } else if (arg === '--clean') {
+      cleanOnly = true;
+    } else if (arg === '--fresh') {
+      fresh = true;
     }
   }
 
-  return { testCasesDir, reportsDir, outDir, openStudio, verbose, forceNew, port };
+  return { testCasesDir, reportsDir, outDir, openStudio, verbose, forceNew, port, cleanOnly, fresh };
 }
 
 function formatRow(file: string, status: string, scenes: number, duration: string, aspect: string, layouts: number, transitions: number, timeMs: number) {
@@ -68,67 +75,6 @@ function formatRow(file: string, status: string, scenes: number, duration: strin
   return `│ ${colFile} │ ${colStatus} │ ${colScenes} │ ${colDuration} │ ${colAspect} │ ${colLayouts} │ ${colTrans} │ ${colTime} │`;
 }
 
-function isPortInUseSync(port: number): boolean {
-  try {
-    execSync(
-      `node -e "const net = require('net'); const s = net.createServer(); s.once('error', () => process.exit(1)); s.listen(${port}, () => { s.close(); process.exit(0); });"`,
-      { stdio: 'ignore' }
-    );
-    return false;
-  } catch {
-    return true;
-  }
-}
-
-function killPortProcessSync(port: number): boolean {
-  if (!isPortInUseSync(port)) return true;
-
-  try {
-    if (process.platform === 'win32') {
-      const netstatOutput = execSync(`netstat -ano | findstr LISTENING | findstr :${port}`, {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'ignore'],
-      });
-      const lines = netstatOutput.trim().split('\n');
-      const pidsToKill = new Set<string>();
-
-      for (const line of lines) {
-        const parts = line.trim().split(/\s+/);
-        const localAddr = parts[1];
-        const pid = parts[parts.length - 1];
-        if (localAddr && localAddr.endsWith(`:${port}`) && pid && pid !== '0') {
-          pidsToKill.add(pid);
-        }
-      }
-
-      for (const pid of pidsToKill) {
-        try {
-          execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
-        } catch {
-          // Process already terminated
-        }
-      }
-    } else {
-      try {
-        execSync(`fuser -k ${port}/tcp`, { stdio: 'ignore' });
-      } catch {
-        try {
-          execSync(`lsof -t -i:${port} | xargs kill -9`, { stdio: 'ignore' });
-        } catch {
-          // Process already terminated
-        }
-      }
-    }
-
-    const waitTill = Date.now() + 350;
-    while (Date.now() < waitTill) {}
-
-    return !isPortInUseSync(port);
-  } catch {
-    return false;
-  }
-}
-
 function findAvailablePortSync(startPort: number): number {
   let port = startPort;
   while (port < startPort + 50) {
@@ -141,12 +87,23 @@ function findAvailablePortSync(startPort: number): number {
 }
 
 function runEvaluation() {
+  const { testCasesDir, reportsDir, outDir, openStudio, verbose, forceNew, port: requestedPortStr, cleanOnly, fresh } = parseEvalArgs(process.argv.slice(2));
+
+  const portNum = parseInt(requestedPortStr, 10) || 9876;
+
+  if (cleanOnly) {
+    cleanEvalArtifacts({ verbose: true, port: portNum });
+    process.exit(0);
+  }
+
+  if (fresh) {
+    cleanEvalArtifacts({ verbose, port: portNum });
+  }
+
   const startTime = Date.now();
   console.log('\n┌──────────────────────────────────────────────────────────────────────────┐');
   console.log('│   🚀 ChronoViet Remotion Render Engine - Real Evaluation Suite (v3.2)     │');
   console.log('└──────────────────────────────────────────────────────────────────────────┘\n');
-
-  const { testCasesDir, reportsDir, outDir, openStudio, verbose, forceNew, port: requestedPortStr } = parseEvalArgs(process.argv.slice(2));
 
   console.log(` 📁 Test Cases Folder : ${testCasesDir}`);
   console.log(` 📁 Output Folder     : ${outDir}`);
@@ -370,10 +327,29 @@ ${Array.from(globalTransitions).sort().map((t) => `- \`${t}\``).join('\n')}
       console.log(` 📁 Working Directory : ${packageRoot}\n`);
     }
 
+    // Clean stale webpack cache if it exists to avoid RangeError: Array buffer allocation failed
+    const cacheDirsToClean = [
+      path.join(packageRoot, 'node_modules/.cache/webpack'),
+      path.resolve(process.cwd(), 'node_modules/.cache/webpack'),
+    ];
+    for (const cacheDir of cacheDirsToClean) {
+      if (fs.existsSync(cacheDir)) {
+        try {
+          fs.rmSync(cacheDir, { recursive: true, force: true });
+        } catch {
+          // Ignore cache cleanup errors
+        }
+      }
+    }
+
     try {
       execSync(cmd, {
         cwd: packageRoot,
         stdio: 'inherit',
+        env: {
+          ...process.env,
+          NODE_OPTIONS: process.env.NODE_OPTIONS || '--max-old-space-size=4096',
+        },
       });
     } catch (e: any) {
       if (e.signal === 'SIGINT' || e.signal === 'SIGTERM' || e.status === 130 || e.status === 0) {

@@ -36,6 +36,12 @@ eval/
 ```bash
 # Chạy suite eval tự động & mở Studio GUI từ root monorepo:
 pnpm --filter @chronoviet/remotion-engine eval
+
+# Chạy với vòng đời dọn dẹp sạch sẽ trước khi đánh giá:
+pnpm --filter @chronoviet/remotion-engine eval -- --fresh
+
+# Chỉ chạy dọn dẹp artifact rác:
+pnpm --filter @chronoviet/remotion-engine eval -- --clean
 ```
 > Khi chạy lệnh trên: Hệ thống sẽ đánh giá tự động Phase 1 -> Báo cáo Phase 2 -> Tự động khởi chạy **Remotion Studio GUI** ở Phase 3.
 
@@ -55,4 +61,5 @@ pnpm --filter @chronoviet/remotion-engine eval -- --no-studio
 | `--outDir` | `-o` | Thư mục output (giữ sạch) | `eval/out` |
 | `--reportsDir` | `-r` | Thư mục lưu báo cáo kiểm định Markdown/JSON | `eval/reports` |
 | `--no-studio` / `--ci` | - | Tắt tự động mở Remotion Studio GUI | `false` |
-
+| `--clean` | - | Chỉ dọn dẹp toàn bộ audio rác, báo cáo cũ & port rồi thoát | `false` |
+| `--fresh` | - | Thực thi dọn dẹp sạch trước khi tiến hành eval | `false` |

@@ -34,7 +34,7 @@ Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 │   ├── README.md         # Tài liệu hướng dẫn chạy eval & định nghĩa tiêu chí KPI
 │   ├── datasets/         # Bộ dữ liệu mẫu / Ground truth benchmark
 │   ├── test-cases/       # Các kịch bản kiểm thử biên (edge cases)
-│   ├── runner.ts         # Script thực thi benchmark & đo lường metrics
+│   ├── runner.ts         # Script thực thi benchmark & đo lường metrics (hỗ trợ --clean, --fresh)
 │   └── reports/          # Kết quả đánh giá xuất ra (JSON/Markdown)
 ```
 

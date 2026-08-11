@@ -88,9 +88,12 @@ pnpm build
 pnpm remotion:studio
 
 # ----- EVALUATION COMMANDS -----
-# Run eval suite monorepo-wide
-pnpm eval:all
+# Purge eval artifacts, stale audio files, reports, and ports monorepo-wide
+pnpm eval:clean
+
+# Run eval suite monorepo-wide (with fresh clean lifecycle)
+pnpm eval:all --fresh
 
 # Run eval runner for Remotion Engine specifically
-pnpm --filter @chronoviet/remotion-engine eval
+pnpm --filter @chronoviet/remotion-engine eval -- --fresh
 ```

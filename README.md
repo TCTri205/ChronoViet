@@ -134,10 +134,16 @@ pnpm remotion:studio
 ```
 *Trình duyệt sẽ tự động mở Remotion Studio tại `http://localhost:9876` để bạn xem trực quan 18 LayoutModes, 15 Transitions và hiệu ứng chuyển cảnh real-time.*
 
-#### 2. Chạy Suite Kiểm Định & Đánh Giá Kịch Bản Mẫu (Eval Runner):
+#### 2. Chạy Suite Kiểm Định & Đánh Giá Kịch Bản Mẫu (Eval Runner & Clean Lifecycle):
 ```bash
-# Chạy eval runner để thẩm định Zod Schema v3.0 & render frame ảnh minh họa cho 9 kịch bản mẫu
-pnpm --filter @chronoviet/remotion-engine eval
+# Dọn dẹp sạch toàn bộ audio rác, báo cáo cũ & port bị chiếm giữ:
+pnpm eval:clean
+
+# Chạy eval runner thẩm định Zod Schema v3.2 & metrics với trạng thái làm sạch tự động:
+pnpm --filter @chronoviet/remotion-engine eval -- --fresh
+
+# Chạy toàn bộ Master Global Eval:
+pnpm eval:all --fresh
 ```
 
 #### 3. Render Các Kịch Bản Mẫu Chuẩn ra Video MP4:

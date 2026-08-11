@@ -19,7 +19,7 @@ Bộ công cụ đánh giá chuyên biệt dành cho **VieNeu TTS Service** (Neu
 ```
 eval/
 ├── README.md                           # Tài liệu hướng dẫn này
-├── runner.ts                           # Main Eval Runner đo lường RTF, alignment & frame error
+├── runner.ts                           # Main Eval Runner đo lường RTF, alignment & frame error (hỗ trợ --fresh, --clean)
 ├── datasets/
 │   ├── historical_50_sentences.json    # Dataset 50 câu văn bản lịch sử tiếng Việt phức tạp
 │   └── remotion_script_sentences.json  # Dataset câu thoại trích xuất từ kịch bản Remotion thực tế
@@ -37,8 +37,11 @@ eval/
 
 ### 1. Chạy Evaluation Suite (từ Root Monorepo)
 ```bash
-# Thực thi qua pnpm workspace filter
+# Thực thi qua pnpm workspace filter:
 pnpm --filter @chronoviet/vieneu-tts eval
+
+# Chạy với chế độ làm sạch báo cáo & audio rác trước khi eval:
+pnpm --filter @chronoviet/vieneu-tts eval -- --fresh
 ```
 
 ### 2. Chạy với ngưỡng RTF tùy chỉnh qua biến môi trường
@@ -57,4 +60,3 @@ npx tsx services/vieneu-tts/eval/scripts/extract_remotion_dataset.ts
 Khi thực thi `runner.ts`, bộ đánh giá tự động nhận diện chế độ engine đang hoạt động:
 * 🤖 **REAL_NEURAL_ONNX**: Kết nối trực tiếp Python FastAPI Microservice (`app.py`, 24kHz NeuCodec ONNX).
 * ⚙️ **SYNTHETIC_FALLBACK_TONE**: Tự động kích hoạt khi microservice Python chưa bật, sử dụng Sine Wave Generator để kiểm thử toán học khung hình không gián đoạn.
-

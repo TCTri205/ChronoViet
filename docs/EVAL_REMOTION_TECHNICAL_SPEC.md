@@ -447,6 +447,18 @@ packages/remotion-engine/src/
 
 ## 8. Hướng Dẫn Render Video Bằng Remotion CLI (Chạy tại Root Monorepo)
 
+### Chạy Bộ Đánh Giá Evaluation Suite (với Monorepo-wide Clean Lifecycle):
+```bash
+# Dọn dẹp sạch sẽ toàn bộ audio rác, báo cáo cũ & port treo:
+pnpm eval:clean
+
+# Chạy suite eval tự động với vòng đời làm sạch trước khi thực thi:
+pnpm --filter @chronoviet/remotion-engine eval -- --fresh
+
+# Chạy toàn bộ Master Global Eval:
+pnpm eval:all --fresh
+```
+
 ### Xem preview trực tiếp (Remotion Studio GUI):
 ```bash
 pnpm remotion:studio

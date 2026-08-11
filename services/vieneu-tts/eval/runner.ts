@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { performance } from 'perf_hooks';
-import { VieNeuEngine } from '../src/engine.js';
-import { SentenceEvalMetric, SummaryEvalReport, saveEvalReport } from './reports/report_generator.js';
+import { VieNeuEngine } from '../src/engine';
+import { SentenceEvalMetric, SummaryEvalReport, saveEvalReport } from './reports/report_generator';
+import { cleanEvalArtifacts } from '../../../eval/utils/cleaner';
 
 interface DatasetItem {
   id: string;
@@ -12,6 +13,19 @@ interface DatasetItem {
 }
 
 async function runVieNeuTtsEvaluation() {
+  const args = process.argv.slice(2);
+  const cleanOnly = args.includes('--clean');
+  const fresh = args.includes('--fresh');
+
+  if (cleanOnly) {
+    cleanEvalArtifacts({ verbose: true, killPorts: false });
+    process.exit(0);
+  }
+
+  if (fresh) {
+    cleanEvalArtifacts({ verbose: true, killPorts: false });
+  }
+
   console.log(`┌──────────────────────────────────────────────────────────────────────────┐`);
   console.log(`│   🚀 ChronoViet VieNeu TTS Engine Evaluation Suite (Workstream B)        │`);
   console.log(`└──────────────────────────────────────────────────────────────────────────┘`);
