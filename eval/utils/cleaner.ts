@@ -32,8 +32,8 @@ function purgeDirectory(dirPath: string, verbose = false): void {
   try {
     const entries = fs.readdirSync(dirPath);
     for (const entry of entries) {
-      // Do not delete source code files or documentation within report/output directories
-      if (entry.endsWith('.ts') || entry === 'README.md') {
+      // Do not delete source code files, documentation, or git placeholders within report/output directories
+      if (entry.endsWith('.ts') || entry === 'README.md' || entry === '.gitkeep') {
         continue;
       }
       const fullPath = path.join(dirPath, entry);

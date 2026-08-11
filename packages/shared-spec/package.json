@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
     "eval": "echo [shared-spec] No evaluation suite needed"
   },
   "dependencies": {
