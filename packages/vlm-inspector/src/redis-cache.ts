@@ -1,9 +1,9 @@
 export interface VLMScoreResult {
-  historicalContextScore: number; // 0-40
-  visualNoiseScore: number;       // 0-30
-  artisticFitScore: number;        // 0-30
-  totalScore: number;              // 0-100
-  passed: boolean;                 // totalScore >= 60
+  historicalContextScore: number;
+  visualNoiseScore: number;
+  artisticFitScore: number;
+  totalScore: number;
+  passed: boolean;
   reasons: string[];
 }
 

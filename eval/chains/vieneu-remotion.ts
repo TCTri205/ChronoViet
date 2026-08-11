@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import http from 'http';
 import { execSync } from 'child_process';
-import { ChronoVideoSchema, ChronoVideoProps } from '../../packages/shared-spec/src';
+import { ChronoVideoSchema, ChronoVideoProps, envConfig } from '../../packages/shared-spec/src';
 import { VieNeuEngine, convertVieNeuTimestampsToCaptions } from '../../services/vieneu-tts/src';
 import { cleanEvalArtifacts, isPortInUseSync, killPortProcessSync } from '../utils/cleaner';
 
@@ -75,8 +75,8 @@ export async function runVieNeuRemotionChain(options: {
 } = {}): Promise<IntegratedChainReport> {
   const verbose = options.verbose ?? false;
   const openStudio = options.openStudio ?? true;
-  const requestedPortStr = options.port || process.env.PORT || '9876';
-  const pythonUrl = options.pythonUrl || process.env.VIENEU_PYTHON_URL || 'http://localhost:8080';
+  const requestedPortStr = options.port || String(envConfig.REMOTION_PORT);
+  const pythonUrl = options.pythonUrl || envConfig.VIENEU_PYTHON_URL;
 
   if (options.cleanBeforeRun) {
     cleanEvalArtifacts({ verbose, port: parseInt(requestedPortStr, 10) });
@@ -283,7 +283,7 @@ export async function runVieNeuRemotionChain(options: {
     console.log(' BUOC CUOI: KHOI CHAY GIAO DIEN REMOTION STUDIO DE XEM VIDEO HOAN CHINH');
     console.log('----------------------------------------------------------------\n');
 
-    const requestedPort = parseInt(requestedPortStr, 10) || 9876;
+    const requestedPort = parseInt(requestedPortStr, 10) || envConfig.REMOTION_PORT;
     let targetPort = requestedPort;
     if (isPortInUseSync(targetPort)) {
       console.log(`[*] Cong ${requestedPort} dang bi chiem giu. Dang giai phong...`);
@@ -328,7 +328,7 @@ export async function runVieNeuRemotionChain(options: {
         stdio: 'inherit',
         env: {
           ...process.env,
-          NODE_OPTIONS: process.env.NODE_OPTIONS || '--max-old-space-size=4096',
+          NODE_OPTIONS: envConfig.REMOTION_NODE_OPTIONS,
         },
       });
     } catch (e: any) {

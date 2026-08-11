@@ -75,3 +75,23 @@ media/audio-cache/*
 # TTS Service Media
 services/vieneu-tts/media/audio-cache/*
 !services/vieneu-tts/media/audio-cache/.gitkeep
+
+# Evaluation Suite Artifacts (generated during test runs)
+eval/reports/*.json
+eval/reports/*.md
+eval/out/*
+!eval/out/.gitkeep
+
+# Per-module eval artifacts (generated JSON/MD reports)
+packages/*/eval/reports/*.json
+packages/*/eval/reports/*.md
+packages/*/eval/out/*
+!packages/*/eval/out/.gitkeep
+services/*/eval/reports/*.json
+services/*/eval/reports/*.md
+
+# Eval-generated audio caches
+packages/remotion-engine/eval/public/audio/*
+!packages/remotion-engine/eval/public/audio/.gitkeep
+packages/remotion-engine/public/audio/*
+!packages/remotion-engine/public/audio/.gitkeep

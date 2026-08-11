@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { INITIAL_RAG_SCHEMA_SQL } from './schema.js';
+import { envConfig, getDatabaseConfig } from '@chronoviet/shared-spec';
 
 export interface DbEntity {
   id: string;
@@ -62,14 +63,15 @@ let pgConnected = false;
 let checkAttempted = false;
 
 export function getPoolConfig() {
+  const db = getDatabaseConfig();
   return {
-    host: process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-    database: process.env.POSTGRES_DB || 'chronoviet',
-    user: process.env.POSTGRES_USER || 'postgres',
-    password: process.env.POSTGRES_PASSWORD || 'postgres',
-    connectionTimeoutMillis: 1000,
-    idleTimeoutMillis: 10000,
+    host: db.host,
+    port: db.port,
+    database: db.database,
+    user: db.user,
+    password: db.password,
+    connectionTimeoutMillis: envConfig.PG_CONNECTION_TIMEOUT_MS,
+    idleTimeoutMillis: envConfig.PG_IDLE_TIMEOUT_MS,
   };
 }
 

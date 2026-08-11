@@ -1,11 +1,11 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { VieNeuTTSRequestSchema } from '@chronoviet/shared-spec';
+import { VieNeuTTSRequestSchema, envConfig } from '@chronoviet/shared-spec';
 import { VieNeuEngine } from './engine.js';
 
-const PORT = parseInt(process.env.PORT || '8080', 10);
-const CACHE_DIR = path.resolve(process.cwd(), 'media/audio-cache');
+const PORT = envConfig.TTS_SERVICE_PORT;
+const CACHE_DIR = path.resolve(process.cwd(), envConfig.AUDIO_CACHE_DIR);
 const engine = new VieNeuEngine();
 
 if (!fs.existsSync(CACHE_DIR)) {
@@ -86,7 +86,7 @@ export function createTtsServer() {
 }
 
 // Start Server if executed directly
-if (process.env.NODE_ENV !== 'test' && require.main === module) {
+if (envConfig.NODE_ENV !== 'test' && require.main === module) {
   const server = createTtsServer();
   server.listen(PORT, () => {
     console.log(`🚀 VieNeu TTS Microservice running on http://localhost:${PORT}`);

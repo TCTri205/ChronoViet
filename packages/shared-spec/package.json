@@ -10,6 +10,7 @@
     "eval": "echo [shared-spec] No evaluation suite needed"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
     "zod": "4.4.3"
   },
   "devDependencies": {

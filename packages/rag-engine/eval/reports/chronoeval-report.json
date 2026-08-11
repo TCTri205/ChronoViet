@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-11T14:10:15.169Z",
+  "timestamp": "2026-08-11T14:33:56.820Z",
   "totalEvaluated": 6,
   "avgFactPrecision": 100,
   "avgHallucinationRate": 0,
@@ -20,7 +20,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 3,
-      "latencyMs": 3,
+      "latencyMs": 4,
       "passed": true
     },
     {
@@ -31,7 +31,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 2,
-      "latencyMs": 1,
+      "latencyMs": 0,
       "passed": true
     },
     {

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
-import { VieNeuTTSRequest, VieNeuTTSResponse, WordTimestamp } from '@chronoviet/shared-spec';
+import { VieNeuTTSRequest, VieNeuTTSResponse, WordTimestamp, envConfig } from '@chronoviet/shared-spec';
 import { calculateSceneDurationInFrames } from './timestamp-converter.js';
 
 export interface IVieNeuEngine {
@@ -76,7 +76,7 @@ function createSyntheticWavBuffer(
 export class SyntheticTTSFallbackEngine implements IVieNeuEngine {
   private cacheDir: string;
 
-  constructor(cacheDir = path.resolve(process.cwd(), 'media/audio-cache')) {
+  constructor(cacheDir = path.resolve(process.cwd(), envConfig.AUDIO_CACHE_DIR)) {
     this.cacheDir = cacheDir;
     if (!fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir, { recursive: true });
@@ -150,7 +150,7 @@ export class VieNeuEngine implements IVieNeuEngine {
   private fallbackEngine: SyntheticTTSFallbackEngine;
   private pythonUrl: string;
 
-  constructor(pythonUrl = process.env.VIENEU_PYTHON_URL || 'http://localhost:8080') {
+  constructor(pythonUrl = envConfig.VIENEU_PYTHON_URL) {
     this.pythonUrl = pythonUrl;
     this.fallbackEngine = new SyntheticTTSFallbackEngine();
   }
@@ -169,7 +169,7 @@ export class VieNeuEngine implements IVieNeuEngine {
               'Content-Type': 'application/json',
               'Content-Length': Buffer.byteLength(payload),
             },
-            timeout: 60000,
+            timeout: envConfig.TTS_HTTP_TIMEOUT_MS,
           },
           (res) => {
             let data = '';

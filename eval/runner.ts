@@ -3,6 +3,7 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { runVieNeuRemotionChain, IntegratedChainReport } from './chains/vieneu-remotion';
 import { cleanEvalArtifacts } from './utils/cleaner';
+import { envConfig } from '../packages/shared-spec/src/index.js';
 
 interface MasterEvalReport {
   timestamp: string;
@@ -58,13 +59,13 @@ async function main() {
 
   // If user passed --clean, run cleaner and exit
   if (cleanOnly) {
-    cleanEvalArtifacts({ verbose: true, port: port ? parseInt(port, 10) : 9876 });
+    cleanEvalArtifacts({ verbose: true, port: port ? parseInt(port, 10) : envConfig.REMOTION_PORT });
     process.exit(0);
   }
 
   // Pre-eval cleanup lifecycle (Always run pre-clean when --fresh, or when running --all)
   if (fresh || mode === 'all') {
-    cleanEvalArtifacts({ verbose, port: port ? parseInt(port, 10) : 9876 });
+    cleanEvalArtifacts({ verbose, port: port ? parseInt(port, 10) : envConfig.REMOTION_PORT });
   }
 
   const reportsDir = path.resolve(process.cwd(), 'eval/reports');

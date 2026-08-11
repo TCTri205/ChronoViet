@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import { envConfig } from '../../packages/shared-spec/src/index.js';
 
 export interface CleanupOptions {
   cleanAudio?: boolean;
@@ -18,7 +19,7 @@ const DEFAULT_OPTIONS: CleanupOptions = {
   cleanOut: true,
   cleanCaches: true,
   killPorts: true,
-  port: 9876,
+  port: envConfig.REMOTION_PORT,
   verbose: true,
 };
 

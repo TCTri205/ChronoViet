@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { performance } from 'perf_hooks';
 import { VieNeuEngine } from '../src/engine';
+import { envConfig } from '@chronoviet/shared-spec';
 import { SentenceEvalMetric, SummaryEvalReport, saveEvalReport } from './reports/report_generator';
 import { cleanEvalArtifacts } from '../../../eval/utils/cleaner';
 
@@ -48,7 +49,7 @@ async function runVieNeuTtsEvaluation() {
   const rawData = fs.readFileSync(datasetPath, 'utf-8');
   const dataset: DatasetItem[] = JSON.parse(rawData);
 
-  const targetRtf = parseFloat(process.env.EVAL_MAX_RTF || '0.3');
+  const targetRtf = envConfig.EVAL_MAX_RTF;
 
   console.log(`📁 Loaded ${dataset.length} scene sentences for scenario script from '${datasetName}'.`);
   console.log(`⚙️ Target KPIs: RTF < ${targetRtf}x | Alignment Error < 50ms | Frame Error < 1 frame`);

@@ -20,8 +20,8 @@ d:\Persional_Projects\ChronoViet\docs\
 │
 ├── ⚙️ modules/                                [CHI TIẾT 5 MÔ-ĐUN XỬ LÝ PIPELINE]
 │   ├── modules/README.md                      [Tổng quan 5 Mô-đun Xử lý Dữ liệu]
-│   ├── modules/00_DATA_PREPROCESSING_AND_INGESTION.md [Mô-đun 0: Data Preprocessing & Ingestion Engine [📐]]
-│   ├── modules/01_CHRONO_RAG_ENGINE.md        [Mô-đun 1: Knowledge Retrieval & Anti-Hallucination [📐]]
+│   ├── modules/00_DATA_PREPROCESSING_AND_INGESTION.md [Mô-đun 0: Data Preprocessing & Ingestion Engine [✅]]
+│   ├── modules/01_CHRONO_RAG_ENGINE.md        [Mô-đun 1: Knowledge Retrieval & Anti-Hallucination [✅]]
 │   ├── modules/02_MULTI_AGENT_ORCHESTRATOR.md [Mô-đun 2: Small LLM & Long-Form Script Pipeline v3.2 [📐]]
 │   ├── modules/03_VLM_INSPECTOR_AGENT.md      [Mô-đun 3: Visual Quality Control & Fallback System [📐]]
 │   └── modules/04_REMOTION_RENDER_ENGINE.md   [Mô-đun 4: 100% Data-Driven Video Pipeline [✅]]

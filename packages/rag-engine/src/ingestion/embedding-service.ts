@@ -1,8 +1,10 @@
 /**
- * Embedding Service: Generates 1024-dimensional Dense Embeddings (BAAI/bge-m3 compatible)
+ * Embedding Service: Generates Dense Embeddings (BAAI/bge-m3 compatible)
  */
 
-export const EMBEDDING_DIMENSION = 1024;
+import { envConfig } from '@chronoviet/shared-spec';
+
+export const EMBEDDING_DIMENSION = envConfig.EMBEDDING_DIMENSION;
 
 /**
  * Deterministic pseudo-random seed generator for text strings

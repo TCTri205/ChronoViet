@@ -20,11 +20,12 @@
 
 **ChronoViet** (*Chronology + Việt Nam*) giải quyết bài toán sấy khô kiến thức lịch sử bằng cách biến nguồn tri thức lịch sử Việt Nam dạng văn bản thành các **Video tóm tắt trực quan tự động** kết hợp **Hệ thống Chatbot RAG tương tác hai chiều**.
 
-Dự án ứng dụng mô hình **Decoupled Event-Driven Architecture** với 4 mô-đun xử lý chuyên biệt:
+Dự án ứng dụng mô hình **Decoupled Event-Driven Architecture** với 5 mô-đun xử lý chuyên biệt:
+0. **Data Preprocessing & Ingestion Engine**: Nạp tri thức lịch sử offline, làm sạch lỗi OCR, chuẩn hóa địa danh qua các thời kỳ (`SAME_AS_LOCATION`), khử nhập nhằng nhân vật (`ALIAS_OF`), Dynamic Hierarchical Chunking, nạp PostgreSQL pgvector & Host Mount Volume `/media/`.
 1. **Hybrid GraphRAG Engine**: Đảm bảo tri thức lịch sử chính xác, loại bỏ hoàn toàn hiện tượng suy đoán sai (hallucination).
 2. **Multi-Agent Orchestrator (LangGraph.js)**: Lập kịch bản video chi tiết, phân chia phân cảnh & chọn bố cục trực quan phù hợp.
 3. **VLM Inspector Agent (Gemini 2.5 Flash / CLIP)**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
-4. **Remotion Render Engine**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v3.0/v3.2.
+4. **Remotion Render Engine**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v4.1.
 
 ---
 
@@ -75,7 +76,7 @@ ChronoViet/
 | :--- | :--- | :---: | :---: |
 | [`@chronoviet/remotion-engine`](file:///d:/Persional_Projects/ChronoViet/packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
 | [`@chronoviet/shared-spec`](file:///d:/Persional_Projects/ChronoViet/packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas & Data Contracts | **✅ Ready** | N/A (Shared Spec) |
-| [`@chronoviet/rag-engine`](file:///d:/Persional_Projects/ChronoViet/packages/rag-engine) | Truy xuất tri thức lịch sử với PostgreSQL pgvector & Relational Graph CTEs | **📐 Roadmap** | `packages/rag-engine/eval/` |
+| [`@chronoviet/rag-engine`](file:///d:/Persional_Projects/ChronoViet/packages/rag-engine) | Data Ingestion ETL (Mô-đun 0) & Chrono-RAG Engine (Mô-đun 1) PostgreSQL pgvector + Graph | **✅ Ready** | `packages/rag-engine/eval/` |
 | [`@chronoviet/agent-orchestrator`](file:///d:/Persional_Projects/ChronoViet/packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh & biên tập kịch bản | **📐 Roadmap** | `packages/agent-orchestrator/eval/` |
 | [`@chronoviet/vlm-inspector`](file:///d:/Persional_Projects/ChronoViet/packages/vlm-inspector) | Thẩm định hình ảnh tư liệu & lọc bản quyền (PD, CC0, CC-BY) | **📐 Roadmap** | `packages/vlm-inspector/eval/` |
 | [`@chronoviet/vieneu-tts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts) | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX) | **✅ Ready** | `services/vieneu-tts/eval/` |
