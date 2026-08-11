@@ -29,7 +29,7 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { scale, isLandscape } = useResponsiveLayout();
+  const { scale } = useResponsiveLayout();
   const activeTheme = resolveTheme(theme);
   const activeFont = getSafeFontFamily(theme?.fontFamily, false);
   const activeSerifFont = getSafeFontFamily(theme?.fontFamily, true);
@@ -44,10 +44,6 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
     ? cleanTitle.split(' ').map((w) => w[0]).join('').slice(0, 2)
     : 'CV';
 
-  // Background zoom motion
-  const bgScale = interpolate(frame, [0, durationInFrames], [1.0, 1.1], { extrapolateRight: 'clamp' });
-  const [hasBgError, setHasBgError] = React.useState(false);
-
   // Phase 1: Poem quote (0 - 150 frames ~ 5s)
   const poemOpacity = interpolate(frame, [0, 20, 110, 140], [0, 1, 1, 0], {
     extrapolateRight: 'clamp',
@@ -57,17 +53,17 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
   const endCardScale = spring({
     frame: Math.max(0, frame - 130),
     fps,
-    from: 0.85,
+    from: 0.92,
     to: 1,
-    config: { damping: 14, stiffness: 100 },
+    config: { damping: 15, stiffness: 100 },
   });
 
   const endCardOpacity = interpolate(frame, [130, 150], [0, 1], {
     extrapolateRight: 'clamp',
   });
 
-  const poemFontSize = Math.round((isLandscape ? 32 : 24) * scale);
-  const titleFontSize = Math.round((isLandscape ? 34 : 26) * scale);
+  const poemFontSize = Math.round(32 * scale);
+  const titleFontSize = Math.round(34 * scale);
 
   return (
     <AbsoluteFill
@@ -79,12 +75,11 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
         overflow: 'hidden',
       }}
     >
-
-      {/* Primary Glow Accent */}
+      {/* Historical Parchment Vignette Canvas Overlay */}
       <AbsoluteFill
         style={{
-          background: `radial-gradient(circle at center, ${activeTheme.accentGlow} 0%, transparent 65%)`,
-          opacity: 0.5,
+          background: 'radial-gradient(circle at center, transparent 35%, rgba(14, 12, 10, 0.9) 100%)',
+          pointerEvents: 'none',
         }}
       />
 
@@ -103,7 +98,7 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
         >
           <div
             style={{
-              maxWidth: isLandscape ? '70%' : '85%',
+              maxWidth: '70%',
               textAlign: 'center',
             }}
           >
@@ -131,7 +126,7 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
                   fontSize: `${Math.round(16 * scale)}px`,
                   fontWeight: 700,
                   color: COLOR_PALETTE.textSubtle,
-                  letterSpacing: '1px',
+                  letterSpacing: '1.5px',
                 }}
               >
                 — {cleanAuthor}
@@ -141,7 +136,7 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
         </AbsoluteFill>
       )}
 
-      {/* 2. Phase 2: Dynamic Outro End Card */}
+      {/* 2. Phase 2: Dynamic Outro End Card (Framed Mộc Bản) */}
       <AbsoluteFill
         style={{
           display: 'flex',
@@ -154,44 +149,46 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
       >
         <div
           style={{
-            maxWidth: isLandscape ? '75%' : '88%',
-            backgroundColor: 'rgba(15, 23, 34, 0.92)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderRadius: `${Math.round(24 * scale)}px`,
-            border: `2px solid ${activeTheme.secondaryColor}`,
-            padding: `${Math.round(48 * scale)}px ${Math.round(56 * scale)}px`,
+            maxWidth: '75%',
+            backgroundColor: 'rgba(22, 18, 14, 0.95)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            borderRadius: '2px',
+            border: `1px solid ${activeTheme.primaryColor}`,
+            outline: `1px solid ${activeTheme.accentGlow}`,
+            outlineOffset: '-6px',
+            padding: `${Math.round(44 * scale)}px ${Math.round(52 * scale)}px`,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             textAlign: 'center',
-            boxShadow: `0 25px 80px rgba(0,0,0,0.9), 0 0 45px ${activeTheme.accentGlow}`,
+            boxShadow: '0 25px 80px rgba(0, 0, 0, 0.95)',
           }}
         >
-          {/* Dynamic Brand Icon */}
+          {/* Dynamic Brand Square Seal Stamp Icon */}
           <div
             style={{
-              width: `${Math.round(72 * scale)}px`,
-              height: `${Math.round(72 * scale)}px`,
-              borderRadius: '50%',
-              backgroundColor: activeTheme.secondaryColor,
+              width: `${Math.round(64 * scale)}px`,
+              height: `${Math.round(64 * scale)}px`,
+              borderRadius: '2px',
+              backgroundColor: COLOR_PALETTE.vermilionRed,
               border: `2px solid ${activeTheme.primaryColor}`,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              boxShadow: `0 0 30px ${activeTheme.accentGlow}`,
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.95)',
               marginBottom: `${Math.round(18 * scale)}px`,
             }}
           >
             <span
               style={{
-                fontFamily: activeFont,
-                fontSize: `${Math.round(32 * scale)}px`,
+                fontFamily: activeSerifFont,
+                fontSize: `${Math.round(28 * scale)}px`,
                 fontWeight: 900,
-                color: activeTheme.primaryColor,
+                color: COLOR_PALETTE.docParchment,
               }}
             >
-              {logoInitials}
+              印
             </span>
           </div>
 
@@ -199,11 +196,11 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
             <h2
               style={{
                 margin: 0,
-                fontFamily: activeFont,
+                fontFamily: activeSerifFont,
                 fontSize: `${titleFontSize}px`,
                 fontWeight: 900,
-                color: '#ffffff',
-                letterSpacing: '0.8px',
+                color: activeTheme.primaryColor,
+                letterSpacing: '1px',
               }}
             >
               {cleanTitle}
@@ -217,15 +214,15 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
                 fontFamily: activeFont,
                 fontSize: `${Math.round(18 * scale)}px`,
                 fontWeight: 700,
-                color: activeTheme.primaryColor,
-                letterSpacing: '0.8px',
+                color: COLOR_PALETTE.textSubtle,
+                letterSpacing: '1px',
               }}
             >
               {cleanCtaText}
             </p>
           )}
 
-          {/* Dynamic Badges from JSON Input */}
+          {/* Dynamic Red Seal Badges from JSON Input */}
           {bulletPoints.length > 0 && (
             <div
               style={{
@@ -239,18 +236,19 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
                 <div
                   key={idx}
                   style={{
-                    backgroundColor: idx === 0 ? activeTheme.secondaryColor : 'rgba(255, 255, 255, 0.1)',
-                    border: idx === 0 ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
-                    color: '#ffffff',
+                    backgroundColor: idx === 0 ? 'rgba(155, 27, 27, 0.2)' : 'rgba(32, 26, 18, 0.6)',
+                    border: idx === 0 ? `2px solid ${COLOR_PALETTE.vermilionRed}` : `1px solid ${activeTheme.primaryColor}`,
+                    color: idx === 0 ? COLOR_PALETTE.vermilionRed : activeTheme.primaryColor,
                     fontFamily: activeFont,
                     fontWeight: 800,
-                    fontSize: `${Math.round(14 * scale)}px`,
-                    padding: '10px 24px',
-                    borderRadius: '20px',
-                    letterSpacing: '0.8px',
+                    fontSize: `${Math.round(13 * scale)}px`,
+                    padding: '8px 20px',
+                    borderRadius: '2px',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
                   }}
                 >
-                  {toVietnameseUpperCase(badge)}
+                  【 {toVietnameseUpperCase(badge)} 】
                 </div>
               ))}
             </div>
@@ -260,3 +258,4 @@ export const OutroSlide: React.FC<OutroSlideProps> = ({
     </AbsoluteFill>
   );
 };
+

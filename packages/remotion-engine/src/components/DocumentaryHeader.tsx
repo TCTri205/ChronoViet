@@ -23,7 +23,8 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
   const activeTheme = React.useMemo(() => resolveTheme(theme), [theme]);
   const activeFont = React.useMemo(() => getSafeFontFamily(theme?.fontFamily), [theme?.fontFamily]);
 
-  const cleanSeriesTitle = React.useMemo(() => toVietnameseUpperCase(seriesTitle), [seriesTitle]);
+  const effectiveSeriesTitle = seriesTitle || activeTheme.headerTitle;
+  const cleanSeriesTitle = React.useMemo(() => toVietnameseUpperCase(effectiveSeriesTitle), [effectiveSeriesTitle]);
   const cleanChapterTitle = React.useMemo(() => toVietnameseUpperCase(chapterTitle), [chapterTitle]);
 
   // Stagger header entrance slightly (frame delay = 4) to let background visual establish first
@@ -39,10 +40,10 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
 
   const layoutMetrics = React.useMemo(() => {
     return {
-      fontSize: Math.round(13 * scale),
-      paddingY: Math.round(7 * scale),
-      paddingX: Math.round(18 * scale),
-      dotSize: Math.round(8 * scale),
+      fontSize: Math.round(12 * scale),
+      paddingY: Math.round(6 * scale),
+      paddingX: Math.round(16 * scale),
+      dotSize: Math.round(6 * scale),
     };
   }, [scale]);
 
@@ -72,13 +73,13 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: `${Math.round(8 * scale)}px`,
-            backgroundColor: 'rgba(10, 14, 22, 0.92)',
+            backgroundColor: 'rgba(22, 18, 14, 0.94)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
-            border: `1px solid ${activeTheme.accentGlow}`,
-            borderRadius: `${Math.round(20 * scale)}px`,
+            border: `1px solid ${activeTheme.primaryColor}`,
+            borderRadius: '2px',
             padding: `${paddingY}px ${paddingX}px`,
-            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.5)',
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.85)',
             maxWidth: '45%',
           }}
         >
@@ -87,9 +88,8 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
               width: `${dotSize}px`,
               height: `${dotSize}px`,
               minWidth: `${dotSize}px`,
-              borderRadius: '50%',
-              backgroundColor: activeTheme.primaryColor,
-              boxShadow: `0 0 8px ${activeTheme.primaryColor}`,
+              borderRadius: '1px',
+              backgroundColor: COLOR_PALETTE.vermilionRed,
             }}
           />
           <span
@@ -115,11 +115,11 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
       {cleanChapterTitle && cleanChapterTitle !== cleanSeriesTitle && (
         <div
           style={{
-            backgroundColor: 'rgba(10, 14, 22, 0.92)',
+            backgroundColor: 'rgba(22, 18, 14, 0.94)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
-            border: `1px solid ${activeTheme.accentGlow}`,
-            borderRadius: `${Math.round(20 * scale)}px`,
+            border: `1px solid ${activeTheme.primaryColor}`,
+            borderRadius: '2px',
             padding: `${paddingY}px ${paddingX}px`,
             color: activeTheme.primaryColor,
             fontFamily: activeFont,
@@ -138,3 +138,4 @@ export const DocumentaryHeader: React.FC<DocumentaryHeaderProps> = ({
     </div>
   );
 };
+

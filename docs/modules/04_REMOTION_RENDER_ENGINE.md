@@ -8,7 +8,7 @@
 Mô-đun **Remotion Render Engine** là **Công cụ Thực thi (Agent Tool)** của hệ thống [Multi-Agent Orchestrator](file:///D:/Persional_Projects/ChronoViet/docs/modules/02_MULTI_AGENT_ORCHESTRATOR.md). 
 
 Trong sơ đồ tổng thể:
-* Input của Remotion Render Engine là file **JSON Production Schema v3.0** (`ChronoVideoProps`) được đóng gói và thẩm định từ **Module 2 (Multi-Agent Orchestrator)**.
+* Input của Remotion Render Engine là file **JSON Production Schema v4.1** (`ChronoVideoProps`) được đóng gói và thẩm định từ **Module 2 (Multi-Agent Orchestrator)**.
 * Trước khi gọi CLI `npx remotion render`, Render Worker **pre-download toàn bộ media assets** (Audio `.wav`, Images, Fonts) về thư mục làm việc cục bộ Host Volume `/media/raw-assets/` để đảm bảo 0% gián đoạn do mạng.
 * Remotion hoạt động như một Tool nhận diện lệnh CLI hoặc API wrapper, khởi tạo Chromium Process riêng biệt và giải phóng toàn bộ tài nguyên process (`browser.close()`) ngay sau khi xuất xong MP4.
 * Engine này đã được **triển khai hoàn thiện 100%** tại thư mục codebase [`packages/remotion-engine/src/`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src).
@@ -16,9 +16,9 @@ Trong sơ đồ tổng thể:
 
 ---
 
-## 2. Mô Tả Chi Tiết & 100% Chính Xác Format JSON Input Schema v3.0
+## 2. Mô Tả Chi Tiết & 100% Chính Xác Format JSON Input Schema v4.1
 
-Cấu trúc file JSON input truyền vào Remotion Render Engine tuân thủ 100% chuẩn Zod Schema quy định tại [`packages/remotion-engine/src/types/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/schema.ts) và TypeScript definitions tại [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts).
+Cấu trúc file JSON input truyền vào Remotion Render Engine tuân thủ 100% chuẩn Zod Schema quy định tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) và TypeScript definitions tại [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts).
 
 Dưới đây là bảng tra cứu đầy đủ 100% không bỏ sót bất kỳ trường dữ liệu hay enum nào:
 
@@ -46,11 +46,11 @@ Dưới đây là bảng tra cứu đầy đủ 100% không bỏ sót bất kỳ
 #### Chi Tiết `ThemeConfig` (Cấu Hình Màu Sắc & Typography):
 ```json
 {
-  "primaryColor": "#DC2626",        // Màu chủ đạo (Headers, Viền nổi bật, Accent)
-  "secondaryColor": "#F59E0B",      // Màu phụ (Subtitles, Badges, Highlights)
-  "backgroundColor": "#090D14",     // Màu nền Canvas (Dark mode bảo tàng)
+  "primaryColor": "#C89D35",        // Màu chủ đạo Hoàng Thành (Headers, Viền nổi bật, Accent)
+  "secondaryColor": "#9B1B1B",      // Màu phụ Đỏ Son (Con dấu Triện, Badges, Highlights)
+  "backgroundColor": "#0E0C0A",     // Màu nền Canvas Sơn Mài (Dark mode bảo tàng)
   "fontFamily": "Merriweather, serif", // Font chữ tiếng Việt chuẩn
-  "accentGlow": "rgba(220, 38, 38, 0.4)" // Hiệu ứng phát sáng neon/hào quang
+  "accentGlow": "rgba(200, 157, 53, 0.4)" // Hiệu ứng phát sáng/hào quang kim sắc
 }
 ```
 
@@ -168,11 +168,11 @@ export interface CaptionWord {
 
 ---
 
-### 2.4. Danh Mục Đầy Đủ 18 LayoutModes Trong Remotion Engine
+### 2.4. Danh Mục Đầy Đủ 31 LayoutModes Trong Remotion Engine (Tối ưu 16:9 Phim Tài Liệu)
 
 ```typescript
 export type LayoutMode =
-  // Group 1: Pure Image Layouts (7 Modes - Sử dụng ảnh Crawl đã qua VLM duyệt)
+  // Group 1: Pure Image Layouts (11 Modes - Sử dụng ảnh Crawl đã qua VLM duyệt)
   | 'BLUR_BG'          // Ảnh chính ở giữa, làm mờ hậu cảnh tràn màn hình (Phổ biến nhất)
   | 'HISTORICAL_FRAME' // Ảnh đặt trong khung cổ kính mạ vàng / họa tiết sử
   | 'FULL_COVER'       // Ảnh phủ kín toàn màn hình (Crop vừa khung)
@@ -180,19 +180,32 @@ export type LayoutMode =
   | 'CENTER_SCALE'     // Zoom nhẹ ảnh ở trung tâm màn hình
   | 'VIGNETTE_DARK'    // Ảnh phủ lớp tối viền đen xung quanh
   | 'SPLIT_COMPARE'    // Chia đôi màn hình so sánh 2 ảnh (assetUrl vs secondaryAssetUrl)
+  | 'PURE_IMAGE_FULL'  // Ảnh toàn màn hình không che phủ
+  | 'DOCUMENTARY_GRID' // Lưới ảnh tư liệu 16:9
+  | 'NEWSPAPER_ARCHIVE'// Phong cách tư liệu trang báo cổ
+  | 'GALLERY_3D'       // Triển lãm ảnh 3D không gian di sản
 
-  // Group 2: Pure Code Layouts (11 Modes - Render 100% bằng React Code, KHÔNG DÙNG ẢNH)
-  | 'TITLE_CARD'       // Màn hình tiêu đề chính tráng lệ
+  // Group 2: Pure Code Layouts (20 Modes - Render 100% bằng React Code, KHÔNG DÙNG ẢNH, Tối ưu 16:9)
+  | 'TITLE_CARD'       // Màn hình tiêu đề chính tráng lệ 16:9
   | 'CHAPTER_CARD'     // Thẻ báo hiệu chuyển Chương (Chapter I, II, III)
-  | 'STAT_CARD'        // Thẻ hiển thị các mốc năm, quân số, chỉ số ấn tượng
-  | 'VERSUS_CARD'      // Thẻ so sánh tương quan 2 thế lực đối đầu
-  | 'QUOTE_SLIDE'      // Màn hình trích dẫn Hịch / Thơ / Lời nói lịch sử
-  | 'BULLET_HIGHLIGHT' // Liệt kê 2-4 điểm nhấn sự kiện trọng tâm
-  | 'TIMELINE_CHRONO'  // Dòng thời gian mốc năm phát sáng
-  | 'MUSEUM_TAG'       // Thẻ thông tin bảo vật / cổ vật bảo tàng
+  | 'STAT_CARD'        // Thẻ hiển thị mốc năm, quân số, chỉ số ấn tượng
+  | 'VERSUS_CARD'      // Thẻ so sánh tương quan 2 thế lực đối đầu (Tây Sơn vs Thanh, v.v.)
+  | 'QUOTE_SLIDE'      // Màn hình trích dẫn Hịch / Thơ / Lời nói lịch sử dạng Sắc Phong
+  | 'BULLET_HIGHLIGHT' // Liệt kê điểm nhấn sự kiện trọng tâm
+  | 'TIMELINE_CHRONO'  // Trục niên đại sự kiện chạy ngang 16:9 (Horizontal Timeline)
+  | 'ROYAL_DECREE'     // Chiếu Cần Vương / Sắc Phong cuộn ngang 16:9 (Imperial Scroll)
+  | 'MAP_TACTICAL'     // Sa bàn / Sơ đồ trận đánh lịch sử 16:9 kèm Chú giải (Battle Map UI)
+  | 'CHARACTER_PROFILE'// Hồ sơ danh nhân / tướng lĩnh dạng Dual-Column 16:9
+  | 'ARTIFACT_INSPECT' // Giao diện thẩm định bảo vật quốc gia 16:9 kèm 4 Hotspot tags
+  | 'POEM_RECITING'    // Màn hình ngâm thơ lịch sử / tuyên ngôn độc lập 16:9
+  | 'MUSEUM_TAG'       // Thẻ thông tin cổ vật bảo tàng
   | 'SPLIT_THEORY'     // Trình bày các giả thuyết / góc nhìn lịch sử
   | 'ARTICLE_UI'       // Giao diện trích đoạn bài báo sử học
-  | 'OUTRO_CARD';      // Màn hình kết thúc video (Subscribe, Kênh)
+  | 'SPONSOR_UI'       // Thẻ đồng hành / nhà tài trợ
+  | 'OUTRO_CARD'       // Màn hình kết thúc video (Subscribe, Kênh)
+  | 'QUOTE_CANVAS'     // Trích dẫn dạng parchment canvas
+  | 'HERO_SPOTLIGHT'   // Điểm sáng danh nhân lịch sử
+  | 'ARMY_STRENGTH';   // Biểu đồ tương quan lực lượng quân sự
 ```
 
 ---
@@ -208,23 +221,27 @@ export type LayoutMode =
 
 ---
 
-### 2.6. Danh Mục Đầy Đủ 15 Hiệu Ứng Chuyển Cảnh (`TransitionType`)
+### 2.6. Danh Mục Đầy Đủ 19 Hiệu Ứng Chuyển Cảnh (`TransitionType`)
 
 1. `'DISSOLVE'`: Hòa tan hình ảnh nhẹ nhàng.
-2. `'FADE_TO_BLACK'`: Chuyển mờ dần về nền đen.
-3. `'LIGHT_LEAK'`: Chuyển cảnh hiệu ứng vệt sáng điện ảnh.
-4. `'GLITCH'`: Chuyển cảnh nhiễu sóng số hiện đại.
-5. `'SLIDE_LEFT'`: Trượt phân cảnh sang trái.
-6. `'SLIDE_RIGHT'`: Trượt phân cảnh sang phải.
-7. `'SLIDE_UP'`: Trượt phân cảnh lên trên.
-8. `'SLIDE_DOWN'`: Trượt phân cảnh xuống dưới.
-9. `'WIPE'`: Gạt màn hình ngang.
-10. `'FLIP'`: Lật thẻ 3D.
-11. `'CLOCK_WIPE'`: Gạt màn hình theo chiều kim đồng hồ.
-12. `'ZOOM_DREAMY'`: Zoom mờ huyền ảo.
-13. `'CROSS_ZOOM'`: Zoom xuyên không gian.
-14. `'LINEAR_BLUR'`: Chuyển cảnh làm mờ tuyến tính.
-15. `'NONE'`: Cắt cảnh trực tiếp không dùng hiệu ứng.
+2. `'FADE'`: Chuyển mờ dần.
+3. `'FADE_TO_BLACK'`: Chuyển mờ dần về nền đen.
+4. `'LIGHT_LEAK'`: Chuyển cảnh hiệu ứng vệt sáng điện ảnh.
+5. `'FILM_BURN'`: Hiệu ứng cháy phim cổ điển.
+6. `'GLITCH'`: Chuyển cảnh nhiễu sóng số hiện đại.
+7. `'SLIDE_LEFT'`: Trượt phân cảnh sang trái.
+8. `'SLIDE_RIGHT'`: Trượt phân cảnh sang phải.
+9. `'SLIDE_UP'`: Trượt phân cảnh lên trên.
+10. `'SLIDE_DOWN'`: Trượt phân cảnh xuống dưới.
+11. `'ZOOM_IN'`: Thu phóng ống kính vào trong.
+12. `'ZOOM_OUT'`: Thu phóng ống kính ra ngoài.
+13. `'WIPE'`: Gạt màn hình ngang.
+14. `'FLIP'`: Lật thẻ 3D.
+15. `'CLOCK_WIPE'`: Gạt màn hình theo chiều kim đồng hồ.
+16. `'ZOOM_DREAMY'`: Zoom mờ huyền ảo.
+17. `'CROSS_ZOOM'`: Zoom xuyên không gian.
+18. `'LINEAR_BLUR'`: Chuyển cảnh làm mờ tuyến tính.
+19. `'NONE'`: Cắt cảnh trực tiếp không dùng hiệu ứng.
 
 ---
 
@@ -333,7 +350,7 @@ Dưới đây là một file JSON kịch bản hoàn chỉnh chuẩn 100% đư�
 
 ## 4. Kiểm Định Runtime & Đăng Ký Compositions
 
-### 4.1. Zod Schema Validation Boundary (`eval-remotion/src/types/schema.ts`)
+### 4.1. Zod Schema Validation Boundary (`packages/shared-spec/src/schema.ts`)
 Khi Agent gọi Remotion Tool, dữ liệu được parse trực tiếp qua Zod Schema. Nếu phát hiện thiếu trường dữ liệu hoặc sai định dạng, Tool trả về lỗi Validation cụ thể để Orchestrator thực hiện Self-Correction Loop:
 
 ```typescript
@@ -345,6 +362,7 @@ export const ChronoVideoSchema = z.object({
   aspectRatio: AspectRatioSchema.default('16:9'),
   theme: ThemeConfigSchema.optional(),
   audioUrl: z.string().optional(),
+  captionsUrl: z.string().optional(),
   bgmUrl: z.string().optional(),
   bgmVolume: z.number().optional(),
   defaultLayoutMode: LayoutModeSchema.optional(),
@@ -357,17 +375,25 @@ export const ChronoVideoSchema = z.object({
 });
 ```
 
-### 4.2. 8 Compositions Đã Đăng Ký Chính Thức (`eval-remotion/src/Root.tsx`)
+### 4.2. 11 Compositions Đã Đăng Ký Chính Thức (`packages/remotion-engine/src/Root.tsx`)
 
-Engine đã đăng ký sẵn 5 Compositions chuẩn theo domain nội dung và 3 Legacy Compositions:
+Engine đã đăng ký sẵn 1 Composition chung, 5 Compositions chuẩn theo domain nội dung, 2 Compositions định dạng chuyên biệt (Shorts/News) và 3 Legacy Compositions:
 
 ```tsx
-// 5 Standard Domain Compositions (v3.0 Schema)
+// Core & Domain Compositions (v3.0 Schema)
+<Composition id="ChronoVideo" component={ChronoVideo} defaultProps={templateGeneralTimeline} />
 <Composition id="BiographyVideo" component={ChronoVideo} defaultProps={biographyData} />
 <Composition id="BattleVideo" component={ChronoVideo} defaultProps={battleData} />
 <Composition id="DynastyVideo" component={ChronoVideo} defaultProps={dynastyData} />
 <Composition id="MysteryVideo" component={ChronoVideo} defaultProps={mysteryData} />
 <Composition id="ArtifactVideo" component={ChronoVideo} defaultProps={artifactData} />
+<Composition id="QuickShortsVideo" component={ChronoVideo} defaultProps={shortsData} width={1080} height={1920} />
+<Composition id="ModernNewsVideo" component={ChronoVideo} defaultProps={newsData} />
+
+// Legacy Compositions
+<Composition id="QuangTrungVideo" component={QuangTrungComposition} defaultProps={quangTrungData} />
+<Composition id="MongolViet2Video" component={MongolViet2Composition} defaultProps={mongolViet2Data} />
+<Composition id="HaiBaTrungVideo" component={HaiBaTrungComposition} defaultProps={haiBaTrungData} />
 ```
 
 ---

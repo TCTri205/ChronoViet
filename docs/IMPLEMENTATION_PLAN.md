@@ -13,7 +13,7 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 
 | Thành phần / Mô-đun | Trạng thái Thực tế | Mức độ Phức tạp | Đánh giá Công nghệ & Sẵn sàng | Thư mục Đánh giá (`eval/`) |
 | :--- | :---: | :---: | :--- | :--- |
-| **Mô-đun 4: Remotion Render Engine** | **[✅ IMPLEMENTED]** | Trung bình | **100% Hoàn thiện codebase** (`packages/remotion-engine/src/`). Đã có 18 `LayoutMode`, 15 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 13 UI Components, 8 Compositions. | `packages/remotion-engine/eval/` |
+| **Mô-đun 4: Remotion Render Engine** | **[✅ IMPLEMENTED]** | Trung bình | **100% Hoàn thiện codebase** (`packages/remotion-engine/src/`). Đã có 31 `LayoutMode`, 19 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 13 UI Components, 11 Compositions. | `packages/remotion-engine/eval/` |
 | **Dịch vụ VieNeu TTS (ONNX Engine)** | **[📐 ROADMAP Spec]** | Thấp - Trung bình | Đã thiết kế spec API ONNX Runtime + thuật toán tính toán `durationInFrames` dựa trên audio `.wav` thực tế và mốc từ `wordTimestamps` cho phụ đề Karaoke. | `services/vieneu-tts/eval/` |
 | **Mô-đun 1: Chrono-RAG Engine** | **[📐 ROADMAP Spec]** | Phức tạp | Hybrid GraphRAG dùng PostgreSQL 15+ (`pgvector` Dense Embedding BGE-M3 + Relational Graph Schema CTEs + k-hop Local Search + BGE Reranker v2). | `packages/rag-engine/eval/` |
 | **Mô-đun 2: Multi-Agent Orchestrator** | **[📐 ROADMAP Spec]** | Rất Phức tạp | LangGraph.js State Machine trên Node.js/TS, Postgres Checkpointer SSOT, quy trình 12 trạng thái, Chaptering Agent + 5 Script Micro-Steps, Duration Reconciler, Alias Table Fact-Checker. | `packages/agent-orchestrator/eval/` |

@@ -25,44 +25,42 @@ export const VersusCard: React.FC<VersusCardProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { scale, isLandscape } = useResponsiveLayout();
+  const { scale } = useResponsiveLayout();
   const activeTheme = resolveTheme(theme);
   const activeFont = getSafeFontFamily(theme?.fontFamily);
+  const activeSerifFont = getSafeFontFamily(theme?.fontFamily, true);
   const cleanTitle = toVietnameseUpperCase(title);
 
   // Delay card entrance by 15 frames (0.5s) so background media shows first
   const cardDelay = 15;
-  const leftX = interpolate(frame, [cardDelay, cardDelay + 15], [-120, 0], {
+  const leftX = interpolate(frame, [cardDelay, cardDelay + 15], [-100, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const rightX = interpolate(frame, [cardDelay, cardDelay + 15], [120, 0], {
+  const rightX = interpolate(frame, [cardDelay, cardDelay + 15], [100, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   const vsScale = spring({
-    frame: Math.max(0, frame - cardDelay - 10),
+    frame: Math.max(0, frame - cardDelay - 8),
     fps,
     from: 0,
     to: 1,
-    config: { damping: 10, stiffness: 120 },
+    config: { damping: 12, stiffness: 110 },
   });
 
   const opacity = interpolate(frame, [cardDelay, cardDelay + 10], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const vsPulse = Math.sin(frame * 0.1) * 0.08 + 1;
 
-  const headerFontSize = Math.round((isLandscape ? 32 : 24) * scale);
-  const nameFontSize = Math.round((isLandscape ? 34 : 26) * scale);
-  const statFontSize = Math.round((isLandscape ? 18 : 15) * scale);
+  const headerFontSize = Math.round(28 * scale);
+  const nameFontSize = Math.round(32 * scale);
+  const statFontSize = Math.round(17 * scale);
 
-  const [hasBgError, setHasBgError] = React.useState(false);
-
-  const rawLeft = leftSide || { name: '', stat: '', color: activeTheme.secondaryColor };
-  const rawRight = rightSide || { name: '', stat: '', color: '#8B0000' };
+  const rawLeft = leftSide || { name: '', stat: '', color: activeTheme.primaryColor };
+  const rawRight = rightSide || { name: '', stat: '', color: COLOR_PALETTE.vermilionRed };
 
   const left = {
     ...rawLeft,
@@ -89,81 +87,85 @@ export const VersusCard: React.FC<VersusCardProps> = ({
         overflow: 'hidden',
       }}
     >
-
-      {/* Dynamic Background Split Glow */}
+      {/* Historical Parchment Vignette Canvas Overlay */}
       <AbsoluteFill
         style={{
-          background: `linear-gradient(90deg, rgba(37, 99, 235, 0.2) 0%, transparent 45%, transparent 55%, rgba(139, 0, 0, 0.25) 100%)`,
+          background: 'radial-gradient(circle at center, transparent 40%, rgba(14, 12, 10, 0.85) 100%)',
+          pointerEvents: 'none',
         }}
       />
 
-      {/* Header Badge */}
+      {/* Header Badge (Con dấu Triện Son Tiêu Đề) */}
       {cleanTitle && (
         <div
           style={{
             opacity,
             transform: `translateY(${interpolate(frame, [0, 12], [-30, 0], { extrapolateRight: 'clamp' })}px)`,
             zIndex: 20,
-            marginBottom: `${Math.round(30 * scale)}px`,
-            backgroundColor: 'rgba(139, 0, 0, 0.3)',
-            color: '#ffffff',
+            marginBottom: `${Math.round(28 * scale)}px`,
+            backgroundColor: 'rgba(155, 27, 27, 0.15)',
+            color: COLOR_PALETTE.vermilionRed,
             fontFamily: activeFont,
             fontSize: `${headerFontSize}px`,
             fontWeight: 900,
-            letterSpacing: '1px',
-            padding: `${Math.round(8 * scale)}px ${Math.round(28 * scale)}px`,
-            borderRadius: `${Math.round(30 * scale)}px`,
-            border: `2px solid ${activeTheme.primaryColor}`,
-            boxShadow: `0 0 30px ${activeTheme.accentGlow}`,
+            letterSpacing: '2px',
+            padding: `${Math.round(6 * scale)}px ${Math.round(24 * scale)}px`,
+            borderRadius: '2px',
+            border: `2px solid ${COLOR_PALETTE.vermilionRed}`,
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
           }}
         >
-          {cleanTitle}
+          【 {cleanTitle} 】
         </div>
       )}
 
       {/* Main Versus Container */}
       <div
         style={{
-          width: isLandscape ? '85%' : '94%',
+          width: '85%',
           maxWidth: '1200px',
           display: 'flex',
-          flexDirection: isLandscape ? 'row' : 'column',
+          flexDirection: 'row',
           alignItems: 'stretch',
           justifyContent: 'center',
-          gap: `${Math.round(24 * scale)}px`,
+          gap: `${Math.round(20 * scale)}px`,
           position: 'relative',
           zIndex: 10,
         }}
       >
-        {/* Left Side */}
+        {/* Left Side (Phe 1 - Framed Mộc Bản) */}
         <div
           style={{
             flex: 1,
             transform: `translateX(${leftX}px)`,
             opacity,
-            padding: `${Math.round(32 * scale)}px ${Math.round(28 * scale)}px`,
-            background: 'rgba(10, 18, 32, 0.92)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderRadius: `${Math.round(20 * scale)}px`,
-            border: `2px solid ${left.color || activeTheme.secondaryColor}`,
-            boxShadow: `0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(37, 99, 235, 0.3)`,
+            padding: `${Math.round(28 * scale)}px ${Math.round(26 * scale)}px`,
+            background: 'rgba(22, 18, 14, 0.95)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            borderRadius: '2px',
+            border: `1px solid ${left.color || activeTheme.primaryColor}`,
+            outline: `1px solid ${activeTheme.accentGlow}`,
+            outlineOffset: '-5px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.9)',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: isLandscape ? 'flex-end' : 'center',
-            textAlign: isLandscape ? 'right' : 'center',
+            alignItems: 'flex-end',
+            textAlign: 'right',
           }}
         >
           {left.badge && (
             <span
               style={{
-                backgroundColor: left.color || activeTheme.secondaryColor,
-                color: '#ffffff',
+                backgroundColor: 'rgba(200, 157, 53, 0.15)',
+                color: left.color || activeTheme.primaryColor,
                 fontFamily: activeFont,
-                fontSize: `${Math.round(13 * scale)}px`,
+                fontSize: `${Math.round(12 * scale)}px`,
                 fontWeight: 800,
-                padding: `${Math.round(4 * scale)}px ${Math.round(14 * scale)}px`,
-                borderRadius: `${Math.round(12 * scale)}px`,
+                letterSpacing: '1px',
+                padding: `${Math.round(3 * scale)}px ${Math.round(12 * scale)}px`,
+                borderRadius: '2px',
+                border: `1px solid ${left.color || activeTheme.primaryColor}`,
                 marginBottom: `${Math.round(12 * scale)}px`,
               }}
             >
@@ -174,10 +176,10 @@ export const VersusCard: React.FC<VersusCardProps> = ({
           <h3
             style={{
               margin: 0,
-              fontFamily: activeFont,
+              fontFamily: activeSerifFont,
               fontSize: `${nameFontSize}px`,
               fontWeight: 900,
-              color: left.color || activeTheme.secondaryColor,
+              color: left.color || activeTheme.primaryColor,
               letterSpacing: '0.5px',
             }}
           >
@@ -186,7 +188,7 @@ export const VersusCard: React.FC<VersusCardProps> = ({
 
           <p
             style={{
-              margin: `${Math.round(12 * scale)}px 0 0 0`,
+              margin: `${Math.round(10 * scale)}px 0 0 0`,
               fontFamily: activeFont,
               fontSize: `${statFontSize}px`,
               color: COLOR_PALETTE.textSubtle,
@@ -198,66 +200,69 @@ export const VersusCard: React.FC<VersusCardProps> = ({
           </p>
         </div>
 
-        {/* Center VS Badge */}
+        {/* Center VS Badge (Con Dấu Triện Trận Đánh) */}
         <div
           style={{
             alignSelf: 'center',
-            transform: `scale(${vsScale * vsPulse})`,
+            transform: `scale(${vsScale})`,
             zIndex: 30,
-            width: `${Math.round(76 * scale)}px`,
-            height: `${Math.round(76 * scale)}px`,
-            borderRadius: '50%',
-            backgroundColor: COLOR_PALETTE.crimsonDark,
-            border: `3px solid ${activeTheme.primaryColor}`,
+            width: `${Math.round(64 * scale)}px`,
+            height: `${Math.round(64 * scale)}px`,
+            borderRadius: '2px',
+            backgroundColor: COLOR_PALETTE.vermilionRed,
+            border: `2px solid ${activeTheme.primaryColor}`,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            boxShadow: `0 0 40px ${activeTheme.accentGlow}, 0 0 25px rgba(239, 68, 68, 0.7)`,
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.95)',
           }}
         >
           <span
             style={{
-              fontFamily: activeFont,
-              fontSize: `${Math.round(30 * scale)}px`,
+              fontFamily: activeSerifFont,
+              fontSize: `${Math.round(26 * scale)}px`,
               fontWeight: 900,
-              color: activeTheme.primaryColor,
+              color: COLOR_PALETTE.docParchment,
               letterSpacing: '1px',
-              fontStyle: 'italic',
             }}
           >
             VS
           </span>
         </div>
 
-        {/* Right Side */}
+        {/* Right Side (Phe 2 - Framed Mộc Bản) */}
         <div
           style={{
             flex: 1,
             transform: `translateX(${rightX}px)`,
             opacity,
-            padding: `${Math.round(32 * scale)}px ${Math.round(28 * scale)}px`,
-            background: 'rgba(28, 12, 16, 0.92)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderRadius: `${Math.round(20 * scale)}px`,
-            border: `2px solid ${right.color || COLOR_PALETTE.crimsonDark}`,
-            boxShadow: `0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(139, 0, 0, 0.35)`,
+            padding: `${Math.round(28 * scale)}px ${Math.round(26 * scale)}px`,
+            background: 'rgba(22, 18, 14, 0.95)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            borderRadius: '2px',
+            border: `1px solid ${right.color || COLOR_PALETTE.vermilionRed}`,
+            outline: `1px solid ${activeTheme.accentGlow}`,
+            outlineOffset: '-5px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.9)',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: isLandscape ? 'flex-start' : 'center',
-            textAlign: isLandscape ? 'left' : 'center',
+            alignItems: 'flex-start',
+            textAlign: 'left',
           }}
         >
           {right.badge && (
             <span
               style={{
-                backgroundColor: right.color || COLOR_PALETTE.crimsonDark,
-                color: '#ffffff',
+                backgroundColor: 'rgba(155, 27, 27, 0.15)',
+                color: right.color || COLOR_PALETTE.vermilionRed,
                 fontFamily: activeFont,
-                fontSize: `${Math.round(13 * scale)}px`,
+                fontSize: `${Math.round(12 * scale)}px`,
                 fontWeight: 800,
-                padding: `${Math.round(4 * scale)}px ${Math.round(14 * scale)}px`,
-                borderRadius: `${Math.round(12 * scale)}px`,
+                letterSpacing: '1px',
+                padding: `${Math.round(3 * scale)}px ${Math.round(12 * scale)}px`,
+                borderRadius: '2px',
+                border: `1px solid ${right.color || COLOR_PALETTE.vermilionRed}`,
                 marginBottom: `${Math.round(12 * scale)}px`,
               }}
             >
@@ -268,10 +273,10 @@ export const VersusCard: React.FC<VersusCardProps> = ({
           <h3
             style={{
               margin: 0,
-              fontFamily: activeFont,
+              fontFamily: activeSerifFont,
               fontSize: `${nameFontSize}px`,
               fontWeight: 900,
-              color: right.color || '#ef4444',
+              color: right.color || COLOR_PALETTE.vermilionRed,
               letterSpacing: '0.5px',
             }}
           >
@@ -280,7 +285,7 @@ export const VersusCard: React.FC<VersusCardProps> = ({
 
           <p
             style={{
-              margin: `${Math.round(12 * scale)}px 0 0 0`,
+              margin: `${Math.round(10 * scale)}px 0 0 0`,
               fontFamily: activeFont,
               fontSize: `${statFontSize}px`,
               color: COLOR_PALETTE.textSubtle,
@@ -295,3 +300,4 @@ export const VersusCard: React.FC<VersusCardProps> = ({
     </AbsoluteFill>
   );
 };
+

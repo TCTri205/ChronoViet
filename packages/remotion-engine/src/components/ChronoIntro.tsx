@@ -21,9 +21,10 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { scale, isLandscape } = useResponsiveLayout();
+  const { scale } = useResponsiveLayout();
   const activeTheme = resolveTheme(theme);
   const activeFont = getSafeFontFamily(theme?.fontFamily);
+  const activeSerifFont = getSafeFontFamily(theme?.fontFamily, true);
 
   const cleanArticleTitle = toVietnameseUpperCase(articleTitle);
   const cleanAuthorName = normalizeVietnameseText(authorName);
@@ -32,7 +33,7 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
   const logoScale = spring({
     frame,
     fps,
-    from: 0.3,
+    from: 0.5,
     to: 1,
     config: { damping: 14, stiffness: 90 },
   });
@@ -41,17 +42,10 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
   const titleOpacity = interpolate(frame, [20, 40], [0, 1], { extrapolateRight: 'clamp' });
   const titleY = interpolate(frame, [20, 40], [30, 0], { extrapolateRight: 'clamp' });
 
-  // Ambient pulsing glow effect
-  const glowPulse = interpolate(
-    Math.sin((frame / fps) * Math.PI * 2),
-    [-1, 1],
-    [0.7, 1.1]
-  );
-
-  const logoSize = Math.round((isLandscape ? 130 : 100) * scale);
-  const brandFontSize = Math.round((isLandscape ? 44 : 32) * scale);
-  const tagFontSize = Math.round((isLandscape ? 16 : 13) * scale);
-  const videoTitleFontSize = Math.round((isLandscape ? 28 : 22) * scale);
+  const logoSize = Math.round(120 * scale);
+  const brandFontSize = Math.round(44 * scale);
+  const tagFontSize = Math.round(16 * scale);
+  const videoTitleFontSize = Math.round(28 * scale);
 
   return (
     <AbsoluteFill
@@ -63,10 +57,10 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Lightweight Edge Vignette Accent */}
+      {/* Historical Parchment Vignette Canvas Overlay */}
       <AbsoluteFill
         style={{
-          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.7) 100%)',
+          background: 'radial-gradient(circle at center, transparent 35%, rgba(14, 12, 10, 0.9) 100%)',
           pointerEvents: 'none',
         }}
       />
@@ -80,37 +74,37 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
           textAlign: 'center',
           zIndex: 10,
           padding: `${Math.round(40 * scale)}px`,
-          maxWidth: isLandscape ? '75%' : '88%',
+          maxWidth: '75%',
         }}
       >
-        {/* ChronoViet Crest Icon */}
+        {/* ChronoViet Imperial Red Seal Stamp Crest Icon */}
         <div
           style={{
             transform: `scale(${logoScale})`,
             opacity: logoOpacity,
             width: `${logoSize}px`,
             height: `${logoSize}px`,
-            borderRadius: '50%',
-            backgroundColor: activeTheme.secondaryColor,
-            border: `3px solid ${activeTheme.primaryColor}`,
+            borderRadius: '2px',
+            backgroundColor: COLOR_PALETTE.vermilionRed,
+            border: `2px solid ${activeTheme.primaryColor}`,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            boxShadow: `0 0 50px ${activeTheme.accentGlow}, 0 0 25px ${activeTheme.accentGlow}`,
+            boxShadow: '0 15px 40px rgba(0, 0, 0, 0.95)',
             marginBottom: `${Math.round(24 * scale)}px`,
           }}
         >
           <span
             style={{
-              fontFamily: activeFont,
+              fontFamily: activeSerifFont,
               fontSize: `${Math.round(logoSize * 0.45)}px`,
               fontWeight: 900,
-              color: activeTheme.primaryColor,
-              letterSpacing: '-1px',
+              color: COLOR_PALETTE.docParchment,
+              letterSpacing: '1px',
               textShadow: '0 2px 8px rgba(0,0,0,0.6)',
             }}
           >
-            CV
+            印
           </span>
         </div>
 
@@ -120,12 +114,12 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
             transform: `scale(${logoScale})`,
             opacity: logoOpacity,
             margin: 0,
-            fontFamily: activeFont,
+            fontFamily: activeSerifFont,
             fontSize: `${brandFontSize}px`,
             fontWeight: 900,
-            color: '#ffffff',
-            letterSpacing: '5px',
-            textShadow: '0 4px 18px rgba(0,0,0,0.9)',
+            color: activeTheme.primaryColor,
+            letterSpacing: '4px',
+            textShadow: '0 4px 18px rgba(0,0,0,0.95)',
           }}
         >
           {cleanArticleTitle}
@@ -137,7 +131,7 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
             style={{
               transform: `scale(${logoScale})`,
               opacity: logoOpacity,
-              marginTop: `${Math.round(8 * scale)}px`,
+              marginTop: `${Math.round(10 * scale)}px`,
               fontFamily: activeFont,
               fontSize: `${tagFontSize}px`,
               fontWeight: 700,
@@ -149,11 +143,11 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
           </span>
         )}
 
-        {/* Decorative Divider */}
+        {/* Decorative Heritage Divider */}
         <div
           style={{
             opacity: titleOpacity,
-            width: `${Math.round(140 * scale)}px`,
+            width: `${Math.round(160 * scale)}px`,
             height: '2px',
             background: `linear-gradient(90deg, transparent, ${activeTheme.primaryColor}, transparent)`,
             margin: `${Math.round(28 * scale)}px 0`,
@@ -186,3 +180,4 @@ export const ChronoIntro: React.FC<ChronoIntroProps> = ({
     </AbsoluteFill>
   );
 };
+

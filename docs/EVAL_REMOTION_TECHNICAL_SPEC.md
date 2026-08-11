@@ -1,15 +1,15 @@
-# TÀI LIỆU KỸ THUẬT VÀ QUY CHUẨN KIẾN TRÚC: EVAL-REMOTION ENGINE (100% JSON-DRIVEN)
+# TÀI LIỆU KỸ THUẬT VÀ QUY CHUẨN KIẾN TRÚC: REMOTION RENDER ENGINE (100% JSON-DRIVEN)
 
-Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và Engine Render Remotion (v3.0 - Data-Driven)** của dự án **ChronoViet**. Engine này đảm bảo khả năng linh hoạt 100%, trong đó toàn bộ nội dung, kịch bản, phương thức hiển thị (layout), chuyển cảnh (transitions), hình ảnh/âm thanh, cũng như **phong cách thiết kế (Theme: Màu sắc, Phông chữ, Glow)** đều được điều khiển **hoàn toàn bằng JSON Input** mà không bao giờ cần phải chỉnh sửa hay biên dịch lại mã nguồn React.
+Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và Engine Render Remotion (v4.1 - Data-Driven, Audio-Driven Timing, Discriminated Overlay Unions & Word-Level Karaoke Sync)** của dự án **ChronoViet**. Engine này đảm bảo khả năng linh hoạt 100%, trong đó toàn bộ nội dung, kịch bản, phương thức hiển thị (layout), chuyển cảnh (transitions), hình ảnh/âm thanh, **tọa độ hiển thị từng từ (Scene-Scoped Word Captions Karaoke)**, cũng như **phong cách thiết kế (Theme: Màu sắc, Phông chữ, Glow, Gradient)** đều được điều khiển **hoàn toàn bằng JSON Input** mà không bao giờ cần phải chỉnh sửa hay biên dịch lại mã nguồn React.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/interfaces.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/interfaces.ts) và [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts)
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) và [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts)
 > 🔗 **Quy chuẩn Tích hợp TTS & Tối ưu Sản xuất:** [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](file:///D:/Persional_Projects/ChronoViet/docs/architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md) (Quy đổi VieNeu Word Timestamps sang Remotion Captions Karaoke).
 
 ---
 
 ## 1. Tổng Quan Kiến Trúc (Architecture Overview)
 
-`eval-remotion` là engine render video lịch sử tự động dựa trên công nghệ [Remotion](https://www.remotion.dev/) v4.0. Engine hoạt động theo nguyên lý **Data-Driven Video Generation**:
+`@chronoviet/remotion-engine` (`packages/remotion-engine`) là engine render video lịch sử tự động dựa trên công nghệ [Remotion](https://www.remotion.dev/) v4.0. Engine hoạt động theo nguyên lý **Data-Driven Video Generation**:
 
 ```
                                   ┌───────────────────────────────┐
@@ -49,7 +49,7 @@ Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và 
 
 ## 2. Mô Hình 3 Lớp Rendering & TransitionSeries (`ChronoVideo.tsx`)
 
-Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp riêng biệt được xử lý đồng bộ qua `TransitionSeries` (`@remotion/transitions`). Cấu trúc React Component thực tế tại [`ChronoVideo.tsx`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src/compositions/ChronoVideo.tsx):
+Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp riêng biệt được xử lý đồng bộ qua `TransitionSeries` (`@remotion/transitions`). Cấu trúc React Component thực tế tại [`ChronoVideo.tsx`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/compositions/ChronoVideo.tsx):
 
 ```tsx
 <TransitionSeries>
@@ -65,13 +65,17 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
         {/* Layer 3: Persistent Overlays (Header top & Subtitle Karaoke bottom) */}
         <AbsoluteFill style={{ pointerEvents: 'none', zIndex: 100 }}>
           {!shouldHideHeader && <DocumentaryHeader seriesTitle={...} chapterTitle={...} theme={effectiveTheme} />}
-          {!shouldHideSubtitle && <DocumentarySubtitle text={scene.text} durationInFrames={sceneDurationInFrames} theme={effectiveTheme} />}
+          {!shouldHideSubtitle && <DocumentarySubtitle text={scene.text} durationInFrames={sceneDurationInFrames} theme={effectiveTheme} captions={scene.captions} />}
         </AbsoluteFill>
       </AbsoluteFill>
 
-      {/* Per-Scene Audio & Sound Effects (Optional) */}
+      {/* Per-Scene Audio & Sound Effects (Multi-track SFX array support) */}
       {scene.sceneAudioUrl && <Audio src={staticFile(scene.sceneAudioUrl)} volume={1.0} />}
-      {scene.sfxUrl && <Audio src={staticFile(scene.sfxUrl)} volume={0.85} />}
+      {scene.soundEffects?.map((sfx, i) => (
+        <Sequence key={i} from={sfx.offsetFrame || 0}>
+          <Audio src={staticFile(sfx.sfxUrl)} volume={sfx.volume ?? 0.85} />
+        </Sequence>
+      ))}
     </TransitionSeries.Sequence>
   ))}
 </TransitionSeries>
@@ -134,7 +138,7 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 
 > Tất cả enum dưới đây được định nghĩa chính thức tại `src/types/index.ts` và validate bởi `src/types/schema.ts`.
 
-### 4.1. `LayoutMode` — 18 Chế Độ Hiển Thị
+### 4.1. `LayoutMode` — 31 Chế Độ Hiển Thị (18 Core Modes + 13 Extended Modes)
 
 | `layoutMode` | Loại | Component tương ứng | Mô tả |
 | :--- | :--- | :--- | :--- |
@@ -145,17 +149,30 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 | `CENTER_SCALE` | Pure Image | `SlideImage.tsx` | Ảnh căn giữa có scale nhẹ, không blur nền. |
 | `VIGNETTE_DARK` | Pure Image | `SlideImage.tsx` | Ảnh phủ filter đen mờ 4 góc, giảm sáng 40%. Dùng làm nền cho phụ đề. |
 | `SPLIT_COMPARE` | Pure Image | `SlideImage.tsx` + `secondaryAssetUrl` | So sánh 2 ảnh cạnh nhau (dùng `assetUrl` + `secondaryAssetUrl`). |
+| `PURE_IMAGE_FULL` | Pure Image | `SlideImage.tsx` | Render ảnh tĩnh full-bleed nâng cao không overlay text. |
+| `DOCUMENTARY_GRID` | Pure Image | `SlideImage.tsx` | Lưới 2-4 ảnh phong cách phim tài liệu truyền hình. |
+| `NEWSPAPER_ARCHIVE` | Pure Image | `SlideImage.tsx` | Mô phỏng ảnh báo chí lưu trữ cổ điển. |
+| `GALLERY_3D` | Pure Image | `SlideImage.tsx` | Trình chiếu bộ sưu tập ảnh 3D chiều sâu. |
 | `TITLE_CARD` | Pure Code | `ChapterTitle.tsx` | Thẻ tiêu đề Chương với nền màu gradient, text lớn ở giữa, viền phát sáng. |
 | `CHAPTER_CARD` | Pure Code | `ChapterTitle.tsx` | Tương tự `TITLE_CARD`, nhấn mạnh số chương bằng Roman numeral lớn. |
 | `STAT_CARD` | Pure Code | `StatCard.tsx` | Thẻ Hồ sơ & Chỉ số Nhân vật / Sự kiện với `statItems` fade-in tuần tự. |
 | `VERSUS_CARD` | Pure Code | `VersusCard.tsx` | Thẻ Đối đầu, chia đôi màn hình so sánh `leftSide` / `rightSide`. |
 | `QUOTE_CANVAS` | Pure Code | `QuoteSlide.tsx` | Khung trích dẫn trang trọng với `quoteText` và `author`. |
+| `QUOTE_SLIDE` | Pure Code | `QuoteSlide.tsx` | Biến thể / Alias của QUOTE_CANVAS, render qua `QuoteSlide.tsx`. |
 | `BULLET_HIGHLIGHT` | Pure Code | `BulletHighlight.tsx` | Danh sách `bulletPoints` sáng từng dòng theo thứ tự thời gian đọc. |
 | `MUSEUM_TAG` | Pure Code | `MuseumTag.tsx` | Thẻ chú thích bảo tàng chuyên dụng cho Cổ vật (`artifactInfo`). |
 | `SPLIT_THEORY` | Pure Code | `SplitTheory.tsx` | So sánh 2–3 giả thuyết lịch sử (`theories`) với độ tin cậy %. |
 | `OUTRO_CARD` | Pure Code | `OutroSlide.tsx` | Màn hình tổng kết, lời thơ tri ân, thương hiệu kết thúc. |
 | `ARTICLE_UI` | Pure Code | `ChronoIntro.tsx` | Màn hình mở đầu dạng báo chí / phim tài liệu chuyên sâu. |
 | `SPONSOR_UI` | Pure Code | `SponsorSlide.tsx` | Màn hình giới thiệu đơn vị tài trợ / đồng hành sản xuất. |
+| `HERO_SPOTLIGHT` | Pure Code | Extended Layout | Màn hình tiêu điểm anh hùng dân tộc. |
+| `TIMELINE_CHRONO` | Pure Code | Extended Layout | Trục thời gian diễn biến sự kiện lịch sử. |
+| `MAP_TACTICAL` | Pure Code | Extended Layout | Sơ đồ bản đồ tác chiến / hành quân. |
+| `ARMY_STRENGTH` | Pure Code | Extended Layout | Biểu đồ quân số & tương quan lực lượng. |
+| `CHARACTER_PROFILE` | Pure Code | Extended Layout | Hồ sơ chi tiết nhân vật lịch sử. |
+| `ROYAL_DECREE` | Pure Code | Extended Layout | Khung văn bản chiếu dời đô / hịch / chiếu thư. |
+| `ARTIFACT_INSPECT` | Pure Code | Extended Layout | Giao diện soi chi tiết hoa văn cổ vật. |
+| `POEM_RECITING` | Pure Code | Extended Layout | Giao diện ngâm thơ / văn thơ cổ truyền. |
 
 ### 4.2. `FilterStyle` — 4 Kiểu Lọc Màu
 
@@ -166,18 +183,22 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 | `VINTAGE` | Màu phai nhạt, haze sáng góc, tone nostalgic |
 | `NONE` | Không áp dụng bộ lọc — ảnh giữ nguyên màu gốc |
 
-### 4.3. `TransitionType` — 15 Kiểu Chuyển Cảnh
+### 4.3. `TransitionType` — 19 Kiểu Chuyển Cảnh
 
 | Giá trị | Mô tả |
 | :--- | :--- |
 | `DISSOLVE` | Tan dần mượt mà — chuyển cảnh trung tính phổ biến nhất |
+| `FADE` | Chuyển mờ dần |
 | `FADE_TO_BLACK` | Tối dần về đen rồi sáng lên — trang trọng, nghiêm túc |
 | `LIGHT_LEAK` | Ánh sáng tràn vào — huyền bí, phim tài liệu nghệ thuật |
+| `FILM_BURN` | Vệt cháy phim điện ảnh cổ điển |
 | `GLITCH` | Nhiễu kỹ thuật số — căng thẳng, chiến tranh, cảnh hỗn loạn |
 | `SLIDE_LEFT` | Trượt sang trái — dòng thời gian tiến về phía trước |
 | `SLIDE_RIGHT` | Trượt sang phải — flashback, quay về quá khứ |
 | `SLIDE_UP` | Trượt lên — leo thang, chuyển chủ đề quan trọng hơn |
 | `SLIDE_DOWN` | Trượt xuống |
+| `ZOOM_IN` | Thu phóng ống kính vào trong |
+| `ZOOM_OUT` | Thu phóng ống kính ra ngoài |
 | `WIPE` | Quét ngang — dứt khoát, chuyển chương rõ ràng |
 | `FLIP` | Lật trang — chuyển sang góc nhìn mới |
 | `CLOCK_WIPE` | Quét theo kim đồng hồ — biểu tượng thời gian trôi qua |
@@ -214,6 +235,7 @@ export const ChronoVideoSchema = z.object({
   theme: ThemeConfigSchema.optional(),         // Override theme tùy chỉnh
   aspectRatio: AspectRatioSchema.default('16:9'), // "16:9"|"9:16"|"1:1"
   audioUrl: z.string().optional(),             // Path tới file voiceover chính
+  captionsUrl: z.string().optional(),          // Path/URL file karaoke phụ đề (tách rời payload)
   bgmUrl: z.string().optional(),               // Path tới file nhạc nền
   bgmVolume: z.number().optional(),            // 0.0 – 1.0 (khuyến nghị 0.2–0.3)
   defaultLayoutMode: LayoutModeSchema.optional(),    // layoutMode mặc định khi scene không chỉ định
@@ -231,23 +253,30 @@ export const ChronoVideoSchema = z.object({
 ```typescript
 export const TimelineSceneSchema = z.object({
   id: z.string(),                              // BẮT BUỘC: ID duy nhất
-  // --- Thời lượng (dùng 1 trong 2 cách) ---
-  durationInFrames: z.number().optional(),     // Cách 1: Số frames tuyệt đối (30fps = 1s)
-  startTime: z.number().optional(),            // Cách 2: Giây bắt đầu (engine tự convert)
-  endTime: z.number().optional(),              // Cách 2: Giây kết thúc (engine tự convert)
+  // --- Thời lượng (Chuẩn Relative v4.0) ---
+  durationInFrames: z.number().optional(),     // Số frames tương đối (30fps = 1s)
+  durationInSeconds: z.number().optional(),    // Thời lượng tương đối (giây)
+  startTime: z.number().optional(),            // [Deprecated] Giây bắt đầu
+  endTime: z.number().optional(),              // [Deprecated] Giây kết thúc
   // --- Nội dung ---
   text: z.string().optional(),                 // Lời thuyết minh hiển thị tại subtitle bar
   assetUrl: z.string().optional(),             // Path ảnh/video chính
+  assetMetadata: AssetMetadataSchema.optional(), // Preloaded metadata (width, height, aspectRatio, durationSec)
   secondaryAssetUrl: z.string().optional(),    // Path ảnh thứ 2 (dùng cho SPLIT_COMPARE)
+  secondaryAssetMetadata: AssetMetadataSchema.optional(),
   sceneAudioUrl: z.string().optional(),        // Voiceover riêng cho scene này
-  sfxUrl: z.string().optional(),               // Sound effect riêng cho scene này
-  // --- Hiển thị ---
+  sfxUrl: z.string().optional(),               // Sound effect đơn lẻ cho scene này
+  soundEffects: z.array(SoundEffectSchema).optional(), // Mảng âm thanh hiệu ứng song song ({sfxUrl, offsetFrame, volume})
+  // --- Hiển thị & Tùy biến mở rộng ---
   layoutMode: LayoutModeSchema.optional(),     // Chế độ layout (xem bảng §4.1)
+  fallbackLayoutMode: LayoutModeSchema.optional(), // Layout dự phòng nếu layoutMode chính không hỗ trợ
+  fallbackOverlayData: OverlayDataSchema.optional(), // OverlayData dự phòng
   overlayType: z.string().optional(),          // Gợi ý thêm cho AI Agent (VD: "QUOTE", "BIO_CARD")
   filterStyle: FilterStyleSchema.optional(),   // Override filter của scene này
   effect: KenBurnsEffectSchema.optional(),     // Hiệu ứng Ken Burns
   customKenBurns: CustomKenBurnsSchema.optional(), // Tùy chỉnh Ken Burns nâng cao
   rotateDeg: z.number().optional(),            // Xoay ảnh nhẹ (VD: -1.5 cho cảm giác analog)
+  layoutProps: z.record(z.string(), z.unknown()).optional(), // Extensible dynamic props per layout
   // --- Chuyển cảnh ---
   transition: TransitionTypeSchema.optional(), // Override transition sang scene tiếp theo
   transitionDurationFrames: z.number().optional(), // Mặc định: 15 frames (0.5s)
@@ -315,30 +344,31 @@ export const OverlayDataSchema = z.object({
 });
 ```
 
-### 5.4. Quy Tắc Tính Thời Lượng Scene
+### 5.4. Quy Tắc Tính Thời Lượng Scene & Overlap
 
 Engine tại `Root.tsx` (`calculateMetadataHelper`) xử lý thời lượng theo thứ tự ưu tiên:
 
 ```
 1. Nếu có durationInFrames  →  dùng trực tiếp (ưu tiên cao nhất)
-2. Nếu có startTime + endTime  →  Math.round((endTime - startTime) * fps)
-3. Fallback mặc định  →  5 giây = Math.round(5 * fps)
+2. Nếu có durationInSeconds →  Math.round(durationInSeconds * fps)
+3. Nếu có captions word-level → Math.max(caption.endFrame) + 15 frames (tối thiểu 3s)
+4. Nếu có startTime + endTime → Math.round((endTime - startTime) * fps)
+5. Fallback mặc định           → 5 giây = Math.round(5 * fps)
 ```
 
-**Lưu ý quan trọng:** Khi dùng đồng thời `durationInFrames` và `startTime`/`endTime`, `durationInFrames` luôn thắng.
+**Khấu trừ Transition Series:** Khi `enableTransitions: true`, nếu scene tiếp theo có transition (`transition !== 'NONE'`), tổng frames của video sẽ được trừ đi khoảng overlap: `totalFrames -= transitionDuration` (mặc định 15 frames).
 
 ---
 
-## 6. Cấu Trúc Thư Mục Codebase (`eval-remotion/src/`)
+## 6. Cấu Trúc Thư Mục Codebase (`packages/remotion-engine/src/`)
 
 ```
-eval-remotion/src/
+packages/remotion-engine/src/
 ├── index.ts                        # Entry point — export RemotionRoot
-├── Root.tsx                        # Khai báo tất cả Composition (8 compositions)
+├── Root.tsx                        # Khai báo tất cả Composition (11 compositions)
 │
 ├── types/
-│   ├── index.ts                    # ★ TypeScript types: LayoutMode, FilterStyle, TransitionType...
-│   └── schema.ts                   # ★ Zod runtime schemas: ChronoVideoSchema, TimelineSceneSchema...
+│   └── index.ts                    # ★ TypeScript types & Zod schemas (Re-export từ @chronoviet/shared-spec)
 │
 ├── constants/
 │   └── config.ts                   # DEFAULT_FPS=30, CANVAS_DIMENSIONS, COLOR_PALETTE, TEMPLATE_THEMES
@@ -395,20 +425,23 @@ eval-remotion/src/
 
 ---
 
-## 7. Danh Sách 8 Composition Đã Đăng Ký (`Root.tsx`)
+## 7. Danh Sách 11 Composition Đã Đăng Ký (`Root.tsx`)
 
 | Composition ID | Component | Data File | Thời lượng mặc định | Mô tả |
 | :--- | :--- | :--- | :--- | :--- |
+| `ChronoVideo` | `ChronoVideo` | `templateGeneralTimeline.json` | 15 scenes (150s / 4500 frames) | Default General Template |
 | `BiographyVideo` | `ChronoVideo` | `biographyTimeline.json` | 21 scenes (405s / 12150 frames) | Domain BIOGRAPHY |
 | `BattleVideo` | `ChronoVideo` | `battleTimeline.json` | 21 scenes (405s / 12150 frames) | Domain BATTLE |
 | `DynastyVideo` | `ChronoVideo` | `dynastyTimeline.json` | 21 scenes (405s / 12150 frames) | Domain DYNASTY |
 | `MysteryVideo` | `ChronoVideo` | `mysteryTimeline.json` | 19 scenes (375s / 11250 frames) | Domain MYSTERY |
 | `ArtifactVideo` | `ChronoVideo` | `artifactTimeline.json` | 19 scenes (375s / 11250 frames) | Domain ARTIFACT |
+| `QuickShortsVideo` | `ChronoVideo` | `templateGeneralTimeline.json` (Override `templateId: QUICK_SHORTS`, `aspectRatio: 9:16`) | 145s / 4350 frames | Quick Shorts Vertical (9:16) |
+| `ModernNewsVideo` | `ChronoVideo` | `templateGeneralTimeline.json` (Override `templateId: MODERN_NEWS`, `aspectRatio: 16:9`) | 145s / 4350 frames | Modern News Horizontal (16:9) |
 | `QuangTrungVideo` | `QuangTrungComposition` | `quangTrungTimeline.json` | 24 scenes (245s / 7350 frames) | Legacy |
 | `MongolViet2Video` | `MongolViet2Composition` | `mongolViet2Timeline.json` | 25 scenes (1140s / 34200 frames) | Legacy |
 | `HaiBaTrungVideo` | `HaiBaTrungComposition` | `haiBaTrungTimeline.json` | 28 scenes (450s / 13500 frames) | Legacy |
 
-> **Lưu ý:** `calculateMetadata` tự tính lại `durationInFrames` chính xác từ dữ liệu JSON lúc runtime. Giá trị mặc định trên chỉ là placeholder để Remotion Studio hiển thị.
+> **Lưu ý:** `calculateMetadata` tự tính lại `durationInFrames` chính xác từ dữ liệu JSON lúc runtime. `QuickShortsVideo` và `ModernNewsVideo` dùng chung dữ liệu `templateGeneralTimeline.json` nhưng ghi đè các cấu hình `templateId` và `aspectRatio` trực tiếp tại `Root.tsx`.
 
 ---
 

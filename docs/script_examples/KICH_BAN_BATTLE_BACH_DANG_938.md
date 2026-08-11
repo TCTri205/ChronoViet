@@ -1,4 +1,4 @@
-﻿# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
+# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
 
 > **TĂ¡c pháº©m:** TRáº¬N Báº CH Äáº°NG 938 â€“ Cá»˜T Má»C Má» Äáº¦U Ká»¶ NGUYĂN Äá»˜C Láº¬P  
 > **Dá»± Ă¡n:** ChronoViet (Video Essay / Historical Motion Graphics)  
@@ -52,9 +52,9 @@
 
 ## đŸ› ï¸ 3. TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`bachDang938Timeline.json`)
 
-Tá»‡p nĂ y náº±m táº¡i `eval-remotion/src/data/battleTimeline.json` vĂ  Ä‘Ă£ Ä‘Æ°á»£c Ä‘Äƒng kĂ½ táº¡i `Root.tsx` vá»›i Composition ID `BattleVideo`.
+Tệp này nằm tại `packages/remotion-engine/src/data/battleTimeline.json` và đã được đăng ký tại `Root.tsx` với Composition ID `BattleVideo`.
 
-> **Chuáº©n:** Schema v3.0 â€” tÆ°Æ¡ng thĂ­ch 100% vá»›i `ChronoVideoSchema` táº¡i `eval-remotion/src/types/schema.ts`.
+> **Chuẩn:** Schema v3.0 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts).
 
 ```json
 {

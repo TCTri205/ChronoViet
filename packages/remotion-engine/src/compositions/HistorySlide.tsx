@@ -1,5 +1,6 @@
 import React from 'react';
 import { AbsoluteFill } from 'remotion';
+import { COLOR_PALETTE } from '../constants/config';
 import { TimelineScene, ThemeConfig } from '../types';
 import { SlideImage } from '../components/SlideImage';
 import { ChapterTitle } from '../components/ChapterTitle';
@@ -12,6 +13,12 @@ import { MuseumTag } from '../components/MuseumTag';
 import { SplitTheory } from '../components/SplitTheory';
 import { SponsorSlide } from '../components/SponsorSlide';
 import { ChronoIntro } from '../components/ChronoIntro';
+import { TimelineChrono } from '../components/TimelineChrono';
+import { RoyalDecree } from '../components/RoyalDecree';
+import { MapTactical } from '../components/MapTactical';
+import { CharacterProfile } from '../components/CharacterProfile';
+import { ArtifactInspect } from '../components/ArtifactInspect';
+import { PoemReciting } from '../components/PoemReciting';
 
 interface HistorySlideProps {
   scene: TimelineScene;
@@ -29,8 +36,8 @@ export const HistoryBackground: React.FC<HistorySlideProps> = ({
   theme,
 }) => {
   const hasAsset = Boolean(scene.assetUrl || scene.secondaryAssetUrl);
-  const bgColor = theme?.backgroundColor || '#090d14';
-  const glowColor = theme?.accentGlow || 'rgba(212, 175, 55, 0.2)';
+  const bgColor = theme?.backgroundColor || COLOR_PALETTE.lacquerBlack;
+  const glowColor = theme?.accentGlow || COLOR_PALETTE.goldGlow;
 
   return (
     <AbsoluteFill style={{ backgroundColor: bgColor, overflow: 'hidden' }}>
@@ -49,7 +56,7 @@ export const HistoryBackground: React.FC<HistorySlideProps> = ({
       ) : (
         <AbsoluteFill
           style={{
-            background: `radial-gradient(circle at 50% 50%, ${glowColor} 0%, ${bgColor} 80%)`,
+            background: theme?.gradientBg || `radial-gradient(circle at 50% 50%, ${glowColor} 0%, ${bgColor} 80%)`,
           }}
         />
       )}
@@ -64,10 +71,83 @@ const getForegroundContent = (
   theme?: ThemeConfig
 ) => {
   const layoutMode = scene.layoutMode || 'BLUR_BG';
-  const od = scene.overlayData;
+  const od = scene.overlayData || scene.fallbackOverlayData;
+
+  if (layoutMode === 'TIMELINE_CHRONO') {
+    return (
+      <TimelineChrono
+        title={od?.title || scene.text}
+        subtitle={od?.subtitle}
+        durationInFrames={durationInFrames}
+        theme={theme}
+      />
+    );
+  }
+
+  if (layoutMode === 'ROYAL_DECREE') {
+    return (
+      <RoyalDecree
+        title={od?.title}
+        author={od?.author}
+        decreeText={od?.quoteText || scene.text}
+        durationInFrames={durationInFrames}
+        theme={theme}
+      />
+    );
+  }
+
+  if (layoutMode === 'MAP_TACTICAL') {
+    return (
+      <MapTactical
+        title={od?.title}
+        subtitle={od?.subtitle}
+        details={od?.details || scene.text}
+        durationInFrames={durationInFrames}
+        theme={theme}
+      />
+    );
+  }
+
+  if (layoutMode === 'CHARACTER_PROFILE') {
+    return (
+      <CharacterProfile
+        name={od?.name || od?.title}
+        role={od?.role}
+        details={od?.details || scene.text}
+        quote={od?.quoteText}
+        durationInFrames={durationInFrames}
+        theme={theme}
+      />
+    );
+  }
+
+  if (layoutMode === 'ARTIFACT_INSPECT') {
+    return (
+      <ArtifactInspect
+        title={od?.title}
+        subtitle={od?.subtitle}
+        artifactInfo={od?.artifactInfo}
+        durationInFrames={durationInFrames}
+        theme={theme}
+      />
+    );
+  }
+
+  if (layoutMode === 'POEM_RECITING') {
+    return (
+      <PoemReciting
+        title={od?.title}
+        author={od?.author}
+        poemText={od?.quoteText || scene.text || ''}
+        durationInFrames={durationInFrames}
+        theme={theme}
+      />
+    );
+  }
 
   const isQuoteScene =
     layoutMode === 'QUOTE_CANVAS' ||
+    layoutMode === 'QUOTE_SLIDE' ||
     scene.overlayType === 'QUOTE' ||
     (Boolean(od?.quoteText) && !od?.statItems && !od?.bulletPoints && !od?.leftSide && !od?.artifactInfo);
 

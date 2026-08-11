@@ -1,7 +1,7 @@
 # Remotion Render Engine Evaluation Suite (`packages/remotion-engine/eval/`)
 
 ## 📌 Overview
-Bộ công cụ đánh giá chuyên biệt dành cho **Remotion Render Engine** (18 LayoutModes, 15 TransitionTypes, 100% Data-Driven Render Pipeline).
+Bộ công cụ đánh giá chuyên biệt dành cho **Remotion Render Engine** (31 LayoutModes, 19 TransitionTypes, 100% Data-Driven Render Pipeline).
 
 Bộ đánh giá hoạt động theo 3 giai đoạn:
 1. **Phase 1: Programmatic Automated Metrics Evaluation**: Kiểm định hợp lệ Zod JSON Schema v3.0 / v3.2, tính toán thời lượng tổng theo khung hình (`calculatedTotalFrames`), thống kê số lượng phân cảnh (`totalScenes`), đo lường độ bao phủ các `layoutModes` và `transitions`.
@@ -12,8 +12,8 @@ Bộ đánh giá hoạt động theo 3 giai đoạn:
 
 ## 📊 Core Metrics & Targets (KPI)
 - **Schema Validation Pass Rate**: $100\%$ (Mọi file JSON kịch bản phải khớp Zod Schema từ `@chronoviet/shared-spec`).
-- **Layout Coverage Rate**: $18 / 18$ Core Layout Modes.
-- **Transition Coverage Rate**: $15 / 15$ Core Transition Types.
+- **Layout Coverage Rate**: $31 / 31$ Layout Modes (18 Core + 13 Extended).
+- **Transition Coverage Rate**: $19 / 19$ Transition Types.
 - **Zero Image Artifact Policy**: $0$ file ảnh thừa sinh ra trong `eval/out`.
 
 ---

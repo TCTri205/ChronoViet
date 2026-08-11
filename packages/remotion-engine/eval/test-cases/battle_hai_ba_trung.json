@@ -8,11 +8,11 @@
   "bgmUrl": "/audio/epic_vietnam_heroic_bgm.mp3",
   "bgmVolume": 0.25,
   "theme": {
-    "primaryColor": "#F59E0B",
-    "secondaryColor": "#DC2626",
-    "backgroundColor": "#0F172A",
-    "fontFamily": "Montserrat, sans-serif",
-    "accentGlow": "rgba(245, 158, 11, 0.5)"
+    "primaryColor": "#C89D35",
+    "secondaryColor": "#9B1B1B",
+    "backgroundColor": "#0E0C0A",
+    "fontFamily": "Merriweather, serif",
+    "accentGlow": "rgba(200, 157, 53, 0.5)"
   },
   "timeline": [
     {

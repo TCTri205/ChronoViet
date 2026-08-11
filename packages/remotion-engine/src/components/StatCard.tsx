@@ -31,10 +31,11 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { scale, isLandscape } = useResponsiveLayout();
+  const { scale } = useResponsiveLayout();
   const activeTheme = resolveTheme(theme);
   const activeFont = getSafeFontFamily(theme?.fontFamily);
-  
+  const activeSerifFont = getSafeFontFamily(theme?.fontFamily, true);
+
   const cleanTitle = toVietnameseUpperCase(title);
   const cleanName = toVietnameseUpperCase(name);
   const cleanRole = normalizeVietnameseText(role);
@@ -45,9 +46,9 @@ export const StatCard: React.FC<StatCardProps> = ({
   const containerScale = spring({
     frame: Math.max(0, frame - cardDelay),
     fps,
-    from: 0.9,
+    from: 0.92,
     to: 1,
-    config: { damping: 14, stiffness: 90 },
+    config: { damping: 15, stiffness: 90 },
   });
 
   const opacity = interpolate(frame, [cardDelay, cardDelay + 12], [0, 1], {
@@ -55,17 +56,17 @@ export const StatCard: React.FC<StatCardProps> = ({
     extrapolateRight: 'clamp',
   });
 
-  const nameFontSize = Math.round((isLandscape ? 40 : 30) * scale);
-  const roleFontSize = Math.round((isLandscape ? 22 : 18) * scale);
-  const detailsFontSize = Math.round((isLandscape ? 18 : 15) * scale);
+  const nameFontSize = Math.round(38 * scale);
+  const roleFontSize = Math.round(20 * scale);
+  const detailsFontSize = Math.round(17 * scale);
 
-  const posStyle = resolveOverlayPositionStyle(position, index, scale, isLandscape);
+  const posStyle = resolveOverlayPositionStyle(position, index, scale);
 
   return (
     <div
       style={{
         position: 'absolute',
-        width: isLandscape ? `${Math.round(450 * scale)}px` : '90%',
+        width: `${Math.round(460 * scale)}px`,
         maxWidth: '92%',
         zIndex: 20,
         display: 'flex',
@@ -76,7 +77,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         ...posStyle,
       }}
     >
-      {/* Main Glassmorphic Side Panel */}
+      {/* Main Framed Mộc Bản Side Panel */}
       <div
         style={{
           transform: `scale(${containerScale}) translateZ(0)`,
@@ -90,31 +91,35 @@ export const StatCard: React.FC<StatCardProps> = ({
           alignItems: 'flex-start',
           textAlign: 'left',
           padding: `${Math.round(28 * scale)}px ${Math.round(32 * scale)}px`,
-          background: 'rgba(10, 15, 26, 0.92)',
+          background: 'rgba(22, 18, 14, 0.95)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
-          borderRadius: `${Math.round(20 * scale)}px`,
+          borderRadius: '2px',
           border: `1px solid ${activeTheme.primaryColor}`,
-          boxShadow: `0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px ${activeTheme.accentGlow}`,
+          outline: `1px solid ${activeTheme.accentGlow}`,
+          outlineOffset: '-5px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.95)',
         }}
       >
-        {/* Card Header Tag */}
+        {/* Card Header Tag (Con dấu Triện Son) */}
         {cleanTitle && (
           <div
             style={{
-              backgroundColor: 'rgba(212, 175, 55, 0.18)',
-              color: activeTheme.primaryColor,
+              backgroundColor: 'rgba(155, 27, 27, 0.1)',
+              color: COLOR_PALETTE.vermilionRed,
               fontFamily: activeFont,
-              fontSize: `${Math.round(13 * scale)}px`,
-              fontWeight: 800,
-              letterSpacing: '1px',
+              fontSize: `${Math.round(12 * scale)}px`,
+              fontWeight: 900,
+              letterSpacing: '2px',
               padding: `${Math.round(4 * scale)}px ${Math.round(14 * scale)}px`,
-              borderRadius: `${Math.round(14 * scale)}px`,
-              border: `1px solid ${activeTheme.primaryColor}`,
-              marginBottom: `${Math.round(12 * scale)}px`,
+              borderRadius: '2px',
+              border: `2px solid ${COLOR_PALETTE.vermilionRed}`,
+              marginBottom: `${Math.round(14 * scale)}px`,
+              textTransform: 'uppercase',
+              boxShadow: 'inset 0 0 4px rgba(155, 27, 27, 0.25)',
             }}
           >
-            {cleanTitle}
+            【 {cleanTitle} 】
           </div>
         )}
 
@@ -123,13 +128,13 @@ export const StatCard: React.FC<StatCardProps> = ({
           <h2
             style={{
               margin: 0,
-              fontFamily: activeFont,
+              fontFamily: activeSerifFont,
               fontSize: `${nameFontSize}px`,
               fontWeight: 900,
-              color: COLOR_PALETTE.textWhite,
-              letterSpacing: '0.4px',
+              color: activeTheme.primaryColor,
+              letterSpacing: '0.5px',
               textShadow: '0 3px 12px rgba(0,0,0,0.9)',
-              lineHeight: 1.15,
+              lineHeight: 1.2,
             }}
           >
             {cleanName}
@@ -144,21 +149,21 @@ export const StatCard: React.FC<StatCardProps> = ({
               fontFamily: activeFont,
               fontSize: `${roleFontSize}px`,
               fontWeight: 600,
-              color: activeTheme.primaryColor,
-              letterSpacing: '0.2px',
-              lineHeight: 1.3,
+              color: COLOR_PALETTE.textSubtle,
+              letterSpacing: '0.3px',
+              lineHeight: 1.35,
             }}
           >
             {cleanRole}
           </p>
         )}
 
-        {/* Divider */}
+        {/* Heritage Divider */}
         <div
           style={{
-            width: '100px',
+            width: '120px',
             height: '2px',
-            background: `linear-gradient(90deg, ${activeTheme.secondaryColor}, transparent)`,
+            background: `linear-gradient(90deg, ${activeTheme.primaryColor}, transparent)`,
             margin: `${Math.round(14 * scale)}px 0`,
           }}
         />
@@ -171,7 +176,7 @@ export const StatCard: React.FC<StatCardProps> = ({
               fontFamily: activeFont,
               fontSize: `${detailsFontSize}px`,
               color: COLOR_PALETTE.textSubtle,
-              lineHeight: 1.45,
+              lineHeight: 1.5,
             }}
           >
             {cleanDetails}
@@ -215,8 +220,8 @@ export const StatCard: React.FC<StatCardProps> = ({
                     opacity: itemOpacity,
                     transform: `translateY(${itemY}px)`,
                     padding: `${Math.round(10 * scale)}px ${Math.round(14 * scale)}px`,
-                    background: 'rgba(18, 25, 38, 0.7)',
-                    borderRadius: `${Math.round(10 * scale)}px`,
+                    background: 'rgba(32, 26, 18, 0.75)',
+                    borderRadius: '2px',
                     borderLeft: `3px solid ${badgeColor}`,
                     display: 'flex',
                     flexDirection: 'column',
@@ -229,7 +234,8 @@ export const StatCard: React.FC<StatCardProps> = ({
                       fontSize: `${Math.round(12 * scale)}px`,
                       color: COLOR_PALETTE.textSubtle,
                       marginBottom: `${Math.round(2 * scale)}px`,
-                      fontWeight: 500,
+                      fontWeight: 600,
+                      letterSpacing: '0.2px',
                     }}
                   >
                     {cleanLabel}
@@ -240,7 +246,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                       fontSize: `${Math.round(16 * scale)}px`,
                       fontWeight: 800,
                       color: badgeColor,
-                      letterSpacing: '0.2px',
+                      letterSpacing: '0.3px',
                     }}
                   >
                     {cleanValue}
@@ -254,3 +260,4 @@ export const StatCard: React.FC<StatCardProps> = ({
     </div>
   );
 };
+

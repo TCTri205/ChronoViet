@@ -1,4 +1,4 @@
-﻿# Ká»CH Báº¢N PHĂ‚N TĂCH Lá»CH Sá»¬: CHIáº¾N TRANH MĂ”NG Cá»” - Äáº I VIá»†T Láº¦N 2 (1285)
+# Ká»CH Báº¢N PHĂ‚N TĂCH Lá»CH Sá»¬: CHIáº¾N TRANH MĂ”NG Cá»” - Äáº I VIá»†T Láº¦N 2 (1285)
 
 > **Thá»ƒ loáº¡i:** Video Essay / PhĂ¢n tĂ­ch Lá»‹ch sá»­ / Podcast Trá»±c quan (Spiderum Format)  
 > **Nguá»“n sá»­ liá»‡u tham chiáº¿u:** *Äáº¡i Viá»‡t Sá»­ KĂ½ ToĂ n ThÆ°*, *NguyĂªn Sá»­*, *An Nam ChĂ­ LÆ°á»£c*, *Viá»‡t Sá»­ TiĂªu Ăn*.  
@@ -53,9 +53,9 @@
 
 ## đŸ› ï¸ TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`mongolViet2Timeline.json`)
 
-Tá»‡p nĂ y náº±m táº¡i `eval-remotion/src/data/mongol-viet-2/mongolViet2Timeline.json` vĂ  Ä‘Ă£ Ä‘Æ°á»£c Ä‘Äƒng kĂ½ táº¡i `Root.tsx` vá»›i Composition ID `MongolViet2Video`.
+Tệp này nằm tại `packages/remotion-engine/src/data/mongol-viet-2/mongolViet2Timeline.json` và đã được đăng ký tại `Root.tsx` với Composition ID `MongolViet2Video`.
 
-> **Chuáº©n:** Schema v3.0 â€” tÆ°Æ¡ng thĂ­ch 100% vá»›i `ChronoVideoSchema` táº¡i `eval-remotion/src/types/schema.ts`.  
+> **Chuẩn:** Schema v3.0 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts).  
 > **LÆ°u Ă½ thá»ƒ loáº¡i:** ÄĂ¢y lĂ  Video Essay phĂ¢n tĂ­ch dĂ i (~18 phĂºt), khĂ¡c vá»›i format Documentary 5â€“7 phĂºt chuáº©n. `videoType` Ä‘Æ°á»£c xáº¿p vĂ o `BATTLE`.
 
 ```json
@@ -184,8 +184,8 @@ Tá»‡p nĂ y náº±m táº¡i `eval-remotion/src/data/mongol-viet-2/mongolV
 
 ## đŸ”’ HÆ¯á»NG DáºªN Báº¢O Tá»’N VĂ€ KHĂ”NG CHá»’NG CHĂ‰O CODE
 
-1. Ká»‹ch báº£n nĂ y Ä‘Ă£ Ä‘Æ°á»£c tĂ­ch há»£p táº¡i `eval-remotion/src/data/mongol-viet-2/mongolViet2Timeline.json`.
-2. Composition tÆ°Æ¡ng á»©ng lĂ  `MongolViet2Video` trong `eval-remotion/src/compositions/mongol-viet-2/MongolViet2Composition.tsx`.
-3. **KhĂ´ng** chá»‰nh sá»­a `eval-remotion/src/Root.tsx` hay mĂ£ nguá»“n composition cÅ© khi lĂ m ká»‹ch báº£n má»›i.
+1. Kịch bản này đã được tích hợp tại `packages/remotion-engine/src/data/mongol-viet-2/mongolViet2Timeline.json`.
+2. Composition tương ứng là `MongolViet2Video` trong `packages/remotion-engine/src/compositions/mongol-viet-2/MongolViet2Composition.tsx`.
+3. **Không** chỉnh sửa `packages/remotion-engine/src/Root.tsx` hay mã nguồn composition cũ khi làm kịch bản mới.
 4. Render báº±ng lá»‡nh: `npm run render:mongolviet2` (náº¿u Ä‘Ă£ cáº¥u hĂ¬nh trong `package.json`).
 

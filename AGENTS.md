@@ -32,7 +32,8 @@ This document outlines the core principles, development workflows, and tool usag
 * **Scope of Use:**
   * **Should be used for:** Searching classes, functions, interfaces, Zod schemas, API routes, Remotion components; tracing data flow between packages (`packages/shared-spec`, `packages/remotion-engine`, Agent/RAG services); preparing code refactoring.
   * **Do NOT use for:** Reading configuration files (`.env`, `package.json`), Markdown documentation (`docs/*.md`), or standard file system operations.
-* **Tool / CLI Priority Order:** `codegraph_explore` (Priority #1) → `codegraph_node` → `codegraph_callers` → `codegraph_search`.
+* **MCP Tools Priority:** `codegraph_explore` (Priority #1, returns verbatim source + call paths) → `codegraph_node`.
+* **CLI Commands Priority:** `codegraph explore "<query>"` (Priority #1) → `codegraph node <symbol-or-file>` → `codegraph query <search>`.
 
 ---
 
@@ -67,7 +68,7 @@ This document outlines the core principles, development workflows, and tool usag
 # Check CodeGraph index status
 codegraph status
 
-# Update CodeGraph index after code edits
+# Force sync CodeGraph index (if auto-sync daemon is disabled/stale)
 codegraph sync
 
 # Query symbol or architectural questions

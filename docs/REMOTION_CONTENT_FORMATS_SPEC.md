@@ -1,9 +1,9 @@
 # TÀI LIỆU KIẾN TRÚC & QUY CHUẨN THIẾT KẾ: CHRONO-VIDEO GENERATOR PIPELINE
 
-Tài liệu này đóng gói toàn bộ **Kiến trúc Tổng thể**, **Bộ Ranh giới An toàn cho AI**, **Ma trận Mapping 5 Dạng Nội dung Lịch sử**, và **Schema JSON Production v3.2 (bao gồm License & Attribution Metadata)** dành cho hệ thống tự động hóa video lịch sử **ChronoViet**.
+Tài liệu này đóng gói toàn bộ **Kiến trúc Tổng thể**, **Bộ Ranh giới An toàn cho AI**, **Ma trận Mapping 5 Dạng Nội dung Lịch sử**, và **Schema JSON Production v4.1 (Tối ưu Context Window, Discriminated Unions per Layout Mode, Field Consolidation, Relative Timing Standard durationInFrames/durationInSeconds, Extensible layoutProps, Asset Metadata Preloading & External Captions URL)** dành cho hệ thống tự động hóa video lịch sử **ChronoViet**.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** `packages/shared-spec/src/schema.ts` + `packages/remotion-engine/src/types/index.ts`  
-> 📄 **Template JSON chuẩn & Evaluation Test Cases:** `packages/remotion-engine/eval/test-cases/`
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) + [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts)  
+> 📄 **Template JSON chuẩn & Evaluation Test Cases:** [`packages/remotion-engine/eval/test-cases/`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/eval/test-cases/)
 
 ---
 
@@ -20,9 +20,9 @@ Nếu AI Agent không tìm thấy ảnh phù hợp hoặc link ảnh bị chết
 
 ## II. THƯ VIỆN COMPONENT & LAYOUT MODES (LEGO BLOCKS CHO AI AGENT)
 
-AI Agent chỉ được phép xây dựng kịch bản dựa trên các "khối Lego" đã được lập trình sẵn trong Remotion Engine. Tất cả 18 giá trị `layoutMode` đều được định nghĩa trong `LayoutModeSchema` tại `src/types/schema.ts`.
+AI Agent chỉ được phép xây dựng kịch bản dựa trên các "khối Lego" đã được lập trình sẵn trong Remotion Engine. Tất cả các giá trị `layoutMode` (18 Core Modes + 13 Extended Modes) đều được định nghĩa trong `LayoutModeSchema` tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts).
 
-### 1. Nhóm Pure Image (7 Layout Modes)
+### 1. Nhóm Pure Image (11 Layout Modes)
 
 Điều khiển qua các trường `layoutMode`, `effect` và `filterStyle` — tất cả render qua `SlideImage.tsx`:
 
@@ -35,14 +35,18 @@ AI Agent chỉ được phép xây dựng kịch bản dựa trên các "khối 
 | `CENTER_SCALE` | Ảnh căn giữa có scale nhẹ, không blur nền. |
 | `VIGNETTE_DARK` | Phủ lớp filter đen mờ 4 góc, giảm độ sáng 40%. **Phù hợp:** làm nền an toàn cho Phụ đề hoặc giọng đọc trầm lắng. |
 | `SPLIT_COMPARE` | So sánh 2 ảnh cạnh nhau. Dùng `assetUrl` (trái) + `secondaryAssetUrl` (phải). |
+| `PURE_IMAGE_FULL` | Render ảnh tĩnh full-bleed nâng cao không overlay text. |
+| `DOCUMENTARY_GRID` | Lưới 2-4 ảnh phong cách phim tài liệu truyền hình. |
+| `NEWSPAPER_ARCHIVE` | Mô phỏng ảnh báo chí lưu trữ cổ điển. |
+| `GALLERY_3D` | Trình chiếu bộ sưu tập ảnh 3D chiều sâu. |
 
 **Hiệu ứng chuyển động Ken Burns (`effect`):**
 ```
 KEN_BURNS_ZOOM_IN | KEN_BURNS_ZOOM_OUT | KEN_BURNS_PAN_LEFT
-KEN_BURNS_PAN_RIGHT | KEN_BURNS_PAN_UP | KEN_BURNS_PAN_DOWN
+KEN_BURNS_PAN_RIGHT | KEN_BURNS_PAN_UP | KEN_BURNS_PAN_DOWN | NONE
 ```
 
-### 2. Nhóm Pure Code (11 Layout Modes)
+### 2. Nhóm Pure Code / Overlay UI (20 Layout Modes)
 
 Mỗi layout mode kích hoạt một UI Component chuyên biệt trong `src/components/`:
 
@@ -53,12 +57,21 @@ Mỗi layout mode kích hoạt một UI Component chuyên biệt trong `src/comp
 | `STAT_CARD` | `StatCard.tsx` | Hồ sơ & Chỉ số Nhân vật / Sự kiện với staggered fade-in. | `title`, `name`, `role`, `statItems[]` |
 | `VERSUS_CARD` | `VersusCard.tsx` | Thẻ Đối đầu — chia đôi màn hình so sánh lực lượng/chiến thuật. | `title`, `leftSide{}`, `rightSide{}` |
 | `QUOTE_CANVAS` | `QuoteSlide.tsx` | Khung trích dẫn trang trọng với dấu ngoặc kép nghệ thuật. | `quoteText`, `author`, `subtitle` |
+| `QUOTE_SLIDE` | `QuoteSlide.tsx` | Biến thể / Alias của QUOTE_CANVAS, render qua `QuoteSlide.tsx`. | `quoteText`, `author`, `subtitle` |
 | `BULLET_HIGHLIGHT` | `BulletHighlight.tsx` | Danh sách thành tựu / mốc thời gian / diễn biến sáng từng dòng. | `title`, `bulletPoints[]` |
 | `MUSEUM_TAG` | `MuseumTag.tsx` | Thẻ chú thích bảo tàng chuyên dụng cho Cổ vật. | `title`, `subtitle`, `artifactInfo{}` |
 | `SPLIT_THEORY` | `SplitTheory.tsx` | So sánh 2–3 giả thuyết lịch sử với độ tin cậy %. | `title`, `theories[]` |
 | `OUTRO_CARD` | `OutroSlide.tsx` | Màn hình Kết bài — tóm tắt di sản, thông điệp CTA. | `title`, `quoteText`, `ctaText`, `bulletPoints[]` |
 | `ARTICLE_UI` | `ChronoIntro.tsx` | Màn hình mở đầu dạng báo chí / phim tài liệu chuyên sâu. | `title`, `author`, `seriesTitle` |
 | `SPONSOR_UI` | `SponsorSlide.tsx` | Màn hình giới thiệu tài trợ / đồng hành sản xuất. | `sponsorTitle`, `sponsorDesc`, `ctaText` |
+| `HERO_SPOTLIGHT` | Extended Layout | Màn hình tiêu điểm anh hùng dân tộc. | `name`, `title`, `details` |
+| `TIMELINE_CHRONO` | Extended Layout | Trục thời gian diễn biến sự kiện lịch sử. | `title`, `bulletPoints[]` |
+| `MAP_TACTICAL` | Extended Layout | Sơ đồ bản đồ tác chiến / hành quân. | `title`, `details` |
+| `ARMY_STRENGTH` | Extended Layout | Biểu đồ quân số & tương quan lực lượng. | `title`, `statItems[]` |
+| `CHARACTER_PROFILE` | Extended Layout | Hồ sơ chi tiết nhân vật lịch sử. | `name`, `role`, `details` |
+| `ROYAL_DECREE` | Extended Layout | Khung văn bản chiếu dời đô / hịch / chiếu thư. | `title`, `quoteText` |
+| `ARTIFACT_INSPECT` | Extended Layout | Giao diện soi chi tiết hoa văn cổ vật. | `title`, `artifactInfo{}` |
+| `POEM_RECITING` | Extended Layout | Giao diện ngâm thơ / văn thơ cổ truyền. | `title`, `quoteText` |
 
 **Overlays dùng chung (tự động trong mọi scene):**
 - `DocumentaryHeader.tsx` — Thanh Header thương hiệu cố định phía trên (ẩn bằng `hideHeader: true`)
@@ -88,12 +101,15 @@ AI Agent tự động xếp loại prompt của người dùng theo các tín hi
 
 ---
 
-## IV. BỘ KỊCH BẢN MẪU ĐỒNG BỘ NGUYÊN BẢN CODEBASE (PRODUCTION SCHEMA V3.0)
+## IV. BỘ KỊCH BẢN MẪU ĐỒNG BỘ NGUYÊN BẢN CODEBASE (PRODUCTION SCHEMA V4.1)
 
-> **Lưu ý thời lượng scene:** Cả hai cách đều hợp lệ và được engine tự xử lý:
-> - **Cách 1 (khuyến nghị):** `"durationInFrames": 450` (30fps × 15s = 450 frames)
-> - **Cách 2 (tiện lợi cho AI):** `"startTime": 0, "endTime": 15` (engine tự convert sang frames)
-> - Khi có cả hai: `durationInFrames` có độ ưu tiên cao hơn.
+> **Lưu ý quy tắc tính thời lượng Scene trong Engine (`Root.tsx`):**
+> 1. Trực tiếp `"durationInFrames": 450` (Ưu tiên số 1 - Khuyến nghị cho Production render).
+> 2. Theo giây `"durationInSeconds": 15` (Engine tự nhân với `fps`).
+> 3. Tự động theo Karaoke Audio Captions: `max(caption.endFrame) + 15` frames (tối thiểu 3s).
+> 4. Tính qua khoảng thời gian `"startTime": 0, "endTime": 15` (`(endTime - startTime) * fps`).
+> 5. Mặc định Fallback: 5 giây (`5 * fps`).
+> *Khi `enableTransitions: true`, thời lượng tổng video sẽ được trừ đi khoảng overlap chuyển cảnh (`transitionDurationFrames` mặc định 15 frames).*
 
 ---
 
@@ -107,11 +123,11 @@ AI Agent tự động xếp loại prompt của người dùng theo các tín hi
   "templateId": "HISTORICAL_DOCUMENTARY",
   "aspectRatio": "16:9",
   "theme": {
-    "primaryColor": "#D4AF37",
-    "secondaryColor": "#8B0000",
-    "backgroundColor": "#090d14",
+    "primaryColor": "#C89D35",
+    "secondaryColor": "#9B1B1B",
+    "backgroundColor": "#0E0C0A",
     "fontFamily": "Merriweather, serif",
-    "accentGlow": "rgba(212, 175, 55, 0.35)"
+    "accentGlow": "rgba(200, 157, 53, 0.35)"
   },
   "audioUrl": "assets/biography/tran-hung-dao/voiceover.wav",
   "bgmUrl": "assets/biography/tran-hung-dao/bgm.wav",
@@ -211,11 +227,11 @@ AI Agent tự động xếp loại prompt của người dùng theo các tín hi
   "templateId": "HISTORICAL_DOCUMENTARY",
   "aspectRatio": "16:9",
   "theme": {
-    "primaryColor": "#DC2626",
-    "secondaryColor": "#1E293B",
-    "backgroundColor": "#090d14",
+    "primaryColor": "#9B1B1B",
+    "secondaryColor": "#C89D35",
+    "backgroundColor": "#0E0C0A",
     "fontFamily": "Merriweather, serif",
-    "accentGlow": "rgba(220, 38, 38, 0.4)"
+    "accentGlow": "rgba(155, 27, 27, 0.4)"
   },
   "audioUrl": "assets/battle/bach-dang/voiceover.wav",
   "bgmUrl": "assets/battle/bach-dang/bgm.wav",
@@ -429,7 +445,7 @@ AI Agent tự động xếp loại prompt của người dùng theo các tín hi
 │   - Nhận diện domain → BIOGRAPHY/BATTLE/...             │
 │   - Crawl/Kiểm định ảnh bằng VLM Inspector (Score ≥ 60)│
 │   - Fallback 404/thiếu ảnh → dùng Pure Code layoutMode │
-│   - Đóng gói JSON chuẩn ChronoVideoSchema (v3.0)       │
+│   - Đóng gói JSON chuẩn ChronoVideoSchema (v4.1)       │
 └────────────────────────────┬────────────────────────────┘
                              │ (data.json)
                              ▼
@@ -457,30 +473,28 @@ AI Agent tự động xếp loại prompt của người dùng theo các tín hi
 
 ---
 
-## VI. ĐỐI CHIẾU & ĐỒNG BỘ VỚI CODEBASE `eval-remotion`
+## VI. ĐỐI CHIẾU & ĐỒNG BỘ VỚI CODEBASE `remotion-engine` (`packages/remotion-engine`)
 
-Thư mục `eval-remotion/src/` đã được hoàn thiện 100% linh hoạt theo cơ chế Data-Driven:
+Thư mục `packages/remotion-engine/src/` và `packages/shared-spec/src/` đã được hoàn thiện 100% linh hoạt theo cơ chế Data-Driven:
 
-1. **Types & Validation (`src/types/`):**
-   - [`index.ts`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src/types/index.ts): Khai báo đầy đủ 18 `LayoutMode`, 15 `TransitionType`, 4 `FilterStyle`, `ThemeConfig`, `OverlayData` và toàn bộ sub-types.
-   - [`schema.ts`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src/types/schema.ts): Zod Schema (`ChronoVideoSchema`, `TimelineSceneSchema`, `OverlayDataSchema`) validate JSON runtime.
+1. **Types & Validation (`packages/shared-spec/src/` & `packages/remotion-engine/src/types/`):**
+   - [`index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts): Re-export từ `@chronoviet/shared-spec` (Khai báo đầy đủ 31 `LayoutMode`, 19 `TransitionType`, 4 `FilterStyle`, `ThemeConfig`, `OverlayData` và toàn bộ sub-types).
+   - [`schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts): Zod Schema (`ChronoVideoSchema`, `TimelineSceneSchema`, `OverlayDataSchema`) validate JSON runtime.
 
 2. **Hệ Thống Theme Động (`src/utils/themeUtils.ts`):**
    - `resolveTheme(theme)` — giải quyết màu sắc với fallback từ `COLOR_PALETTE`.
    - `getMergedTheme(templateId, customTheme)` — merge template default với custom theme JSON.
-   - `TEMPLATE_THEMES` tại [`src/constants/config.ts`](file:///D:/Persional_Projects/ChronoViet/eval-remotion/src/constants/config.ts).
+   - `TEMPLATE_THEMES` tại [`src/constants/config.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/constants/config.ts).
 
 3. **Thư viện 13 Component Pure Code (`src/components/`):**
    - `StatCard`, `VersusCard`, `BulletHighlight`, `MuseumTag`, `SplitTheory`, `ChapterTitle` (dùng cho cả `TITLE_CARD` và `CHAPTER_CARD`), `QuoteSlide`, `OutroSlide`, `SponsorSlide`, `ChronoIntro`, `DocumentaryHeader`, `DocumentarySubtitle`, `SlideImage`.
 
 4. **Data Files (`src/data/`):**
-   - 5 file JSON kịch bản chuẩn v3.0: `biographyTimeline.json` (21 scenes), `battleTimeline.json` (21 scenes), `dynastyTimeline.json` (21 scenes), `mysteryTimeline.json` (19 scenes), `artifactTimeline.json` (19 scenes).
-   - 1 file template blank: `templateGeneralTimeline.json` — dùng làm điểm bắt đầu cho AI Agent.
-   - 3 thư mục legacy: `quang-trung/`, `hai-ba-trung/`, `mongol-viet-2/`.
+   - Tổng cộng 9 file JSON kịch bản chuẩn (5 domain timelines + 3 legacy historical timelines + 1 general template timeline): `biographyTimeline.json` (21 scenes), `battleTimeline.json` (21 scenes), `dynastyTimeline.json` (21 scenes), `mysteryTimeline.json` (19 scenes), `artifactTimeline.json` (19 scenes), `templateGeneralTimeline.json`, `quang-trung/quangTrungTimeline.json`, `hai-ba-trung/haiBaTrungTimeline.json`, `mongol-viet-2/mongolViet2Timeline.json`.
    - **Lưu ý:** `audioUrl` & `bgmUrl` trong các file JSON hiện dùng placeholder `assets/quang-trung/voiceover.wav` — sẽ được thay thế bằng audio domain-specific khi Multi-Agent TTS Pipeline hoàn thiện. `templateId` là optional trong schema, các file có thể bổ sung khi cần override theme mặc định.
 
 5. **Compositions & Core Engine (`src/Root.tsx` & `src/compositions/ChronoVideo.tsx`):**
-   - 8 Composition đã đăng ký: `BiographyVideo`, `BattleVideo`, `DynastyVideo`, `MysteryVideo`, `ArtifactVideo` (5 domain chuẩn) + `QuangTrungVideo`, `HaiBaTrungVideo`, `MongolViet2Video` (legacy).
+   - 11 Composition đã đăng ký: `ChronoVideo` (general template), `BiographyVideo`, `BattleVideo`, `DynastyVideo`, `MysteryVideo`, `ArtifactVideo` (5 domain chuẩn), `QuickShortsVideo` (9:16), `ModernNewsVideo` (16:9) + `QuangTrungVideo`, `HaiBaTrungVideo`, `MongolViet2Video` (legacy).
    - `calculateMetadata` tự động tính duration từ `timeline` JSON, hỗ trợ cả `durationInFrames` lẫn `startTime`/`endTime`.
 
 ---

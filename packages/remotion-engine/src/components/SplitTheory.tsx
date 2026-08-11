@@ -21,24 +21,25 @@ export const SplitTheory: React.FC<SplitTheoryProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { scale, isLandscape } = useResponsiveLayout();
+  const { scale } = useResponsiveLayout();
   const activeTheme = resolveTheme(theme);
   const activeFont = getSafeFontFamily(theme?.fontFamily);
+  const activeSerifFont = getSafeFontFamily(theme?.fontFamily, true);
   const cleanTitle = toVietnameseUpperCase(title);
 
   const titleScale = spring({
     frame,
     fps,
-    from: 0.9,
+    from: 0.92,
     to: 1,
     config: { damping: 14, stiffness: 95 },
   });
 
   const titleOpacity = interpolate(frame, [0, 10], [0, 1], { extrapolateRight: 'clamp' });
 
-  const titleFontSize = Math.round((isLandscape ? 32 : 24) * scale);
-  const cardTitleFontSize = Math.round((isLandscape ? 22 : 18) * scale);
-  const descFontSize = Math.round((isLandscape ? 16 : 14) * scale);
+  const titleFontSize = Math.round(28 * scale);
+  const cardTitleFontSize = Math.round(22 * scale);
+  const descFontSize = Math.round(16 * scale);
 
   return (
     <AbsoluteFill
@@ -51,52 +52,45 @@ export const SplitTheory: React.FC<SplitTheoryProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Dark Suspense Ambient Background */}
+      {/* Historical Parchment Vignette Canvas Overlay */}
       <AbsoluteFill
         style={{
-          background:
-            'radial-gradient(circle at 50% 40%, #171b26 0%, #0a0d14 60%, #030407 100%)',
+          background: 'radial-gradient(circle at center, transparent 40%, rgba(14, 12, 10, 0.85) 100%)',
+          pointerEvents: 'none',
         }}
       />
 
-      {/* Detective Fog/Vignette Accent */}
-      <AbsoluteFill
-        style={{
-          background: 'radial-gradient(circle at 50% 50%, transparent 40%, rgba(0,0,0,0.85) 100%)',
-        }}
-      />
-
-      {/* Section Title Badge */}
+      {/* Section Title Badge (Con dấu Triện Son Tiêu Đề) */}
       <div
         style={{
           opacity: titleOpacity,
           transform: `scale(${titleScale})`,
           zIndex: 20,
           marginBottom: `${Math.round(24 * scale)}px`,
-          backgroundColor: 'rgba(30, 41, 59, 0.85)',
-          color: activeTheme.primaryColor,
+          backgroundColor: 'rgba(155, 27, 27, 0.15)',
+          color: COLOR_PALETTE.vermilionRed,
           fontFamily: activeFont,
           fontSize: `${titleFontSize}px`,
           fontWeight: 900,
-          letterSpacing: '1px',
-          padding: `${Math.round(8 * scale)}px ${Math.round(28 * scale)}px`,
-          borderRadius: `${Math.round(30 * scale)}px`,
-          border: `2px solid ${activeTheme.primaryColor}`,
-          boxShadow: `0 0 25px ${activeTheme.accentGlow}`,
+          letterSpacing: '2px',
+          padding: `${Math.round(6 * scale)}px ${Math.round(24 * scale)}px`,
+          borderRadius: '2px',
+          border: `2px solid ${COLOR_PALETTE.vermilionRed}`,
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
         }}
       >
-        {cleanTitle}
+        【 {cleanTitle} 】
       </div>
 
-      {/* Theories Container */}
+      {/* Theories Container (Framed Mộc Bản) */}
       {theories.length > 0 && (
         <div
           style={{
-            width: isLandscape ? '88%' : '94%',
+            width: '88%',
             maxWidth: '1200px',
             display: 'grid',
             gridTemplateColumns:
-              theories.length > 1 && isLandscape ? `repeat(${theories.length}, 1fr)` : '1fr',
+              theories.length > 1 ? `repeat(${theories.length}, 1fr)` : '1fr',
             gap: `${Math.round(24 * scale)}px`,
             zIndex: 10,
           }}
@@ -117,7 +111,7 @@ export const SplitTheory: React.FC<SplitTheoryProps> = ({
             );
 
             const isPrimary = idx === 0;
-            const borderColor = isPrimary ? activeTheme.primaryColor : activeTheme.secondaryColor;
+            const borderColor = isPrimary ? activeTheme.primaryColor : COLOR_PALETTE.vermilionRed;
             const cleanProb = toVietnameseUpperCase(theory.probability);
             const cleanTheoryTitle = toVietnameseUpperCase(theory.title);
             const cleanDesc = normalizeVietnameseText(theory.desc);
@@ -128,13 +122,15 @@ export const SplitTheory: React.FC<SplitTheoryProps> = ({
                 style={{
                   opacity: cardOpacity,
                   transform: `translateY(${cardY}px)`,
-                  padding: `${Math.round(28 * scale)}px ${Math.round(24 * scale)}px`,
-                  background: 'rgba(15, 20, 30, 0.92)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  borderRadius: `${Math.round(18 * scale)}px`,
-                  border: `2px solid ${borderColor}`,
-                  boxShadow: `0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0,0,0,0.5)`,
+                  padding: `${Math.round(26 * scale)}px ${Math.round(24 * scale)}px`,
+                  background: 'rgba(22, 18, 14, 0.95)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  borderRadius: '2px',
+                  border: `1px solid ${borderColor}`,
+                  outline: `1px solid ${activeTheme.accentGlow}`,
+                  outlineOffset: '-5px',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.9)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -145,27 +141,29 @@ export const SplitTheory: React.FC<SplitTheoryProps> = ({
                     <span
                       style={{
                         display: 'inline-block',
-                        backgroundColor: isPrimary ? activeTheme.primaryColor : activeTheme.secondaryColor,
-                        color: '#000000',
+                        backgroundColor: 'rgba(200, 157, 53, 0.15)',
+                        color: borderColor,
                         fontFamily: activeFont,
-                        fontSize: `${Math.round(12 * scale)}px`,
+                        fontSize: `${Math.round(11 * scale)}px`,
                         fontWeight: 900,
-                        padding: `${Math.round(4 * scale)}px ${Math.round(12 * scale)}px`,
-                        borderRadius: `${Math.round(10 * scale)}px`,
+                        letterSpacing: '1px',
+                        padding: `${Math.round(3 * scale)}px ${Math.round(10 * scale)}px`,
+                        borderRadius: '2px',
+                        border: `1px solid ${borderColor}`,
                         marginBottom: `${Math.round(12 * scale)}px`,
                       }}
                     >
-                      {cleanProb}
+                      【 {cleanProb} 】
                     </span>
                   )}
 
                   <h3
                     style={{
                       margin: 0,
-                      fontFamily: activeFont,
+                      fontFamily: activeSerifFont,
                       fontSize: `${cardTitleFontSize}px`,
                       fontWeight: 900,
-                      color: COLOR_PALETTE.textWhite,
+                      color: borderColor,
                       letterSpacing: '0.4px',
                       lineHeight: 1.3,
                     }}
@@ -194,3 +192,4 @@ export const SplitTheory: React.FC<SplitTheoryProps> = ({
     </AbsoluteFill>
   );
 };
+

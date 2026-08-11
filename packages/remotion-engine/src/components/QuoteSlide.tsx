@@ -25,7 +25,7 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { scale, isLandscape } = useResponsiveLayout();
+  const { scale } = useResponsiveLayout();
   const activeTheme = resolveTheme(theme);
   const activeFont = getSafeFontFamily(theme?.fontFamily, false);
   const activeSerifFont = getSafeFontFamily(theme?.fontFamily, true);
@@ -43,9 +43,9 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
   const cardScale = spring({
     frame: Math.max(0, frame - cardDelay),
     fps,
-    from: 0.92,
+    from: 0.94,
     to: 1,
-    config: { damping: 14, stiffness: 90 },
+    config: { damping: 16, stiffness: 90 },
   });
 
   const opacity = interpolate(frame, [cardDelay, cardDelay + 12], [0, 1], {
@@ -54,12 +54,10 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
   });
 
   const badgeFontSize = Math.round(12 * scale);
-  const quoteFontSize = Math.round((isLandscape ? 34 : 26) * scale);
+  const quoteFontSize = Math.round(34 * scale);
   const authorFontSize = Math.round(17 * scale);
   const subtitleFontSize = Math.round(14 * scale);
-  const markSize = Math.round(64 * scale);
-
-  const [hasBgError, setHasBgError] = React.useState(false);
+  const markSize = Math.round(56 * scale);
 
   return (
     <AbsoluteFill
@@ -71,59 +69,57 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
         overflow: 'hidden',
       }}
     >
-
-      {/* Decorative Canvas Texture */}
+      {/* Historical Parchment Vignette Canvas Overlay */}
       <AbsoluteFill
         style={{
-          backgroundImage:
-            'radial-gradient(rgba(212, 175, 55, 0.08) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-          opacity: 0.7,
+          background: 'radial-gradient(circle at center, transparent 40%, rgba(14, 12, 10, 0.85) 100%)',
+          pointerEvents: 'none',
         }}
       />
 
-
-      {/* 2. Main Quote Card Container */}
+      {/* Main Quote Card Container (Framed Mộc Bản / Sắc Phong) */}
       <div
         style={{
           transform: `scale(${cardScale}) translateZ(0)`,
           opacity,
           willChange: 'transform, opacity',
-          maxWidth: isLandscape ? '82%' : '92%',
-          width: isLandscape ? '880px' : 'auto',
+          maxWidth: '82%',
+          width: '880px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
           zIndex: 10,
           padding: `${Math.round(36 * scale)}px ${Math.round(44 * scale)}px`,
-          background: 'rgba(10, 8, 6, 0.94)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          borderRadius: `${Math.round(16 * scale)}px`,
-          border: `1px solid ${activeTheme.accentGlow}`,
-          borderLeft: `4px solid ${activeTheme.primaryColor}`,
-          boxShadow:
-            `0 25px 70px rgba(0, 0, 0, 0.95), 0 0 50px ${activeTheme.accentGlow}`,
+          background: 'rgba(22, 18, 14, 0.95)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          borderRadius: '2px',
+          border: `1px solid ${activeTheme.primaryColor}`,
+          outline: `1px solid ${activeTheme.accentGlow}`,
+          outlineOffset: '-6px',
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.95)',
         }}
       >
-        {/* Dynamic Category Header Badge */}
+        {/* Vietnamese Red Seal Stamp Badge (Con dấu Triện Son) */}
         {cleanSubtitle && (
           <div
             style={{
               fontFamily: activeFont,
               fontSize: `${badgeFontSize}px`,
-              fontWeight: 800,
-              letterSpacing: '2px',
-              color: activeTheme.primaryColor,
-              backgroundColor: 'rgba(212, 175, 55, 0.12)',
-              border: `1px solid ${activeTheme.accentGlow}`,
+              fontWeight: 900,
+              letterSpacing: '2.5px',
+              color: COLOR_PALETTE.vermilionRed,
+              backgroundColor: 'rgba(155, 27, 27, 0.1)',
+              border: `2px solid ${COLOR_PALETTE.vermilionRed}`,
               padding: '4px 16px',
-              borderRadius: '20px',
-              marginBottom: `${Math.round(14 * scale)}px`,
+              borderRadius: '2px',
+              marginBottom: `${Math.round(16 * scale)}px`,
+              textTransform: 'uppercase',
+              boxShadow: 'inset 0 0 4px rgba(155, 27, 27, 0.25)',
             }}
           >
-            ✦ {cleanSubtitle} ✦
+            【 {cleanSubtitle} 】
           </div>
         )}
 
@@ -136,7 +132,7 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
             color: activeTheme.primaryColor,
             opacity: 0.9,
             marginBottom: `${Math.round(10 * scale)}px`,
-            textShadow: `0 0 24px ${activeTheme.accentGlow}`,
+            textShadow: '0 2px 10px rgba(0, 0, 0, 0.9)',
           }}
         >
           “
@@ -150,19 +146,19 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
             fontSize: `${quoteFontSize}px`,
             fontWeight: 700,
             fontStyle: 'italic',
-            lineHeight: 1.5,
+            lineHeight: 1.55,
             color: COLOR_PALETTE.textWhite,
-            letterSpacing: '0.2px',
+            letterSpacing: '0.3px',
             textShadow: '0 4px 14px rgba(0, 0, 0, 0.95)',
           }}
         >
           "{cleanQuoteText}"
         </h2>
 
-        {/* Decorative Divider */}
+        {/* Decorative Heritage Divider */}
         <div
           style={{
-            width: `${Math.round(140 * scale)}px`,
+            width: `${Math.round(160 * scale)}px`,
             height: '2px',
             background: `linear-gradient(90deg, transparent, ${activeTheme.primaryColor}, transparent)`,
             margin: `${Math.round(20 * scale)}px 0`,
@@ -177,7 +173,7 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
               fontSize: `${authorFontSize}px`,
               fontWeight: 800,
               color: activeTheme.primaryColor,
-              letterSpacing: '1.5px',
+              letterSpacing: '2px',
             }}
           >
             — {cleanAuthor}
@@ -202,3 +198,4 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
     </AbsoluteFill>
   );
 };
+

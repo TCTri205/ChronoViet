@@ -5,20 +5,16 @@ export interface ResponsiveLayout {
   width: number;
   height: number;
   scale: number;
-  isLandscape: boolean;
-  isPortrait: boolean;
   safeMarginX: number;
   safeMarginY: number;
 }
 
 /**
  * Custom hook to calculate responsive scale factor and safe margins
- * based on Remotion 16:9 landscape video dimensions (1920x1080 baseline).
+ * based strictly on Remotion 16:9 landscape HD video dimensions (1920x1080 baseline).
  */
 export function useResponsiveLayout(): ResponsiveLayout {
   const { width, height } = useVideoConfig();
-  const isLandscape = width >= height;
-  const isPortrait = !isLandscape;
 
   // Scale factor normalized to standard 1920px 16:9 HD baseline
   const scale = Math.min(Math.max(width / 1920, 0.5), 2.0);
@@ -31,8 +27,6 @@ export function useResponsiveLayout(): ResponsiveLayout {
     width,
     height,
     scale,
-    isLandscape,
-    isPortrait,
     safeMarginX,
     safeMarginY,
   };
@@ -51,6 +45,9 @@ export function isFullscreenLayout(layoutMode?: LayoutMode): boolean {
     'SPONSOR_UI',
     'OUTRO_CARD',
     'TITLE_CARD',
+    'ROYAL_DECREE',
+    'POEM_RECITING',
+    'TIMELINE_CHRONO',
   ] as LayoutMode[]).includes(layoutMode);
 }
 
@@ -71,32 +68,30 @@ export function isPureCodeLayout(layoutMode?: LayoutMode): boolean {
     'VERSUS_CARD',
     'SPLIT_THEORY',
     'POEM_RECITING',
-    'DOCUMENTARY_GRID',
-    'NEWSPAPER_ARCHIVE',
     'TIMELINE_CHRONO',
     'MAP_TACTICAL',
     'ARMY_STRENGTH',
     'CHARACTER_PROFILE',
     'ROYAL_DECREE',
+    'ARTIFACT_INSPECT',
   ] as LayoutMode[]).includes(layoutMode);
 }
 
 /**
- * Resolves CSS positioning properties dynamically for overlay cards.
+ * Resolves CSS positioning properties dynamically for overlay cards in 16:9 landscape format.
  * If position is explicit ('LEFT', 'RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT', 'CENTER'), uses it.
  * If position is not specified, auto-alternates between LEFT and RIGHT based on scene index.
  */
 export function resolveOverlayPositionStyle(
   position?: 'LEFT' | 'RIGHT' | 'TOP_LEFT' | 'TOP_RIGHT' | 'BOTTOM_LEFT' | 'BOTTOM_RIGHT' | 'CENTER',
   index: number = 0,
-  scale: number = 1.0,
-  isLandscape: boolean = true
+  scale: number = 1.0
 ): React.CSSProperties {
   const margin = `${Math.round(40 * scale)}px`;
   const topSafe = `${Math.round(115 * scale)}px`;
   const bottomSafe = `${Math.round(165 * scale)}px`;
 
-  const effectivePos = position || ((index % 2 === 1 && isLandscape) ? 'RIGHT' : 'LEFT');
+  const effectivePos = position || (index % 2 === 1 ? 'RIGHT' : 'LEFT');
 
   switch (effectivePos) {
     case 'RIGHT':
@@ -142,3 +137,4 @@ export function resolveOverlayPositionStyle(
       };
   }
 }
+

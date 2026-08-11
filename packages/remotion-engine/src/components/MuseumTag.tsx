@@ -27,7 +27,7 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { scale, isLandscape } = useResponsiveLayout();
+  const { scale } = useResponsiveLayout();
   const activeTheme = resolveTheme(theme);
   const activeFont = getSafeFontFamily(theme?.fontFamily, false);
   const activeSerifFont = getSafeFontFamily(theme?.fontFamily, true);
@@ -40,7 +40,7 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
   const cardScale = spring({
     frame: Math.max(0, frame - cardDelay),
     fps,
-    from: 0.9,
+    from: 0.92,
     to: 1,
     config: { damping: 15, stiffness: 90 },
   });
@@ -50,9 +50,9 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
     extrapolateRight: 'clamp',
   });
 
-  const titleFontSize = Math.round((isLandscape ? 36 : 28) * scale);
-  const subFontSize = Math.round((isLandscape ? 18 : 15) * scale);
-  const infoFontSize = Math.round((isLandscape ? 18 : 15) * scale);
+  const titleFontSize = Math.round(36 * scale);
+  const subFontSize = Math.round(18 * scale);
+  const infoFontSize = Math.round(18 * scale);
 
   const infoRows = [
     { label: 'Niên đại / Văn hóa:', value: normalizeVietnameseText(artifactInfo?.period) },
@@ -62,13 +62,13 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
     { label: 'Nơi lưu giữ hiện tại:', value: normalizeVietnameseText(artifactInfo?.location) },
   ].filter((r) => Boolean(r.value));
 
-  const posStyle = resolveOverlayPositionStyle(position || 'BOTTOM_LEFT', index, scale, isLandscape);
+  const posStyle = resolveOverlayPositionStyle(position || 'BOTTOM_LEFT', index, scale);
 
   return (
     <div
       style={{
         position: 'absolute',
-        width: isLandscape ? `${Math.round(440 * scale)}px` : '90%',
+        width: `${Math.round(450 * scale)}px`,
         maxWidth: '92%',
         maxHeight: `${Math.round(500 * scale)}px`,
         zIndex: 20,
@@ -80,7 +80,7 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
         ...posStyle,
       }}
     >
-      {/* Museum Display Showcase Tag */}
+      {/* Museum Display Showcase Tag (Framed Mộc Bản Di Sản) */}
       <div
         style={{
           transform: `scale(${cardScale})`,
@@ -93,29 +93,34 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
           alignItems: 'flex-start',
           textAlign: 'left',
           padding: `${Math.round(24 * scale)}px ${Math.round(28 * scale)}px`,
-          background: 'rgba(18, 14, 10, 0.88)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderRadius: `${Math.round(18 * scale)}px`,
+          background: 'rgba(22, 18, 14, 0.94)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderRadius: '2px',
           border: `1px solid ${activeTheme.primaryColor}`,
-          boxShadow: `0 20px 50px rgba(0, 0, 0, 0.9), 0 0 25px ${activeTheme.accentGlow}`,
+          outline: `1px solid ${activeTheme.accentGlow}`,
+          outlineOffset: '-5px',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.95)',
         }}
       >
-        {/* Top Header Badge */}
+        {/* Vietnamese Red Seal Stamp Badge (Con dấu Triện Son Bảo Tàng) */}
         <div
           style={{
-            backgroundColor: activeTheme.primaryColor,
-            color: '#000000',
+            border: `2px solid ${COLOR_PALETTE.vermilionRed}`,
+            color: COLOR_PALETTE.vermilionRed,
+            backgroundColor: 'rgba(155, 27, 27, 0.1)',
             fontFamily: activeFont,
             fontSize: `${Math.round(11 * scale)}px`,
             fontWeight: 900,
-            letterSpacing: '1.5px',
+            letterSpacing: '2px',
             padding: `${Math.round(3 * scale)}px ${Math.round(12 * scale)}px`,
-            borderRadius: `${Math.round(12 * scale)}px`,
-            marginBottom: `${Math.round(10 * scale)}px`,
+            borderRadius: '2px',
+            marginBottom: `${Math.round(12 * scale)}px`,
+            textTransform: 'uppercase',
+            boxShadow: 'inset 0 0 4px rgba(155, 27, 27, 0.25)',
           }}
         >
-          BẢO TÀNG • CATALOG TAG
+          【 BẢO VẬT QUỐC GIA 】
         </div>
 
         {/* Title */}
@@ -128,7 +133,7 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
             color: activeTheme.primaryColor,
             letterSpacing: '0.5px',
             textShadow: '0 2px 10px rgba(0,0,0,0.9)',
-            lineHeight: 1.2,
+            lineHeight: 1.25,
           }}
         >
           {cleanTitle}
@@ -143,7 +148,7 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
               fontSize: `${subFontSize}px`,
               fontWeight: 600,
               color: COLOR_PALETTE.textSubtle,
-              letterSpacing: '0.2px',
+              letterSpacing: '0.3px',
             }}
           >
             {cleanSubtitle}
@@ -153,10 +158,10 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
         {/* Divider Line */}
         <div
           style={{
-            width: '80px',
+            width: '100px',
             height: '2px',
             background: `linear-gradient(90deg, ${activeTheme.primaryColor}, transparent)`,
-            margin: `${Math.round(12 * scale)}px 0`,
+            margin: `${Math.round(14 * scale)}px 0`,
           }}
         />
 
@@ -188,8 +193,8 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
                     display: 'flex',
                     flexDirection: 'column',
                     padding: `${Math.round(6 * scale)}px ${Math.round(12 * scale)}px`,
-                    background: 'rgba(32, 26, 18, 0.65)',
-                    borderRadius: `${Math.round(8 * scale)}px`,
+                    background: 'rgba(32, 26, 18, 0.75)',
+                    borderRadius: '2px',
                     borderLeft: `3px solid ${activeTheme.primaryColor}`,
                   }}
                 >
@@ -199,6 +204,7 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
                       fontSize: `${infoFontSize * 0.85}px`,
                       fontWeight: 700,
                       color: activeTheme.primaryColor,
+                      letterSpacing: '0.2px',
                     }}
                   >
                     {row.label}
@@ -223,3 +229,4 @@ export const MuseumTag: React.FC<MuseumTagProps> = ({
     </div>
   );
 };
+

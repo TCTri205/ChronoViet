@@ -20,19 +20,28 @@ Trung tâm Tài liệu Kiến trúc Hệ thống, Công nghệ Hạ tầng & Mô
 ## 🏗️ Sơ Đồ Kiến Trúc Hệ Thống Tổng Thể (Streamlined VPS Topology v3.4)
 
 ```
-                                    ┌───────────────────────────┐
-                                    │    CLIENT / FRONTEND      │
-                                    │ (Next.js / TS Dashboard)  │
-                                    └─────────────┬─────────────┘
-                                                  │ (HTTPS / WS / SSE + Trace ID)
-                                                  ▼
-                                    ┌───────────────────────────┐
-                                                                        │
-                                                                        ▼
-                                                       ┌──────────────────────────────────┐
-                                                       │ Host Volume Storage (/media)     │
-                                                       │ (Raw Assets, License Snapshots   │
-                                                       │  & Final MP4 Videos)             │
-                                                       └──────────────────────────────────┘
+                                     ┌───────────────────────────┐
+                                     │    CLIENT / FRONTEND      │
+                                     │ (Next.js / TS Dashboard)  │
+                                     └─────────────┬─────────────┘
+                                                   │ (HTTPS / WS / SSE + Trace ID)
+                                                   ▼
+                                     ┌───────────────────────────┐
+                                     │      CADDY GATEWAY        │
+                                     │   (Reverse Proxy & SSL)   │
+                                     └─────────────┬─────────────┘
+                                                   │
+                        ┌──────────────────────────┴──────────────────────────┐
+                        ▼                                                     ▼
+         ┌─────────────────────────────┐                       ┌─────────────────────────────┐
+         │     APP MONOLITH SERVER     │                       │     RENDER WORKER POOL      │
+         │   (Next.js / Fastify Core)  ├──────────────────────►│ (Remotion / Chromium Engine)│
+         └──────────────┬──────────────┘       BullMQ Task     └──────────────┬──────────────┘
+                        │                        Queue                        │
+                        ▼                                                     ▼
+         ┌─────────────────────────────┐                       ┌─────────────────────────────┐
+         │ POSTGRESQL + PGVECTOR / REDIS│                       │ Host Volume Storage (/media)│
+         │ (Entities, Vectors, Cache)  │                       │ (Raw Assets, License Snaps, │
+         └─────────────────────────────┘                       │  & Rendered MP4 Output)     │
+                                                               └─────────────────────────────┘
 ```
-

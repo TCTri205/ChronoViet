@@ -29,15 +29,15 @@ d:\Persional_Projects\ChronoViet\docs\
 ├── 📘 SystemOverview.md                       [Kiến trúc RAG + Multi-Agent + VLM + Remotion [✅ Engine / 📐 Agent Roadmap]]
 ├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai, Phân tích Song song & Khung Đánh giá [📐 Roadmap]]
 │
-├── ⚙️ EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 18 LayoutMode, 15 Transition, Zod Schema, 8 Compositions [✅]]
-└── REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v3.0, Lego Components [✅]]
+├── ⚙️ EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 31 LayoutMode, 19 Transition, Zod Schema, 11 Compositions [✅]]
+└── REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v4.1, Lego Components [✅]]
 │
 ├── 🎨 3. HƯỚNG DẪN THIẾT KẾ & VISUAL DESIGN
 │   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md          [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]
 │
 └── 📜 4. KỊCH BẢN MẪU & RESEARCH LOG
     ├── RESEARCH_PROMPTS_LOG.md                [Nhật ký audit ảnh tư liệu Wikimedia (Phase 1: Quang Trung 15 scenes) [🟡 Audit In Progress]]
-    └── script_examples/                      [Tất cả 8 kịch bản chuẩn Schema v3.0 [✅]]
+    └── script_examples/                      [Tất cả kịch bản chuẩn Schema v4.1 [✅]]
         ├── KICH_BAN_BIOGRAPHY_TRAN_HUNG_DAO.md [Kịch bản Domain BIOGRAPHY: Trần Hưng Đạo (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
         ├── KICH_BAN_BATTLE_BACH_DANG_938.md     [Kịch bản Domain BATTLE: Trận Bạch Đằng 938 (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
         ├── KICH_BAN_DYNASTY_TRIEU_LY.md          [Kịch bản Domain DYNASTY: Triều Đại Nhà Lý (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
@@ -55,36 +55,36 @@ d:\Persional_Projects\ChronoViet\docs\
 ### 2.1. [SystemOverview.md](file:///D:/Persional_Projects/ChronoViet/docs/SystemOverview.md) — Kiến Trúc Hệ Thống Tổng Quan
 - **Mục đích:** Cung cấp cái nhìn toàn cảnh về dự án ChronoViet.
 - **Trạng thái:** 
-  - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation, 13 Components, 18 LayoutModes, 8 Compositions trong `Root.tsx`.
+  - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation, 13 Components, 31 LayoutModes, 11 Compositions trong `Root.tsx`.
   - **[📐 ROADMAP]:** RAG Engine, Multi-Agent Orchestrator, VLM Inspector Agent (mô hình thiết kế kiến trúc chuẩn bị kết nối với Remotion Engine).
 
 ### 2.2. [IMPLEMENTATION_PLAN.md](file:///D:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md) — Kế Hoạch Triển Khai v1.1, Phân Tích Song Song & Khung Đánh Giá `eval/`
 - **Mục đích:** Kế hoạch thực thi dự án chi tiết, lộ trình 5 giai đoạn, phân tích khả năng phát triển song song của 4 mô-đun, quy tắc bắt buộc có thư mục `eval/` riêng cho từng mô-đun và bộ hợp đồng giao tiếp Type-Safe giữa các mô-đun (`packages/shared-spec`).
 - **Trạng thái:** **[📐 ROADMAP SPECIFICATION v1.1]** Đã xác định rõ Workstream A (RAG), B (VieNeu TTS), C (VLM Inspector) triển khai và tự đánh giá song song bằng bộ `eval/` riêng trước khi hợp nhất ở Workstream D (Orchestrator).
 
-### 2.2. [EVAL_REMOTION_TECHNICAL_SPEC.md](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) — ★ Quy Chuẩn Kỹ Thuật (Source of Truth)
+### 2.3. [EVAL_REMOTION_TECHNICAL_SPEC.md](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md) — ★ Quy Chuẩn Kỹ Thuật (Source of Truth)
 - **Mục đích:** Tài liệu tham chiếu kỹ thuật chi tiết và chính xác nhất cho `packages/remotion-engine/src/`.
 - **Trọng tâm:**
   - Mô hình 3 Lớp Rendering (`HistoryBackground` + `HistoryForeground` + `Persistent Overlays`) & cơ chế `TransitionSeries` trong `ChronoVideo.tsx`
-  - **18 `LayoutMode`** đầy đủ (7 Pure Image + 11 Pure Code)
-  - **15 `TransitionType`**, **4 `FilterStyle`**, **6 `KenBurnsEffect`**
+  - **31 `LayoutMode`** đầy đủ (11 Pure Image + 20 Pure Code)
+  - **19 `TransitionType`**, **4 `FilterStyle`**, **6 `KenBurnsEffect`**
   - Zod Schema (`ChronoVideoSchema`, `TimelineSceneSchema`, `OverlayDataSchema`)
-  - **8 Composition** đã đăng ký trong `Root.tsx` (BIOGRAPHY 21 scenes, BATTLE 21 scenes, DYNASTY 21 scenes, MYSTERY 19 scenes, ARTIFACT 19 scenes, + 3 Legacy)
+  - **11 Composition** đã đăng ký trong `Root.tsx` (BIOGRAPHY 21 scenes, BATTLE 21 scenes, DYNASTY 21 scenes, MYSTERY 19 scenes, ARTIFACT 19 scenes, Quick Shorts, Modern News + 3 Legacy)
 
-### 2.3. [REMOTION_CONTENT_FORMATS_SPEC.md](file:///D:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md) — Quy Chuẩn Định Dạng Nội Dung v3.0
+### 2.4. [REMOTION_CONTENT_FORMATS_SPEC.md](file:///D:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md) — Quy Chuẩn Định Dạng Nội Dung v4.1
 - **Mục đích:** Quy định ranh giới cho AI Agent khi lập kịch bản video.
 - **Trọng tâm:** Triết lý "1 Scene = 1 Trạng thái", Bảng mapping 5 Domain lịch sử với Component flow bắt buộc, Schema JSON Production mẫu cho cả 5 domain.
-- **Lưu ý Âm thanh:** Trường `sfxUrl` & `sceneAudioUrl` được hỗ trợ 100% trong Zod Schema và `ChronoVideo.tsx` render pipeline. Thư viện file âm thanh SFX gốc (`.wav`/`.mp3`) được cấu hình nạp qua `scripts/setup_assets.js`.
+- **Lưu ý Âm thanh & Tải tài nguyên:** Trường `sfxUrl`, `soundEffects[]` & `sceneAudioUrl` được hỗ trợ 100% trong Zod Schema và `ChronoVideo.tsx` render pipeline. Tài nguyên âm thanh SFX & hình ảnh tư liệu được cấu hình nạp trực tiếp qua `media/` hoặc `packages/remotion-engine/public/`.
 
-### 2.4. [TEMPLATE_GUIDE_VIDEO_ESSAY.md](file:///D:/Persional_Projects/ChronoViet/docs/TEMPLATE_GUIDE_VIDEO_ESSAY.md) — Hướng Dẫn Thiết Kế Format Video Essay
+### 2.5. [TEMPLATE_GUIDE_VIDEO_ESSAY.md](file:///D:/Persional_Projects/ChronoViet/docs/TEMPLATE_GUIDE_VIDEO_ESSAY.md) — Hướng Dẫn Thiết Kế Format Video Essay
 - **Mục đích:** Hướng dẫn quy chuẩn đồ họa cho format Video Essay phân tích dài (Spiderum style).
 - **Trạng thái:** **[📐 DESIGN SPECIFICATION]** Định hướng thiết kế cho các component mở rộng tương lai (`VideoEssayTitleCard`, `HistoricalQuoteCard`), tuân thủ quy tắc không override code lõi.
 
-### 2.5. [RESEARCH_PROMPTS_LOG.md](file:///D:/Persional_Projects/ChronoViet/docs/RESEARCH_PROMPTS_LOG.md) — Nhật Ký Audit Ảnh Tư Liệu
+### 2.6. [RESEARCH_PROMPTS_LOG.md](file:///D:/Persional_Projects/ChronoViet/docs/RESEARCH_PROMPTS_LOG.md) — Nhật Ký Audit Ảnh Tư Liệu
 - **Trạng thái:** **[🟡 PHASE 1 VERIFIED AUDIT]** Chứa bảng kiểm định 15 ảnh tư liệu cốt lõi cho kịch bản Quang Trung. Phụ lục chứa template audit cho các phân cảnh và kịch bản còn lại trong lộ trình Phase 2.
 
-### 2.6. [script_examples/](file:///D:/Persional_Projects/ChronoViet/docs/script_examples) — Kịch Bản Mẫu
-- 5 kịch bản chuẩn domain (BIOGRAPHY, BATTLE, DYNASTY, MYSTERY, ARTIFACT) + 3 kịch bản legacy (Quang Trung, Hai Bà Trưng, Mông Cổ lần 2) — **tất cả 8/8 file đều có JSON template chuẩn Schema v3.0**.
+### 2.7. [script_examples/](file:///D:/Persional_Projects/ChronoViet/docs/script_examples) — Kịch Bản Mẫu
+- 5 kịch bản chuẩn domain (BIOGRAPHY, BATTLE, DYNASTY, MYSTERY, ARTIFACT) + 3 kịch bản legacy (Quang Trung, Hai Bà Trưng, Mông Cổ lần 2) — **tất cả file đều có JSON template chuẩn Schema v4.1**.
 
 ---
 

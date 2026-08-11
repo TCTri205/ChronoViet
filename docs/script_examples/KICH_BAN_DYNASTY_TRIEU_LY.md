@@ -1,4 +1,4 @@
-﻿# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
+# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
 
 > **TĂ¡c pháº©m:** TRIá»€U Äáº I NHĂ€ LĂ â€“ Ká»¶ NGUYĂN VĂ€NG VÄ‚N MINH Äáº I VIá»†T (1009 â€“ 1225)  
 > **Dá»± Ă¡n:** ChronoViet (Video Essay / Historical Motion Graphics)  
@@ -52,9 +52,9 @@
 
 ## đŸ› ï¸ 3. TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`dynastyTrieuLyTimeline.json`)
 
-Tá»‡p nĂ y náº±m táº¡i `eval-remotion/src/data/dynastyTimeline.json` vĂ  Ä‘Ă£ Ä‘Æ°á»£c Ä‘Äƒng kĂ½ táº¡i `Root.tsx` vá»›i Composition ID `DynastyVideo`.
+Tệp này nằm tại `packages/remotion-engine/src/data/dynastyTimeline.json` và đã được đăng ký tại `Root.tsx` với Composition ID `DynastyVideo`.
 
-> **Chuáº©n:** Schema v3.0 â€” tÆ°Æ¡ng thĂ­ch 100% vá»›i `ChronoVideoSchema` táº¡i `eval-remotion/src/types/schema.ts`.
+> **Chuẩn:** Schema v3.0 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts).
 
 ```json
 {

@@ -25,9 +25,10 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { scale, isLandscape } = useResponsiveLayout();
+  const { scale } = useResponsiveLayout();
   const activeTheme = resolveTheme(theme);
   const activeFont = getSafeFontFamily(theme?.fontFamily);
+  const activeSerifFont = getSafeFontFamily(theme?.fontFamily, true);
   const cleanTitle = toVietnameseUpperCase(title);
 
   // Delay card entrance by 15 frames (0.5s) so background media shows first
@@ -35,9 +36,9 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
   const titleScale = spring({
     frame: Math.max(0, frame - cardDelay),
     fps,
-    from: 0.88,
+    from: 0.92,
     to: 1,
-    config: { damping: 12, stiffness: 100 },
+    config: { damping: 14, stiffness: 95 },
   });
 
   const titleOpacity = interpolate(frame, [cardDelay, cardDelay + 10], [0, 1], {
@@ -45,16 +46,16 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
     extrapolateRight: 'clamp',
   });
 
-  const titleFontSize = Math.round((isLandscape ? 34 : 26) * scale);
-  const bulletFontSize = Math.round((isLandscape ? 20 : 16) * scale);
+  const titleFontSize = Math.round(32 * scale);
+  const bulletFontSize = Math.round(19 * scale);
 
-  const posStyle = resolveOverlayPositionStyle(position, index, scale, isLandscape);
+  const posStyle = resolveOverlayPositionStyle(position, index, scale);
 
   return (
     <div
       style={{
         position: 'absolute',
-        width: isLandscape ? `${Math.round(480 * scale)}px` : '90%',
+        width: `${Math.round(480 * scale)}px`,
         maxWidth: '92%',
         zIndex: 20,
         display: 'flex',
@@ -65,7 +66,7 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
         ...posStyle,
       }}
     >
-      {/* Main Glassmorphic Container Card */}
+      {/* Main Framed Mộc Bản Container Card */}
       <div
         style={{
           transform: `scale(${titleScale})`,
@@ -77,12 +78,14 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
           flexDirection: 'column',
           alignItems: 'flex-start',
           padding: `${Math.round(28 * scale)}px ${Math.round(30 * scale)}px`,
-          background: 'rgba(9, 14, 24, 0.85)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderRadius: `${Math.round(20 * scale)}px`,
-          border: `1px solid ${activeTheme.secondaryColor}`,
-          boxShadow: `0 20px 60px rgba(0, 0, 0, 0.85), 0 0 25px ${activeTheme.accentGlow}`,
+          background: 'rgba(22, 18, 14, 0.95)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderRadius: '2px',
+          border: `1px solid ${activeTheme.primaryColor}`,
+          outline: `1px solid ${activeTheme.accentGlow}`,
+          outlineOffset: '-5px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.95)',
         }}
       >
         {/* Title */}
@@ -97,20 +100,20 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
           >
             <div
               style={{
-                width: `${Math.round(6 * scale)}px`,
-                height: `${Math.round(22 * scale)}px`,
-                backgroundColor: activeTheme.primaryColor,
-                borderRadius: `${Math.round(3 * scale)}px`,
+                width: `${Math.round(4 * scale)}px`,
+                height: `${Math.round(24 * scale)}px`,
+                backgroundColor: COLOR_PALETTE.vermilionRed,
+                borderRadius: '1px',
               }}
             />
             <h2
               style={{
                 margin: 0,
-                fontFamily: activeFont,
+                fontFamily: activeSerifFont,
                 fontSize: `${titleFontSize}px`,
                 fontWeight: 900,
-                color: COLOR_PALETTE.textWhite,
-                letterSpacing: '0.4px',
+                color: activeTheme.primaryColor,
+                letterSpacing: '0.5px',
               }}
             >
               {cleanTitle}
@@ -155,29 +158,29 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: `${Math.round(12 * scale)}px`,
-                  padding: `${Math.round(12 * scale)}px ${Math.round(16 * scale)}px`,
+                  padding: `${Math.round(10 * scale)}px ${Math.round(14 * scale)}px`,
                   background: isActive
-                    ? 'rgba(37, 99, 235, 0.22)'
-                    : 'rgba(15, 23, 38, 0.6)',
-                  borderRadius: `${Math.round(12 * scale)}px`,
-                  border: isActive
-                    ? `1px solid ${activeTheme.primaryColor}`
-                    : '1px solid rgba(255, 255, 255, 0.08)',
-                  boxShadow: isActive
-                    ? `0 4px 15px rgba(0,0,0,0.5), 0 0 10px ${activeTheme.accentGlow}`
-                    : 'none',
+                    ? 'rgba(32, 26, 18, 0.85)'
+                    : 'rgba(20, 16, 12, 0.5)',
+                  borderRadius: '2px',
+                  borderLeft: isActive
+                    ? `3px solid ${activeTheme.primaryColor}`
+                    : '3px solid rgba(200, 157, 53, 0.25)',
                 }}
               >
-                {/* Bullet Number Badge */}
+                {/* Square Heritage Stamp Badge */}
                 <div
                   style={{
-                    minWidth: `${Math.round(28 * scale)}px`,
-                    height: `${Math.round(28 * scale)}px`,
-                    borderRadius: '50%',
+                    minWidth: `${Math.round(26 * scale)}px`,
+                    height: `${Math.round(26 * scale)}px`,
+                    borderRadius: '2px',
                     backgroundColor: isActive
-                      ? activeTheme.primaryColor
-                      : 'rgba(255, 255, 255, 0.15)',
-                    color: isActive ? '#000000' : COLOR_PALETTE.textWhite,
+                      ? 'rgba(155, 27, 27, 0.2)'
+                      : 'rgba(255, 255, 255, 0.05)',
+                    border: isActive
+                      ? `1px solid ${COLOR_PALETTE.vermilionRed}`
+                      : '1px solid rgba(255, 255, 255, 0.15)',
+                    color: isActive ? COLOR_PALETTE.vermilionRed : COLOR_PALETTE.textSubtle,
                     fontFamily: activeFont,
                     fontWeight: 900,
                     fontSize: `${Math.round(13 * scale)}px`,
@@ -198,7 +201,7 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
                     fontSize: `${bulletFontSize}px`,
                     fontWeight: isActive ? 700 : 500,
                     color: isActive ? COLOR_PALETTE.textWhite : COLOR_PALETTE.textSubtle,
-                    lineHeight: 1.45,
+                    lineHeight: 1.5,
                   }}
                 >
                   {cleanPoint}
@@ -211,3 +214,4 @@ export const BulletHighlight: React.FC<BulletHighlightProps> = ({
     </div>
   );
 };
+

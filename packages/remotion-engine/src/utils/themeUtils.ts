@@ -6,7 +6,10 @@ export interface ResolvedTheme {
   primaryColor: string;
   secondaryColor: string;
   backgroundColor: string;
+  gradientBg?: string;
   fontFamily: string;
+  customFontUrl?: string;
+  headerTitle?: string;
   accentGlow: string;
 }
 
@@ -33,7 +36,10 @@ export function resolveTheme(theme?: ThemeConfig | null): ResolvedTheme {
     primaryColor: theme?.primaryColor || COLOR_PALETTE.primaryGold,
     secondaryColor: theme?.secondaryColor || COLOR_PALETTE.chronoBlue,
     backgroundColor: theme?.backgroundColor || COLOR_PALETTE.chronoDarkBg,
+    gradientBg: theme?.gradientBg,
     fontFamily: getSafeFontFamily(theme?.fontFamily),
+    customFontUrl: theme?.customFontUrl,
+    headerTitle: theme?.headerTitle,
     accentGlow: theme?.accentGlow || COLOR_PALETTE.goldGlow,
   };
 }

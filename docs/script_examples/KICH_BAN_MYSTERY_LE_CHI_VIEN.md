@@ -1,4 +1,4 @@
-﻿# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
+# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
 
 > **TĂ¡c pháº©m:** BĂ áº¨N THáº¢M ĂN Lá»† CHI VIĂN & Ná»–I OAN KHUáº¤T Cá»¦A NGUYá»„N TRĂƒI (1442)  
 > **Dá»± Ă¡n:** ChronoViet (Video Essay / Historical Motion Graphics)  
@@ -51,9 +51,9 @@
 
 ## đŸ› ï¸ 3. TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`mysteryLeChiVienTimeline.json`)
 
-Tá»‡p nĂ y náº±m táº¡i `eval-remotion/src/data/mysteryTimeline.json` vĂ  Ä‘Ă£ Ä‘Æ°á»£c Ä‘Äƒng kĂ½ táº¡i `Root.tsx` vá»›i Composition ID `MysteryVideo`.
+Tệp này nằm tại `packages/remotion-engine/src/data/mysteryTimeline.json` và đã được đăng ký tại `Root.tsx` với Composition ID `MysteryVideo`.
 
-> **Chuáº©n:** Schema v3.0 â€” tÆ°Æ¡ng thĂ­ch 100% vá»›i `ChronoVideoSchema` táº¡i `eval-remotion/src/types/schema.ts`.
+> **Chuẩn:** Schema v3.0 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts).
 
 ```json
 {

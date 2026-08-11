@@ -1,4 +1,4 @@
-﻿# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
+# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
 
 > **TĂ¡c pháº©m:** HAI BĂ€ TRÆ¯NG â€“ Báº¢N ANH HĂ™NG CA Äáº¦U TIĂN Cá»¦A DĂ‚N Tá»˜C  
 > **Dá»± Ă¡n:** ChronoViet (Video Essay / Historical Motion Graphics)  
@@ -58,9 +58,9 @@
 
 ## đŸ› ï¸ 3. TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`haiBaTrungTimeline.json`)
 
-Tá»‡p nĂ y náº±m táº¡i `eval-remotion/src/data/hai-ba-trung/haiBaTrungTimeline.json`, sáºµn sĂ ng náº¡p tháº³ng vĂ o **ChronoViet Remotion Engine** vĂ  Ä‘Ă£ Ä‘Æ°á»£c Ä‘Äƒng kĂ½ táº¡i `Root.tsx` vá»›i Composition ID `HaiBaTrungVideo`.
+Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrungTimeline.json`, sẵn sàng nạp thẳng vào **ChronoViet Remotion Engine** và đã được đăng ký tại `Root.tsx` với Composition ID `HaiBaTrungVideo`.
 
-> **Chuáº©n:** Schema v3.0 â€” tÆ°Æ¡ng thĂ­ch 100% vá»›i `ChronoVideoSchema` táº¡i `eval-remotion/src/types/schema.ts`.
+> **Chuẩn:** Schema v3.0 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts).
 
 ```json
 {
@@ -378,7 +378,7 @@ Tá»‡p nĂ y náº±m táº¡i `eval-remotion/src/data/hai-ba-trung/haiBaTru
 
 ## đŸ’» 4. PHĂ‚N MĂƒ REACT REMOTION COMPOSITION (`HaiBaTrungComposition.tsx`)
 
-MĂ£ nguá»“n React Component chuyĂªn dá»¥ng cho video Hai BĂ  TrÆ°ng táº¡i `eval-remotion/src/compositions/hai-ba-trung/HaiBaTrungComposition.tsx`:
+Mã nguồn React Component chuyên dụng cho video Hai Bà Trưng tại `packages/remotion-engine/src/compositions/hai-ba-trung/HaiBaTrungComposition.tsx`:
 
 ```tsx
 import React from 'react';
@@ -408,7 +408,7 @@ export const HaiBaTrungComposition: React.FC<Partial<ChronoVideoProps>> = (overr
 
 ## đŸ–¼ï¸ 5. DANH Má»¤C 26 áº¢NH TÆ¯ LIá»†U Lá»CH Sá»¬ THá»°C Táº¾ 100% (REAL HISTORICAL ASSETS)
 
-Táº¥t cáº£ 26 tá»‡p áº£nh tÆ° liá»‡u lá»‹ch sá»­ thá»±c táº¿ Ä‘Ă£ Ä‘Æ°á»£c nghiĂªn cá»©u, thu tháº­p vĂ  lÆ°u trá»¯ trá»±c tiáº¿p táº¡i `eval-remotion/public/assets/hai-ba-trung/` (100% áº¢nh thá»±c táº¿ tá»« Báº£o tĂ ng, Khu di tĂ­ch Quá»‘c gia & Wikimedia Commons, **tuyá»‡t Ä‘á»‘i khĂ´ng sá»­ dá»¥ng áº£nh AI**):
+Tất cả 26 tệp ảnh tư liệu lịch sử thực tế đã được nghiên cứu, thu thập và lưu trữ trực tiếp tại `packages/remotion-engine/eval/public/assets/hai-ba-trung/` (100% Ảnh thực tế từ Bảo tàng, Khu di tích Quốc gia & Wikimedia Commons, **tuyệt đối không sử dụng ảnh AI**):
 
 1. `assets/hai-ba-trung/scene_01_song_hat_sunrise.jpg`: áº¢nh chá»¥p di tĂ­ch thá»±c táº¿ SĂ´ng HĂ¡t MĂ´n / SĂ´ng ÄĂ¡y (PhĂºc Thá», HĂ  Ná»™i).
 2. `assets/hai-ba-trung/scene_02_nu_tuong_giap_vang.jpg`: Tranh tÆ° liá»‡u / PhĂ¹ Ä‘iĂªu lá»‹ch sá»­ Hai BĂ  TrÆ°ng khoĂ¡c giĂ¡p vĂ ng cÆ°á»¡i voi.

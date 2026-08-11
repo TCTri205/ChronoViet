@@ -59,11 +59,21 @@ export const RemotionRoot: React.FC = () => {
     // Calculate exact duration accounting for TransitionSeries overlaps
     let totalFrames = 0;
     timeline.forEach((scene, index) => {
-      const sceneDuration =
-        scene.durationInFrames ??
-        (scene.startTime !== undefined && scene.endTime !== undefined
-          ? Math.round((scene.endTime - scene.startTime) * fps)
-          : Math.round(5 * fps));
+      let sceneDuration = scene.durationInFrames;
+      if (sceneDuration === undefined && scene.durationInSeconds !== undefined) {
+        sceneDuration = Math.round(scene.durationInSeconds * fps);
+      }
+      if (sceneDuration === undefined) {
+        if (scene.captions && scene.captions.length > 0) {
+          const maxCaptionEndFrame = Math.max(...scene.captions.map((c) => c.endFrame));
+          sceneDuration = Math.max(maxCaptionEndFrame + 15, Math.round(3 * fps));
+        } else if (scene.startTime !== undefined && scene.endTime !== undefined) {
+          const computed = Math.round((scene.endTime - scene.startTime) * fps);
+          sceneDuration = computed > 0 ? computed : Math.round(5 * fps);
+        } else {
+          sceneDuration = Math.round(5 * fps);
+        }
+      }
 
       totalFrames += sceneDuration;
 

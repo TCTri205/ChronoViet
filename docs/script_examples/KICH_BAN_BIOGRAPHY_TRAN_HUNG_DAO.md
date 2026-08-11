@@ -1,4 +1,4 @@
-﻿# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
+# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
 
 > **TĂ¡c pháº©m:** HÆ¯NG Äáº O Äáº I VÆ¯Æ NG TRáº¦N QUá»C TUáº¤N â€“ HUYá»€N THOáº I BĂCH CHIáº¾N BĂCH THáº®NG  
 > **Dá»± Ă¡n:** ChronoViet (Video Essay / Historical Motion Graphics)  
@@ -52,7 +52,7 @@
 
 ## đŸ› ï¸ 3. TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`biographyTranHungDaoTimeline.json`)
 
-> **Chuáº©n:** Schema v3.0 â€” tÆ°Æ¡ng thĂ­ch 100% vá»›i `ChronoVideoSchema` táº¡i `eval-remotion/src/types/schema.ts`.
+> **Chuẩn:** Schema v3.0 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts).
 
 ```json
 {

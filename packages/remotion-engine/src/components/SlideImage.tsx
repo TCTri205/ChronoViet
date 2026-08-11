@@ -1,5 +1,6 @@
 import React from 'react';
 import { AbsoluteFill, Img, staticFile, useCurrentFrame } from 'remotion';
+import { COLOR_PALETTE } from '../constants/config';
 import { calculateKenBurnsTransform, getFilterCss } from '../utils/animationUtils';
 import { CustomKenBurns, FilterStyle, KenBurnsEffect, LayoutMode } from '../types';
 import { isPureCodeLayout } from '../utils/layoutUtils';
@@ -16,12 +17,17 @@ interface SlideImageProps {
   isPureCodeScene?: boolean;
 }
 
-const FALLBACK_SRC = staticFile('assets/battle/bach_dang_river.jpg');
+const normalizePath = (url: string) => {
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  const clean = url.startsWith('/') ? url : `/${url}`;
+  return staticFile(clean);
+};
+
+const FALLBACK_SRC = normalizePath('assets/battle/bach_dang_river.jpg');
 
 const resolveUrl = (url?: string, isError?: boolean) => {
   if (isError || !url) return FALLBACK_SRC;
-  if (url.startsWith('http') || url.startsWith('data:')) return url;
-  return staticFile(url);
+  return normalizePath(url);
 };
 
 export const SlideImage: React.FC<SlideImageProps> = ({
@@ -60,13 +66,21 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   const [hasPrimaryError, setHasPrimaryError] = React.useState(false);
   const [hasSecondaryError, setHasSecondaryError] = React.useState(false);
 
+  React.useEffect(() => {
+    setHasPrimaryError(false);
+  }, [src]);
+
+  React.useEffect(() => {
+    setHasSecondaryError(false);
+  }, [secondaryAssetUrl]);
+
   const resolvedSrc = resolveUrl(src, hasPrimaryError);
   const resolvedSecondarySrc = resolveUrl(secondaryAssetUrl, hasSecondaryError);
 
   // 0. Pure Code / UI Component Scenes: Image is rendered purely as full-screen blurred background wallpaper (same blur as Type 1, no sharp image component)
   if (isPureCodeScene || isPureCodeLayout(layoutMode)) {
     return (
-      <AbsoluteFill style={{ backgroundColor: '#07090e', overflow: 'hidden' }}>
+      <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         {/* Fullscreen Blurred Cover Background Image with Ken Burns motion */}
         <Img
           src={resolvedSrc}
@@ -85,7 +99,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
         <AbsoluteFill
           style={{
             background:
-              'radial-gradient(circle at 50% 50%, rgba(9, 13, 20, 0.4) 0%, rgba(7, 9, 14, 0.85) 75%, rgba(4, 5, 8, 0.95) 100%)',
+              'radial-gradient(circle at 50% 50%, rgba(14, 12, 10, 0.4) 0%, rgba(14, 12, 10, 0.85) 75%, rgba(10, 8, 6, 0.95) 100%)',
             pointerEvents: 'none',
           }}
         />
@@ -96,7 +110,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   // 1. SPLIT_COMPARE: Dual Image Side-by-Side Comparison
   if (layoutMode === 'SPLIT_COMPARE') {
     return (
-      <AbsoluteFill style={{ backgroundColor: '#07090e', overflow: 'hidden' }}>
+      <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         <div
           style={{
             display: 'flex',
@@ -106,7 +120,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
           }}
         >
           {/* Left Image */}
-          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRight: '2px solid #D4AF37' }}>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRight: `2px solid ${COLOR_PALETTE.primaryGold}` }}>
             <Img
               src={resolvedSrc}
               onError={() => setHasPrimaryError(true)}
@@ -124,13 +138,13 @@ export const SlideImage: React.FC<SlideImageProps> = ({
                 top: 20,
                 left: 20,
                 padding: '6px 14px',
-                backgroundColor: 'rgba(9, 13, 20, 0.85)',
-                border: '1px solid #D4AF37',
-                borderRadius: '4px',
-                color: '#D4AF37',
+                backgroundColor: 'rgba(22, 18, 14, 0.92)',
+                border: `1px solid ${COLOR_PALETTE.primaryGold}`,
+                borderRadius: '2px',
+                color: COLOR_PALETTE.primaryGold,
                 fontSize: '14px',
-                fontWeight: 600,
-                letterSpacing: '1px',
+                fontWeight: 700,
+                letterSpacing: '1.5px',
               }}
             >
               HÌNH ẢNH I
@@ -156,13 +170,13 @@ export const SlideImage: React.FC<SlideImageProps> = ({
                 top: 20,
                 right: 20,
                 padding: '6px 14px',
-                backgroundColor: 'rgba(9, 13, 20, 0.85)',
-                border: '1px solid #2563eb',
-                borderRadius: '4px',
-                color: '#60a5fa',
+                backgroundColor: 'rgba(22, 18, 14, 0.92)',
+                border: `1px solid ${COLOR_PALETTE.vermilionRed}`,
+                borderRadius: '2px',
+                color: COLOR_PALETTE.vermilionRed,
                 fontSize: '14px',
-                fontWeight: 600,
-                letterSpacing: '1px',
+                fontWeight: 700,
+                letterSpacing: '1.5px',
               }}
             >
               HÌNH ẢNH II
@@ -185,7 +199,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   // 2. FULL_COVER: Fullscreen Cover with Ken Burns motion (no background blur layer needed)
   if (layoutMode === 'FULL_COVER') {
     return (
-      <AbsoluteFill style={{ backgroundColor: '#090d14', overflow: 'hidden' }}>
+      <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         <Img
           src={resolvedSrc}
           onError={() => setHasPrimaryError(true)}
@@ -214,7 +228,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
     return (
       <AbsoluteFill
         style={{
-          backgroundColor: '#07090e',
+          backgroundColor: COLOR_PALETTE.lacquerBlack,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -246,7 +260,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   // 4. VIGNETTE_DARK: Reduced brightness (-40%) with heavy 4-corner radial dark vignette
   if (layoutMode === 'VIGNETTE_DARK') {
     return (
-      <AbsoluteFill style={{ backgroundColor: '#05070a', overflow: 'hidden' }}>
+      <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         <Img
           src={resolvedSrc}
           onError={() => setHasPrimaryError(true)}
@@ -272,7 +286,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   // 5. HISTORICAL_FRAME: Vintage framed image with ornamental gold border
   if (layoutMode === 'HISTORICAL_FRAME') {
     return (
-      <AbsoluteFill style={{ backgroundColor: '#0a0807', overflow: 'hidden' }}>
+      <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         {/* Background Blur */}
         <AbsoluteFill style={{ overflow: 'hidden' }}>
           <Img
@@ -302,12 +316,12 @@ export const SlideImage: React.FC<SlideImageProps> = ({
               transform: `rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.25}%, ${translateY * 0.25}%)`,
               maxHeight: '80%',
               maxWidth: '82%',
-              border: '3px solid #D4AF37',
-              outline: '8px solid rgba(139, 0, 0, 0.4)',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(212, 175, 55, 0.3)',
-              borderRadius: '4px',
+              border: `3px solid ${COLOR_PALETTE.primaryGold}`,
+              outline: `8px solid ${COLOR_PALETTE.vermilionRed}`,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 40px rgba(200, 157, 53, 0.3)',
+              borderRadius: '2px',
               overflow: 'hidden',
-              backgroundColor: '#0d0a07',
+              backgroundColor: COLOR_PALETTE.ancientWood,
             }}
           >
             <Img
@@ -337,7 +351,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
 
   // 6. BLUR_BG (Default): Contain image centered with blurred background
   return (
-    <AbsoluteFill style={{ backgroundColor: '#0d0d0d', overflow: 'hidden' }}>
+    <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
       {/* Background Blur */}
       <AbsoluteFill style={{ overflow: 'hidden' }}>
         <Img
@@ -370,10 +384,10 @@ export const SlideImage: React.FC<SlideImageProps> = ({
             willChange: 'transform',
             maxHeight: '82%',
             maxWidth: '85%',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.12)',
-            borderRadius: '6px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(200, 157, 53, 0.3)',
+            borderRadius: '2px',
             overflow: 'hidden',
-            backgroundColor: '#0a0807',
+            backgroundColor: COLOR_PALETTE.ancientWood,
           }}
         >
           <Img
@@ -400,3 +414,4 @@ export const SlideImage: React.FC<SlideImageProps> = ({
     </AbsoluteFill>
   );
 };
+

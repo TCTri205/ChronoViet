@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-10T16:26:38.930Z",
+  "timestamp": "2026-08-11T10:11:38.954Z",
   "testCaseName": "artifact_trong_dong_ngoc_lu.json",
   "isValidSchema": true,
   "totalScenes": 19,
@@ -26,5 +26,5 @@
   "durationSeconds": 366,
   "fps": 30,
   "aspectRatio": "16:9",
-  "evalDurationMs": 8
+  "evalDurationMs": 6
 }

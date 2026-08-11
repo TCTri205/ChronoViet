@@ -1,21 +1,28 @@
 import React from 'react';
-import { AbsoluteFill, Audio, interpolate, Loop, staticFile, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Audio, interpolate, Loop, Sequence, staticFile, useVideoConfig } from 'remotion';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
 import { fade } from '@remotion/transitions/fade';
 import { slide } from '@remotion/transitions/slide';
 import { wipe } from '@remotion/transitions/wipe';
 import { flip } from '@remotion/transitions/flip';
 import { clockWipe } from '@remotion/transitions/clock-wipe';
-import { ChronoVideoProps, TimelineScene, TransitionType } from '../types';
+import { ChronoVideoProps, TimelineScene, TransitionType, isPureImageLayout } from '../types';
 import { HistoryBackground, HistoryForeground } from './HistorySlide';
 import { DocumentaryHeader } from '../components/DocumentaryHeader';
 import { DocumentarySubtitle } from '../components/DocumentarySubtitle';
 import { getMergedTheme } from '../utils/themeUtils';
 
+const resolveMediaUrl = (url?: string): string => {
+  if (!url) return '';
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  const clean = url.startsWith('/') ? url : `/${url}`;
+  return staticFile(clean);
+};
+
 const transitionPresentationCache = new Map<string, any>();
 
-const getTransitionPresentation = (type?: TransitionType): any => {
-  const cacheKey = type || 'DEFAULT';
+const getTransitionPresentation = (type?: TransitionType, width = 1920, height = 1080): any => {
+  const cacheKey = `${type || 'DEFAULT'}_${width}x${height}`;
   if (transitionPresentationCache.has(cacheKey)) {
     return transitionPresentationCache.get(cacheKey);
   }
@@ -48,7 +55,7 @@ const getTransitionPresentation = (type?: TransitionType): any => {
       break;
     case 'CLOCK_WIPE':
     case 'CROSS_ZOOM':
-      presentation = clockWipe({ width: 1920, height: 1080 });
+      presentation = clockWipe({ width, height });
       break;
     case 'FILM_BURN':
     case 'LIGHT_LEAK':
@@ -78,12 +85,21 @@ const getTransitionPresentation = (type?: TransitionType): any => {
 };
 
 const getSceneDurationInFrames = (scene: TimelineScene, fps: number): number => {
-  return (
-    scene.durationInFrames ??
-    (scene.startTime !== undefined && scene.endTime !== undefined
-      ? Math.round((scene.endTime - scene.startTime) * fps)
-      : Math.round(5 * fps))
-  );
+  if (scene.durationInFrames !== undefined && scene.durationInFrames > 0) {
+    return scene.durationInFrames;
+  }
+  if (scene.durationInSeconds !== undefined && scene.durationInSeconds > 0) {
+    return Math.round(scene.durationInSeconds * fps);
+  }
+  if (scene.captions && scene.captions.length > 0) {
+    const maxCaptionEndFrame = Math.max(...scene.captions.map((c) => c.endFrame));
+    return Math.max(maxCaptionEndFrame + 15, Math.round(3 * fps));
+  }
+  if (scene.startTime !== undefined && scene.endTime !== undefined) {
+    const computed = Math.round((scene.endTime - scene.startTime) * fps);
+    return computed > 0 ? computed : Math.round(5 * fps);
+  }
+  return Math.round(5 * fps);
 };
 
 export const ChronoVideo: React.FC<ChronoVideoProps> = ({
@@ -97,11 +113,12 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
   defaultTransition = 'FADE_TO_BLACK',
   enableTransitions = true,
   timeline = [],
+  captions = [],
   videoType,
   templateId,
   theme,
 }) => {
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps, durationInFrames, width, height } = useVideoConfig();
   const effectiveTheme = getMergedTheme(templateId, theme, videoType);
 
   return (
@@ -119,7 +136,7 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
       {/* Audio Layer 1: Primary Voiceover */}
       {audioUrl && (
         <Audio
-          src={audioUrl.startsWith('http') ? audioUrl : staticFile(audioUrl)}
+          src={resolveMediaUrl(audioUrl)}
           volume={1.0}
         />
       )}
@@ -128,7 +145,7 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
       {bgmUrl && (
         <Loop durationInFrames={durationInFrames}>
           <Audio
-            src={bgmUrl.startsWith('http') ? bgmUrl : staticFile(bgmUrl)}
+            src={resolveMediaUrl(bgmUrl)}
             volume={(f) =>
               interpolate(f, [0, 15], [0, bgmVolume], {
                 extrapolateLeft: 'clamp',
@@ -143,9 +160,17 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
       <TransitionSeries>
         {timeline.map((scene, index) => {
           const sceneDurationInFrames = getSceneDurationInFrames(scene, fps);
-          const effectiveScene = {
+
+          // Determine effective layout mode with fallback support
+          let effectiveLayoutMode = scene.layoutMode || defaultLayoutMode;
+          const isPureImage = scene.type === 'PURE_IMAGE' || isPureImageLayout(effectiveLayoutMode);
+          if (isPureImage && !scene.assetUrl && scene.fallbackLayoutMode) {
+            effectiveLayoutMode = scene.fallbackLayoutMode;
+          }
+
+          const effectiveScene: TimelineScene = {
             ...scene,
-            layoutMode: scene.layoutMode || defaultLayoutMode,
+            layoutMode: effectiveLayoutMode,
             filterStyle: scene.filterStyle || defaultFilterStyle,
           };
 
@@ -156,6 +181,17 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
             effectiveTransition &&
             effectiveTransition !== 'NONE' &&
             index < timeline.length - 1;
+
+          const shouldHideSubtitle =
+            effectiveScene.layoutMode === 'OUTRO_CARD' ||
+            effectiveScene.layoutMode === 'SPONSOR_UI' ||
+            effectiveScene.hideSubtitle === true;
+
+          const shouldHideHeader =
+            effectiveScene.layoutMode === 'OUTRO_CARD' ||
+            effectiveScene.hideHeader === true;
+
+          const attribution = scene.attribution;
 
           return (
             <React.Fragment key={`scene-${scene.id || index}`}>
@@ -177,43 +213,50 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
                     theme={effectiveTheme}
                   />
 
-                  {/* Layer 3: Persistent Overlay (Top Header & Bottom Subtitle) */}
-                  {(() => {
-                    const shouldHideSubtitle =
-                      effectiveScene.layoutMode === 'OUTRO_CARD' ||
-                      effectiveScene.layoutMode === 'SPONSOR_UI' ||
-                      effectiveScene.hideSubtitle === true;
-
-                    const shouldHideHeader =
-                      effectiveScene.layoutMode === 'OUTRO_CARD' ||
-                      effectiveScene.hideHeader === true;
-
-                    return (
-                      <AbsoluteFill style={{ pointerEvents: 'none', zIndex: 100 }}>
-                        {!shouldHideHeader && (
-                          <DocumentaryHeader
-                            seriesTitle={scene.overlayData?.seriesTitle || 'CHRONOVIET DOCUMENTARY'}
-                            chapterTitle={
-                              scene.overlayData?.chapterNumber
-                                ? `PHẦN ${scene.overlayData.chapterNumber}${scene.overlayData?.title ? ` • ${scene.overlayData.title}` : ''}`
-                                : scene.overlayData?.title
-                            }
-                            theme={effectiveTheme}
-                          />
-                        )}
-                        {!shouldHideSubtitle && (
-                          <DocumentarySubtitle
-                            text={scene.text || ''}
-                            durationInFrames={sceneDurationInFrames}
-                            theme={effectiveTheme}
-                          />
-                        )}
-                      </AbsoluteFill>
-                    );
-                  })()}
+                  {/* Layer 3: Persistent Overlay (Header, Subtitle & Attribution) */}
+                  <AbsoluteFill style={{ pointerEvents: 'none', zIndex: 100 }}>
+                    {!shouldHideHeader && (
+                      <DocumentaryHeader
+                        seriesTitle={scene.overlayData?.seriesTitle || 'CHRONOVIET DOCUMENTARY'}
+                        chapterTitle={
+                          scene.overlayData?.chapterNumber
+                            ? `PHẦN ${scene.overlayData.chapterNumber}${scene.overlayData?.title ? ` • ${scene.overlayData.title}` : ''}`
+                            : scene.overlayData?.title
+                        }
+                        theme={effectiveTheme}
+                      />
+                    )}
+                    {!shouldHideSubtitle && (
+                      <DocumentarySubtitle
+                        text={scene.text || ''}
+                        durationInFrames={sceneDurationInFrames}
+                        theme={effectiveTheme}
+                        captions={scene.captions}
+                      />
+                    )}
+                    {attribution && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 24,
+                          right: 32,
+                          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                          color: '#9CA3AF',
+                          fontSize: 12,
+                          fontFamily: 'sans-serif',
+                          padding: '4px 10px',
+                          borderRadius: 4,
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          backdropFilter: 'blur(4px)',
+                        }}
+                      >
+                        📷 Nguồn: {attribution.author} {attribution.license ? `(${attribution.license})` : ''}
+                      </div>
+                    )}
+                  </AbsoluteFill>
                 </AbsoluteFill>
 
-                {/* Per-Scene Audio */}
+                {/* Per-Scene Primary Audio */}
                 {scene.sceneAudioUrl && (
                   <Audio
                     src={
@@ -224,6 +267,7 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
                     volume={1.0}
                   />
                 )}
+                {/* Legacy single SFX */}
                 {scene.sfxUrl && (
                   <Audio
                     src={
@@ -234,12 +278,26 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
                     volume={0.85}
                   />
                 )}
+                {/* Multi-track SFX Array */}
+                {scene.soundEffects &&
+                  scene.soundEffects.map((sfx, sfxIdx) => (
+                    <Sequence key={`sfx-${sfxIdx}`} from={sfx.offsetFrame || 0}>
+                      <Audio
+                        src={
+                          sfx.sfxUrl.startsWith('http')
+                            ? sfx.sfxUrl
+                            : staticFile(sfx.sfxUrl)
+                        }
+                        volume={sfx.volume ?? 0.85}
+                      />
+                    </Sequence>
+                  ))}
               </TransitionSeries.Sequence>
 
               {/* Dynamic Scene Transition Presentation */}
               {hasTransition && (
                 <TransitionSeries.Transition
-                  presentation={getTransitionPresentation(effectiveTransition)}
+                  presentation={getTransitionPresentation(effectiveTransition, width, height)}
                   timing={linearTiming({ durationInFrames: transitionDuration })}
                 />
               )}
@@ -250,4 +308,3 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
     </div>
   );
 };
-

@@ -3,9 +3,9 @@
 Tài liệu này quy định bộ chuẩn thiết kế Đồ họa (Design System), Cấu trúc Component Remotion và Quy trình Dựng video dạng **Video Essay / Phân tích Lịch sử chuyên sâu** theo phong cách Spiderum.
 
 > **📌 TRẠNG THÁI TÀI LIỆU:** **[📐 DESIGN SPECIFICATION & INTERFACE GUIDELINE]**  
-> Tài liệu này mô tả quy chuẩn giao diện và cấu trúc component dự kiến cho các mở rộng Video Essay phân tích dài trong tương lai. Các component ví dụ (`VideoEssayTitleCard`, `HistoricalQuoteCard`) đóng vai trò là giao thức thiết kế chuẩn, tuân thủ nguyên tắc không can thiệp hay ghi đè vào 13 UI Component cốt lõi đã hoàn thiện trong `eval-remotion/src/components/`.
+> Tài liệu này mô tả quy chuẩn giao diện và cấu trúc component dự kiến cho các mở rộng Video Essay phân tích dài trong tương lai. Các component ví dụ (`VideoEssayTitleCard`, `HistoricalQuoteCard`) đóng vai trò là giao thức thiết kế chuẩn, tuân thủ nguyên tắc không can thiệp hay ghi đè vào 13 UI Component cốt lõi đã hoàn thiện trong `packages/remotion-engine/src/components/`.
 
-> **⚠️ NGUYÊN TẮC VÀNG:** Tất cả các mẫu Template mới phải được lưu thành file/component riêng biệt, tuyệt đối **KHÔNG** chỉnh sửa hoặc ghi đè lên các Component hiện có trong dự án (`eval-remotion/src/`).
+> **⚠️ NGUYÊN TẮC VÀNG:** Tất cả các mẫu Template mới phải được lưu thành file/component riêng biệt, tuyệt đối **KHÔNG** chỉnh sửa hoặc ghi đè lên các Component hiện có trong dự án (`packages/remotion-engine/src/`).
 
 > **💡 PHÂN BIỆT HAI PALETTE:**
 > - **Palette này (Video Essay):** `#0EA5E9` Sky Blue — Dùng cho format phân tích chuyên sâu dài (Spiderum style).
@@ -47,7 +47,7 @@ border: 1px solid rgba(255, 255, 255, 0.08);
 
 ## 🧩 2. HỆ THỐNG COMPONENT ĐỒ HỌA TRONG REMOTION
 
-Khi tích hợp vào Remotion, tạo thư mục độc lập tại `eval-remotion/src/components/video-essay/` để không ảnh hưởng tới các component chuẩn hiện có.
+Khi tích hợp vào Remotion, tạo thư mục độc lập tại `packages/remotion-engine/src/components/video-essay/` để không ảnh hưởng tới các component chuẩn hiện có.
 
 ### 2.1 `VideoEssayTitleCard.tsx`
 - **Nhiệm vụ:** Hiển thị thẻ tiêu đề chính cho từng luận điểm (Luận điểm 1, 2, 3, 4).
@@ -130,11 +130,11 @@ assets/
 
 ## 🔒 4. QUY TRÌNH KIỂM THỬ KHÔNG GÂY LỖI CODE CŨ
 
-1. **Không sửa đổi** `eval-remotion/src/Root.tsx`, `ChronoVideo.tsx`, hay bất kỳ component chuẩn nào trong `src/components/`.
-2. Tạo Composition độc lập mới trong `eval-remotion/src/compositions/video-essay/` với `id` duy nhất (ví dụ: `"VideoEssay-MongolViet2"`).
+1. **Không sửa đổi** `packages/remotion-engine/src/Root.tsx`, `ChronoVideo.tsx`, hay bất kỳ component chuẩn nào trong `src/components/`.
+2. Tạo Composition độc lập mới trong `packages/remotion-engine/src/compositions/video-essay/` với `id` duy nhất (ví dụ: `"VideoEssay-MongolViet2"`).
 3. Đăng ký Composition mới vào `Root.tsx` mà không xóa bất kỳ Composition cũ nào.
-4. Chạy `npx tsc --noEmit` để kiểm tra type safety trước khi render.
+4. Chạy `pnpm typecheck` để kiểm tra type safety trước khi render.
 5. Render thử nghiệm 30 frames trước khi render toàn bộ:
    ```bash
-   npx remotion render src/index.ts VideoEssay-MongolViet2 out/test.mp4 --frames=0-30
+   pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_mongol_viet_2.json -o out/test.mp4
    ```
