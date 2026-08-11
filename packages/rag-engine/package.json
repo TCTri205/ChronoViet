@@ -10,6 +10,7 @@
     "eval": "tsx eval/runner.ts",
     "db:init": "tsx src/cli/init-db.ts",
     "ingest:knowledge": "tsx src/cli/ingest-knowledge.ts",
+    "crawl:corpus": "tsx src/cli/crawl-corpus.ts",
     "setup-assets": "tsx src/cli/setup-assets.ts",
     "eval:seed": "tsx src/cli/seed-eval.ts",
     "eval:ingest": "tsx eval/ingest-runner.ts"

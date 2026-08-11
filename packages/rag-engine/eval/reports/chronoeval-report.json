@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-08-11T14:33:56.820Z",
+  "timestamp": "2026-08-11T15:05:42.854Z",
   "totalEvaluated": 6,
   "avgFactPrecision": 100,
   "avgHallucinationRate": 0,
   "citationTraceabilityPercent": 100,
-  "avgLatencyMs": 1,
+  "avgLatencyMs": 1.67,
   "kpiStatus": {
     "factPrecisionPassed": true,
     "hallucinationRatePassed": true,
@@ -31,7 +31,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 2,
-      "latencyMs": 0,
+      "latencyMs": 1,
       "passed": true
     },
     {
@@ -42,7 +42,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 2,
-      "latencyMs": 0,
+      "latencyMs": 1,
       "passed": true
     },
     {
@@ -64,7 +64,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 1,
-      "latencyMs": 0,
+      "latencyMs": 2,
       "passed": true
     },
     {

@@ -461,12 +461,14 @@ export const ChunkMetadataSchema = z.object({
   parent_chunk_id: z.string().optional(),
   title: z.string().optional(),
   dynasty: z.string().optional(),
+  epoch_ids: z.array(z.string()).optional(),
   time_start: z.number().int().optional(),
   time_end: z.number().int().optional(),
   key_figures: z.array(z.string()).default([]),
   location: z.string().optional(),
   source_name: z.string().optional(),
   source_reliability: SourceReliabilityEnum.optional(),
+  license_status: z.enum(['PUBLIC_DOMAIN', 'CREATIVE_COMMONS', 'FAIR_USE_SUMMARY', 'UNKNOWN']).optional(),
   page_number: z.number().int().optional(),
 });
 

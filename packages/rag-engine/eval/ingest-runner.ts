@@ -74,7 +74,7 @@ const ENTITY_DISAMBIGUATION_TEST_CASES: Array<{
   { input: 'Quang Trung', expectedCanonicalId: 'person:quang_trung', expectedCanonicalName: 'Quang Trung' },
   { input: 'Hồ Thơm', expectedCanonicalId: 'person:quang_trung', expectedCanonicalName: 'Quang Trung' },
   { input: 'Bắc Bình Vương', expectedCanonicalId: 'person:quang_trung', expectedCanonicalName: 'Quang Trung' },
-  { input: 'Tây Sơn Vương', expectedCanonicalId: 'person:quang_trung', expectedCanonicalName: 'Quang Trung' },
+  { input: 'Tây Sơn Vương', expectedCanonicalId: 'person:nguyen_nhac', expectedCanonicalName: 'Nguyễn Nhạc' },
   
   { input: 'Trần Quốc Tuấn', expectedCanonicalId: 'person:tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
   { input: 'Trần Hưng Đạo', expectedCanonicalId: 'person:tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },

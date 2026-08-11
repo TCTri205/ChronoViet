@@ -32,7 +32,8 @@ d:\Persional_Projects\ChronoViet\docs\
 ├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai, Phân tích Song song & Khung Đánh giá [✅ Phase 1 DONE / 📐 Phase 2-5]]
 │
 ├── ⚙️ EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 31 LayoutMode, 19 Transition, Zod Schema, 11 Compositions [✅]]
-└── REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v4.1, Lego Components [✅]]
+├── 📜 REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v4.1, Lego Components [✅]]
+└── 🧠 KNOWLEDGE_DATA_GOVERNANCE_SPEC.md      [★ Source of Truth: Quản trị Số lượng, Chất lượng & Giải quyết Xung đột Sử liệu [✅]]
 │
 ├── 🎨 3. HƯỚNG DẪN THIẾT KẾ & VISUAL DESIGN
 │   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md          [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]

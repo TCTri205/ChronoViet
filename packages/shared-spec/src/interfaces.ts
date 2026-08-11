@@ -185,5 +185,33 @@ export interface ChunkMetadataEnrichment {
   page_number?: number;
 }
 
+export interface CorpusCrawlOptions {
+  topics?: string[];
+  urls?: string[];
+  outputPath?: string;
+  minWordCount?: number;
+  dynasty?: string;
+}
+
+export interface CorpusCrawlItemResult {
+  title: string;
+  sourceUrl: string;
+  savedPath: string;
+  wordCount: number;
+  status: 'SUCCESS' | 'SKIPPED' | 'FAILED';
+  error?: string;
+}
+
+export interface CorpusCrawlResult {
+  totalAttempted: number;
+  totalSaved: number;
+  items: CorpusCrawlItemResult[];
+  durationMs: number;
+}
+
+export interface ICorpusCrawler {
+  crawl(options: CorpusCrawlOptions): Promise<CorpusCrawlResult>;
+}
+
 
 

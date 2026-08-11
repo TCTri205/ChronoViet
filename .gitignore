@@ -71,6 +71,7 @@ media/cache/*
 !media/cache/.gitkeep
 media/audio-cache/*
 !media/audio-cache/.gitkeep
+data/
 
 # TTS Service Media
 services/vieneu-tts/media/audio-cache/*

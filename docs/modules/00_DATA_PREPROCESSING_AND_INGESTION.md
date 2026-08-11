@@ -96,7 +96,7 @@ Lịch sử Việt Nam chứng kiến sự thay đổi tên gọi địa danh li
 ```
 
 #### Giải Quyết Đồng Tham Chiếu & Đồng Nhất Nhân Vật (`ALIAS_OF`):
-Khi nạp văn bản cổ, các đại từ hoặc tên hiệu như *"Tây Sơn Vương"*, *"Đức Thắng Hoàng Đế"*, *"Quang Trung"*, *"Nguyễn Huệ"* đều được ánh xạ về một **Canonical Entity ID** (`person_nguyen_hue`) với thuộc tính `aliases = ["Quang Trung", "Nguyễn Huệ", "Hồ Thơm", "Tây Sơn Vương"]`.
+Khi nạp văn bản cổ, các đại từ hoặc tên hiệu như *"Bắc Bình Vương"*, *"Quang Trung"*, *"Nguyễn Huệ"*, *"Hồ Thơm"* đều được ánh xạ về một **Canonical Entity ID** (`person_nguyen_hue`) với thuộc tính `aliases = ["Quang Trung", "Nguyễn Huệ", "Hồ Thơm", "Bắc Bình Vương", "Long Nhượng Tướng Quân"]` (lưu ý danh xưng *"Tây Sơn Vương"* được ánh xạ riêng về **Nguyễn Nhạc** — `person_nguyen_nhac`).
 
 ---
 

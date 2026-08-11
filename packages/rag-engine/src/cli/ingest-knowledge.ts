@@ -7,9 +7,11 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { DualBranchSeeder } from '../ingestion/seeder/dual-branch-seeder.js';
 
+import { findMonorepoRoot } from '../utils/path-utils.js';
+
 function parseArgs(): { inputPath: string; force: boolean; localLlm: boolean } {
   const args = process.argv.slice(2);
-  let inputPath = path.resolve(process.cwd(), 'data', 'raw_corpus');
+  let inputPath = path.resolve(findMonorepoRoot(), 'data', 'raw_corpus');
   let force = false;
   let localLlm = false;
 

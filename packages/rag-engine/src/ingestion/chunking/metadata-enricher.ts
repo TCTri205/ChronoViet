@@ -9,6 +9,7 @@ export interface EnrichedMetadata {
   title: string;
   sourceName?: string;
   dynasty?: string;
+  epochIds?: string[];
   sourceReliability: SourceReliability;
   timeStart?: number;
   timeEnd?: number;

@@ -66,7 +66,7 @@ Cung cấp các Zod Schema và TypeScript Interfaces chuẩn hóa cho toàn bộ
   1. **Bảng Ánh Xạ Địa Danh Qua Các Thời Kỳ (`SAME_AS_LOCATION`):**
      Ánh xạ Thăng Long $\rightarrow$ Đông Quan $\rightarrow$ Đông Kinh $\rightarrow$ Hà Nội theo mốc triều đại và thời gian.
   2. **Bảng Giải Quyết Đồng Tham Chiếu & Khử Nhập Nhằng Nhân Vật (`ALIAS_OF`):**
-     Ánh xạ tất cả danh xưng "Nguyễn Huệ", "Quang Trung", "Hồ Thơm", "Tây Sơn Vương" về một **Canonical Entity ID** (`person_nguyen_hue`).
+     Ánh xạ tất cả danh xưng "Nguyễn Huệ", "Quang Trung", "Hồ Thơm", "Bắc Bình Vương" về một **Canonical Entity ID** (`person_nguyen_hue`) (và "Tây Sơn Vương" về `person_nguyen_nhac`).
 
 ---
 

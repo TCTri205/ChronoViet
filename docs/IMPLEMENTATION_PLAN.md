@@ -143,7 +143,7 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
 1. **Làm Sạch & Chuẩn Hóa Sử Liệu (Historical Text Normalization & Disambiguation):**
    - Viết pipeline OCR & trích xuất văn bản từ PDF/Scan (Sách giáo khoa, *Đại Việt Sử Ký Toàn Thư*, *Khâm Định Việt Sử Thông Giám Cương Mục*).
    - Xây dựng Bảng ánh xạ Địa danh qua các thời kỳ (`SAME_AS_LOCATION`): Thăng Long $\rightarrow$ Đông Quan $\rightarrow$ Đông Kinh $\rightarrow$ Hà Nội.
-   - Giải quyết đồng tham chiếu & khử nhập nhằng nhân vật (`ALIAS_OF`): Ánh xạ Nguyễn Huệ, Quang Trung, Hồ Thơm, Tây Sơn Vương về `person_nguyen_hue`.
+   - Giải quyết đồng tham chiếu & khử nhập nhằng nhân vật (`ALIAS_OF`): Ánh xạ Nguyễn Huệ, Quang Trung, Hồ Thơm, Bắc Bình Vương về `person_nguyen_hue` (và Tây Sơn Vương về `person_nguyen_nhac`).
 2. **Phân Đoạn Đa Cấp & Dynamic Hierarchical Metadata Enrichment:**
    - Cắt nhỏ văn bản theo cấu trúc Parent Chunk (2.000 – 3.000 từ) và Child Chunk (300 – 500 từ).
    - Gán JSON Metadata bắt buộc (`source_reliability` Level 1-3, `dynasty`, `time_start`/`time_end`, `key_figures`, `location`, `page_number`).

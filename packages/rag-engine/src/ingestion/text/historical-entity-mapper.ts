@@ -19,7 +19,13 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     entityId: 'person:quang_trung',
     canonicalName: 'Quang Trung',
     type: 'Person',
-    aliases: ['Nguyễn Huệ', 'Hồ Thơm', 'Bắc Bình Vương', 'Vua Quang Trung', 'Quang Trung Hoàng Đế', 'Tây Sơn Vương'],
+    aliases: ['Nguyễn Huệ', 'Hồ Thơm', 'Bắc Bình Vương', 'Vua Quang Trung', 'Quang Trung Hoàng Đế', 'Long Nhương Tướng Quân', 'Long Nhượng Tướng Quân'],
+  },
+  'person:nguyen_nhac': {
+    entityId: 'person:nguyen_nhac',
+    canonicalName: 'Nguyễn Nhạc',
+    type: 'Person',
+    aliases: ['Tây Sơn Vương', 'Thái Đức Hoàng Đế', 'Vua Thái Đức'],
   },
   'person:tran_hung_dao': {
     entityId: 'person:tran_hung_dao',
