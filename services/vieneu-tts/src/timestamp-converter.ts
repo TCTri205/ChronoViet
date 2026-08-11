@@ -1,20 +1,10 @@
-export interface VieNeuWordTimestamp {
-  word: string;
-  startMs: number;
-  endMs: number;
-}
-
-export interface CaptionWord {
-  word: string;
-  startFrame: number;
-  endFrame: number;
-}
+import { WordTimestamp, CaptionWord } from '@chronoviet/shared-spec';
 
 /**
- * Quy đổi VieNeu Word Timestamps (ms) sang Remotion Caption Frames dựa trên FPS và padding
+ * Quy đổi VieNeu Word Timestamps (ms) sang Remotion Caption Frames dựa trên FPS
  */
 export function convertVieNeuTimestampsToCaptions(
-  wordTimestamps: VieNeuWordTimestamp[],
+  wordTimestamps: WordTimestamp[],
   fps = 30
 ): CaptionWord[] {
   return wordTimestamps.map((item) => ({

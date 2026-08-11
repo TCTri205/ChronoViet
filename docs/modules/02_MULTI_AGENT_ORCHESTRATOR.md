@@ -224,7 +224,9 @@ Hệ thống thiết lập **Cơ chế Kiểm tra Lỗi 4 Tầng & Escalation Ma
 ├────────────────────────┼───────────────────────────┼───────────────────────────────────────────────────┤
 │ 2. TTS Voiceover       │ API VieNeu Timeout hoặc   │ - Idempotency Check Hash Key trước khi gọi.       │
 │                        │ file âm thanh hỏng/0-byte │ - Retry Exponential Backoff (1s, 2s, 4s).         │
-│                        │                           │ - Fallback: Tính duration dự phòng theo ký tự.    │
+│                        │                           │ - Dual-Layer Fallback: Tự động kích hoạt          │
+│                        │                           │   `SyntheticTTSFallbackEngine` sinh audio tone    │
+│                        │                           │   480Hz & word timestamps để render không ngắt.   │
 ├────────────────────────┼───────────────────────────┼───────────────────────────────────────────────────┤
 │ 3. Asset Crawling &    │ Crawl 404 / VLM < 60 /    │ - Lọc Whitelisted License (PD, CC0, CC-BY).       │
 │    VLM Inspection      │ Gemini API Rate Limit 429 │ - Chiến lược 3+3 Candidates Crawl.                │

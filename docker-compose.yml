@@ -36,6 +36,21 @@ services:
     volumes:
       - redis_data:/data
 
+  vieneu-tts-service:
+    build:
+      context: .
+      dockerfile: services/vieneu-tts/Dockerfile
+    container_name: vieneu_tts_engine
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - MODEL_PATH=/app/models/vieneu-historical-onnx
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./media:/app/media
+
   app:
     build:
       context: .

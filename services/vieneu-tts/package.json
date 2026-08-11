@@ -5,7 +5,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js",
+    "eval": "tsx eval/runner.ts"
   },
   "dependencies": {
     "@chronoviet/shared-spec": "workspace:*",

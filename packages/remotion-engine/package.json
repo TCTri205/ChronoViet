@@ -13,7 +13,7 @@
     "cli": "tsx src/cli.ts",
     "render": "tsx src/cli.ts render",
     "still": "tsx src/cli.ts still",
-    "eval": "tsx eval/runner.ts",
+    "eval": "tsx eval/runner.ts --ci",
     "setup-assets": "node eval/scripts/setup_assets.js"
   },
   "dependencies": {

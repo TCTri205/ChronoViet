@@ -5,7 +5,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "eval": "echo [shared-spec] No evaluation suite needed"
   },
   "dependencies": {
     "zod": "4.4.3"

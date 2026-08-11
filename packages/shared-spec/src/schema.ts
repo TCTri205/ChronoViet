@@ -20,6 +20,32 @@ export const CaptionWordSchema = z.object({
   endFrame: z.number().int().min(0),
 });
 
+export const WordTimestampSchema = z.object({
+  word: z.string(),
+  startMs: z.number().min(0),
+  endMs: z.number().min(0),
+});
+
+export const VieNeuTTSRequestSchema = z.object({
+  text: z.string().min(1),
+  speakerId: z.string().optional().default('vi_historical_male_1'),
+  speedRatio: z.number().positive().optional().default(1.0),
+  sampleRate: z.number().int().positive().optional().default(24000),
+  paddingMs: z.number().int().min(0).optional().default(300),
+  fps: z.number().int().positive().optional().default(30),
+});
+
+export const VieNeuTTSResponseSchema = z.object({
+  status: z.enum(['SUCCESS', 'ERROR']),
+  audioUrl: z.string(),
+  audioDurationMs: z.number().min(0),
+  calculatedFramesAt30fps: z.number().int().min(0),
+  wordTimestamps: z.array(WordTimestampSchema),
+  errorMsg: z.string().optional(),
+  engineType: z.string().optional(),
+});
+
+
 export const LicenseTypeSchema = z.enum([
   'PUBLIC_DOMAIN',
   'CC0',
@@ -382,6 +408,9 @@ export type TemplateId = z.infer<typeof TemplateIdSchema>;
 export type VideoDomain = z.infer<typeof VideoDomainSchema>;
 export type AspectRatio = z.infer<typeof AspectRatioSchema>;
 export type CaptionWord = z.infer<typeof CaptionWordSchema>;
+export type WordTimestamp = z.infer<typeof WordTimestampSchema>;
+export type VieNeuTTSRequest = z.infer<typeof VieNeuTTSRequestSchema>;
+export type VieNeuTTSResponse = z.infer<typeof VieNeuTTSResponseSchema>;
 export type LicenseType = z.infer<typeof LicenseTypeSchema>;
 export type Attribution = z.infer<typeof AttributionSchema>;
 export type ThemeConfig = z.infer<typeof ThemeConfigSchema>;

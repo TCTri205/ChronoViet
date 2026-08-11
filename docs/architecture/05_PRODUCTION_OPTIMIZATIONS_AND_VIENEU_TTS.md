@@ -67,35 +67,41 @@ $$\text{durationInFrames} = \left\lceil \frac{7400 + 300}{1000} \times 30 \right
 ### 🟢 Thách Thức 4: Tích Hợp Mô Hình VieNeu TTS (ONNX Engine) & Phụ Đề Karaoke Real-time
 
 #### *Giải pháp hoàn chỉnh:*
-ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS chuyên biệt cho tiếng Việt đóng gói dưới dạng ONNX Runtime Container.
+ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS chuyên biệt cho tiếng Việt đóng gói dưới dạng ONNX Runtime Container kết hợp kiến trúc phòng thủ 2 lớp (Dual-Layer Architecture):
+1. **Lớp Primary Neural Engine**: Python FastAPI microservice (`app.py`) chạy mô hình VieNeu ONNX & NeuCodec sinh file âm thanh chất lượng cao 24kHz (PCM 16-bit) kèm phân bổ mốc từ ngữ `wordTimestamps` thông minh.
+2. **Lớp Dual-Layer Fallback Engine**: Node.js `SyntheticTTSFallbackEngine` (`src/engine.ts`) tự động kích hoạt khi microservice Python chưa khởi chạy hoặc timeout, sinh xung âm thanh định thanh 480Hz để tiến trình render video Remotion không bao giờ ngắt quãng.
 
 ---
 
-## 3. Cấu Hình Triển Khai VieNeu TTS API (Node.js ONNX Engine)
+## 3. Cấu Hình Triển Khai VieNeu TTS API (Microservice & Docker Compose)
 
-Service VieNeu được đóng gói dưới dạng TypeScript / Node.js microservice hoặc gói Monorepo chạy trực tiếp qua `onnxruntime-node` trên CPU:
+Service VieNeu được đóng gói container trong monorepo và tích hợp trực tiếp vào `docker-compose.yml`:
 
 ```yaml
-version: '3.8'
-
-services:
   vieneu-tts-service:
-    image: chronoviet/vieneu-tts-onnx-node:v1.0
+    build:
+      context: .
+      dockerfile: services/vieneu-tts/Dockerfile
     container_name: vieneu_tts_engine
     restart: always
     environment:
+      - NODE_ENV=production
+      - PORT=8080
       - MODEL_PATH=/app/models/vieneu-historical-onnx
-      - NUM_THREADS=4
-      - DEFAULT_SAMPLE_RATE=24000
     ports:
       - "8080:8080"
+    volumes:
+      - ./media:/app/media
 ```
 
-### Response Payload:
+### API Endpoint Spec (`POST /api/v1/synthesize`) & Response Payload:
+
+Yêu cầu và phản hồi tuân thủ tuyệt đối Zod Schema `VieNeuTTSRequestSchema` & `VieNeuTTSResponseSchema` tại `@chronoviet/shared-spec`:
+
 ```json
 {
   "status": "SUCCESS",
-  "audioUrl": "/static/audio/cache_scene_01.wav",
+  "audioUrl": "/static/audio/vieneu_real_a1b2c3d4e5f67890.wav",
   "audioDurationMs": 7400,
   "calculatedFramesAt30fps": 231,
   "wordTimestamps": [
@@ -113,7 +119,8 @@ services:
     { "word": "đồn", "startMs": 3800, "endMs": 4100 },
     { "word": "Ngọc", "startMs": 4150, "endMs": 4500 },
     { "word": "Hồi.", "startMs": 4510, "endMs": 5200 }
-  ]
+  ],
+  "engineType": "REAL_NEURAL_ONNX"
 }
 ```
 
@@ -134,7 +141,9 @@ export function convertVieNeuTimestampsToCaptions(
 }
 ```
 
-Dữ liệu `captions` này được truyền trực tiếp vào `DocumentarySubtitle.tsx` của Remotion Engine để tự động làm sáng từ Karaoke màu vàng/đỏ cổ điển khi giọng đọc VieNeu vang lên.
+Dữ liệu `captions` này được truyền trực tiếp vào `DocumentarySubtitle.tsx` của Remotion Engine để tự động làm sáng từ Karaoke màu vàng/đỏ cổ điển khi giọng đọc VieNeu vang lên. 
+
+Toàn bộ quy trình tổng hợp và chuyển đổi mốc từ đều được tự động thẩm định độc lập qua bộ kiểm thử `services/vieneu-tts/eval/` với 3 tiêu chuẩn KPI bắt buộc: **RTF < 0.3x**, **Alignment Error < 50ms**, và **Frame Calculation Error < 1 frame**.
 
 ---
 
@@ -145,5 +154,6 @@ Dữ liệu `captions` này được truyền trực tiếp vào `DocumentarySub
 | **1. Quản lý RAM/CPU khi Render** | Pre-download Local Assets + Chromium Process Cleanup sau mỗi Job | Giảm 70% RAM tiêu thụ, tránh đơ/OOM server. |
 | **2. Độ trễ VLM Inspection** | Offload sang Gemini 2.5 Flash Cloud API + Dual-Layer Cache (Redis + pHash) | Giảm thời gian audit từ 30s xuống < 1s, tiết kiệm GPU. |
 | **3. Đồng bộ Audio - Visual** | Công thức $\lceil \frac{\text{DurationMs} + 300}{1000} \times 30 \rceil$ dựa trên file `.wav` thực tế | Tránh 100% rủi ro audio bị chèn hoặc hẫng nhịp. |
-| **4. Giọng đọc & Subtitle Karaoke** | Self-Hosted VieNeu TTS ONNX Container + Alignment Timestamps Converter | Giọng đọc lịch sử truyền cảm, phụ đề Karaoke chạy chuẩn xác theo từ. |
+| **4. Giọng đọc & Subtitle Karaoke** | Self-Hosted VieNeu TTS Dual-Layer Microservice + Alignment Timestamps Converter + Eval Suite (`eval/`) | Giọng đọc lịch sử truyền cảm, phụ đề Karaoke chạy chuẩn xác theo từ, có bộ đánh giá độc lập. |
+
 

@@ -69,3 +69,9 @@ media/rendered-videos/*
 !media/rendered-videos/.gitkeep
 media/cache/*
 !media/cache/.gitkeep
+media/audio-cache/*
+!media/audio-cache/.gitkeep
+
+# TTS Service Media
+services/vieneu-tts/media/audio-cache/*
+!services/vieneu-tts/media/audio-cache/.gitkeep
