@@ -83,7 +83,7 @@ docker-compose up vieneu-tts-service
 ### 2. Cài đặt & Khởi chạy Python ONNX Engine (Dành cho Real Voice AI Cục Bộ)
 ```bash
 # Cài đặt thư viện Python phụ thuộc
-pip install vieneu soundfile fastapi uvicorn pydantic
+pip install vieneu numpy soundfile fastapi uvicorn pydantic
 
 # Khởi chạy Python Microservice
 python services/vieneu-tts/app.py
@@ -143,14 +143,14 @@ services/vieneu-tts/
 ├── tsconfig.json               # Cấu hình TypeScript compiler
 ├── src/
 │   ├── index.ts                # Main export entrypoint
-│   ├── engine.ts               # VieNeuEngine Wrapper & Synthetic Fallback Engine
+│   ├── engine.ts               # VieNeuEngine Wrapper & SyntheticTTSFallbackEngine
 │   ├── server.ts               # Node.js HTTP Server API router & static audio server
 │   ├── timestamp-converter.ts  # Quy đổi ms -> Remotion Caption Frames & Scene Duration
 │   └── __tests__/              # Unit test bộ quy đổi timestamp
 ├── eval/
-│   ├── runner.ts               # Runner đo lường RTF & alignment accuracy
-│   ├── datasets/               # Dataset 50 câu văn bản lịch sử tiếng Việt & kịch bản Remotion
-│   ├── reports/                # Báo cáo đánh giá JSON (report.json) & Markdown (report.md)
+│   ├── runner.ts               # Runner đo lường RTF & alignment accuracy (hỗ trợ --fresh, --clean)
+│   ├── datasets/               # Dataset câu thoại trích xuất từ kịch bản Remotion (remotion_script_sentences.json)
+│   ├── reports/                # Module report_generator.ts & báo cáo JSON/Markdown
 │   └── scripts/                # Script trích xuất dataset từ kịch bản testcase JSON
 └── media/
     └── audio-cache/            # Thư mục cache file WAV âm thanh

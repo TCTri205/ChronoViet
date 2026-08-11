@@ -57,7 +57,7 @@ ChronoViet/
 │   └── vlm-inspector/           # [📐 ROADMAP] Gemini 2.5 VLM & CLIP Inspector (+ eval/)
 │
 ├── services/
-│   └── vieneu-tts/              # [📐 ROADMAP] VieNeu ONNX Neural TTS Service (+ eval/)
+│   └── vieneu-tts/              # [✅ READY] VieNeu ONNX Neural TTS Service (+ eval/)
 │
 ├── eval/                        # [📐 ROADMAP] Tầng Đánh Giá Tập Trung (E2E Integration Benchmark & Golden Datasets)
 ├── docs/                        # Trung tâm Tài liệu Kỹ thuật & Kiến trúc (Documentation Portal)
@@ -73,12 +73,12 @@ ChronoViet/
 
 | Package / App | Vai Trò | Trạng Thái | Thư Mục Eval |
 | :--- | :--- | :---: | :---: |
-| [`@chronoviet/remotion-engine`](file:///d:/Persional_Projects/ChronoViet/packages/remotion-engine) | Engine render video Remotion v4, 18 LayoutModes, 13 Components, 8 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
+| [`@chronoviet/remotion-engine`](file:///d:/Persional_Projects/ChronoViet/packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
 | [`@chronoviet/shared-spec`](file:///d:/Persional_Projects/ChronoViet/packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas & Data Contracts | **✅ Ready** | N/A (Shared Spec) |
 | [`@chronoviet/rag-engine`](file:///d:/Persional_Projects/ChronoViet/packages/rag-engine) | Truy xuất tri thức lịch sử với PostgreSQL pgvector & Relational Graph CTEs | **📐 Roadmap** | `packages/rag-engine/eval/` |
 | [`@chronoviet/agent-orchestrator`](file:///d:/Persional_Projects/ChronoViet/packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh & biên tập kịch bản | **📐 Roadmap** | `packages/agent-orchestrator/eval/` |
 | [`@chronoviet/vlm-inspector`](file:///d:/Persional_Projects/ChronoViet/packages/vlm-inspector) | Thẩm định hình ảnh tư liệu & lọc bản quyền (PD, CC0, CC-BY) | **📐 Roadmap** | `packages/vlm-inspector/eval/` |
-| [`@chronoviet/vieneu-tts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts) | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX) | **📐 Roadmap** | `services/vieneu-tts/eval/` |
+| [`@chronoviet/vieneu-tts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts) | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX) | **✅ Ready** | `services/vieneu-tts/eval/` |
 | [`@chronoviet/render-worker`](file:///d:/Persional_Projects/ChronoViet/apps/render-worker) | Tiến trình xử lý hàng đợi render video bất đồng bộ (BullMQ + Redis) | **📐 Roadmap** | `apps/render-worker/eval/` |
 | [`@chronoviet/web`](file:///d:/Persional_Projects/ChronoViet/apps/web) | Giao diện người dùng Web Dashboard & Chatbot RAG | **📐 Roadmap** | `apps/web/` |
 

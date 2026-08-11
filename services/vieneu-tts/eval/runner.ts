@@ -48,7 +48,7 @@ async function runVieNeuTtsEvaluation() {
   const rawData = fs.readFileSync(datasetPath, 'utf-8');
   const dataset: DatasetItem[] = JSON.parse(rawData);
 
-  const targetRtf = parseFloat(process.env.EVAL_MAX_RTF || '0.5');
+  const targetRtf = parseFloat(process.env.EVAL_MAX_RTF || '0.3');
 
   console.log(`📁 Loaded ${dataset.length} scene sentences for scenario script from '${datasetName}'.`);
   console.log(`⚙️ Target KPIs: RTF < ${targetRtf}x | Alignment Error < 50ms | Frame Error < 1 frame`);
@@ -147,7 +147,7 @@ async function runVieNeuTtsEvaluation() {
     results,
   };
 
-  saveEvalReport(summaryReport, reportsDir);
+  saveEvalReport(summaryReport, reportsDir, targetRtf);
 
   console.log(`============================================================================`);
   console.log(`  🎉 VIENEU TTS EVALUATION SUITE COMPLETED! (${overallStatus})`);

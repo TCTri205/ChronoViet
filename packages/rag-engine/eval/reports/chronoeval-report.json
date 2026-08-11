@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-08-11T13:13:25.748Z",
+  "totalEvaluated": 6,
+  "avgFactPrecision": 100,
+  "avgHallucinationRate": 0,
+  "citationTraceabilityPercent": 100,
+  "avgLatencyMs": 0.83,
+  "kpiStatus": {
+    "factPrecisionPassed": true,
+    "hallucinationRatePassed": true,
+    "citationTraceabilityPassed": true,
+    "overallPassed": true
+  },
+  "details": [
+    {
+      "testId": "eval_001",
+      "domain": "BATTLE",
+      "question": "Trận Ngọc Hồi - Đống Đa năm 1789 do ai chỉ huy và diễn ra ở đâu?",
+      "factPrecision": 100,
+      "hallucinationRate": 0,
+      "citationTraceable": true,
+      "aliasesFoundCount": 3,
+      "latencyMs": 3,
+      "passed": true
+    },
+    {
+      "testId": "eval_002",
+      "domain": "BIOGRAPHY",
+      "question": "Trần Hưng Đạo tên thật là gì và ông có danh hiệu gì?",
+      "factPrecision": 100,
+      "hallucinationRate": 0,
+      "citationTraceable": true,
+      "aliasesFoundCount": 2,
+      "latencyMs": 0,
+      "passed": true
+    },
+    {
+      "testId": "eval_003",
+      "domain": "DYNASTY",
+      "question": "Lê Lợi khởi nghĩa tại đâu và lập ra triều đại nào?",
+      "factPrecision": 100,
+      "hallucinationRate": 0,
+      "citationTraceable": true,
+      "aliasesFoundCount": 2,
+      "latencyMs": 0,
+      "passed": true
+    },
+    {
+      "testId": "eval_004",
+      "domain": "BATTLE",
+      "question": "Ngô Quyền đánh tan quân Nam Hán trên sông Bạch Đằng năm nào?",
+      "factPrecision": 100,
+      "hallucinationRate": 0,
+      "citationTraceable": true,
+      "aliasesFoundCount": 1,
+      "latencyMs": 1,
+      "passed": true
+    },
+    {
+      "testId": "eval_005",
+      "domain": "ARTIFACT",
+      "question": "Trống đồng Đông Sơn đại diện cho nền văn hóa lịch sử nào?",
+      "factPrecision": 100,
+      "hallucinationRate": 0,
+      "citationTraceable": true,
+      "aliasesFoundCount": 1,
+      "latencyMs": 0,
+      "passed": true
+    },
+    {
+      "testId": "eval_006",
+      "domain": "MYSTERY",
+      "question": "Vụ án Lệ Chi Viên liên quan đến danh nhân văn hóa nào?",
+      "factPrecision": 100,
+      "hallucinationRate": 0,
+      "citationTraceable": true,
+      "aliasesFoundCount": 1,
+      "latencyMs": 1,
+      "passed": true
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 Tài liệu này quy định bộ chuẩn thiết kế Đồ họa (Design System), Cấu trúc Component Remotion và Quy trình Dựng video dạng **Video Essay / Phân tích Lịch sử chuyên sâu** theo phong cách Spiderum.
 
 > **📌 TRẠNG THÁI TÀI LIỆU:** **[📐 DESIGN SPECIFICATION & INTERFACE GUIDELINE]**  
-> Tài liệu này mô tả quy chuẩn giao diện và cấu trúc component dự kiến cho các mở rộng Video Essay phân tích dài trong tương lai. Các component ví dụ (`VideoEssayTitleCard`, `HistoricalQuoteCard`) đóng vai trò là giao thức thiết kế chuẩn, tuân thủ nguyên tắc không can thiệp hay ghi đè vào 13 UI Component cốt lõi đã hoàn thiện trong `packages/remotion-engine/src/components/`.
+> Tài liệu này mô tả quy chuẩn giao diện và cấu trúc component dự kiến cho các mở rộng Video Essay phân tích dài trong tương lai. Các component ví dụ (`VideoEssayTitleCard`, `HistoricalQuoteCard`) đóng vai trò là giao thức thiết kế chuẩn, tuân thủ nguyên tắc không can thiệp hay ghi đè vào 19 UI Component cốt lõi đã hoàn thiện trong `packages/remotion-engine/src/components/`.
 
 > **⚠️ NGUYÊN TẮC VÀNG:** Tất cả các mẫu Template mới phải được lưu thành file/component riêng biệt, tuyệt đối **KHÔNG** chỉnh sửa hoặc ghi đè lên các Component hiện có trong dự án (`packages/remotion-engine/src/`).
 

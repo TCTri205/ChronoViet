@@ -9,10 +9,10 @@
 * **Tên dự án:** ChronoViet
 * **Định vị:** Hệ thống tự động hóa nội dung giáo dục lịch sử (Automated Historical EdTech Platform).
 * **Bài toán giải quyết:** Lịch sử Việt Nam có kho tàng dữ liệu đồ sộ nhưng văn bản khô khan, dễ bị sai lệch khi AI sinh nội dung (hallucination), và thiếu các công cụ trực quan hóa dạng video ngắn cho thế hệ trẻ.
-* **Giải pháp:** Sử dụng **Hybrid GraphRAG** để đảm bảo tính chuẩn xác sử liệu → **Multi-Agent Orchestrator (LangGraph.js - Node.js/TS)** chia nhỏ kịch bản & chọn layout → **Gemini 2.5 Flash VLM** kiểm định hình ảnh → **Remotion Engine** render video tự động từ file JSON.
+* **Giải pháp:** Sử dụng **Data Preprocessing & Ingestion Engine (Mô-đun 0)** để làm sạch, chuẩn hóa địa danh/nhân vật và nạp dữ liệu offline $\rightarrow$ **Hybrid GraphRAG (Mô-đun 1)** để đảm bảo tính chuẩn xác sử liệu $\rightarrow$ **Multi-Agent Orchestrator (Mô-đun 2)** chia nhỏ kịch bản & chọn layout $\rightarrow$ **VLM Inspector (Mô-đun 3)** kiểm định hình ảnh & bản quyền $\rightarrow$ **Remotion Engine (Mô-đun 4)** render video tự động từ file JSON.
 * **Trạng thái Triển khai Hệ thống:**
   - **[✅ IMPLEMENTED CORE ENGINE]:** Engine Render Remotion 100% JSON-Driven (`packages/remotion-engine/src/`), 31 `LayoutMode` (tối ưu 16:9), 19 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 19 UI Components (bao gồm 6 Pure Code UI Cards 16:9 mới), 11 Compositions đã đăng ký (`Root.tsx`), 9 file kịch bản JSON dữ liệu mẫu v4.1.
-  - **[📐 ARCHITECTURE DESIGN / ROADMAP]:** Tầng xử lý tri thức Hybrid GraphRAG, Multi-Agent Orchestrator với Postgres Checkpointer và VLM Inspector Agent (Mô hình thiết kế kiến trúc chuẩn bị kết nối với Remotion Engine).
+  - **[✅ IMPLEMENTED TTS SERVICE]:** VieNeu TTS Dual-Layer Microservice (`VieNeuEngine` + `SyntheticTTSFallbackEngine`), Python FastAPI ONNX Engine (`app.py`), Zod Schema Validation, `wordTimestamps` → Caption Frame Converter, Eval Suite (`services/vieneu-tts/eval/`).
 
 ---
 
@@ -20,69 +20,80 @@
 
 | Trụ cột | Công nghệ lõi | Trạng thái Thực tế | Mô tả Chức năng & Không gian Mở rộng |
 | --- | --- | :---: | --- |
+| **Tiền xử lý & Nạp dữ liệu (Ingestion ETL)** | OCR, Normalization (`SAME_AS_LOCATION`, `ALIAS_OF`), Dynamic Hierarchical Chunking, Dual-Branch Vector/Graph Seeder, Visual & Audio Media ETL, Copyright License Audit, LUFS Normalization | **[📐 ARCHITECTURE DESIGN]** (Roadmap) | Mô-đun 0: Lớp nạp dữ liệu offline làm sạch sử liệu cổ & SGK, nạp PostgreSQL pgvector & Host Mount Volume `/media`, tạo tập Golden Datasets cho `eval/`. |
 | **Engine Render (Remotion)** | React 18 + Remotion v4, Ken Burns, 31 LayoutMode, Zod Discriminated Unions, Audio-Driven Timing, Fallback Overlay Data, Karaoke Sync | **[✅ IMPLEMENTED]** (100% Codebase) | Engine cốt lõi đã hoàn thiện, nhận JSON schema v4.1 để render MP4 mượt mà 0% vỡ layout. |
 | **Tạo Giọng Đọc (TTS)** | Self-Hosted VieNeu Neural TTS (`vieneu.io`), FastAPI Python ONNX Engine + Node.js Dual-Layer Fallback, Word Timestamps | **[✅ IMPLEMENTED]** (Phase 1 Microservice & Eval Suite) | Giọng thuyết minh lịch sử truyền cảm, ngắt nghỉ chuẩn, sinh Word Timestamps cho chữ Karaoke, kèm bộ kiểm thử `services/vieneu-tts/eval/`. |
-| **Dữ liệu & Tri thức (RAG)** | PostgreSQL-Powered GraphRAG (`pgvector` Dense BGE-M3 1024d + Relational Graph CTEs), SGK & Sử liệu cổ. | **[📐 ARCHITECTURE DESIGN]** (Roadmap) | Thiết kế truy vấn sử liệu chuẩn xác. Kết nối quan hệ dòng tộc, triều đại và diễn biến chiến dịch. |
-| **Đội ngũ Agent (Multi-Agent)** | LangGraph.js Agentic Orchestrator (Node.js/TS) + PostgreSQL State Checkpointer. | **[📐 ARCHITECTURE DESIGN]** (v3.2 Spec) | Quy trình Chaptering & 5 Micro-Steps kịch bản (kèm Narrative Context & Duration Reconcile), Hybrid Fact-Checker (Alias Table & 4-Tier Escalation Path), Whitelisted License & Postgres Checkpoint. |
-| **Thẩm định Hình ảnh (VLM)** | Hybrid VLM (Google Gemini 2.5 Flash Cloud + Local CLIP ONNX Fallback) + Dual-Layer Cache. | **[📐 ARCHITECTURE DESIGN]** (v3.2 Spec) | Thẩm định bối cảnh lịch sử theo Chiến lược 3+3 Candidates, lọc giấy phép Whitelisted (`Public Domain`, `CC0`, `CC-BY`), tự động chọn Fallback Pure Code Layout Rotation. |
+| **Dữ liệu & Tri thức (RAG)** | PostgreSQL-Powered GraphRAG (`pgvector` Dense BGE-M3 1024d + Relational Graph CTEs), SGK & Sử liệu cổ. | **[📐 ARCHITECTURE DESIGN]** (Roadmap) | Mô-đun 1: Thiết kế truy vấn sử liệu chuẩn xác. Kết nối quan hệ dòng tộc, triều đại và diễn biến chiến dịch. |
+| **Đội ngũ Agent (Multi-Agent)** | LangGraph.js Agentic Orchestrator (Node.js/TS) + PostgreSQL State Checkpointer. | **[📐 ARCHITECTURE DESIGN]** (v3.2 Spec) | Mô-đun 2: Quy trình Chaptering & 5 Micro-Steps kịch bản (kèm Narrative Context & Duration Reconcile), Hybrid Fact-Checker (Alias Table & 4-Tier Escalation Path), Whitelisted License & Postgres Checkpoint. |
+| **Thẩm định Hình ảnh (VLM)** | Hybrid VLM (Google Gemini 2.5 Flash Cloud + Local CLIP ONNX Fallback) + Dual-Layer Cache. | **[📐 ARCHITECTURE DESIGN]** (v3.2 Spec) | Mô-đun 3: Thẩm định bối cảnh lịch sử theo Chiến lược 3+3 Candidates, lọc giấy phép Whitelisted (`Public Domain`, `CC0`, `CC-BY`), tự động chọn Fallback Pure Code Layout Rotation. |
 
-> 🔗 **Tài liệu Chi tiết:** Tra cứu [docs/architecture/](file:///D:/Persional_Projects/ChronoViet/docs/architecture) cho Kiến trúc Hệ thống & Hạ tầng và [docs/modules/](file:///D:/Persional_Projects/ChronoViet/docs/modules) cho 4 Mô-đun Pipeline.
+> 🔗 **Tài liệu Chi tiết:** Tra cứu [docs/architecture/](file:///D:/Persional_Projects/ChronoViet/docs/architecture) cho Kiến trúc Hệ thống & Hạ tầng và [docs/modules/](file:///D:/Persional_Projects/ChronoViet/docs/modules) cho 5 Mô-đun Pipeline.
 
 ---
 
 ## 3. Kiến trúc Hệ thống (System Architecture v3.4)
 
 ```
-                       ┌──────────────────────────────┐
-                       │   Cơ sở dữ liệu Sử liệu      │
-                       │ (SGK, Văn bản lịch sử chuẩn) │
-                       └──────────────┬───────────────┘
-                                      │
-                                      ▼
-                       ┌──────────────────────────────┐
-                       │     Chrono-RAG Engine        │
-                       │   (PostgreSQL pgvector DB)   │
-                       └──────────────┬───────────────┘
-                                      │
-             ┌────────────────────────┴────────────────────────┐
-             ▼                                                 ▼
-┌─────────────────────────┐                       ┌─────────────────────────┐
-│     Interactive Chat    │                       │ Multi-Agent Orchestrator│
-│   (Hỏi đáp sâu về lịch  │                       │ (LangGraph.js + Postgres│
-│     sử cùng RAG)        │                       └────────────┬────────────┘
-└─────────────────────────┘                                    │
-                                                               ▼
-                                                  ┌─────────────────────────┐
-                                                  │ Micro-Step 0 Chaptering │
-                                                  │ & 5-Step Script Pipeline│
-                                                  │ (Writer->Audit->Seg->   │
-                                                  │  Reconcile->Kw)         │
-                                                  └────────────┬────────────┘
-                                                               │
-                                      ┌────────────────────────┴────────────────────────┐
-                                      ▼                                                 ▼
-                       ┌─────────────────────────────┐                   ┌─────────────────────────────┐
-                       │ Parallel Worker A: TTS      │                   │ Parallel Worker B: Crawler  │
-                       │ (VieNeu ONNX Engine)        │                   │ + Hybrid VLM (Gemini/CLIP)  │
-                       └──────────────┬──────────────┘                   │ + License Filter (PD, CC0)  │
-                                      │                                  └──────────────┬──────────────┘
-                                      └────────────────────────┬────────────────────────┘
-                                                               │
-                                                               ▼
-                                                  ┌─────────────────────────┐
-                                                  │ Code Rules Engine (TS)  │
-                                                  │ (Layout Rotation Code)  │
-                                                  └────────────┬────────────┘
-                                                               │ (JSON Schema v3.2)
-                                                               ▼
-                                                  ┌─────────────────────────┐
-                                                  │ Remotion Render Engine  │
-                                                  │ (Pre-download + Chrome  │
-                                                  │  Process Isolation)     │
-                                                  └────────────┬────────────┘
-                                                               │
-                                                               ▼
-                                                  [XUẤT VIDEO SHORT / REELS]
+                       ┌────────────────────────────────────────────────────────┐
+                       │ Raw Knowledge Corpus (SGK, Sử liệu cổ) & Raw Media     │
+                       └───────────────────────────┬────────────────────────────┘
+                                                   │
+                                                   ▼
+                       ┌────────────────────────────────────────────────────────┐
+                       │ Mô-đun 0: Data Preprocessing & Ingestion Engine        │
+                       │ (Text Normalization, Hierarchical Chunking, Media ETL) │
+                       └───────────────────────────┬────────────────────────────┘
+                                                   │ (Ingest & Seed Data)
+                                                   ▼
+                       ┌────────────────────────────────────────────────────────┐
+                       │ Persistent Storage: PostgreSQL pgvector & Host /media  │
+                       └───────────────────────────┬────────────────────────────┘
+                                                   │
+                                                   ▼
+                       ┌────────────────────────────────────────────────────────┐
+                       │ Mô-đun 1: Chrono-RAG Engine (Knowledge Retrieval)      │
+                       └───────────────────────────┬────────────────────────────┘
+                                                   │
+             ┌─────────────────────────────────────┴─────────────────────────────────────┐
+             ▼                                                                           ▼
+┌─────────────────────────┐                                             ┌─────────────────────────┐
+│     Interactive Chat    │                                             │ Mô-đun 2: Multi-Agent   │
+│   (Hỏi đáp sâu về lịch  │                                             │ Orchestrator (LangGraph)│
+│     sử cùng RAG)        │                                             └────────────┬────────────┘
+└─────────────────────────┘                                                          │
+                                                                                     ▼
+                                                                        ┌─────────────────────────┐
+                                                                        │ Micro-Step 0 Chaptering │
+                                                                        │ & 5-Step Script Pipeline│
+                                                                        │ (Writer->Audit->Seg->   │
+                                                                        │  Reconcile->Kw)         │
+                                                                        └────────────┬────────────┘
+                                                                                     │
+                                             ┌───────────────────────────────────────┴───────────────────────────────────────┐
+                                             ▼                                                                               ▼
+                              ┌─────────────────────────────┐                                                 ┌─────────────────────────────┐
+                              │ Parallel Worker A: TTS      │                                                 │ Parallel Worker B: Crawler  │
+                              │ (VieNeu ONNX Engine)        │                                                 │ + Mô-đun 3: Hybrid VLM      │
+                              └──────────────┬──────────────┘                                                 │ + License Filter (PD, CC0)  │
+                                             │                                                                └──────────────┬──────────────┘
+                                             └───────────────────────────────┬───────────────────────────────┘
+                                                                             │
+                                                                             ▼
+                                                                ┌─────────────────────────┐
+                                                                │ Code Rules Engine (TS)  │
+                                                                │ (Layout Rotation Code)  │
+                                                                └────────────┬────────────┘
+                                                                             │ (JSON Schema v4.1)
+                                                                             ▼
+                                                                ┌─────────────────────────┐
+                                                                │ Mô-đun 4: Remotion      │
+                                                                │ Render Engine Tool      │
+                                                                │ (Pre-download + Chrome  │
+                                                                │  Process Isolation)     │
+                                                                └────────────┬────────────┘
+                                                                             │
+                                                                             ▼
+                                                                [XUẤT VIDEO SHORT / REELS]
 ```
 
 ---

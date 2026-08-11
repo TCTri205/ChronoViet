@@ -380,7 +380,7 @@ packages/remotion-engine/src/
 │   ├── layoutUtils.ts              # Layout helper functions
 │   └── index.ts                    # Re-exports
 │
-├── components/                     # ★ 13 UI Components (Pure Code)
+├── components/                     # ★ 19 UI Components (Pure Code)
 │   ├── ChapterTitle.tsx            # layoutMode: TITLE_CARD, CHAPTER_CARD
 │   ├── StatCard.tsx                # layoutMode: STAT_CARD
 │   ├── VersusCard.tsx              # layoutMode: VERSUS_CARD

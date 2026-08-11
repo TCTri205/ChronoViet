@@ -392,6 +392,32 @@ export const ChronoVideoScriptSchema = z.object({
 
 export const ChronoVideoSchema = ChronoVideoScriptSchema;
 
+// ==========================================
+// 5. RAG ENGINE SCHEMAS (`packages/rag-engine`)
+// ==========================================
+export const RagSearchRequestSchema = z.object({
+  query: z.string().min(1),
+  entityFilter: z.array(z.string()).optional(),
+  maxTokens: z.number().int().positive().optional().default(2048),
+  rerankTopK: z.number().int().positive().optional().default(5),
+});
+
+export const HistoricalContextEntitySchema = z.object({
+  entityId: z.string(),
+  canonicalName: z.string(),
+  aliases: z.array(z.string()).default([]),
+  summary: z.string(),
+  citations: z.array(z.string()).default([]),
+  confidenceScore: z.number().min(0).max(1).default(1.0),
+});
+
+export const RagSearchResponseSchema = z.object({
+  verifiedContext: z.array(HistoricalContextEntitySchema),
+  aliasTable: z.record(z.string(), z.array(z.string())),
+  citations: z.array(z.string()),
+  retrievalLatencyMs: z.number().min(0),
+});
+
 // Type Exports
 export type AssetMetadata = z.infer<typeof AssetMetadataSchema>;
 export type StatItem = z.infer<typeof StatItemSchema>;
@@ -419,5 +445,11 @@ export type TimelineSceneInput = z.input<typeof TimelineSceneSchema>;
 export type TimelineScene = z.output<typeof TimelineSceneSchema>;
 export type ChronoVideoScript = z.infer<typeof ChronoVideoScriptSchema>;
 export type ChronoVideoProps = ChronoVideoScript;
+
+export type RagSearchRequestInput = z.input<typeof RagSearchRequestSchema>;
+export type RagSearchRequest = z.output<typeof RagSearchRequestSchema>;
+export type HistoricalContextEntity = z.infer<typeof HistoricalContextEntitySchema>;
+export type RagSearchResponse = z.infer<typeof RagSearchResponseSchema>;
+
 
 

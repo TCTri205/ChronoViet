@@ -3,69 +3,34 @@
  * Single Source of Truth for Inter-Module Communication
  */
 
-import { ChronoVideoProps, LicenseType } from './schema.js';
+import {
+  ChronoVideoProps,
+  LicenseType,
+  RagSearchRequest,
+  HistoricalContextEntity,
+  RagSearchResponse,
+} from './schema.js';
 
 // ============================================================================
 // 1. Chrono-RAG Engine Interface (`packages/rag-engine`)
 // ============================================================================
 
-export interface RagSearchRequest {
-  query: string;
-  entityFilter?: string[];
-  maxTokens?: number;
-  rerankTopK?: number;
-}
-
-export interface HistoricalContextEntity {
-  entityId: string;
-  canonicalName: string;
-  aliases: string[];
-  summary: string;
-  citations: string[];
-  confidenceScore: number;
-}
-
-export interface RagSearchResponse {
-  verifiedContext: HistoricalContextEntity[];
-  aliasTable: Record<string, string[]>;
-  citations: string[];
-  retrievalLatencyMs: number;
-}
+export type { RagSearchRequest, HistoricalContextEntity, RagSearchResponse };
 
 export interface IRagEngine {
   search(request: RagSearchRequest): Promise<RagSearchResponse>;
   ingestDocument(content: string, metadata: { title: string; source: string }): Promise<void>;
 }
 
+
 // ============================================================================
 // 2. VieNeu TTS Service Interface (`services/vieneu-tts`)
 // ============================================================================
+// NOTE: All VieNeu TTS types are now defined as Zod Schemas in schema.ts:
+//   VieNeuTTSRequestSchema, VieNeuTTSResponseSchema, WordTimestampSchema, CaptionWordSchema
+// The legacy interfaces (TtsSynthesizeRequest, IVieNeuTtsService, etc.) have been removed
+// in favor of the Zod-validated types used across all modules.
 
-export interface TtsSynthesizeRequest {
-  text: string;
-  speakerId?: string;
-  speed?: number;
-  fps?: number;
-}
-
-export interface WordTimestampInfo {
-  word: string;
-  startMs: number;
-  endMs: number;
-  startFrame: number;
-  endFrame: number;
-}
-
-export interface TtsSynthesizeResponse {
-  audioUrl: string;
-  durationMs: number;
-  durationInFrames: number;
-  wordTimestamps: WordTimestampInfo[];
-}
-
-export interface IVieNeuTtsService {
-  synthesize(request: TtsSynthesizeRequest): Promise<TtsSynthesizeResponse>;
-}
 
 // ============================================================================
 // 3. VLM Inspector Sub-Agent Interface (`packages/vlm-inspector`)

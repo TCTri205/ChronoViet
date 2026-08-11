@@ -87,7 +87,7 @@ async function main() {
   if (mode === 'all' || mode === 'module') {
     const targetModules = moduleName
       ? [moduleName]
-      : ['@chronoviet/vieneu-tts', '@chronoviet/remotion-engine'];
+      : ['@chronoviet/rag-engine', '@chronoviet/vieneu-tts', '@chronoviet/remotion-engine'];
 
     console.log('\n--- [PHASE 1] RUNNING ISOLATED MODULE EVALUATIONS ---');
 

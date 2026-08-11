@@ -57,7 +57,8 @@ d:\Persional_Projects\ChronoViet\docs\
 ### 2.1. [SystemOverview.md](file:///D:/Persional_Projects/ChronoViet/docs/SystemOverview.md) — Kiến Trúc Hệ Thống Tổng Quan
 - **Mục đích:** Cung cấp cái nhìn toàn cảnh về dự án ChronoViet.
 - **Trạng thái:** 
-  - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation, 13 Components, 31 LayoutModes, 11 Compositions trong `Root.tsx`.
+  - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation, 19 Components, 31 LayoutModes, 11 Compositions trong `Root.tsx`.
+  - **[✅ IMPLEMENTED]:** VieNeu TTS Dual-Layer Microservice + Eval Suite (`services/vieneu-tts/`).
   - **[📐 ROADMAP]:** RAG Engine, Multi-Agent Orchestrator, VLM Inspector Agent (mô hình thiết kế kiến trúc chuẩn bị kết nối với Remotion Engine).
 
 ### 2.2. [IMPLEMENTATION_PLAN.md](file:///D:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md) — Kế Hoạch Triển Khai v1.1, Phân Tích Song Song & Khung Đánh Giá `eval/`

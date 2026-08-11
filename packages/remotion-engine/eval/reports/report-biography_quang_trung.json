@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-08-11T13:08:53.308Z",
+  "testCaseName": "biography_quang_trung.json",
+  "isValidSchema": true,
+  "totalScenes": 18,
+  "layoutModesCovered": [
+    "ARTICLE_UI",
+    "BLUR_BG",
+    "HISTORICAL_FRAME",
+    "CHAPTER_CARD",
+    "QUOTE_CANVAS",
+    "OUTRO_CARD"
+  ],
+  "transitionsCovered": [
+    "FADE_TO_BLACK"
+  ],
+  "calculatedTotalFrames": 2445,
+  "durationSeconds": 81.5,
+  "fps": 30,
+  "aspectRatio": "16:9",
+  "evalDurationMs": 1
+}

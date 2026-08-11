@@ -1,14 +1,101 @@
+/**
+ * Local Subgraph Search using PostgreSQL Recursive CTEs ($k=1, 2$) & In-Memory Fallback
+ */
+
+import { isPgAvailable, query, inMemoryStore } from '../db/client.js';
+import { buildAliasTable } from '../ingestion/entity-disambiguator.js';
+
 export interface GraphTriple {
-  sourceEntity: string;
+  sourceEntityId: string;
   relationType: string;
-  targetEntity: string;
+  targetEntityId: string;
+  confidence: number;
   hopCount: number;
 }
 
+export interface LocalGraphSearchResult {
+  triples: GraphTriple[];
+  aliasTable: Record<string, string[]>;
+  entityIds: string[];
+}
+
 export async function searchLocalGraphCTE(
-  _entityId: string,
-  _maxHops: number = 2
-): Promise<GraphTriple[]> {
-  // Stub implementation for PostgreSQL Recursive CTE k-hop search
-  return [];
+  entityIds: string[],
+  maxHops: number = 2
+): Promise<LocalGraphSearchResult> {
+  if (!entityIds || entityIds.length === 0) {
+    return { triples: [], aliasTable: {}, entityIds: [] };
+  }
+
+  const pgConnected = await isPgAvailable();
+  const triples: GraphTriple[] = [];
+  const visitedEntities = new Set<string>(entityIds);
+
+  if (pgConnected) {
+    const sql = `
+      WITH RECURSIVE graph_cte AS (
+        SELECT source_entity_id, target_entity_id, relation_type, confidence, 1 AS depth
+        FROM relationships
+        WHERE source_entity_id = ANY($1) OR target_entity_id = ANY($1)
+        UNION ALL
+        SELECT r.source_entity_id, r.target_entity_id, r.relation_type, r.confidence, g.depth + 1
+        FROM relationships r
+        INNER JOIN graph_cte g ON r.source_entity_id = g.target_entity_id OR r.target_entity_id = g.source_entity_id
+        WHERE g.depth < $2
+      )
+      SELECT DISTINCT * FROM graph_cte;
+    `;
+    const rows = await query<{
+      source_entity_id: string;
+      target_entity_id: string;
+      relation_type: string;
+      confidence: number;
+      depth: number;
+    }>(sql, [entityIds, maxHops]);
+
+    for (const r of rows) {
+      triples.push({
+        sourceEntityId: r.source_entity_id,
+        relationType: r.relation_type,
+        targetEntityId: r.target_entity_id,
+        confidence: r.confidence,
+        hopCount: r.depth,
+      });
+      visitedEntities.add(r.source_entity_id);
+      visitedEntities.add(r.target_entity_id);
+    }
+  } else {
+    // In-Memory Graph Recursive Traversal Fallback
+    let currentFrontier = new Set<string>(entityIds);
+
+    for (let hop = 1; hop <= maxHops; hop++) {
+      const nextFrontier = new Set<string>();
+      for (const rel of inMemoryStore.relationships) {
+        if (currentFrontier.has(rel.source_entity_id) || currentFrontier.has(rel.target_entity_id)) {
+          triples.push({
+            sourceEntityId: rel.source_entity_id,
+            relationType: rel.relation_type,
+            targetEntityId: rel.target_entity_id,
+            confidence: rel.confidence,
+            hopCount: hop,
+          });
+          visitedEntities.add(rel.source_entity_id);
+          visitedEntities.add(rel.target_entity_id);
+          nextFrontier.add(rel.source_entity_id);
+          nextFrontier.add(rel.target_entity_id);
+        }
+      }
+      currentFrontier = nextFrontier;
+      if (currentFrontier.size === 0) break;
+    }
+  }
+
+  const allEntityIds = Array.from(visitedEntities);
+  const aliasTable = buildAliasTable(allEntityIds);
+
+  return {
+    triples,
+    aliasTable,
+    entityIds: allEntityIds,
+  };
 }

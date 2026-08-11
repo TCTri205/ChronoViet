@@ -486,7 +486,7 @@ Thư mục `packages/remotion-engine/src/` và `packages/shared-spec/src/` đã 
    - `getMergedTheme(templateId, customTheme)` — merge template default với custom theme JSON.
    - `TEMPLATE_THEMES` tại [`src/constants/config.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/constants/config.ts).
 
-3. **Thư viện 13 Component Pure Code (`src/components/`):**
+3. **Thư viện 19 Component Pure Code (`src/components/`):**
    - `StatCard`, `VersusCard`, `BulletHighlight`, `MuseumTag`, `SplitTheory`, `ChapterTitle` (dùng cho cả `TITLE_CARD` và `CHAPTER_CARD`), `QuoteSlide`, `OutroSlide`, `SponsorSlide`, `ChronoIntro`, `DocumentaryHeader`, `DocumentarySubtitle`, `SlideImage`.
 
 4. **Data Files (`src/data/`):**

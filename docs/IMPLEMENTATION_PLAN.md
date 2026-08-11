@@ -13,9 +13,10 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 
 | Thành phần / Mô-đun | Trạng thái Thực tế | Mức độ Phức tạp | Đánh giá Công nghệ & Sẵn sàng | Thư mục Đánh giá (`eval/`) |
 | :--- | :---: | :---: | :--- | :--- |
-| **Mô-đun 4: Remotion Render Engine** | **[✅ IMPLEMENTED]** | Trung bình | **100% Hoàn thiện codebase** (`packages/remotion-engine/src/`). Đã có 31 `LayoutMode`, 19 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 13 UI Components, 11 Compositions. | `packages/remotion-engine/eval/` |
-| **Dịch vụ VieNeu TTS (ONNX Engine)** | **[📐 ROADMAP Spec]** | Thấp - Trung bình | Đã thiết kế spec API ONNX Runtime + thuật toán tính toán `durationInFrames` dựa trên audio `.wav` thực tế và mốc từ `wordTimestamps` cho phụ đề Karaoke. | `services/vieneu-tts/eval/` |
-| **Mô-đun 1: Chrono-RAG Engine** | **[📐 ROADMAP Spec]** | Phức tạp | Hybrid GraphRAG dùng PostgreSQL 15+ (`pgvector` Dense Embedding BGE-M3 + Relational Graph Schema CTEs + k-hop Local Search + BGE Reranker v2). | `packages/rag-engine/eval/` |
+| **Mô-đun 0: Data Preprocessing & Ingestion Engine** | **[📐 ROADMAP Spec]** | Trung bình - Phức tạp | Offline ETL Pipeline: Text Cleaning, OCR, Historical Entity Normalization (`SAME_AS_LOCATION`, `ALIAS_OF`), Hierarchical Dynamic Chunking, Dual-Branch Vector/Graph Seeder, Visual & Audio Media ETL, Copyright License Audit, LUFS Normalization, CLI Seeders (`pnpm ingest:knowledge`, `pnpm setup-assets`, `pnpm eval:seed`). | `packages/rag-engine/eval/` & `eval/test-cases/` |
+| **Mô-đun 4: Remotion Render Engine** | **[✅ IMPLEMENTED]** | Trung bình | **100% Hoàn thiện codebase** (`packages/remotion-engine/src/`). Đã có 31 `LayoutMode`, 19 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 19 UI Components, 11 Compositions. | `packages/remotion-engine/eval/` |
+| **Dịch vụ VieNeu TTS (ONNX Engine)** | **[✅ IMPLEMENTED]** (Phase 1) | Thấp - Trung bình | Đã hoàn thiện microservice Node.js Dual-Layer (`VieNeuEngine` + `SyntheticTTSFallbackEngine`), Python FastAPI ONNX Engine (`app.py`), Zod Schema Validation, `wordTimestamps` -> Caption Frames Converter, và bộ Eval Suite `services/vieneu-tts/eval/` với 3 KPI: RTF, Alignment Error, Frame Error. | `services/vieneu-tts/eval/` |
+| **Mô-đun 1: Chrono-RAG Engine** | **[✅ IMPLEMENTED]** | Phức tạp | **100% Hoàn thiện codebase & Eval suite** (`packages/rag-engine/src/`, `eval/`). Hybrid GraphRAG dùng PostgreSQL 15+ (`pgvector` Dense Embedding 1024d + Relational Graph Schema CTEs $k=1,2$ + BM25 FTS + RRF + Integrated BGE Reranker v2). Đã vượt ma trận KPI: Fact Precision 100%, Hallucination Rate 0%, Citation Traceability 100%. | `packages/rag-engine/eval/` |
 | **Mô-đun 2: Multi-Agent Orchestrator** | **[📐 ROADMAP Spec]** | Rất Phức tạp | LangGraph.js State Machine trên Node.js/TS, Postgres Checkpointer SSOT, quy trình 12 trạng thái, Chaptering Agent + 5 Script Micro-Steps, Duration Reconciler, Alias Table Fact-Checker. | `packages/agent-orchestrator/eval/` |
 | **Mô-đun 3: VLM Inspector Sub-Agent** | **[📐 ROADMAP Spec]** | Trung bình | Gemini 2.5 Flash Cloud Primary + Local CLIP ONNX Fallback + Whitelisted License Filter (CC0/PD/CC-BY) + Unified Redis Cache (SHA-256/pHash) + Chiến lược 3+3 Candidates. | `packages/vlm-inspector/eval/` |
 | **Hạ tầng Worker & Render Queue** | **[📐 ROADMAP Spec]** | Trung bình | Docker Compose (Caddy Reverse Proxy, PostgreSQL `pgvector`, Redis 7 BullMQ, App Monolith Fastify/Next.js, Worker). | `apps/render-worker/eval/` |
@@ -40,7 +41,8 @@ Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 
 ### 1.3. Nhận Xét Lõi Cho Kế Hoạch Triển Khai
 - **Điểm tựa vững chắc:** Remotion Render Engine đã hoàn thành 100% và hoạt động 100% **Data-Driven thông qua file JSON Schema v3.0/v3.2**.
-- **Nhiệm vụ trọng tâm:** Xây dựng tầng "đầu vào AI" (RAG $\rightarrow$ Multi-Agent Scriptwriter $\rightarrow$ VLM Inspector & TTS $\rightarrow$ JSON Schema Packager) để nối tự động với Remotion Engine, song song với việc xây dựng bộ đánh giá `eval/` độc lập cho từng thành phần.
+- **Tầng dữ liệu gốc (Mô-đun 0):** Đóng vai trò là Offline Pipeline thu thập, làm sạch, phân cấp tri thức (Text ETL) và nạp tư liệu (Media/SFX ETL) vào PostgreSQL và Host Mount Volume `/media`, đảm bảo triết lý Monorepo Stateless & 100% Data-Driven.
+- **Nhiệm vụ trọng tâm:** Xây dựng tầng "đầu vào AI" (Data Ingestion $\rightarrow$ RAG $\rightarrow$ Multi-Agent Scriptwriter $\rightarrow$ VLM Inspector & TTS $\rightarrow$ JSON Schema Packager) để nối tự động với Remotion Engine, song song với việc xây dựng bộ đánh giá `eval/` độc lập cho từng thành phần.
 
 ---
 
@@ -68,30 +70,39 @@ Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 │   + Graph Schema)    │ │   Timestamp Alignment)       │ │    + Redis Dual Cache)        │
 │  Bộ đánh giá:        │ │  Bộ đánh giá:                │ │  Bộ đánh giá:                │
 │  .../rag-engine/eval/│ │  .../vieneu-tts/eval/        │ │  .../vlm-inspector/eval/     │
-└──────────────────────┘ └──────────────────────────────┘ └──────────────────────────────┘
+└───────▲──────────────┘ └──────────────────────────────┘ └───────▲──────────────────────┘
+        │                                                         │
+        └────────────────────────────────┬────────────────────────┘
+                                         │ (Seed SQL Vectors/Graph & Host /media assets)
+┌────────────────────────────────────────┴───────────────────────────────────────────────┐
+│              WORKSTREAM 0: DATA PREPROCESSING & INGESTION ENGINE                       │
+│          (Text Normalization + Hierarchical Chunking + Media ETL + Seeders)            │
+│          Bộ đánh giá: packages/rag-engine/eval/ & eval/test-cases/                      │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 2.2. Phân Tích Khả Năng Song Song Hóa (Parallelization Analysis)
 
 | Workstream | Có thể chạy song song? | Phụ thuộc đầu vào (Inputs) | Tệp giao tiếp (Data Contract) | Thư mục Eval Độc Lập |
 | :--- | :---: | :--- | :--- | :--- |
-| **Workstream A: Chrono-RAG Engine** | **CÓ (100%)** | Nguồn tri thức (SGK, Đại Việt Sử Ký Toàn Thư). | Trả về `Verified Historical Context` + `Alias Table`. | `packages/rag-engine/eval/` |
+| **Workstream 0: Data Ingestion ETL** | **CÓ (100%)** | Raw Corpus (PDF, SGK, Sử liệu cổ), Raw Media Assets (Images, SFX). | Nạp Postgres (`document_chunks`, `entities`, `relationships`), Host mount `/media/raw-assets/`, `/media/license-snapshots/registry.json`, Golden Datasets (`eval/test-cases/`). | `packages/rag-engine/eval/` & `eval/test-cases/` |
+| **Workstream A: Chrono-RAG Engine** | **CÓ (100%)** | Nguồn tri thức từ Workstream 0 (Bảng Postgres vector/graph). | Trả về `Verified Historical Context` + `Alias Table`. | `packages/rag-engine/eval/` |
 | **Workstream B: VieNeu TTS Engine** | **CÓ (100%)** | Script text mẫu (String). | Trả về file `.wav` + `wordTimestamps` + `calculatedFrames`. | `services/vieneu-tts/eval/` |
 | **Workstream C: VLM Inspector Sub-Agent** | **CÓ (100%)** | URL ảnh crawl + Từ khóa bối cảnh. | Trả về `VLM Score` + `License Metadata` + Verdict (`PASS`/`REJECT`). | `packages/vlm-inspector/eval/` |
 | **Workstream D: Multi-Agent Orchestrator** | **TUẦN TỰ (Cần A,B,C)** | Output từ Workstream A, B, C để lắp ráp pipeline đầy đủ. | Đóng gói JSON Schema v3.2 truyền sang Remotion Render Tool. | `packages/agent-orchestrator/eval/` |
 
 > 💡 **Kết Luận Kiến Trúc:** 
-> Dự án triển khai song song 3 Workstream A, B, C ở giai đoạn đầu, trong đó mỗi Workstream **tự phát triển và tự chạy suite `eval/` của chính mình** trước khi hợp nhất vào Workstream D.
+> Dự án triển khai song song 4 Workstream 0, A, B, C ở giai đoạn đầu, trong đó Workstream 0 nạp dữ liệu tri thức & tư liệu cho toàn hệ thống, mỗi Workstream **tự phát triển và tự chạy suite `eval/` của chính mình** trước khi hợp nhất vào Workstream D.
 
 ---
 
 ## 3. Lộ Trình Triển Khai Chi Tiết Theo Giai Đoạn (Phased Implementation Roadmap)
 
-Tổng thời gian dự kiến: **7 Tuần** (chia làm 5 Giai đoạn).
+Tổng thời gian dự kiến: **8 Tuần** (chia làm 5 Giai đoạn).
 
 ```
 Tuần 1 - 2 :  Phase 1 [Khởi tạo Hạ tầng & Workstream B (VieNeu TTS) + vieneu-tts/eval/]
-Tuần 3 - 4 :  Phase 2 [Workstream A (Chrono-RAG) + rag-engine/eval/ & Workstream C (VLM Inspector) + vlm-inspector/eval/]
+Tuần 3 - 4 :  Phase 2 [Workstream 0 (Ingestion ETL) + Workstream A (Chrono-RAG) + Workstream C (VLM Inspector)]
 Tuần 5 - 6 :  Phase 3 [Workstream D (LangGraph.js Orchestrator) + agent-orchestrator/eval/ & Task Queues + render-worker/eval/]
 Tuần 7     :  Phase 4 [End-to-End Tích hợp Pipeline & Remotion Coupling + remotion-engine/eval/]
 Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & Tối ưu Sản xuất]
@@ -99,10 +110,12 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
 
 ---
 
-### 🎨 Phase 1: Setup Hạ Tầng Monorepo & Dịch Vụ VieNeu TTS (Tuần 1 – Tuần 2)
+### 🎨 Phase 1: Setup Hạ Tầng Monorepo & Dịch Vụ VieNeu TTS (Tuần 1 – Tuần 2) ✅ **HOÀN THÀNH**
 **Mục tiêu:** Dựng khung Monorepo TypeScript, đưa hạ tầng Docker Compose lên môi trường dev, tích hợp hoàn chỉnh dịch vụ VieNeu TTS dạng standalone kèm suite đánh giá `services/vieneu-tts/eval/`.
 
-#### 📋 Các công việc cụ thể:
+**Trạng thái:** Toàn bộ Phase 1 đã được triển khai xong — Monorepo pnpm workspace, Docker Compose dev stack (PostgreSQL pgvector, Redis 7, Caddy), Dockerfile cho vieneu-tts, Node.js Dual-Layer Engine (`VieNeuEngine` + `SyntheticTTSFallbackEngine`), Python FastAPI ONNX Engine (`app.py`), Zod Schema Validation, `wordTimestamps` → Caption Frame Converter, và Eval Suite với 3 KPI metrics.
+
+#### 📋 Các công việc cụ thể (ĐÃ HOÀN THÀNH ✅):
 1. **Thiết lập Monorepo (`pnpm workspace`):**
    - Khởi tạo thư mục gốc: `packages/shared-spec`, `packages/rag-engine`, `packages/agent-orchestrator`, `packages/vlm-inspector`, `packages/remotion-engine`, `services/vieneu-tts`, `apps/web`, `apps/render-worker`.
    - **Tạo sẵn thư mục `eval/` tại TẤT CẢ các package/service/app.**
@@ -110,10 +123,10 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
    - Container `postgres`: PostgreSQL 15+ cài sẵn `pgvector` extension.
    - Container `redis`: Redis 7 Alpine cấu hình `appendonly yes`.
    - Container `caddy`: Dynamic reverse proxy local.
-3. **Triển khai VieNeu TTS Engine & Suite Đánh Giá (Workstream B):**
-   - Đóng gói microservice `vieneu-tts-service` sử dụng `onnxruntime-node` đọc model VieNeu ONNX trên CPU.
+3. **Triển khai VieNeu TTS Engine & Suite Đánh Giá (Workstream B):** ✅
+   - Đóng gói microservice `vieneu-tts-service` với kiến trúc Dual-Layer: Node.js HTTP Server + Python FastAPI ONNX Engine.
    - Viết API `POST /api/v1/synthesize` trả về file `.wav` và mốc từ `wordTimestamps`.
-   - Viết module utility `convertVieNeuTimestampsToCaptions()` quy đổi `ms` $\rightarrow$ `startFrame`/`endFrame` tại 30 FPS.
+   - Viết module utility `convertVieNeuTimestampsToCaptions()` quy đổi `ms` $\rightarrow$ `startFrame`/`endFrame` tại FPS chỉ định.
    - **Triển khai `services/vieneu-tts/eval/`:**
      - Xây dựng dataset 50 mẫu câu lịch sử tiếng Việt với âm tiết phức tạp (tên riêng, mốc năm, từ hán việt).
      - Viết `eval/runner.ts` đo lường:
@@ -123,15 +136,35 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
 
 ---
 
-### 🏛️ Phase 2: Phát Triển RAG Engine & VLM Inspector Sub-Agent (Tuần 3 – Tuần 4)
-**Mục tiêu:** Xây dựng song song tầng dữ liệu tri thức lịch sử (Workstream A) và tầng kiểm định hình ảnh/bản quyền (Workstream C), đi kèm hai suite đánh giá `packages/rag-engine/eval/` và `packages/vlm-inspector/eval/`.
+### 🏛️ Phase 2: Tiền Xử Lý Dữ Liệu, Chrono-RAG Engine & VLM Inspector Sub-Agent (Tuần 3 – Tuần 4)
+**Mục tiêu:** Tự động hóa đường ống nạp & làm sạch dữ liệu tri thức/tư liệu (Workstream 0), xây dựng tầng tri thức lịch sử (Workstream A) và tầng kiểm định hình ảnh/bản quyền (Workstream C), đi kèm các suite đánh giá `packages/rag-engine/eval/`, `eval/test-cases/` và `packages/vlm-inspector/eval/`.
+
+#### 📋 Công việc Workstream 0 (Data Preprocessing & Ingestion Engine):
+1. **Làm Sạch & Chuẩn Hóa Sử Liệu (Historical Text Normalization & Disambiguation):**
+   - Viết pipeline OCR & trích xuất văn bản từ PDF/Scan (Sách giáo khoa, *Đại Việt Sử Ký Toàn Thư*, *Khâm Định Việt Sử Thông Giám Cương Mục*).
+   - Xây dựng Bảng ánh xạ Địa danh qua các thời kỳ (`SAME_AS_LOCATION`): Thăng Long $\rightarrow$ Đông Quan $\rightarrow$ Đông Kinh $\rightarrow$ Hà Nội.
+   - Giải quyết đồng tham chiếu & khử nhập nhằng nhân vật (`ALIAS_OF`): Ánh xạ Nguyễn Huệ, Quang Trung, Hồ Thơm, Tây Sơn Vương về `person_nguyen_hue`.
+2. **Phân Đoạn Đa Cấp & Dynamic Hierarchical Metadata Enrichment:**
+   - Cắt nhỏ văn bản theo cấu trúc Parent Chunk (2.000 – 3.000 từ) và Child Chunk (300 – 500 từ).
+   - Gán JSON Metadata bắt buộc (`source_reliability` Level 1-3, `dynasty`, `time_start`/`time_end`, `key_figures`, `location`, `page_number`).
+3. **Đường Ống Nạp Dual-Branch Vector & Relational Graph Indexing:**
+   - Vector Branch: Dense Embedding (`bge-m3` 1024d) + BM25 Sparse Indexing nạp vào `document_chunks` (khởi tạo chỉ mục HNSW).
+   - Graph Branch: Few-Shot Schema-Guided LLM Triple Extraction trích xuất bộ ba $(Sub \rightarrow Rel \rightarrow Obj)$ nạp vào `entities` & `relationships`.
+   - Tạo bảng liên kết chéo `entity_chunks` phục vụ Graph-Guided Chunk Retrieval.
+4. **Tiền Xử Lý Media & Copyright Compliance Audit Trail:**
+   - Visual Asset Ingestion: Filter chất lượng (Resolution $\ge 600\times 600\text{px}$), gán nhãn bối cảnh/triều đại qua VLM, kiểm định bản quyền Whitelisted License (`PUBLIC_DOMAIN`, `CC0`, `CC-BY-4.0`, `CC-BY-SA-4.0`).
+   - Lưu trữ media thô vào `/media/raw-assets/` và lưu snapshot bản quyền vào `/media/license-snapshots/registry.json`.
+   - Audio & SFX ETL: Chuẩn hóa EBU R128 (-14 LUFS cho BGM, -6 LUFS Peak cho SFX) và phân loại cataloging (`sfx_drum_war`, `sfx_court_gong`...).
+5. **Bộ Lệnh CLI Seeders & Nạp Golden Datasets Cho `eval/`:**
+   - Phát triển bộ lệnh CLI: `pnpm db:init`, `pnpm ingest:knowledge`, `pnpm setup-assets`, `pnpm eval:seed`.
+   - Seed tập Golden Datasets vào `eval/test-cases/` (BIOGRAPHY, BATTLE, DYNASTY, MYSTERY, ARTIFACT) làm ground-truth benchmark.
 
 #### 📋 Công việc Workstream A (Chrono-RAG Engine & `rag-engine/eval/`):
 1. **Khởi tạo Database Schema:**
    - Tạo bảng Postgres `document_chunks` với vector column `embedding vector(1024)` (`BAAI/bge-m3`). Cấu hình HNSW index.
    - Xây dựng bảng quan hệ đồ thị Relational Graph: `entities`, `relationships`, `entity_chunks`.
-2. **Offline Ingestion Pipeline:**
-   - Viết script chunking tài liệu SGK Lịch sử & Đại Việt Sử Ký Toàn Thư. Trích xuất bộ ba `(Entity - Relation - Entity)`.
+2. **Offline Ingestion Pipeline Coupling:**
+   - Tích hợp dữ liệu đã chunking & trích xuất bộ ba `(Entity - Relation - Entity)` từ Workstream 0 vào Postgres.
 3. **Online Local Search & Reranking:**
    - Viết thuật toán PostgreSQL Recursive CTEs (k-hop neighborhood $k=1,2$).
    - Kết nối Hybrid Search (RRF BM25 sparse + `bge-m3` dense) + `bge-reranker-v2-m3` chọn Top-3 context.
@@ -235,6 +268,7 @@ Ma trận dưới đây ánh xạ trực tiếp từng trục đánh giá kỹ t
 
 | Trục Đánh Giá | Chỉ Số Đo Lường (KPI / Metrics) | Mục Tiêu Đạt Chuẩn | Mô-đun & Đường Dẫn Thư Mục `eval/` |
 | :--- | :--- | :---: | :--- |
+| **0. Tiền Xử Lý & Nạp Dữ Liệu (Data Ingestion ETL)** | - Entity Normalization & Disambiguation Accuracy<br>- Copyright License Compliance Audit Rate<br>- Ingestion Seeder Throughput & Golden Dataset Integrity | **> 98.0%**<br>**100%**<br>**100%** | **Data Preprocessing & Ingestion Engine**<br>`file:///d:/Persional_Projects/ChronoViet/docs/modules/00_DATA_PREPROCESSING_AND_INGESTION.md`<br>(Đánh giá tại `packages/rag-engine/eval/` & `eval/test-cases/`) |
 | **1. Tính Chuẩn Xác Sử Liệu (RAG Accuracy)** | - Fact Precision Score<br>- Hallucination Rate<br>- Citation Traceability | **> 99.2%**<br>**< 0.8%**<br>**100%** | **Chrono-RAG Engine**<br>`file:///d:/Persional_Projects/ChronoViet/packages/rag-engine/eval/` |
 | **2. Chất Lượng Thị Giác & Bản Quyền (VLM Inspection)** | - Visual Noise Free Rate<br>- Historical Context Match<br>- Whitelisted License Compliance | **> 95%**<br>**> 90%**<br>**100%** | **VLM Inspector Sub-Agent**<br>`file:///d:/Persional_Projects/ChronoViet/packages/vlm-inspector/eval/` |
 | **3. Chất Lượng Giọng Đọc & Đồng Bộ Audio** | - RTF Inference Speed<br>- Word Timestamp Alignment Error<br>- Duration Frame Calculation Error | **< 0.3x RTF**<br>**< 50ms**<br>**< 1 frame** | **VieNeu TTS Service**<br>`file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts/eval/` |
@@ -251,8 +285,9 @@ Ma trận dưới đây ánh xạ trực tiếp từng trục đánh giá kỹ t
 | **1. Rate-Limit / Cloud VLM API Down** | Cao | Cloud API Gemini 2.5 Flash bị sập hoặc trả lỗi 429 quá 3 lần. | **Circuit Breaker Fallback sang Local CLIP ONNX Scorer.** Đã có test case giả lập 429 trong `packages/vlm-inspector/eval/`. |
 | **2. Khởi tạo Kịch bản bị Lỗi Thời Lượng (>15%)** | Trung bình | VieNeu TTS đọc câu văn quá dài/ngắn so với dự tính của Script Agent. | **Duration Reconciler Step 1B:** Áp dụng Time-Stretch $\pm 10\%$. Nếu vẫn quá 15%, rewrite pacing. Test tự động trong `packages/agent-orchestrator/eval/`. |
 | **3. Tự động Crawl Không Tìm Thấy Ảnh Phù Hợp** | Trung bình | Từ khóa hiếm, cả 6 ảnh (3+3 candidates) đều $< 60$ điểm VLM. | **PURE_CODE Layout Rotation:** Tự động switch scene sang các component thuần code (`STAT_CARD`, `QUOTE_SLIDE`, `TIMELINE_CHRONO`...). Kiểm thử trong `packages/remotion-engine/eval/`. |
-| **4. Render Remotion Bị Out Of Memory (OOM)** | Cao | Chromium Puppeteer instance giữ lại RAM cũ sau nhiều job render. | **Chromium Process Isolation:** Cấu hình `--concurrency=1`, gọi `browser.close()` và dọn temp. Đã đưa vào benchmark `apps/render-worker/eval/`. |
+| **4. Render Remotion Bị Out Of Memory (OOM)** | Cao | Chromium Puppeteer instance giữ lại RAM cũ sau nhiều job render. | **Chromium Process Isolation:** Cấu hình `--concurrency=1`, gọi `browser.close()` and dọn temp. Đã đưa vào benchmark `apps/render-worker/eval/`. |
 | **5. LLM Bị Reset Tone Giữa Các Chương Video Dài** | Trung bình | Small LLM (Qwen 7B/14B) bị tràn context window khi sinh video 10-15 phút. | **Micro-Step 0 Chaptering:** Tách video dài thành $N$ Chapters 2-3 phút và truyền `runningNarrativeState`. Đo lường bằng LLM-as-a-Judge trong `packages/agent-orchestrator/eval/`. |
+| **6. Sai Lệch Địa Danh/Nhân Vật Cổ & Vi Phạm Bản Quyền Ingest** | Cao | Sử liệu cổ thay đổi tên địa danh qua các triều đại; ảnh crawl thô chứa logo/bản quyền không rõ nguồn gốc. | **Bảng Từ Điển Ánh Xạ Địa Danh/Nhân Vật (`SAME_AS_LOCATION`/`ALIAS_OF`) & Mandatory License Whitelist Registry.** Kiểm thử tự động qua `pnpm eval:seed` và `packages/rag-engine/eval/`. |
 
 ---
 
@@ -261,13 +296,7 @@ Ma trận dưới đây ánh xạ trực tiếp từng trục đánh giá kỹ t
 Kế hoạch triển khai dự án ChronoViet được xây dựng dựa trên nguyên tắc **tối ưu hóa tài nguyên**, **triển khai mô-đun hóa nghiêm ngặt**, và **bắt buộc có thư mục đánh giá `eval/` cho từng mô-đun**.
 
 ### 🎯 Các bước cần thực hiện ngay (Next Immediate Steps):
-1. **Khởi tạo thư mục `eval/` và file `README.md` hướng dẫn đánh giá** cho 6 mô-đun/gói trọng tâm:
-   - `packages/rag-engine/eval/`
-   - `services/vieneu-tts/eval/`
-   - `packages/vlm-inspector/eval/`
-   - `packages/agent-orchestrator/eval/`
-   - `packages/remotion-engine/eval/`
-   - `apps/render-worker/eval/`
-2. **Cấu hình script tổng hợp `pnpm eval:all`** tại `package.json` gốc để có thể kích hoạt toàn bộ các bộ eval chỉ bằng một lệnh đơn.
-3. **Tiến hành Workstream B (VieNeu TTS ONNX Service)** kèm script đánh giá `services/vieneu-tts/eval/runner.ts`.
+1. ✅ ~~Khởi tạo thư mục `eval/` và file `README.md` hướng dẫn đánh giá~~ — **ĐÃ HOÀN THÀNH** (Phase 1)
+2. ✅ ~~Cấu hình script tổng hợp `pnpm eval:all`~~ — **ĐÃ HOÀN THÀNH** tại `package.json` gốc
+3. ✅ ~~Tiến hành Workstream B (VieNeu TTS ONNX Service)~~ — **ĐÃ HOÀN THÀNH** (Phase 1, `services/vieneu-tts/`)
 4. **Cập nhật Trung tâm Tài liệu (`docs/README.md`)** để dẫn link tới tài liệu Kế hoạch Triển khai v1.1 này.

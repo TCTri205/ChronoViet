@@ -30,7 +30,7 @@ export interface SummaryEvalReport {
   results: SentenceEvalMetric[];
 }
 
-export function generateEvalMarkdownReport(report: SummaryEvalReport): string {
+export function generateEvalMarkdownReport(report: SummaryEvalReport, targetRtf = 0.3): string {
   const lines: string[] = [];
   lines.push(`# Báo Cáo Đánh Giá Chất Lượng Dịch Vụ VieNeu TTS Service`);
   lines.push(`**Thời gian chạy:** ${report.timestamp}`);
@@ -40,7 +40,7 @@ export function generateEvalMarkdownReport(report: SummaryEvalReport): string {
   lines.push(`## 📊 Tổng Hợp Chỉ Số KPI Core Metrics`);
   lines.push(`| Chỉ Số KPI | Mục Tiêu Chuẩn | Kết Quả Thực Tế | Trạng Thái |`);
   lines.push(`| :--- | :---: | :---: | :---: |`);
-  lines.push(`| **Inference Real-Time Factor (RTF)** | $< 0.3\\text{x}$ | **${report.avgRtf.toFixed(4)}x** (Max: ${report.maxRtf.toFixed(4)}x) | ${report.maxRtf < 0.3 ? '✅ PASS' : '❌ FAIL'} |`);
+  lines.push(`| **Inference Real-Time Factor (RTF)** | $< ${targetRtf}\\text{x}$ | **${report.avgRtf.toFixed(4)}x** (Max: ${report.maxRtf.toFixed(4)}x) | ${report.maxRtf < targetRtf ? '✅ PASS' : '❌ FAIL'} |`);
   lines.push(`| **Word Timestamp Alignment Error** | $< 50\\text{ms}$ | **${report.avgAlignmentErrorMs.toFixed(2)}ms** (Max: ${report.maxAlignmentErrorMs.toFixed(2)}ms) | ${report.maxAlignmentErrorMs < 50 ? '✅ PASS' : '❌ FAIL'} |`);
   lines.push(`| **Duration Frame Calculation Error** | $< 1\\text{ frame}$ | **${report.maxFrameCalcError.toFixed(2)} frames** | ${report.maxFrameCalcError < 1.0 ? '✅ PASS' : '❌ FAIL'} |`);
   lines.push(``);
@@ -59,7 +59,7 @@ export function generateEvalMarkdownReport(report: SummaryEvalReport): string {
   return lines.join('\n');
 }
 
-export function saveEvalReport(report: SummaryEvalReport, reportsDir: string): void {
+export function saveEvalReport(report: SummaryEvalReport, reportsDir: string, targetRtf = 0.3): void {
   if (!fs.existsSync(reportsDir)) {
     fs.mkdirSync(reportsDir, { recursive: true });
   }
@@ -68,7 +68,7 @@ export function saveEvalReport(report: SummaryEvalReport, reportsDir: string): v
   const mdPath = path.join(reportsDir, 'report.md');
 
   fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2), 'utf-8');
-  fs.writeFileSync(mdPath, generateEvalMarkdownReport(report), 'utf-8');
+  fs.writeFileSync(mdPath, generateEvalMarkdownReport(report, targetRtf), 'utf-8');
 
   console.log(`📄 Report saved to: ${jsonPath}`);
   console.log(`📄 Report saved to: ${mdPath}`);
