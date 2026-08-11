@@ -1,0 +1,39 @@
+{
+  "id": "golden_battle_bach_dang_938",
+  "topic_category": "BATTLE",
+  "title": "Trận Đại Chiến Sông Bạch Đằng Năm 938",
+  "dynasty": "Nhà Ngô",
+  "time_start": 938,
+  "time_end": 938,
+  "key_figures": ["Ngô Quyền", "Lưu Hồng Thao", "Kiều Công Hãn"],
+  "location": "Sông Bạch Đằng",
+  "source_name": "Khâm Định Việt Sử Thông Giám Cương Mục",
+  "source_reliability": "LEVEL_1",
+  "content": "Trận sông Bạch Đằng năm 938 là một trận chiến lịch sử trọng đại do Ngô Quyền chỉ huy đánh tan quân xâm lược Nam Hán do Hoàng tử Lưu Hồng Thao cầm đầu trên sông Bạch Đằng. Ngô Quyền đã cho đóng cọc gỗ vạt nhọn đầu bịt sắt xuống lòng sông Bạch Đằng tại khu vực thủy triều lên xuống. Khi thủy triều dâng cao, Ngô Quyền cử thuyền nhẹ ra khiêu chiến rồi giả vờ thua rút chạy, dụ chiến thuyền Nam Hán lọt sâu vào trận địa cọc. Khi thủy triều rút nhanh, chiến thuyền Nam Hán bị đâm thủng và vướng cọc nhọn bốc cháy dữ dội. Chiến thắng Bạch Đằng năm 938 đã kết thúc hơn 1000 năm Bắc thuộc, mở ra thời kỳ độc lập tự chủ lâu dài cho dân tộc Việt Nam.",
+  "ground_truth_entities": [
+    {
+      "id": "person_ngo_quyen",
+      "canonical_name": "Ngô Quyền",
+      "aliases": ["Tiền Ngô Vương"],
+      "type": "PERSON"
+    },
+    {
+      "id": "location_song_bach_dang",
+      "canonical_name": "Sông Bạch Đằng",
+      "aliases": ["Bạch Đằng Giang"],
+      "type": "LOCATION"
+    }
+  ],
+  "ground_truth_triples": [
+    {
+      "source": "Ngô Quyền",
+      "relation": "LED_BY",
+      "target": "Trận Sông Bạch Đằng"
+    },
+    {
+      "source": "Trận Sông Bạch Đằng",
+      "relation": "HAPPENED_AT",
+      "target": "Sông Bạch Đằng"
+    }
+  ]
+}

@@ -451,5 +451,64 @@ export type RagSearchRequest = z.output<typeof RagSearchRequestSchema>;
 export type HistoricalContextEntity = z.infer<typeof HistoricalContextEntitySchema>;
 export type RagSearchResponse = z.infer<typeof RagSearchResponseSchema>;
 
+// ==========================================
+// 6. DATA INGESTION & ETL SCHEMAS (MODULE 0)
+// ==========================================
+export const SourceReliabilityEnum = z.enum(['LEVEL_1', 'LEVEL_2', 'LEVEL_3']);
+
+export const ChunkMetadataSchema = z.object({
+  chunk_id: z.string(),
+  parent_chunk_id: z.string().optional(),
+  title: z.string().optional(),
+  dynasty: z.string().optional(),
+  time_start: z.number().int().optional(),
+  time_end: z.number().int().optional(),
+  key_figures: z.array(z.string()).default([]),
+  location: z.string().optional(),
+  source_name: z.string().optional(),
+  source_reliability: SourceReliabilityEnum.optional(),
+  page_number: z.number().int().optional(),
+});
+
+export const ExtractedEntitySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  aliases: z.array(z.string()).default([]),
+});
+
+export const ExtractedRelationshipSchema = z.object({
+  source: z.string(),
+  target: z.string(),
+  relation_type: z.string(),
+  confidence: z.number().min(0).max(1).default(1.0),
+});
+
+export const TripleExtractionSchema = z.object({
+  entities: z.array(ExtractedEntitySchema),
+  relationships: z.array(ExtractedRelationshipSchema),
+});
+
+export const AssetLicenseRegistrySchema = z.object({
+  assetId: z.string(),
+  filePath: z.string(),
+  license: LicenseTypeSchema,
+  author: z.string().optional(),
+  sourceUrl: z.string().optional(),
+  checksum: z.string().optional(),
+  verifiedAt: z.string(),
+});
+
+export type SourceReliability = z.infer<typeof SourceReliabilityEnum>;
+export type ChunkMetadata = z.infer<typeof ChunkMetadataSchema>;
+export type ExtractedEntity = z.infer<typeof ExtractedEntitySchema>;
+export type ExtractedRelationship = z.infer<typeof ExtractedRelationshipSchema>;
+export type TripleExtraction = z.infer<typeof TripleExtractionSchema>;
+export type AssetLicenseRegistry = z.infer<typeof AssetLicenseRegistrySchema>;
+export type MediaAssetRegistryEntry = AssetLicenseRegistry;
+
+
+
+
 
 

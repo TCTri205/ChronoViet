@@ -45,17 +45,24 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
 /**
  * Computes Cosine Similarity between two 1024d vectors
+ * Fast-path for unit vectors (L2 norm = 1)
  */
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  if (vecA.length !== vecB.length) return 0;
+  if (vecA.length !== vecB.length || vecA.length === 0) return 0;
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
   for (let i = 0; i < vecA.length; i++) {
-    dotProduct += vecA[i] * vecB[i];
-    normA += vecA[i] * vecA[i];
-    normB += vecB[i] * vecB[i];
+    const a = vecA[i];
+    const b = vecB[i];
+    dotProduct += a * b;
+    normA += a * a;
+    normB += b * b;
   }
   if (normA === 0 || normB === 0) return 0;
+  // If vectors are already normalized (L2 norm ~ 1), return dot product directly
+  if (Math.abs(normA - 1.0) < 1e-4 && Math.abs(normB - 1.0) < 1e-4) {
+    return dotProduct;
+  }
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }

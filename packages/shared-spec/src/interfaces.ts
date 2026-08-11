@@ -9,7 +9,12 @@ import {
   RagSearchRequest,
   HistoricalContextEntity,
   RagSearchResponse,
+  SourceReliability,
+  MediaAssetRegistryEntry,
 } from './schema.js';
+
+export type { MediaAssetRegistryEntry };
+
 
 // ============================================================================
 // 1. Chrono-RAG Engine Interface (`packages/rag-engine`)
@@ -133,3 +138,52 @@ export interface IRenderWorker {
   submitRenderJob(payload: RenderJobPayload): Promise<{ jobId: string }>;
   getJobStatus(jobId: string): Promise<RenderJobProgress>;
 }
+
+// ============================================================================
+// 6. Data Preprocessing & Ingestion Engine Interface (`packages/rag-engine`)
+// ============================================================================
+
+export interface IngestionOptions {
+  force?: boolean;
+  useLocalLlm?: boolean;
+  batchSize?: number;
+}
+
+export interface IngestionResult {
+  documentsProcessed: number;
+  chunksCreated: number;
+  entitiesExtracted: number;
+  relationshipsExtracted: number;
+  durationMs: number;
+}
+
+export interface IIngestionPipeline {
+  run(inputPath: string, options?: IngestionOptions): Promise<IngestionResult>;
+}
+
+export interface HistoricalLocationMapping {
+  historicalName: string;
+  canonicalModernName: string;
+  dynasty?: string;
+  timeRange?: { start?: number; end?: number };
+}
+
+export interface EntityAliasMapping {
+  alias: string;
+  canonicalId: string;
+  canonicalName: string;
+}
+
+export interface ChunkMetadataEnrichment {
+  dynasty?: string;
+  time_start?: number;
+  time_end?: number;
+  key_figures?: string[];
+  location?: string;
+  source_name?: string;
+  source_reliability?: SourceReliability;
+  page_number?: number;
+}
+
+
+

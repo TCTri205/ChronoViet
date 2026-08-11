@@ -1,0 +1,49 @@
+{
+  "id": "golden_biography_tran_hung_dao",
+  "topic_category": "BIOGRAPHY",
+  "title": "Tiểu sử Hưng Đạo Đại Vương Trần Quốc Tuấn",
+  "dynasty": "Nhà Trần",
+  "time_start": 1228,
+  "time_end": 1300,
+  "key_figures": ["Trần Quốc Tuấn", "Trần Hưng Đạo", "Trần Thái Tông", "Trần Thánh Tông", "Trần Nhân Tông"],
+  "location": "Thăng Long",
+  "source_name": "Đại Việt Sử Ký Toàn Thư",
+  "source_reliability": "LEVEL_1",
+  "content": "Hưng Đạo Đại Vương Trần Quốc Tuấn (1228 - 1300) là nhà quân sự đại tài, danh tướng kiệt xuất của dân tộc Việt Nam thời Nhà Trần. Ông sinh ra tại Thăng Long, là con trai của An Quốc Vương Trần Liễu và là cháu ruột của vua Trần Thái Tông. Với tài năng thao lược kiệt xuất, ông được cử làm Tiết chế Quốc công chỉ huy quân đội Đại Việt ba lần đánh tan quân xâm lược Nguyên Mông vào các năm 1258, 1285 và 1288. Trần Quốc Tuấn là tác giả của Hịch Tướng Sĩ vang dội non sông và hai tác phẩm quân sự kinh điển là Binh Thư Yếu Lược và Vạn Kiếp Tông Bí Truyền Thư. Ông qua đời năm 1300 tại Vạn Kiếp, được nhân dân tôn vinh là Đức Thánh Trần.",
+  "ground_truth_entities": [
+    {
+      "id": "person_tran_hung_dao",
+      "canonical_name": "Trần Quốc Tuấn",
+      "aliases": ["Trần Hưng Đạo", "Hưng Đạo Đại Vương", "Đức Thánh Trần"],
+      "type": "PERSON"
+    },
+    {
+      "id": "dynasty_nha_tran",
+      "canonical_name": "Nhà Trần",
+      "type": "DYNASTY"
+    },
+    {
+      "id": "location_thang_long",
+      "canonical_name": "Hà Nội",
+      "aliases": ["Thăng Long", "Đông Quan", "Đông Kinh"],
+      "type": "LOCATION"
+    }
+  ],
+  "ground_truth_triples": [
+    {
+      "source": "Trần Quốc Tuấn",
+      "relation": "PART_OF",
+      "target": "Nhà Trần"
+    },
+    {
+      "source": "Trần Quốc Tuấn",
+      "relation": "LED_BY",
+      "target": "Đại Việt"
+    },
+    {
+      "source": "Trần Quốc Tuấn",
+      "relation": "HAPPENED_IN",
+      "target": "Thăng Long"
+    }
+  ]
+}

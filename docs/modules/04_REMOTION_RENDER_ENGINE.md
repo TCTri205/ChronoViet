@@ -73,13 +73,13 @@ Mỗi phần tử trong mảng `timeline` định nghĩa chính xác 1 phân c�
 | `secondaryAssetUrl`| `string` | Tùy chọn | Đường dẫn ảnh phụ thứ hai (dùng cho layout `SPLIT_COMPARE`). |
 | `sceneAudioUrl` | `string` | Tùy chọn | File voiceover riêng lẻ từng scene (nếu không dùng file `audioUrl` tổng). |
 | `sfxUrl` | `string` | Tùy chọn | File hiệu ứng âm thanh SFX (tiếng gươm đao, tiếng trống trận, tiếng lật sách cổ). |
-| `layoutMode` | `enum` | **Quan trọng** | 1 trong **18 LayoutMode** điều khiển Component UI render scene. |
+| `layoutMode` | `enum` | **Quan trọng** | 1 trong **31 LayoutMode** điều khiển Component UI render scene. |
 | `overlayType` | `string` | Tùy chọn | Gắn nhãn overlay (VD: `"QUOTE"`, `"ARTICLE_INTRO"`, `"BIO_CARD"`). |
 | `effect` | `enum` | Tùy chọn | Hiệu ứng Ken Burns chuyển động ảnh (xem 6 kiểu tại section 2.5). |
 | `customKenBurns` | `object` | Tùy chọn | Tùy chỉnh tọa độ & tỉ lệ Ken Burns (`CustomKenBurns`). |
 | `filterStyle` | `enum` | Tùy chọn | Bộ lọc màu ảnh (`'HISTORICAL'`, `'SEPIA'`, `'VINTAGE'`, `'NONE'`). |
 | `rotateDeg` | `number` | Tùy chọn | Độ xoay ảnh theo độ (VD: `0`, `90`, `180`). |
-| `transition` | `enum` | Tùy chọn | Loại hiệu ứng chuyển cảnh (xem 15 kiểu tại section 2.6). |
+| `transition` | `enum` | Tùy chọn | Loại hiệu ứng chuyển cảnh (xem 19 kiểu tại section 2.6). |
 | `transitionDurationFrames` | `number` | Tùy chọn | Độ dài hiệu ứng chuyển cảnh tính theo frames (mặc định: `15` frames = 0.5s). |
 | `hideSubtitle` | `boolean` | Tùy chọn | `true` để ẩn thanh phụ đề viền dưới (dùng cho scene tiêu đề mở đầu). |
 | `hideHeader` | `boolean` | Tùy chọn | `true` để ẩn thanh thương hiệu/chương viền trên. |
@@ -380,7 +380,7 @@ export const ChronoVideoSchema = z.object({
 Engine đã đăng ký sẵn 1 Composition chung, 5 Compositions chuẩn theo domain nội dung, 2 Compositions định dạng chuyên biệt (Shorts/News) và 3 Legacy Compositions:
 
 ```tsx
-// Core & Domain Compositions (v3.0 Schema)
+// Core & Domain Compositions (v4.1 Schema)
 <Composition id="ChronoVideo" component={ChronoVideo} defaultProps={templateGeneralTimeline} />
 <Composition id="BiographyVideo" component={ChronoVideo} defaultProps={biographyData} />
 <Composition id="BattleVideo" component={ChronoVideo} defaultProps={battleData} />
@@ -390,10 +390,10 @@ Engine đã đăng ký sẵn 1 Composition chung, 5 Compositions chuẩn theo do
 <Composition id="QuickShortsVideo" component={ChronoVideo} defaultProps={shortsData} width={1080} height={1920} />
 <Composition id="ModernNewsVideo" component={ChronoVideo} defaultProps={newsData} />
 
-// Legacy Compositions
-<Composition id="QuangTrungVideo" component={QuangTrungComposition} defaultProps={quangTrungData} />
-<Composition id="MongolViet2Video" component={MongolViet2Composition} defaultProps={mongolViet2Data} />
-<Composition id="HaiBaTrungVideo" component={HaiBaTrungComposition} defaultProps={haiBaTrungData} />
+// Legacy Compositions (all using ChronoVideo component)
+<Composition id="QuangTrungVideo" component={ChronoVideo} defaultProps={quangTrungData} />
+<Composition id="MongolViet2Video" component={ChronoVideo} defaultProps={mongolViet2Data} />
+<Composition id="HaiBaTrungVideo" component={ChronoVideo} defaultProps={haiBaTrungData} />
 ```
 
 ---

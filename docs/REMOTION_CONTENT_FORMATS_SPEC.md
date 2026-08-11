@@ -2,7 +2,7 @@
 
 Tài liệu này đóng gói toàn bộ **Kiến trúc Tổng thể**, **Bộ Ranh giới An toàn cho AI**, **Ma trận Mapping 5 Dạng Nội dung Lịch sử**, và **Schema JSON Production v4.1 (Tối ưu Context Window, Discriminated Unions per Layout Mode, Field Consolidation, Relative Timing Standard durationInFrames/durationInSeconds, Extensible layoutProps, Asset Metadata Preloading & External Captions URL)** dành cho hệ thống tự động hóa video lịch sử **ChronoViet**.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) + [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts)  
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) + [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts) (re-export từ `@chronoviet/shared-spec`)  
 > 📄 **Template JSON chuẩn & Evaluation Test Cases:** [`packages/remotion-engine/eval/test-cases/`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/eval/test-cases/)
 
 ---
@@ -65,13 +65,13 @@ Mỗi layout mode kích hoạt một UI Component chuyên biệt trong `src/comp
 | `ARTICLE_UI` | `ChronoIntro.tsx` | Màn hình mở đầu dạng báo chí / phim tài liệu chuyên sâu. | `title`, `author`, `seriesTitle` |
 | `SPONSOR_UI` | `SponsorSlide.tsx` | Màn hình giới thiệu tài trợ / đồng hành sản xuất. | `sponsorTitle`, `sponsorDesc`, `ctaText` |
 | `HERO_SPOTLIGHT` | Extended Layout | Màn hình tiêu điểm anh hùng dân tộc. | `name`, `title`, `details` |
-| `TIMELINE_CHRONO` | Extended Layout | Trục thời gian diễn biến sự kiện lịch sử. | `title`, `bulletPoints[]` |
-| `MAP_TACTICAL` | Extended Layout | Sơ đồ bản đồ tác chiến / hành quân. | `title`, `details` |
+| `TIMELINE_CHRONO` | `TimelineChrono.tsx` | Trục thời gian diễn biến sự kiện lịch sử. | `title`, `subtitle` |
+| `MAP_TACTICAL` | `MapTactical.tsx` | Sơ đồ bản đồ tác chiến / hành quân. | `title`, `subtitle`, `details` |
 | `ARMY_STRENGTH` | Extended Layout | Biểu đồ quân số & tương quan lực lượng. | `title`, `statItems[]` |
-| `CHARACTER_PROFILE` | Extended Layout | Hồ sơ chi tiết nhân vật lịch sử. | `name`, `role`, `details` |
-| `ROYAL_DECREE` | Extended Layout | Khung văn bản chiếu dời đô / hịch / chiếu thư. | `title`, `quoteText` |
-| `ARTIFACT_INSPECT` | Extended Layout | Giao diện soi chi tiết hoa văn cổ vật. | `title`, `artifactInfo{}` |
-| `POEM_RECITING` | Extended Layout | Giao diện ngâm thơ / văn thơ cổ truyền. | `title`, `quoteText` |
+| `CHARACTER_PROFILE` | `CharacterProfile.tsx` | Hồ sơ chi tiết nhân vật lịch sử. | `name`, `role`, `details`, `quoteText` |
+| `ROYAL_DECREE` | `RoyalDecree.tsx` | Khung văn bản chiếu dời đô / hịch / chiếu thư. | `title`, `author`, `quoteText` |
+| `ARTIFACT_INSPECT` | `ArtifactInspect.tsx` | Giao diện soi chi tiết hoa văn cổ vật. | `title`, `subtitle`, `artifactInfo{}` |
+| `POEM_RECITING` | `PoemReciting.tsx` | Giao diện ngâm thơ / văn thơ cổ truyền. | `title`, `author`, `quoteText` |
 
 **Overlays dùng chung (tự động trong mọi scene):**
 - `DocumentaryHeader.tsx` — Thanh Header thương hiệu cố định phía trên (ẩn bằng `hideHeader: true`)
@@ -486,15 +486,15 @@ Thư mục `packages/remotion-engine/src/` và `packages/shared-spec/src/` đã 
    - `getMergedTheme(templateId, customTheme)` — merge template default với custom theme JSON.
    - `TEMPLATE_THEMES` tại [`src/constants/config.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/constants/config.ts).
 
-3. **Thư viện 19 Component Pure Code (`src/components/`):**
-   - `StatCard`, `VersusCard`, `BulletHighlight`, `MuseumTag`, `SplitTheory`, `ChapterTitle` (dùng cho cả `TITLE_CARD` và `CHAPTER_CARD`), `QuoteSlide`, `OutroSlide`, `SponsorSlide`, `ChronoIntro`, `DocumentaryHeader`, `DocumentarySubtitle`, `SlideImage`.
+3. **Thư viện 19 Component (`src/components/`):**
+   - `StatCard`, `VersusCard`, `BulletHighlight`, `MuseumTag`, `SplitTheory`, `ChapterTitle` (dùng cho cả `TITLE_CARD` và `CHAPTER_CARD`), `QuoteSlide`, `OutroSlide`, `SponsorSlide`, `ChronoIntro`, `DocumentaryHeader`, `DocumentarySubtitle`, `SlideImage`, `TimelineChrono`, `RoyalDecree`, `MapTactical`, `CharacterProfile`, `ArtifactInspect`, `PoemReciting`.
 
 4. **Data Files (`src/data/`):**
    - Tổng cộng 9 file JSON kịch bản chuẩn (5 domain timelines + 3 legacy historical timelines + 1 general template timeline): `biographyTimeline.json` (21 scenes), `battleTimeline.json` (21 scenes), `dynastyTimeline.json` (21 scenes), `mysteryTimeline.json` (19 scenes), `artifactTimeline.json` (19 scenes), `templateGeneralTimeline.json`, `quang-trung/quangTrungTimeline.json`, `hai-ba-trung/haiBaTrungTimeline.json`, `mongol-viet-2/mongolViet2Timeline.json`.
    - **Lưu ý:** `audioUrl` & `bgmUrl` trong các file JSON hiện dùng placeholder `assets/quang-trung/voiceover.wav` — sẽ được thay thế bằng audio domain-specific khi Multi-Agent TTS Pipeline hoàn thiện. `templateId` là optional trong schema, các file có thể bổ sung khi cần override theme mặc định.
 
 5. **Compositions & Core Engine (`src/Root.tsx` & `src/compositions/ChronoVideo.tsx`):**
-   - 11 Composition đã đăng ký: `ChronoVideo` (general template), `BiographyVideo`, `BattleVideo`, `DynastyVideo`, `MysteryVideo`, `ArtifactVideo` (5 domain chuẩn), `QuickShortsVideo` (9:16), `ModernNewsVideo` (16:9) + `QuangTrungVideo`, `HaiBaTrungVideo`, `MongolViet2Video` (legacy).
+   - 11 Composition đã đăng ký, tất cả sử dụng chung component `ChronoVideo`: `ChronoVideo` (general template), `BiographyVideo`, `BattleVideo`, `DynastyVideo`, `MysteryVideo`, `ArtifactVideo` (5 domain chuẩn), `QuickShortsVideo` (9:16), `ModernNewsVideo` (16:9) + `QuangTrungVideo`, `HaiBaTrungVideo`, `MongolViet2Video` (legacy).
    - `calculateMetadata` tự động tính duration từ `timeline` JSON, hỗ trợ cả `durationInFrames` lẫn `startTime`/`endTime`.
 
 ---

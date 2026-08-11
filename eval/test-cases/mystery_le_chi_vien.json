@@ -1,0 +1,39 @@
+{
+  "id": "golden_mystery_le_chi_vien",
+  "topic_category": "MYSTERY",
+  "title": "Thảm Án Lệ Chi Viên Và Danh Nhân Nguyễn Trãi",
+  "dynasty": "Nhà Lê Sơ",
+  "time_start": 1442,
+  "time_end": 1442,
+  "key_figures": ["Nguyễn Trãi", "Nguyễn Thị Lộ", "Lê Thái Tông", "Lê Thánh Tông"],
+  "location": "Lệ Chi Viên",
+  "source_name": "Đại Việt Sử Ký Toàn Thư",
+  "source_reliability": "LEVEL_1",
+  "content": "Vụ án Lệ Chi Viên (Vườn Vải) năm 1442 là thảm án oan khốc bậc nhất trong lịch sử Việt Nam. Vua Lê Thái Tông sau khi đi duyệt quân ở chí linh đã ghé thăm trang trại Côn Sơn của danh nhân Nguyễn Trãi và Lễ nghi học sĩ Nguyễn Thị Lộ. Sau đó vua ngự tại Lệ Chi Viên (Bắc Ninh) và đột ngột qua đời trong đêm. Gian thần trong triều đã vu khống Nguyễn Trãi và Nguyễn Thị Lộ mưu sát vua, dẫn đến án chỉu tam tộc (tru di ba họ) đối với Nguyễn Trãi. Đến năm 1464, vua Lê Thánh Tông chính thức minh oan cho Nguyễn Trãi, ban chiếu sưu tầm lại di sản văn thơ của ông.",
+  "ground_truth_entities": [
+    {
+      "id": "person_nguyen_trai",
+      "canonical_name": "Nguyễn Trãi",
+      "aliases": ["Ức Trai"],
+      "type": "PERSON"
+    },
+    {
+      "id": "location_le_chi_vien",
+      "canonical_name": "Lệ Chi Viên",
+      "aliases": ["Vườn Vải"],
+      "type": "LOCATION"
+    }
+  ],
+  "ground_truth_triples": [
+    {
+      "source": "Nguyễn Trãi",
+      "relation": "PART_OF",
+      "target": "Nhà Lê Sơ"
+    },
+    {
+      "source": "Nguyễn Trãi",
+      "relation": "HAPPENED_AT",
+      "target": "Lệ Chi Viên"
+    }
+  ]
+}

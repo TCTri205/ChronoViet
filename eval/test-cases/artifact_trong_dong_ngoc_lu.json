@@ -1,0 +1,33 @@
+{
+  "id": "golden_artifact_trong_dong_ngoc_lu",
+  "topic_category": "ARTIFACT",
+  "title": "Bảo Vật Quốc Gia Trống Đồng Ngọc Lũ - Đỉnh Cao Văn Hóa Đông Sơn",
+  "dynasty": "Văn Lang - Âu Lạc",
+  "time_start": -500,
+  "time_end": 0,
+  "key_figures": ["Vùng Đất Hà Nam", "Cư Dân Lạc Việt"],
+  "location": "Đông Sơn",
+  "source_name": "Viện Lịch Sử Việt Nam",
+  "source_reliability": "LEVEL_1",
+  "content": "Trống đồng Ngọc Lũ là một trong những bảo vật quốc gia tiêu biểu nhất của nền văn minh Đông Sơn, được phát hiện tại làng Ngọc Lũ (Hà Nam). Trống đồng có niên đại khoảng thế kỷ 3-2 TCN, đúc bằng đồng thau với kỹ thuật luyện kim tuyệt mỹ. Mặt trống chạm khắc hình ngôi sao 14 cánh ở trung tâm, xung quanh là các vòng hoa văn miêu tả sinh động đời sống cư dân Lạc Việt: người giã gạo, chèo thuyền đánh cá, vũ công hóa trang chim thần và dàn trống đồng. Trống đồng Ngọc Lũ không chỉ là nhạc khí thiêng mà còn biểu tượng cho quyền lực thần thánh và trí tuệ đỉnh cao thời Văn Lang - Âu Lạc.",
+  "ground_truth_entities": [
+    {
+      "id": "artifact_trong_dong_ngoc_lu",
+      "canonical_name": "Trống Đồng Ngọc Lũ",
+      "aliases": ["Trống Đông Sơn"],
+      "type": "ARTIFACT"
+    },
+    {
+      "id": "culture_dong_son",
+      "canonical_name": "Văn Hóa Đông Sơn",
+      "type": "CULTURE"
+    }
+  ],
+  "ground_truth_triples": [
+    {
+      "source": "Trống Đồng Ngọc Lũ",
+      "relation": "PART_OF",
+      "target": "Văn Hóa Đông Sơn"
+    }
+  ]
+}

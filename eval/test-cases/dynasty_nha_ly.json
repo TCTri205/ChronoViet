@@ -1,0 +1,44 @@
+{
+  "id": "golden_dynasty_nha_ly",
+  "topic_category": "DYNASTY",
+  "title": "Triều Đại Nhà Lý Và Sự Kiện Dời Đô Về Thăng Long Năm 1010",
+  "dynasty": "Nhà Lý",
+  "time_start": 1009,
+  "time_end": 1225,
+  "key_figures": ["Lý Thái Tổ", "Lý Công Uẩn", "Lý Thường Kiệt", "Lý Thánh Tông", "Lý Nhân Tông"],
+  "location": "Thăng Long",
+  "source_name": "Đại Việt Sử Ký Toàn Thư",
+  "source_reliability": "LEVEL_1",
+  "content": "Triều đại Nhà Lý được thành lập vào mùa thu năm 1009 khi Lý Công Uẩn (vua Lý Thái Tổ) lên ngôi hoàng đế tại Hoa Lư. Năm 1010, Lý Thái Tổ ban Chiếu Dời Đô, chuyển kinh đô Đại Việt từ vùng núi Hoa Lư (Ninh Bình) về vùng đồng bằng Thăng Long (Hà Nội ngày nay). Nhà Lý tồn tại hơn 216 năm với 9 đời vua, đặt nền móng quốc gia Đại Việt hùng cường, phát triển Phật giáo rực rỡ và xây dựng nền văn hiến lâu đời với việc lập Văn Miếu - Quốc Tử Giám năm 1070.",
+  "ground_truth_entities": [
+    {
+      "id": "person_ly_cong_uan",
+      "canonical_name": "Lý Công Uẩn",
+      "aliases": ["Lý Thái Tổ"],
+      "type": "PERSON"
+    },
+    {
+      "id": "dynasty_nha_ly",
+      "canonical_name": "Nhà Lý",
+      "type": "DYNASTY"
+    },
+    {
+      "id": "location_thang_long",
+      "canonical_name": "Hà Nội",
+      "aliases": ["Thăng Long", "Đông Quan", "Đông Kinh"],
+      "type": "LOCATION"
+    }
+  ],
+  "ground_truth_triples": [
+    {
+      "source": "Lý Công Uẩn",
+      "relation": "ROYAL_LINEAGE",
+      "target": "Nhà Lý"
+    },
+    {
+      "source": "Lý Công Uẩn",
+      "relation": "HAPPENED_IN",
+      "target": "Thăng Long"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và Engine Render Remotion (v4.1 - Data-Driven, Audio-Driven Timing, Discriminated Overlay Unions & Word-Level Karaoke Sync)** của dự án **ChronoViet**. Engine này đảm bảo khả năng linh hoạt 100%, trong đó toàn bộ nội dung, kịch bản, phương thức hiển thị (layout), chuyển cảnh (transitions), hình ảnh/âm thanh, **tọa độ hiển thị từng từ (Scene-Scoped Word Captions Karaoke)**, cũng như **phong cách thiết kế (Theme: Màu sắc, Phông chữ, Glow, Gradient)** đều được điều khiển **hoàn toàn bằng JSON Input** mà không bao giờ cần phải chỉnh sửa hay biên dịch lại mã nguồn React.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) và [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts)
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) và [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts) (re-export từ `@chronoviet/shared-spec`)
 > 🔗 **Quy chuẩn Tích hợp TTS & Tối ưu Sản xuất:** [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](file:///D:/Persional_Projects/ChronoViet/docs/architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md) (Quy đổi VieNeu Word Timestamps sang Remotion Captions Karaoke).
 
 ---
@@ -136,7 +136,7 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 
 ## 4. Enum Đầy Đủ Các Kiểu Dữ Liệu (Type Enums)
 
-> Tất cả enum dưới đây được định nghĩa chính thức tại `src/types/index.ts` và validate bởi `src/types/schema.ts`.
+> Tất cả enum dưới đây được định nghĩa chính thức tại `packages/shared-spec/src/schema.ts` và được re-export qua `packages/remotion-engine/src/types/index.ts`.
 
 ### 4.1. `LayoutMode` — 31 Chế Độ Hiển Thị (18 Core Modes + 13 Extended Modes)
 
@@ -220,9 +220,9 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 
 ---
 
-## 5. Chuẩn Hóa Schema Dữ Liệu Zod (`schema.ts`)
+## 5. Chuẩn Hóa Schema Dữ Liệu Zod (`packages/shared-spec/src/schema.ts`)
 
-Mọi file JSON truyền vào đều được kiểm tra tính hợp lệ ở thời điểm runtime thông qua Zod Schema tại `src/types/schema.ts`.
+Mọi file JSON truyền vào đều được kiểm tra tính hợp lệ ở thời điểm runtime thông qua Zod Schema tại `packages/shared-spec/src/schema.ts`.
 
 ### 5.1. `ChronoVideoSchema` — Root Object
 
@@ -365,10 +365,11 @@ Engine tại `Root.tsx` (`calculateMetadataHelper`) xử lý thời lượng the
 ```
 packages/remotion-engine/src/
 ├── index.ts                        # Entry point — export RemotionRoot
-├── Root.tsx                        # Khai báo tất cả Composition (11 compositions)
+├── Root.tsx                        # Khai báo tất cả Composition (11 compositions) + calculateMetadata
+├── cli.ts                          # CLI render tool (render, still, eval, inspect, help)
 │
 ├── types/
-│   └── index.ts                    # ★ TypeScript types & Zod schemas (Re-export từ @chronoviet/shared-spec)
+│   └── index.ts                    # ★ Re-export tất cả types từ @chronoviet/shared-spec
 │
 ├── constants/
 │   └── config.ts                   # DEFAULT_FPS=30, CANVAS_DIMENSIONS, COLOR_PALETTE, TEMPLATE_THEMES
@@ -380,47 +381,50 @@ packages/remotion-engine/src/
 │   ├── layoutUtils.ts              # Layout helper functions
 │   └── index.ts                    # Re-exports
 │
-├── components/                     # ★ 19 UI Components (Pure Code)
+├── components/                     # ★ 19 UI Components
+│   ├── SlideImage.tsx              # All Pure Image modes (BLUR_BG, HISTORICAL_FRAME, FULL_COVER...)
 │   ├── ChapterTitle.tsx            # layoutMode: TITLE_CARD, CHAPTER_CARD
 │   ├── StatCard.tsx                # layoutMode: STAT_CARD
 │   ├── VersusCard.tsx              # layoutMode: VERSUS_CARD
-│   ├── QuoteSlide.tsx              # layoutMode: QUOTE_CANVAS
+│   ├── QuoteSlide.tsx              # layoutMode: QUOTE_CANVAS, QUOTE_SLIDE
 │   ├── BulletHighlight.tsx         # layoutMode: BULLET_HIGHLIGHT
 │   ├── MuseumTag.tsx               # layoutMode: MUSEUM_TAG
 │   ├── SplitTheory.tsx             # layoutMode: SPLIT_THEORY
 │   ├── OutroSlide.tsx              # layoutMode: OUTRO_CARD
 │   ├── ChronoIntro.tsx             # layoutMode: ARTICLE_UI
 │   ├── SponsorSlide.tsx            # layoutMode: SPONSOR_UI
-│   ├── SlideImage.tsx              # All Pure Image modes (BLUR_BG, HISTORICAL_FRAME...)
 │   ├── DocumentaryHeader.tsx       # Persistent top header (ẩn bằng hideHeader: true)
 │   ├── DocumentarySubtitle.tsx     # Persistent bottom subtitle (ẩn bằng hideSubtitle: true)
-│   └── index.ts
+│   ├── TimelineChrono.tsx          # layoutMode: TIMELINE_CHRONO
+│   ├── RoyalDecree.tsx             # layoutMode: ROYAL_DECREE
+│   ├── MapTactical.tsx             # layoutMode: MAP_TACTICAL
+│   ├── CharacterProfile.tsx        # layoutMode: CHARACTER_PROFILE
+│   ├── ArtifactInspect.tsx         # layoutMode: ARTIFACT_INSPECT
+│   └── PoemReciting.tsx            # layoutMode: POEM_RECITING
 │
 ├── compositions/
-│   ├── ChronoVideo.tsx             # ★ Core composition — dùng cho 5 Domain Videos
-│   ├── HistorySlide.tsx            # Scene-level renderer
-│   ├── quang-trung/
-│   │   └── QuangTrungComposition.tsx    # Legacy composition
-│   ├── mongol-viet-2/
-│   │   └── MongolViet2Composition.tsx   # Legacy composition
-│   └── hai-ba-trung/
-│       └── HaiBaTrungComposition.tsx    # Legacy composition
+│   ├── ChronoVideo.tsx             # ★ Core composition — dùng cho tất cả 11 Compositions
+│   └── HistorySlide.tsx            # Layer 1 + Layer 2 scene renderer
 │
-├── data/                           # File JSON kịch bản
+├── transitions/
+│   └── fadeToBlack.tsx             # Custom transition
+│
+├── templates/
+│   └── index.ts                    # Template helpers
+│
+├── data/                           # File JSON kịch bản (9 files)
 │   ├── templateGeneralTimeline.json    # ★ Template mẫu cho AI Agent
-│   ├── biographyTimeline.json          # Trần Hưng Đạo (21 scenes: scene_00_brand_intro → scene_20, 405s, ~6.75 phút)
-│   ├── battleTimeline.json             # Trận Bạch Đằng 938 (21 scenes, 405s, ~6.75 phút)
-│   ├── dynastyTimeline.json            # Triều đại Nhà Lý (21 scenes, 405s, ~6.75 phút)
-│   ├── mysteryTimeline.json            # Thảm án Lệ Chi Viên (19 scenes, 375s, ~6.25 phút)
-│   ├── artifactTimeline.json           # Trống Đồng Ngọc Lũ (19 scenes, 375s, ~6.25 phút)
+│   ├── biographyTimeline.json          # Trần Hưng Đạo (21 scenes, ~405s)
+│   ├── battleTimeline.json             # Trận Bạch Đằng 938 (21 scenes, ~405s)
+│   ├── dynastyTimeline.json            # Triều đại Nhà Lý (21 scenes, ~405s)
+│   ├── mysteryTimeline.json            # Thảm án Lệ Chi Viên (19 scenes, ~375s)
+│   ├── artifactTimeline.json           # Trống Đồng Ngọc Lũ (19 scenes, ~375s)
 │   ├── quang-trung/
-│   │   └── quangTrungTimeline.json
+│   │   └── quangTrungTimeline.json     # 24 scenes, 245s
 │   ├── mongol-viet-2/
-│   │   └── mongolViet2Timeline.json
+│   │   └── mongolViet2Timeline.json    # 25 scenes, 1140s
 │   └── hai-ba-trung/
-│       └── haiBaTrungTimeline.json
-│
-└── templates/                      # Template helpers (dự phòng)
+│       └── haiBaTrungTimeline.json     # 28 scenes, 450s
 ```
 
 ---
@@ -437,11 +441,11 @@ packages/remotion-engine/src/
 | `ArtifactVideo` | `ChronoVideo` | `artifactTimeline.json` | 19 scenes (375s / 11250 frames) | Domain ARTIFACT |
 | `QuickShortsVideo` | `ChronoVideo` | `templateGeneralTimeline.json` (Override `templateId: QUICK_SHORTS`, `aspectRatio: 9:16`) | 145s / 4350 frames | Quick Shorts Vertical (9:16) |
 | `ModernNewsVideo` | `ChronoVideo` | `templateGeneralTimeline.json` (Override `templateId: MODERN_NEWS`, `aspectRatio: 16:9`) | 145s / 4350 frames | Modern News Horizontal (16:9) |
-| `QuangTrungVideo` | `QuangTrungComposition` | `quangTrungTimeline.json` | 24 scenes (245s / 7350 frames) | Legacy |
-| `MongolViet2Video` | `MongolViet2Composition` | `mongolViet2Timeline.json` | 25 scenes (1140s / 34200 frames) | Legacy |
-| `HaiBaTrungVideo` | `HaiBaTrungComposition` | `haiBaTrungTimeline.json` | 28 scenes (450s / 13500 frames) | Legacy |
+| `QuangTrungVideo` | `ChronoVideo` | `quangTrungTimeline.json` | 24 scenes (245s / 7350 frames) | Legacy |
+| `MongolViet2Video` | `ChronoVideo` | `mongolViet2Timeline.json` | 25 scenes (1140s / 34200 frames) | Legacy |
+| `HaiBaTrungVideo` | `ChronoVideo` | `haiBaTrungTimeline.json` | 28 scenes (450s / 13500 frames) | Legacy |
 
-> **Lưu ý:** `calculateMetadata` tự tính lại `durationInFrames` chính xác từ dữ liệu JSON lúc runtime. `QuickShortsVideo` và `ModernNewsVideo` dùng chung dữ liệu `templateGeneralTimeline.json` nhưng ghi đè các cấu hình `templateId` và `aspectRatio` trực tiếp tại `Root.tsx`.
+> **Lưu ý:** `calculateMetadata` tự tính lại `durationInFrames` chính xác từ dữ liệu JSON lúc runtime. `QuickShortsVideo` và `ModernNewsVideo` dùng chung dữ liệu `templateGeneralTimeline.json` nhưng ghi đè các cấu hình `templateId` và `aspectRatio` trực tiếp tại `Root.tsx`. Tất cả 11 compositions sử dụng chung component `ChronoVideo`.
 
 ---
 

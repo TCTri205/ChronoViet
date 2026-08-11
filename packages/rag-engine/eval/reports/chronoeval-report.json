@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-08-11T13:13:25.748Z",
+  "timestamp": "2026-08-11T14:10:15.169Z",
   "totalEvaluated": 6,
   "avgFactPrecision": 100,
   "avgHallucinationRate": 0,
   "citationTraceabilityPercent": 100,
-  "avgLatencyMs": 0.83,
+  "avgLatencyMs": 1,
   "kpiStatus": {
     "factPrecisionPassed": true,
     "hallucinationRatePassed": true,
@@ -31,7 +31,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 2,
-      "latencyMs": 0,
+      "latencyMs": 1,
       "passed": true
     },
     {

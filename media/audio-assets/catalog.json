@@ -1,0 +1,18 @@
+[
+  {
+    "assetId": "sfx_drum_war_bach_dang",
+    "filePath": "D:\\Persional_Projects\\ChronoViet\\media\\audio-assets\\sfx_drum_war_bach_dang.wav",
+    "category": "sfx_drum_war",
+    "title": "Tiếng Trống Trận Bạch Đằng",
+    "durationSeconds": 15,
+    "sampleRate": 44100,
+    "normalization": {
+      "targetLufs": -6,
+      "originalLufsEstimate": -10,
+      "gainAdjustmentDb": 4,
+      "normalized": true
+    },
+    "checksum": "f6086cf044bfff22a15653463d2773ef70a1c9037f0a2507d44a48a3c328c1bd",
+    "createdAt": "2026-08-11T13:44:53.192Z"
+  }
+]

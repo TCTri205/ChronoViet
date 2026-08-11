@@ -7,7 +7,12 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "eval": "tsx eval/runner.ts"
+    "eval": "tsx eval/runner.ts",
+    "db:init": "tsx src/cli/init-db.ts",
+    "ingest:knowledge": "tsx src/cli/ingest-knowledge.ts",
+    "setup-assets": "tsx src/cli/setup-assets.ts",
+    "eval:seed": "tsx src/cli/seed-eval.ts",
+    "eval:ingest": "tsx eval/ingest-runner.ts"
   },
   "dependencies": {
     "@chronoviet/shared-spec": "workspace:*",

@@ -29,38 +29,38 @@ export async function searchHybridVectorAndBM25(
   const pgConnected = await isPgAvailable();
 
   if (pgConnected) {
-    // 1. Vector Search Query (HNSW Cosine Distance)
-    const vecRows = await query<{
-      id: string;
-      title: string;
-      text_content: string;
-      dynasty?: string;
-      source_reliability?: string;
-      dist: number;
-    }>(
-      `SELECT id, title, text_content, dynasty, source_reliability, embedding <=> $1::vector AS dist
-       FROM document_chunks
-       ORDER BY dist ASC
-       LIMIT $2;`,
-      [JSON.stringify(queryEmbedding), topK * 2]
-    );
-
-    // 2. Full-Text BM25 Search Query
-    const ftsRows = await query<{
-      id: string;
-      title: string;
-      text_content: string;
-      dynasty?: string;
-      source_reliability?: string;
-      rank: number;
-    }>(
-      `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
-       FROM document_chunks
-       WHERE tsv @@ plainto_tsquery('simple', $1)
-       ORDER BY rank DESC
-       LIMIT $2;`,
-      [queryText, topK * 2]
-    );
+    // Execute Vector (HNSW Cosine Distance) and BM25 Full-Text Search in Parallel
+    const [vecRows, ftsRows] = await Promise.all([
+      query<{
+        id: string;
+        title: string;
+        text_content: string;
+        dynasty?: string;
+        source_reliability?: string;
+        dist: number;
+      }>(
+        `SELECT id, title, text_content, dynasty, source_reliability, embedding <=> $1::vector AS dist
+         FROM document_chunks
+         ORDER BY dist ASC
+         LIMIT $2;`,
+        [JSON.stringify(queryEmbedding), topK * 2]
+      ),
+      query<{
+        id: string;
+        title: string;
+        text_content: string;
+        dynasty?: string;
+        source_reliability?: string;
+        rank: number;
+      }>(
+        `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
+         FROM document_chunks
+         WHERE tsv @@ plainto_tsquery('simple', $1)
+         ORDER BY rank DESC
+         LIMIT $2;`,
+        [queryText, topK * 2]
+      ),
+    ]);
 
     // Combine using Reciprocal Rank Fusion (RRF)
     const chunkMap = new Map<string, VectorSearchResult>();
