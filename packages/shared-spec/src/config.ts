@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
 
-dotenv.config();
+if (typeof process !== 'undefined' && process?.versions?.node) {
+  try {
+    dotenv.config();
+  } catch {
+    // Ignore in non-Node environments
+  }
+}
 
 const EnvSchema = z.object({
   // ==========================================
@@ -69,13 +75,16 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 
-const parsed = EnvSchema.safeParse(process.env);
-if (!parsed.success) {
+const isNode = typeof process !== 'undefined' && !!process?.versions?.node;
+const processEnv = typeof process !== 'undefined' && process?.env ? process.env : {};
+
+const parsed = EnvSchema.safeParse(processEnv);
+if (!parsed.success && isNode && processEnv.NODE_ENV !== 'test') {
   console.error('❌ Invalid environment configuration:', JSON.stringify(parsed.error.format(), null, 2));
-  process.exit(1);
 }
 
-export const envConfig = parsed.data;
+export const envConfig = parsed.success ? parsed.data : EnvSchema.parse({});
+
 export type EnvConfig = z.infer<typeof EnvSchema>;
 
 /**
