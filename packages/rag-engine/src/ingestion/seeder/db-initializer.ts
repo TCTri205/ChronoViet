@@ -14,8 +14,16 @@ export interface DbInitResult {
  * Initializes the PostgreSQL database schema including vector extensions,
  * tables (entities, relationships, document_chunks, entity_chunks), and indexes.
  */
-export async function initializeDatabaseSchema(): Promise<DbInitResult> {
-  const pgAvailable = await isPgAvailable();
+export async function initializeDatabaseSchema(maxRetries = 5, retryIntervalMs = 1500): Promise<DbInitResult> {
+  let pgAvailable = false;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    pgAvailable = await isPgAvailable(true);
+    if (pgAvailable) break;
+    if (attempt < maxRetries) {
+      console.log(`⏳ Waiting for PostgreSQL container to finish startup (attempt ${attempt}/${maxRetries})...`);
+      await new Promise((resolve) => setTimeout(resolve, retryIntervalMs));
+    }
+  }
 
   if (!pgAvailable) {
     return {

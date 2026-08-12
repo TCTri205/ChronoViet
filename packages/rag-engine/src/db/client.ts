@@ -90,14 +90,17 @@ export function getPoolConfig() {
   };
 }
 
-export async function isPgAvailable(): Promise<boolean> {
-  if (checkAttempted) return pgConnected;
+export async function isPgAvailable(forceCheck = false): Promise<boolean> {
+  if (checkAttempted && !forceCheck) return pgConnected;
   checkAttempted = true;
+  const cfg = getPoolConfig();
+  console.log(`[DB Client] Connecting to PostgreSQL at ${cfg.host}:${cfg.port}/${cfg.database} (user: ${cfg.user})...`);
   try {
     if (!pgPool) {
-      pgPool = new Pool(getPoolConfig());
-      // Silence unexpected pool errors
-      pgPool.on('error', () => {
+      pgPool = new Pool(cfg);
+      // Log unexpected pool errors
+      pgPool.on('error', (err) => {
+        console.warn('[DB Client] Background PG pool error:', err.message);
         pgConnected = false;
       });
     }
@@ -105,8 +108,16 @@ export async function isPgAvailable(): Promise<boolean> {
     await client.query('SELECT 1');
     client.release();
     pgConnected = true;
-  } catch (_err) {
+  } catch (err) {
     pgConnected = false;
+    if (pgPool) {
+      await pgPool.end().catch(() => {});
+      pgPool = null;
+    }
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(`[DB Client] PostgreSQL connection attempt failed (${errMsg})`);
+    }
   }
   return pgConnected;
 }

@@ -1,8 +1,8 @@
 # QUY CHUẨN QUẢN TRỊ CHIẾN LƯỢC DỮ LIỆU RAG, SỐ LƯỢNG, CHẤT LƯỢNG & GIẢI QUYẾT XUNG ĐỘT SỬ LIỆU CHRONOVIET
 *(ChronoViet RAG Knowledge Base Strategy, Text Quality Governance & Historical Conflict Resolution Specification)*
 
-> **Trạng thái:** `[✅ SPECIFICATION v1.5 — MASTER SOURCE OF TRUTH FOR RAG KNOWLEDGE BASE]`  
-> **Cập nhật mới:** 2026-08-12 (Bổ sung: Chuẩn hóa 7 Entity Taxonomy Enums & Canonical ID `person_<slug>`; Bổ sung DDL `entity_audit_logs` & cột `epoch_ids` trong CSDL; Chuẩn hóa công thức RRF / Min-Max BM25; Công thức Hiệu chỉnh Quần thể Hữu hạn FPC cho cỡ mẫu Spot-check; Regex Pattern Matching cho Level 3 Guardrail; Kiến trúc 2 giai đoạn cho NLI Entailment Hallucination Judge)  
+> **Trạng thái:** `[✅ SPECIFICATION v1.6 — MASTER SOURCE OF TRUTH FOR RAG KNOWLEDGE BASE]`  
+> **Cập nhật mới:** 2026-08-12 (Bổ sung v1.6: Phân lớp Sub-tiers Level 1A/1B/1C cho Khảo cổ & Lưu trữ Quốc gia; Chuẩn hóa Metadata Scope Tags `region_scope` & `domain_scope`; Quy trình tích hợp Lịch sử Vùng miền / Chăm-pa / Phù Nam / Dân tộc thiểu số; Quy trình crawl & ingest trực tiếp Nguồn sơ cấp từ Wikisource & Kho Lưu trữ)  
 > **Phạm vi áp dụng:** Mô-đun 0 (`Data Preprocessing & Ingestion Engine`), Mô-đun 1 (`Chrono-RAG Engine`), Mô-đun 2 (`Multi-Agent Orchestrator`).
 
 > [!NOTE]
@@ -92,29 +92,33 @@ Mọi thực thể (`entities`) khi trích xuất vào Knowledge Graph phải th
 
 ## 🏆 3. Phân Cấp Nguồn Sử Liệu Văn Bản & Quy Trình Xử Lý Đặc Thù (Source Reliability Hierarchy & Execution)
 
-Mọi văn bản thô khi cào về hoặc nhập vào hệ thống bắt buộc phải được gán nhãn **Cấp độ Tin cậy (`source_reliability`)** theo 3 tầng:
+Mọi văn bản thô khi cào về hoặc nhập vào hệ thống bắt buộc phải được gán nhãn **Cấp độ Tin cậy (`source_reliability`)** theo 3 tầng (kèm phân lớp Sub-tiers):
 
 ```text
-               ┌──────────────────────────────────────────────┐
-               │    LEVEL 1: CHÍNH SỬ & HỌC THUẬT NGUYÊN BẢN   │ (Trọng số: W = 1.0)
-               │    - Đại Việt Sử Ký Toàn Thư, Khâm Định...   │
-               └──────────────────────┬───────────────────────┘
-                                      │
-               ┌──────────────────────▼───────────────────────┐
-               │  LEVEL 2: TƯ LIỆU BÁCH KHOA & SÁCH GIÁO KHOA  │ (Trọng số: W = 0.8)
-               │  - Wikipedia/Wikisource đã kiểm định, SGK... │
-               └──────────────────────┬───────────────────────┘
-                                      │
-               ┌──────────────────────▼───────────────────────┐
-               │ LEVEL 3: DÃ SỬ, TRUYỀN THUYẾT & GIAI THOẠI    │ (Trọng số: W = 0.5)
-               │ - Truyền thuyết dân gian, Dã sử, Giai thoại...│
-               └──────────────────────────────────────────────┘
+               ┌──────────────────────────────────────────────────────────────┐
+               │    LEVEL 1: CHÍNH SỬ, KHẢO CỔ & TƯ LIỆU LƯU TRỮ QUỐC GIA      │ (Trọng số: W = 1.0)
+               │    - Level 1A: Đại Việt Sử Ký Toàn Thư, Khâm Định...         │
+               │    - Level 1B: Báo cáo Khảo cổ, Bia đá, Di chỉ vật thể...     │
+               │    - Level 1C: Châu bản, Mộc bản, Báo chí cổ...              │
+               └──────────────────────────────┬───────────────────────────────┘
+                                              │
+               ┌──────────────────────────────▼───────────────────────────────┐
+               │   LEVEL 2: TƯ LIỆU BÁCH KHOA & SÁCH GIÁO KHOA CHUẨN HÓA      │ (Trọng số: W = 0.8)
+               │   - Wikipedia/Wikisource đã kiểm định, SGK Lịch sử...       │
+               └──────────────────────────────┬───────────────────────────────┘
+                                              │
+               ┌──────────────────────────────▼───────────────────────────────┐
+               │  LEVEL 3: DÃ SỬ, TRUYỀN THUYẾT & GIAI THOẠI DÂN GIAN         │ (Trọng số: W = 0.5)
+               │  - Lĩnh Nam Chích Quái, Truyền thuyết dân gian...            │
+               └──────────────────────────────────────────────────────────────┘
 ```
 
-### 3.1. Chi Tiết Phân Loại Cấp Độ Tin Cậy
+### 3.1. Chi Tiết Phân Loại Cấp Độ Tin Cậy & Các Phân Lớp Sub-Tiers
 
-1. **LEVEL 1 — Chính Sử & Văn Bản Học Thuật Nguyên Bản (Ground Truth Level 1 | Trọng số $W = 1.0$):**
-   * **Nguồn dữ liệu:** *Đại Việt Sử Ký Toàn Thư* (Lê Văn Hưu, Phan Phu Tiên, Ngô Sĩ Liên), *Khâm Định Việt Sử Thông Giám Cương Mục* (Quốc Sử Quán Nhà Nguyễn), *Việt Sử Lược*, *Bình Ngô Đại Cáo*, *Hịch Tướng Sĩ*, các công trình khảo cứu nguyên bản xuất bản bởi Viện Sử Học Việt Nam, Cục Di sản Văn hóa, Viện Hán Nôm.
+1. **LEVEL 1 — Chính Sử, Khảo Cổ & Tư Liệu Lưu Trữ Nguyên Bản (Ground Truth Level 1 | Trọng số $W = 1.0$):**
+   * **`LEVEL_1A` (Chính Sử Phong Kiến & Bộ Sử Quốc Gia):** *Đại Việt Sử Ký Toàn Thư* (Lê Văn Hưu, Ngô Sĩ Liên), *Khâm Định Việt Sử Thông Giám Cương Mục* (Quốc Sử Quán Nhà Nguyễn), *Việt Sử Lược*, *Đại Nam Thực Lực*, *Gia Định Thành Thông Chí*, các công trình khảo cứu do Viện Sử Học Việt Nam / Cục Di sản Văn hóa ban hành.
+   * **`LEVEL_1B` (Báo Cáo Khảo Cổ & Di Sản Vật Thể):** Báo cáo khai quật khảo cổ học từ Viện Khảo cổ học (Di chỉ Hoàng thành Thăng Long, Văn hóa Đông Sơn, Sa Huỳnh, Óc Eo/Phù Nam, các thành lũy cổ), hệ thống Bia đá (Văn Miếu - Quốc Tử Giám), Sắc phong, Mộc bản.
+   * **`LEVEL_1C` (Tư Liệu Lưu Trữ Quốc Gia & Báo Chí Lịch Sử):** Châu bản / Mộc bản Triều Nguyễn (Trung tâm Lưu trữ Quốc gia IV), Hồ sơ văn kiện lịch sử (Trung tâm Lưu trữ Quốc gia I, II, III), các tờ báo lịch sử có giá trị tư liệu (*Gia Định Báo*, *Nam Phong Tạp Chí*, *Phong Hóa*, *Tiếng Dân*...).
    * **Quy tắc:** Căn cứ nền tảng để xác minh sự thật lịch sử. Khi mâu thuẫn với Level 2 hoặc Level 3, Level 1 có ưu tiên mặc định.
 
 2. **LEVEL 2 — Tư Liệu Bách Khoa & Chuẩn Giáo Dục (Ground Truth Level 2 | Trọng số $W = 0.8$):**
@@ -188,6 +192,36 @@ Cơ chế thực thi trọng số nguồn được tách bạch làm 3 cấp đ�
 3. **Bước Đóng Gói Prompt Cho AI Scriptwriter (Prompt Context Framing):**  
    Gán nhãn thẩm quyền nguồn vào từng chunk truyền vào LLM context: `[SOURCE_TIER: LEVEL_1 | W=1.0]` hoặc `[SOURCE_TIER: LEVEL_3 | W=0.5]`. Prompt yêu cầu AI Scriptwriter dùng giọng văn khẳng định với Level 1 và giọng văn giả thuyết/nghệ thuật đối với Level 3.
 
+### 3.8. Phân Loại Metadata Đa Chiều (Multi-Dimensional Scope Tags: Region & Domain Tags)
+
+Mọi chunk văn bản khi ingest vào CSDL RAG phải được gán mảng nhãn phạm vi không gian và lĩnh vực:
+
+1. **Phạm vi Địa lý - Vùng miền (`region_scope`):**
+   - `NORTH`: Bắc Bộ & Trung tâm Thăng Long / Đông Kinh.
+   - `CENTRAL`: Trung Bộ (Thanh - Nghệ - Tĩnh, Bình - Trị - Thiên, Quảng Nam - Nam Ngãi).
+   - `SOUTH`: Nam Bộ (Gia Định, Miền Tây Nam Bộ).
+   - `HIGHLANDS`: Tây Nguyên (Bản mộc, các dân tộc Ba Na, Ê Đê, Gia Rai).
+   - `CHAMPA`: Vương quốc Chăm-pa (Lâm Ấp, Hoàn Vương, Chiêm Thành, Panduranga).
+   - `FUNAN`: Văn hóa Óc Eo & Phù Nam cổ đại.
+
+2. **Lĩnh vực Tri thức (`domain_scope`):**
+   - `POLITICAL_MILITARY`: Chính trị, triều đại, chiến tranh, trận đánh, ngoại giao.
+   - `SOCIO_ECONOMIC`: Giao thương (Hội An, Phố Hiến, Vân Đồn), tiền tệ, nông nghiệp, cảng thị.
+   - `CULTURAL_RELIGIOUS`: Nho - Phật - Đạo, Ki tô giáo, văn học, tín ngưỡng dân gian, phong tục.
+   - `LEGAL_INSTITUTIONAL`: Thể chế chính trị, pháp luật (*Hồng Đức bảo hình*, *Quốc triều hình luật*), thi cử.
+
+### 3.9. Quy Chuẩn Tích Hợp Sử Liệu Vùng Miền, Chăm-pa, Phù Nam & Dân Tộc Thiểu Số (Regional & Ethnic Diversity Governance Protocol)
+
+1. **Tôn Trọng Sự Thật Lịch Sử Đa Chiều:** Lịch sử Việt Nam là tiến trình giao thoa và hợp nhất của nhiều cộng đồng cư dân. RAG Engine không được bỏ qua lịch sử các vương quốc cổ (Chăm-pa, Phù Nam) hoặc phong trào các dân tộc thiểu số (Tây Bắc, Tây Nguyên) trong cùng mốc thời gian.
+2. **Tránh Đồng Nhất Giai Đoạn Cổ Đại:** Khi truy vấn các mốc thời gian thuộc Epoch 01-11 ở khu vực Miền Trung / Nam Bộ, hệ thống phải trả về kết quả thuộc cả hai luồng tri thức (ví dụ: song song giữa Nhà Trần / Nhà Lê ở Bắc Bộ và Vương quốc Chiêm Thành / Panduranga ở Miền Trung).
+
+### 3.10. Quy Trình Nạp Trực Tiếp Nguồn Sơ Cấp & Wikisource (Primary Sources & Wikisource Ingestion Protocol)
+
+1. **Thu Thập Văn Bản Sơ Cấp:** Hệ thống hỗ trợ cào trực tiếp từ Vi.Wikisource (các bộ sử *Đại Việt Sử Ký Toàn Thư*, *Khâm Định*, các bài Hịch/Chiếu) thông qua URL Connector chuyên dụng (`pnpm crawl:corpus --urls="..."`).
+2. **Cấu Trúc Hóa Chương Mục Sơ Cấp:** Khi ingest tác phẩm sơ cấp (như *Bình Ngô Đại Cáo* hay *Đại Việt Sử Ký Toàn Thư*), mỗi chunk phải giữ nguyên thông tin chương/quyển (`chapter_title`, `volume_number`, `author`) để đảm bảo khả năng trích dẫn tuyệt đối ($100\%$ Citation Traceability).
+
+---
+
 ---
 
 ## 🧹 4. Quy Trình Khử Trùng Lặp & Đồng Nhất Tri Thức Văn Bản (Text Deduplication & Canonicalization)
@@ -252,6 +286,19 @@ Mọi thao tác hợp nhất thực thể (Merge Entity), cập nhật Modern Ov
 * **Schema Audit Log Table:** `entity_audit_logs(log_id, entity_id, action_type, modified_by, timestamp, previous_state, new_state, rationale)`.
 * Cho phép Rollback lại trạng thái đồ thị tri thức trước đó nếu phát hiện thao tác hợp nhất sai sót.
 
+### 4.6. Quy Trình Xử Lý Trùng Lặp Giữa PDF Sơ Cấp (Level 1 Detail) Và Wikipedia (Level 2 Overview)
+
+Khi hệ thống ingest song song các tệp PDF chính sử chi tiết (`data/raw_corpus/pdf/`) và các tệp Wikipedia tóm tắt (`data/raw_corpus/wiki/`):
+
+1. **Phân Tầng Vai Trò Dữ Liệu:**
+   - **Tệp Wikipedia (`is_overview: true`, $W = 0.8$):** Cung cấp bức tranh tổng quan, định nghĩa khái niệm, ngữ cảnh ngắn gọn.
+   - **Tệp PDF Sơ Cấp (`is_detailed_evidence: true`, $W = 1.0$):** Cung cấp bằng chứng sử liệu chi tiết, diễn biến trọn vẹn, trích dẫn văn bản cổ và số trang sách (`page_number`).
+2. **Nguyên Tắc Không Xóa Bỏ Chunk PDF (Non-Destructive Detail Preservation):**
+   - Khi phát hiện độ tương đồng semantic $\text{BGE-M3} \ge 0.88$ giữa 1 chunk Wikipedia và 1 chunk PDF, **tuyệt đối không xóa bỏ chunk PDF**.
+   - Chunk PDF được giữ nguyên vị trí Ground Truth ($W=1.0$). Chunk Wikipedia được gán cờ `overview_summary: true` và lưu liên kết `primary_evidence_chunk_id` trỏ về chunk PDF tương ứng.
+3. **Ưu Tiên Bộ Ba Quan Hệ Trong Đồ Thị Tri Thức:**
+   - Khi cả PDF và Wikipedia cùng trích xuất bộ ba quan hệ $(E_1, R, E_2)$, hệ thống ưu tiên lưu giữ thuộc tính confidence của PDF Level 1 ($W=1.0$), đồng thời gắn thêm `citation_page` và `source_work` từ tệp PDF.
+
 ---
 
 ## ⚔️ 5. Khung Giải Quyết Xung Đột Sử Liệu (Historical Conflict Resolution Framework)
@@ -260,6 +307,7 @@ Mọi thao tác hợp nhất thực thể (Merge Entity), cập nhật Modern Ov
 1. **Xung đột mốc thời gian:** Năm sinh/năm mất, năm diễn ra trận đánh chênh lệch 1-2 năm.
 2. **Xung đột lực lượng/quân số:** Sử Việt ghi quân Nguyên-Mông 50 vạn, sử nhà Nguyên ghi 10-20 vạn.
 3. **Xung đột kết cục trận đánh / nhân vật:** Tướng bị bắt sống hay tử trận tại chỗ (ví dụ: tướng Ô Mã Nhi tại trận Bạch Đằng 1288).
+4. **Xung đột quan điểm sử luận giữa các bộ chính sử phong kiến:** Sự đánh giá khác nhau về một nhân vật/sự kiện giữa *Đại Việt Sử Ký Toàn Thư* (Nhà Lê Sơ), *Khâm Định Việt Sử Thông Giám Cương Mục* (Nhà Nguyễn), và *Việt Sử Tiêu Án* (Ngô Thời Sĩ).
 
 ### 5.2. Thuật Toán Giải Quyết Xung Đột 3 Bước & Ngưỡng Định Lượng Tranh Luận (3-Step Conflict Resolution & Decision Threshold)
 
@@ -298,6 +346,16 @@ Mọi thao tác hợp nhất thực thể (Merge Entity), cập nhật Modern Ov
 > 1. Cả 2 nguồn đều thuộc **Level 1** nhưng đưa ra dữ kiện mâu thuẫn.
 > 2. Chênh lệch điểm tin cậy giữa hai nguồn cạnh tranh nhỏ hơn hoặc bằng $0.15$:  
 >    $$|\text{Confidence}(Edge_A) - \text{Confidence}(Edge_B)| \le 0.15$$
+
+### 5.3. Khung Phân Xử Xung Đột Lịch Sử Giữa Các Tác Phẩm Chính Sử PDF (Multi-Primary Conflicts Protocol)
+
+Đối với mâu thuẫn trực tiếp giữa các tác phẩm chính sử Level 1 (*Toàn Thư* vs *Cương Mục* vs *Việt Sử Tiêu Án*):
+
+1. **Không Loại Trừ Đơn Phương:** Cả 2 tác phẩm đều là di sản sử học giá trị. Hệ thống không bao giờ tự ý xóa 1 dữ kiện chính sử để lấy dữ kiện kia.
+2. **Cơ Chế Graph Edge Multi-Source Tagging:** Mỗi cạnh quan hệ lưu thông tin nguồn cụ thể:
+   - Edge A: `(Lê Lợi, BORN_YEAR, 1385)`, `source_work: "Dai_Viet_Su_Ky_Toan_Thu"`, `author: "Ngô Sĩ Liên"`.
+   - Edge B: `(Lê Lợi, BORN_YEAR, 1384)`, `source_work: "Kham_Dinh_Viet_Su_Thong_Giam_Cuong_Muc"`, `author: "Quốc Sử Quán Triều Nguyễn"`.
+3. **AI Scriptwriter Context Synthesis:** Khi sinh kịch bản, RAG Engine đóng gói cả 2 nguồn vào Prompt Context với tag `[DISPUTED_PRIMARY_SOURCES]` để AI Scriptwriter trình bày khách quan: *"Sử thư ghi nhận có hai góc nhìn: Theo Đại Việt Sử Ký Toàn Thư... Trong khi Khâm Định Việt Sử Thông Giám Cương Mục chép lại rằng..."*.
 
 ---
 

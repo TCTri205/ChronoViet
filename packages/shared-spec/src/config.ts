@@ -1,9 +1,25 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
 
+import path from 'path';
+import fs from 'fs';
+
 if (typeof process !== 'undefined' && process?.versions?.node) {
   try {
     dotenv.config();
+    if (!process.env.DATABASE_URL) {
+      let dir = process.cwd();
+      for (let i = 0; i < 4; i++) {
+        const envPath = path.join(dir, '.env');
+        if (fs.existsSync(envPath)) {
+          dotenv.config({ path: envPath });
+          break;
+        }
+        const parent = path.dirname(dir);
+        if (parent === dir) break;
+        dir = parent;
+      }
+    }
   } catch {
     // Ignore in non-Node environments
   }
@@ -22,9 +38,9 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().optional(),
   POSTGRES_HOST: z.string().default('localhost'),
   POSTGRES_PORT: z.coerce.number().int().positive().default(5432),
-  POSTGRES_DB: z.string().default('chronoviet'),
-  POSTGRES_USER: z.string().default('postgres'),
-  POSTGRES_PASSWORD: z.string().default('postgres'),
+  POSTGRES_DB: z.string().default('chronoviet_db'),
+  POSTGRES_USER: z.string().default('chronoviet'),
+  POSTGRES_PASSWORD: z.string().default('chronoviet_secret'),
   PG_CONNECTION_TIMEOUT_MS: z.coerce.number().int().positive().default(1000),
   PG_IDLE_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
 

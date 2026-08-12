@@ -23,7 +23,7 @@ export class WebScraper {
   }
 
   public async fetchUrl(targetUrl: string, options: WebScraperOptions = {}): Promise<CorpusCrawlItemResult> {
-    const targetDir = options.outputPath || path.resolve(findMonorepoRoot(), 'data', 'raw_corpus');
+    const targetDir = options.outputPath || path.resolve(findMonorepoRoot(), 'data', 'raw_corpus', 'web');
 
     try {
       const response = await fetch(targetUrl, {

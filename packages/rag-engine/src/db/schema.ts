@@ -8,9 +8,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 -- 2. Entities Table (Graph Nodes)
 CREATE TABLE IF NOT EXISTS entities (
-    id VARCHAR(128) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    type VARCHAR(64) NOT NULL, -- HISTORICAL_PERSON, LOCATION, EVENT_BATTLE, DYNASTY_ERA, ORGANIZATION, ARTIFACT, DOCUMENT_CULTURE
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL, -- HISTORICAL_PERSON, LOCATION, EVENT_BATTLE, DYNASTY_ERA, ORGANIZATION, ARTIFACT, DOCUMENT_CULTURE
     aliases TEXT[] DEFAULT '{}', -- Alias Table for Fuzzy Fact-Checking
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -19,26 +19,26 @@ CREATE TABLE IF NOT EXISTS entities (
 -- 3. Relationships Table (Graph Edges)
 CREATE TABLE IF NOT EXISTS relationships (
     id SERIAL PRIMARY KEY,
-    source_entity_id VARCHAR(128) REFERENCES entities(id) ON DELETE CASCADE,
-    target_entity_id VARCHAR(128) REFERENCES entities(id) ON DELETE CASCADE,
-    relation_type VARCHAR(64) NOT NULL, -- PART_OF, LED_BY, HAPPENED_IN, HAPPENED_AT, SAME_AS_LOCATION, ALIAS_OF, ROYAL_LINEAGE, MENTIONED_IN
+    source_entity_id TEXT REFERENCES entities(id) ON DELETE CASCADE,
+    target_entity_id TEXT REFERENCES entities(id) ON DELETE CASCADE,
+    relation_type TEXT NOT NULL, -- PART_OF, LED_BY, HAPPENED_IN, HAPPENED_AT, SAME_AS_LOCATION, ALIAS_OF, ROYAL_LINEAGE, MENTIONED_IN
     confidence REAL DEFAULT 1.0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. Document Chunks Table (Vector Store - 1024d BGE-M3 + FTS BM25)
 CREATE TABLE IF NOT EXISTS document_chunks (
-    id VARCHAR(128) PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
     text_content TEXT NOT NULL,
-    dynasty VARCHAR(64),
+    dynasty TEXT,
     epoch_ids TEXT[] DEFAULT '{}',
-    source_reliability VARCHAR(32) DEFAULT 'LEVEL_1', -- LEVEL_1, LEVEL_2, LEVEL_3
-    parent_chunk_id VARCHAR(128),
+    source_reliability TEXT DEFAULT 'LEVEL_1', -- LEVEL_1, LEVEL_2, LEVEL_3
+    parent_chunk_id TEXT,
     time_start INT,
     time_end INT,
     key_figures TEXT[] DEFAULT '{}',
-    location VARCHAR(255),
+    location TEXT,
     page_number INT,
     embedding vector(1024),
     metadata JSONB DEFAULT '{}'::jsonb,
@@ -48,22 +48,42 @@ CREATE TABLE IF NOT EXISTS document_chunks (
 
 -- 5. Entity-Chunk Junction Table (Cross-linking Graph & Vector)
 CREATE TABLE IF NOT EXISTS entity_chunks (
-    entity_id VARCHAR(128) REFERENCES entities(id) ON DELETE CASCADE,
-    chunk_id VARCHAR(128) REFERENCES document_chunks(id) ON DELETE CASCADE,
+    entity_id TEXT REFERENCES entities(id) ON DELETE CASCADE,
+    chunk_id TEXT REFERENCES document_chunks(id) ON DELETE CASCADE,
     PRIMARY KEY (entity_id, chunk_id)
 );
 
 -- 6. Audit Logs Table (Append-Only Change Tracking & Governance)
 CREATE TABLE IF NOT EXISTS entity_audit_logs (
     log_id SERIAL PRIMARY KEY,
-    entity_id VARCHAR(128) REFERENCES entities(id) ON DELETE CASCADE,
-    action_type VARCHAR(64) NOT NULL, -- MERGE_ENTITY, ALIAS_UPDATE, MODERN_OVERRIDE, CONFLICT_RESOLVE
-    modified_by VARCHAR(128) DEFAULT 'SYSTEM',
+    entity_id TEXT REFERENCES entities(id) ON DELETE CASCADE,
+    action_type TEXT NOT NULL, -- MERGE_ENTITY, ALIAS_UPDATE, MODERN_OVERRIDE, CONFLICT_RESOLVE
+    modified_by TEXT DEFAULT 'SYSTEM',
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     previous_state JSONB DEFAULT '{}'::jsonb,
     new_state JSONB DEFAULT '{}'::jsonb,
     rationale TEXT
 );
+
+-- Migrations for existing tables (Upgrading to TEXT type for zero length restrictions)
+ALTER TABLE document_chunks DROP COLUMN IF EXISTS tsv;
+
+ALTER TABLE entities ALTER COLUMN id TYPE TEXT;
+ALTER TABLE entities ALTER COLUMN name TYPE TEXT;
+ALTER TABLE entities ALTER COLUMN type TYPE TEXT;
+ALTER TABLE relationships ALTER COLUMN source_entity_id TYPE TEXT;
+ALTER TABLE relationships ALTER COLUMN target_entity_id TYPE TEXT;
+ALTER TABLE relationships ALTER COLUMN relation_type TYPE TEXT;
+ALTER TABLE document_chunks ALTER COLUMN id TYPE TEXT;
+ALTER TABLE document_chunks ALTER COLUMN title TYPE TEXT;
+ALTER TABLE document_chunks ALTER COLUMN parent_chunk_id TYPE TEXT;
+ALTER TABLE document_chunks ALTER COLUMN dynasty TYPE TEXT;
+ALTER TABLE document_chunks ALTER COLUMN location TYPE TEXT;
+ALTER TABLE entity_chunks ALTER COLUMN entity_id TYPE TEXT;
+ALTER TABLE entity_chunks ALTER COLUMN chunk_id TYPE TEXT;
+ALTER TABLE entity_audit_logs ALTER COLUMN entity_id TYPE TEXT;
+
+ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', title || ' ' || text_content)) STORED;
 
 -- 7. Indexes
 CREATE INDEX IF NOT EXISTS idx_entities_aliases ON entities USING GIN (aliases);

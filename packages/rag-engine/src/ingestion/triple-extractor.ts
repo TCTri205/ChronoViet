@@ -69,7 +69,14 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
       const rawSource = match[pattern.sourceGroup]?.trim();
       const rawTarget = match[pattern.targetGroup]?.trim();
 
-      if (rawSource && rawTarget && rawSource.length > 1 && rawTarget.length > 1) {
+      if (
+        rawSource &&
+        rawTarget &&
+        rawSource.length > 1 &&
+        rawTarget.length > 1 &&
+        rawSource.length <= 120 &&
+        rawTarget.length <= 120
+      ) {
         const sourceEntity = resolveCanonicalEntity(rawSource);
         const targetEntity = resolveCanonicalEntity(rawTarget);
 

@@ -12,6 +12,7 @@ import { chunkDocumentHierarchical, ProcessedHierarchicalChunk } from '../chunki
 import { resolveCanonicalEntity, resolveLocationMapping } from '../text/historical-entity-mapper.js';
 import { extractTriplesFromText, ExtractedTriple } from '../triple-extractor.js';
 import { generateEmbedding } from '../embedding-service.js';
+import { PdfExtractor } from '../pdf/pdf-extractor.js';
 
 export interface IngestionDocMetadata {
   title: string;
@@ -32,6 +33,38 @@ export interface DualBranchSeedResult {
   chunksIngested: number;
   durationMs: number;
   isPgMode: boolean;
+}
+
+/**
+ * Helper to parse YAML frontmatter from Markdown text if present
+ */
+function parseFrontmatter(rawText: string): { body: string; metadata: Record<string, string> } {
+  if (!rawText.startsWith('---')) {
+    return { body: rawText, metadata: {} };
+  }
+
+  const endIdx = rawText.indexOf('\n---', 3);
+  if (endIdx === -1) {
+    return { body: rawText, metadata: {} };
+  }
+
+  const frontmatterStr = rawText.substring(3, endIdx).trim();
+  const body = rawText.substring(endIdx + 4).trim();
+  const metadata: Record<string, string> = {};
+
+  for (const line of frontmatterStr.split('\n')) {
+    const colonIdx = line.indexOf(':');
+    if (colonIdx > 0) {
+      const key = line.substring(0, colonIdx).trim().toLowerCase();
+      let val = line.substring(colonIdx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.substring(1, val.length - 1);
+      }
+      metadata[key] = val;
+    }
+  }
+
+  return { body, metadata };
 }
 
 /**
@@ -111,6 +144,13 @@ export async function seedDualBranch(
     if (chunk.metadata.keyFigures) {
       for (const figure of chunk.metadata.keyFigures) {
         const figureEntity = resolveCanonicalEntity(figure);
+        entityMap.set(figureEntity.entityId, {
+          id: figureEntity.entityId,
+          name: figureEntity.canonicalName,
+          type: figureEntity.type,
+          aliases: figureEntity.aliases,
+          metadata: {},
+        });
         chunkEntityIds.add(figureEntity.entityId);
       }
     }
@@ -191,25 +231,14 @@ export async function seedDualBranch(
       }
 
       await query('COMMIT;');
-    } catch (dbErr) {
+    } catch (err) {
       await query('ROLLBACK;');
-      throw dbErr;
+      throw err;
     }
   } else {
-    // 4. In-Memory Store Fallback Mode
+    // 4. In-Memory Mock Ingestion Fallback (for testing / eval environments)
     for (const entity of entityMap.values()) {
       inMemoryStore.entities.set(entity.id, entity);
-    }
-
-    for (const triple of allTriples) {
-      if (triple.targetEntityId === 'doc:historical_context') continue;
-      inMemoryStore.relationships.push({
-        id: inMemoryStore.nextRelId++,
-        source_entity_id: triple.sourceEntityId,
-        target_entity_id: triple.targetEntityId,
-        relation_type: triple.relationType,
-        confidence: triple.confidence,
-      });
     }
 
     for (const { chunk, embedding } of chunkEmbeddings) {
@@ -228,11 +257,6 @@ export async function seedDualBranch(
         embedding,
       };
       inMemoryStore.documentChunks.set(chunk.id, dbChunk);
-
-      const specificEntityIds = chunkEntityMap.get(chunk.id) || new Set<string>();
-      for (const entityId of specificEntityIds) {
-        inMemoryStore.entityChunks.push({ entity_id: entityId, chunk_id: chunk.id });
-      }
     }
   }
 
@@ -251,10 +275,12 @@ export async function seedDualBranch(
 }
 
 /**
- * Class implementing IIngestionPipeline interface for batch ingestion from filesystem
+ * Class wrapper implementing IIngestionPipeline
  */
 export class DualBranchSeeder implements IIngestionPipeline {
-  async run(inputPath: string, _options?: IngestionOptions): Promise<IngestionResult> {
+  private pdfExtractor = new PdfExtractor();
+
+  public async run(inputPath: string, _options?: IngestionOptions): Promise<IngestionResult> {
     const startTime = Date.now();
     let documentsProcessed = 0;
     let chunksCreated = 0;
@@ -264,41 +290,74 @@ export class DualBranchSeeder implements IIngestionPipeline {
     const stat = await fs.stat(inputPath);
     const filesToProcess: string[] = [];
 
-    if (stat.isDirectory()) {
-      const entries = await fs.readdir(inputPath);
+    const collectFiles = async (dir: string) => {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
       for (const entry of entries) {
-        if (entry.endsWith('.txt') || entry.endsWith('.md') || entry.endsWith('.json')) {
-          filesToProcess.push(path.join(inputPath, entry));
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await collectFiles(fullPath);
+        } else if (entry.isFile()) {
+          const ext = path.extname(entry.name).toLowerCase();
+          if (ext === '.txt' || ext === '.md' || ext === '.json' || ext === '.pdf') {
+            filesToProcess.push(fullPath);
+          }
         }
       }
+    };
+
+    if (stat.isDirectory()) {
+      await collectFiles(inputPath);
     } else {
       filesToProcess.push(inputPath);
     }
 
     for (const filePath of filesToProcess) {
-      const rawText = await fs.readFile(filePath, 'utf-8');
       const baseName = path.basename(filePath, path.extname(filePath));
+      const registeredMeta = this.pdfExtractor.getMetadata(baseName);
 
-      let content = rawText;
-      let title = baseName;
-      let dynasty: string | undefined;
+      let content = '';
+      let title = registeredMeta.title;
+      let dynasty: string | undefined = registeredMeta.dynasty;
+      let sourceReliability: SourceReliability = registeredMeta.sourceReliability || 'LEVEL_1';
 
-      if (filePath.endsWith('.json')) {
-        try {
-          const parsed = JSON.parse(rawText);
-          content = parsed.content || parsed.text || rawText;
-          title = parsed.title || baseName;
-          dynasty = parsed.dynasty;
-        } catch (_err) {
-          content = rawText;
+      if (filePath.endsWith('.pdf')) {
+        const pdfBuf = await fs.readFile(filePath);
+        const pdfResult = this.pdfExtractor.extract(pdfBuf, filePath);
+        content = pdfResult.text;
+        title = pdfResult.title;
+        sourceReliability = pdfResult.sourceReliability;
+      } else {
+        const rawText = await fs.readFile(filePath, 'utf-8');
+        const { body, metadata: fmMeta } = parseFrontmatter(rawText);
+        content = body;
+
+        if (fmMeta.title) title = fmMeta.title;
+        if (fmMeta.dynasty) dynasty = fmMeta.dynasty;
+        if (fmMeta.source_reliability === 'LEVEL_1' || fmMeta.source_reliability === 'LEVEL_2' || fmMeta.source_reliability === 'LEVEL_3') {
+          sourceReliability = fmMeta.source_reliability;
         }
+
+        if (filePath.endsWith('.json')) {
+          try {
+            const parsed = JSON.parse(rawText);
+            content = parsed.content || parsed.text || rawText;
+            title = parsed.title || title;
+            dynasty = parsed.dynasty || dynasty;
+          } catch (_err) {
+            content = body;
+          }
+        }
+      }
+
+      if (!content || content.trim().length === 0) {
+        continue;
       }
 
       const seedResult = await seedDualBranch(content, {
         title,
         sourceName: baseName,
         dynasty,
-        sourceReliability: 'LEVEL_1',
+        sourceReliability,
       });
 
       documentsProcessed++;

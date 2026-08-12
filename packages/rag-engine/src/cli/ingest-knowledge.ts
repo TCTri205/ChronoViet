@@ -17,7 +17,8 @@ function parseArgs(): { inputPath: string; force: boolean; localLlm: boolean } {
 
   for (const arg of args) {
     if (arg.startsWith('--input=')) {
-      inputPath = path.resolve(arg.split('=')[1]);
+      const val = arg.split('=')[1] || '';
+      inputPath = path.isAbsolute(val) ? val : path.resolve(findMonorepoRoot(), val);
     } else if (arg === '--force') {
       force = true;
     } else if (arg === '--local-llm') {

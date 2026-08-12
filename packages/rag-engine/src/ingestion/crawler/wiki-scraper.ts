@@ -23,7 +23,7 @@ export class WikiScraper {
   }
 
   public async fetchTopic(topic: string, options: WikiScraperOptions = {}): Promise<CorpusCrawlItemResult> {
-    const targetDir = options.outputPath || path.resolve(findMonorepoRoot(), 'data', 'raw_corpus');
+    const targetDir = options.outputPath || path.resolve(findMonorepoRoot(), 'data', 'raw_corpus', 'wiki');
 
     try {
       const apiUrl = `https://vi.wikipedia.org/w/api.php?action=query&prop=extracts|info&inprop=url&explaintext=true&titles=${encodeURIComponent(

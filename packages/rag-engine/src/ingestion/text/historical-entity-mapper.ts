@@ -248,7 +248,8 @@ export function resolveEntityAlias(aliasOrName: string, entityType: string = 'HI
   }
 
   // Fallback for unknown entity with canonical prefix
-  const slug = normInput.replace(/\s+/g, '_');
+  const rawSlug = normInput.replace(/\s+/g, '_');
+  const slug = rawSlug.length > 100 ? rawSlug.slice(0, 100) : rawSlug;
   const prefix = getCanonicalEntityIdPrefix(entityType as any);
   return {
     alias: aliasOrName.trim(),

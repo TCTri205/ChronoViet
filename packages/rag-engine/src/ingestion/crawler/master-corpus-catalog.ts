@@ -1,6 +1,7 @@
 /**
- * Master Historical Corpus Catalog (15 Standardized Epochs Specification)
- * Contains comprehensive Wikipedia topics, primary sources, battles, and key figures covering all 15 Epochs of Vietnamese History.
+ * Master Historical Corpus Catalog (15 Standardized Epochs Specification v1.6)
+ * Contains multi-source, multi-perspective historical topics, primary sources, regional histories (Champa, Funan, Tây Nguyên, Nam Bộ),
+ * socio-economic trade ports, legal codes, and primary Wikisource URLs covering all 15 Epochs of Vietnamese History.
  */
 
 export interface EpochCatalogEntry {
@@ -9,6 +10,10 @@ export interface EpochCatalogEntry {
   dynastyTag: string;
   timeRange: string;
   topics: string[];
+  primarySources?: string[];
+  urls?: string[];
+  regionTags?: string[];
+  domainTags?: string[];
 }
 
 export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
@@ -17,6 +22,8 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Hùng Vương - Văn Lang & Âu Lạc',
     dynastyTag: 'Văn Lang / Âu Lạc',
     timeRange: 'Tự khởi đầu - 179 TCN',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'CHAMPA', 'FUNAN'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'SOCIO_ECONOMIC', 'ARCHAEOLOGICAL'],
     topics: [
       'Hùng Vương',
       'Văn Lang',
@@ -25,9 +32,21 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Thành Cổ Loa',
       'Trống đồng Đông Sơn',
       'Văn hóa Đông Sơn',
+      'Văn hóa Sa Huỳnh',
+      'Văn hóa Óc Eo',
+      'Phù Nam',
+      'Lâm Ấp',
+      'Di chỉ Phùng Nguyên',
+      'Di chỉ Đồng Đậu',
+      'Di chỉ Gò Mun',
       'Sơn Tinh Thủy Tinh',
       'Thánh Gióng',
       'Nỏ thần',
+    ],
+    primarySources: ['Lĩnh Nam Chích Quái', 'Việt Điện U Linh Tập', 'Đại Việt Sử Ký Toàn Thư (Ngoại kỷ)'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Lĩnh_Nam_chích_quái',
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Ngoại_kỷ/Quyển_I',
     ],
   },
   {
@@ -35,6 +54,8 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Bắc Thuộc & Các Cuộc Khởi Nghĩa Giành Độc Lập',
     dynastyTag: 'Bắc Thuộc',
     timeRange: '179 TCN - 938',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'CHAMPA', 'FUNAN'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'SOCIO_ECONOMIC', 'ARCHAEOLOGICAL'],
     topics: [
       'Bắc Thuộc',
       'Hai Bà Trưng',
@@ -42,12 +63,24 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Lý Nam Đế',
       'Nhà Tiền Lý',
       'Vạn Xuân',
+      'Triệu Quang Phục',
       'Mai Thúc Loan',
       'Phùng Hưng',
       'Khúc Thừa Dụ',
       'Dương Đình Nghệ',
       'Ngô Quyền',
       'Trận Bạch Đằng (938)',
+      'Luy Lâu',
+      'Phật giáo Luy Lâu',
+      'Lâm Ấp',
+      'Khu Liên',
+      'Vương quốc Chăm-pa',
+      'Vương quốc Phù Nam',
+    ],
+    primarySources: ['Sử Ký Tư Mã Thiên', 'Hán Thư', 'Đại Việt Sử Ký Toàn Thư (Ngoại kỷ Quyển 2-5)'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Ngoại_kỷ/Quyển_III',
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Ngoại_kỷ/Quyển_V',
     ],
   },
   {
@@ -55,6 +88,8 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Ngô - Đinh - Tiền Lê',
     dynastyTag: 'Ngô / Đinh / Tiền Lê',
     timeRange: '938 - 1009',
+    regionTags: ['NORTH', 'CENTRAL', 'CHAMPA'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'LEGAL_INSTITUTIONAL'],
     topics: [
       'Nhà Ngô',
       'Đinh Tiên Hoàng',
@@ -65,6 +100,14 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Lê Đại Hành',
       'Nhà Tiền Lê',
       'Trận sông Bạch Đằng (981)',
+      'Thái hậu Dương Vân Nga',
+      'Tiền Thái Bình Hưng Bảo',
+      'Chiêm Thành',
+      'Đồ Bàn',
+    ],
+    primarySources: ['Đại Việt Sử Ký Toàn Thư (Bản kỷ Quyển 1)', 'Khâm Định Việt Sử Thông Giám Cương Mục'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Bản_kỷ/Quyển_I',
     ],
   },
   {
@@ -72,6 +115,8 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Lý',
     dynastyTag: 'Nhà Lý',
     timeRange: '1009 - 1225',
+    regionTags: ['NORTH', 'CENTRAL', 'CHAMPA'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'SOCIO_ECONOMIC', 'LEGAL_INSTITUTIONAL'],
     topics: [
       'Lý Thái Tổ',
       'Lý Công Uẩn',
@@ -84,6 +129,18 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Nam quốc sơn hà',
       'Trận Như Nguyệt',
       'Nhà Lý',
+      'Văn Miếu - Quốc Tử Giám',
+      'Chùa Một Cột',
+      'Hình thư (Nhà Lý)',
+      'Thương cảng Vân Đồn',
+      'Vương quốc Chiêm Thành',
+      'Jaya Indravarman',
+    ],
+    primarySources: ['Chiếu dời đô', 'Nam quốc sơn hà', 'Đại Việt Sử Ký Toàn Thư (Bản kỷ Quyển 2-4)'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Chiếu_dời_đô',
+      'https://vi.wikisource.org/wiki/Nam_quốc_sơn_hà',
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Bản_kỷ/Quyển_II',
     ],
   },
   {
@@ -91,6 +148,8 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Trần',
     dynastyTag: 'Nhà Trần',
     timeRange: '1225 - 1400',
+    regionTags: ['NORTH', 'CENTRAL', 'CHAMPA'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'SOCIO_ECONOMIC', 'LEGAL_INSTITUTIONAL'],
     topics: [
       'Nhà Trần',
       'Trần Thái Tông',
@@ -105,7 +164,19 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Trận Bạch Đằng (1288)',
       'Trần Nhân Tông',
       'Thiền phái Trúc Lâm',
+      'Yên Tử',
       'Chu Văn An',
+      'Thương cảng Vân Đồn',
+      'Hình luật Nhà Trần',
+      'Chế Bồng Nga',
+      'Trần Duệ Tông',
+      'Chiến tranh Việt-Chiêm (1367–1396)',
+    ],
+    primarySources: ['Hịch tướng sĩ', 'Đại Việt Sử Ký Toàn Thư (Bản kỷ Quyển 5-8)', 'Việt Sử Lược'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Hịch_tướng_sĩ',
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Bản_kỷ/Quyển_V',
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Bản_kỷ/Quyển_VI',
     ],
   },
   {
@@ -113,12 +184,22 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Nhà Hồ & Các Cuộc Canh Tân',
     dynastyTag: 'Nhà Hồ',
     timeRange: '1400 - 1407',
+    regionTags: ['NORTH', 'CENTRAL'],
+    domainTags: ['POLITICAL_MILITARY', 'SOCIO_ECONOMIC', 'LEGAL_INSTITUTIONAL', 'ARCHAEOLOGICAL'],
     topics: [
       'Hồ Quý Ly',
       'Nhà Hồ',
       'Thành nhà Hồ',
+      'Tiền giấy Thông Bảo Hội Chao',
+      'Súng thần cơ',
+      'Hồ Nguyên Trừng',
       'Nhà Hậu Trần',
       'Trận Cổ Lộng',
+      'Chế độ hạn điền hạn nô',
+    ],
+    primarySources: ['Đại Việt Sử Ký Toàn Thư (Bản kỷ Quyển 9)', 'Minh Thực Lục'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Bản_kỷ/Quyển_IX',
     ],
   },
   {
@@ -126,17 +207,27 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Kỳ Bắc Thuộc Lần 4 & Khởi Nghĩa Lam Sơn',
     dynastyTag: 'Lam Sơn',
     timeRange: '1407 - 1427',
+    regionTags: ['NORTH', 'CENTRAL', 'HIGHLANDS'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'LEGAL_INSTITUTIONAL'],
     topics: [
       'Bắc thuộc lần 4',
       'Khởi nghĩa Lam Sơn',
       'Lê Lợi',
       'Nguyễn Trãi',
       'Bình Ngô đại cáo',
+      'Hội thề Lũng Nhai',
       'Trận Tốt Động – Chúc Động',
       'Trận Chi Lăng – Xương Giang',
       'Hội thề Đông Quan',
       'Nguyễn Chích',
       'Trần Nguyên Hãn',
+      'Lam Sơn thực lục',
+      'Minh Thực Lục',
+    ],
+    primarySources: ['Bình Ngô đại cáo', 'Lam Sơn thực lục', 'Đại Việt Sử Ký Toàn Thư (Bản kỷ Quyển 10)'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Bình_Ngô_đại_cáo',
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư/Bản_kỷ/Quyển_X',
     ],
   },
   {
@@ -144,17 +235,26 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Lê Sơ',
     dynastyTag: 'Nhà Lê Sơ',
     timeRange: '1428 - 1527',
+    regionTags: ['NORTH', 'CENTRAL', 'CHAMPA'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'SOCIO_ECONOMIC', 'LEGAL_INSTITUTIONAL'],
     topics: [
       'Nhà Lê sơ',
       'Lê Thái Tổ',
       'Lê Thái Tông',
       'Lê Thánh Tông',
       'Hồng Đức bảo hình',
+      'Bản đồ Hồng Đức',
       'Quốc sử quán',
       'Bia Tiến sĩ Văn Miếu',
       'Thảm án Lệ Chi Viên',
       'Ngô Sĩ Liên',
       'Đại Việt sử ký toàn thư',
+      'Gốm Chu Đậu',
+      'Vương quốc Chăm-pa (1471)',
+    ],
+    primarySources: ['Quốc triều hình luật (Luật Hồng Đức)', 'Đại Việt Sử Ký Toàn Thư (Ngô Sĩ Liên)'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư',
     ],
   },
   {
@@ -162,6 +262,8 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Nam - Bắc Triều & Trịnh - Nguyễn Phân Tranh',
     dynastyTag: 'Lê - Mạc / Trịnh - Nguyễn',
     timeRange: '1527 - 1777',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'CHAMPA'],
+    domainTags: ['POLITICAL_MILITARY', 'SOCIO_ECONOMIC', 'CULTURAL_RELIGIOUS'],
     topics: [
       'Chiến tranh Lê–Mạc',
       'Nhà Mạc',
@@ -173,6 +275,18 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Phú Xuân',
       'Nguyễn Hoàng',
       'Trịnh Kiểm',
+      'Đào Duy Từ',
+      'Lũy Thầy',
+      'Thương cảng Hội An',
+      'Phố Hiến',
+      'Châu Ấn Thuyền',
+      'Panduranga',
+      'Alexandre de Rhodes',
+      'Chữ Quốc ngữ',
+    ],
+    primarySources: ['Phủ biên tạp lục (Lê Quý Đôn)', 'Đại Nam Thực Lục (Tiền biên)'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Phủ_biên_tạp_lục',
     ],
   },
   {
@@ -180,17 +294,28 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Kỳ Tây Sơn & Phong Trào Khởi Nghĩa',
     dynastyTag: 'Nhà Tây Sơn',
     timeRange: '1771 - 1802',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'HIGHLANDS'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'LEGAL_INSTITUTIONAL'],
     topics: [
       'Nhà Tây Sơn',
       'Nguyễn Huệ',
       'Quang Trung',
       'Nguyễn Nhạc',
       'Nguyễn Lữ',
+      'Tây Sơn Thượng đạo',
       'Trận Rạch Gầm – Xoài Mút',
       'Trận Ngọc Hồi – Đống Đa',
       'Bùi Thị Xuân',
       'Trần Quang Diệu',
       'Ngô Thì Nhậm',
+      'Chiếu lên ngôi Vua Quang Trung',
+      'Chiếu khuyến học',
+      'Hoàng Lê nhất thống chí',
+      'Vũ trung tùy bút',
+    ],
+    primarySources: ['Hoàng Lê nhất thống chí', 'Vũ trung tùy bút', 'Chiếu chiếu lên ngôi Vua Quang Trung'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Hoàng_Lê_nhất_thống_chí',
     ],
   },
   {
@@ -198,6 +323,8 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Nhà Nguyễn Độc Lập',
     dynastyTag: 'Nhà Nguyễn',
     timeRange: '1802 - 1858',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'HIGHLANDS', 'CHAMPA'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'SOCIO_ECONOMIC', 'LEGAL_INSTITUTIONAL', 'ARCHAEOLOGICAL'],
     topics: [
       'Nhà Nguyễn',
       'Gia Long',
@@ -206,7 +333,18 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Thiệu Trị',
       'Tự Đức',
       'Đại Nam thực lục',
+      'Khâm định Việt sử thông giám cương mục',
+      'Gia Định thành thông chí',
       'Hoàng thành Huế',
+      'Mộc bản Triều Nguyễn',
+      'Châu bản Triều Nguyễn',
+      'Kênh Vĩnh Tế',
+      'Thoại Ngọc Hầu',
+      'Panduranga (Chăm-pa 1832)',
+    ],
+    primarySources: ['Đại Nam thực lục', 'Khâm định Việt sử thông giám cương mục', 'Gia Định thành thông chí'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Khâm_định_Việt_sử_thông_giám_cương_mục',
     ],
   },
   {
@@ -214,9 +352,11 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Kỳ Pháp Thuộc & Phong Trào Yêu Nước / Cách Mạng',
     dynastyTag: 'Pháp Thuộc / Cách Mạng',
     timeRange: '1858 - 1945',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'HIGHLANDS'],
+    domainTags: ['POLITICAL_MILITARY', 'CULTURAL_RELIGIOUS', 'SOCIO_ECONOMIC', 'LEGAL_INSTITUTIONAL'],
     topics: [
       'Pháp thuộc',
-      'Trận Đà Nẵng (1858)',
+      'Trận Đà Nẵng (1858–1859)',
       'Trương Định',
       'Nguyễn Trung Trực',
       'Phong trào Cần Vương',
@@ -224,9 +364,19 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Phan Bội Châu',
       'Phong trào Đông Du',
       'Phan Châu Trinh',
+      'Khởi nghĩa Yên Thế',
+      'Hoàng Hoa Thám',
       'Nguyễn Thái Học',
+      'Gia Định Báo',
+      'Nam Phong Tạp Chí',
+      'Phong Hóa',
+      'Tiếng Dân',
       'Cách mạng Tháng Tám',
-      'Tuyên ngôn Độc lập (Việt Nam Dân chủ Cộng hòa)',
+      'Tuyên ngôn độc lập (Việt Nam Dân chủ Cộng hòa)',
+    ],
+    primarySources: ['Tuyên ngôn Độc lập (1945)', 'Bản án chế độ thực dân Pháp', 'Báo Gia Định Báo'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Tuyên_ngôn_Độc_lập_(Việt_Nam_Dân_chủ_Cộng_hòa)',
     ],
   },
   {
@@ -234,6 +384,8 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Kỳ Kháng Chiến Chống Thực Dân Pháp',
     dynastyTag: 'Kháng Chiến Chống Pháp',
     timeRange: '1945 - 1954',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'HIGHLANDS'],
+    domainTags: ['POLITICAL_MILITARY', 'SOCIO_ECONOMIC', 'CULTURAL_RELIGIOUS'],
     topics: [
       'Kháng chiến chống Pháp',
       'Chiến dịch Việt Bắc',
@@ -241,7 +393,15 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
       'Chiến dịch Điện Biên Phủ',
       'Võ Nguyên Giáp',
       'Hồ Chí Minh',
-      'Hiệp định Giơ-ne-vơ 1954',
+      'Hiệp định Genève',
+      'Chiến khu Việt Bắc',
+      'Nam Bộ kháng chiến',
+      'Báo Cứu Quốc',
+      'Báo Sự Thật',
+    ],
+    primarySources: ['Lời kêu gọi toàn quốc kháng chiến', 'Hiệp định Genève 1954'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Lời_kêu_gọi_toàn_quốc_kháng_chiến',
     ],
   },
   {
@@ -249,14 +409,22 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Kỳ Kháng Chiến Chống Đế Quốc Mỹ & Thống Nhất Đất Nước',
     dynastyTag: 'Kháng Chiến Chống Mỹ',
     timeRange: '1954 - 1975',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'HIGHLANDS'],
+    domainTags: ['POLITICAL_MILITARY', 'SOCIO_ECONOMIC', 'CULTURAL_RELIGIOUS'],
     topics: [
       'Chiến tranh Việt Nam',
-      'Chiến dịch Tết Mậu Thân 1968',
+      'Sự kiện Tết Mậu Thân',
       'Chiến dịch Điện Biên Phủ trên không',
       'Chiến dịch Hồ Chí Minh',
       'Đường Trường Sơn',
+      'Chiến dịch Tây Nguyên',
+      'Địa đạo Củ Chi',
       'Sự kiện 30 tháng 4 năm 1975',
-      'Hiệp định Pa-ri 1973',
+      'Hiệp định Paris',
+    ],
+    primarySources: ['Hiệp định Paris 1973', 'Di chúc của Chủ tịch Hồ Chí Minh'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Hiệp_định_Paris_1973',
     ],
   },
   {
@@ -264,11 +432,21 @@ export const MASTER_HISTORICAL_CATALOG: EpochCatalogEntry[] = [
     epochName: 'Thời Kỳ Bảo Vệ Tổ Quốc, Đổi Mới & Hiện Đại',
     dynastyTag: 'Hiện Đại',
     timeRange: '1975 - Nay',
+    regionTags: ['NORTH', 'CENTRAL', 'SOUTH', 'HIGHLANDS'],
+    domainTags: ['POLITICAL_MILITARY', 'SOCIO_ECONOMIC', 'CULTURAL_RELIGIOUS', 'LEGAL_INSTITUTIONAL'],
     topics: [
       'Chiến tranh biên giới Việt–Trung 1979',
+      'Mặt trận Vị Xuyên',
       'Chiến tranh biên giới Tây Nam',
       'Đổi Mới',
+      'Hoàng Sa',
+      'Trường Sa',
+      'Công ước Luật Biển UNCLOS 1982',
       'Lịch sử Việt Nam',
+    ],
+    primarySources: ['Cương lĩnh xây dựng đất nước trong thời kỳ quá độ (1991, 2011)', 'Hiến pháp nước Cộng hòa Xã hội Chủ nghĩa Việt Nam'],
+    urls: [
+      'https://vi.wikisource.org/wiki/Hiến_pháp_nước_Cộng_hòa_Xã_hội_Chủ_nghĩa_Việt_Nam_(2013)',
     ],
   },
 ];

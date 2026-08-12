@@ -1,7 +1,7 @@
 # `@chronoviet/rag-engine`
 
 > **ChronoViet Data Preprocessing, Ingestion ETL & Hybrid GraphRAG Engine**  
-> Gói mã nguồn cốt lõi chịu trách nhiệm cào tự động 15 thời kỳ lịch sử & nạp dữ liệu tri thức offline (Mô-đun 0) và cung cấp động cơ truy xuất Hybrid GraphRAG chuẩn xác (Mô-đun 1) cho hệ thống ChronoViet. Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](file:///d:/Persional_Projects/ChronoViet/docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v1.5.
+> Gói mã nguồn cốt lõi chịu trách nhiệm cào tự động 15 thời kỳ lịch sử & nạp dữ liệu tri thức offline (Mô-đun 0) và cung cấp động cơ truy xuất Hybrid GraphRAG chuẩn xác (Mô-đun 1) cho hệ thống ChronoViet. Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](../../docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v1.5.
 
 ---
 
@@ -62,8 +62,9 @@ packages/rag-engine/
 │   └── index.ts                       # Entrypoint export public APIs
 │
 ├── eval/                              # Tầng Đánh Giá & Benchmark
-│   ├── test-cases/                    # 5 tập dữ liệu mẫu chuẩn (Golden Datasets)
+│   ├── datasets/                      # Tập dữ liệu mẫu chuẩn (Golden Datasets)
 │   ├── ingest-runner.ts               # Benchmark Runner cho Mô-đun 0 (KPI 1-3)
+│   ├── metrics.ts                     # Động cơ đo lường Fact Precision, Hallucination & Citation
 │   ├── runner.ts                      # Benchmark Runner cho Mô-đun 1 (Fact Precision & Latency)
 │   └── reports/                       # Báo cáo kết quả đánh giá xuất ra JSON
 │
@@ -133,5 +134,5 @@ Gói mã nguồn khởi tạo và quản lý 5 bảng dữ liệu cốt lõi tro
 
 ## 📄 6. Giấy Phép & Bản Quyền (License)
 
-Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**. Mọi sửa đổi phải tuân thủ nghiêm ngặt chuẩn Single Source of Truth (SSOT) khai báo tại [`@chronoviet/shared-spec`](file:///d:/Persional_Projects/ChronoViet/packages/shared-spec).
+Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**. Mọi sửa đổi phải tuân thủ nghiêm ngặt chuẩn Single Source of Truth (SSOT) khai báo tại [`@chronoviet/shared-spec`](../shared-spec).
 
