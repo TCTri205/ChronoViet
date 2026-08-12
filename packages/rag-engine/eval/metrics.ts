@@ -157,3 +157,30 @@ export function calculateAggregateReport(results: EvaluationItemResult[]): Aggre
     details: results,
   };
 }
+
+/**
+ * Statistical Audit Parameters & Finite Population Correction (FPC) Sample Size Formula (Spec Section 6.2)
+ */
+export function calculateFpcSampleSize(
+  populationSize: number,
+  confidenceLevel: number = 0.95,
+  expectedErrorRate: number = 0.05,
+  marginOfError: number = 0.05
+): { n0: number; nAdjusted: number } {
+  const zMap: Record<number, number> = { 0.90: 1.645, 0.95: 1.96, 0.99: 2.576 };
+  const z = zMap[confidenceLevel] || 1.96;
+  const p = expectedErrorRate;
+  const e = marginOfError;
+
+  const n0Raw = (Math.pow(z, 2) * p * (1 - p)) / Math.pow(e, 2);
+  const n0 = Math.max(50, Math.ceil(n0Raw));
+
+  if (populationSize >= 10000) {
+    return { n0, nAdjusted: n0 };
+  }
+
+  const N = Math.max(1, populationSize);
+  const nAdjusted = Math.ceil(n0 / (1 + (n0 - 1) / N));
+
+  return { n0, nAdjusted };
+}

@@ -456,12 +456,92 @@ export type RagSearchResponse = z.infer<typeof RagSearchResponseSchema>;
 // ==========================================
 export const SourceReliabilityEnum = z.enum(['LEVEL_1', 'LEVEL_2', 'LEVEL_3']);
 
+export const HistoricalEpochEnum = z.enum([
+  'EPOCH_01', // Hùng Vương - Văn Lang & Âu Lạc (-179 TCN)
+  'EPOCH_02', // Bắc Thuộc & Các Cuộc Khởi Nghĩa (179 TCN - 938)
+  'EPOCH_03', // Ngô - Đinh - Tiền Lê (938 - 1009)
+  'EPOCH_04', // Nhà Lý (1009 - 1225)
+  'EPOCH_05', // Nhà Trần (1225 - 1400)
+  'EPOCH_06', // Nhà Hồ & Canh Tân (1400 - 1407)
+  'EPOCH_07', // Bắc Thuộc Lần 4 & Lam Sơn (1407 - 1427)
+  'EPOCH_08', // Nhà Lê Sơ (1428 - 1527)
+  'EPOCH_09', // Nam - Bắc Triều & Trịnh - Nguyễn (1527 - 1777)
+  'EPOCH_10', // Tây Sơn & Phong Trào Khởi Nghĩa (1771 - 1802)
+  'EPOCH_11', // Nhà Nguyễn Độc Lập (1802 - 1858)
+  'EPOCH_12', // Pháp Thuộc & Phong Trào Yêu Nước (1858 - 1945)
+  'EPOCH_13', // Kháng Chiến Chống Pháp (1945 - 1954)
+  'EPOCH_14', // Kháng Chiến Chống Mỹ & Thống Nhất (1954 - 1975)
+  'EPOCH_15', // Bảo Vệ Tổ Quốc, Đổi Mới & Hiện Đại (1975 - Nay)
+]);
+
+export const EntityTypeEnum = z.enum([
+  'HISTORICAL_PERSON',
+  'LOCATION',
+  'EVENT_BATTLE',
+  'DYNASTY_ERA',
+  'ORGANIZATION',
+  'ARTIFACT',
+  'DOCUMENT_CULTURE',
+]);
+
+export const AliasTypeEnum = z.enum([
+  'ROYAL_TITLE',
+  'OFFICIAL_TITLE',
+  'PHONETIC_VARIANT',
+  'FOLK_BIRTH_NAME',
+  'OTHER',
+]);
+
+export const StructuredAliasSchema = z.object({
+  name: z.string(),
+  type: AliasTypeEnum.default('OTHER'),
+  confidence: z.number().min(0).max(1).default(1.0),
+  notes: z.string().optional(),
+});
+
+export const AuditActionTypeEnum = z.enum([
+  'MERGE_ENTITY',
+  'ALIAS_UPDATE',
+  'MODERN_OVERRIDE',
+  'CONFLICT_RESOLVE',
+]);
+
+export const EntityAuditLogSchema = z.object({
+  logId: z.number().int().optional(),
+  entityId: z.string(),
+  actionType: AuditActionTypeEnum,
+  modifiedBy: z.string().default('SYSTEM'),
+  timestamp: z.string().optional(),
+  previousState: z.record(z.string(), z.unknown()).default({}),
+  newState: z.record(z.string(), z.unknown()).default({}),
+  rationale: z.string().optional(),
+});
+
+export function getCanonicalEntityIdPrefix(entityType: z.infer<typeof EntityTypeEnum> | string): string {
+  switch (entityType) {
+    case 'HISTORICAL_PERSON': return 'person_';
+    case 'LOCATION': return 'loc_';
+    case 'EVENT_BATTLE': return 'event_';
+    case 'DYNASTY_ERA': return 'dynasty_';
+    case 'ORGANIZATION': return 'org_';
+    case 'ARTIFACT': return 'artifact_';
+    case 'DOCUMENT_CULTURE': return 'doc_';
+    default: return 'entity_';
+  }
+}
+
+export const TranslationVariantSchema = z.object({
+  translator: z.string(),
+  text: z.string(),
+  notes: z.string().optional(),
+});
+
 export const ChunkMetadataSchema = z.object({
   chunk_id: z.string(),
   parent_chunk_id: z.string().optional(),
   title: z.string().optional(),
   dynasty: z.string().optional(),
-  epoch_ids: z.array(z.string()).optional(),
+  epoch_ids: z.array(z.union([HistoricalEpochEnum, z.string()])).optional(),
   time_start: z.number().int().optional(),
   time_end: z.number().int().optional(),
   key_figures: z.array(z.string()).default([]),
@@ -470,13 +550,20 @@ export const ChunkMetadataSchema = z.object({
   source_reliability: SourceReliabilityEnum.optional(),
   license_status: z.enum(['PUBLIC_DOMAIN', 'CREATIVE_COMMONS', 'FAIR_USE_SUMMARY', 'UNKNOWN']).optional(),
   page_number: z.number().int().optional(),
+  translation_variants: z.array(TranslationVariantSchema).optional(),
+  original_text: z.string().optional(),
+  original_language: z.string().optional(),
+  translated_text: z.string().optional(),
+  perspective_tag: z.string().optional(),
+  has_modern_scholarly_override: z.boolean().optional(),
 });
 
 export const ExtractedEntitySchema = z.object({
   id: z.string(),
   name: z.string(),
-  type: z.string(),
+  type: z.union([EntityTypeEnum, z.string()]),
   aliases: z.array(z.string()).default([]),
+  structuredAliases: z.array(StructuredAliasSchema).optional(),
 });
 
 export const ExtractedRelationshipSchema = z.object({
@@ -484,6 +571,7 @@ export const ExtractedRelationshipSchema = z.object({
   target: z.string(),
   relation_type: z.string(),
   confidence: z.number().min(0).max(1).default(1.0),
+  source_name: z.string().optional(),
 });
 
 export const TripleExtractionSchema = z.object({
@@ -502,6 +590,12 @@ export const AssetLicenseRegistrySchema = z.object({
 });
 
 export type SourceReliability = z.infer<typeof SourceReliabilityEnum>;
+export type HistoricalEpoch = z.infer<typeof HistoricalEpochEnum>;
+export type EntityType = z.infer<typeof EntityTypeEnum>;
+export type AliasType = z.infer<typeof AliasTypeEnum>;
+export type StructuredAlias = z.infer<typeof StructuredAliasSchema>;
+export type AuditActionType = z.infer<typeof AuditActionTypeEnum>;
+export type EntityAuditLog = z.infer<typeof EntityAuditLogSchema>;
 export type ChunkMetadata = z.infer<typeof ChunkMetadataSchema>;
 export type ExtractedEntity = z.infer<typeof ExtractedEntitySchema>;
 export type ExtractedRelationship = z.infer<typeof ExtractedRelationshipSchema>;

@@ -12,6 +12,7 @@ export function rerankCandidates(
   if (!candidates || candidates.length === 0) return [];
 
   const queryTerms = queryText.toLowerCase().split(/\s+/).filter((t) => t.length > 2);
+  const isFactCheckQuery = /(xác minh|có thật không|thật hay giả|đúng hay sai|bằng chứng)/i.test(queryText);
 
   const scored = candidates.map((cand) => {
     let textScore = cand.score;
@@ -27,11 +28,16 @@ export function rerankCandidates(
     const overlapRatio = queryTerms.length > 0 ? keywordOverlapCount / queryTerms.length : 0;
     textScore += overlapRatio * 0.5;
 
-    // 2. Source Reliability Bonus
+    // 2. Source Reliability Re-ranking (Spec Section 3.7): W_source in [1.0, 0.8, 0.5] capped at <= 15%
+    let sourceWeight = 0.5;
     if (cand.sourceReliability === 'LEVEL_1') {
-      textScore += 0.2;
+      sourceWeight = 1.0;
     } else if (cand.sourceReliability === 'LEVEL_2') {
-      textScore += 0.1;
+      sourceWeight = 0.8;
+    }
+
+    if (isFactCheckQuery) {
+      textScore = textScore * 0.85 + sourceWeight * 0.15;
     }
 
     return {

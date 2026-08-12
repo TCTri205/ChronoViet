@@ -10,10 +10,24 @@ import {
   HistoricalContextEntity,
   RagSearchResponse,
   SourceReliability,
+  HistoricalEpoch,
+  StructuredAlias,
+  EntityAuditLog,
+  AuditActionType,
+  AliasType,
   MediaAssetRegistryEntry,
+  getCanonicalEntityIdPrefix,
 } from './schema.js';
 
-export type { MediaAssetRegistryEntry };
+export type {
+  MediaAssetRegistryEntry,
+  HistoricalEpoch,
+  StructuredAlias,
+  EntityAuditLog,
+  AuditActionType,
+  AliasType,
+};
+export { getCanonicalEntityIdPrefix };
 
 
 // ============================================================================

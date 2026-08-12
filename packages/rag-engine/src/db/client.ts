@@ -39,20 +39,35 @@ export interface DbEntityChunk {
   chunk_id: string;
 }
 
+export interface DbEntityAuditLog {
+  log_id?: number;
+  entity_id: string;
+  action_type: 'MERGE_ENTITY' | 'ALIAS_UPDATE' | 'MODERN_OVERRIDE' | 'CONFLICT_RESOLVE';
+  modified_by?: string;
+  timestamp?: string;
+  previous_state?: Record<string, unknown>;
+  new_state?: Record<string, unknown>;
+  rationale?: string;
+}
+
 // In-Memory Database Fallback Store
 class InMemoryRagStore {
   entities = new Map<string, DbEntity>();
   relationships: DbRelationship[] = [];
   documentChunks = new Map<string, DbDocumentChunk>();
   entityChunks: DbEntityChunk[] = [];
+  auditLogs: DbEntityAuditLog[] = [];
   nextRelId = 1;
+  nextAuditLogId = 1;
 
   clear() {
     this.entities.clear();
     this.relationships = [];
     this.documentChunks.clear();
     this.entityChunks = [];
+    this.auditLogs = [];
     this.nextRelId = 1;
+    this.nextAuditLogId = 1;
   }
 }
 
@@ -124,5 +139,31 @@ export async function closePool(): Promise<void> {
     pgPool = null;
     pgConnected = false;
     checkAttempted = false;
+  }
+}
+
+export async function logEntityAuditAction(params: DbEntityAuditLog): Promise<void> {
+  const available = await isPgAvailable();
+  const modifiedBy = params.modified_by || 'SYSTEM';
+  const prevState = JSON.stringify(params.previous_state || {});
+  const newState = JSON.stringify(params.new_state || {});
+
+  if (available && pgPool) {
+    await query(
+      `INSERT INTO entity_audit_logs (entity_id, action_type, modified_by, previous_state, new_state, rationale)
+       VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6);`,
+      [params.entity_id, params.action_type, modifiedBy, prevState, newState, params.rationale || '']
+    );
+  } else {
+    inMemoryStore.auditLogs.push({
+      log_id: inMemoryStore.nextAuditLogId++,
+      entity_id: params.entity_id,
+      action_type: params.action_type,
+      modified_by: modifiedBy,
+      timestamp: new Date().toISOString(),
+      previous_state: params.previous_state || {},
+      new_state: params.new_state || {},
+      rationale: params.rationale || '',
+    });
   }
 }

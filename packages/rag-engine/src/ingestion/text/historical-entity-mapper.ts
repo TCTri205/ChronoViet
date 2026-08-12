@@ -2,12 +2,12 @@
  * Historical Entity Mapper: Location Temporal Mapping (SAME_AS_LOCATION) & Character Alias Resolution (ALIAS_OF)
  */
 
-import { EntityAliasMapping, HistoricalLocationMapping } from '@chronoviet/shared-spec';
+import { EntityAliasMapping, HistoricalLocationMapping, getCanonicalEntityIdPrefix } from '@chronoviet/shared-spec';
 
 export interface HistoricalEntityInfo {
   entityId: string;
   canonicalName: string;
-  type: 'Person' | 'Event' | 'Location' | 'Dynasty' | 'TimePeriod' | 'Artifact';
+  type: 'HISTORICAL_PERSON' | 'LOCATION' | 'EVENT_BATTLE' | 'DYNASTY_ERA' | 'ORGANIZATION' | 'ARTIFACT' | 'DOCUMENT_CULTURE' | string;
   aliases: string[];
 }
 
@@ -15,58 +15,58 @@ export interface HistoricalEntityInfo {
  * Built-in Historical Character Dictionary with Canonical Entity IDs and Aliases
  */
 export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> = {
-  'person:quang_trung': {
-    entityId: 'person:quang_trung',
+  'person_quang_trung': {
+    entityId: 'person_quang_trung',
     canonicalName: 'Quang Trung',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Nguyễn Huệ', 'Hồ Thơm', 'Bắc Bình Vương', 'Vua Quang Trung', 'Quang Trung Hoàng Đế', 'Long Nhương Tướng Quân', 'Long Nhượng Tướng Quân'],
   },
-  'person:nguyen_nhac': {
-    entityId: 'person:nguyen_nhac',
+  'person_nguyen_nhac': {
+    entityId: 'person_nguyen_nhac',
     canonicalName: 'Nguyễn Nhạc',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Tây Sơn Vương', 'Thái Đức Hoàng Đế', 'Vua Thái Đức'],
   },
-  'person:tran_hung_dao': {
-    entityId: 'person:tran_hung_dao',
+  'person_tran_hung_dao': {
+    entityId: 'person_tran_hung_dao',
     canonicalName: 'Trần Hưng Đạo',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Trần Quốc Tuấn', 'Hưng Đạo Đại Vương', 'Hưng Đạo Vương', 'Đức Thánh Trần'],
   },
-  'person:le_loi': {
-    entityId: 'person:le_loi',
+  'person_le_loi': {
+    entityId: 'person_le_loi',
     canonicalName: 'Lê Lợi',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Lê Thái Tổ', 'Bình Định Vương', 'Vua Lê Lợi'],
   },
-  'person:ngo_quyen': {
-    entityId: 'person:ngo_quyen',
+  'person_ngo_quyen': {
+    entityId: 'person_ngo_quyen',
     canonicalName: 'Ngô Quyền',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Tiền Ngô Vương', 'Vua Ngô Quyền'],
   },
-  'person:ly_thai_to': {
-    entityId: 'person:ly_thai_to',
+  'person_ly_thai_to': {
+    entityId: 'person_ly_thai_to',
     canonicalName: 'Lý Thái Tổ',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Lý Công Uẩn', 'Vua Lý Thái Tổ'],
   },
-  'person:dinh_tien_hoang': {
-    entityId: 'person:dinh_tien_hoang',
+  'person_dinh_tien_hoang': {
+    entityId: 'person_dinh_tien_hoang',
     canonicalName: 'Đinh Tiên Hoàng',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Đinh Bộ Lĩnh', 'Vạn Thắng Vương', 'Đinh Tiên Hoàng Đế'],
   },
-  'person:nguyen_trai': {
-    entityId: 'person:nguyen_trai',
+  'person_nguyen_trai': {
+    entityId: 'person_nguyen_trai',
     canonicalName: 'Nguyễn Trãi',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Ức Trai', 'Quan Trãi'],
   },
-  'person:vo_nguyen_giap': {
-    entityId: 'person:vo_nguyen_giap',
+  'person_vo_nguyen_giap': {
+    entityId: 'person_vo_nguyen_giap',
     canonicalName: 'Võ Nguyên Giáp',
-    type: 'Person',
+    type: 'HISTORICAL_PERSON',
     aliases: ['Đại tướng Võ Nguyên Giáp', 'Tướng Giáp', 'Anh Văn'],
   },
 };
@@ -147,28 +147,28 @@ export const HISTORICAL_LOCATION_MAPPINGS: HistoricalLocationMapping[] = [
  * Built-in Historical Location Dictionary with Canonical Entity IDs and Aliases
  */
 export const HISTORICAL_LOCATION_DICTIONARY: Record<string, HistoricalEntityInfo> = {
-  'location:ha_noi': {
-    entityId: 'location:ha_noi',
+  'loc_ha_noi': {
+    entityId: 'loc_ha_noi',
     canonicalName: 'Hà Nội',
-    type: 'Location',
+    type: 'LOCATION',
     aliases: ['Thăng Long', 'Đông Quan', 'Đông Kinh', 'Tống Bình', 'Đại La'],
   },
-  'location:hue': {
-    entityId: 'location:hue',
+  'loc_hue': {
+    entityId: 'loc_hue',
     canonicalName: 'Huế',
-    type: 'Location',
+    type: 'LOCATION',
     aliases: ['Phú Xuân', 'Thuận Hóa'],
   },
-  'location:ho_chi_minh': {
-    entityId: 'location:ho_chi_minh',
+  'loc_ho_chi_minh': {
+    entityId: 'loc_ho_chi_minh',
     canonicalName: 'Thành phố Hồ Chí Minh',
-    type: 'Location',
+    type: 'LOCATION',
     aliases: ['Sài Gòn', 'Gia Định'],
   },
-  'location:ninh_binh': {
-    entityId: 'location:ninh_binh',
+  'loc_ninh_binh': {
+    entityId: 'loc_ninh_binh',
     canonicalName: 'Ninh Bình',
-    type: 'Location',
+    type: 'LOCATION',
     aliases: ['Hoa Lư', 'Cố đô Hoa Lư'],
   },
 };
@@ -197,8 +197,17 @@ export function resolveLocationMapping(locationName: string): HistoricalLocation
 /**
  * Resolves any person or entity alias to an EntityAliasMapping
  */
-export function resolveEntityAlias(aliasOrName: string): EntityAliasMapping {
+export function resolveEntityAlias(aliasOrName: string, entityType: string = 'HISTORICAL_PERSON'): EntityAliasMapping {
   const normInput = normalizeKey(aliasOrName);
+
+  // Explicit Safeguard: "Tây Sơn Vương" maps strictly to Nguyễn Nhạc (person_nguyen_nhac)
+  if (normInput === 'tay son vuong' || normInput === 'tây sơn vương') {
+    return {
+      alias: 'Tây Sơn Vương',
+      canonicalId: 'person_nguyen_nhac',
+      canonicalName: 'Nguyễn Nhạc',
+    };
+  }
 
   for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
     if (normalizeKey(person.canonicalName) === normInput) {
@@ -238,13 +247,50 @@ export function resolveEntityAlias(aliasOrName: string): EntityAliasMapping {
     }
   }
 
-  // Fallback for unknown entity
+  // Fallback for unknown entity with canonical prefix
   const slug = normInput.replace(/\s+/g, '_');
+  const prefix = getCanonicalEntityIdPrefix(entityType as any);
   return {
     alias: aliasOrName.trim(),
-    canonicalId: `entity:${slug}`,
+    canonicalId: `${prefix}${slug}`,
     canonicalName: aliasOrName.trim(),
   };
+}
+
+/**
+ * Resolves historical epoch IDs for a given time range (Spec Section 2.1)
+ * Enforces Dual-Axis Overlap Protocol for 1771 - 1777 (EPOCH_09 and EPOCH_10)
+ */
+export function resolveHistoricalEpochs(timeStart?: number, timeEnd?: number): string[] {
+  if (timeStart === undefined && timeEnd === undefined) return [];
+  const start = timeStart ?? timeEnd!;
+  const end = timeEnd ?? timeStart!;
+
+  const epochSet = new Set<string>();
+
+  // Dual-Axis Overlap Protocol (Spec 2.1): 1771 - 1777 must have BOTH EPOCH_09 and EPOCH_10
+  if ((start >= 1771 && start <= 1777) || (end >= 1771 && end <= 1777) || (start <= 1771 && end >= 1777)) {
+    epochSet.add('EPOCH_09');
+    epochSet.add('EPOCH_10');
+  }
+
+  if (start < -179 || (start <= 179 && end <= 179)) epochSet.add('EPOCH_01');
+  if (start >= -179 && start <= 938) epochSet.add('EPOCH_02');
+  if (start >= 938 && start <= 1009) epochSet.add('EPOCH_03');
+  if (start >= 1009 && start <= 1225) epochSet.add('EPOCH_04');
+  if (start >= 1225 && start <= 1400) epochSet.add('EPOCH_05');
+  if (start >= 1400 && start <= 1407) epochSet.add('EPOCH_06');
+  if (start >= 1407 && start <= 1427) epochSet.add('EPOCH_07');
+  if (start >= 1428 && start <= 1527) epochSet.add('EPOCH_08');
+  if (start >= 1527 && start <= 1777) epochSet.add('EPOCH_09');
+  if (start >= 1771 && start <= 1802) epochSet.add('EPOCH_10');
+  if (start >= 1802 && start <= 1858) epochSet.add('EPOCH_11');
+  if (start >= 1858 && start <= 1945) epochSet.add('EPOCH_12');
+  if (start >= 1945 && start <= 1954) epochSet.add('EPOCH_13');
+  if (start >= 1954 && start <= 1975) epochSet.add('EPOCH_14');
+  if (start >= 1975) epochSet.add('EPOCH_15');
+
+  return Array.from(epochSet);
 }
 
 /**

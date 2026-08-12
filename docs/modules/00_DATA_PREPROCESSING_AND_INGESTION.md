@@ -1,7 +1,8 @@
 # CHI TIẾT MÔ-ĐUN 0: DATA PREPROCESSING & INGESTION ENGINE
 ## (Lớp Tiền Xử Lý, Chuẩn Hóa & Nạp Dữ Liệu Offline)
 
-> **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED 100%]`
+> **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED 100% — COMPLIANT WITH DATA GOVERNANCE SPEC v1.5]`
+> **Cập nhật:** Chuẩn hóa 7 Entity Taxonomy Prefix (`person_`, `loc_`, `event_`, `dynasty_`, `org_`, `artifact_`, `doc_`), Dual-Axis Overlap Protocol (1771-1777: `EPOCH_09` & `EPOCH_10`), Append-only Entity Audit Log Service (`entity_audit_logs`), và công cụ CLI `pnpm rag:re-resolve`.
 
 ---
 
@@ -277,16 +278,22 @@ Nhạc nền (BGM) và hiệu ứng âm thanh (SFX) được nạp qua script se
 # 1. Khởi tạo SQL Schema chuẩn cho PostgreSQL pgvector & Relational Graph
 pnpm --filter @chronoviet/rag-engine db:init
 
-# 2. Chạy pipeline nạp & làm sạch dữ liệu tri thức văn bản (Text ETL)
+# 2. Cào TỰ ĐỘNG 100% tài liệu 15 Thời kỳ Lịch sử Việt Nam (Master Corpus Crawl)
+pnpm crawl:all # hoặc pnpm --filter @chronoviet/rag-engine crawl:corpus --epoch=EPOCH_05
+
+# 3. Chạy pipeline nạp & làm sạch dữ liệu tri thức văn bản (Text ETL)
 pnpm --filter @chronoviet/rag-engine ingest:knowledge --input=data/raw_corpus/ [--force] [--local-llm]
 
-# 3. Chạy pipeline kiểm định bản quyền & nạp tài nguyên hình ảnh/âm thanh
+# 4. Hợp giải mâu thuẫn thực thể & ghi vết nhật ký audit log
+pnpm --filter @chronoviet/rag-engine rag:re-resolve
+
+# 5. Chạy pipeline kiểm định bản quyền & nạp tài nguyên hình ảnh/âm thanh
 pnpm setup-assets # hoặc pnpm --filter @chronoviet/rag-engine setup-assets
 
-# 4. Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
+# 6. Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
 pnpm eval:seed # hoặc pnpm --filter @chronoviet/rag-engine eval:seed
 
-# 5. Chạy bộ kiểm thử Benchmark đo lường 3 chỉ số KPI Mô-đun 0
+# 7. Chạy bộ kiểm thử Benchmark đo lường 3 chỉ số KPI Mô-đun 0
 pnpm eval:ingest # hoặc pnpm --filter @chronoviet/rag-engine eval:ingest
 ```
 

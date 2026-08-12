@@ -1,6 +1,9 @@
 # CHI TIẾT MÔ-ĐUN 2: MULTI-AGENT ORCHESTRATOR
 ## (Content Synthesis, Cross-Chapter Continuity, Robust Fact-Checking & Small LLM Pipeline v3.2)
 
+> **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED — INTEGRATED WITH AUTOMATED GUARDRAILS & SPECIFICATION v1.5]`
+> **Cập nhật:** Tích hợp Folklore Guardrail Gate (`folklore-validator.ts` Regex Pattern Matching) cho nguồn tin Dã sử Level 3 và NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts` Entailment Score $\ge 0.80$).
+
 ---
 
 ## 1. Mục Đích & Vai Trò

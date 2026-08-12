@@ -1,7 +1,8 @@
 # CHI TIẾT MÔ-ĐUN 1: CHRONO-RAG ENGINE
 ## (Hybrid GraphRAG: Knowledge Graph + Vector Database + Local Search)
 
-> **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED 100%]`
+> **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED 100% — COMPLIANT WITH DATA GOVERNANCE SPEC v1.5]`
+> **Cập nhật:** Tích hợp $W_{\text{source}}$ Re-ranking ($\le 15\%$) cho câu hỏi xác minh sự thật, Thuật toán 3 bước Giải quyết Xung đột Sử liệu với Multi-Perspective Graph Edges ($|\Delta| \le 0.15$), và Công thức FPC lấy mẫu kiểm định chất lượng.
 
 ---
 

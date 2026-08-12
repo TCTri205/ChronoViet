@@ -70,47 +70,47 @@ const ENTITY_DISAMBIGUATION_TEST_CASES: Array<{
   expectedModernLocation?: string;
 }> = [
   // Character Aliases (ALIAS_OF)
-  { input: 'Nguyễn Huệ', expectedCanonicalId: 'person:quang_trung', expectedCanonicalName: 'Quang Trung' },
-  { input: 'Quang Trung', expectedCanonicalId: 'person:quang_trung', expectedCanonicalName: 'Quang Trung' },
-  { input: 'Hồ Thơm', expectedCanonicalId: 'person:quang_trung', expectedCanonicalName: 'Quang Trung' },
-  { input: 'Bắc Bình Vương', expectedCanonicalId: 'person:quang_trung', expectedCanonicalName: 'Quang Trung' },
-  { input: 'Tây Sơn Vương', expectedCanonicalId: 'person:nguyen_nhac', expectedCanonicalName: 'Nguyễn Nhạc' },
+  { input: 'Nguyễn Huệ', expectedCanonicalId: 'person_quang_trung', expectedCanonicalName: 'Quang Trung' },
+  { input: 'Quang Trung', expectedCanonicalId: 'person_quang_trung', expectedCanonicalName: 'Quang Trung' },
+  { input: 'Hồ Thơm', expectedCanonicalId: 'person_quang_trung', expectedCanonicalName: 'Quang Trung' },
+  { input: 'Bắc Bình Vương', expectedCanonicalId: 'person_quang_trung', expectedCanonicalName: 'Quang Trung' },
+  { input: 'Tây Sơn Vương', expectedCanonicalId: 'person_nguyen_nhac', expectedCanonicalName: 'Nguyễn Nhạc' },
   
-  { input: 'Trần Quốc Tuấn', expectedCanonicalId: 'person:tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
-  { input: 'Trần Hưng Đạo', expectedCanonicalId: 'person:tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
-  { input: 'Hưng Đạo Đại Vương', expectedCanonicalId: 'person:tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
-  { input: 'Đức Thánh Trần', expectedCanonicalId: 'person:tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
+  { input: 'Trần Quốc Tuấn', expectedCanonicalId: 'person_tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
+  { input: 'Trần Hưng Đạo', expectedCanonicalId: 'person_tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
+  { input: 'Hưng Đạo Đại Vương', expectedCanonicalId: 'person_tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
+  { input: 'Đức Thánh Trần', expectedCanonicalId: 'person_tran_hung_dao', expectedCanonicalName: 'Trần Hưng Đạo' },
   
-  { input: 'Lê Lợi', expectedCanonicalId: 'person:le_loi', expectedCanonicalName: 'Lê Lợi' },
-  { input: 'Bình Định Vương', expectedCanonicalId: 'person:le_loi', expectedCanonicalName: 'Lê Lợi' },
-  { input: 'Lê Thái Tổ', expectedCanonicalId: 'person:le_loi', expectedCanonicalName: 'Lê Lợi' },
+  { input: 'Lê Lợi', expectedCanonicalId: 'person_le_loi', expectedCanonicalName: 'Lê Lợi' },
+  { input: 'Bình Định Vương', expectedCanonicalId: 'person_le_loi', expectedCanonicalName: 'Lê Lợi' },
+  { input: 'Lê Thái Tổ', expectedCanonicalId: 'person_le_loi', expectedCanonicalName: 'Lê Lợi' },
   
-  { input: 'Ngô Quyền', expectedCanonicalId: 'person:ngo_quyen', expectedCanonicalName: 'Ngô Quyền' },
-  { input: 'Tiền Ngô Vương', expectedCanonicalId: 'person:ngo_quyen', expectedCanonicalName: 'Ngô Quyền' },
+  { input: 'Ngô Quyền', expectedCanonicalId: 'person_ngo_quyen', expectedCanonicalName: 'Ngô Quyền' },
+  { input: 'Tiền Ngô Vương', expectedCanonicalId: 'person_ngo_quyen', expectedCanonicalName: 'Ngô Quyền' },
   
-  { input: 'Nguyễn Trãi', expectedCanonicalId: 'person:nguyen_trai', expectedCanonicalName: 'Nguyễn Trãi' },
-  { input: 'Ức Trai', expectedCanonicalId: 'person:nguyen_trai', expectedCanonicalName: 'Nguyễn Trãi' },
+  { input: 'Nguyễn Trãi', expectedCanonicalId: 'person_nguyen_trai', expectedCanonicalName: 'Nguyễn Trãi' },
+  { input: 'Ức Trai', expectedCanonicalId: 'person_nguyen_trai', expectedCanonicalName: 'Nguyễn Trãi' },
   
-  { input: 'Lý Thái Tổ', expectedCanonicalId: 'person:ly_thai_to', expectedCanonicalName: 'Lý Thái Tổ' },
-  { input: 'Lý Công Uẩn', expectedCanonicalId: 'person:ly_thai_to', expectedCanonicalName: 'Lý Thái Tổ' },
+  { input: 'Lý Thái Tổ', expectedCanonicalId: 'person_ly_thai_to', expectedCanonicalName: 'Lý Thái Tổ' },
+  { input: 'Lý Công Uẩn', expectedCanonicalId: 'person_ly_thai_to', expectedCanonicalName: 'Lý Thái Tổ' },
 
-  { input: 'Đinh Bộ Lĩnh', expectedCanonicalId: 'person:dinh_tien_hoang', expectedCanonicalName: 'Đinh Tiên Hoàng' },
-  { input: 'Đinh Tiên Hoàng', expectedCanonicalId: 'person:dinh_tien_hoang', expectedCanonicalName: 'Đinh Tiên Hoàng' },
-  { input: 'Vạn Thắng Vương', expectedCanonicalId: 'person:dinh_tien_hoang', expectedCanonicalName: 'Đinh Tiên Hoàng' },
+  { input: 'Đinh Bộ Lĩnh', expectedCanonicalId: 'person_dinh_tien_hoang', expectedCanonicalName: 'Đinh Tiên Hoàng' },
+  { input: 'Đinh Tiên Hoàng', expectedCanonicalId: 'person_dinh_tien_hoang', expectedCanonicalName: 'Đinh Tiên Hoàng' },
+  { input: 'Vạn Thắng Vương', expectedCanonicalId: 'person_dinh_tien_hoang', expectedCanonicalName: 'Đinh Tiên Hoàng' },
 
-  { input: 'Võ Nguyên Giáp', expectedCanonicalId: 'person:vo_nguyen_giap', expectedCanonicalName: 'Võ Nguyên Giáp' },
-  { input: 'Anh Văn', expectedCanonicalId: 'person:vo_nguyen_giap', expectedCanonicalName: 'Võ Nguyên Giáp' },
+  { input: 'Võ Nguyên Giáp', expectedCanonicalId: 'person_vo_nguyen_giap', expectedCanonicalName: 'Võ Nguyên Giáp' },
+  { input: 'Anh Văn', expectedCanonicalId: 'person_vo_nguyen_giap', expectedCanonicalName: 'Võ Nguyên Giáp' },
 
   // Location Mappings across Eras (SAME_AS_LOCATION)
-  { input: 'Thăng Long', expectedCanonicalId: 'location:ha_noi', expectedCanonicalName: 'Hà Nội', isLocation: true, expectedModernLocation: 'Hà Nội' },
-  { input: 'Đông Quan', expectedCanonicalId: 'location:ha_noi', expectedCanonicalName: 'Hà Nội', isLocation: true, expectedModernLocation: 'Hà Nội' },
-  { input: 'Đông Kinh', expectedCanonicalId: 'location:ha_noi', expectedCanonicalName: 'Hà Nội', isLocation: true, expectedModernLocation: 'Hà Nội' },
-  { input: 'Đại La', expectedCanonicalId: 'location:ha_noi', expectedCanonicalName: 'Hà Nội', isLocation: true, expectedModernLocation: 'Hà Nội' },
-  { input: 'Phú Xuân', expectedCanonicalId: 'location:hue', expectedCanonicalName: 'Huế', isLocation: true, expectedModernLocation: 'Huế' },
-  { input: 'Thuận Hóa', expectedCanonicalId: 'location:hue', expectedCanonicalName: 'Huế', isLocation: true, expectedModernLocation: 'Huế' },
-  { input: 'Sài Gòn', expectedCanonicalId: 'location:ho_chi_minh', expectedCanonicalName: 'Thành phố Hồ Chí Minh', isLocation: true, expectedModernLocation: 'Thành phố Hồ Chí Minh' },
-  { input: 'Gia Định', expectedCanonicalId: 'location:ho_chi_minh', expectedCanonicalName: 'Thành phố Hồ Chí Minh', isLocation: true, expectedModernLocation: 'Thành phố Hồ Chí Minh' },
-  { input: 'Hoa Lư', expectedCanonicalId: 'location:ninh_binh', expectedCanonicalName: 'Ninh Bình', isLocation: true, expectedModernLocation: 'Ninh Bình' },
+  { input: 'Thăng Long', expectedCanonicalId: 'loc_ha_noi', expectedCanonicalName: 'Hà Nội', isLocation: true, expectedModernLocation: 'Hà Nội' },
+  { input: 'Đông Quan', expectedCanonicalId: 'loc_ha_noi', expectedCanonicalName: 'Hà Nội', isLocation: true, expectedModernLocation: 'Hà Nội' },
+  { input: 'Đông Kinh', expectedCanonicalId: 'loc_ha_noi', expectedCanonicalName: 'Hà Nội', isLocation: true, expectedModernLocation: 'Hà Nội' },
+  { input: 'Đại La', expectedCanonicalId: 'loc_ha_noi', expectedCanonicalName: 'Hà Nội', isLocation: true, expectedModernLocation: 'Hà Nội' },
+  { input: 'Phú Xuân', expectedCanonicalId: 'loc_hue', expectedCanonicalName: 'Huế', isLocation: true, expectedModernLocation: 'Huế' },
+  { input: 'Thuận Hóa', expectedCanonicalId: 'loc_hue', expectedCanonicalName: 'Huế', isLocation: true, expectedModernLocation: 'Huế' },
+  { input: 'Sài Gòn', expectedCanonicalId: 'loc_ho_chi_minh', expectedCanonicalName: 'Thành phố Hồ Chí Minh', isLocation: true, expectedModernLocation: 'Thành phố Hồ Chí Minh' },
+  { input: 'Gia Định', expectedCanonicalId: 'loc_ho_chi_minh', expectedCanonicalName: 'Thành phố Hồ Chí Minh', isLocation: true, expectedModernLocation: 'Thành phố Hồ Chí Minh' },
+  { input: 'Hoa Lư', expectedCanonicalId: 'loc_ninh_binh', expectedCanonicalName: 'Ninh Bình', isLocation: true, expectedModernLocation: 'Ninh Bình' },
 ];
 
 // ------------------------------------------------------------------

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-11T15:18:46.464Z",
+  "timestamp": "2026-08-12T06:19:34.438Z",
   "kpis": {
     "entityDisambiguation": {
       "totalEvaluated": 32,
@@ -20,8 +20,8 @@
       "passedDatasets": 5,
       "integrityRatePercent": 100,
       "targetPercent": 100,
-      "throughputDocsPerSec": 1250,
-      "throughputChunksPerSec": 2500,
+      "throughputDocsPerSec": 1000,
+      "throughputChunksPerSec": 2000,
       "passed": true
     }
   },

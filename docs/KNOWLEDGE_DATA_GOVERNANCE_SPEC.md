@@ -1,8 +1,8 @@
 # QUY CHUẨN QUẢN TRỊ CHIẾN LƯỢC DỮ LIỆU RAG, SỐ LƯỢNG, CHẤT LƯỢNG & GIẢI QUYẾT XUNG ĐỘT SỬ LIỆU CHRONOVIET
 *(ChronoViet RAG Knowledge Base Strategy, Text Quality Governance & Historical Conflict Resolution Specification)*
 
-> **Trạng thái:** `[✅ SPECIFICATION v1.3 — MASTER SOURCE OF TRUTH FOR RAG KNOWLEDGE BASE]`  
-> **Cập nhật mới:** 2026-08-11 (Đính chính danh xưng Hán-Việt "Long Nhương Tướng Quân", phân loại alias_confidence cho "Hồ Thơm", chuẩn hóa 15 thời kỳ lịch sử, tách biệt Thời Hồ & Bắc Thuộc Lần 4, giải tỏa phạt chồng trọng số nguồn, quy trình bất đồng bản dịch Hán Nôm, cơ chế phê duyệt Modern Override, thuật toán merge node, KPI sampling theo công thức thống kê và gán mảng `epoch_ids` đa thời kỳ)  
+> **Trạng thái:** `[✅ SPECIFICATION v1.5 — MASTER SOURCE OF TRUTH FOR RAG KNOWLEDGE BASE]`  
+> **Cập nhật mới:** 2026-08-12 (Bổ sung: Chuẩn hóa 7 Entity Taxonomy Enums & Canonical ID `person_<slug>`; Bổ sung DDL `entity_audit_logs` & cột `epoch_ids` trong CSDL; Chuẩn hóa công thức RRF / Min-Max BM25; Công thức Hiệu chỉnh Quần thể Hữu hạn FPC cho cỡ mẫu Spot-check; Regex Pattern Matching cho Level 3 Guardrail; Kiến trúc 2 giai đoạn cho NLI Entailment Hallucination Judge)  
 > **Phạm vi áp dụng:** Mô-đun 0 (`Data Preprocessing & Ingestion Engine`), Mô-đun 1 (`Chrono-RAG Engine`), Mô-đun 2 (`Multi-Agent Orchestrator`).
 
 > [!NOTE]
@@ -27,46 +27,66 @@ Một ứng dụng AI dù sở hữu kiến trúc GraphRAG tối tân hay hệ t
 
 ## 📊 2. Khung Đo Lường & Mục Tiêu Số Lượng Dữ Liệu RAG (RAG Knowledge Quantity & Coverage Targets)
 
-Để đảm bảo RAG Engine truy xuất đủ chi tiết cho kịch bản documentary cho bất kỳ chủ đề nào, dữ liệu văn bản nạp vào phải phủ rộng qua **15 Thời Kỳ Lịch Sử Chuẩn Hóa** (kết hợp hai trục phân kỳ: Thể chế/Triều đại và Phong trào Yêu nước/Kháng chiến) cùng **5 Danh Mục Thực Thể Core**.
+Để đảm bảo RAG Engine truy xuất đủ chi tiết cho kịch bản documentary cho bất kỳ chủ đề nào, dữ liệu văn bản nạp vào phải phủ rộng qua **15 Thời Kỳ Lịch Sử Chuẩn Hóa** (kết hợp hai trục phân kỳ: Thể chế/Triều đại và Phong trào Yêu nước/Kháng chiến) cùng **7 Danh Mục Thực Thể Core (Entity Taxonomy)**.
 
-### 2.1. Độ Bao Phủ 15 Thời Kỳ Lịch Sử Việt Nam & Trục Phân Loại Kép (Dual-Axis Epoch Coverage)
-
-> [!NOTE]
-> **Lý Do Tách Phân Kỳ Chuẩn Hóa (15 Thời Kỳ):**  
-> 1. **Tách Thời Hồ (1400 - 1407) & Bắc Thuộc Lần 4 (1407 - 1427):** Nhà Hồ là chính quyền phong kiến bản địa với nhiều chính sách canh tân đất nước; trong khi Bắc Thuộc Lần 4 là giai đoạn nhà Minh đô hộ, đất nước mất chủ quyền hoàn toàn và bùng nổ phong trào giải phóng dân tộc (Lam Sơn). Gộp hai thời kỳ này sẽ vi phạm tiêu chí nhất quán về bản chất chính trị.  
-> 2. **Thời Kỳ Tây Sơn & Khởi Nghĩa (1771 - 1802):** Khởi nghĩa Tây Sơn bùng nổ từ 1771 (Tây Sơn Thượng đạo). Việc mở rộng mốc 1771 - 1802 đảm bảo toàn bộ giai đoạn khởi nghĩa chống chúa Nguyễn, quân Thanh và quân Xiêm được gắn nhãn chính xác.  
-> 3. **Tách Thời Kỳ Pháp Thuộc (1858 - 1945) & Kháng Chiến Chống Pháp/Mỹ:** Đảm bảo không có "điểm mù truy xuất" cho giai đoạn 1858-1945 và phân biệt rõ hai cuộc chiến tranh có bối cảnh quốc tế hoàn toàn khác biệt.
+### 2.1. Độ Bao Phủ 15 Thời Kỳ Lịch Sử Việt Nam & Quy Tắc Xử Lý Giao Thời (Dual-Axis Epoch Coverage & Transition Rules)
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 ##                     15 THỜI KỲ LỊCH SỬ VIỆT NAM CHUẨN HÓA (DUAL-AXIS COVERAGE)                   │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1. Thời Hùng Vương - Văn Lang & Âu Lạc (Tự khởi đầu - 179 TCN)                                    │
-│ 2. Thời Bắc Thuộc & Các Cuộc Khởi Nghĩa Giành Độc Lập (179 TCN - 938)                             │
-│ 3. Thời Ngô - Đinh - Tiền Lê (938 - 1009)                                                        │
-│ 4. Thời Lý (1009 - 1225)                                                                         │
-│ 5. Thời Trần (1225 - 1400)                                                                       │
-│ 6. Thời Nhà Hồ & Các Cuộc Canh Tân (1400 - 1407)                                                 │
-│ 7. Thời Kỳ Bắc Thuộc Lần 4 & Khởi Nghĩa Lam Sơn (1407 - 1427)                                    │
-│ 8. Thời Lê Sơ (1428 - 1527)                                                                      │
-│ 9. Thời Nam - Bắc Triều & Trịnh - Nguyễn Phân Tranh (1527 - 1777)                                │
-│ 10. Thời Kỳ Tây Sơn & Phong Trào Khởi Nghĩa (1771 - 1802)                                        │
-│ 11. Thời Nhà Nguyễn Độc Lập (1802 - 1858)                                                        │
-│ 12. Thời Kỳ Pháp Thuộc & Phong Trào Yêu Nước / Cách Mạng (1858 - 1945)                           │
-│ 13. Thời Kỳ Kháng Chiến Chống Thực Dân Pháp (1945 - 1954)                                        │
-│ 14. Thời Kỳ Kháng Chiến Chống Đế Quốc Mỹ & Thống Nhất Đất Nước (1954 - 1975)                     │
-│ 15. Thời Kỳ Bảo Vệ Tổ Quốc, Đổi Mới & Hiện Đại (1975 - Nay)                                      │
+│ 1. EPOCH_01: Thời Hùng Vương - Văn Lang & Âu Lạc (Tự khởi đầu - 179 TCN)                          │
+│ 2. EPOCH_02: Thời Bắc Thuộc & Các Cuộc Khởi Nghĩa Giành Độc Lập (179 TCN - 938)                   │
+│ 3. EPOCH_03: Thời Ngô - Đinh - Tiền Lê (938 - 1009)                                              │
+│ 4. EPOCH_04: Thời Lý (1009 - 1225)                                                               │
+│ 5. EPOCH_05: Thời Trần (1225 - 1400)                                                             │
+│ 6. EPOCH_06: Thời Nhà Hồ & Các Cuộc Canh Tân (1400 - 1407)                                       │
+│ 7. EPOCH_07: Thời Kỳ Bắc Thuộc Lần 4 & Khởi Nghĩa Lam Sơn (1407 - 1427)                          │
+│ 8. EPOCH_08: Thời Lê Sơ (1428 - 1527)                                                            │
+│ 9. EPOCH_09: Thời Nam - Bắc Triều & Trịnh - Nguyễn Phân Tranh (1527 - 1777)                      │
+│ 10. EPOCH_10: Thời Kỳ Tây Sơn & Phong Trào Khởi Nghĩa (1771 - 1802)                              │
+│ 11. EPOCH_11: Thời Nhà Nguyễn Độc Lập (1802 - 1858)                                              │
+│ 12. EPOCH_12: Thời Kỳ Pháp Thuộc & Phong Trào Yêu Nước / Cách Mạng (1858 - 1945)                 │
+│ 13. EPOCH_13: Thời Kỳ Kháng Chiến Chống Thực Dân Pháp (1945 - 1954)                              │
+│ 14. EPOCH_14: Thời Kỳ Kháng Chiến Chống Đế Quốc Mỹ & Thống Nhất Đất Nước (1954 - 1975)           │
+│ 15. EPOCH_15: Thời Kỳ Bảo Vệ Tổ Quốc, Đổi Mới & Hiện Đại (1975 - Nay)                             │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2. Mục Tiêu Số Lượng Chỉ Mộc Tri Thức RAG (RAG Volume Targets)
+> [!IMPORTANT]
+> **Quy Tắc Xử Lý Chồng Lấn Thời Gian Mốc Giao Thời (Epoch Overlap Protocol — Epoch 09 & Epoch 10):**  
+> Khoảng thời gian **1771 - 1777** giữa Epoch 9 (Trịnh - Nguyễn Phân Tranh) và Epoch 10 (Tây Sơn) trùng khớp về mặt lịch sử thực tế: chính quyền Đàng Trong (Chúa Nguyễn) và Đàng Ngoài (Chúa Trịnh) vẫn đang tồn tại song song với sự phát triển bùng nổ của phong trào Tây Sơn (nổi dậy từ năm 1771 tại Tây Sơn Thượng đạo).  
+> **Quy tắc gán nhãn bắt buộc:**  
+> 1. Mọi đoạn văn bản (chunk), sự kiện (event), trận đánh hoặc thực thể hoạt động trong mốc **1771 - 1777** (ví dụ: Tây Sơn đánh chiếm Quy Nhơn 1773, Quân Trịnh vượt sông Gianh đánh Phú Xuân 1774) **BẮT BUỘC GÁN BẰNG MẢNG ĐA EPOCH**:  
+>    `epoch_ids: ["EPOCH_09", "EPOCH_10"]`  
+> 2. Tuyệt đối không gán đơn lẻ `EPOCH_09` hoặc `EPOCH_10` cho các sự kiện thuộc giai đoạn 1771-1777 để tránh tình trạng "bỏ sót chunk" khi RAG Engine lọc theo một trong hai epoch.
 
-| Chỉ số Tri thức RAG | Mục tiêu Tối thiểu (Phase 1) | Mục tiêu Mở rộng (Phase 2-3) | Đơn vị tính |
-| :--- | :---: | :---: | :--- |
-| **Tổng số Child Chunks (`document_chunks`)** | $\ge 20.000$ | $\ge 100.000$ | Chunks (300-500 từ) |
-| **Thực thể Lịch sử (`entities`)** | $\ge 10.000$ | $\ge 50.000$ | Nodes |
-| **Bộ ba Quan hệ Đồ thị (`relationships`)** | $\ge 50.000$ | $\ge 250.000$ | Edges |
-| **Bảng Liên kết Cross-Linking (`entity_chunks`)** | $\ge 40.000$ | $\ge 200.000$ | Junction Rows |
+### 2.2. Bảng Taxonomy Thực Thể Chuẩn Hóa (Standardized Entity Taxonomy)
+
+Mọi thực thể (`entities`) khi trích xuất vào Knowledge Graph phải thuộc chính xác một trong **7 loại thực thể chuẩn hóa** dưới đây (tương ứng với `ExtractedEntitySchema` trong `packages/shared-spec/src/schema.ts`):
+
+| Entity Type | Mô tả & Phạm vi áp dụng | Ví dụ minh họa | Canonical ID Format |
+| :--- | :--- | :--- | :--- |
+| **`HISTORICAL_PERSON`** | Nhân vật lịch sử: vua, chúa, tướng lĩnh, sĩ phu, nhà văn, anh hùng dân tộc | Trần Hưng Đạo, Nguyễn Trãi, Quang Trung, Hồ Xuân Hương | `person_<slug>` |
+| **`LOCATION`** | Địa danh lịch sử, địa lý: kinh đô, thành lũy, sông, núi, chiến trường, tỉnh/thành | Thăng Long, Bạch Đằng, Chi Lăng, Đàng Trong, Quy Nhơn | `loc_<slug>` |
+| **`EVENT_BATTLE`** | Trận đánh, chiến dịch, cuộc khởi nghĩa, biến cố chính trị, hội nghị, sự kiện | Trận Bạch Đằng 1288, Khởi nghĩa Lam Sơn, Hội nghị Diên Hồng | `event_<slug>` |
+| **`DYNASTY_ERA`** | Triều đại phong kiến, thể chế chính trị, kỷ nguyên lịch sử | Nhà Trần, Nhà Hồ, Nhà Lê Sơ, Nam - Bắc Triều | `dynasty_<slug>` |
+| **`ORGANIZATION`** | Tổ chức, triều đình, tập đoàn quân, phái đoàn, hội nhóm | Quốc Sử Quán, Quân Tây Sơn, Hội Việt Nam Cách mạng Thanh niên | `org_<slug>` |
+| **`ARTIFACT`** | Hiện vật, bảo vật quốc gia, vũ khí, sắc phong, ấn tín, bia đá | Trống đồng Đông Sơn, Sắc phong Vua Quang Trung, Bia Sùng Thiện Diên Linh | `artifact_<slug>` |
+| **`DOCUMENT_CULTURE`** | Tác phẩm văn học, bộ chính sử, hịch, chiếu, văn bản pháp quy | *Đại Việt Sử Ký Toàn Thư*, *Bình Ngô Đại Cáo*, *Hịch Tướng Sĩ*, *Nam Quốc Sơn Hà* | `doc_<slug>` |
+
+> [!CAUTION]
+> **Cảnh Báo Rủi Ro Tách Nhỏ Thực Thể Giả Tạo (Spurious Splitting Safeguard):**  
+> Đội ngũ Ingestion và LLM Extractor **không được phép tạo mới các `entity_type` nằm ngoài 7 danh mục trên**, cũng như không được tự ý tách nhỏ thực thể một cách khiên cưỡng chỉ để đạt KPI số lượng Phase 1 ($10.000$ entities). Chất lượng đồ thị tri thức (Graph Density & Entity Quality) được ưu tiên tuyệt đối hơn số lượng thô.
+
+### 2.3. Mục Tiêu Số Lượng Chỉ Mộc Tri Thức RAG (RAG Volume Targets)
+
+| Chỉ số Tri thức RAG | Mục tiêu Tối thiểu (Phase 1) | Mục tiêu Mở rộng (Phase 2-3) | Đơn vị tính | Phương pháp Kiểm định / KPI Quality |
+| :--- | :---: | :---: | :--- | :--- |
+| **Child Chunks (`document_chunks`)** | $\ge 20.000$ | $\ge 100.000$ | Chunks (300-500 từ) | Semantic Boundary Chunking (Mục 7.1) |
+| **Thực thể Lịch sử (`entities`)** | $\ge 10.000$ | $\ge 50.000$ | Nodes (7 Taxonomy Types) | Entity Normalization Accuracy $> 98.0\%$ |
+| **Bộ ba Quan hệ (`relationships`)** | $\ge 50.000$ | $\ge 250.000$ | Edges | Edge Confidence Multi-Perspective Score |
+| **Bảng Liên kết (`entity_chunks`)** | $\ge 40.000$ | $\ge 200.000$ | Junction Rows | **Cross-Linking Precision $\ge 98.0\%$** |
 
 ---
 
@@ -94,7 +114,7 @@ Mọi văn bản thô khi cào về hoặc nhập vào hệ thống bắt buộc
 ### 3.1. Chi Tiết Phân Loại Cấp Độ Tin Cậy
 
 1. **LEVEL 1 — Chính Sử & Văn Bản Học Thuật Nguyên Bản (Ground Truth Level 1 | Trọng số $W = 1.0$):**
-   * **Nguồn dữ liệu:** *Đại Việt Sử Ký Toàn Thư* (Lê Văn Hưu, Phan Phu Tiên, Ngô Sĩ Liên), *Khâm Định Việt Sử Thông Giám Cương Mục* (Quốc Sử Quán Nhà Nguyễn), *Việt Sử Lược*, *Bình Ngô Đại Cáo*, *Hịch Tướng Sĩ*, các công trình khảo cứu nguyên bản xuất bản bởi Viện Sử Học Việt Nam.
+   * **Nguồn dữ liệu:** *Đại Việt Sử Ký Toàn Thư* (Lê Văn Hưu, Phan Phu Tiên, Ngô Sĩ Liên), *Khâm Định Việt Sử Thông Giám Cương Mục* (Quốc Sử Quán Nhà Nguyễn), *Việt Sử Lược*, *Bình Ngô Đại Cáo*, *Hịch Tướng Sĩ*, các công trình khảo cứu nguyên bản xuất bản bởi Viện Sử Học Việt Nam, Cục Di sản Văn hóa, Viện Hán Nôm.
    * **Quy tắc:** Căn cứ nền tảng để xác minh sự thật lịch sử. Khi mâu thuẫn với Level 2 hoặc Level 3, Level 1 có ưu tiên mặc định.
 
 2. **LEVEL 2 — Tư Liệu Bách Khoa & Chuẩn Giáo Dục (Ground Truth Level 2 | Trọng số $W = 0.8$):**
@@ -105,7 +125,18 @@ Mọi văn bản thô khi cào về hoặc nhập vào hệ thống bắt buộc
    * **Nguồn dữ liệu:** *Lĩnh Nam Chích Quái*, *Việt Điện U Linh Tập*, truyền thuyết dân gian (Sơn Tinh Thủy Tinh, Thánh Gióng, An Dương Vương...), giai thoại truyền miệng.
    * **Quy tắc:** Bắt buộc gán nhãn `category: "FOLKLORE_MYTH"`. Dữ liệu này chỉ được dùng làm chất liệu nghệ thuật cho kịch bản, **tuyệt đối không được khẳng định là sự thật lịch sử khách quan**.
 
-### 3.2. Tiêu Chí & Quy Trình Phê Duyệt "Modern Scholarly Consensus Override Protocol"
+### 3.2. Cơ Chế Tự Động Bảo Đảm Giọng Văn Giả Thuyết Cho Level 3 / Dã Sử (Automated Folklore Guardrail Validator Gate)
+
+> [!WARNING]
+> **Khắc Phục Lỗ Hổng Prompt Enforcement:**  
+> Việc chỉ dựa vào prompt instruction ("dùng giọng văn giả thuyết") rất dễ bị LLM "quên" khi sinh kịch bản dài. Hệ thống áp dụng **Guardrail Validator Gate tự động dạng Flexible Regex & Semantic Signal-Checking** cho kịch bản sinh ra:
+> 1. **Thuật toán bắt lỗi (Regex Pattern Matching):** Nếu câu thoại kịch bản trích dẫn thông tin từ chunk có `category: "FOLKLORE_MYTH"` hoặc `source_reliability: "LEVEL_3"`, câu thoại đó **BẮT BUỘC khớp với biểu thức chính quy (Regex Pattern)** bao quát các từ/cụm từ tín hiệu giả thuyết:
+>    ```regex
+>    /(theo (truyền thuyết|dã sử|thần thoại|dân gian|giai thoại)|tương truyền|dân gian (kể|cho rằng)|(truyền thuyết|giai thoại) (kể|rằng|ghi nhận)|người xưa (kể|truyền)|theo các giai thoại)/i
+>    ```
+> 2. **Cơ chế xử lý:** Nếu thiếu cụm từ tín hiệu $\rightarrow$ Guardrail lập tức **Reject & Retry (Tối đa 3 lần)** với prompt bổ sung nguyên nhân từ chối.
+
+### 3.3. Tiêu Chí & Quy Trình Phê Duyệt "Modern Scholarly Consensus Override Protocol"
 
 > [!WARNING]
 > **Quy Trình Phê Duyệt Cờ Modern Override:**  
@@ -113,7 +144,7 @@ Mọi văn bản thô khi cào về hoặc nhập vào hệ thống bắt buộc
 > 1. **Tiêu chuẩn Bằng chứng:** Phải có ít nhất **2 công trình nghiên cứu/bài báo phản biện độc lập** (Peer-Reviewed) từ các cơ quan uy tín (Viện Sử Học, Tạp chí Nghiên cứu Lịch sử, Cục Di sản Văn hóa...) HOẶC bằng chứng khảo cổ học / đo đạc phóng xạ carbon verified.
 > 2. **Tiêu chuẩn Phê duyệt:** Phải được xác thực qua quy trình Sign-off Gate bởi Hội đồng Biên tập Lịch sử (`approved_by: "HISTORICAL_BOARD"`).
 
-### 3.3. Quy Trình Kiểm Định & Xử Lý Bất Đồng Bản Dịch Hán / Hán Nôm (Classical Chinese Translation Protocol)
+### 3.4. Quy Trình Kiểm Định & Xử Lý Bất Đồng Bản Dịch Hán / Hán Nôm (Classical Chinese Translation Protocol)
 
 Đối với các nguồn cổ văn Hán / Hán Nôm (*Minh Thực Lục*, *Nguyên Sử*, *Châu Bản Nhà Nguyễn*...):
 1. **OCR & Trích Xuất Chuyên Dụng:** Sử dụng mô hình OCR tối ưu cho chữ Hán/Nôm cổ (như NomNaOCR).
@@ -123,29 +154,39 @@ Mọi văn bản thô khi cào về hoặc nhập vào hệ thống bắt buộc
      `translation_variants: [{ translator: "Viện Hán Nôm", text: "..." }, { translator: "NXB KHXH", text: "..." }]`.
    * Áp dụng khung Multi-Perspective (Mục 5.2) để AI Scriptwriter trình bày cả 2 góc nhìn dịch thuật trong kịch bản.
 
-### 3.4. Quy Trình Đảm Bảo Bản Quyền & Sở Hữu Trí Tuệ Khi Cào Text (Text Copyright Governance)
+### 3.5. Quy Trình Ingest Tư Liệu Ngoại Ngữ / Nguồn Nước Ngoài (Foreign Language Source Ingestion Protocol)
 
-1. **Public Domain:** Văn bản cổ đại/trung đại (đã quá 50 năm sau khi tác giả qua đời), văn bản hành chính nhà nước công bố rộng rãi $\rightarrow$ Cho phép cào và nạp đầy đủ nội dung (`license_status: "PUBLIC_DOMAIN"`).
-2. **Open Access:** Bài báo Open Access (CC-BY), SGK công khai $\rightarrow$ Cho phép nạp chunk kèm citation trích dẫn (`license_status: "CREATIVE_COMMONS"`).
-3. **Sách Chuyên Khảo Thương Mại:** Tác phẩm chuyên khảo còn bảo hộ bản quyền $\rightarrow$ **Tuyệt đối không lưu verbatim toàn văn (full-text)**; chỉ cho phép trích xuất **Tóm tắt Diễn giải (Abstractive Summary Chunks)** kèm thông tin citation (`license_status: "FAIR_USE_SUMMARY"`).
+Đối với các tư liệu lịch sử tiếng Pháp (thời Pháp thuộc), tiếng Trung/Nhật hiện đại, hoặc tài liệu sử học phương Tây (tiếng Anh):
+1. **Nạp Đa Ngữ Kèm Citation Gốc:** Lưu trữ nguyên bản văn bản gốc (`original_text`, `original_language`) song song với bản dịch tiếng Việt đã hiệu đính (`translated_text`).
+2. **Xác Minh Bối Cảnh Lịch Sử (Source Context Verification):** Các nguồn nước ngoài (đặc biệt là sử thư phong kiến Trung Quốc hoặc báo chí thời Pháp) thường mang góc nhìn chính trị riêng. Bắt buộc gán nhãn `perspective_tag: "FOREIGN_CHRONICLE"` và gán trọng số $W_{\text{source}}$ phù hợp kèm ghi chú bối cảnh trong Knowledge Graph.
 
-### 3.5. Giải Tỏa Phạt Chồng & Cơ Chế Áp Dụng Trọng Số Nguồn (Source Weight Decoupling & Execution)
+### 3.6. Quy Định An Toàn Nội Dung & Quản Trị Nhạy Cảm Thời Kỳ Hiện Đại (Epoch 15 Content Governance Protocol)
+
+Đối với **EPOCH_15 (1975 - Nay)**:
+1. **Bảo Vệ Quyền Riêng Tư & Nhân Thân Nhân Vật Còn Sống:** Tuyệt đối không ingest thông tin đời tư, thông tin cá nhân chưa kiểm chứng của các cá nhân còn sống.
+2. **Nguồn Dữ Liệu Bắt Buộc:** Chỉ ingest từ các nguồn văn bản chính thống được công bố bởi các cơ quan nhà nước, Viện Sử Học, Tạp chí Lịch sử Đảng, hoặc các văn kiện chính thức đã xuất bản.
+3. **Quy Tắc Trung Lập & Tôn Trọng Pháp Luật:** Đảm bảo ngôn từ kịch bản luôn khách quan, chuẩn mực, tuân thủ nghiêm ngặt Luật An ninh mạng và các quy định pháp luật hiện hành.
+
+### 3.7. Giải Tỏa Phạt Chồng & Cơ Chế Áp Dụng Trọng Số Nguồn (Source Weight Decoupling & Execution)
 
 > [!NOTE]
 > **Giải Tỏa Rủi Ro "Phạt Chồng" (Over-Penalization Avoidance):**  
-> Trọng số nguồn $W_{\text{source}} \in \{1.0, 0.8, 0.5\}$ được dùng để phân xử **Độ tin cậy sự thật (Fact Confidence)**, KHÔNG ĐƯỢC dùng để triệt hạ **Độ liên quan truy xuất (Retrieval Relevance)**. Nếu nhân $W_{\text{source}} = 0.5$ trực tiếp vào bước tìm kiếm, các truy vấn về dã sử (vd: "kể chuyện Sơn Tinh Thủy Tinh") sẽ bị đánh tụt thứ hạng chunk dã sử một cách vô lý.
+> Trọng số nguồn $W_{\text{source}} \in \{1.0, 0.8, 0.5\}$ được dùng để phân xử **Độ tin cậy sự thật (Fact Confidence)**, KHÔNG ĐƯỢC dùng để triệt hạ **Độ liên quan truy xuất (Retrieval Relevance)**.  
+> Mô hình embedding dùng để dedup và retrieval là **BGE-M3 (1024-dimensional)** đồng nhất monorepo-wide, đảm bảo không bị lệch không gian vector.
 
 Cơ chế thực thi trọng số nguồn được tách bạch làm 3 cấp độ:
 
 1. **Bước Tìm Kiếm (Retrieval Phase):**  
-   Tìm kiếm thuần túy dựa vào độ liên quan ngữ nghĩa và từ khóa:
-   $$\text{RelevanceScore}(chunk) = \alpha \cdot \text{DenseCosineSim} + (1-\alpha) \cdot \text{BM25Sim}$$
+   Tìm kiếm kết hợp Dense Vector và Lexical BM25 thông qua **Reciprocal Rank Fusion (RRF)** hoặc normalized combination (tránh rủi ro BM25 score không chặn đè bẹp Cosine Sim):
+   $$RRF\_Score(chunk) = \dfrac{1}{k + r_{\text{dense}}(chunk)} + \dfrac{1}{k + r_{\text{bm25}}(chunk)} \quad (k = 60)$$
+   *Hoặc công thức normalized score:*
+   $$\text{RelevanceScore}(chunk) = \alpha \cdot \text{DenseCosineSim}_{\text{BGE-M3}} + (1-\alpha) \cdot \dfrac{\text{BM25Score}}{\max(\text{BM25Score})}$$
    *Đối với các truy vấn có ý định xác minh sự thật ("xác minh", "có thật không"), $W_{\text{source}}$ chỉ tham gia như một hệ số re-rank nhẹ với tỷ trọng $\le 15\%$.*
 2. **Bước Đồ Thị Tri Thức (Knowledge Graph Edge Confidence):**  
    Nhân $W_{\text{source}}$ trực tiếp vào `confidence_score` của Edge trên Graph:
    $$\text{Confidence}_{\text{edge}} = W_{\text{source}} \times \text{ExtractorModelConfidence}$$
 3. **Bước Đóng Gói Prompt Cho AI Scriptwriter (Prompt Context Framing):**  
-   Gán nhãn thẩm quyền nguồn vào từng chunk truyền vào LLM context: `[SOURCE_TIER: LEVEL_1 | W=1.0]` hoặc `[SOURCE_TIER: LEVEL_3 | W=0.5]`. Prompt yêu cầu AI Scriptwriter dùng giọng văn khẳng định với Level 1 và giọng văn giả thuyết/nghệ thuật ("Theo truyền thuyết dân gian...") đối với Level 3.
+   Gán nhãn thẩm quyền nguồn vào từng chunk truyền vào LLM context: `[SOURCE_TIER: LEVEL_1 | W=1.0]` hoặc `[SOURCE_TIER: LEVEL_3 | W=0.5]`. Prompt yêu cầu AI Scriptwriter dùng giọng văn khẳng định với Level 1 và giọng văn giả thuyết/nghệ thuật đối với Level 3.
 
 ---
 
@@ -205,6 +246,12 @@ Khi chạy pipeline re-indexing (`pnpm --filter @chronoviet/rag-engine rag:re-re
 - **Cạnh không mâu thuẫn (cùng thuộc tính/giá trị):** Lấy $\max(\text{Confidence}_A, \text{Confidence}_B)$.
 - **Cạnh mâu thuẫn giá trị (vd: Nguồn A bảo sinh năm 1225, Nguồn B bảo sinh năm 1226):** **Tuyệt đối không ghi đè ngẫu nhiên.** Hệ thống tự động chuyển đổi thành 2 cạnh song song theo mô hình **Multi-Perspective Graph Edge** (Mục 5.2) kèm trích dẫn nguồn riêng biệt.
 
+### 4.5. Nhật Ký Phiên Bản & Truy Vết Thay Đổi Dữ Liệu (Audit Trail & Versioning)
+
+Mọi thao tác hợp nhất thực thể (Merge Entity), cập nhật Modern Override, hoặc chỉnh sửa bảng Alias bắt buộc phải được ghi vào nhật ký vết thay đổi không thể sửa xóa (Append-Only Audit Log) trong PostgreSQL:
+* **Schema Audit Log Table:** `entity_audit_logs(log_id, entity_id, action_type, modified_by, timestamp, previous_state, new_state, rationale)`.
+* Cho phép Rollback lại trạng thái đồ thị tri thức trước đó nếu phát hiện thao tác hợp nhất sai sót.
+
 ---
 
 ## ⚔️ 5. Khung Giải Quyết Xung Đột Sử Liệu (Historical Conflict Resolution Framework)
@@ -214,18 +261,19 @@ Khi chạy pipeline re-indexing (`pnpm --filter @chronoviet/rag-engine rag:re-re
 2. **Xung đột lực lượng/quân số:** Sử Việt ghi quân Nguyên-Mông 50 vạn, sử nhà Nguyên ghi 10-20 vạn.
 3. **Xung đột kết cục trận đánh / nhân vật:** Tướng bị bắt sống hay tử trận tại chỗ (ví dụ: tướng Ô Mã Nhi tại trận Bạch Đằng 1288).
 
-### 5.2. Thuật Toán Giải Quyết Xung Đột 3 Bước (3-Step Conflict Resolution)
+### 5.2. Thuật Toán Giải Quyết Xung Đột 3 Bước & Ngưỡng Định Lượng Tranh Luận (3-Step Conflict Resolution & Decision Threshold)
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                          BƯỚC 1: XÁC ĐỊNH CẤP ĐỘ NGUỒN (LEVEL & SCHOLARLY CONSENSUS)   │
+##  BƯỚC 1: XÁC ĐỊNH CẤP ĐỘ NGUỒN & NGƯỠNG TƯƠNG QUAN CONFIDENCE                          │
 │  - Nếu Nguồn A (Level 1) mâu thuẫn Nguồn B (Level 3) ──► Chọn Nguồn A                  │
 │  - Nếu Nguồn B (Level 2/Hiện đại) có bằng chứng khảo cổ/đồng thuận khoa học ──► Override│
 └───────────────────────────────────────────┬────────────────────────────────────────────┘
-                                            │ (Nếu 2 nguồn cùng Level 1 hoặc tranh luận kéo dài)
+                                            │ (Nếu 2 nguồn cùng Level 1 HOẶC chênh lệch 
+                                            │  |Confidence(A) - Confidence(B)| <= 0.15)
                                             ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                   BƯỚC 2: BIỂU DIỄN ĐỒ THỊ ĐA GÓC NHÌN (MULTI-PERSPECTIVE)             │
+##  BƯỚC 2: BIỂU DIỄN ĐỒ THỊ ĐA GÓC NHÌN (MULTI-PERSPECTIVE EDGE MODELLING)              │
 │  - Lưu trữ song song các luồng quan hệ trên Đồ thị Tri thức kèm Trọng số & Nguồn trích │
 │    + Ví dụ 1 (Quân số chiến dịch 1285):                                                │
 │      Edge 1a: (Yuan_Army, HAS_SOLDIER_COUNT, 500000) | confidence: 0.95 | source: "Su_Ky_Toan_Thu"
@@ -237,7 +285,7 @@ Khi chạy pipeline re-indexing (`pnpm --filter @chronoviet/rag-engine rag:re-re
                                             │
                                             ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                   BƯỚC 3: AI SCRIPTWRITER PROMPT ENFORCEMENT                           │
+##  BƯỚC 3: AI SCRIPTWRITER PROMPT ENFORCEMENT                                           │
 │  - Khi tạo kịch bản, AI Agent bắt buộc phải nêu rõ tranh luận sử liệu nếu có:          │
 │    "Theo Đại Việt Sử Ký Toàn Thư, tướng Ô Mã Nhi bị bắt sống... Tuy nhiên theo một số  │
 │    sử liệu phương Bắc..."                                                              │
@@ -245,34 +293,59 @@ Khi chạy pipeline re-indexing (`pnpm --filter @chronoviet/rag-engine rag:re-re
 ```
 
 > [!IMPORTANT]
-> **Đính Chính Sử Liệu Trong Minh Họa Mẫu (Historical Accuracy Note):**  
-> Tướng Nguyên-Mông **Toa Đô (Sogetu)** tử trận tại **Tây Kết (1285)** trong cuộc kháng chiến chống Nguyên-Mông lần 2, **KHÔNG PHẢI Trận Bạch Đằng (1288)** (Trận Bạch Đằng 1288 là cuộc kháng chiến lần 3, chống Ô Mã Nhi và Phàn Tiếp). Mọi ví dụ trong codebase và seed data phải tuân thủ chuẩn xác mốc lịch sử này để tránh nạp dữ liệu sai từ đầu.
+> **Ngưỡng Định Lượng Quyết Định Tranh Luận Kéo Dài (Protracted Debate Quantitative Threshold):**  
+> Hai nguồn được coi là có **tranh luận kéo dài** và kích hoạt Bước 2 (Multi-Perspective) khi thỏa mãn 1 trong 2 điều kiện:
+> 1. Cả 2 nguồn đều thuộc **Level 1** nhưng đưa ra dữ kiện mâu thuẫn.
+> 2. Chênh lệch điểm tin cậy giữa hai nguồn cạnh tranh nhỏ hơn hoặc bằng $0.15$:  
+>    $$|\text{Confidence}(Edge_A) - \text{Confidence}(Edge_B)| \le 0.15$$
 
 ---
 
-## 🔍 6. Quy Trình Kiểm Định & Giám Sát Chất Lượng RAG (RAG Quality Audit & KPI Metrics)
+## 🔍 6. Quy Trình Kiểm Định & Giám Sát Chất Lượng RAG (RAG Quality Audit & Operational Parameters)
 
 ```bash
 # Lệnh chạy kiểm định chất lượng dữ liệu nạp vào RAG Engine
 pnpm --filter @chronoviet/rag-engine eval:ingest
 ```
 
-### Bảng Chỉ Số KPI Chất Lượng Dữ Liệu & Phương Pháp Đo Lường Thực Tế:
+### 6.1. Bảng Chỉ Số KPI Chất Lượng Dữ Liệu & Phương Pháp Đo Lường Thực Tế:
 
 | Tên chỉ số KPI | Định nghĩa & Phương pháp đo | Mục tiêu tối thiểu | Cơ chế Enforcement / Bảo đảm |
 | :--- | :--- | :---: | :--- |
 | **Entity Normalization Accuracy** | Tỷ lệ ánh xạ chính xác tên nhân vật cổ và địa danh về Canonical ID | **$> 98.0\%$** | Benchmark suite tự động trên tập test case chuẩn |
-| **Citation Traceability Score** | Tỷ lệ câu thoại kịch bản trỏ ngược được về đúng `chunk_id` gốc trong DB | **$100\%$** | **Guardrail Validator Gate:** Reject & Retry lập tức nếu câu thoại không có citation hợp lệ |
-| **Hallucination Rate** | Tỷ lệ thông tin AI tự suy đoán không có trong dữ liệu gốc | **$< 0.5\%$** *(Vận hành)* | **Grounding Check (NLI Entailment)** 100% output tự động + **Human Audit Spot-check** theo mẫu thống kê |
+| **Cross-Linking Precision** | Tỷ lệ chính xác liên kết giữa thực thể và đoạn văn bản (`entity_chunks`) | **$> 98.0\%$** | Audit tự động trên 500 junction rows ngẫu nhiên |
+| **Citation Traceability Score** | Tỷ lệ câu thoại kịch bản trỏ ngược được về đúng `chunk_id` gốc trong DB | **$100\%$** | **Guardrail Validator Gate:** Reject & Retry (Tối đa 3 lần). Sau 3 lần $\rightarrow$ **Circuit Breaker Flag `HUMAN_REVIEW`** |
+| **Hallucination Rate** | Tỷ lệ thông tin AI tự suy đoán không có trong dữ liệu gốc | **$< 0.5\%$** *(Vận hành)* | **NLI Entailment Judge 2 Phase Architecture:**<br>- **Phase 1 (MVP/Node.js):** Zero-Shot LLM NLI Judge Prompting với Entailment Score $\ge 0.80$.<br>- **Phase 2 (Prod):** Python Sidecar Microservice (`xlm-roberta-base-nli-stsb-vietnamese`) qua ONNX Runtime. |
 | **Data Duplicate Ratio** | Tỷ lệ đoạn văn bản trùng lặp còn sót lại trong Database | **$< 0.5\%$** | MinHash LSH & BGE-M3 Dense Cosine Check ($\ge 0.96$) |
 
-> [!NOTE]
-> **Công Thức Thống Kê Xác Định Cỡ Mẫu Spot-Check (Statistical Audit Sampling):**  
-> Cỡ mẫu kiểm định thủ công hàng chu kỳ được tính theo công thức: $n = \max\left(50, \; \left\lceil \dfrac{Z^2 \cdot p(1-p)}{e^2} \right\rceil \right)$ hoặc tối thiểu $5\%$ tổng số lượng kịch bản xuất bản trong chu kỳ sprint, đảm bảo độ tin cậy thống kê $95\%$.
+### 6.2. Thông Số Mặc Định Công Thức Lấy Mẫu Thống Kê Spot-Check (Statistical Audit Parameters)
+
+Cỡ mẫu kiểm định thủ công hàng chu kỳ cho quần thể vô hạn ($N \ge 10.000$) được tính theo công thức Cochran:
+$$n_0 = \max\left(50, \; \left\lceil \dfrac{Z^2 \cdot p(1-p)}{e^2} \right\rceil \right)$$
+
+Đối với các đợt kiểm định lô/batch dữ liệu nhỏ ($N < 10.000$), áp dụng **Công thức Hiệu chỉnh Quần thể Hữu hạn (Finite Population Correction - FPC)** để tránh lấy mẫu dư thừa:
+$$n_{\text{adjusted}} = \left\lceil \dfrac{n_0}{1 + \dfrac{n_0 - 1}{N}} \right\rceil$$
+
+**Giá trị tham số mặc định áp dụng chuẩn hóa trong hệ thống:**
+* **Mức độ tin cậy (Confidence Level):** $95\% \implies Z = 1.96$.
+* **Tỷ lệ lỗi dự kiến (Expected Error Rate):** $p = 0.05$ ($5\%$) cho quy trình kiểm soát chất lượng tiêu chuẩn. *(Trường hợp đánh giá cỡ mẫu bảo thủ tối đại áp dụng $p = 0.50$)*.
+* **Sai số biên cho phép (Margin of Error):** $e = 0.05$ ($5\%$).
+* **Cỡ mẫu tính toán thực tế:**
+  * Khi $N \ge 10.000$ (với $p = 0.05$): $n_0 = \max\left(50, \left\lceil \dfrac{1.96^2 \cdot 0.05 \cdot 0.95}{0.05^2} \right\rceil\right) = \max(50, 73) = \mathbf{73 \text{ kịch bản/chunks}}$.
+  * Khi $N \ge 10.000$ (với $p = 0.50$ Max volatility): $n_0 = \max\left(50, \left\lceil \dfrac{1.96^2 \cdot 0.5 \cdot 0.5}{0.05^2} \right\rceil\right) = \mathbf{385 \text{ kịch bản/chunks}}$.
+  * Khi $N = 100$ batch kịch bản (với $p = 0.05, n_0 = 73$): $n_{\text{adjusted}} = \left\lceil \dfrac{73}{1 + \frac{72}{100}} \right\rceil = \mathbf{43 \text{ kịch bản/chunks}}$.
 
 ---
 
 ## 📑 7. Hướng Dẫn Thực Hành Cào & Nạp Dữ Liệu RAG Đạt Chuẩn (Best Practices for Developers)
+
+### 7.1. Cắt Đoạn Theo Ranh Giới Ngữ Nghĩa (Semantic Boundary Chunking)
+
+Khi thực hiện ingest văn bản sử ký:
+* **Không dùng đếm từ cứng để ngắt dòng ngẫu nhiên.** Văn bản cổ sử có mối liên hệ nhân quả chặt chẽ giữa các câu.
+* **Quy tắc cắt đoạn:** Mỗi child chunk đại diện cho **1 sự kiện lịch sử hoàn chỉnh** hoặc **1 đoạn luận điểm trọn vẹn**, có độ dài khuyến nghị từ **300 - 500 từ**, giữ nguyên tính liên tục của cặp nguyên nhân - kết quả.
+
+### 7.2. Gán Nhãn Đa Thời Kỳ & Cập Nhật Từ Điển Entities
 
 1. **Khi cào bài viết mới (Cơ chế Mảng `epoch_ids` Đa Thời Kỳ):**
    * Sử dụng lệnh `pnpm crawl:corpus --topics="..."` để qua bộ lọc `Quality Gate`.

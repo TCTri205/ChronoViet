@@ -1,13 +1,20 @@
 /**
  * CLI Command: Crawl Historical Corpus & Quality Gate Sanitization
  * Usage:
- *   pnpm crawl:corpus --topics="Trần Hưng Đạo, Trận Bạch Đằng" [--output=path] [--dynasty="Nhà Trần"]
- *   pnpm crawl:corpus --urls="https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư"
+ *   pnpm crawl:corpus --all                            # Crawl ALL 15 Epochs automatically
+ *   pnpm crawl:corpus --epoch=EPOCH_05                 # Crawl specific Epoch (e.g. Epoch 5 - Nhà Trần)
+ *   pnpm crawl:corpus --topics="Trần Hưng Đạo"          # Crawl specific topics
+ *   pnpm crawl:corpus --urls="https://vi.wikisource.org/..."
  */
 
 import path from 'path';
 import { WikiScraper } from '../ingestion/crawler/wiki-scraper.js';
 import { WebScraper } from '../ingestion/crawler/web-scraper.js';
+import {
+  getAllMasterTopics,
+  getTopicsByEpoch,
+  MASTER_HISTORICAL_CATALOG,
+} from '../ingestion/crawler/master-corpus-catalog.js';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 import { CorpusCrawlItemResult, CorpusCrawlResult } from '@chronoviet/shared-spec';
 
@@ -17,6 +24,8 @@ function parseArgs(): {
   outputPath: string;
   dynasty?: string;
   minWordCount: number;
+  all: boolean;
+  epoch?: string;
 } {
   const args = process.argv.slice(2);
   let topics: string[] = [];
@@ -24,9 +33,15 @@ function parseArgs(): {
   let outputPath = path.resolve(findMonorepoRoot(), 'data', 'raw_corpus');
   let dynasty: string | undefined = undefined;
   let minWordCount = 150;
+  let all = false;
+  let epoch: string | undefined = undefined;
 
   for (const arg of args) {
-    if (arg.startsWith('--topics=')) {
+    if (arg === '--all' || arg === '--full') {
+      all = true;
+    } else if (arg.startsWith('--epoch=')) {
+      epoch = arg.split('=')[1];
+    } else if (arg.startsWith('--topics=')) {
       const topicStr = arg.split('=')[1] || '';
       topics = topicStr.split(',').map((t) => t.trim()).filter((t) => t.length > 0);
     } else if (arg.startsWith('--urls=')) {
@@ -41,22 +56,40 @@ function parseArgs(): {
     }
   }
 
-  return { topics, urls, outputPath, dynasty, minWordCount };
+  return { topics, urls, outputPath, dynasty, minWordCount, all, epoch };
 }
 
 async function main() {
-  const { topics, urls, outputPath, dynasty, minWordCount } = parseArgs();
+  const { topics: inputTopics, urls, outputPath, dynasty, minWordCount, all, epoch } = parseArgs();
   const startTime = Date.now();
 
-  console.log('🌐 Starting ChronoViet Historical Corpus Crawler...');
+  console.log('🌐 Starting ChronoViet Historical Corpus Master Crawler...');
   console.log(`📁 Target Output Directory: ${outputPath}`);
   if (dynasty) console.log(`🏛️ Dynasty Tag:              ${dynasty}`);
   console.log(`📝 Min Word Count Threshold: ${minWordCount} words`);
 
-  if (topics.length === 0 && urls.length === 0) {
-    console.warn('\n⚠️ No topics or URLs provided!');
+  let topicsToCrawl: string[] = [...inputTopics];
+
+  if (all) {
+    console.log('\n👑 [--all FLAG DETECTED] Loading Master Catalog for ALL 15 HISTORICAL EPOCHS...');
+    topicsToCrawl = getAllMasterTopics();
+    console.log(`📌 Total Master Topics to Crawl: ${topicsToCrawl.length} topics across 15 Epochs`);
+  } else if (epoch) {
+    const epochEntry = getTopicsByEpoch(epoch);
+    if (epochEntry) {
+      console.log(`\n🏛️ [--epoch=${epoch} DETECTED] Loading Catalog for "${epochEntry.epochName}" (${epochEntry.epochId})...`);
+      topicsToCrawl = epochEntry.topics;
+    } else {
+      console.warn(`⚠️ Unknown Epoch identifier: "${epoch}". Expected values like "EPOCH_05" or "5".`);
+    }
+  }
+
+  if (topicsToCrawl.length === 0 && urls.length === 0) {
+    console.warn('\n⚠️ No topics, URLs, --all, or --epoch flags provided!');
     console.log('Usage Examples:');
-    console.log('  pnpm crawl:corpus --topics="Trần Hưng Đạo, Trận Bạch Đằng, Nhà Trần"');
+    console.log('  pnpm crawl:corpus --all                            # Automatically crawl ALL 15 Epochs');
+    console.log('  pnpm crawl:corpus --epoch=EPOCH_05                 # Crawl Epoch 5 (Nhà Trần)');
+    console.log('  pnpm crawl:corpus --topics="Trần Hưng Đạo, Trận Bạch Đằng"');
     console.log('  pnpm crawl:corpus --urls="https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư"');
     process.exit(0);
   }
@@ -66,10 +99,12 @@ async function main() {
   const results: CorpusCrawlItemResult[] = [];
 
   // 1. Crawl Topics via Wikipedia API
-  if (topics.length > 0) {
-    console.log(`\n📚 Crawling ${topics.length} Wikipedia Topics...`);
-    for (const topic of topics) {
-      console.log(`  - Crawling topic: "${topic}"...`);
+  if (topicsToCrawl.length > 0) {
+    console.log(`\n📚 Crawling ${topicsToCrawl.length} Historical Topics...`);
+    let count = 0;
+    for (const topic of topicsToCrawl) {
+      count++;
+      console.log(`  [${count}/${topicsToCrawl.length}] Crawling: "${topic}"...`);
       const res = await wikiScraper.fetchTopic(topic, { outputPath, dynasty, minWordCount });
       results.push(res);
 
@@ -86,8 +121,10 @@ async function main() {
   // 2. Crawl URLs via WebScraper
   if (urls.length > 0) {
     console.log(`\n🔗 Crawling ${urls.length} Web URLs...`);
+    let count = 0;
     for (const url of urls) {
-      console.log(`  - Crawling URL: ${url}...`);
+      count++;
+      console.log(`  [${count}/${urls.length}] Crawling URL: ${url}...`);
       const res = await webScraper.fetchUrl(url, { outputPath, dynasty, minWordCount });
       results.push(res);
 
@@ -112,7 +149,7 @@ async function main() {
   };
 
   console.log('\n======================================================');
-  console.log('🎉 Corpus Crawling & Quality Gate Completed!');
+  console.log('🎉 Master Corpus Crawling & Quality Gate Completed!');
   console.log(`📊 Attempted: ${summary.totalAttempted} | Saved: ${summary.totalSaved} | Failed/Skipped: ${summary.totalAttempted - summary.totalSaved}`);
   console.log(`⏱️ Duration: ${summary.durationMs} ms`);
   console.log('======================================================\n');
@@ -126,3 +163,4 @@ main().catch((err) => {
   console.error('❌ Fatal Crawler Error:', err);
   process.exit(1);
 });
+

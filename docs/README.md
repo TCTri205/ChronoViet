@@ -95,27 +95,19 @@ d:\Persional_Projects\ChronoViet\docs\
 ## ⚡ 3. Quickstart: Lệnh Render Video Remotion Nhanh (Chạy tại Root Monorepo)
 
 ```bash
-# Xem preview trực tiếp (Remotion Studio GUI)
-pnpm remotion:studio
+# 1. Khởi tạo CSDL PostgreSQL pgvector & Relational Graph Schema
+pnpm --filter @chronoviet/rag-engine db:init
 
-# Kiểm tra type safety toàn bộ monorepo (0 lỗi TypeScript)
-pnpm typecheck
+# 2. Cào TỰ ĐỘNG toàn bộ 15 Thời kỳ Lịch sử Việt Nam
+pnpm crawl:all
 
-# Chạy suite kiểm định tự động Remotion Engine & mở Studio GUI
-pnpm --filter @chronoviet/remotion-engine eval
+# 3. Tiền xử lý & Nạp kho tri thức vào CSDL
+pnpm --filter @chronoviet/rag-engine ingest:knowledge
 
-# Render các kịch bản domain chuẩn ra MP4 từ root monorepo
+# 4. Render các kịch bản domain chuẩn ra MP4 từ root monorepo
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/rendered-videos/biography.mp4
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/rendered-videos/battle.mp4
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/mystery_le_chi_vien.json -o media/rendered-videos/mystery.mp4
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/artifact_trong_dong_ngoc_lu.json -o media/rendered-videos/artifact.mp4
-```
-npm run render:haibatrung   # → out/haibatrung_full.mp4
-npm run render:mongolviet2  # → out/mongolviet2_full.mp4 (Chống Mông Cổ lần 2, 18 phút)
-
-# Render tùy chỉnh với JSON bất kỳ
-npx remotion render src/index.ts BiographyVideo out/custom.mp4 --props=src/data/templateGeneralTimeline.json
 ```
 
 ---

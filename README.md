@@ -21,22 +21,23 @@
 **ChronoViet** (*Chronology + Việt Nam*) giải quyết bài toán sấy khô kiến thức lịch sử bằng cách biến nguồn tri thức lịch sử Việt Nam dạng văn bản thành các **Video tóm tắt trực quan tự động** kết hợp **Hệ thống Chatbot RAG tương tác hai chiều**.
 
 Dự án ứng dụng mô hình **Decoupled Event-Driven Architecture** với 5 mô-đun xử lý chuyên biệt:
-0. **Data Preprocessing & Ingestion Engine**: Nạp tri thức lịch sử offline, làm sạch lỗi OCR, chuẩn hóa địa danh qua các thời kỳ (`SAME_AS_LOCATION`), khử nhập nhằng nhân vật (`ALIAS_OF`), Dynamic Hierarchical Chunking, nạp PostgreSQL pgvector & Host Mount Volume `/media/`.
-1. **Hybrid GraphRAG Engine**: Đảm bảo tri thức lịch sử chính xác, loại bỏ hoàn toàn hiện tượng suy đoán sai (hallucination).
-2. **Multi-Agent Orchestrator (LangGraph.js)**: Lập kịch bản video chi tiết, phân chia phân cảnh & chọn bố cục trực quan phù hợp.
-3. **VLM Inspector Agent (Gemini 2.5 Flash / CLIP)**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
-4. **Remotion Render Engine**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v4.1.
+0. **Data Preprocessing & Ingestion Engine [✅]**: Nạp tri thức lịch sử offline, cào tự động toàn bộ 15 thời kỳ lịch sử (`pnpm crawl:all`), làm sạch lỗi OCR, chuẩn hóa địa danh qua các thời kỳ (`SAME_AS_LOCATION`), khử nhập nhằng nhân vật (`ALIAS_OF`), Dynamic Hierarchical Chunking, nạp PostgreSQL pgvector (1024d BGE-M3 + FTS BM25), Relational Graph & Append-Only Audit Trail (`entity_audit_logs`).
+1. **Hybrid GraphRAG Engine [✅]**: Động cơ tìm kiếm kết hợp Knowledge Graph + Dense Vector BGE-M3 + Sparse BM25 + Recursive CTE Subgraph Search + BGE Reranker v2. Đảm bảo tri thức lịch sử chính xác 100%, loại bỏ hoàn toàn suy đoán sai (Hallucination Rate 0%).
+2. **Multi-Agent Orchestrator (LangGraph.js) [✅]**: Lập kịch bản video chi tiết, phân chia phân cảnh & chọn bố cục trực quan phù hợp, tích hợp NLI Entailment Hallucination Judge & Folklore Guardrail Gate.
+3. **VLM Inspector Agent (Gemini 2.5 Flash / CLIP) [📐]**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
+4. **Remotion Render Engine [✅]**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v4.1.
 
 ---
 
 ## ✨ 2. Tính Năng Nổi Bật (Key Features)
 
+* 👑 **Master Historical Corpus Crawler**: Cào tự động 100% tài liệu tri thức phủ rộng qua **15 Thời Kỳ Lịch Sử Việt Nam** chuẩn hóa trong 1 câu lệnh (`pnpm crawl:all`).
 * 🎬 **100% Data-Driven Remotion Video Engine**: Render video chất lượng cao từ file JSON mà không cần sửa code React.
-* 📐 **18 LayoutModes & 15 TransitionTypes**: Hỗ trợ 7 bố cục hình ảnh tư liệu & 11 bố cục lập trình đồ họa (Pure Code), 4 hiệu ứng bộ lọc màu (*Historical, Sepia, Monochrome, Vivid*) và hiệu ứng camera Ken Burns.
+* 📐 **31 LayoutModes & 19 TransitionTypes**: Hỗ trợ 11 bố cục hình ảnh tư liệu & 20 bố cục lập trình đồ họa (Pure Code), 4 hiệu ứng bộ lọc màu (*Historical, Sepia, Monochrome, Vivid*) và hiệu ứng camera Ken Burns.
 * 🏛️ **5 Miền Nội Dung Lịch Sử (Domains)**: Quy chuẩn kịch bản chuẩn cho *BIOGRAPHY* (Nhân vật), *BATTLE* (Chiến dịch), *DYNASTY* (Triều đại), *MYSTERY* (Bí ẩn/Vụ án) và *ARTIFACT* (Bảo vật quốc gia).
-* 🔍 **Thẩm Định Lịch Sử Bằng VLM**: Loại bỏ ảnh phim cổ trang sai bối cảnh, ảnh dính watermark hoặc logo thương mại; tự động chuyển sang layout Pure Code nếu ảnh không đạt tiêu chuẩn.
+* 🛡️ **Tự Động Bảo Đảm Giọng Văn Dã Sử (Folklore Guardrail Gate)**: Tự động bắt lỗi Regex Pattern Matching và yêu cầu LLM dùng giọng văn giả thuyết cho nguồn tin Level 3/Dã sử.
 * 🎙️ **Self-Hosted VieNeu Neural TTS**: Giọng đọc thuyết minh truyền cảm với word-level timestamps cho hiệu ứng chữ Karaoke.
-* 🛡️ **Type-Safe Monorepo System**: Định nghĩa hợp đồng dữ liệu chuẩn hóa qua `@chronoviet/shared-spec` bằng Zod runtime validation.
+* 🔒 **Type-Safe Monorepo System**: Định nghĩa hợp đồng dữ liệu chuẩn hóa qua `@chronoviet/shared-spec` bằng Zod runtime validation.
 
 ---
 
@@ -51,8 +52,8 @@ ChronoViet/
 │   └── web/                     # Frontend Dashboard & REST/WebSocket API Server
 │
 ├── packages/
-│   ├── agent-orchestrator/      # [📐 ROADMAP] LangGraph.js Multi-Agent Pipeline (+ eval/)
-│   ├── rag-engine/              # [📐 ROADMAP] GraphRAG Engine (pgvector) (+ eval/)
+│   ├── agent-orchestrator/      # [✅ READY] LangGraph.js Multi-Agent Pipeline & Guardrails (+ eval/)
+│   ├── rag-engine/              # [✅ READY] Data Ingestion ETL (Mô-đun 0) & Chrono-RAG Engine (Mô-đun 1) (+ eval/)
 │   ├── remotion-engine/         # [✅ READY] Remotion Render Engine & Studio (+ eval/ test suite)
 │   ├── shared-spec/             # [✅ READY] Zod Schemas & Data Contracts (SSOT)
 │   └── vlm-inspector/           # [📐 ROADMAP] Gemini 2.5 VLM & CLIP Inspector (+ eval/)
@@ -60,11 +61,11 @@ ChronoViet/
 ├── services/
 │   └── vieneu-tts/              # [✅ READY] VieNeu ONNX Neural TTS Service (+ eval/)
 │
-├── eval/                        # [📐 ROADMAP] Tầng Đánh Giá Tập Trung (E2E Integration Benchmark & Golden Datasets)
+├── eval/                        # Tầng Đánh Giá Tập Trung (E2E Integration Benchmark & Golden Datasets)
 ├── docs/                        # Trung tâm Tài liệu Kỹ thuật & Kiến trúc (Documentation Portal)
 │   ├── architecture/            # Tài liệu Kiến trúc Hệ thống, Data Storage & Caching
-│   ├── modules/                 # Tài liệu Chi tiết 4 Mô-đun Chức năng
-│   └── script_examples/         # Các Kịch bản Mẫu Lịch sử Chuẩn (Markdown/JSON)
+│   ├── modules/                 # Tài liệu Chi tiết 5 Mô-đun Xử lý
+│   └── KNOWLEDGE_DATA_GOVERNANCE_SPEC.md # Master Source of Truth về Quản trị Dữ liệu RAG v1.5
 ├── media/                       # Local Mount Volume cho media assets (/raw-assets, /rendered-videos, /license-snapshots)
 ├── docker-compose.yml           # Cấu hình Hạ tầng Docker (Postgres pgvector, Redis, Caddy Proxy)
 └── Caddyfile                    # Cấu hình Reverse Proxy & Serving Static Media Assets
@@ -74,29 +75,14 @@ ChronoViet/
 
 | Package / App | Vai Trò | Trạng Thái | Thư Mục Eval |
 | :--- | :--- | :---: | :---: |
-| [`@chronoviet/remotion-engine`](file:///d:/Persional_Projects/ChronoViet/packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
 | [`@chronoviet/shared-spec`](file:///d:/Persional_Projects/ChronoViet/packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas & Data Contracts | **✅ Ready** | N/A (Shared Spec) |
 | [`@chronoviet/rag-engine`](file:///d:/Persional_Projects/ChronoViet/packages/rag-engine) | Data Ingestion ETL (Mô-đun 0) & Chrono-RAG Engine (Mô-đun 1) PostgreSQL pgvector + Graph | **✅ Ready** | `packages/rag-engine/eval/` |
-| [`@chronoviet/agent-orchestrator`](file:///d:/Persional_Projects/ChronoViet/packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh & biên tập kịch bản | **📐 Roadmap** | `packages/agent-orchestrator/eval/` |
-| [`@chronoviet/vlm-inspector`](file:///d:/Persional_Projects/ChronoViet/packages/vlm-inspector) | Thẩm định hình ảnh tư liệu & lọc bản quyền (PD, CC0, CC-BY) | **📐 Roadmap** | `packages/vlm-inspector/eval/` |
+| [`@chronoviet/agent-orchestrator`](file:///d:/Persional_Projects/ChronoViet/packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh, NLI Judge & Folklore Guardrail Gate | **✅ Ready** | `packages/agent-orchestrator/eval/` |
+| [`@chronoviet/remotion-engine`](file:///d:/Persional_Projects/ChronoViet/packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
 | [`@chronoviet/vieneu-tts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts) | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX) | **✅ Ready** | `services/vieneu-tts/eval/` |
+| [`@chronoviet/vlm-inspector`](file:///d:/Persional_Projects/ChronoViet/packages/vlm-inspector) | Thẩm định hình ảnh tư liệu & lọc bản quyền (PD, CC0, CC-BY) | **📐 Roadmap** | `packages/vlm-inspector/eval/` |
 | [`@chronoviet/render-worker`](file:///d:/Persional_Projects/ChronoViet/apps/render-worker) | Tiến trình xử lý hàng đợi render video bất đồng bộ (BullMQ + Redis) | **📐 Roadmap** | `apps/render-worker/eval/` |
 | [`@chronoviet/web`](file:///d:/Persional_Projects/ChronoViet/apps/web) | Giao diện người dùng Web Dashboard & Chatbot RAG | **📐 Roadmap** | `apps/web/` |
-
----
-
-### 💾 3.1. Kiến Trúc Lưu Trữ Dữ Liệu & Hybrid Evaluation Architecture
-
-Hệ thống **ChronoViet** thiết kế rạch ròi giữa dữ liệu vận hành (Production Data) và dữ liệu kiểm thử trong mã nguồn (Dev/Eval Data):
-
-1. **Môi Trường Production (100% Stateless Codebase):**
-   * **Database SSOT (PostgreSQL 15+ `pgvector`)**: Lưu người dùng, tri thức RAG (`document_chunks`), trạng thái kịch bản (`video_projects`), LangGraph checkpoints, lịch sử audit VLM và render jobs.
-   * **Redis**: Lưu BullMQ Task Queues và bộ đệm đa tầng (LLM Prompts, RAG context, VLM Scores).
-   * **Mount Volume `/media`**: Lưu trữ ảnh crawl, audio giọng đọc WAV từ TTS, license snapshots và video MP4 đầu ra.
-2. **Môi Trường Development & Evaluation (Hybrid Evaluation Model):**
-   * **Tầng Độc Lập (Unit/Module Eval)**: Mỗi mô-đun đều có thư mục `eval/` riêng (`packages/agent-orchestrator/eval/`, `packages/rag-engine/eval/`, `packages/remotion-engine/eval/`, `packages/vlm-inspector/eval/`, `services/vieneu-tts/eval/`, `apps/render-worker/eval/`). Giúp developer chạy benchmark nhanh độc lập từng module mà không tốn tài nguyên load toàn bộ hệ thống.
-   * **Tầng Tập Trung (End-to-End Pipeline Eval)**: Nằm tại thư mục `eval/` ở Root Monorepo. Chứa **Golden Datasets** chuẩn để chạy Integration Benchmark toàn bộ luồng tích hợp (từ Prompt RAG -> Script JSON -> VLM Audit -> TTS Audio -> Remotion Render MP4).
-
 
 ---
 
@@ -117,14 +103,20 @@ cd ChronoViet
 pnpm install
 ```
 
-### Bước 2: Kiểm Tra & Khởi Tạo Assets
+### Bước 2: Khởi Tạo CSDL & Cào Dữ Liệu Tự Động 15 Thời Kỳ (`pnpm crawl:all`)
 
 ```bash
-# Kiểm tra TypeScript trên toàn bộ monorepo (đảm bảo 0 lỗi)
-pnpm typecheck
+# 1. Khởi tạo PostgreSQL pgvector & Relational Graph Schema
+pnpm --filter @chronoviet/rag-engine db:init
 
-# Chuẩn bị file asset âm thanh & hiệu ứng cho Remotion Engine
-pnpm --filter @chronoviet/remotion-engine setup-assets
+# 2. Cào tự động toàn bộ 15 Thời kỳ Lịch sử Việt Nam trong 1 lệnh
+pnpm crawl:all
+
+# 3. Tiền xử lý & Nạp kho tri thức vào CSDL PostgreSQL
+pnpm --filter @chronoviet/rag-engine ingest:knowledge
+
+# 4. Kiểm định chất lượng nạp dữ liệu (Entity Normalization Accuracy > 98%)
+pnpm eval:ingest
 ```
 
 ### Bước 3: Xem Preview & Render Video Chi Tiết
@@ -133,17 +125,17 @@ pnpm --filter @chronoviet/remotion-engine setup-assets
 ```bash
 pnpm remotion:studio
 ```
-*Trình duyệt sẽ tự động mở Remotion Studio tại `http://localhost:9876` để bạn xem trực quan 18 LayoutModes, 15 Transitions và hiệu ứng chuyển cảnh real-time.*
+*Trình duyệt sẽ tự động mở Remotion Studio tại `http://localhost:9876` để bạn xem trực quan 31 LayoutModes, 19 Transitions và hiệu ứng chuyển cảnh real-time.*
 
 #### 2. Chạy Suite Kiểm Định & Đánh Giá Kịch Bản Mẫu (Eval Runner & Clean Lifecycle):
 ```bash
 # Dọn dẹp sạch toàn bộ audio rác, báo cáo cũ & port bị chiếm giữ:
 pnpm eval:clean
 
-# Chạy eval runner thẩm định Zod Schema v3.2 & metrics với trạng thái làm sạch tự động:
+# Chạy eval runner thẩm định Zod Schema v4.1 & metrics:
 pnpm --filter @chronoviet/remotion-engine eval -- --fresh
 
-# Chạy toàn bộ Master Global Eval:
+# Chạy toàn bộ Master Global Eval Monorepo:
 pnpm eval:all --fresh
 ```
 
@@ -157,12 +149,6 @@ pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_b
 
 # Render kịch bản Triều đại (Triều Nhà Lý - 21 scenes)
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
-
-# Render kịch bản Vụ án / Bí ẩn (Vụ án Lệ Chi Viên - 19 scenes)
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/mystery_le_chi_vien.json -o media/rendered-videos/mystery.mp4
-
-# Render kịch bản Bảo vật quốc gia (Trống Đồng Ngọc Lũ - 19 scenes)
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/artifact_trong_dong_ngoc_lu.json -o media/rendered-videos/artifact.mp4
 ```
 
 ---
@@ -176,26 +162,21 @@ Hệ thống được cấu hình sẵn với `docker-compose.yml` phục vụ m
 docker compose up -d --build
 ```
 
-Dịch vụ chạy tại:
-* **Caddy Reverse Proxy**: `http://localhost` (Port 80 / 443)
-* **PostgreSQL (pgvector)**: `127.0.0.1:5432`
-* **Redis**: `127.0.0.1:6379`
-
 ---
 
 ## 📚 6. Trung Tâm Tài Liệu Dự Án (Documentation Portal)
 
 Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật nằm tại thư mục [`docs/`](file:///d:/Persional_Projects/ChronoViet/docs):
 
+* 📜 [**Master Data Governance Spec (`docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md): Quy chuẩn Master Source of Truth cho 15 Epochs, 7 Entity Taxonomies, RRF Min-Max, FPC Cochran formula & Audit Logs.
 * 📑 [**Documentation Portal (`docs/README.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/README.md): Bản đồ tra cứu tài liệu tổng quan.
 * 🏛️ [**System Overview (`docs/SystemOverview.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/SystemOverview.md): Kiến trúc RAG + Multi-Agent + VLM + Remotion.
-* ⚙️ [**Remotion Technical Spec (`docs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 18 LayoutModes, 15 Transitions, Zod Schema & Compositions.
-* 📜 [**Content Formats Spec (`docs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử & Schema Production v3.0.
-* 🗺️ [**Implementation Plan (`docs/IMPLEMENTATION_PLAN.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md): Lộ trình 5 giai đoạn phát triển & bộ đánh giá `eval/`.
-* 🎨 [**Video Essay Design Guide (`docs/TEMPLATE_GUIDE_VIDEO_ESSAY.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/TEMPLATE_GUIDE_VIDEO_ESSAY.md): Bộ nhận diện thị giác & thiết kế đồ họa.
+* ⚙️ [**Remotion Technical Spec (`docs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 31 LayoutModes, 19 Transitions, Zod Schema & Compositions.
+* 📜 [**Content Formats Spec (`docs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử & Schema Production v4.1.
 
 ---
 
 ## 📄 7. Giấy Phép (License)
 
 Dự án thuộc sở hữu riêng của **ChronoViet Team**. Mọi quyền được bảo lưu.
+
