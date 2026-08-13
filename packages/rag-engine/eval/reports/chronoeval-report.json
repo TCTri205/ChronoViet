@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-08-13T12:08:38.127Z",
+  "timestamp": "2026-08-13T14:58:30.187Z",
   "totalEvaluated": 15,
   "avgFactPrecision": 100,
   "avgHallucinationRate": 0,
   "citationTraceabilityPercent": 100,
-  "avgLatencyMs": 136.27,
+  "avgLatencyMs": 0.47,
   "kpiStatus": {
     "factPrecisionPassed": true,
     "hallucinationRatePassed": true,
@@ -21,7 +21,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 3,
-      "latencyMs": 148,
+      "latencyMs": 1,
       "isAnswerable": true,
       "passed": true
     },
@@ -33,7 +33,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 2,
-      "latencyMs": 133,
+      "latencyMs": 1,
       "isAnswerable": true,
       "passed": true
     },
@@ -45,7 +45,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 2,
-      "latencyMs": 130,
+      "latencyMs": 0,
       "isAnswerable": true,
       "passed": true
     },
@@ -57,7 +57,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 1,
-      "latencyMs": 133,
+      "latencyMs": 0,
       "isAnswerable": true,
       "passed": true
     },
@@ -69,7 +69,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 2,
-      "latencyMs": 137,
+      "latencyMs": 1,
       "isAnswerable": true,
       "passed": true
     },
@@ -81,7 +81,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 1,
-      "latencyMs": 137,
+      "latencyMs": 0,
       "isAnswerable": true,
       "passed": true
     },
@@ -93,7 +93,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 3,
-      "latencyMs": 133,
+      "latencyMs": 1,
       "isAnswerable": true,
       "passed": true
     },
@@ -105,7 +105,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 3,
-      "latencyMs": 138,
+      "latencyMs": 0,
       "isAnswerable": true,
       "passed": true
     },
@@ -117,7 +117,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 3,
-      "latencyMs": 132,
+      "latencyMs": 0,
       "isAnswerable": true,
       "passed": true
     },
@@ -129,7 +129,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 3,
-      "latencyMs": 130,
+      "latencyMs": 1,
       "isAnswerable": true,
       "passed": true
     },
@@ -141,7 +141,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 3,
-      "latencyMs": 139,
+      "latencyMs": 0,
       "isAnswerable": true,
       "passed": true
     },
@@ -153,7 +153,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 3,
-      "latencyMs": 132,
+      "latencyMs": 1,
       "isAnswerable": true,
       "passed": true
     },
@@ -165,7 +165,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 0,
-      "latencyMs": 125,
+      "latencyMs": 0,
       "isAnswerable": false,
       "passed": true
     },
@@ -177,7 +177,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 0,
-      "latencyMs": 133,
+      "latencyMs": 0,
       "isAnswerable": false,
       "passed": true
     },
@@ -189,7 +189,7 @@
       "hallucinationRate": 0,
       "citationTraceable": true,
       "aliasesFoundCount": 0,
-      "latencyMs": 164,
+      "latencyMs": 1,
       "isAnswerable": false,
       "passed": true
     }

@@ -91,6 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_entities_aliases ON entities USING GIN (aliases);
 CREATE INDEX IF NOT EXISTS idx_rel_source ON relationships (source_entity_id);
 CREATE INDEX IF NOT EXISTS idx_rel_target ON relationships (target_entity_id);
 CREATE INDEX IF NOT EXISTS idx_rel_type ON relationships (relation_type);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rel_unique ON relationships (source_entity_id, target_entity_id, relation_type);
 
 CREATE INDEX IF NOT EXISTS idx_chunks_epoch_ids ON document_chunks USING GIN (epoch_ids);
 

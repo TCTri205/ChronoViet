@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
-import { VieNeuTTSRequest, VieNeuTTSResponse, WordTimestamp, envConfig } from '@chronoviet/shared-spec';
+import { VieNeuTTSRequest, VieNeuTTSResponse, WordTimestamp, envConfig, logFallbackAlert } from '@chronoviet/shared-spec';
 import { calculateSceneDurationInFrames } from './timestamp-converter.js';
 
 export interface IVieNeuEngine {
@@ -201,7 +201,13 @@ export class VieNeuEngine implements IVieNeuEngine {
     } catch (err: any) {
       // If Python ONNX microservice is offline, seamlessly switch to Fallback Engine with warning log
       const reason = err?.message || 'Connection refused or offline';
-      console.warn(`⚠️ [VieNeuEngine] Could not reach Python ONNX Service (${this.pythonUrl}): ${reason}. Falling back to Synthetic Tone Generator.`);
+      logFallbackAlert({
+        subsystem: 'TTS_ENGINE',
+        primaryTarget: `VieNeu Python ONNX Neural Engine (${this.pythonUrl})`,
+        fallbackTarget: 'SyntheticToneFallbackEngine (480Hz Sine Wave)',
+        reason: reason,
+        actionRequired: `Start VieNeu Python FastAPI ONNX service at ${this.pythonUrl} (e.g. python app.py)`,
+      });
       return this.fallbackEngine.synthesize(request);
     }
   }

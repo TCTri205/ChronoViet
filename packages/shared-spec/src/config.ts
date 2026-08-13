@@ -50,11 +50,36 @@ const EnvSchema = z.object({
   REDIS_URL: z.string().default('redis://localhost:6379'),
 
   // ==========================================
-  // AI / External APIs
+  // AI / External APIs & Local Model Gateway
   // ==========================================
   GEMINI_API_KEY: z.string().optional(),
   EMBEDDING_API_URL: z.string().optional(),
   EMBEDDING_DIMENSION: z.coerce.number().int().positive().default(1024),
+
+  // Local AI Gateway Configuration
+  USE_LOCAL_LLM: z
+    .union([z.boolean(), z.string().transform((v) => v === 'true')])
+    .default(true),
+  LOCAL_LLM_BACKEND: z.enum(['llama_cpp', 'ollama', 'mlx']).default('llama_cpp'),
+  LLM_BASE_URL: z.string().default('http://localhost:8080'),
+  LOCAL_LLM_PRIMARY_MODEL: z.string().default('qwen3.5-27b-instruct-q4_k_m'),
+  LOCAL_LLM_BENCHMARK_MODEL: z.string().default('qwen3.6-27b-instruct-q4_k_m'),
+
+  // Cloud API Fallback Configuration (Agnes 2.0 Flash)
+  ENABLE_CLOUD_FALLBACK: z
+    .union([z.boolean(), z.string().transform((v) => v === 'true')])
+    .default(true),
+  REMOTE_FALLBACK_MODEL: z.string().default('agnes-2.0-flash'),
+  AGNES_API_KEY: z.string().optional(),
+  REMOTE_FALLBACK_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+
+  // Embedding, Rerank & Vision Stack
+  LOCAL_EMBEDDING_DEFAULT: z.string().default('qwen3-embedding-0.6b'),
+  LOCAL_EMBEDDING_HIGH_QUALITY: z.string().default('qwen3-embedding-4b'),
+  LOCAL_RERANK_MODEL: z.string().default('qwen3-reranker-0.6b'),
+  LOCAL_VISION_FILTER: z.string().default('siglip-2-multilingual-onnx'),
+  LOCAL_VLM_INSPECTOR: z.string().default('qwen3-vl-8b'),
+  HISTORICAL_OCR_ENGINE: z.string().default('paddleocr_v5_hannom'),
 
   // ==========================================
   // TTS Service

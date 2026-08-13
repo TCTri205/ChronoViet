@@ -82,13 +82,17 @@ export function chunkDocumentHierarchical(
 
   const totalWords = countWords(text);
 
+  const titleHash = (docMetadata.title + text.slice(0, 30))
+    .split('')
+    .reduce((acc, char) => (acc * 33) ^ char.charCodeAt(0), 5381) >>> 0;
+
   // Helper function to process a completed Parent Chunk and generate its Child Chunks
   const processParent = () => {
     if (currentParentParagraphs.length === 0) return;
 
     const parentContent = currentParentParagraphs.join('\n\n');
     const parentWords = countWords(parentContent);
-    const parentId = `parent_chunk_${timestamp}_${parentIndex}`;
+    const parentId = `parent_chunk_${timestamp}_${titleHash}_${parentIndex}`;
 
     // 1. Create Parent Chunk with enriched metadata
     const parentMetadata = enrichChunkMetadata(parentContent, {

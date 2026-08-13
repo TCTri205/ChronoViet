@@ -75,14 +75,14 @@ ChronoViet/
 
 | Package / App | Vai Trò | Trạng Thái | Thư Mục Eval |
 | :--- | :--- | :---: | :---: |
-| [`@chronoviet/shared-spec`](file:///d:/Persional_Projects/ChronoViet/packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas & Data Contracts | **✅ Ready** | N/A (Shared Spec) |
-| [`@chronoviet/rag-engine`](file:///d:/Persional_Projects/ChronoViet/packages/rag-engine) | Data Ingestion ETL (Mô-đun 0) & Chrono-RAG Engine (Mô-đun 1) PostgreSQL pgvector + Graph | **✅ Ready** | `packages/rag-engine/eval/` |
-| [`@chronoviet/agent-orchestrator`](file:///d:/Persional_Projects/ChronoViet/packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh, NLI Judge & Folklore Guardrail Gate | **✅ Ready** | `packages/agent-orchestrator/eval/` |
-| [`@chronoviet/remotion-engine`](file:///d:/Persional_Projects/ChronoViet/packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
-| [`@chronoviet/vieneu-tts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts) | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX) | **✅ Ready** | `services/vieneu-tts/eval/` |
-| [`@chronoviet/vlm-inspector`](file:///d:/Persional_Projects/ChronoViet/packages/vlm-inspector) | Thẩm định hình ảnh tư liệu & lọc bản quyền (PD, CC0, CC-BY) | **📐 Roadmap** | `packages/vlm-inspector/eval/` |
-| [`@chronoviet/render-worker`](file:///d:/Persional_Projects/ChronoViet/apps/render-worker) | Tiến trình xử lý hàng đợi render video bất đồng bộ (BullMQ + Redis) | **📐 Roadmap** | `apps/render-worker/eval/` |
-| [`@chronoviet/web`](file:///d:/Persional_Projects/ChronoViet/apps/web) | Giao diện người dùng Web Dashboard & Chatbot RAG | **📐 Roadmap** | `apps/web/` |
+| [`@chronoviet/shared-spec`](packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas & Data Contracts | **✅ Ready** | N/A (Shared Spec) |
+| [`@chronoviet/rag-engine`](packages/rag-engine) | Data Ingestion ETL (Mô-đun 0) & Chrono-RAG Engine (Mô-đun 1) PostgreSQL pgvector + Graph | **✅ Ready** | `packages/rag-engine/eval/` |
+| [`@chronoviet/agent-orchestrator`](packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh, NLI Judge & Folklore Guardrail Gate | **✅ Ready** | `packages/agent-orchestrator/eval/` |
+| [`@chronoviet/remotion-engine`](packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
+| [`@chronoviet/vieneu-tts`](services/vieneu-tts) | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX) | **✅ Ready** | `services/vieneu-tts/eval/` |
+| [`@chronoviet/vlm-inspector`](packages/vlm-inspector) | Thẩm định hình ảnh tư liệu & lọc bản quyền (PD, CC0, CC-BY) | **📐 Roadmap** | `packages/vlm-inspector/eval/` |
+| [`@chronoviet/render-worker`](apps/render-worker) | Tiến trình xử lý hàng đợi render video bất đồng bộ (BullMQ + Redis) | **📐 Roadmap** | `apps/render-worker/eval/` |
+| [`@chronoviet/web`](apps/web) | Giao diện người dùng Web Dashboard & Chatbot RAG | **📐 Roadmap** | `apps/web/` |
 
 ---
 
@@ -166,13 +166,13 @@ docker compose up -d --build
 
 ## 📚 6. Trung Tâm Tài Liệu Dự Án (Documentation Portal)
 
-Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật nằm tại thư mục [`docs/`](file:///d:/Persional_Projects/ChronoViet/docs):
+Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật nằm tại thư mục [`docs/`](docs/):
 
-* 📜 [**Master Data Governance Spec (`docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md): Quy chuẩn Master Source of Truth cho 15 Epochs, 7 Entity Taxonomies, RRF Min-Max, FPC Cochran formula & Audit Logs.
-* 📑 [**Documentation Portal (`docs/README.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/README.md): Bản đồ tra cứu tài liệu tổng quan.
-* 🏛️ [**System Overview (`docs/SystemOverview.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/SystemOverview.md): Kiến trúc RAG + Multi-Agent + VLM + Remotion.
-* ⚙️ [**Remotion Technical Spec (`docs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 31 LayoutModes, 19 Transitions, Zod Schema & Compositions.
-* 📜 [**Content Formats Spec (`docs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](file:///d:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử & Schema Production v4.1.
+* 📜 [**Master Data Governance Spec (`docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`)**](docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md): Quy chuẩn Master Source of Truth cho 15 Epochs, 7 Entity Taxonomies, RRF Min-Max, FPC Cochran formula & Audit Logs.
+* 📑 [**Documentation Portal (`docs/README.md`)**](docs/README.md): Bản đồ tra cứu tài liệu tổng quan.
+* 🏛️ [**System Overview (`docs/SystemOverview.md`)**](docs/SystemOverview.md): Kiến trúc RAG + Multi-Agent + VLM + Remotion.
+* ⚙️ [**Remotion Technical Spec (`docs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](docs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 31 LayoutModes, 19 Transitions, Zod Schema & Compositions.
+* 📜 [**Content Formats Spec (`docs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](docs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử & Schema Production v4.1.
 
 ---
 

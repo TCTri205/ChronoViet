@@ -8,12 +8,12 @@ This document outlines the core principles, development workflows, and tool usag
 
 1. **Read Relevant Documentation Before Planning and Coding:**
    - Agents and Developers **must thoroughly read domain-relevant specification documents** matching the task in the project to understand the architecture and processing workflows before creating implementation plans or writing code:
-     - **System Architecture Docs:** [`docs/architecture/`](file:///d:/Persional_Projects/ChronoViet/docs/architecture/)
-     - **Detailed Module Docs:** [`docs/modules/`](file:///d:/Persional_Projects/ChronoViet/docs/modules/)
-     - **System Overview & Specs:** [`docs/SystemOverview.md`](file:///d:/Persional_Projects/ChronoViet/docs/SystemOverview.md), [`docs/REMOTION_CONTENT_FORMATS_SPEC.md`](file:///d:/Persional_Projects/ChronoViet/docs/REMOTION_CONTENT_FORMATS_SPEC.md), [`docs/EVAL_REMOTION_TECHNICAL_SPEC.md`](file:///d:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md), [`docs/IMPLEMENTATION_PLAN.md`](file:///d:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md)
+     - **System Architecture Docs:** [`docs/architecture/`](docs/architecture/)
+     - **Detailed Module Docs:** [`docs/modules/`](docs/modules/)
+     - **System Overview & Specs:** [`docs/SystemOverview.md`](docs/SystemOverview.md), [`docs/REMOTION_CONTENT_FORMATS_SPEC.md`](docs/REMOTION_CONTENT_FORMATS_SPEC.md), [`docs/EVAL_REMOTION_TECHNICAL_SPEC.md`](docs/EVAL_REMOTION_TECHNICAL_SPEC.md), [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
 
 2. **Strict Type-Safety & SSOT (Single Source of Truth):**
-   - All cross-module Data Contracts, Zod Schemas, and shared TypeScript Interfaces MUST be declared centrally in [`packages/shared-spec`](file:///d:/Persional_Projects/ChronoViet/packages/shared-spec). Never duplicate schemas/interfaces across child packages. Module-internal private types should remain encapsulated within their respective package.
+   - All cross-module Data Contracts, Zod Schemas, and shared TypeScript Interfaces MUST be declared centrally in [`packages/shared-spec`](packages/shared-spec). Never duplicate schemas/interfaces across child packages. Module-internal private types should remain encapsulated within their respective package.
 
 3. **Production-Ready & Anti-Overfitting:**
    - All solutions, algorithms, prompt framings, and code logic must ensure generality, performance optimization, and compliance with Production standards.

@@ -3,6 +3,7 @@
  */
 
 import { envConfig } from './config.js';
+import { logFallbackAlert } from './logger.js';
 
 export const EMBEDDING_DIMENSION = envConfig.EMBEDDING_DIMENSION;
 
@@ -77,7 +78,13 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   const apiUrl = envConfig.EMBEDDING_API_URL;
   if (!apiUrl) {
     if (!warnedMissingApiUrl && typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
-      console.warn('[EmbeddingService] EMBEDDING_API_URL not configured — using pseudo-random fallback embeddings');
+      logFallbackAlert({
+        subsystem: 'EMBEDDING',
+        primaryTarget: `Embedding API Server (${envConfig.LOCAL_EMBEDDING_DEFAULT})`,
+        fallbackTarget: 'Deterministic Pseudo-Random Vector Generator',
+        reason: 'EMBEDDING_API_URL environment variable is unconfigured',
+        actionRequired: 'Set EMBEDDING_API_URL=http://localhost:8080/v1/embeddings in .env',
+      });
       warnedMissingApiUrl = true;
     }
     const fallbackVec = generatePseudoRandomEmbedding(trimmed);
@@ -97,8 +104,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
     const isOllamaEmbeddingsEndpoint = apiUrl.includes('11434') || apiUrl.includes('/api/embeddings');
     const reqBody = isOllamaEmbeddingsEndpoint
-      ? { model: 'bge-m3', prompt: trimmed }
-      : { model: 'bge-m3', input: trimmed };
+      ? { model: envConfig.LOCAL_EMBEDDING_DEFAULT, prompt: trimmed }
+      : { model: envConfig.LOCAL_EMBEDDING_DEFAULT, input: trimmed };
 
     const res = await fetch(apiUrl, {
       method: 'POST',
@@ -138,7 +145,14 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     embeddingCache.set(trimmed, normalized);
     return normalized;
   } catch (err) {
-    console.error(`[EmbeddingService] Remote embedding request failed (${apiUrl}):`, err instanceof Error ? err.message : err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    logFallbackAlert({
+      subsystem: 'EMBEDDING',
+      primaryTarget: `Embedding API Server (${apiUrl}) [${envConfig.LOCAL_EMBEDDING_DEFAULT}]`,
+      fallbackTarget: 'Deterministic Pseudo-Random Vector Generator',
+      reason: errMsg,
+      actionRequired: `Verify embedding server is running on ${apiUrl}`,
+    });
     return generatePseudoRandomEmbedding(trimmed);
   }
 }

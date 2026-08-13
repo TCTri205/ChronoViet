@@ -2,8 +2,8 @@
 
 Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và Engine Render Remotion (v4.1 - Data-Driven, Audio-Driven Timing, Discriminated Overlay Unions & Word-Level Karaoke Sync)** của dự án **ChronoViet**. Engine này đảm bảo khả năng linh hoạt 100%, trong đó toàn bộ nội dung, kịch bản, phương thức hiển thị (layout), chuyển cảnh (transitions), hình ảnh/âm thanh, **tọa độ hiển thị từng từ (Scene-Scoped Word Captions Karaoke)**, cũng như **phong cách thiết kế (Theme: Màu sắc, Phông chữ, Glow, Gradient)** đều được điều khiển **hoàn toàn bằng JSON Input** mà không bao giờ cần phải chỉnh sửa hay biên dịch lại mã nguồn React.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) và [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts) (re-export từ `@chronoviet/shared-spec`)
-> 🔗 **Quy chuẩn Tích hợp TTS & Tối ưu Sản xuất:** [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](file:///D:/Persional_Projects/ChronoViet/docs/architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md) (Quy đổi VieNeu Word Timestamps sang Remotion Captions Karaoke).
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](../packages/shared-spec/src/schema.ts) và [`packages/remotion-engine/src/types/index.ts`](../packages/remotion-engine/src/types/index.ts) (re-export từ `@chronoviet/shared-spec`)
+> 🔗 **Quy chuẩn Tích hợp TTS & Tối ưu Sản xuất:** [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md) (Quy đổi VieNeu Word Timestamps sang Remotion Captions Karaoke).
 
 ---
 
@@ -49,7 +49,7 @@ Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và 
 
 ## 2. Mô Hình 3 Lớp Rendering & TransitionSeries (`ChronoVideo.tsx`)
 
-Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp riêng biệt được xử lý đồng bộ qua `TransitionSeries` (`@remotion/transitions`). Cấu trúc React Component thực tế tại [`ChronoVideo.tsx`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/compositions/ChronoVideo.tsx):
+Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp riêng biệt được xử lý đồng bộ qua `TransitionSeries` (`@remotion/transitions`). Cấu trúc React Component thực tế tại [`ChronoVideo.tsx`](../packages/remotion-engine/src/compositions/ChronoVideo.tsx):
 
 ```tsx
 <TransitionSeries>

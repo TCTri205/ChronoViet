@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { seedDualBranch, DualBranchSeedResult } from '../../packages/data-ingestion/src';
 import { ChronoRagEngine, extractQueryEntities, searchLocalGraphCTE } from '../../packages/rag-engine/src';
+import { query, inMemoryStore } from '../../packages/shared-spec/src';
 
 export interface ProductionBenchmarkTestCase {
   id: string;
@@ -97,8 +98,6 @@ export async function runIngestRagChain(options: {
   // Test Seeding 5 Golden Datasets to ensure DB contracts
   const goldenDir = path.resolve(process.cwd(), 'eval/test-cases');
   const sampleFile = path.join(goldenDir, 'biography_tran_hung_dao.json');
-  let isPgMode = false;
-
   if (fs.existsSync(sampleFile)) {
     const rawJson = fs.readFileSync(sampleFile, 'utf-8');
     const data = JSON.parse(rawJson);
@@ -110,7 +109,20 @@ export async function runIngestRagChain(options: {
     isPgMode = seedRes.isPgMode;
   }
 
-  console.log(`[+] Storage Layer Active: ${isPgMode ? 'PostgreSQL pgvector (Full 33,941 Chunks Database)' : 'In-Memory Store'}`);
+  let totalCorpusChunksCount = 0;
+  let totalCorpusEntitiesCount = 0;
+
+  if (isPgMode) {
+    const chunkRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM document_chunks');
+    const entityRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM entities');
+    totalCorpusChunksCount = parseInt(chunkRes[0]?.count || '0', 10);
+    totalCorpusEntitiesCount = parseInt(entityRes[0]?.count || '0', 10);
+  } else {
+    totalCorpusChunksCount = inMemoryStore.documentChunks.size;
+    totalCorpusEntitiesCount = inMemoryStore.entities.size;
+  }
+
+  console.log(`[+] Storage Layer Active: ${isPgMode ? `PostgreSQL pgvector (Full ${totalCorpusChunksCount.toLocaleString()} Chunks Database)` : 'In-Memory Store'}`);
 
   // ----------------------------------------------------------------
   // PHASE 2: PRODUCTION IR RANKING & ADVERSARIAL EVALUATION
@@ -341,8 +353,8 @@ export async function runIngestRagChain(options: {
     chainName: 'data-ingestion -> rag-engine',
     evalMode: 'PRODUCTION_FULL_CORPUS_BENCHMARK',
     isPgMode,
-    totalCorpusChunksCount: 33941,
-    totalCorpusEntitiesCount: 105268,
+    totalCorpusChunksCount,
+    totalCorpusEntitiesCount,
     meanReciprocalRank,
     meanNdcgAt5,
     avgPrecisionAt5,
@@ -363,7 +375,7 @@ export async function runIngestRagChain(options: {
 
   console.log('\n================================================================');
   console.log(` BÁO CÁO ĐÁNH GIÁ CHẤT LƯỢNG PRODUCTION (FULL CORPUS BENCHMARK):`);
-  console.log(`- Quy mô lưu trữ DB (Corpus Scale)    : 33,941 Chunks | 105,268 Entities`);
+  console.log(`- Quy mô lưu trữ DB (Corpus Scale)    : ${totalCorpusChunksCount.toLocaleString()} Chunks | ${totalCorpusEntitiesCount.toLocaleString()} Entities`);
   console.log(`- Mean Reciprocal Rank (MRR)           : ${meanReciprocalRank} (Chỉ tiêu KPI >= 0.70)`);
   console.log(`- nDCG@5 (Rank Quality Score)          : ${meanNdcgAt5} (Chỉ tiêu KPI >= 0.75)`);
   console.log(`- Precision@5 / Recall@5               : P@5 = ${avgPrecisionAt5} | R@5 = ${avgRecallAt5}`);
@@ -378,4 +390,13 @@ export async function runIngestRagChain(options: {
   console.log('================================================================\n');
 
   return masterReport;
+}
+
+if (process.argv[1] && (process.argv[1].endsWith('ingest-rag.ts') || process.argv[1].endsWith('ingest-rag.js'))) {
+  runIngestRagChain({ verbose: true })
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error('❌ Ingest-RAG Chain Eval Error:', err);
+      process.exit(1);
+    });
 }

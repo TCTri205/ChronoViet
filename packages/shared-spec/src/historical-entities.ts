@@ -324,20 +324,20 @@ export function resolveHistoricalEpochs(timeStart?: number, timeEnd?: number): s
     epochSet.add('EPOCH_10');
   }
 
-  if (start < -179 || (start <= 179 && end <= 179)) epochSet.add('EPOCH_01');
-  if (start >= -179 && start <= 938) epochSet.add('EPOCH_02');
-  if (start >= 938 && start <= 1009) epochSet.add('EPOCH_03');
-  if (start >= 1009 && start <= 1225) epochSet.add('EPOCH_04');
-  if (start >= 1225 && start <= 1400) epochSet.add('EPOCH_05');
-  if (start >= 1400 && start <= 1407) epochSet.add('EPOCH_06');
-  if (start >= 1407 && start <= 1427) epochSet.add('EPOCH_07');
-  if (start >= 1428 && start <= 1527) epochSet.add('EPOCH_08');
+  if (start < -179 || (start <= -179 && end <= -179)) epochSet.add('EPOCH_01');
+  if (start >= -179 && start < 938) epochSet.add('EPOCH_02');
+  if (start >= 938 && start < 1009) epochSet.add('EPOCH_03');
+  if (start >= 1009 && start < 1225) epochSet.add('EPOCH_04');
+  if (start >= 1225 && start < 1400) epochSet.add('EPOCH_05');
+  if (start >= 1400 && start < 1407) epochSet.add('EPOCH_06');
+  if (start >= 1407 && start < 1428) epochSet.add('EPOCH_07');
+  if (start >= 1428 && start < 1527) epochSet.add('EPOCH_08');
   if (start >= 1527 && start <= 1777) epochSet.add('EPOCH_09');
-  if (start >= 1771 && start <= 1802) epochSet.add('EPOCH_10');
-  if (start >= 1802 && start <= 1858) epochSet.add('EPOCH_11');
-  if (start >= 1858 && start <= 1945) epochSet.add('EPOCH_12');
-  if (start >= 1945 && start <= 1954) epochSet.add('EPOCH_13');
-  if (start >= 1954 && start <= 1975) epochSet.add('EPOCH_14');
+  if (start >= 1771 && start < 1802) epochSet.add('EPOCH_10');
+  if (start >= 1802 && start < 1858) epochSet.add('EPOCH_11');
+  if (start >= 1858 && start < 1945) epochSet.add('EPOCH_12');
+  if (start >= 1945 && start < 1954) epochSet.add('EPOCH_13');
+  if (start >= 1954 && start < 1975) epochSet.add('EPOCH_14');
   if (start >= 1975) epochSet.add('EPOCH_15');
 
   return Array.from(epochSet);
@@ -502,6 +502,7 @@ export async function ingestHistoricalDocument(
     for (const rel of sameAsRels) {
       const srcEntity = resolveCanonicalEntity(rel.source);
       const tgtEntity = resolveCanonicalEntity(rel.target);
+      if (srcEntity.entityId === tgtEntity.entityId) continue;
 
       await query(
         `INSERT INTO entities (id, name, type, aliases, metadata)
@@ -527,6 +528,7 @@ export async function ingestHistoricalDocument(
     for (const rel of aliasRels) {
       const srcEntity = resolveCanonicalEntity(rel.source);
       const tgtEntity = resolveCanonicalEntity(rel.target);
+      if (srcEntity.entityId === tgtEntity.entityId) continue;
 
       await query(
         `INSERT INTO entities (id, name, type, aliases, metadata)
@@ -575,24 +577,42 @@ export async function ingestHistoricalDocument(
 
     const sameAsRels = formatSameAsLocationRelations();
     for (const rel of sameAsRels) {
-      inMemoryStore.relationships.push({
-        id: inMemoryStore.nextRelId++,
-        source_entity_id: rel.source,
-        target_entity_id: rel.target,
-        relation_type: rel.relationType,
-        confidence: rel.confidence,
-      });
+      const srcEntity = resolveCanonicalEntity(rel.source);
+      const tgtEntity = resolveCanonicalEntity(rel.target);
+      if (srcEntity.entityId === tgtEntity.entityId) continue;
+
+      const exists = inMemoryStore.relationships.some(
+        (r) => r.source_entity_id === srcEntity.entityId && r.target_entity_id === tgtEntity.entityId && r.relation_type === rel.relationType
+      );
+      if (!exists) {
+        inMemoryStore.relationships.push({
+          id: inMemoryStore.nextRelId++,
+          source_entity_id: srcEntity.entityId,
+          target_entity_id: tgtEntity.entityId,
+          relation_type: rel.relationType,
+          confidence: rel.confidence,
+        });
+      }
     }
 
     const aliasRels = formatAliasOfRelations();
     for (const rel of aliasRels) {
-      inMemoryStore.relationships.push({
-        id: inMemoryStore.nextRelId++,
-        source_entity_id: rel.source,
-        target_entity_id: rel.target,
-        relation_type: rel.relationType,
-        confidence: rel.confidence,
-      });
+      const srcEntity = resolveCanonicalEntity(rel.source);
+      const tgtEntity = resolveCanonicalEntity(rel.target);
+      if (srcEntity.entityId === tgtEntity.entityId) continue;
+
+      const exists = inMemoryStore.relationships.some(
+        (r) => r.source_entity_id === srcEntity.entityId && r.target_entity_id === tgtEntity.entityId && r.relation_type === rel.relationType
+      );
+      if (!exists) {
+        inMemoryStore.relationships.push({
+          id: inMemoryStore.nextRelId++,
+          source_entity_id: srcEntity.entityId,
+          target_entity_id: tgtEntity.entityId,
+          relation_type: rel.relationType,
+          confidence: rel.confidence,
+        });
+      }
     }
   }
 }

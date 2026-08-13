@@ -9,7 +9,7 @@ import {
   HistoricalContextEntity,
 } from '@chronoviet/shared-spec';
 
-import { initSchema, generateEmbedding, ingestHistoricalDocument } from '@chronoviet/shared-spec';
+import { initSchema, generateEmbedding, ingestHistoricalDocument, resolveCanonicalEntity } from '@chronoviet/shared-spec';
 
 import { extractQueryEntities } from './retrieval/question-ner.js';
 import { searchLocalGraphCTE } from './retrieval/graph-cte-search.js';
@@ -62,14 +62,35 @@ export class ChronoRagEngine implements IRagEngine {
     const topChunks = rerankCandidates(queryText, allCandidates, rerankTopK);
 
     // Map top chunks to Verified Context Entities
-    const verifiedContext: HistoricalContextEntity[] = topChunks.map((chunk, idx) => ({
-      entityId: chunk.chunkId,
-      canonicalName: chunk.title,
-      aliases: graphResult.aliasTable[chunk.title] || [],
-      summary: chunk.textContent,
-      citations: [`Tập sử liệu: ${chunk.title}`, `Mức độ tin cậy: ${chunk.sourceReliability || 'LEVEL_1'}`],
-      confidenceScore: Math.min(1.0, 0.85 + (topChunks.length - idx) * 0.03),
-    }));
+    const verifiedContext: HistoricalContextEntity[] = topChunks.map((chunk, idx) => {
+      let matchedCanonicalName = '';
+      let matchedAliases: string[] = [];
+
+      for (const [canonicalName, aliases] of Object.entries(graphResult.aliasTable)) {
+        if (
+          chunk.title.includes(canonicalName) ||
+          chunk.textContent.includes(canonicalName) ||
+          aliases.some((alias) => chunk.title.includes(alias) || chunk.textContent.includes(alias))
+        ) {
+          matchedCanonicalName = canonicalName;
+          matchedAliases = aliases;
+          break;
+        }
+      }
+
+      const canonical = resolveCanonicalEntity(matchedCanonicalName || chunk.title);
+      const canonicalName = matchedCanonicalName || canonical.canonicalName || chunk.title;
+      const aliases = matchedAliases.length > 0 ? matchedAliases : canonical.aliases || [];
+
+      return {
+        entityId: canonical.entityId,
+        canonicalName,
+        aliases,
+        summary: chunk.textContent,
+        citations: [`Tập sử liệu: ${chunk.title}`, `Mức độ tin cậy: ${chunk.sourceReliability || 'LEVEL_1'}`],
+        confidenceScore: Math.min(1.0, 0.85 + (topChunks.length - idx) * 0.03),
+      };
+    });
 
     const citations: string[] = topChunks.map(
       (chunk) => `${chunk.title} [Nguồn: ${chunk.sourceReliability || 'LEVEL_1'}]`

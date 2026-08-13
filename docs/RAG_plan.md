@@ -16,7 +16,7 @@ Kế hoạch này phân rã toàn bộ quá trình phát triển Chrono-RAG Engi
 ## Đối Chiếu & Bổ Sung Kiến Trúc (Architecture & Data Contracts Audit)
 
 ### 1. Chuẩn Hóa Data Contract (SSOT tại `packages/shared-spec`)
-Mọi giao diện TypeScript và Zod Schemas giữa RAG Engine và các mô-đun khác (đặc biệt là Multi-Agent Orchestrator) được khai báo tập trung tại [`packages/shared-spec`](file:///d:/Persional_Projects/ChronoViet/packages/shared-spec):
+Mọi giao diện TypeScript và Zod Schemas giữa RAG Engine và các mô-đun khác (đặc biệt là Multi-Agent Orchestrator) được khai báo tập trung tại [`packages/shared-spec`](../packages/shared-spec):
 - `IRagEngine`: Interface chuẩn cho service RAG (`search()` và `ingestDocument()`).
 - `RagSearchRequestSchema`: Zod validation cho dữ liệu đầu vào `search()`, bao gồm `query`, `entityFilter`, `maxTokens`, `rerankTopK`.
 - `RagSearchResponseSchema`: Zod validation cho kết quả đầu ra, bao gồm `verifiedContext`, `aliasTable`, `citations`, và `retrievalLatencyMs`.
@@ -262,7 +262,7 @@ graph TD
 - **Mục tiêu:** Đưa `rag-engine` vào script đánh giá toàn cục monorepo (`pnpm eval:all`) và đồng bộ hóa tài liệu kỹ thuật trong `docs/`.
 - **Mô tả chi tiết:**
   - Cập nhật script root `package.json` đảm bảo `pnpm eval:all` kích hoạt mượt mà runner `eval/` của `rag-engine`.
-  - Cập nhật tài liệu kỹ thuật [`docs/modules/01_CHRONO_RAG_ENGINE.md`](file:///d:/Persional_Projects/ChronoViet/docs/modules/01_CHRONO_RAG_ENGINE.md) và [`docs/IMPLEMENTATION_PLAN.md`](file:///d:/Persional_Projects/ChronoViet/docs/IMPLEMENTATION_PLAN.md) chuyển trạng thái Mô-đun 1 sang `[✅ IMPLEMENTED]`.
+  - Cập nhật tài liệu kỹ thuật [`docs/modules/01_CHRONO_RAG_ENGINE.md`](modules/01_CHRONO_RAG_ENGINE.md) và [`docs/IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) chuyển trạng thái Mô-đun 1 sang `[✅ IMPLEMENTED]`.
 - **Tiêu chí nghiệm thu (Acceptance Criteria):**
   - [ ] Lệnh `pnpm eval:all` chạy thành công monorepo-wide.
   - [ ] Tài liệu trong `docs/` được cập nhật đồng bộ với codebase thực tế.

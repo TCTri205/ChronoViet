@@ -5,5 +5,7 @@ export * from './embeddings.js';
 export * from './historical-entities.js';
 export * from './db/client.js';
 export * from './db/schema.js';
+export * from './llm-client.js';
+export * from './logger.js';
 
 
