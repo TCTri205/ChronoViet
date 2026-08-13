@@ -9,7 +9,16 @@ This package contains the automated benchmark runner and evaluation metrics for 
 | **Fact Precision Score** | **$> 99.2\%$** | Ratio of ground-truth historical facts accurately retrieved and verified. |
 | **Hallucination Rate** | **$< 0.8\%$** | Percentage of unverified or hallucinated facts in context response. |
 | **Citation Traceability** | **$100\%$** | Percentage of contexts containing explicit, traceable source citations. |
-| **Retrieval Latency** | **$< 300\text{ms}$** | Total latency of the 5-step online retrieval engine. |
+| **Retrieval Latency** | **$< 300\text{ms}$** | Total latency of the 5-step online retrieval engine (SLA: $< 1500\text{ms}$ in dev environment). |
+
+## Benchmark Domains Evaluated
+
+- `MULTI_HOP`: Multi-document historical reasoning.
+- `HISTORICAL_ALIAS`: Character & location alias resolution.
+- `AMBIGUITY_DISAMBIGUATION`: Era-based disambiguation for similar events.
+- `TEMPORAL_EPOCH`: Era-specific historical context.
+- `ARTIFACT_CULTURE`: Cultural artifacts & heritage preservation.
+- `ADVERSARIAL_NEGATIVE`: False historical myths & unanswerable query rejection.
 
 ## Running Evaluation
 

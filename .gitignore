@@ -8,6 +8,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+tasks/
+
 # Build & Compilation Outputs
 dist/
 build/

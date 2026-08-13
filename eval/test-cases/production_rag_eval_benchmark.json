@@ -1,0 +1,142 @@
+[
+  {
+    "id": "PROD_MH_001",
+    "category": "MULTI_HOP",
+    "question": "Vị tướng chỉ huy đại thắng quân Nguyên Mông trên sông Bạch Đằng năm 1288 là ai và ông tác soạn tác phẩm nào?",
+    "groundTruthCanonical": "Trần Hưng Đạo",
+    "expectedEntityId": "person:tran_hung_dao",
+    "expectedAliases": ["Trần Quốc Tuấn", "Hưng Đạo Đại Vương", "Hưng Đạo Vương"],
+    "targetChunkKeywords": ["Trần Quốc Tuấn", "Hịch Tướng Sĩ", "Bạch Đằng", "1288"],
+    "requiredFacts": ["Trần Hưng Đạo", "Hịch Tướng Sĩ", "1288", "Nguyên Mông"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_MH_002",
+    "category": "MULTI_HOP",
+    "question": "Người cố vấn quân sự cho Lê Lợi trong khởi nghĩa Lam Sơn là ai và ông vướng vào thảm án nào?",
+    "groundTruthCanonical": "Nguyễn Trãi",
+    "expectedEntityId": "person:nguyen_trai",
+    "expectedAliases": ["Ức Trai"],
+    "targetChunkKeywords": ["Nguyễn Trãi", "Ức Trai", "Lệ Chi Viên", "Lam Sơn"],
+    "requiredFacts": ["Nguyễn Trãi", "Lệ Chi Viên", "Lam Sơn", "Lê Thái Tổ"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_AMB_001",
+    "category": "AMBIGUITY_DISAMBIGUATION",
+    "question": "Phân biệt chiến thắng Bạch Đằng năm 938 và chiến thắng Bạch Đằng năm 981 do những ai lãnh đạo?",
+    "groundTruthCanonical": "Ngô Quyền & Lê Đại Hành",
+    "expectedEntityId": "person:ngo_quyen",
+    "expectedAliases": ["Tiền Ngô Vương", "Lê Hoàn"],
+    "targetChunkKeywords": ["Ngô Quyền", "938", "Lê Hoàn", "Lê Đại Hành", "981"],
+    "requiredFacts": ["Ngô Quyền năm 938", "Lê Đại Hành", "Nam Hán", "Nhà Tống"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_AMB_002",
+    "category": "AMBIGUITY_DISAMBIGUATION",
+    "question": "Nhà Lê sơ được thành lập sau sự kiện nào và khác gì với Nhà Tiền Lê?",
+    "groundTruthCanonical": "Khởi nghĩa Lam Sơn",
+    "expectedEntityId": "dynasty:nha_le_so",
+    "expectedAliases": ["Lê Thái Tổ", "Lê Đại Hành"],
+    "targetChunkKeywords": ["Khởi nghĩa Lam Sơn", "Lê Lợi", "1428", "Nhà Tiền Lê", "Lê Hoàn"],
+    "requiredFacts": ["Lê Lợi", "Khởi nghĩa Lam Sơn", "1428", "Lê Hoàn năm 980"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_ALIAS_001",
+    "category": "HISTORICAL_ALIAS",
+    "question": "Vua Quang Trung còn có những tên gọi hay danh xưng nào khác trong lịch sử?",
+    "groundTruthCanonical": "Quang Trung",
+    "expectedEntityId": "person:quang_trung",
+    "expectedAliases": ["Nguyễn Huệ", "Hồ Thơm", "Bắc Bình Vương"],
+    "targetChunkKeywords": ["Nguyễn Huệ", "Hồ Thơm", "Bắc Bình Vương", "Quang Trung"],
+    "requiredFacts": ["Nguyễn Huệ", "Hồ Thơm", "Bắc Bình Vương"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_ALIAS_002",
+    "category": "HISTORICAL_ALIAS",
+    "question": "Đô thành Thăng Long thời Nhà Lý tương ứng với thành phố nào ngày nay?",
+    "groundTruthCanonical": "Hà Nội",
+    "expectedEntityId": "loc:thang_long",
+    "expectedAliases": ["Thăng Long", "Hà Nội", "Đại La"],
+    "targetChunkKeywords": ["Thăng Long", "Hà Nội", "Đại La", "1010"],
+    "requiredFacts": ["Hà Nội", "Lý Thái Tổ", "1010"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_TEMPORAL_001",
+    "category": "TEMPORAL_EPOCH",
+    "question": "Trong giai đoạn 1771 đến 1777, phong trào Tây Sơn diễn ra trong bối cảnh triều đại và thế lực nào?",
+    "groundTruthCanonical": "Nhà Tây Sơn & Chúa Nguyễn / Chúa Trịnh",
+    "expectedEntityId": "dynasty:nha_tay_son",
+    "expectedAliases": ["Nguyễn Nhạc", "Chúa Nguyễn", "Chúa Trịnh"],
+    "targetChunkKeywords": ["1771", "Quy Nhơn", "Nguyễn Nhạc", "Chúa Nguyễn"],
+    "requiredFacts": ["1771", "Nguyễn Nhạc", "Chúa Nguyễn", "Tây Sơn"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_TEMPORAL_002",
+    "category": "TEMPORAL_EPOCH",
+    "question": "Chiến thắng Ngọc Hồi - Đống Đa đại phá 29 vạn quân Thanh diễn ra vào thời gian nào?",
+    "groundTruthCanonical": "1789",
+    "expectedEntityId": "event:tran_ngoc_hoi_dong_da",
+    "expectedAliases": ["Kỷ Dậu 1789", "Quang Trung"],
+    "targetChunkKeywords": ["Ngọc Hồi", "Đống Đa", "1789", "Quân Thanh", "Tôn Sĩ Nghị"],
+    "requiredFacts": ["1789", "Đống Đa", "29 vạn quân Thanh", "Quang Trung"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_ARTIFACT_001",
+    "category": "ARTIFACT_CULTURE",
+    "question": "Trống đồng Đông Sơn mang những đặc điểm hoa văn trang trí tiêu biểu nào?",
+    "groundTruthCanonical": "Trống đồng Đông Sơn",
+    "expectedEntityId": "artifact:trong_dong_dong_son",
+    "expectedAliases": ["Trống đồng Ngọc Lũ", "Văn hóa Đông Sơn"],
+    "targetChunkKeywords": ["Chim Lạc", "Hình thuyền", "Ngôi sao 14 cánh", "Giã gạo"],
+    "requiredFacts": ["Chim Lạc", "Hình thuyền", "Ngôi sao", "Văn hóa Đông Sơn"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_ARTIFACT_002",
+    "category": "ARTIFACT_CULTURE",
+    "question": "Thành Cổ Loa gắn liền với vị vua nào và truyền thuyết bảo vật gì?",
+    "groundTruthCanonical": "An Dương Vương",
+    "expectedEntityId": "loc:thanh_co_loa",
+    "expectedAliases": ["Thục Phán", "Nỏ Liên Châu", "Nỏ thần"],
+    "targetChunkKeywords": ["Thục Phán", "An Dương Vương", "Nỏ Liên Châu", "Cổ Loa"],
+    "requiredFacts": ["An Dương Vương", "Thục Phán", "Nỏ Liên Châu"],
+    "isAnswerable": true
+  },
+  {
+    "id": "PROD_NEG_001",
+    "category": "ADVERSARIAL_NEGATIVE",
+    "question": "Vua Quang Trung đã chỉ huy trận Điện Biên Phủ năm 1954 đúng hay sai?",
+    "groundTruthCanonical": "Không đúng / Sai lệch lịch sử",
+    "expectedEntityId": null,
+    "targetChunkKeywords": [],
+    "requiredFacts": [],
+    "isAnswerable": false
+  },
+  {
+    "id": "PROD_NEG_002",
+    "category": "ADVERSARIAL_NEGATIVE",
+    "question": "Trần Hưng Đạo đã ký Hiệp định Genève năm 1954 tại Thụy Sĩ đúng không?",
+    "groundTruthCanonical": "Không đúng / Sai lệch lịch sử",
+    "expectedEntityId": null,
+    "targetChunkKeywords": [],
+    "requiredFacts": [],
+    "isAnswerable": false
+  },
+  {
+    "id": "PROD_NEG_003",
+    "category": "ADVERSARIAL_NEGATIVE",
+    "question": "Ngô Quyền đã lãnh đạo cuộc kháng chiến chống quân Minh năm 1418 tại Lam Sơn?",
+    "groundTruthCanonical": "Không đúng / Sai lệch lịch sử",
+    "expectedEntityId": null,
+    "targetChunkKeywords": [],
+    "requiredFacts": [],
+    "isAnswerable": false
+  }
+]

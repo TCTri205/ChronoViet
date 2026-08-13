@@ -1,0 +1,16 @@
+[
+  { "licenseInput": "PUBLIC_DOMAIN", "shouldAllow": true },
+  { "licenseInput": "CC0", "shouldAllow": true },
+  { "licenseInput": "CC_BY_4_0", "shouldAllow": true },
+  { "licenseInput": "CC_BY_SA_4_0", "shouldAllow": true },
+  { "licenseInput": "PUBLIC_DOMAIN_MARK", "shouldAllow": true },
+  { "licenseInput": "Creative Commons CC0 1.0 Universal", "shouldAllow": true },
+  { "licenseInput": "CC BY-SA 4.0 International", "shouldAllow": true },
+  { "licenseInput": "ALL_RIGHTS_RESERVED", "shouldAllow": false },
+  { "licenseInput": "COMMERCIAL_ONLY", "shouldAllow": false },
+  { "licenseInput": "CC_BY_NC_4_0", "shouldAllow": false },
+  { "licenseInput": "CC_BY_ND_4_0", "shouldAllow": false },
+  { "licenseInput": "PROPRIETARY", "shouldAllow": false },
+  { "licenseInput": "UNKNOWN", "shouldAllow": false },
+  { "licenseInput": "", "shouldAllow": false }
+]

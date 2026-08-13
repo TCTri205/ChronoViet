@@ -2,8 +2,8 @@
  * Local Subgraph Search using PostgreSQL Recursive CTEs ($k=1, 2$) & In-Memory Fallback
  */
 
-import { isPgAvailable, query, inMemoryStore } from '../db/client.js';
-import { buildAliasTable } from '../ingestion/entity-disambiguator.js';
+import { isPgAvailable, query, inMemoryStore, buildAliasTable } from '@chronoviet/shared-spec';
+
 
 export interface GraphTriple {
   sourceEntityId: string;
@@ -37,13 +37,13 @@ export async function searchLocalGraphCTE(
         SELECT source_entity_id, target_entity_id, relation_type, confidence, 1 AS depth
         FROM relationships
         WHERE source_entity_id = ANY($1) OR target_entity_id = ANY($1)
-        UNION ALL
+        UNION
         SELECT r.source_entity_id, r.target_entity_id, r.relation_type, r.confidence, g.depth + 1
         FROM relationships r
         INNER JOIN graph_cte g ON r.source_entity_id = g.target_entity_id OR r.target_entity_id = g.source_entity_id
         WHERE g.depth < $2
       )
-      SELECT DISTINCT * FROM graph_cte;
+      SELECT * FROM graph_cte;
     `;
     const rows = await query<{
       source_entity_id: string;

@@ -54,6 +54,11 @@ This document outlines the core principles, development workflows, and tool usag
   2. **Tier 2:** `pnpm --filter @chronoviet/shared-spec typecheck` (Zod Contract Validation).
   3. **Tier 3:** `pnpm lint` (Code formatting & lint checks).
   4. **Tier 4:** `pnpm eval:all` or `pnpm --filter <package> eval` (Module eval & unit tests).
+
+* **Test vs. Eval Distinction:**
+  * **Unit & Integration Tests (`npx vitest`):** Focus on verifying deterministic code correctness, schema validation, data contracts, and edge cases. Results must yield strict binary outcomes (Pass/Fail).
+  * **Evaluation Suite (`packages/<module>/eval/`):** Focus on measuring non-deterministic system aspects such as AI/RAG generation quality, prompt responsiveness, render engine output integrity, latency benchmarks, and regression scores against datasets.
+
 * **Protect Test Suite Integrity:** Strictly do not relax or modify test cases solely to force tests to pass.
 * **Log-First Debugging:** Read detailed logs before editing code to correctly distinguish failure axes:
   - *Infrastructure/System Axis (Database, Redis, Network, Service Worker, Render Engines):* Fix issues in `services/`, `packages/`, or retry policies.

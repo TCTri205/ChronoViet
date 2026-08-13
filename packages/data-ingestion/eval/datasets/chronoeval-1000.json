@@ -1,0 +1,62 @@
+[
+  {
+    "id": "eval_001",
+    "domain": "BATTLE",
+    "question": "Trận Ngọc Hồi - Đống Đa năm 1789 do ai chỉ huy và diễn ra ở đâu?",
+    "groundTruthCanonical": "Quang Trung",
+    "expectedAliases": ["Nguyễn Huệ", "Hồ Thơm", "Bắc Bình Vương"],
+    "expectedLocation": "Hà Nội",
+    "expectedDynasty": "Nhà Tây Sơn",
+    "requiredFacts": ["Quang Trung chỉ huy", "Năm 1789", "Đánh tan quân Thanh"]
+  },
+  {
+    "id": "eval_002",
+    "domain": "BIOGRAPHY",
+    "question": "Trần Hưng Đạo tên thật là gì và ông có danh hiệu gì?",
+    "groundTruthCanonical": "Trần Hưng Đạo",
+    "expectedAliases": ["Trần Quốc Tuấn", "Hưng Đạo Đại Vương", "Hưng Đạo Vương"],
+    "expectedLocation": "Thăng Long",
+    "expectedDynasty": "Nhà Trần",
+    "requiredFacts": ["Tên thật là Trần Quốc Tuấn", "Tước hiệu Hưng Đạo Đại Vương", "Ba lần đánh bại quân Nguyên Mông"]
+  },
+  {
+    "id": "eval_003",
+    "domain": "DYNASTY",
+    "question": "Lê Lợi khởi nghĩa tại đâu và lập ra triều đại nào?",
+    "groundTruthCanonical": "Lê Lợi",
+    "expectedAliases": ["Lê Thái Tổ", "Bình Định Vương"],
+    "expectedLocation": "Lam Sơn",
+    "expectedDynasty": "Nhà Lê",
+    "requiredFacts": ["Khởi nghĩa Lam Sơn", "Đánh đuổi quân Minh", "Lập ra nhà Lê"]
+  },
+  {
+    "id": "eval_004",
+    "domain": "BATTLE",
+    "question": "Ngô Quyền đánh tan quân Nam Hán trên sông Bạch Đằng năm nào?",
+    "groundTruthCanonical": "Ngô Quyền",
+    "expectedAliases": ["Tiền Ngô Vương"],
+    "expectedLocation": "Sông Bạch Đằng",
+    "expectedDynasty": "Nhà Ngô",
+    "requiredFacts": ["Năm 938", "Sử dụng cọc gỗ bọc sắt", "Chấm đứt 1000 năm bắc thuộc"]
+  },
+  {
+    "id": "eval_005",
+    "domain": "ARTIFACT",
+    "question": "Trống đồng Đông Sơn đại diện cho nền văn hóa lịch sử nào?",
+    "groundTruthCanonical": "Trống đồng Đông Sơn",
+    "expectedAliases": ["Văn hóa Đông Sơn"],
+    "expectedLocation": "Thanh Hóa",
+    "expectedDynasty": "Văn Lang",
+    "requiredFacts": ["Kỷ nguyên đồ đồng", "Họa tiết chim Lạc và hình thuyền", "Bảo vật quốc gia"]
+  },
+  {
+    "id": "eval_006",
+    "domain": "MYSTERY",
+    "question": "Vụ án Lệ Chi Viên liên quan đến danh nhân văn hóa nào?",
+    "groundTruthCanonical": "Nguyễn Trãi",
+    "expectedAliases": ["Ức Trai"],
+    "expectedLocation": "Lệ Chi Viên",
+    "expectedDynasty": "Nhà Lê",
+    "requiredFacts": ["Nguyễn Trãi bị oan thảm án", "Vua Lê Thái Tông qua đời", "Lê Thánh Tông minh oan"]
+  }
+]

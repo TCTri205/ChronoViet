@@ -1,0 +1,34 @@
+{
+  "name": "@chronoviet/data-ingestion",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "pnpm clean",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "eval": "tsx eval/runner.ts",
+    "db:init": "tsx src/cli/init-db.ts",
+    "ingest:knowledge": "tsx src/cli/ingest-knowledge.ts",
+    "crawl:corpus": "tsx src/cli/crawl-corpus.ts",
+    "crawl:all": "tsx src/cli/crawl-corpus.ts --all",
+    "setup-assets": "tsx src/cli/setup-assets.ts",
+    "eval:seed": "tsx src/cli/seed-eval.ts",
+    "extract:pdf": "tsx src/cli/extract-pdf-md.ts",
+    "crawl:pdf-extracted": "tsx src/cli/crawl-pdf-extracted.ts",
+    "rag:re-resolve": "tsx src/cli/re-resolve-cli.ts"
+  },
+  "dependencies": {
+    "@chronoviet/shared-spec": "workspace:*",
+    "cheerio": "^1.2.0",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/cheerio": "^1.0.0",
+    "@types/node": "^20.11.0",
+    "@types/pg": "^8.11.0",
+    "typescript": "^5.3.3"
+  }
+}

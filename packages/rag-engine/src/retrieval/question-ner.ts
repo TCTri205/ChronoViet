@@ -2,7 +2,8 @@
  * Question Entity Extraction & Keyword Parsing (Question NER)
  */
 
-import { resolveCanonicalEntity } from '../ingestion/entity-disambiguator.js';
+import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
+
 
 export interface ExtractedQueryInfo {
   entityIds: string[];

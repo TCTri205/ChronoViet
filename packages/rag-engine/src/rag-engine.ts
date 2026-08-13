@@ -9,9 +9,8 @@ import {
   HistoricalContextEntity,
 } from '@chronoviet/shared-spec';
 
-import { initSchema } from './db/client.js';
-import { ingestDocument as ingestPipelineDoc, IngestionMetadata } from './ingestion/ingest-pipeline.js';
-import { generateEmbedding } from './ingestion/embedding-service.js';
+import { initSchema, generateEmbedding, ingestHistoricalDocument } from '@chronoviet/shared-spec';
+
 import { extractQueryEntities } from './retrieval/question-ner.js';
 import { searchLocalGraphCTE } from './retrieval/graph-cte-search.js';
 import { searchHybridVectorAndBM25, VectorSearchResult } from './retrieval/vector-search.js';
@@ -94,12 +93,7 @@ export class ChronoRagEngine implements IRagEngine {
     metadata: { title: string; source: string; dynasty?: string; sourceReliability?: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3' }
   ): Promise<void> {
     await this.ensureInitialized();
-    const ingestMetadata: IngestionMetadata = {
-      title: metadata.title,
-      source: metadata.source,
-      dynasty: metadata.dynasty,
-      sourceReliability: metadata.sourceReliability || 'LEVEL_1',
-    };
-    await ingestPipelineDoc(content, ingestMetadata);
+    await ingestHistoricalDocument(content, metadata);
   }
 }
+

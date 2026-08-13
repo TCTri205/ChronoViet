@@ -13,8 +13,17 @@ Config.overrideWebpackConfig((currentConfiguration) => {
         os: false,
         crypto: false,
         dotenv: false,
+        pg: false,
+        'pg-native': false,
+        net: false,
+        tls: false,
+        dns: false,
+        util: false,
+        stream: false,
+        string_decoder: false,
       },
     },
   };
 });
+
 

@@ -2,7 +2,8 @@
  * Graph-Guided Chunk Retrieval Service
  */
 
-import { isPgAvailable, query, inMemoryStore } from '../db/client.js';
+import { isPgAvailable, query, inMemoryStore } from '@chronoviet/shared-spec';
+
 import { VectorSearchResult } from './vector-search.js';
 
 export async function getChunksForEntities(entityIds: string[]): Promise<VectorSearchResult[]> {

@@ -2,8 +2,8 @@
  * Hybrid Vector Search (pgvector Cosine HNSW) + BM25 Lexical Full-Text Search via Reciprocal Rank Fusion (RRF)
  */
 
-import { isPgAvailable, query, inMemoryStore, DbDocumentChunk } from '../db/client.js';
-import { cosineSimilarity } from '../ingestion/embedding-service.js';
+import { isPgAvailable, query, inMemoryStore, DbDocumentChunk, cosineSimilarity } from '@chronoviet/shared-spec';
+
 
 export interface VectorSearchResult {
   chunkId: string;

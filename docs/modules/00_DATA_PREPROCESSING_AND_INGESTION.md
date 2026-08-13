@@ -276,25 +276,25 @@ Nhạc nền (BGM) và hiệu ứng âm thanh (SFX) được nạp qua script se
 
 ```bash
 # 1. Khởi tạo SQL Schema chuẩn cho PostgreSQL pgvector & Relational Graph
-pnpm --filter @chronoviet/rag-engine db:init
+pnpm --filter @chronoviet/data-ingestion db:init
 
 # 2. Cào TỰ ĐỘNG 100% tài liệu 15 Thời kỳ Lịch sử Việt Nam (Master Corpus Crawl)
-pnpm crawl:all # hoặc pnpm --filter @chronoviet/rag-engine crawl:corpus --epoch=EPOCH_05
+pnpm crawl:all # hoặc pnpm --filter @chronoviet/data-ingestion crawl:corpus --epoch=EPOCH_05
 
 # 3. Chạy pipeline nạp & làm sạch dữ liệu tri thức văn bản (Text ETL)
-pnpm --filter @chronoviet/rag-engine ingest:knowledge --input=data/raw_corpus/ [--force] [--local-llm]
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge --input=data/raw_corpus/ [--force] [--local-llm]
 
 # 4. Hợp giải mâu thuẫn thực thể & ghi vết nhật ký audit log
-pnpm --filter @chronoviet/rag-engine rag:re-resolve
+pnpm --filter @chronoviet/data-ingestion rag:re-resolve
 
 # 5. Chạy pipeline kiểm định bản quyền & nạp tài nguyên hình ảnh/âm thanh
-pnpm setup-assets # hoặc pnpm --filter @chronoviet/rag-engine setup-assets
+pnpm setup-assets # hoặc pnpm --filter @chronoviet/data-ingestion setup-assets
 
 # 6. Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
-pnpm eval:seed # hoặc pnpm --filter @chronoviet/rag-engine eval:seed
+pnpm eval:seed # hoặc pnpm --filter @chronoviet/data-ingestion eval:seed
 
 # 7. Chạy bộ kiểm thử Benchmark đo lường 3 chỉ số KPI Mô-đun 0
-pnpm eval:ingest # hoặc pnpm --filter @chronoviet/rag-engine eval:ingest
+pnpm eval:ingest # hoặc pnpm --filter @chronoviet/data-ingestion eval
 ```
 
 ### 6.2. Nạp Golden Datasets Cho Kiến Trúc Đánh Giá `eval/`
@@ -315,7 +315,7 @@ Bộ dữ liệu mẫu này giúp kiểm tra chất lượng kết quả đầu 
 
 ## 7. Khung Đánh Giá & Kết Quả Đo Lường KPI (Module 0 Evaluation Suite)
 
-Mô-đun 0 tích hợp bộ kiểm thử độc lập tại [`packages/rag-engine/eval/ingest-runner.ts`](file:///d:/Persional_Projects/ChronoViet/packages/rag-engine/eval/ingest-runner.ts) đo lường 3 KPI cốt lõi:
+Mô-đun 0 tích hợp bộ kiểm thử độc lập tại [`packages/data-ingestion/eval/runner.ts`](file:///d:/Persional_Projects/ChronoViet/packages/data-ingestion/eval/runner.ts) đo lường 3 KPI cốt lõi:
 
 | Chỉ số KPI | Mô Tả & Phương Pháp Đánh Giá | Chỉ Số Mục Tiêu | Kết Quả Thực Tế | Trạng Thái |
 | :--- | :--- | :---: | :---: | :---: |
@@ -323,5 +323,5 @@ Mô-đun 0 tích hợp bộ kiểm thử độc lập tại [`packages/rag-engin
 | **KPI 2: Copyright Compliance Rate** | Kiểm định tính tuân thủ 100% Whitelisted License (`PUBLIC_DOMAIN`, `CC0`, `CC_BY_4_0`, `CC_BY_SA_4_0`) cho visual asset. | **$100\%$** | **100%** (10/10 test cases) | **PASSED** |
 | **KPI 3: Golden Dataset Integrity & Throughput** | Xác minh tính toàn vẹn 5 tập Golden Datasets (Parent/Child Chunks) và đo tốc độ nạp dữ liệu. | **$100\%$ Integrity** | **100% Integrity** (5000 chunks/s) | **PASSED** |
 
-> 📄 File Báo Cáo Chi Tiết: [`packages/rag-engine/eval/reports/ingest-eval-report.json`](file:///d:/Persional_Projects/ChronoViet/packages/rag-engine/eval/reports/ingest-eval-report.json)
+> 📄 File Báo Cáo Chi Tiết: [`packages/data-ingestion/eval/reports/ingest-eval-report.json`](file:///d:/Persional_Projects/ChronoViet/packages/data-ingestion/eval/reports/ingest-eval-report.json)
 

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { runVieNeuRemotionChain, IntegratedChainReport } from './chains/vieneu-remotion';
+import { runIngestRagChain, IntegratedIngestRagReport } from './chains/ingest-rag';
 import { cleanEvalArtifacts } from './utils/cleaner';
 import { envConfig } from '../packages/shared-spec/src/index.js';
 
@@ -10,7 +11,7 @@ interface MasterEvalReport {
   mode: string;
   isolatedModulesEvaluated: string[];
   chainsEvaluated: string[];
-  chainReports: Record<string, IntegratedChainReport>;
+  chainReports: Record<string, IntegratedChainReport | IntegratedIngestRagReport>;
   overallStatus: 'PASS' | 'FAIL';
 }
 
@@ -88,7 +89,7 @@ async function main() {
   if (mode === 'all' || mode === 'module') {
     const targetModules = moduleName
       ? [moduleName]
-      : ['@chronoviet/rag-engine', '@chronoviet/vieneu-tts', '@chronoviet/remotion-engine'];
+      : ['@chronoviet/data-ingestion', '@chronoviet/rag-engine', '@chronoviet/vieneu-tts', '@chronoviet/remotion-engine'];
 
     console.log('\n--- [PHASE 1] RUNNING ISOLATED MODULE EVALUATIONS ---');
 
@@ -111,12 +112,24 @@ async function main() {
   if (mode === 'all' || mode === 'chain') {
     const targetChains = chainName
       ? [chainName]
-      : ['vieneu-remotion'];
+      : ['ingest-rag', 'vieneu-remotion'];
 
     console.log('\n--- [PHASE 2] RUNNING MULTI-MODULE INTEGRATION CHAINS ---');
 
     for (const chain of targetChains) {
-      if (chain === 'vieneu-remotion') {
+      if (chain === 'ingest-rag') {
+        try {
+          const report = await runIngestRagChain({ verbose });
+          chainsEvaluated.push(chain);
+          chainReports[chain] = report;
+          if (report.qualityStatus !== 'PASS') {
+            overallPass = false;
+          }
+        } catch (err) {
+          console.error(`[!] Chain ${chain} FAILED:`, err);
+          overallPass = false;
+        }
+      } else if (chain === 'vieneu-remotion') {
         try {
           const report = await runVieNeuRemotionChain({
             testCaseName,

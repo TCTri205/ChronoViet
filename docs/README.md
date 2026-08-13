@@ -28,6 +28,7 @@ d:\Persional_Projects\ChronoViet\docs\
 │
 ├── 🔊 services/vieneu-tts                      [Mô-đun VieNeu TTS Engine Standalone Microservice & Eval [✅ Phase 1]]
 │
+├── 💻 MACOS_LOCAL_MODEL_OPTIMIZATION.md       [Hướng dẫn Tối ưu hóa Mô hình Local trên macOS (Apple Silicon)]
 ├── 📘 SystemOverview.md                       [Kiến trúc RAG + Multi-Agent + VLM + Remotion [✅ Engine & TTS / 📐 Agent Roadmap]]
 ├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai, Phân tích Song song & Khung Đánh giá [✅ Phase 1 DONE / 📐 Phase 2-5]]
 │

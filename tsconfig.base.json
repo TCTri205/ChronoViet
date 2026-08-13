@@ -15,7 +15,9 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@chronoviet/shared-spec": ["./packages/shared-spec/dist/index.d.ts"]
+      "@chronoviet/shared-spec": ["./packages/shared-spec/dist/index.d.ts"],
+      "@chronoviet/rag-engine": ["./packages/rag-engine/dist/index.d.ts"],
+      "@chronoviet/data-ingestion": ["./packages/data-ingestion/dist/index.d.ts"]
     }
   }
 }
