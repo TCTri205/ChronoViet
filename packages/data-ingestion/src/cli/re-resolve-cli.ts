@@ -3,11 +3,20 @@
  * Usage: pnpm --filter @chronoviet/data-ingestion rag:re-resolve
  */
 
-import { initSchema, query, inMemoryStore, isPgAvailable, logEntityAuditAction } from '@chronoviet/shared-spec';
+import {
+  createLogger,
+  initSchema,
+  query,
+  inMemoryStore,
+  isPgAvailable,
+  logEntityAuditAction,
+} from '@chronoviet/shared-spec';
 import { resolveCanonicalEntity } from '../text/historical-entity-mapper.js';
 
+const log = createLogger({ service: 'data-ingestion' });
+
 export async function runReResolve(): Promise<{ resolvedEntitiesCount: number; auditLogsCount: number }> {
-  console.log('🔄 Starting Chrono-RAG Knowledge Graph Re-Resolution Pipeline...');
+  log.info('reresolve.started', 'Starting Chrono-RAG Knowledge Graph Re-Resolution Pipeline');
   await initSchema();
 
   const pgConnected = await isPgAvailable();
@@ -53,11 +62,10 @@ export async function runReResolve(): Promise<{ resolvedEntitiesCount: number; a
     }
   }
 
-  console.log('======================================================');
-  console.log('🎉 Graph Re-Resolution Completed!');
-  console.log(`🏷️ Entities Evaluated: ${resolvedEntitiesCount}`);
-  console.log(`📝 Audit Logs Created:  ${auditLogsCount}`);
-  console.log('======================================================\n');
+  log.info('reresolve.completed', 'Graph Re-Resolution completed', {
+    entitiesEvaluated: resolvedEntitiesCount,
+    auditLogsCreated: auditLogsCount,
+  });
 
   return { resolvedEntitiesCount, auditLogsCount };
 }
@@ -66,7 +74,7 @@ if (process.argv[1] && (process.argv[1].endsWith('re-resolve-cli.ts') || process
   runReResolve()
     .then(() => process.exit(0))
     .catch((err) => {
-      console.error('❌ Re-resolve Pipeline Error:', err);
+      log.error('reresolve.failed', 'Re-resolve Pipeline Error', { error: err });
       process.exit(1);
     });
 }

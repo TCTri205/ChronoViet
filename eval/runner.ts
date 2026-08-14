@@ -2,16 +2,18 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { runVieNeuRemotionChain, IntegratedChainReport } from './chains/vieneu-remotion';
-import { runIngestRagChain, IntegratedIngestRagReport } from './chains/ingest-rag';
+import { runIngestRagChain, ProductionRagQualityReport } from './chains/ingest-rag';
 import { cleanEvalArtifacts } from './utils/cleaner';
-import { envConfig } from '../packages/shared-spec/src/index.js';
+import { envConfig, createLogger } from '../packages/shared-spec/src/index.js';
+
+const log = createLogger({ service: 'eval-runner' });
 
 interface MasterEvalReport {
   timestamp: string;
   mode: string;
   isolatedModulesEvaluated: string[];
   chainsEvaluated: string[];
-  chainReports: Record<string, IntegratedChainReport | IntegratedIngestRagReport>;
+  chainReports: Record<string, IntegratedChainReport | ProductionRagQualityReport>;
   overallStatus: 'PASS' | 'FAIL';
 }
 
@@ -82,7 +84,7 @@ async function main() {
 
   const isolatedModules: string[] = [];
   const chainsEvaluated: string[] = [];
-  const chainReports: Record<string, IntegratedChainReport> = {};
+  const chainReports: Record<string, IntegratedChainReport | ProductionRagQualityReport> = {};
   let overallPass = true;
 
   // 1. Module-level isolated evals (only if --all or --module)
@@ -103,6 +105,7 @@ async function main() {
         console.log(`[+] Module ${mod} eval PASSED.`);
       } catch (err) {
         console.error(`[!] Module ${mod} eval FAILED.`);
+        log.error('eval.module_failed', 'Isolated module eval failed', { module: mod, error: err });
         overallPass = false;
       }
     }
@@ -127,6 +130,7 @@ async function main() {
           }
         } catch (err) {
           console.error(`[!] Chain ${chain} FAILED:`, err);
+          log.error('eval.chain_failed', 'Integration chain eval failed', { chain, error: err });
           overallPass = false;
         }
       } else if (chain === 'vieneu-remotion') {
@@ -145,10 +149,12 @@ async function main() {
           }
         } catch (err) {
           console.error(`[!] Chain ${chain} FAILED:`, err);
+          log.error('eval.chain_failed', 'Integration chain eval failed', { chain, error: err });
           overallPass = false;
         }
       } else {
         console.warn(`[!] Unknown chain specified: ${chain}`);
+        log.warn('eval.unknown_chain', 'Unknown chain specified', { chain });
       }
     }
   }
@@ -178,5 +184,6 @@ async function main() {
 
 main().catch((err) => {
   console.error('[!] Master Runner Fatal Error:', err);
+  log.error('eval.fatal_error', 'Master Runner Fatal Error', { error: err });
   process.exit(1);
 });

@@ -30,22 +30,107 @@ const evalDatasetsDir = path.resolve(__dirname, 'datasets');
 
 function loadEntityCases(): EntityDisambiguationTestCase[] {
   const filePath = path.join(evalDatasetsDir, 'entity-disambiguation-benchmark.json');
-  if (fs.existsSync(filePath)) {
-    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Entity disambiguation benchmark dataset missing at: ${filePath}`);
   }
-  return [];
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch (err) {
+    throw new Error(`Failed to parse entity disambiguation benchmark dataset at ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 function loadLicenseCases(): LicenseAuditTestCase[] {
   const filePath = path.join(evalDatasetsDir, 'license-audit-benchmark.json');
-  if (fs.existsSync(filePath)) {
-    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`License audit benchmark dataset missing at: ${filePath}`);
   }
-  return [];
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch (err) {
+    throw new Error(`Failed to parse license audit benchmark dataset at ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 const ENTITY_DISAMBIGUATION_TEST_CASES = loadEntityCases();
 const LICENSE_AUDIT_TEST_CASES = loadLicenseCases();
+
+// ------------------------------------------------------------------
+// Ground Truth Integrity Validation Helpers (KPI 3)
+// ------------------------------------------------------------------
+interface GroundTruthEntity {
+  id?: string;
+  canonical_name?: string;
+  canonicalName?: string;
+  aliases?: string[];
+}
+
+interface GroundTruthTriple {
+  source?: string;
+  relation?: string;
+  target?: string;
+}
+
+/**
+ * Validates a dataset's ground truth against its document content.
+ * An entity/triple term is considered "resolved" when the canonical name or
+ * one of its aliases is mentioned in the content (case-insensitive substring).
+ */
+function isTermResolved(term: string, contentLower: string): boolean {
+  const termLower = term.trim().toLowerCase();
+  return contentLower.includes(termLower);
+}
+
+function validateGroundTruth(
+  dataset: any,
+  contentLower: string
+): { entitiesResolved: number; entitiesTotal: number; triplesResolved: number; triplesTotal: number; failures: string[] } {
+  const failures: string[] = [];
+  const gtEntities: GroundTruthEntity[] = dataset.ground_truth_entities || [];
+  const gtTriples: GroundTruthTriple[] = dataset.ground_truth_triples || [];
+
+  let entitiesResolved = 0;
+  for (const ent of gtEntities) {
+    const name = ent.canonical_name || ent.canonicalName;
+    if (!name) {
+      failures.push(`Ground truth entity missing canonical_name (id=${ent.id || 'unknown'})`);
+      continue;
+    }
+    const mentioned =
+      isTermResolved(name, contentLower) || (ent.aliases || []).some((a) => a && isTermResolved(a, contentLower));
+    if (mentioned) {
+      entitiesResolved++;
+    } else {
+      failures.push(`Ground truth entity '${name}' (id=${ent.id || 'unknown'}) is not mentioned in document content`);
+    }
+  }
+
+  let triplesResolved = 0;
+  for (const triple of gtTriples) {
+    const src = triple.source;
+    const tgt = triple.target;
+    if (!src || !tgt) {
+      failures.push(`Ground truth triple missing source/target (relation=${triple.relation || 'unknown'})`);
+      continue;
+    }
+    const srcOk = isTermResolved(src, contentLower);
+    const tgtOk = isTermResolved(tgt, contentLower);
+    if (srcOk && tgtOk) {
+      triplesResolved++;
+    } else {
+      const missing = [!srcOk ? `source '${src}'` : null, !tgtOk ? `target '${tgt}'` : null].filter(Boolean).join(' and ');
+      failures.push(`Ground truth triple (${src} -${triple.relation || '?'}> ${tgt}) has unresolved ${missing} in document content`);
+    }
+  }
+
+  return {
+    entitiesResolved,
+    entitiesTotal: gtEntities.length,
+    triplesResolved,
+    triplesTotal: gtTriples.length,
+    failures,
+  };
+}
 
 export async function runIngestEval(): Promise<IngestKpiReport> {
   console.log('===============================================================');
@@ -130,6 +215,10 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
     domain: string;
     parentChunksCount: number;
     childChunksCount: number;
+    entitiesResolved: number;
+    entitiesTotal: number;
+    triplesResolved: number;
+    triplesTotal: number;
     passed: boolean;
     error?: string;
   }> = [];
@@ -203,17 +292,37 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
           }
         }
 
-        goldenPassedCount++;
+        // Validate ground truth entities & triples against document content
+        const gtCheck = validateGroundTruth(dataset, dataset.content.toLowerCase());
+
+        const datasetPassed = gtCheck.failures.length === 0;
+        if (datasetPassed) {
+          goldenPassedCount++;
+        }
+
         goldenDatasetResults.push({
           filename,
           title: dataset.title,
           domain,
           parentChunksCount: parentCount,
           childChunksCount: childCount,
-          passed: true,
+          entitiesResolved: gtCheck.entitiesResolved,
+          entitiesTotal: gtCheck.entitiesTotal,
+          triplesResolved: gtCheck.triplesResolved,
+          triplesTotal: gtCheck.triplesTotal,
+          passed: datasetPassed,
         });
 
-        console.log(`  [PASS] Dataset '${dataset.title}' (${filename}): ${parentCount} Parent, ${childCount} Child Chunks`);
+        if (!datasetPassed) {
+          console.log(`  [WARN] Dataset '${dataset.title}' ground truth issues:`);
+          for (const f of gtCheck.failures) {
+            console.log(`         - ${f}`);
+          }
+        }
+
+        console.log(
+          `  [${datasetPassed ? 'PASS' : 'FAIL'}] Dataset '${dataset.title}' (${filename}): ${parentCount} Parent, ${childCount} Child Chunks | GT Entities ${gtCheck.entitiesResolved}/${gtCheck.entitiesTotal}, Triples ${gtCheck.triplesResolved}/${gtCheck.triplesTotal}`
+        );
       } catch (err: any) {
         goldenDatasetResults.push({
           filename,
@@ -221,6 +330,10 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
           domain: 'UNKNOWN',
           parentChunksCount: 0,
           childChunksCount: 0,
+          entitiesResolved: 0,
+          entitiesTotal: 0,
+          triplesResolved: 0,
+          triplesTotal: 0,
           passed: false,
           error: err?.message || String(err),
         });

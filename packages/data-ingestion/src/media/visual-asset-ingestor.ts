@@ -1,8 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { MediaAssetRegistryEntry, LicenseType } from '@chronoviet/shared-spec';
+import { MediaAssetRegistryEntry, LicenseType, createLogger } from '@chronoviet/shared-spec';
 import { findMonorepoRoot } from '../utils/path-utils.js';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 export interface VisualAssetIngestInput {
   assetId?: string;
@@ -62,16 +64,29 @@ export class VisualAssetIngestor {
   }
 
   public normalizeLicense(license: string): string {
-    const clean = license.trim().toUpperCase().replace(/[\s\-_]+/g, '_');
+    // Normalize version separators too: "4.0" and "4_0" are equivalent.
+    const clean = license
+      .trim()
+      .toUpperCase()
+      .replace(/[\s\-_]+/g, '_')
+      .replace(/(\d)\.(\d)/g, '$1_$2');
     if (WHITELISTED_LICENSES.has(clean)) return clean;
+    // Non-commercial / no-derivative variants are never whitelisted; keep them verbatim
+    // so auditLicense correctly rejects them instead of coercing to a whitelisted version.
     if (clean.includes('_NC') || clean.includes('NC_') || clean.includes('_ND') || clean.includes('ND_') || clean.includes('NON_COMMERCIAL')) {
       return clean;
     }
     if (clean.includes('CC0') || clean.includes('PUBLIC_DOMAIN') || clean.includes('PUBLICDOMAIN')) {
       return 'CC0';
     }
-    if (clean.includes('CC_BY_SA') || clean.includes('ATTRIBUTION_SHAREALIKE')) return 'CC_BY_SA_4_0';
-    if (clean.includes('CC_BY') || clean.includes('ATTRIBUTION')) return 'CC_BY_4_0';
+    // Only map unambiguous CC BY / CC BY-SA version 4.0 (or no-version) variants.
+    // Older versions (3.0, 3.0 Unported, 2.5...) are a DIFFERENT license and must NOT
+    // be coerced into CC_BY_4_0 / CC_BY_SA_4_0.
+    const hasExplicitOtherVersion = /CC_BY(_SA)?_\d+_\d+/.test(clean) && !/CC_BY(_SA)?_4_0/.test(clean);
+    const ccBySa = clean.includes('CC_BY_SA') || clean.includes('ATTRIBUTION_SHAREALIKE');
+    const ccBy = clean.includes('CC_BY') || clean.includes('ATTRIBUTION');
+    if (ccBySa && !hasExplicitOtherVersion) return 'CC_BY_SA_4_0';
+    if (ccBy && !hasExplicitOtherVersion) return 'CC_BY_4_0';
     return clean;
   }
 
@@ -198,7 +213,7 @@ export class VisualAssetIngestor {
 
       fs.writeFileSync(this.registryPath, JSON.stringify(registry, null, 2), 'utf-8');
     } catch (err) {
-      console.warn(`[VisualAssetIngestor] Failed to update license registry:`, err);
+      log.warn('media.registry_update_failed', 'Failed to update visual license registry', { error: err });
     }
   }
 }

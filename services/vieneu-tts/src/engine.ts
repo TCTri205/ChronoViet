@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
-import { VieNeuTTSRequest, VieNeuTTSResponse, WordTimestamp, envConfig, logFallbackAlert } from '@chronoviet/shared-spec';
+import { VieNeuTTSRequest, VieNeuTTSResponse, WordTimestamp, envConfig, logFallbackAlert, createLogger } from '@chronoviet/shared-spec';
 import { calculateSceneDurationInFrames } from './timestamp-converter.js';
+
+const log = createLogger({ service: 'vieneu-tts' });
 
 export interface IVieNeuEngine {
   synthesize(request: VieNeuTTSRequest): Promise<VieNeuTTSResponse>;
@@ -201,6 +203,11 @@ export class VieNeuEngine implements IVieNeuEngine {
     } catch (err: any) {
       // If Python ONNX microservice is offline, seamlessly switch to Fallback Engine with warning log
       const reason = err?.message || 'Connection refused or offline';
+      log.warn('tts.python_engine_failed', 'VieNeu Python ONNX engine failed; falling back to synthetic engine', {
+        error: err,
+        pythonUrl: this.pythonUrl,
+        requestText: request.text,
+      });
       logFallbackAlert({
         subsystem: 'TTS_ENGINE',
         primaryTarget: `VieNeu Python ONNX Neural Engine (${this.pythonUrl})`,

@@ -53,7 +53,7 @@ Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài n
 1. **`tts-gen-queue` (Tạo Giọng Thuyết Minh VieNeu ONNX):**
    * *Nhiệm vụ:* Nhận kịch bản chữ từ Script Generation Pipeline, gọi mô hình **Self-Hosted VieNeu Neural TTS Engine** qua API `POST /api/v1/synthesize` để xuất file âm thanh `.wav` và mốc từ ngữ `wordTimestamps` cho từng scene.
    * *Priority:* Cao (Cần hoàn thành sớm để tính độ dài khung hình `durationInFrames` cho từng cảnh).
-   * *Quy chuẩn Kỹ thuật:* Xem chi tiết tại [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](file:///D:/Persional_Projects/ChronoViet/docs/architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md).
+   * *Quy chuẩn Kỹ thuật:* Xem chi tiết tại [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md).
 
 2. **`vlm-inspect-queue` (Thẩm Định Thị Giác, License Snapshot & Circuit Breaker):**
    * *Nhiệm vụ:* Đưa các đợt ảnh crawl qua Whitelisted License Filter (`Public Domain`, `CC0`, `CC-BY`), snapshot file ảnh + license metadata vào Host Volume `/media/license-snapshots/` và thực hiện chấm điểm qua **Gemini 2.5 Flash Cloud API** (kèm **Circuit Breaker** trip khi 3x HTTP 429 trong 5m ➔ auto failover sang **Local CLIP ONNX Scorer**).

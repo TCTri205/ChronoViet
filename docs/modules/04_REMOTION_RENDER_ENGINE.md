@@ -5,20 +5,20 @@
 
 ## 1. Định Vị Trong Hệ Thống Multi-Agent
 
-Mô-đun **Remotion Render Engine** là **Công cụ Thực thi (Agent Tool)** của hệ thống [Multi-Agent Orchestrator](file:///D:/Persional_Projects/ChronoViet/docs/modules/02_MULTI_AGENT_ORCHESTRATOR.md). 
+Mô-đun **Remotion Render Engine** là **Công cụ Thực thi (Agent Tool)** của hệ thống [Multi-Agent Orchestrator](02_MULTI_AGENT_ORCHESTRATOR.md). 
 
 Trong sơ đồ tổng thể:
 * Input của Remotion Render Engine là file **JSON Production Schema v4.1** (`ChronoVideoProps`) được đóng gói và thẩm định từ **Module 2 (Multi-Agent Orchestrator)**.
 * Trước khi gọi CLI `npx remotion render`, Render Worker **pre-download toàn bộ media assets** (Audio `.wav`, Images, Fonts) về thư mục làm việc cục bộ Host Volume `/media/raw-assets/` để đảm bảo 0% gián đoạn do mạng.
 * Remotion hoạt động như một Tool nhận diện lệnh CLI hoặc API wrapper, khởi tạo Chromium Process riêng biệt và giải phóng toàn bộ tài nguyên process (`browser.close()`) ngay sau khi xuất xong MP4.
-* Engine này đã được **triển khai hoàn thiện 100%** tại thư mục codebase [`packages/remotion-engine/src/`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src).
+* Engine này đã được **triển khai hoàn thiện 100%** tại thư mục codebase [`packages/remotion-engine/src/`](../../packages/remotion-engine/src).
 
 
 ---
 
 ## 2. Mô Tả Chi Tiết & 100% Chính Xác Format JSON Input Schema v4.1
 
-Cấu trúc file JSON input truyền vào Remotion Render Engine tuân thủ 100% chuẩn Zod Schema quy định tại [`packages/shared-spec/src/schema.ts`](file:///D:/Persional_Projects/ChronoViet/packages/shared-spec/src/schema.ts) và TypeScript definitions tại [`packages/remotion-engine/src/types/index.ts`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/src/types/index.ts).
+Cấu trúc file JSON input truyền vào Remotion Render Engine tuân thủ 100% chuẩn Zod Schema quy định tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts) và TypeScript definitions tại [`packages/remotion-engine/src/types/index.ts`](../../packages/remotion-engine/src/types/index.ts).
 
 Dưới đây là bảng tra cứu đầy đủ 100% không bỏ sót bất kỳ trường dữ liệu hay enum nào:
 

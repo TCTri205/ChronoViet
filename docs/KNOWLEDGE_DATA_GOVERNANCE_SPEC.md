@@ -276,7 +276,7 @@ Trong sử liệu Việt Nam, danh xưng nhân vật có độ tin cậy và b�
 
 ### 4.4. Thuật Toán Hợp Giải Xung Đột Cạnh Khi Merge Node (`rag:re-resolve` Algorithm)
 
-Khi chạy pipeline re-indexing (`pnpm --filter @chronoviet/rag-engine rag:re-resolve`) để gộp các nút thực thể cũ:
+Khi chạy pipeline re-indexing (`pnpm --filter @chronoviet/data-ingestion rag:re-resolve`) để gộp các nút thực thể cũ:
 - **Cạnh không mâu thuẫn (cùng thuộc tính/giá trị):** Lấy $\max(\text{Confidence}_A, \text{Confidence}_B)$.
 - **Cạnh mâu thuẫn giá trị (vd: Nguồn A bảo sinh năm 1225, Nguồn B bảo sinh năm 1226):** **Tuyệt đối không ghi đè ngẫu nhiên.** Hệ thống tự động chuyển đổi thành 2 cạnh song song theo mô hình **Multi-Perspective Graph Edge** (Mục 5.2) kèm trích dẫn nguồn riêng biệt.
 
@@ -363,7 +363,7 @@ Khi hệ thống ingest song song các tệp PDF chính sử chi tiết (`data/r
 
 ```bash
 # Lệnh chạy kiểm định chất lượng dữ liệu nạp vào RAG Engine
-pnpm --filter @chronoviet/rag-engine eval:ingest
+pnpm --filter @chronoviet/data-ingestion eval:ingest
 ```
 
 ### 6.1. Bảng Chỉ Số KPI Chất Lượng Dữ Liệu & Phương Pháp Đo Lường Thực Tế:

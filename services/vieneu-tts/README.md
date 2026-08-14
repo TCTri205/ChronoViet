@@ -27,7 +27,7 @@ graph TD
 
 ## 📋 Data Contract & Zod Schemas (`@chronoviet/shared-spec`)
 
-Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai báo tại [`packages/shared-spec`](file:///d:/Persional_Projects/ChronoViet/packages/shared-spec):
+Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai báo tại [`packages/shared-spec`](../../packages/shared-spec):
 
 ### Request Payload (`VieNeuTTSRequestSchema`)
 ```typescript
@@ -64,11 +64,11 @@ Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai bá
 
 | Export Symbol | Module File | Description |
 | :--- | :--- | :--- |
-| `convertVieNeuTimestampsToCaptions` | [`src/timestamp-converter.ts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts/src/timestamp-converter.ts) | Quy đổi `wordTimestamps` (ms) $\rightarrow$ `CaptionWord[]` (`startFrame`, `endFrame`) ở FPS quy định. |
-| `calculateSceneDurationInFrames` | [`src/timestamp-converter.ts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts/src/timestamp-converter.ts) | Tính toán tổng `durationInFrames` cho cảnh phim: $\lceil \frac{\text{audioDurationMs} + \text{paddingMs}}{1000} \times \text{fps} \rceil$. |
-| `VieNeuEngine` | [`src/engine.ts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts/src/engine.ts) | Primary Engine Wrapper gọi Python FastAPI Service, tự động failover sang `SyntheticTTSFallbackEngine`. |
-| `SyntheticTTSFallbackEngine` | [`src/engine.ts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts/src/engine.ts) | Fallback engine tạo file `.wav` tone 480Hz giả lập âm thanh và mốc thời gian mượt mà trên CPU dev. |
-| `createTtsServer` | [`src/server.ts`](file:///d:/Persional_Projects/ChronoViet/services/vieneu-tts/src/server.ts) | Khởi tạo Node.js HTTP Server lắng nghe REST API `/api/v1/synthesize`, `/health`, và phục vụ static audio. |
+| `convertVieNeuTimestampsToCaptions` | [`src/timestamp-converter.ts`](src/timestamp-converter.ts) | Quy đổi `wordTimestamps` (ms) $\rightarrow$ `CaptionWord[]` (`startFrame`, `endFrame`) ở FPS quy định. |
+| `calculateSceneDurationInFrames` | [`src/timestamp-converter.ts`](src/timestamp-converter.ts) | Tính toán tổng `durationInFrames` cho cảnh phim: $\lceil \frac{\text{audioDurationMs} + \text{paddingMs}}{1000} \times \text{fps} \rceil$. |
+| `VieNeuEngine` | [`src/engine.ts`](src/engine.ts) | Primary Engine Wrapper gọi Python FastAPI Service, tự động failover sang `SyntheticTTSFallbackEngine`. |
+| `SyntheticTTSFallbackEngine` | [`src/engine.ts`](src/engine.ts) | Fallback engine tạo file `.wav` tone 480Hz giả lập âm thanh và mốc thời gian mượt mà trên CPU dev. |
+| `createTtsServer` | [`src/server.ts`](src/server.ts) | Khởi tạo Node.js HTTP Server lắng nghe REST API `/api/v1/synthesize`, `/health`, và phục vụ static audio. |
 
 ---
 

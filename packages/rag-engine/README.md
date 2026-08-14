@@ -46,12 +46,23 @@ packages/rag-engine/
 ## ⚡ 3. Hướng Dẫn Sử Dụng & Bộ Lệnh CLI (CLI Commands)
 
 ```bash
-# 1. Chạy bộ kiểm thử Benchmark đo lường KPI Mô-đun 1 (Chrono-RAG Search Engine)
+# 1. Trải nghiệm Chatbot RAG tương tác trực tiếp trên Terminal CLI
+pnpm --filter @chronoviet/rag-engine chat
+# hoặc từ root monorepo:
+pnpm rag:chat
+
+# 2. Chạy bộ kiểm thử Benchmark đo lường KPI Mô-đun 1 (Chrono-RAG Search Engine)
 pnpm --filter @chronoviet/rag-engine eval
 
-# 2. Build gói mã nguồn
+# 3. Build gói mã nguồn
 pnpm --filter @chronoviet/rag-engine build
 ```
+
+### 💬 Các lệnh khả dụng trong Terminal Chatbot (`pnpm rag:chat`):
+* `/help`: Hiển thị trợ giúp bộ lệnh.
+* `/stats`: Kiểm tra số lượng văn bản, thực thể và liên kết trong kho tri thức.
+* `/ingest <nội dung sử liệu>`: Nạp thêm văn bản tri thức lịch sử mới trực tiếp vào RAG Engine.
+* `/exit`: Thoát terminal chatbot.
 
 ---
 

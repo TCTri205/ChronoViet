@@ -102,6 +102,9 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.43)(supports-color@8.1.1)(terser@5.49.2)
 
   packages/rag-engine:
     dependencies:
@@ -118,6 +121,9 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.43)(supports-color@8.1.1)(terser@5.49.2)
 
   packages/remotion-engine:
     dependencies:

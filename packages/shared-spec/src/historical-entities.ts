@@ -91,6 +91,24 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     type: 'HISTORICAL_PERSON',
     aliases: ['Trưng Trắc', 'Trưng Nhị', 'Trưng Vương', 'Hai Bà Trưng'],
   },
+  'person_ly_thuong_kiet': {
+    entityId: 'person_ly_thuong_kiet',
+    canonicalName: 'Lý Thường Kiệt',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Ngô Tuấn', 'Thái úy Lý Thường Kiệt', 'Thái úy'],
+  },
+  'person_an_duong_vuong': {
+    entityId: 'person_an_duong_vuong',
+    canonicalName: 'An Dương Vương',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Thục Phán', 'Thục Phán An Dương Vương'],
+  },
+  'person_lieu_thang': {
+    entityId: 'person_lieu_thang',
+    canonicalName: 'Liễu Thăng',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Tổng binh Liễu Thăng'],
+  },
 };
 
 /**

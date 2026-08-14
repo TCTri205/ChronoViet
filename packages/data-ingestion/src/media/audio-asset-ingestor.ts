@@ -1,7 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { createLogger } from '@chronoviet/shared-spec';
 import { findMonorepoRoot } from '../utils/path-utils.js';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 export type AudioCategory =
   | 'sfx_drum_war'
@@ -146,7 +149,7 @@ export class AudioAssetIngestor {
 
       fs.writeFileSync(this.catalogPath, JSON.stringify(catalog, null, 2), 'utf-8');
     } catch (err) {
-      console.warn(`[AudioAssetIngestor] Failed to update audio catalog:`, err);
+      log.warn('media.catalog_update_failed', 'Failed to update audio catalog', { error: err });
     }
   }
 }

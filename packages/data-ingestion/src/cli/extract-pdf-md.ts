@@ -5,17 +5,21 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
+import { createLogger } from '@chronoviet/shared-spec';
 import { PdfExtractor } from '../pdf/pdf-extractor.js';
 import { findMonorepoRoot } from '../utils/path-utils.js';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 async function main() {
   const root = findMonorepoRoot();
   const pdfDir = path.resolve(root, 'data', 'raw_corpus', 'pdf');
   const outputDir = path.resolve(root, 'data', 'raw_corpus', 'pdf_extracted');
 
-  console.log('📚 Starting Primary PDF Text Extraction & Clean Markdown Export...');
-  console.log(`📁 Source PDF Directory: ${pdfDir}`);
-  console.log(`📁 Target Output Directory: ${outputDir}\n`);
+  log.info('pdf_extract.started', 'Starting Primary PDF Text Extraction & Clean Markdown Export', {
+    pdfDir,
+    outputDir,
+  });
 
   await fs.mkdir(outputDir, { recursive: true });
 
@@ -23,7 +27,7 @@ async function main() {
   const pdfFiles = entries.filter((e) => e.endsWith('.pdf'));
 
   if (pdfFiles.length === 0) {
-    console.warn('⚠️ No PDF files found in directory!');
+    log.warn('pdf_extract.no_pdfs', 'No PDF files found in directory');
     process.exit(0);
   }
 
@@ -35,8 +39,6 @@ async function main() {
     const fullPath = path.join(pdfDir, pdfFile);
     const baseName = path.basename(pdfFile, '.pdf');
     const pdfBuf = await fs.readFile(fullPath);
-
-    console.log(`[${count}/${pdfFiles.length}] Extracting: ${pdfFile} (${Math.round(pdfBuf.length / 1024)} KB)...`);
 
     const result = extractor.extract(pdfBuf, fullPath);
     const outFileName = `${baseName}.md`;
@@ -69,16 +71,24 @@ ${result.text}
 
     await fs.writeFile(outPath, mdContent, 'utf-8');
     const wordCount = result.text.split(/\s+/).filter(Boolean).length;
-    console.log(`   ✅ Exported Clean Markdown: ${outPath} (${wordCount} words, type: ${docTypeLabel})\n`);
+    log.info('pdf_extract.item_done', 'PDF extracted and exported to clean Markdown', {
+      pdfFile,
+      index: count,
+      total: pdfFiles.length,
+      sizeKb: Math.round(pdfBuf.length / 1024),
+      outPath,
+      wordCount,
+      docType: docTypeLabel,
+    });
   }
 
-  console.log('======================================================');
-  console.log('🎉 All Historical PDF Files Successfully Extracted to Clean Markdown!');
-  console.log(`📁 Output Folder: ${outputDir}`);
-  console.log('======================================================\n');
+  log.info('pdf_extract.completed', 'All historical PDF files successfully extracted', {
+    total: pdfFiles.length,
+    outputDir,
+  });
 }
 
 main().catch((err) => {
-  console.error('❌ Fatal Extraction Error:', err);
+  log.error('pdf_extract.fatal_error', 'Fatal Extraction Error', { error: err });
   process.exit(1);
 });

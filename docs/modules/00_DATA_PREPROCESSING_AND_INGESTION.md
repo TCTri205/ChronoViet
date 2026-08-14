@@ -197,7 +197,7 @@ Sử dụng LLM (Gemini 1.5 Flash hoặc Qwen2.5-72B-Instruct) ép kiểu trả 
     "relationships": [{"source": "...", "target": "...", "relation_type": "...", "confidence": 1.0}]
   }
   ```
-* **Lưu trữ SQL**: Nạp vào bảng `entities` và `relationships` tương thích với Schema tại [packages/rag-engine/src/db/schema.ts](file:///d:/Persional_Projects/ChronoViet/packages/rag-engine/src/db/schema.ts).
+* **Lưu trữ SQL**: Nạp vào bảng `entities` và `relationships` tương thích với Schema tại [packages/shared-spec/src/db/schema.ts](../../packages/shared-spec/src/db/schema.ts).
 
 ### 4.3. Liên Kết Chéo Graph & Vector (`entity_chunks`)
 Mỗi thực thể xuất hiện trong đoạn văn bản nào sẽ được ghi lại trong bảng liên kết `entity_chunks(entity_id, chunk_id)`. Đây là chiếc cầu nối quyết định cho phép thuật toán **Graph-Guided Chunk Retrieval** ở Mô-đun 1 mở rộng $k$-hop subgraph để lấy chính xác các đoạn văn bản gốc liên quan.
@@ -301,7 +301,7 @@ pnpm eval:ingest # hoặc pnpm --filter @chronoviet/data-ingestion eval
 Mô-đun 0 chịu trách nhiệm nạp các tập **Golden Test Cases** vào thư mục `eval/test-cases/` để phục vụ E2E Pipeline Benchmark:
 
 ```
-d:\Persional_Projects\ChronoViet\eval\test-cases\
+../eval/test-cases
 ├── biography_tran_hung_dao.json   [Golden Test-case cho Domain BIOGRAPHY]
 ├── battle_bach_dang_938.json      [Golden Test-case cho Domain BATTLE]
 ├── dynasty_nha_ly.json            [Golden Test-case cho Domain DYNASTY]
@@ -315,13 +315,14 @@ Bộ dữ liệu mẫu này giúp kiểm tra chất lượng kết quả đầu 
 
 ## 7. Khung Đánh Giá & Kết Quả Đo Lường KPI (Module 0 Evaluation Suite)
 
-Mô-đun 0 tích hợp bộ kiểm thử độc lập tại [`packages/data-ingestion/eval/runner.ts`](file:///d:/Persional_Projects/ChronoViet/packages/data-ingestion/eval/runner.ts) đo lường 3 KPI cốt lõi:
+Mô-đun 0 tích hợp bộ kiểm thử độc lập tại [`packages/data-ingestion/eval/runner.ts`](../../packages/data-ingestion/eval/runner.ts) đo lường 4 KPI cốt lõi:
 
 | Chỉ số KPI | Mô Tả & Phương Pháp Đánh Giá | Chỉ Số Mục Tiêu | Kết Quả Thực Tế | Trạng Thái |
 | :--- | :--- | :---: | :---: | :---: |
-| **KPI 1: Entity Normalization Accuracy** | Đánh giá độ chính xác khi giải quyết đồng tham chiếu (`ALIAS_OF`) và ánh xạ địa danh qua các thời kỳ (`SAME_AS_LOCATION`). | **$> 98.0\%$** | **100%** (32/32 test cases) | **PASSED** |
-| **KPI 2: Copyright Compliance Rate** | Kiểm định tính tuân thủ 100% Whitelisted License (`PUBLIC_DOMAIN`, `CC0`, `CC_BY_4_0`, `CC_BY_SA_4_0`) cho visual asset. | **$100\%$** | **100%** (10/10 test cases) | **PASSED** |
-| **KPI 3: Golden Dataset Integrity & Throughput** | Xác minh tính toàn vẹn 5 tập Golden Datasets (Parent/Child Chunks) và đo tốc độ nạp dữ liệu. | **$100\%$ Integrity** | **100% Integrity** (5000 chunks/s) | **PASSED** |
+| **KPI 1: Entity Normalization Accuracy** | Đánh giá độ chính xác khi giải quyết đồng tham chiếu (`ALIAS_OF`) và ánh xạ địa danh qua các thời kỳ (`SAME_AS_LOCATION`). | **$> 98.0\%$** | **100%** (39/39 test cases) | **PASSED** |
+| **KPI 2: Copyright Compliance Rate** | Kiểm định tính tuân thủ 100% Whitelisted License (`PUBLIC_DOMAIN`, `CC0`, `CC_BY_4_0`, `CC_BY_SA_4_0`) cho visual asset. Reject các phiên bản CC cũ (`CC_BY_3_0`) và biến thể NC/ND. | **$100\%$** | **100%** (20/20 test cases) | **PASSED** |
+| **KPI 3: Golden Dataset Integrity & Throughput** | Xác minh tính toàn vẹn 5 tập Golden Datasets (Parent/Child Chunks) theo `ground_truth_entities`/`ground_truth_triples` và đo tốc độ nạp dữ liệu. | **$100\%$ Integrity** | **100% Integrity** (5/5 datasets, ground truth entities/triples fully resolved) | **PASSED** |
+| **KPI 4: Hierarchical Chunk Quality** | Xác minh Parent Chunk (2000-3000 từ) và Child Chunk (300-500 từ) hợp lệ về token bounds và metadata enrichment. | **$100\%$** | **100%** (34/34 chunks valid) | **PASSED** |
 
-> 📄 File Báo Cáo Chi Tiết: [`packages/data-ingestion/eval/reports/ingest-eval-report.json`](file:///d:/Persional_Projects/ChronoViet/packages/data-ingestion/eval/reports/ingest-eval-report.json)
+> 📄 File Báo Cáo Chi Tiết: [`packages/data-ingestion/eval/reports/ingest-eval-report.json`](../../packages/data-ingestion/eval/reports/ingest-eval-report.json)
 

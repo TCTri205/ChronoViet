@@ -2,7 +2,9 @@
  * Database Initializer for PostgreSQL + pgvector & Knowledge Graph Schema
  */
 
-import { initSchema, isPgAvailable, query } from '@chronoviet/shared-spec';
+import { createLogger, initSchema, isPgAvailable, query } from '@chronoviet/shared-spec';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 export interface DbInitResult {
   success: boolean;
@@ -20,7 +22,11 @@ export async function initializeDatabaseSchema(maxRetries = 5, retryIntervalMs =
     pgAvailable = await isPgAvailable(true);
     if (pgAvailable) break;
     if (attempt < maxRetries) {
-      console.log(`⏳ Waiting for PostgreSQL container to finish startup (attempt ${attempt}/${maxRetries})...`);
+      log.warn('db.init.retry', 'Waiting for PostgreSQL container to finish startup', {
+        attempt,
+        maxRetries,
+        retryIntervalMs,
+      });
       await new Promise((resolve) => setTimeout(resolve, retryIntervalMs));
     }
   }
@@ -56,6 +62,7 @@ export async function initializeDatabaseSchema(maxRetries = 5, retryIntervalMs =
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error('db.init.error', 'Database schema initialization error', { error });
     return {
       success: false,
       pgAvailable: true,

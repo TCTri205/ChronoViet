@@ -1,6 +1,9 @@
 import { Pool } from 'pg';
 import { INITIAL_RAG_SCHEMA_SQL } from './schema.js';
 import { envConfig, getDatabaseConfig } from '../config.js';
+import { createLogger } from '../logger.js';
+
+const log = createLogger({ service: 'shared-spec' });
 
 export interface DbEntity {
   id: string;
@@ -95,6 +98,10 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
   if (Boolean(process.env.FORCE_OFFLINE) || Boolean(process.env.SKIP_PG)) {
     pgConnected = false;
     checkAttempted = true;
+    log.warn('db.pg_forced_offline', 'PostgreSQL disabled via FORCE_OFFLINE/SKIP_PG; using in-memory store', {
+      forceOffline: Boolean(process.env.FORCE_OFFLINE),
+      skipPg: Boolean(process.env.SKIP_PG),
+    });
     return false;
   }
 
@@ -118,8 +125,17 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
     await client.query('SELECT 1');
     client.release();
     pgConnected = true;
-  } catch {
+    log.info('db.pg_connected', 'PostgreSQL connection established', {
+      host: cfg.host,
+      database: cfg.database,
+    });
+  } catch (err) {
     pgConnected = false;
+    log.warn('db.pg_unavailable', 'PostgreSQL unavailable; falling back to in-memory store', {
+      error: err,
+      host: cfg.host,
+      database: cfg.database,
+    });
     if (pgPool) {
       const poolToClose = pgPool;
       pgPool = null;
@@ -171,7 +187,9 @@ export async function initSchema(): Promise<boolean> {
       await pgPool.query(INITIAL_RAG_SCHEMA_SQL);
       return true;
     } catch (err) {
-      console.warn('[DB Client] Migration on PG failed, falling back to In-Memory mode:', err);
+      log.error('db.schema_migration_failed', 'Migration on PG failed; falling back to In-Memory mode', {
+        error: err,
+      });
     }
   }
   return false;

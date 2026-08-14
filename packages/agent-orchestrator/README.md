@@ -42,14 +42,22 @@ import {
   validateFolkloreHypothesisTone,
   evaluateNliEntailmentScore,
 } from '@chronoviet/agent-orchestrator';
+import { createLogger } from '@chronoviet/shared-spec';
+
+const log = createLogger({ service: 'agent-orchestrator' });
 
 // 1. Kiểm định giọng văn Dã sử cho nguồn Level 3
 const folkloreResult = validateFolkloreHypothesisTone(scriptText, isLevel3Source);
 if (!folkloreResult.isValid) {
-  console.warn(folkloreResult.feedbackPrompt);
+  log.warn('guardrail.folklore_rejected', 'Folklore tone guardrail triggered', {
+    feedback: folkloreResult.feedbackPrompt,
+  });
 }
 
 // 2. Kiểm định Entailment chống Hallucination
 const nliResult = evaluateNliEntailmentScore({ scriptClaim, groundTruthChunks });
-console.log(`Entailment score: ${nliResult.entailmentScore}, Pass: ${!nliResult.isHallucinated}`);
+log.info('guardrail.nli_evaluated', 'NLI entailment score evaluated', {
+  entailmentScore: nliResult.entailmentScore,
+  passed: !nliResult.isHallucinated,
+});
 ```

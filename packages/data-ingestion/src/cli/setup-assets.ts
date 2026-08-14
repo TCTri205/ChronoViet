@@ -5,12 +5,15 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
+import { createLogger } from '@chronoviet/shared-spec';
 import { VisualAssetIngestor } from '../media/visual-asset-ingestor.js';
 import { AudioAssetIngestor } from '../media/audio-asset-ingestor.js';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 
+const log = createLogger({ service: 'data-ingestion' });
+
 async function main() {
-  console.log('🚀 Starting ChronoViet Media Assets Setup & Compliance Audit...');
+  log.info('setup_assets.started', 'Starting ChronoViet Media Assets Setup & Compliance Audit');
 
   const rootDir = findMonorepoRoot();
   const mediaRawDir = path.resolve(rootDir, 'media', 'raw-assets');
@@ -25,7 +28,7 @@ async function main() {
   const audioIngestor = new AudioAssetIngestor({ mediaAudioDir });
 
   // 1. Audit Sample Visual Assets
-  console.log('📸 Ingesting & Auditing Sample Whitelisted Visual Assets...');
+  log.info('setup_assets.visual_started', 'Ingesting & auditing sample whitelisted visual assets');
   const sampleVisualResult = await visualIngestor.ingest({
     assetId: 'sample_tran_hung_dao_portrait',
     license: 'PUBLIC_DOMAIN',
@@ -36,10 +39,16 @@ async function main() {
     keyFigures: ['Trần Quốc Tuấn'],
   });
 
-  console.log(`  - Sample Visual Asset Result: ${sampleVisualResult.success ? '✅ Passed Quality Gate & License Audit' : '❌ Failed: ' + sampleVisualResult.error}`);
+  if (sampleVisualResult.success) {
+    log.info('setup_assets.visual_passed', 'Sample visual asset passed quality gate & license audit');
+  } else {
+    log.error('setup_assets.visual_failed', 'Sample visual asset failed quality gate', {
+      error: sampleVisualResult.error,
+    });
+  }
 
   // 2. Audit Sample Audio Assets
-  console.log('🎵 Ingesting & Cataloging Sample Audio Assets (EBU R128 LUFS Standard)...');
+  log.info('setup_assets.audio_started', 'Ingesting & cataloging sample audio assets (EBU R128 LUFS standard)');
   const sampleAudioResult = await audioIngestor.ingest({
     assetId: 'sfx_drum_war_bach_dang',
     category: 'sfx_drum_war',
@@ -47,30 +56,39 @@ async function main() {
     durationSeconds: 15,
   });
 
-  console.log(`  - Sample Audio Asset Result: ${sampleAudioResult.success ? '✅ LUFS Normalized & Cataloged' : '❌ Failed: ' + sampleAudioResult.error}`);
+  if (sampleAudioResult.success) {
+    log.info('setup_assets.audio_passed', 'Sample audio asset LUFS normalized & cataloged');
+  } else {
+    log.error('setup_assets.audio_failed', 'Sample audio asset failed', {
+      error: sampleAudioResult.error,
+    });
+  }
 
   // 3. Trigger Remotion Engine setup_assets script if available
   const remotionSetupScript = path.resolve(rootDir, 'packages', 'remotion-engine', 'eval', 'scripts', 'setup_assets.js');
   try {
     const scriptExists = await fs.stat(remotionSetupScript).then(() => true).catch(() => false);
     if (scriptExists) {
-      console.log('🎬 Executing Remotion Engine setup_assets.js...');
+      log.info('setup_assets.remotion_script', 'Executing Remotion Engine setup_assets.js', {
+        scriptPath: remotionSetupScript,
+      });
       // Dynamic import or execution
       require(remotionSetupScript);
     }
   } catch (err) {
-    console.warn('⚠️ Remotion Engine setup script execution warning:', err);
+    log.warn('setup_assets.remotion_script_warning', 'Remotion Engine setup script execution warning', {
+      error: err,
+    });
   }
 
-  console.log('\n======================================================');
-  console.log('✅ Media Asset Setup & License Snapshot Registry Ready!');
-  console.log(`📁 Raw Assets Location:        ${mediaRawDir}`);
-  console.log(`📄 License Registry Snapshot: ${registryPath}`);
-  console.log(`🔊 Normalized Audio Location: ${mediaAudioDir}`);
-  console.log('======================================================\n');
+  log.info('setup_assets.completed', 'Media Asset Setup & License Snapshot Registry ready', {
+    mediaRawDir,
+    registryPath,
+    mediaAudioDir,
+  });
 }
 
 main().catch((err) => {
-  console.error('❌ Media Asset Setup Error:', err);
+  log.error('setup_assets.fatal_error', 'Media Asset Setup Error', { error: err });
   process.exit(1);
 });

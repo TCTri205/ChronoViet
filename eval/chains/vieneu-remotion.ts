@@ -151,12 +151,11 @@ export async function runVieNeuRemotionChain(options: {
   for (let i = 0; i < jsonProps.timeline.length; i++) {
     const scene = jsonProps.timeline[i];
     
-    // Crucial: Correctly extract actual scene narration text from scene.audioOverlay or scene.text or scene.overlay
+    // Crucial: Correctly extract actual scene narration text from scene.text or scene.overlayData
     const narrationText =
-      scene.audioOverlay?.narrationText ||
       scene.text ||
-      scene.overlay?.title ||
       scene.overlayData?.title ||
+      scene.overlayData?.subtitle ||
       'ChronoViet Lich Su Viet Nam';
 
     const words = narrationText.split(/\s+/).filter(Boolean);
@@ -165,6 +164,9 @@ export async function runVieNeuRemotionChain(options: {
     // Call VieNeu TTS synthesis for unique scene text
     const ttsResponse = await ttsEngine.synthesize({
       text: narrationText,
+      speakerId: 'vi_historical_male_1',
+      speedRatio: 1.0,
+      sampleRate: 24000,
       fps: jsonProps.fps || 30,
       paddingMs: 300,
     });
@@ -202,11 +204,6 @@ export async function runVieNeuRemotionChain(options: {
       
       scene.durationInFrames = ttsResponse.calculatedFramesAt30fps;
       scene.sceneAudioUrl = relAudioPath;
-      scene.audioOverlay = {
-        audioUrl: relAudioPath,
-        narrationText: narrationText,
-        volume: 1.0,
-      };
       scene.captions = captions;
       fileAudioDurationMs += ttsResponse.audioDurationMs;
       fileTotalFrames += ttsResponse.calculatedFramesAt30fps;

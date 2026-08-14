@@ -5,8 +5,11 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
+import { createLogger } from '@chronoviet/shared-spec';
 import { seedDualBranch } from '../seeder/dual-branch-seeder.js';
 import { findMonorepoRoot } from '../utils/path-utils.js';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 const GOLDEN_DATASETS = [
   'biography_tran_hung_dao.json',
@@ -22,10 +25,10 @@ async function resolveTestCasesDir(): Promise<string> {
 }
 
 async function main() {
-  console.log('🚀 Seeding Golden Ground-Truth Datasets for Evaluation...');
+  log.info('eval_seed.started', 'Seeding Golden Ground-Truth Datasets for Evaluation');
 
   const testCasesDir = await resolveTestCasesDir();
-  console.log(`📁 Resolved Test Cases Directory: ${testCasesDir}`);
+  log.info('eval_seed.test_cases_dir', 'Resolved test cases directory', { testCasesDir });
 
   let processedCount = 0;
   let totalChunks = 0;
@@ -38,7 +41,7 @@ async function main() {
     try {
       const exists = await fs.stat(filePath).then(() => true).catch(() => false);
       if (!exists) {
-        console.warn(`⚠️ Dataset file missing at ${filePath}. Skipping...`);
+        log.warn('eval_seed.dataset_missing', `Dataset file missing, skipping`, { filePath });
         continue;
       }
 
@@ -65,22 +68,29 @@ async function main() {
       totalEntities += seedResult.entitiesExtracted;
       totalTriples += seedResult.triplesExtracted;
 
-      console.log(`  ✅ Ingested [${data.topic_category || 'DATASET'}] ${title}: ${seedResult.chunksIngested} chunks, ${seedResult.entitiesExtracted} entities, ${seedResult.triplesExtracted} triples.`);
+      log.info('eval_seed.dataset_ingested', `Ingested dataset`, {
+        filename,
+        title,
+        category: data.topic_category || 'DATASET',
+        chunks: seedResult.chunksIngested,
+        entities: seedResult.entitiesExtracted,
+        triples: seedResult.triplesExtracted,
+      });
     } catch (err) {
-      console.error(`❌ Error seeding ${filename}:`, err);
+      log.error('eval_seed.dataset_failed', `Error seeding dataset`, { filename, error: err });
     }
   }
 
-  console.log('\n======================================================');
-  console.log('🎉 Golden Datasets Seeding Completed!');
-  console.log(`📄 Golden Files Ingested: ${processedCount}/${GOLDEN_DATASETS.length}`);
-  console.log(`🧩 Total Chunks:          ${totalChunks}`);
-  console.log(`🏷️ Total Entities:        ${totalEntities}`);
-  console.log(`🔗 Total Triples:         ${totalTriples}`);
-  console.log('======================================================\n');
+  log.info('eval_seed.completed', 'Golden Datasets Seeding completed', {
+    filesIngested: processedCount,
+    totalFiles: GOLDEN_DATASETS.length,
+    totalChunks,
+    totalEntities,
+    totalTriples,
+  });
 }
 
 main().catch((err) => {
-  console.error('❌ Golden Datasets Seeding Error:', err);
+  log.error('eval_seed.fatal_error', 'Golden Datasets Seeding Error', { error: err });
   process.exit(1);
 });

@@ -8,15 +8,17 @@
  */
 
 import path from 'path';
+import { createLogger } from '@chronoviet/shared-spec';
 import { WikiScraper } from '../crawler/wiki-scraper.js';
 import { WebScraper } from '../crawler/web-scraper.js';
 import {
   getAllMasterTopics,
   getTopicsByEpoch,
-  MASTER_HISTORICAL_CATALOG,
 } from '../crawler/master-corpus-catalog.js';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 import { CorpusCrawlItemResult, CorpusCrawlResult } from '@chronoviet/shared-spec';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 function parseArgs(): {
   topics: string[];
@@ -63,34 +65,36 @@ async function main() {
   const { topics: inputTopics, urls, outputPath, dynasty, minWordCount, all, epoch } = parseArgs();
   const startTime = Date.now();
 
-  console.log('🌐 Starting ChronoViet Historical Corpus Master Crawler...');
-  console.log(`📁 Target Output Directory: ${outputPath}`);
-  if (dynasty) console.log(`🏛️ Dynasty Tag:              ${dynasty}`);
-  console.log(`📝 Min Word Count Threshold: ${minWordCount} words`);
+  log.info('crawl.started', 'Starting ChronoViet Historical Corpus Master Crawler', {
+    outputPath,
+    dynasty,
+    minWordCount,
+  });
 
   let topicsToCrawl: string[] = [...inputTopics];
 
   if (all) {
-    console.log('\n👑 [--all FLAG DETECTED] Loading Master Catalog for ALL 15 HISTORICAL EPOCHS...');
     topicsToCrawl = getAllMasterTopics();
-    console.log(`📌 Total Master Topics to Crawl: ${topicsToCrawl.length} topics across 15 Epochs`);
+    log.info('crawl.loading_all_epochs', 'Loading Master Catalog for ALL 15 historical epochs', {
+      totalTopics: topicsToCrawl.length,
+    });
   } else if (epoch) {
     const epochEntry = getTopicsByEpoch(epoch);
     if (epochEntry) {
-      console.log(`\n🏛️ [--epoch=${epoch} DETECTED] Loading Catalog for "${epochEntry.epochName}" (${epochEntry.epochId})...`);
       topicsToCrawl = epochEntry.topics;
+      log.info('crawl.loading_epoch', 'Loading catalog for epoch', {
+        epochId: epochEntry.epochId,
+        epochName: epochEntry.epochName,
+        topicCount: epochEntry.topics.length,
+      });
     } else {
-      console.warn(`⚠️ Unknown Epoch identifier: "${epoch}". Expected values like "EPOCH_05" or "5".`);
+      log.warn('crawl.unknown_epoch', `Unknown Epoch identifier: "${epoch}". Expected values like "EPOCH_05" or "5"`);
     }
   }
 
   if (topicsToCrawl.length === 0 && urls.length === 0) {
-    console.warn('\n⚠️ No topics, URLs, --all, or --epoch flags provided!');
-    console.log('Usage Examples:');
-    console.log('  pnpm crawl:corpus --all                            # Automatically crawl ALL 15 Epochs');
-    console.log('  pnpm crawl:corpus --epoch=EPOCH_05                 # Crawl Epoch 5 (Nhà Trần)');
-    console.log('  pnpm crawl:corpus --topics="Trần Hưng Đạo, Trận Bạch Đằng"');
-    console.log('  pnpm crawl:corpus --urls="https://vi.wikisource.org/wiki/Đại_Việt_sử_ký_toàn_thư"');
+    log.warn('crawl.no_targets', 'No topics, URLs, --all, or --epoch flags provided');
+    log.info('crawl.usage_hint', 'Usage: pnpm crawl:corpus --all | --epoch=EPOCH_05 | --topics="..." | --urls="..."');
     process.exit(0);
   }
 
@@ -100,40 +104,72 @@ async function main() {
 
   // 1. Crawl Topics via Wikipedia API
   if (topicsToCrawl.length > 0) {
-    console.log(`\n📚 Crawling ${topicsToCrawl.length} Historical Topics...`);
+    log.info('crawl.topics_started', `Crawling ${topicsToCrawl.length} historical topics`);
     let count = 0;
     for (const topic of topicsToCrawl) {
       count++;
-      console.log(`  [${count}/${topicsToCrawl.length}] Crawling: "${topic}"...`);
       const res = await wikiScraper.fetchTopic(topic, { outputPath, dynasty, minWordCount });
       results.push(res);
 
       if (res.status === 'SUCCESS') {
-        console.log(`    ✅ Saved (${res.wordCount} words): ${res.savedPath}`);
+        log.info('crawl.item_succeeded', 'Topic crawled and saved', {
+          topic,
+          index: count,
+          total: topicsToCrawl.length,
+          wordCount: res.wordCount,
+          savedPath: res.savedPath,
+        });
       } else if (res.status === 'SKIPPED') {
-        console.log(`    ⚠️ Skipped (${res.wordCount} words): ${res.error}`);
+        log.warn('crawl.item_skipped', 'Topic skipped by quality gate', {
+          topic,
+          index: count,
+          total: topicsToCrawl.length,
+          wordCount: res.wordCount,
+          reason: res.error,
+        });
       } else {
-        console.log(`    ❌ Failed: ${res.error}`);
+        log.error('crawl.item_failed', 'Topic crawl failed', {
+          topic,
+          index: count,
+          total: topicsToCrawl.length,
+          reason: res.error,
+        });
       }
     }
   }
 
   // 2. Crawl URLs via WebScraper
   if (urls.length > 0) {
-    console.log(`\n🔗 Crawling ${urls.length} Web URLs...`);
+    log.info('crawl.urls_started', `Crawling ${urls.length} web URLs`);
     let count = 0;
     for (const url of urls) {
       count++;
-      console.log(`  [${count}/${urls.length}] Crawling URL: ${url}...`);
       const res = await webScraper.fetchUrl(url, { outputPath, dynasty, minWordCount });
       results.push(res);
 
       if (res.status === 'SUCCESS') {
-        console.log(`    ✅ Saved (${res.wordCount} words): ${res.savedPath}`);
+        log.info('crawl.item_succeeded', 'URL crawled and saved', {
+          url,
+          index: count,
+          total: urls.length,
+          wordCount: res.wordCount,
+          savedPath: res.savedPath,
+        });
       } else if (res.status === 'SKIPPED') {
-        console.log(`    ⚠️ Skipped: ${res.error}`);
+        log.warn('crawl.item_skipped', 'URL skipped by quality gate', {
+          url,
+          index: count,
+          total: urls.length,
+          wordCount: res.wordCount,
+          reason: res.error,
+        });
       } else {
-        console.log(`    ❌ Failed: ${res.error}`);
+        log.error('crawl.item_failed', 'URL crawl failed', {
+          url,
+          index: count,
+          total: urls.length,
+          reason: res.error,
+        });
       }
     }
   }
@@ -148,19 +184,17 @@ async function main() {
     durationMs,
   };
 
-  console.log('\n======================================================');
-  console.log('🎉 Master Corpus Crawling & Quality Gate Completed!');
-  console.log(`📊 Attempted: ${summary.totalAttempted} | Saved: ${summary.totalSaved} | Failed/Skipped: ${summary.totalAttempted - summary.totalSaved}`);
-  console.log(`⏱️ Duration: ${summary.durationMs} ms`);
-  console.log('======================================================\n');
-  console.log('💡 Next Step: Run knowledge ingestion to process raw files into Database:');
-  console.log('  pnpm --filter @chronoviet/data-ingestion ingest:knowledge\n');
+  log.info('crawl.completed', 'Master Corpus Crawling & Quality Gate completed', {
+    attempted: summary.totalAttempted,
+    saved: summary.totalSaved,
+    failedOrSkipped: summary.totalAttempted - summary.totalSaved,
+    durationMs: summary.durationMs,
+  });
 
   process.exit(0);
 }
 
 main().catch((err) => {
-  console.error('❌ Fatal Crawler Error:', err);
+  log.error('crawl.fatal_error', 'Fatal Crawler Error', { error: err });
   process.exit(1);
 });
-

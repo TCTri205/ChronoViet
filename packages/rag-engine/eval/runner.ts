@@ -1,29 +1,32 @@
-if (process.env.FORCE_OFFLINE === undefined) {
-  process.env.FORCE_OFFLINE = 'true';
-}
-
 /**
  * Chrono-RAG Engine Benchmark Evaluation Runner
+ * Evaluates RAG retrieval precision, hallucination rate, citation traceability, and retrieval latency.
  */
 
 import fs from 'fs';
 import path from 'path';
+import { z } from 'zod';
 import { ChronoRagEngine } from '../src/rag-engine.js';
 import { inMemoryStore } from '@chronoviet/shared-spec';
-import { TestCase, evaluateResponse, calculateAggregateReport } from './metrics.js';
+import { TestCase, evaluateResponse, calculateAggregateReport, RAG_KPI_TARGETS } from './metrics.js';
 
-function findMonorepoRoot(startDir: string = __dirname): string {
-  let currentDir = path.resolve(startDir);
-  while (currentDir !== path.parse(currentDir).root) {
-    if (fs.existsSync(path.join(currentDir, 'pnpm-workspace.yaml'))) {
-      return currentDir;
-    }
-    currentDir = path.dirname(currentDir);
-  }
+const TestCaseSchema = z.object({
+  id: z.string(),
+  domain: z.string(),
+  question: z.string(),
+  groundTruthCanonical: z.string(),
+  expectedAliases: z.array(z.string()),
+  expectedLocation: z.string().optional(),
+  expectedDynasty: z.string().optional(),
+  requiredFacts: z.array(z.string()),
+  isAnswerable: z.boolean().optional(),
+});
+
+function getMonorepoRoot(): string {
   return path.resolve(__dirname, '../../..');
 }
 
-// Historical Knowledge Base Seeds for Benchmark Execution
+// Master Historical Knowledge Base Seeds for Production-grade Benchmark Execution
 const SAMPLE_HISTORICAL_DOCUMENTS = [
   {
     title: 'Trận Ngọc Hồi - Đống Đa năm 1789',
@@ -78,7 +81,6 @@ Bảo vật quốc gia này nổi bật với các họa tiết đúc nổi tinh
 Năm 1442, ông và gia quyến vướng vào thảm án Lệ Chi Viên (vườn vải) sau cái chết đột ngột của vua Lê Thái Tông. 
 Đến thời vua Lê Thánh Tông năm 1464, Nguyễn Trãi đã được chính thức minh oan và ban tước hiệu cao quý.`,
   },
-  // Distractor & Additional Benchmark Documents (Breaks Closed-loop Overfitting)
   {
     title: 'Chiếu dời đô và sự kiện thành lập Thăng Long năm 1010',
     source: 'Đại Việt Sử Ký Toàn Thư',
@@ -112,14 +114,14 @@ Năm 1442, ông và gia quyến vướng vào thảm án Lệ Chi Viên (vườn
     source: 'Tây Sơn Thuật Lược',
     dynasty: 'Nhà Tây Sơn',
     sourceReliability: 'LEVEL_1' as const,
-    content: `Năm 1771, ba anh em Tây Sơn (Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ) dấy binh khởi nghĩa tại vùng Tây Sơn thượng đạo (Quy Nhơn). Khởi nghĩa nhanh chóng lật đổ chúa Nguyễn ở Đàng Trong và chúa Trịnh ở Đàng Ngoài.`,
+    content: `Năm 1771, ba anh em Tây Sơn (Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ) dấy binh khởi nghĩa tại vùng Tây Sơn thượng đạo (Quy Nhơn). Khởi nghĩa nhanh chóng lật đổ chúa Nguyễn ở Đàng Trong và chúa Trịnh ở Đàng Ngoài. Năm 1776, Nguyễn Nhạc xưng Tây Sơn Vương. Sau này Nguyễn Huệ được phong Bắc Bình Vương trước khi lên ngôi hoàng đế Quang Trung.`,
   },
   {
     title: 'Chiến thắng Sông Bạch Đằng năm 981 của Lê Đại Hành',
     source: 'Đại Việt Sử Ký Toàn Thư',
     dynasty: 'Tiền Lê',
     sourceReliability: 'LEVEL_1' as const,
-    content: `Năm 981, vua Lê Đại Hành (tên thật Lê Hoàn) đã trực tiếp chỉ huy quân dân Đại Việt đánh tan quân xâm lược Nhà Tống trên sông Bạch Đằng, bảo vệ vững chắc nền độc lập dân tộc.`,
+    content: `Năm 981, vua Lê Đại Hành (tên thật Lê Hoàn) đã trực tiếp chỉ huy quân dân Đại Việt đánh tan quân xâm lược Nhà Tống trên sông Bạch Đằng, bảo vệ vững chắc nền độc lập dân tộc. Trước đó năm 980, Lê Hoàn đã sáng lập triều đại Nhà Tiền Lê, khác với triều đại Nhà Lê Sơ do Lê Lợi lập nên năm 1428.`,
   },
   {
     title: 'Kinh đô Phú Xuân và Thành phố Huế',
@@ -128,25 +130,87 @@ Năm 1442, ông và gia quyến vướng vào thảm án Lệ Chi Viên (vườn
     sourceReliability: 'LEVEL_1' as const,
     content: `Phú Xuân (còn gọi là Thuận Hóa) là kinh đô của chính quyền Chúa Nguyễn ở Đàng Trong và sau đó là triều đại Nhà Tây Sơn dưới thời hoàng đế Quang Trung. Ngày nay, vùng đất Phú Xuân tương ứng với Thành phố Huế (Thừa Thiên Huế).`,
   },
+  {
+    title: 'Trận Rạch Gầm - Xoài Mút năm 1785',
+    source: 'Đại Nam Thực Lục',
+    dynasty: 'Nhà Tây Sơn',
+    sourceReliability: 'LEVEL_1' as const,
+    content: `Đầu năm 1785, Nguyễn Huệ (sau là Quang Trung) chỉ huy quân Tây Sơn mai phục và đánh tan 5 vạn quân Xiêm trong trận Rạch Gầm - Xoài Mút trên sông Tiền (Tiền Giang). Chiến thắng này đập tan âm mưu xâm lược của phong kiến Xiêm La.`,
+  },
+  {
+    title: 'Lý Thường Kiệt và Phòng tuyến Sông Như Nguyệt năm 1077',
+    source: 'Đại Việt Sử Ký Toàn Thư',
+    dynasty: 'Nhà Lý',
+    sourceReliability: 'LEVEL_1' as const,
+    content: `Thái úy Lý Thường Kiệt (tên thật là Ngô Tuấn) là danh tướng kiệt xuất triều Nhà Lý. Năm 1077, ông chỉ huy quân dân Đại Việt xây dựng phòng tuyến Sông Như Nguyệt đánh tan quân xâm lược Nhà Tống. Trong cuộc kháng chiến này, bài thơ thần Nam Quốc Sơn Hà vang lên khẳng định chủ quyền lãnh thổ dân tộc.`,
+  },
+  {
+    title: 'Đinh Tiên Hoàng và Sự kiện dẹp loạn 12 sứ quân năm 968',
+    source: 'Đại Việt Sử Ký Toàn Thư',
+    dynasty: 'Nhà Đinh',
+    sourceReliability: 'LEVEL_1' as const,
+    content: `Năm 968, Đinh Bộ Lĩnh (tức Đinh Tiên Hoàng, xưng Vạn Thắng Vương) đã hoàn thành công cuộc đánh dẹp và thu phục 12 sứ quân, thống nhất đất nước, xưng Hoàng đế, đặt quốc hiệu Đại Cồ Việt và đóng kinh đô tại Hoa Lư (Ninh Bình).`,
+  },
+  {
+    title: 'Khởi nghĩa Hai Bà Trưng năm 40',
+    source: 'Đại Việt Sử Ký Toàn Thư',
+    dynasty: 'Trưng Vương',
+    sourceReliability: 'LEVEL_1' as const,
+    content: `Năm 40 sau Công nguyên, Trưng Trắc cùng em gái là Trưng Nhị (Hai Bà Trưng) phất cờ khởi nghĩa tại Mê Linh đánh đuổi Thái thú Tô Định của nhà Đông Hán, giành lại quyền tự chủ cho đất nước và xưng Trưng Nữ Vương.`,
+  },
+  {
+    title: 'Trận Chi Lăng - Xương Giang năm 1427',
+    source: 'Lam Sơn Thực Lục',
+    dynasty: 'Nhà Lê',
+    sourceReliability: 'LEVEL_1' as const,
+    content: `Tháng 10 năm 1427, tại ải Chi Lăng (Lạng Sơn), nghĩa quân Lam Sơn do Lê Lợi lãnh đạo đã phục kích chém đầu tổng binh Liễu Thăng của quân Minh, đập tan viện binh 10 vạn quân giặc, buộc Vương Thông phải xin hàng tại Hội thề Đông Quan.`,
+  },
+  {
+    title: 'Bình Ngô Đại Cáo và Nguyễn Trãi năm 1428',
+    source: 'Đại Việt Sử Ký Toàn Thư',
+    dynasty: 'Nhà Lê',
+    sourceReliability: 'LEVEL_1' as const,
+    content: `Đầu năm 1428, sau khi khởi nghĩa Lam Sơn đại thắng quân Minh, Nguyễn Trãi (hiệu Ức Trai) thừa lệnh vua Lê Thái Tổ (Lê Lợi) soạn thảo tác phẩm Bình Ngô Đại Cáo tại Đông Kinh. Đây được coi là bản tuyên ngôn độc lập thứ hai của dân tộc Việt Nam.`,
+  },
+  {
+    title: 'Lịch sử vùng đất Gia Định - Sài Gòn',
+    source: 'Gia Định Thành Thông Chí',
+    dynasty: 'Nhà Nguyễn',
+    sourceReliability: 'LEVEL_1' as const,
+    content: `Vùng đất Gia Định xưa (còn gọi là Bến Nghé, Sài Gòn) được Lễ Thành Hầu Nguyễn Hữu Cảnh kinh lược và lập phủ Gia Định năm 1698 dưới thời Chúa Nguyễn. Vùng đất này ngày nay phát triển thành Thành phố Hồ Chí Minh.`,
+  },
+  {
+    title: 'Tranh luận quân số Nguyên Mông giữa Toàn Thư và Nguyên Sử',
+    source: 'Sử học đối chiếu',
+    dynasty: 'Nhà Trần',
+    sourceReliability: 'LEVEL_1' as const,
+    content: `Trong cuộc kháng chiến chống Nguyên Mông thời Nhà Trần dưới sự chỉ huy của Trần Hưng Đạo, Đại Việt Sử Ký Toàn Thư ghi nhận quân Nguyên Mông huy động khoảng 50 vạn quân, trong khi Nguyên Sử của phương Bắc chép lại con số ước tính từ 10 đến 20 vạn quân. Đây là ví dụ tiêu biểu cho việc thể hiện đa góc nhìn sử liệu trong nghiên cứu.`,
+  },
 ];
 
 export async function runChronoRagEval() {
-  if (process.env.FORCE_OFFLINE === undefined) {
+  const isOnlineMode = process.argv.includes('--online') || process.env.FORCE_OFFLINE === 'false';
+  if (!isOnlineMode && process.env.FORCE_OFFLINE === undefined) {
     process.env.FORCE_OFFLINE = 'true';
   }
 
+  const targetLatencyMs = isOnlineMode
+    ? RAG_KPI_TARGETS.MAX_LATENCY_ONLINE_MS
+    : RAG_KPI_TARGETS.MAX_LATENCY_OFFLINE_MS;
+
   console.log('=== [Chrono-RAG Engine Evaluation Runner] ===');
-  console.log('Fact Precision Target: > 99.2%');
-  console.log('Hallucination Rate Target: < 0.8%');
-  console.log('Citation Traceability Target: 100%');
-  console.log('Retrieval Latency Target: < 1500ms (Dev Benchmark SLA)');
+  console.log(`Execution Mode: ${isOnlineMode ? 'ONLINE (Production DB Vector/Graph)' : 'OFFLINE (Dev Benchmark Mock)'}`);
+  console.log(`Fact Precision Target: > ${RAG_KPI_TARGETS.FACT_PRECISION}%`);
+  console.log(`Hallucination Rate Target: < ${RAG_KPI_TARGETS.HALLUCINATION_RATE}%`);
+  console.log(`Citation Traceability Target: ${RAG_KPI_TARGETS.CITATION_TRACEABILITY}%`);
+  console.log(`Retrieval Latency Target: < ${targetLatencyMs}ms SLA`);
   console.log('--------------------------------------------------\n');
 
   const ragEngine = new ChronoRagEngine();
 
   // 1. Ingest Benchmark Data (Combine sample docs & golden test-cases)
   inMemoryStore.clear();
-  console.log('[*] Pre-populating benchmark knowledge base...');
+  console.log('[*] Pre-populating benchmark knowledge base with distractor documents...');
   for (const doc of SAMPLE_HISTORICAL_DOCUMENTS) {
     await ragEngine.ingestDocument(doc.content, {
       title: doc.title,
@@ -156,7 +220,7 @@ export async function runChronoRagEval() {
     });
   }
 
-  const monorepoRoot = findMonorepoRoot();
+  const monorepoRoot = getMonorepoRoot();
   const goldenDir = path.resolve(monorepoRoot, 'eval', 'test-cases');
   if (fs.existsSync(goldenDir)) {
     const files = fs.readdirSync(goldenDir).filter((f) => f.endsWith('.json') && !f.includes('benchmark'));
@@ -172,19 +236,36 @@ export async function runChronoRagEval() {
             sourceReliability: json.source_reliability || 'LEVEL_1',
           });
         }
-      } catch {
-        // Ignore single file parse errors
+      } catch (err) {
+        console.warn(`[!] Skipping invalid test case file ${f}:`, (err as Error).message);
       }
     }
   }
 
   console.log('[+] Knowledge base populated successfully.\n');
 
-  // 2. Load Test Dataset
-  const datasetPath = path.resolve(__dirname, 'datasets/chronoeval-1000.json');
-  const testCases: TestCase[] = JSON.parse(fs.readFileSync(datasetPath, 'utf-8'));
+  // 2. Load Consolidated Test Dataset with Zod Schema Validation
+  let datasetPath = path.resolve(__dirname, 'datasets/chronoeval-benchmark.json');
+  if (!fs.existsSync(datasetPath)) {
+    datasetPath = path.resolve(__dirname, 'datasets/chronoeval-1000.json');
+  }
 
-  console.log(`[*] Executing search benchmark over ${testCases.length} test cases...`);
+  const rawDataset = fs.readFileSync(datasetPath, 'utf-8');
+  const parsedJson = JSON.parse(rawDataset);
+
+  if (!Array.isArray(parsedJson)) {
+    throw new Error(`Invalid dataset format at ${datasetPath}: expected JSON array`);
+  }
+
+  const testCases: TestCase[] = parsedJson.map((item, idx) => {
+    const parseResult = TestCaseSchema.safeParse(item);
+    if (!parseResult.success) {
+      throw new Error(`Dataset item at index ${idx} failed Zod schema validation: ${parseResult.error.message}`);
+    }
+    return parseResult.data;
+  });
+
+  console.log(`[*] Executing search benchmark over ${testCases.length} test cases from ${path.basename(datasetPath)}...`);
   const itemResults = [];
 
   for (const tc of testCases) {
@@ -200,17 +281,21 @@ export async function runChronoRagEval() {
     );
   }
 
-  // 3. Compute Aggregates & Build Report (Target SLA: 1500ms)
-  const aggregateReport = calculateAggregateReport(itemResults, 1500);
+
+  // 3. Compute Aggregates & Build Report
+  const aggregateReport = calculateAggregateReport(itemResults, targetLatencyMs);
 
   console.log('\n==================================================');
   console.log(` AGGREGATE BENCHMARK RESULTS (${aggregateReport.kpiStatus.overallPassed ? 'PASS' : 'FAIL'})`);
   console.log('==================================================');
   console.log(` - Total Evaluated:               ${aggregateReport.totalEvaluated}`);
-  console.log(` - Avg Fact Precision Score:       ${aggregateReport.avgFactPrecision}% (Target: > 95.0%)`);
-  console.log(` - Avg Hallucination Rate:         ${aggregateReport.avgHallucinationRate}% (Target: < 5.0%)`);
-  console.log(` - Citation Traceability:          ${aggregateReport.citationTraceabilityPercent}% (Target: 100%)`);
-  console.log(` - Avg Retrieval Latency:          ${aggregateReport.avgLatencyMs}ms (Target: < 1500ms SLA)`);
+  console.log(` - Avg Fact Precision Score:       ${aggregateReport.avgFactPrecision}% (Target: > ${RAG_KPI_TARGETS.FACT_PRECISION}%)`);
+  console.log(` - Avg Hallucination Rate:         ${aggregateReport.avgHallucinationRate}% (Target: < ${RAG_KPI_TARGETS.HALLUCINATION_RATE}%)`);
+  console.log(` - Citation Traceability:          ${aggregateReport.citationTraceabilityPercent}% (Target: ${RAG_KPI_TARGETS.CITATION_TRACEABILITY}%)`);
+  console.log(` - Avg Retrieval Latency:          ${aggregateReport.avgLatencyMs}ms (Target: < ${targetLatencyMs}ms SLA)`);
+  console.log(` - Fact Precision Status:          ${aggregateReport.kpiStatus.factPrecisionPassed ? 'PASSED' : 'FAILED'}`);
+  console.log(` - Hallucination Rate Status:      ${aggregateReport.kpiStatus.hallucinationRatePassed ? 'PASSED' : 'FAILED'}`);
+  console.log(` - Citation Status:                ${aggregateReport.kpiStatus.citationTraceabilityPassed ? 'PASSED' : 'FAILED'}`);
   console.log(` - Latency SLA Status:             ${aggregateReport.kpiStatus.latencyPassed ? 'PASSED' : 'FAILED'}`);
   console.log('==================================================\n');
 

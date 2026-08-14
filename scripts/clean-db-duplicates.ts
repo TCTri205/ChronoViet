@@ -1,11 +1,13 @@
-import { query, isPgAvailable, logEntityAuditAction } from '../packages/shared-spec/src/index.js';
+import { query, isPgAvailable, logEntityAuditAction, createLogger } from '../packages/shared-spec/src/index.js';
+
+const log = createLogger({ service: 'ops', correlationId: 'db-cleanup' });
 
 async function main() {
-  console.log('🧹 Starting DB Data Sanitization & Audit Log Verification...');
+  log.info('ops.db_cleanup_started', 'Starting DB Data Sanitization & Audit Log Verification');
 
   const available = await isPgAvailable();
   if (!available) {
-    console.log('⚠️ PostgreSQL is not connected or running. Skipping DB cleanup.');
+    log.warn('ops.db_unavailable', 'PostgreSQL is not connected or running. Skipping DB cleanup.');
     return;
   }
 
@@ -19,6 +21,7 @@ async function main() {
     `DELETE FROM relationships WHERE source_entity_id = target_entity_id;`
   );
   console.log(`[+] Deleted self-loop relationships.`);
+  log.info('ops.self_loops_removed', 'Deleted self-loop relationships', { removed: parseInt(selfLoops[0].count, 10) });
 
   // 2. Check & Delete Duplicate Relationships
   const totalRelsBefore = await query<{ count: string }>(`SELECT COUNT(*) as count FROM relationships;`);
@@ -38,6 +41,10 @@ async function main() {
 
   const totalRelsAfter = await query<{ count: string }>(`SELECT COUNT(*) as count FROM relationships;`);
   console.log(`[+] Relationship rows after deduplication: ${totalRelsAfter[0].count}`);
+  log.info('ops.duplicates_removed', 'Relationship deduplication completed', {
+    before: parseInt(totalRelsBefore[0].count, 10),
+    after: parseInt(totalRelsAfter[0].count, 10),
+  });
 
   // 3. Apply Unique Index
   await query(`
@@ -63,10 +70,13 @@ async function main() {
   const auditLogsCount = await query<{ count: string }>(`SELECT COUNT(*) as count FROM entity_audit_logs;`);
   console.log(`[+] Total audit logs in DB: ${auditLogsCount[0].count}`);
 
+  log.info('ops.db_cleanup_completed', 'DB Data Sanitization completed successfully', {
+    totalAuditLogs: parseInt(auditLogsCount[0].count, 10),
+  });
   console.log('✅ DB Data Sanitization completed successfully.');
 }
 
-main().catch(err => {
-  console.error('❌ Sanitization Error:', err);
+main().catch((err) => {
+  log.error('ops.db_cleanup_failed', 'Sanitization Error', { error: err });
   process.exit(1);
 });

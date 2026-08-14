@@ -3,19 +3,22 @@
  * Usage: pnpm --filter @chronoviet/data-ingestion db:init
  */
 
+import { createLogger } from '@chronoviet/shared-spec';
 import { initializeDatabaseSchema } from '../seeder/db-initializer.js';
 
+const log = createLogger({ service: 'data-ingestion' });
+
 async function main() {
-  console.log('🚀 Initializing ChronoViet PostgreSQL + pgvector Schema...');
+  log.info('db.init.started', 'Initializing ChronoViet PostgreSQL + pgvector schema');
   const result = await initializeDatabaseSchema();
 
   if (result.success) {
-    console.log(`✅ ${result.message}`);
+    log.info('db.init.succeeded', result.message);
     process.exit(0);
   } else {
-    console.warn(`⚠️ ${result.message}`);
+    log.warn('db.init.degraded', result.message);
     if (!result.pgAvailable) {
-      console.log('ℹ️ Operating in In-Memory Fallback Mode.');
+      log.warn('db.init.in_memory_mode', 'Operating in In-Memory Fallback Mode');
       process.exit(0);
     } else {
       process.exit(1);
@@ -24,6 +27,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('❌ Fatal error during database schema initialization:', err);
+  log.error('db.init.failed', 'Fatal error during database schema initialization', { error: err });
   process.exit(1);
 });

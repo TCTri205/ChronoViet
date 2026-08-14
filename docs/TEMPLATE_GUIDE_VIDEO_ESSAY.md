@@ -9,7 +9,7 @@ Tài liệu này quy định bộ chuẩn thiết kế Đồ họa (Design Syste
 
 > **💡 PHÂN BIỆT HAI PALETTE:**
 > - **Palette này (Video Essay):** `#0EA5E9` Sky Blue — Dùng cho format phân tích chuyên sâu dài (Spiderum style).
-> - **Palette Documentary (mặc định engine):** `#D4AF37` Vàng Kim — Dùng cho `HISTORICAL_DOCUMENTARY` template, xem tại [EVAL_REMOTION_TECHNICAL_SPEC.md §3](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md).
+> - **Palette Documentary (mặc định engine):** `#D4AF37` Vàng Kim — Dùng cho `HISTORICAL_DOCUMENTARY` template, xem tại [EVAL_REMOTION_TECHNICAL_SPEC.md §3](EVAL_REMOTION_TECHNICAL_SPEC.md).
 
 ---
 

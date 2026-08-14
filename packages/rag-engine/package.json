@@ -9,7 +9,9 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "eval": "tsx eval/runner.ts"
+    "eval": "tsx eval/benchmarks/index.ts",
+    "test": "vitest run",
+    "chat": "tsx src/cli/chat-cli.ts"
   },
   "dependencies": {
     "@chronoviet/shared-spec": "workspace:*",
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@types/pg": "^8.11.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
   }
 }

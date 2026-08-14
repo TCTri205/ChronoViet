@@ -107,16 +107,19 @@ pnpm install
 
 ```bash
 # 1. Khởi tạo PostgreSQL pgvector & Relational Graph Schema
-pnpm --filter @chronoviet/rag-engine db:init
+pnpm --filter @chronoviet/data-ingestion db:init
 
 # 2. Cào tự động toàn bộ 15 Thời kỳ Lịch sử Việt Nam trong 1 lệnh
 pnpm crawl:all
 
 # 3. Tiền xử lý & Nạp kho tri thức vào CSDL PostgreSQL
-pnpm --filter @chronoviet/rag-engine ingest:knowledge
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge
 
 # 4. Kiểm định chất lượng nạp dữ liệu (Entity Normalization Accuracy > 98%)
 pnpm eval:ingest
+
+# 5. Trải nghiệm Chatbot RAG tương tác trực tiếp trên Terminal CLI
+pnpm rag:chat
 ```
 
 ### Bước 3: Xem Preview & Render Video Chi Tiết
@@ -173,6 +176,9 @@ Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật n�
 * 🏛️ [**System Overview (`docs/SystemOverview.md`)**](docs/SystemOverview.md): Kiến trúc RAG + Multi-Agent + VLM + Remotion.
 * ⚙️ [**Remotion Technical Spec (`docs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](docs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 31 LayoutModes, 19 Transitions, Zod Schema & Compositions.
 * 📜 [**Content Formats Spec (`docs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](docs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử & Schema Production v4.1.
+* 📊 [**RAG Component Benchmark Spec (`docs/RAG_COMPONENT_BENCHMARK_SPEC.md`)**](docs/RAG_COMPONENT_BENCHMARK_SPEC.md): Benchmark từng component RAG (C0-C10), datasets, metrics & regression gate.
+* 🩺 [**Observability & Logging (`docs/architecture/06_OBSERVABILITY_AND_LOGGING.md`)**](docs/architecture/06_OBSERVABILITY_AND_LOGGING.md): Unified structured logger (`@chronoviet/shared-spec`), correlation ID, event names & hướng dẫn truy vết log bằng `jq`.
+* 💻 [**macOS Local Model Optimization (`docs/MACOS_LOCAL_MODEL_OPTIMIZATION.md`)**](docs/MACOS_LOCAL_MODEL_OPTIMIZATION.md): Tối ưu mô hình local trên Apple Silicon.
 
 ---
 

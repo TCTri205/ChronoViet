@@ -9,7 +9,7 @@ Thư mục này hỗ trợ 3 chế độ đánh giá linh hoạt từ cấp đ�
 
 1. **Chế độ Chuỗi Tích Hợp (Integration Chains - Multi-Module Pipeline):**
    - Đánh giá luồng dữ liệu tự động nối giữa các mô-đun liên tiếp (ví dụ: `VieNeu TTS` sinh âm thanh & mốc từ thực tế $\rightarrow$ đẩy trực tiếp sang `Remotion Render Engine` để ghép video & kiểm định Audio-Visual sync).
-   - Script: [`eval/chains/vieneu-remotion.ts`](file:///D:/Persional_Projects/ChronoViet/eval/chains/vieneu-remotion.ts)
+   - Script: [`eval/chains/vieneu-remotion.ts`](chains/vieneu-remotion.ts)
 
 2. **Chế độ Mô-đun Đơn (Isolated Module Evaluation):**
    - Thực thi runner eval độc lập của một gói cụ thể trong `packages/*/eval` hoặc `services/*/eval`.
@@ -23,7 +23,7 @@ Thư mục này hỗ trợ 3 chế độ đánh giá linh hoạt từ cấp đ�
 
 ## 🧹 Vòng Đời Dọn Dẹp Giữa Các Lần Chạy (Clean Lifecycle)
 
-Toàn bộ hệ thống Eval được trang bị công cụ dọn dẹp tập trung [`eval/utils/cleaner.ts`](file:///D:/Persional_Projects/ChronoViet/eval/utils/cleaner.ts) giúp:
+Toàn bộ hệ thống Eval được trang bị công cụ dọn dẹp tập trung [`eval/utils/cleaner.ts`](utils/cleaner.ts) giúp:
 - **Xóa file audio `.wav` rác cũ** trong các thư mục cache và public của Remotion Engine.
 - **Purge các file báo cáo JSON/MD cũ** (giữ an toàn các file mã nguồn `.ts` và `README.md`).
 - **Xóa file JSON kịch bản trung gian** (`pipeline_generated_video.json`).

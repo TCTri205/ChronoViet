@@ -4,7 +4,9 @@
  */
 
 import { envConfig } from './config.js';
-import { logFallbackAlert } from './logger.js';
+import { logFallbackAlert, createLogger } from './logger.js';
+
+const log = createLogger({ service: 'shared-spec' });
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -33,6 +35,8 @@ export interface LLMCompletionResponse {
   };
 }
 
+let warnedLocalLlmFailure = false;
+
 /**
  * Generate LLM completion using Primary Local Model (Qwen3.5-27B-Q4_K_M)
  * Falls back automatically to Agnes 2.0 Flash API if local server is unreachable or fails.
@@ -45,6 +49,14 @@ export async function generateLLMCompletion(
   const temperature = options.temperature ?? 0.2;
   const maxTokens = options.max_tokens ?? 2048;
   const timeoutMs = options.timeoutMs ?? 45000;
+
+  log.debug('llm.request_started', 'LLM completion request started', {
+    model: localModel,
+    temperature,
+    maxTokens,
+    timeoutMs,
+    messageCount: messages.length,
+  });
 
   // 1. Attempt Primary Local LLM (llama-server)
   if (envConfig.USE_LOCAL_LLM) {
@@ -84,6 +96,13 @@ export async function generateLLMCompletion(
       const content = choice.message?.content || '';
       const reasoningContent = choice.message?.reasoning_content || undefined;
 
+      log.debug('llm.local_success', 'Local LLM completion succeeded', {
+        model: data.model || localModel,
+        finishReason: choice.finish_reason || 'stop',
+        promptTokens: data.usage?.prompt_tokens,
+        completionTokens: data.usage?.completion_tokens,
+      });
+
       return {
         content,
         reasoningContent,
@@ -101,13 +120,21 @@ export async function generateLLMCompletion(
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
 
-      logFallbackAlert({
-        subsystem: 'LLM_GATEWAY',
-        primaryTarget: `Local LLM (${envConfig.LLM_BASE_URL}) [${localModel}]`,
-        fallbackTarget: `Agnes 2.0 Flash Cloud API [${envConfig.REMOTE_FALLBACK_MODEL}]`,
-        reason: errMsg,
-        actionRequired: `Check if llama-server is running on ${envConfig.LLM_BASE_URL} with model ${localModel}`,
+      log.warn('llm.local_failed', 'Local LLM request failed; attempting cloud fallback', {
+        error: err,
+        model: localModel,
       });
+
+      if (!warnedLocalLlmFailure) {
+        logFallbackAlert({
+          subsystem: 'LLM_GATEWAY',
+          primaryTarget: `Local LLM (${envConfig.LLM_BASE_URL}) [${localModel}]`,
+          fallbackTarget: `Agnes 2.0 Flash Cloud API [${envConfig.REMOTE_FALLBACK_MODEL}]`,
+          reason: errMsg,
+          actionRequired: `Check if llama-server is running on ${envConfig.LLM_BASE_URL} with model ${localModel}`,
+        });
+        warnedLocalLlmFailure = true;
+      }
 
       if (!envConfig.ENABLE_CLOUD_FALLBACK) {
         throw new Error(`Local LLM failed and Cloud Fallback is disabled: ${errMsg}`);
@@ -151,6 +178,13 @@ export async function generateLLMCompletion(
       const choice = data?.choices?.[0];
       const content = choice?.message?.content || '';
 
+      log.debug('llm.cloud_success', 'Agnes cloud fallback completion succeeded', {
+        model: envConfig.REMOTE_FALLBACK_MODEL,
+        finishReason: choice?.finish_reason || 'stop',
+        promptTokens: data.usage?.prompt_tokens,
+        completionTokens: data.usage?.completion_tokens,
+      });
+
       return {
         content,
         reasoningContent: choice?.message?.reasoning_content,
@@ -167,9 +201,58 @@ export async function generateLLMCompletion(
       };
     } catch (fallbackErr) {
       const fallbackMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+      log.error('llm.all_providers_failed', 'All LLM providers failed', {
+        error: fallbackErr,
+        localEnabled: envConfig.USE_LOCAL_LLM,
+        cloudEnabled: envConfig.ENABLE_CLOUD_FALLBACK,
+      });
       throw new Error(`Both Local LLM and Agnes 2.0 Flash Fallback failed. Remote error: ${fallbackMsg}`);
     }
   }
 
   throw new Error('No LLM Provider available (Local LLM disabled and Cloud Fallback disabled).');
 }
+
+/**
+ * Pre-flight health check for LLM Service
+ */
+export async function isLLMServiceHealthy(): Promise<{ healthy: boolean; provider: string; details?: string }> {
+  // 1. Check Local LLM if enabled
+  if (envConfig.USE_LOCAL_LLM) {
+    try {
+      const endpoint = `${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/models`;
+      const res = await fetch(endpoint, { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        return {
+          healthy: true,
+          provider: `LOCAL_LLM (${envConfig.LLM_BASE_URL}) [${envConfig.LOCAL_LLM_PRIMARY_MODEL}]`,
+        };
+      }
+    } catch (_err) {
+      // Local LLM check failed, test cloud fallback
+    }
+  }
+
+  // 2. Check Gemini API if key is present
+  if (envConfig.GEMINI_API_KEY) {
+    return {
+      healthy: true,
+      provider: 'GEMINI_CLOUD_API',
+    };
+  }
+
+  // 3. Check Agnes API if enabled
+  if (envConfig.ENABLE_CLOUD_FALLBACK && envConfig.AGNES_API_KEY) {
+    return {
+      healthy: true,
+      provider: `AGNES_CLOUD_FALLBACK [${envConfig.REMOTE_FALLBACK_MODEL}]`,
+    };
+  }
+
+  return {
+    healthy: false,
+    provider: 'NONE',
+    details: `Local LLM at ${envConfig.LLM_BASE_URL} is unreachable and no valid cloud API key is configured`,
+  };
+}
+

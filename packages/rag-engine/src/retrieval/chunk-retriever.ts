@@ -26,14 +26,16 @@ export async function getChunksForEntities(entityIds: string[]): Promise<VectorS
       [entityIds]
     );
 
-    return rows.map((r) => ({
-      chunkId: r.id,
-      title: r.title,
-      textContent: r.text_content,
-      dynasty: r.dynasty,
-      sourceReliability: r.source_reliability,
-      score: 1.0,
-    }));
+    if (rows && rows.length > 0) {
+      return rows.map((r) => ({
+        chunkId: r.id,
+        title: r.title,
+        textContent: r.text_content,
+        dynasty: r.dynasty,
+        sourceReliability: r.source_reliability,
+        score: 1.0,
+      }));
+    }
   }
 
   // In-Memory Fallback

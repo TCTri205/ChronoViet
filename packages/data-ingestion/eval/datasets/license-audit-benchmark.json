@@ -10,6 +10,12 @@
   { "licenseInput": "COMMERCIAL_ONLY", "shouldAllow": false },
   { "licenseInput": "CC_BY_NC_4_0", "shouldAllow": false },
   { "licenseInput": "CC_BY_ND_4_0", "shouldAllow": false },
+  { "licenseInput": "CC_BY_NC_SA_4_0", "shouldAllow": false },
+  { "licenseInput": "CC_BY_NC_ND_4_0", "shouldAllow": false },
+  { "licenseInput": "CC BY-NC 4.0", "shouldAllow": false },
+  { "licenseInput": "CC_BY_3_0", "shouldAllow": false },
+  { "licenseInput": "CC BY 3.0 Unported", "shouldAllow": false },
+  { "licenseInput": "CC_BY_SA_3_0", "shouldAllow": false },
   { "licenseInput": "PROPRIETARY", "shouldAllow": false },
   { "licenseInput": "UNKNOWN", "shouldAllow": false },
   { "licenseInput": "", "shouldAllow": false }

@@ -1,9 +1,21 @@
 /**
  * Knowledge Graph Triple Extractor (Subject -> Relation -> Object)
+ * Component 2 of Module 0 Data Preprocessing & Ingestion ETL
  */
 
-import { resolveCanonicalEntity } from './entity-disambiguator.js';
-import { envConfig } from '@chronoviet/shared-spec';
+import {
+  resolveCanonicalEntity,
+  HISTORICAL_PERSON_DICTIONARY,
+  HISTORICAL_LOCATION_DICTIONARY,
+} from './entity-disambiguator.js';
+import {
+  envConfig,
+  generateLLMCompletion,
+  logFallbackAlert,
+  createLogger,
+} from '@chronoviet/shared-spec';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 export interface ExtractedTriple {
   sourceEntityId: string;
@@ -14,6 +26,36 @@ export interface ExtractedTriple {
   confidence: number;
 }
 
+const GENERIC_EXCLUSION_TERMS = new Set([
+  'năm', 'tháng', 'ngày', 'vào', 'thời', 'người', 'những', 'đại', 'vua', 'quân',
+  'tướng', 'nhà', 'triều', 'nước', 'một', 'các', 'được', 'có', 'tại', 'sau', 'khi',
+  'lại', 'về', 'đã', 'sẽ', 'cũng', 'thì', 'là', 'sự', 'việc', 'đây', 'đó', 'ông',
+  'bà', 'cha', 'mẹ', 'con', 'cháu', 'anh', 'em', 'trận', 'cuộc', 'bởi', 'do',
+  'tất cả', 'phần lớn', 'nhiều', 'rất', 'quá', 'rồi', 'đang', 'như', 'vì'
+]);
+
+/**
+ * Strict validation filter to prevent LLM hallucination and generic tokens
+ */
+export function isValidEntityName(name: string): boolean {
+  if (!name || typeof name !== 'string') return false;
+  const clean = name.trim();
+  if (clean.length < 3 || clean.length > 50) return false;
+  if (/^\d+/.test(clean)) return false; // Starts with digit/footnote number
+  if (/[\[\]\(\)=\/\\<>|#*]/.test(clean)) return false; // Special characters/markup
+  const words = clean.split(/\s+/);
+  if (words.length > 5) return false; // Sentences or long clauses
+  if (GENERIC_EXCLUSION_TERMS.has(clean.toLowerCase())) return false;
+  if (!/[a-zA-Zà-ỹÀ-Ỹ]/.test(clean)) return false;
+  // First word must start with an uppercase letter
+  if (!/^[A-ZÀ-Ỹ]/.test(words[0])) return false;
+  // Last word must start with an uppercase letter
+  if (!/^[A-ZÀ-Ỹ0-9]/.test(words[words.length - 1])) return false;
+  return true;
+}
+
+const PROPER_NOUN_PATTERN = '([A-ZÀ-Ỹ][a-zà-ỹ0-9_\\-]*(?:\\s+[A-ZÀ-Ỹ0-9_\\-][a-zà-ỹ0-9_\\-]*){0,4})';
+
 const HISTORICAL_PATTERNS: Array<{
   regex: RegExp;
   relation: ExtractedTriple['relationType'];
@@ -23,39 +65,39 @@ const HISTORICAL_PATTERNS: Array<{
 }> = [
   // LED_BY: e.g. "Trận Ngọc Hồi do Quang Trung chỉ huy", "Quang Trung lãnh đạo quân Tây Sơn"
   {
-    regex: /\b(trận|chiến dịch|cuộc khởi nghĩa)\s+([A-ZÀ-ỹ0-9_\-\s]{1,60}?)\s+(do|dưới sự chỉ huy của|lãnh đạo bởi)\s+([A-ZÀ-ỹ0-9_\-\s]{1,60}?)(?=[.,;!?\n]|$)/gi,
+    regex: new RegExp(`\\b(?:trận|chiến dịch|cuộc khởi nghĩa)\\s+${PROPER_NOUN_PATTERN}\\s+(?:do|dưới sự chỉ huy của|lãnh đạo bởi)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
     relation: 'LED_BY',
-    sourceGroup: 2,
-    targetGroup: 4,
+    sourceGroup: 1,
+    targetGroup: 2,
     confidence: 0.95,
   },
   {
-    regex: /\b([A-ZÀ-ỹ0-9_\-\s]{1,60}?)\s+(chỉ huy|lãnh đạo|tổng tư lệnh)\s+(trận|cuộc khởi nghĩa|chiến dịch)\s+([A-ZÀ-ỹ0-9_\-\s]{1,60}?)(?=[.,;!?\n]|$)/gi,
+    regex: new RegExp(`\\b${PROPER_NOUN_PATTERN}\\s+(?:chỉ huy|lãnh đạo|tổng tư lệnh)\\s+(?:trận|cuộc khởi nghĩa|chiến dịch)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
     relation: 'LED_BY',
-    sourceGroup: 4,
+    sourceGroup: 2,
     targetGroup: 1,
     confidence: 0.95,
   },
-  // HAPPENED_AT / HAPPENED_IN: e.g. "Trận Tốt Động diễn ra tại Chúc Động", "Trận Ngọc Hồi diễn ra năm 1789"
+  // HAPPENED_AT / HAPPENED_IN: e.g. "Trận Tốt Động diễn ra tại Chúc Động"
   {
-    regex: /\b(trận|chiến dịch|sự kiện)\s+([A-ZÀ-ỹ0-9_\-\s]{1,60}?)\s+(diễn ra tại|xảy ra ở|tại)\s+([A-ZÀ-ỹ0-9_\-\s]{1,60}?)(?=[.,;!?\n]|$)/gi,
+    regex: new RegExp(`\\b(?:trận|chiến dịch|sự kiện)\\s+${PROPER_NOUN_PATTERN}\\s+(?:diễn ra tại|xảy ra ở|tại)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
     relation: 'HAPPENED_AT',
-    sourceGroup: 2,
-    targetGroup: 4,
+    sourceGroup: 1,
+    targetGroup: 2,
     confidence: 0.9,
   },
   // ALIAS_OF: e.g. "Quang Trung tức là Nguyễn Huệ", "Nguyễn Huệ tên thật là Hồ Thơm"
   {
-    regex: /\b([A-ZÀ-ỹ0-9_\-\s]{1,60}?)\s+(tức là|còn gọi là|tên thật là|tên hiệu là)\s+([A-ZÀ-ỹ0-9_\-\s]{1,60}?)(?=[.,;!?\n]|$)/gi,
+    regex: new RegExp(`\\b${PROPER_NOUN_PATTERN}\\s+(?:tức là|còn gọi là|tên thật là|tên hiệu là)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
     relation: 'ALIAS_OF',
     sourceGroup: 1,
-    targetGroup: 3,
+    targetGroup: 2,
     confidence: 1.0,
   },
 ];
 
 /**
- * Extracts triples from historical text content using pattern-based extraction & entity detection
+ * Extracts triples from historical text content using pattern-based extraction & canonical dictionary detection
  */
 export function extractTriplesFromText(text: string): ExtractedTriple[] {
   const triples: ExtractedTriple[] = [];
@@ -77,10 +119,8 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
         if (
           rawSource &&
           rawTarget &&
-          rawSource.length > 1 &&
-          rawTarget.length > 1 &&
-          rawSource.length <= 120 &&
-          rawTarget.length <= 120
+          isValidEntityName(rawSource) &&
+          isValidEntityName(rawTarget)
         ) {
           const sourceEntity = resolveCanonicalEntity(rawSource);
           const targetEntity = resolveCanonicalEntity(rawTarget);
@@ -97,22 +137,35 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
       }
     }
 
-    // 2. Entity Mention Extraction (Proper Nouns & Capitalized Historical Terms)
-    const capMatches = cleanSentence.match(/\b[A-ZÀ-Ỹ][a-zà-ỹ]+(?:\s+[A-ZÀ-Ỹ][a-zà-ỹ]+)*\b/g);
-    if (capMatches) {
-      const uniqueTerms = Array.from(new Set(capMatches)).filter(
-        (term) => term.length > 3 && !['Trận', 'Cuộc', 'Năm', 'Vào', 'Thời', 'Người', 'Những', 'Đại'].includes(term)
-      );
-
-      for (const term of uniqueTerms) {
-        const entity = resolveCanonicalEntity(term);
+    // 2. Canonical Historical Entity Mentions (from Ground-Truth Master Dictionaries)
+    for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
+      if (
+        cleanSentence.includes(person.canonicalName) ||
+        person.aliases.some((a) => a.length >= 3 && cleanSentence.includes(a))
+      ) {
         triples.push({
-          sourceEntityId: entity.entityId,
-          sourceEntityName: entity.canonicalName,
+          sourceEntityId: person.entityId,
+          sourceEntityName: person.canonicalName,
           relationType: 'MENTIONED_IN',
           targetEntityId: 'doc:historical_context',
           targetEntityName: 'Document Context',
-          confidence: 0.85,
+          confidence: 1.0,
+        });
+      }
+    }
+
+    for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
+      if (
+        cleanSentence.includes(loc.canonicalName) ||
+        loc.aliases.some((a) => a.length >= 3 && cleanSentence.includes(a))
+      ) {
+        triples.push({
+          sourceEntityId: loc.entityId,
+          sourceEntityName: loc.canonicalName,
+          relationType: 'HAPPENED_AT',
+          targetEntityId: 'doc:historical_context',
+          targetEntityName: 'Document Context',
+          confidence: 0.95,
         });
       }
     }
@@ -121,88 +174,15 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
   return triples;
 }
 
-/**
- * Extracts Knowledge Graph triples using Ollama Local (Qwen / Llama) when Gemini API Key is missing
- */
-export async function extractTriplesWithOllamaLocal(text: string): Promise<ExtractedTriple[]> {
-  if (!text || text.trim().length < 20) return [];
-  try {
-    const prompt = `Bạn là chuyên gia phân tích tri thức Lịch sử Việt Nam. Hãy trích xuất tất cả các mối quan hệ bộ ba (Subject -> Relation -> Object) từ đoạn văn bản sau.
-
-Yêu cầu output: Trả về duy nhất 1 JSON object có định dạng:
-{
-  "triples": [
-    {
-      "sourceEntity": "tên thực thể nguồn",
-      "relationType": "LED_BY" | "HAPPENED_IN" | "HAPPENED_AT" | "ALIAS_OF" | "ROYAL_LINEAGE" | "PART_OF" | "MENTIONED_IN",
-      "targetEntity": "tên thực thể đích",
-      "confidence": 0.95
-    }
-  ]
-}
-
-Văn bản:
-"""
-${text.slice(0, 3500)}
-"""`;
-
-    const host = envConfig.EMBEDDING_API_URL ? new URL(envConfig.EMBEDDING_API_URL).origin : 'http://localhost:11434';
-    const apiUrl = `${host}/api/generate`;
-
-    const res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'qwen2.5',
-        prompt,
-        stream: false,
-        format: 'json',
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Ollama Local HTTP ${res.status}: ${res.statusText}`);
-    }
-
-    const data = (await res.json()) as any;
-    if (!data.response) return [];
-
-    const parsed = JSON.parse(data.response);
-    if (!parsed || !Array.isArray(parsed.triples)) return [];
-
-    const validRelations = new Set<ExtractedTriple['relationType']>([
-      'PART_OF', 'LED_BY', 'HAPPENED_IN', 'HAPPENED_AT', 'SAME_AS_LOCATION', 'ALIAS_OF', 'ROYAL_LINEAGE', 'MENTIONED_IN'
-    ]);
-
-    const triples: ExtractedTriple[] = [];
-    for (const item of parsed.triples) {
-      if (item.sourceEntity && item.targetEntity && item.relationType && validRelations.has(item.relationType)) {
-        const sourceEntity = resolveCanonicalEntity(item.sourceEntity);
-        const targetEntity = resolveCanonicalEntity(item.targetEntity);
-        triples.push({
-          sourceEntityId: sourceEntity.entityId,
-          sourceEntityName: sourceEntity.canonicalName,
-          relationType: item.relationType,
-          targetEntityId: targetEntity.entityId,
-          targetEntityName: targetEntity.canonicalName,
-          confidence: item.confidence ?? 0.85,
-        });
-      }
-    }
-    return triples;
-  } catch (_err) {
-    return [];
-  }
-}
+let warnedLlmOffline = false;
 
 /**
- * Extracts Knowledge Graph triples using Google Gemini API or Ollama Local fallback
+ * Extracts Knowledge Graph triples using Primary Local Model (llama-server) or Cloud Fallback
  */
-export async function extractTriplesWithGemini(text: string): Promise<ExtractedTriple[]> {
-  const apiKey = envConfig.GEMINI_API_KEY;
-  if (!apiKey || !apiKey.trim()) {
-    return extractTriplesWithOllamaLocal(text);
-  }
+export async function extractTriplesWithLLM(
+  text: string,
+  options?: { strict?: boolean }
+): Promise<ExtractedTriple[]> {
   if (!text || text.trim().length < 20) {
     return [];
   }
@@ -227,28 +207,19 @@ Văn bản:
 ${text.slice(0, 3500)}
 """`;
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          response_mime_type: 'application/json',
-          temperature: 0.1,
-        },
-      }),
-    });
+    const res = await generateLLMCompletion(
+      [
+        { role: 'system', content: 'You are a Vietnamese History Knowledge Graph Specialist. Return valid JSON only.' },
+        { role: 'user', content: prompt },
+      ],
+      {
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
+        timeoutMs: 8000,
+      }
+    );
 
-    if (!res.ok) {
-      throw new Error(`Gemini API HTTP ${res.status}: ${res.statusText}`);
-    }
-
-    const data = (await res.json()) as any;
-    const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawContent) return [];
-
-    const parsed = JSON.parse(rawContent);
+    const parsed = JSON.parse(res.content);
     if (!parsed || !Array.isArray(parsed.triples)) return [];
 
     const validRelations = new Set<ExtractedTriple['relationType']>([
@@ -257,32 +228,66 @@ ${text.slice(0, 3500)}
 
     const triples: ExtractedTriple[] = [];
     for (const item of parsed.triples) {
-      if (item.sourceEntity && item.targetEntity && item.relationType && validRelations.has(item.relationType)) {
+      if (
+        item.sourceEntity &&
+        item.targetEntity &&
+        item.relationType &&
+        validRelations.has(item.relationType) &&
+        isValidEntityName(item.sourceEntity) &&
+        isValidEntityName(item.targetEntity)
+      ) {
         const sourceEntity = resolveCanonicalEntity(item.sourceEntity);
         const targetEntity = resolveCanonicalEntity(item.targetEntity);
+
+        if (!isValidEntityName(sourceEntity.canonicalName) || !isValidEntityName(targetEntity.canonicalName)) {
+          continue;
+        }
+
         triples.push({
           sourceEntityId: sourceEntity.entityId,
           sourceEntityName: sourceEntity.canonicalName,
           relationType: item.relationType,
           targetEntityId: targetEntity.entityId,
           targetEntityName: targetEntity.canonicalName,
-          confidence: item.confidence ?? 0.9,
+          confidence: item.confidence ?? (res.provider === 'LOCAL_LLM' ? 0.95 : 0.9),
         });
       }
     }
     return triples;
   } catch (err) {
-    console.error('[TripleExtractor] Gemini LLM triple extraction failed:', err instanceof Error ? err.message : err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+
+    log.warn('triple_extract.llm_failed', 'LLM triple extraction failed; falling back to rule-based matcher', {
+      error: err,
+    });
+
+    if (options?.strict) {
+      throw new Error(`[STRICT MODE] LLM Triple Extraction failed: ${errMsg}`);
+    }
+
+    if (!warnedLlmOffline) {
+      logFallbackAlert({
+        subsystem: 'LLM_GATEWAY',
+        primaryTarget: `Local LLM Gateway (${envConfig.LLM_BASE_URL}) [${envConfig.LOCAL_LLM_PRIMARY_MODEL}]`,
+        fallbackTarget: 'Rule-Based Regex Pattern Matcher & Canonical Ground-Truth Dictionaries',
+        reason: errMsg,
+        actionRequired: 'Start llama-server (e.g. llama-server -m models/... --port 8091) or set AGNES_API_KEY in .env',
+      });
+      warnedLlmOffline = true;
+    }
     return [];
   }
 }
 
 /**
- * Asynchronous triple extraction combining Fast-Path Regex patterns & Gemini LLM
+ * Asynchronous two-tier ensemble extraction combining Fast-Path Master Dictionaries & LLM Gateway
  */
-export async function extractTriplesFromTextAsync(text: string): Promise<ExtractedTriple[]> {
+export async function extractTriplesFromTextAsync(
+  text: string,
+  options?: { strict?: boolean }
+): Promise<ExtractedTriple[]> {
   const regexTriples = extractTriplesFromText(text);
-  const llmTriples = await extractTriplesWithGemini(text);
+  const llmTriples = await extractTriplesWithLLM(text, options);
 
   const mergedMap = new Map<string, ExtractedTriple>();
 
@@ -296,7 +301,6 @@ export async function extractTriplesFromTextAsync(text: string): Promise<Extract
 
   return Array.from(mergedMap.values());
 }
-
 
 /**
  * 3-Step Historical Conflict Resolution Protocol (Spec Section 5.2)

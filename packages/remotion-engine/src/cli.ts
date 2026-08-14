@@ -2,7 +2,9 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
-import { ChronoVideoSchema } from '@chronoviet/shared-spec';
+import { ChronoVideoSchema, createLogger } from '@chronoviet/shared-spec';
+
+const log = createLogger({ service: 'remotion-engine' });
 
 export interface CLIArgs {
   command: 'render' | 'still' | 'eval' | 'inspect' | 'help';
@@ -87,7 +89,7 @@ Options:
   const entryFile = path.join(packageRoot, 'src', 'index.ts');
 
   if (options.command === 'eval') {
-    console.log('🚀 Running Remotion Engine Evaluation Suite...');
+    log.info('render.eval_started', 'Running Remotion Engine Evaluation Suite');
     const runnerPath = path.join(packageRoot, 'eval', 'runner.ts');
     execSync(`npx tsx "${runnerPath}" ${rawArgs.join(' ')}`, {
       stdio: 'inherit',
@@ -97,40 +99,46 @@ Options:
   }
 
   if (!options.input) {
-    console.error('❌ Error: Input script JSON file (-i, --input) is required.');
+    log.error('render.input_required', 'Input script JSON file (-i, --input) is required');
     process.exit(1);
   }
 
   const absoluteInputPath = path.resolve(process.cwd(), options.input);
 
   if (!fs.existsSync(absoluteInputPath)) {
-    console.error(`❌ Error: Input file not found at [${absoluteInputPath}]`);
+    log.error('render.input_not_found', 'Input file not found', { inputPath: absoluteInputPath });
     process.exit(1);
   }
 
   // Validate JSON schema
-  console.log(`🔍 Validating JSON script: [${absoluteInputPath}]...`);
+  log.info('render.schema_validating', 'Validating JSON script', { inputPath: absoluteInputPath });
   const rawContent = fs.readFileSync(absoluteInputPath, 'utf-8');
   let jsonContent: unknown;
   try {
     jsonContent = JSON.parse(rawContent);
   } catch (e: any) {
-    console.error(`❌ Invalid JSON format in file [${absoluteInputPath}]:`, e.message);
+    log.error('render.json_invalid', 'Invalid JSON format in file', {
+      inputPath: absoluteInputPath,
+      error: e instanceof Error ? e.message : String(e),
+    });
     process.exit(1);
   }
 
   const parseResult = ChronoVideoSchema.safeParse(jsonContent);
   if (!parseResult.success) {
-    console.error(`❌ Schema Validation Failed for [${absoluteInputPath}]:`);
-    parseResult.error.issues.forEach((err: any) => {
-      console.error(`   - [${err.path.join('.')}]: ${err.message}`);
+    log.error('render.schema_invalid', 'Schema validation failed', {
+      inputPath: absoluteInputPath,
+      issues: parseResult.error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })),
     });
     process.exit(1);
   }
-  console.log('✅ JSON Schema Validation Passed.');
+  log.info('render.schema_valid', 'JSON schema validation passed', { inputPath: absoluteInputPath });
 
   if (options.command === 'inspect') {
-    console.log('ℹ️ Script inspection complete. Schema is 100% valid for Remotion Engine.');
+    log.info('render.inspect_complete', 'Script inspection complete; schema is 100% valid for Remotion Engine');
     return;
   }
 
@@ -151,27 +159,38 @@ Options:
 
   if (options.command === 'still') {
     const frame = options.frame ?? 45;
-    console.log(`⚡ Rendering STILL image [frame ${frame}] for composition [${compId}]...`);
-    console.log(`📄 Output: ${outputPath}`);
+    log.info('render.still_started', 'Rendering still frame', {
+      frame,
+      composition: compId,
+      outputPath,
+      inputPath: absoluteInputPath,
+    });
 
     const cmd = `npx remotion still "${entryFile}" ${compId} "${outputPath}" --props="${absoluteInputPath}" --frame=${frame} ${overwriteFlag}`;
     try {
       execSync(cmd, { cwd: packageRoot, stdio: 'inherit' });
-      console.log(`✅ Still frame successfully rendered to: ${outputPath}`);
+      log.info('render.still_completed', 'Still frame successfully rendered', { outputPath });
     } catch (err: any) {
-      console.error(`❌ Failed to render still frame:`, err.message);
+      log.error('render.still_failed', 'Failed to render still frame', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       process.exit(1);
     }
   } else {
-    console.log(`🎬 Rendering FULL VIDEO for composition [${compId}]...`);
-    console.log(`📄 Output: ${outputPath}`);
+    log.info('render.video_started', 'Rendering full video', {
+      composition: compId,
+      outputPath,
+      inputPath: absoluteInputPath,
+    });
 
     const cmd = `npx remotion render "${entryFile}" ${compId} "${outputPath}" --props="${absoluteInputPath}" ${overwriteFlag}`;
     try {
       execSync(cmd, { cwd: packageRoot, stdio: 'inherit' });
-      console.log(`✅ Video successfully rendered to: ${outputPath}`);
+      log.info('render.video_completed', 'Video successfully rendered', { outputPath });
     } catch (err: any) {
-      console.error(`❌ Failed to render video:`, err.message);
+      log.error('render.video_failed', 'Failed to render video', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       process.exit(1);
     }
   }

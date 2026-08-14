@@ -11,7 +11,7 @@
 * **Bài toán giải quyết:** Lịch sử Việt Nam có kho tàng dữ liệu đồ sộ nhưng văn bản khô khan, dễ bị sai lệch khi AI sinh nội dung (hallucination), và thiếu các công cụ trực quan hóa dạng video ngắn cho thế hệ trẻ.
 * **Giải pháp:** Sử dụng **Data Preprocessing & Ingestion Engine (Mô-đun 0)** để làm sạch, chuẩn hóa địa danh/nhân vật và nạp dữ liệu offline $\rightarrow$ **Hybrid GraphRAG (Mô-đun 1)** để đảm bảo tính chuẩn xác sử liệu $\rightarrow$ **Multi-Agent Orchestrator (Mô-đun 2)** chia nhỏ kịch bản & chọn layout $\rightarrow$ **VLM Inspector (Mô-đun 3)** kiểm định hình ảnh & bản quyền $\rightarrow$ **Remotion Engine (Mô-đun 4)** render video tự động từ file JSON.
 * **Trạng thái Triển khai Hệ thống:**
-  - **[✅ IMPLEMENTED RAG & INGESTION]:** Data Preprocessing & Ingestion Engine (Mô-đun 0) và Chrono-RAG Engine (Mô-đun 1) hoàn thiện 100% codebase & eval (`packages/rag-engine/src/`, `eval/`). Cào tự động 100% 15 thời kỳ (`pnpm crawl:all`), Hybrid GraphRAG PostgreSQL pgvector + Relational Graph CTEs k=1,2 + BM25 FTS + RRF + Append-Only Audit Trail (`entity_audit_logs`). Tuân thủ Specification v1.5.
+  - **[✅ IMPLEMENTED RAG & INGESTION]:** Data Preprocessing & Ingestion Engine (Mô-đun 0) hoàn thiện 100% codebase & eval tại `packages/data-ingestion/src/`; Chrono-RAG Engine (Mô-đun 1) tại `packages/rag-engine/src/`. Cào tự động 100% 15 thời kỳ (`pnpm crawl:all`), Hybrid GraphRAG PostgreSQL pgvector + Relational Graph CTEs k=1,2 + BM25 FTS + RRF + Append-Only Audit Trail (`entity_audit_logs`). Tuân thủ Specification v1.5.
   - **[✅ IMPLEMENTED AGENT ORCHESTRATION & GUARDRAILS]:** Multi-Agent Orchestrator (Mô-đun 2) hoàn thiện với LangGraph.js, Zod Schema v4.1, và 2 Automated Guardrail Gates: Folklore Guardrail Gate (`folklore-validator.ts` Regex Pattern Matching) & NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts` Entailment Score $\ge 0.80$).
   - **[✅ IMPLEMENTED ENGINES]:** Engine Render Remotion 100% JSON-Driven (`packages/remotion-engine/src/`), 31 `LayoutMode` (tối ưu 16:9), 19 `TransitionType`, Zod Schema runtime validation (`packages/shared-spec/src/schema.ts`), 19 UI Components, 11 Compositions đã đăng ký (`Root.tsx`), 9 file kịch bản JSON dữ liệu mẫu v4.1.
   - **[✅ IMPLEMENTED TTS SERVICE]:** VieNeu TTS Dual-Layer Microservice (`VieNeuEngine` + `SyntheticTTSFallbackEngine`), Python FastAPI ONNX Engine (`app.py`), Zod Schema Validation, `wordTimestamps` → Caption Frame Converter, Eval Suite (`services/vieneu-tts/eval/`).
@@ -29,7 +29,7 @@
 | **Đội ngũ Agent (Multi-Agent)** | LangGraph.js Agentic Orchestrator (Node.js/TS) + PostgreSQL State Checkpointer + Automated Guardrails. | **[✅ IMPLEMENTED]** (100% Codebase & Eval) | Mô-đun 2: Quy trình chia phân cảnh & 5 Micro-Steps kịch bản (kèm Narrative Context & Duration Reconcile), NLI Entailment Hallucination Judge & Folklore Guardrail Gate. |
 | **Thẩm định Hình ảnh (VLM)** | Hybrid VLM (Google Gemini 2.5 Flash Cloud + Local CLIP ONNX Fallback) + Dual-Layer Cache. | **[📐 ARCHITECTURE DESIGN]** (v3.2 Spec) | Mô-đun 3: Thẩm định bối cảnh lịch sử theo Chiến lược 3+3 Candidates, lọc giấy phép Whitelisted (`Public Domain`, `CC0`, `CC-BY`), tự động chọn Fallback Pure Code Layout Rotation. |
 
-> 🔗 **Tài liệu Chi tiết:** Tra cứu [docs/architecture/](file:///D:/Persional_Projects/ChronoViet/docs/architecture) cho Kiến trúc Hệ thống & Hạ tầng và [docs/modules/](file:///D:/Persional_Projects/ChronoViet/docs/modules) cho 5 Mô-đun Pipeline.
+> 🔗 **Tài liệu Chi tiết:** Tra cứu [architecture/](architecture) cho Kiến trúc Hệ thống & Hạ tầng và [modules/](modules) cho 5 Mô-đun Pipeline.
 
 ---
 
@@ -185,7 +185,7 @@ Remotion Engine của ChronoViet tuân thủ kiến trúc **100% Data-Driven**. 
 
 > **Lưu ý thời lượng scene:** Dùng `"startTime"` + `"endTime"` (giây) **hoặc** `"durationInFrames"` (số frames). Engine tự xử lý cả hai. `durationInFrames` có độ ưu tiên cao hơn khi có cả hai.
 
-👉 *Xem chi tiết quy chuẩn kỹ thuật đầy đủ tại:* [EVAL_REMOTION_TECHNICAL_SPEC.md](file:///D:/Persional_Projects/ChronoViet/docs/EVAL_REMOTION_TECHNICAL_SPEC.md)
+👉 *Xem chi tiết quy chuẩn kỹ thuật đầy đủ tại:* [EVAL_REMOTION_TECHNICAL_SPEC.md](EVAL_REMOTION_TECHNICAL_SPEC.md)
 
 ---
 

@@ -89,6 +89,8 @@ export async function runIngestRagChain(options: {
 
   const testCases: ProductionBenchmarkTestCase[] = JSON.parse(fs.readFileSync(benchmarkPath, 'utf-8'));
 
+  let isPgMode = false;
+
   // ----------------------------------------------------------------
   // PHASE 1: FULL CORPUS PREPARATION & INTEGRITY CHECK
   // ----------------------------------------------------------------
@@ -149,6 +151,7 @@ export async function runIngestRagChain(options: {
       const searchRes = await ragEngine.search({
         query: tc.question,
         rerankTopK: 5,
+        maxTokens: 512,
       });
       const qLatency = searchRes.retrievalLatencyMs || (Date.now() - qStart);
       totalLatencyMs += qLatency;

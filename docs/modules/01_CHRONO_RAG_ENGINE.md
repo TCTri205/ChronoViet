@@ -266,10 +266,12 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 
 ---
 
-## 8. Tiêu Chí Đánh Giá Tính Chuẩn Xác (Evaluation Benchmark)
+## 8. Tiêu Chí Đánh Giá Tính Chuẩn Xác (Evaluation Benchmark Suite)
 
-Engine được kiểm thử liên tục qua bộ Benchmark nội bộ **ChronoEval-1000** gồm 1,000 câu hỏi lịch sử phức tạp:
+Engine được kiểm thử liên tục qua bộ Benchmark nội bộ **ChronoEval** (`ChronoEval-1000` & `ChronoEval-Smoke-15`) kiểm soát 4 chỉ số KPI cốt lõi:
 
 * **Fact Precision Score:** > 99.2% (Không sai lệch niên đại, nhân vật, triều đại).
-* **Temporal Continuity:** Đảm bảo thứ tự diễn tiến sự kiện theo đúng dòng thời gian.
+* **Hallucination Rate:** < 0.8% (Tỷ lệ ảo giác tri thức trong ngữ cảnh xuất ra).
 * **Source Citation Traceability:** 100% thông tin xuất ra đều gắn kèm Citation ID dẫn về trang/tập trong tài liệu gốc.
+* **Retrieval Latency SLA:** < 300ms (PostgreSQL `pgvector` + Graph CTEs Online DB) / < 1500ms (Offline Dev Benchmark SLA).
+

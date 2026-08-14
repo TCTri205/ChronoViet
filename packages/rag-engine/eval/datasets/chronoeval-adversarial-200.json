@@ -1,0 +1,3202 @@
+[
+  {
+    "query_id": "q_adv_001",
+    "query": "[Bẫy #1] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_002",
+    "query": "[Bẫy #2] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_003",
+    "query": "[Bẫy #3] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_004",
+    "query": "[Bẫy #4] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_005",
+    "query": "[Bẫy #5] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_006",
+    "query": "[Bẫy #6] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_007",
+    "query": "[Bẫy #7] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_008",
+    "query": "[Bẫy #8] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_009",
+    "query": "[Bẫy #9] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_010",
+    "query": "[Bẫy #10] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_011",
+    "query": "[Bẫy #11] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_012",
+    "query": "[Bẫy #12] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_013",
+    "query": "[Bẫy #13] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_014",
+    "query": "[Bẫy #14] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_015",
+    "query": "[Bẫy #15] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_016",
+    "query": "[Bẫy #16] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_017",
+    "query": "[Bẫy #17] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_018",
+    "query": "[Bẫy #18] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_019",
+    "query": "[Bẫy #19] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_020",
+    "query": "[Bẫy #20] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_021",
+    "query": "[Bẫy #21] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_022",
+    "query": "[Bẫy #22] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_023",
+    "query": "[Bẫy #23] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_024",
+    "query": "[Bẫy #24] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_025",
+    "query": "[Bẫy #25] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_026",
+    "query": "[Bẫy #26] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_027",
+    "query": "[Bẫy #27] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_028",
+    "query": "[Bẫy #28] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_029",
+    "query": "[Bẫy #29] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_030",
+    "query": "[Bẫy #30] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_031",
+    "query": "[Bẫy #31] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_032",
+    "query": "[Bẫy #32] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_033",
+    "query": "[Bẫy #33] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_034",
+    "query": "[Bẫy #34] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_035",
+    "query": "[Bẫy #35] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_036",
+    "query": "[Bẫy #36] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_037",
+    "query": "[Bẫy #37] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_038",
+    "query": "[Bẫy #38] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_039",
+    "query": "[Bẫy #39] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_040",
+    "query": "[Bẫy #40] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_041",
+    "query": "[Bẫy #41] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_042",
+    "query": "[Bẫy #42] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_043",
+    "query": "[Bẫy #43] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_044",
+    "query": "[Bẫy #44] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_045",
+    "query": "[Bẫy #45] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_046",
+    "query": "[Bẫy #46] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_047",
+    "query": "[Bẫy #47] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_048",
+    "query": "[Bẫy #48] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_049",
+    "query": "[Bẫy #49] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_050",
+    "query": "[Bẫy #50] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_051",
+    "query": "[Bẫy #51] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_052",
+    "query": "[Bẫy #52] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_053",
+    "query": "[Bẫy #53] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_054",
+    "query": "[Bẫy #54] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_055",
+    "query": "[Bẫy #55] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_056",
+    "query": "[Bẫy #56] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_057",
+    "query": "[Bẫy #57] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_058",
+    "query": "[Bẫy #58] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_059",
+    "query": "[Bẫy #59] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_060",
+    "query": "[Bẫy #60] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_061",
+    "query": "[Bẫy #61] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_062",
+    "query": "[Bẫy #62] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_063",
+    "query": "[Bẫy #63] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_064",
+    "query": "[Bẫy #64] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_065",
+    "query": "[Bẫy #65] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_066",
+    "query": "[Bẫy #66] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_067",
+    "query": "[Bẫy #67] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_068",
+    "query": "[Bẫy #68] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_069",
+    "query": "[Bẫy #69] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_070",
+    "query": "[Bẫy #70] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_071",
+    "query": "[Bẫy #71] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_072",
+    "query": "[Bẫy #72] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_073",
+    "query": "[Bẫy #73] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_074",
+    "query": "[Bẫy #74] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_075",
+    "query": "[Bẫy #75] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_076",
+    "query": "[Bẫy #76] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_077",
+    "query": "[Bẫy #77] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_078",
+    "query": "[Bẫy #78] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_079",
+    "query": "[Bẫy #79] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_080",
+    "query": "[Bẫy #80] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_081",
+    "query": "[Bẫy #81] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_082",
+    "query": "[Bẫy #82] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_083",
+    "query": "[Bẫy #83] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_084",
+    "query": "[Bẫy #84] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_085",
+    "query": "[Bẫy #85] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_086",
+    "query": "[Bẫy #86] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_087",
+    "query": "[Bẫy #87] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_088",
+    "query": "[Bẫy #88] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_089",
+    "query": "[Bẫy #89] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_090",
+    "query": "[Bẫy #90] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_091",
+    "query": "[Bẫy #91] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_092",
+    "query": "[Bẫy #92] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_093",
+    "query": "[Bẫy #93] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_094",
+    "query": "[Bẫy #94] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_095",
+    "query": "[Bẫy #95] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_096",
+    "query": "[Bẫy #96] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_097",
+    "query": "[Bẫy #97] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_098",
+    "query": "[Bẫy #98] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_099",
+    "query": "[Bẫy #99] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_100",
+    "query": "[Bẫy #100] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_101",
+    "query": "[Bẫy #101] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_102",
+    "query": "[Bẫy #102] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_103",
+    "query": "[Bẫy #103] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_104",
+    "query": "[Bẫy #104] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_105",
+    "query": "[Bẫy #105] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_106",
+    "query": "[Bẫy #106] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_107",
+    "query": "[Bẫy #107] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_108",
+    "query": "[Bẫy #108] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_109",
+    "query": "[Bẫy #109] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_110",
+    "query": "[Bẫy #110] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_111",
+    "query": "[Bẫy #111] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_112",
+    "query": "[Bẫy #112] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_113",
+    "query": "[Bẫy #113] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_114",
+    "query": "[Bẫy #114] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_115",
+    "query": "[Bẫy #115] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_116",
+    "query": "[Bẫy #116] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_117",
+    "query": "[Bẫy #117] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_118",
+    "query": "[Bẫy #118] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_119",
+    "query": "[Bẫy #119] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_120",
+    "query": "[Bẫy #120] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_121",
+    "query": "[Bẫy #121] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_122",
+    "query": "[Bẫy #122] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_123",
+    "query": "[Bẫy #123] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_124",
+    "query": "[Bẫy #124] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_125",
+    "query": "[Bẫy #125] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_126",
+    "query": "[Bẫy #126] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_127",
+    "query": "[Bẫy #127] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_128",
+    "query": "[Bẫy #128] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_129",
+    "query": "[Bẫy #129] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_130",
+    "query": "[Bẫy #130] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_131",
+    "query": "[Bẫy #131] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_132",
+    "query": "[Bẫy #132] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_133",
+    "query": "[Bẫy #133] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_134",
+    "query": "[Bẫy #134] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_135",
+    "query": "[Bẫy #135] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_136",
+    "query": "[Bẫy #136] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_137",
+    "query": "[Bẫy #137] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_138",
+    "query": "[Bẫy #138] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_139",
+    "query": "[Bẫy #139] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_140",
+    "query": "[Bẫy #140] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_141",
+    "query": "[Bẫy #141] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_142",
+    "query": "[Bẫy #142] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_143",
+    "query": "[Bẫy #143] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_144",
+    "query": "[Bẫy #144] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_145",
+    "query": "[Bẫy #145] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_146",
+    "query": "[Bẫy #146] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_147",
+    "query": "[Bẫy #147] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_148",
+    "query": "[Bẫy #148] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_149",
+    "query": "[Bẫy #149] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_150",
+    "query": "[Bẫy #150] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_151",
+    "query": "[Bẫy #151] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_152",
+    "query": "[Bẫy #152] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_153",
+    "query": "[Bẫy #153] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_154",
+    "query": "[Bẫy #154] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_155",
+    "query": "[Bẫy #155] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_156",
+    "query": "[Bẫy #156] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_157",
+    "query": "[Bẫy #157] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_158",
+    "query": "[Bẫy #158] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_159",
+    "query": "[Bẫy #159] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_160",
+    "query": "[Bẫy #160] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_161",
+    "query": "[Bẫy #161] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_162",
+    "query": "[Bẫy #162] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_163",
+    "query": "[Bẫy #163] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_164",
+    "query": "[Bẫy #164] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_165",
+    "query": "[Bẫy #165] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_166",
+    "query": "[Bẫy #166] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_167",
+    "query": "[Bẫy #167] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_168",
+    "query": "[Bẫy #168] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_169",
+    "query": "[Bẫy #169] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_170",
+    "query": "[Bẫy #170] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_171",
+    "query": "[Bẫy #171] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_172",
+    "query": "[Bẫy #172] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_173",
+    "query": "[Bẫy #173] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_174",
+    "query": "[Bẫy #174] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_175",
+    "query": "[Bẫy #175] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_176",
+    "query": "[Bẫy #176] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_177",
+    "query": "[Bẫy #177] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_178",
+    "query": "[Bẫy #178] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_179",
+    "query": "[Bẫy #179] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_180",
+    "query": "[Bẫy #180] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_181",
+    "query": "[Bẫy #181] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_182",
+    "query": "[Bẫy #182] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_183",
+    "query": "[Bẫy #183] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_184",
+    "query": "[Bẫy #184] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_185",
+    "query": "[Bẫy #185] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_186",
+    "query": "[Bẫy #186] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_187",
+    "query": "[Bẫy #187] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_188",
+    "query": "[Bẫy #188] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_189",
+    "query": "[Bẫy #189] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_190",
+    "query": "[Bẫy #190] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_191",
+    "query": "[Bẫy #191] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_192",
+    "query": "[Bẫy #192] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_193",
+    "query": "[Bẫy #193] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_194",
+    "query": "[Bẫy #194] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_195",
+    "query": "[Bẫy #195] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_196",
+    "query": "[Bẫy #196] Ngô Quyền dùng súng thần công đánh tan quân Minh trên sông Bạch Đằng năm 1975 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "ANACHRONISM_FALSE_PREMISE",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_197",
+    "query": "[Bẫy #197] Vua Quang Trung Nguyễn Huệ đã chỉ huy trận Điện Biên Phủ năm 1954 như thế nào?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "SAME_NAME_OR_ERA_CONFUSION",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_198",
+    "query": "[Bẫy #198] Hoàng đế Lê Lợi đã đánh bại quân Nguyên Mông tại ải Chi Lăng năm 1288 đúng hay sai?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "CONFUSED_DYNASTY_COMMANDER",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_199",
+    "query": "[Bẫy #199] Vị tướng nào tên là Thần Điêu Đại Hiệp chỉ huy trận Ngọc Hồi năm 1789?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "NON_EXISTENT_FICTIONAL_ENTITY",
+    "expected_aliases": []
+  },
+  {
+    "query_id": "q_adv_200",
+    "query": "[Bẫy #200] Trần Hưng Đạo ban Chiếu dời đô về Thăng Long năm 1010 đúng không?",
+    "domain": "ADVERSARIAL_TRAP",
+    "intent": "ABSTENTION_TEST",
+    "requires_multihop": true,
+    "temporal_bounds": {
+      "time_start": 0,
+      "time_end": 2026
+    },
+    "gold_reasoning_paths": [],
+    "ground_truth_chunks": [],
+    "unanswerable_or_false_premise": true,
+    "adversarial_trap_type": "HISTORICAL_FACT_INVERSION",
+    "expected_aliases": []
+  }
+]

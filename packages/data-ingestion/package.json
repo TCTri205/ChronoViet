@@ -7,9 +7,10 @@
     "clean": "rm -rf dist",
     "prebuild": "pnpm clean",
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p eval/tsconfig.json",
     "lint": "tsc --noEmit",
     "eval": "tsx eval/runner.ts",
+    "test": "vitest run",
     "db:init": "tsx src/cli/init-db.ts",
     "ingest:knowledge": "tsx src/cli/ingest-knowledge.ts",
     "crawl:corpus": "tsx src/cli/crawl-corpus.ts",
@@ -29,6 +30,7 @@
     "@types/cheerio": "^1.0.0",
     "@types/node": "^20.11.0",
     "@types/pg": "^8.11.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
   }
 }

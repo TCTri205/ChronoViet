@@ -589,6 +589,99 @@ export const AssetLicenseRegistrySchema = z.object({
   verifiedAt: z.string(),
 });
 
+// ============================================================================
+// 10. CHRONOEVAL v2.0 COMPONENT BENCHMARK SCHEMAS
+// ============================================================================
+
+export const GoldReasoningTripleSchema = z.object({
+  subject: z.string(),
+  relation: z.string(),
+  object: z.string(),
+  confidence: z.number().optional().default(1.0),
+});
+
+export const GroundTruthChunkSchema = z.object({
+  chunk_id: z.string(),
+  relevance_grade: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
+  source_reliability: SourceReliabilityEnum.optional().default('LEVEL_1'),
+  key_evidence_claims: z.array(z.string()).optional().default([]),
+  title: z.string().optional(),
+  text_content: z.string().optional(),
+});
+
+export const ChronoevalDatasetItemSchema = z.object({
+  query_id: z.string(),
+  query: z.string(),
+  epoch: z.string().optional(),
+  domain: z.string().optional().default('GENERAL_HISTORY'),
+  intent: z.string().optional().default('FACT_RETRIEVAL'),
+  requires_multihop: z.boolean().default(false),
+  temporal_bounds: z
+    .object({
+      time_start: z.number().optional(),
+      time_end: z.number().optional(),
+      dynasty: z.string().optional(),
+    })
+    .optional(),
+  gold_reasoning_paths: z.array(z.array(GoldReasoningTripleSchema)).optional().default([]),
+  ground_truth_chunks: z.array(GroundTruthChunkSchema).default([]),
+  unanswerable_or_false_premise: z.boolean().default(false),
+  expected_aliases: z.array(z.string()).optional().default([]),
+  canonical_entity_id: z.string().optional(),
+  adversarial_trap_type: z.string().optional(),
+  parent_query_id: z.string().optional(),
+});
+
+export const ClaimVerificationSchema = z.object({
+  claim_id: z.string(),
+  claim_text: z.string(),
+  supporting_chunk_ids: z.array(z.string()).default([]),
+  entailment_status: z.enum(['ENTAILED', 'CONTRADICTED', 'NEUTRAL', 'NOT_SUPPORTED']),
+  citation_valid: z.boolean().default(false),
+  confidence_score: z.number().min(0).max(1).default(1.0),
+});
+
+export const AblationConfigSchema = z.object({
+  config_id: z.enum(['CONFIG_A', 'CONFIG_B', 'CONFIG_C', 'CONFIG_D', 'CONFIG_E', 'CONFIG_F']),
+  name: z.string(),
+  dense_enabled: z.boolean(),
+  lexical_enabled: z.boolean(),
+  graph_enabled: z.boolean(),
+  reranker_enabled: z.boolean(),
+  context_assembly_enabled: z.boolean(),
+});
+
+export const ComponentBenchmarkReportSchema = z.object({
+  benchmark_id: z.string(),
+  name: z.string(),
+  timestamp: z.string(),
+  total_evaluated: z.number().int().min(0),
+  metrics: z.record(z.string(), z.union([z.number(), z.boolean(), z.string()])),
+  kpis_passed: z.boolean(),
+  latency_summary: z
+    .object({
+      p50_ms: z.number(),
+      p90_ms: z.number(),
+      p95_ms: z.number(),
+      p99_ms: z.number(),
+      avg_ms: z.number(),
+    })
+    .optional(),
+  details: z.array(z.any()).default([]),
+});
+
+export const RegressionQualityGateSchema = z.object({
+  gate_id: z.string(),
+  metric_name: z.string(),
+  baseline_value: z.number(),
+  current_value: z.number(),
+  delta: z.number(),
+  threshold: z.number(),
+  passed: z.boolean(),
+  is_blocking: z.boolean().default(true),
+  message: z.string(),
+});
+
 export type SourceReliability = z.infer<typeof SourceReliabilityEnum>;
 export type HistoricalEpoch = z.infer<typeof HistoricalEpochEnum>;
 export type EntityType = z.infer<typeof EntityTypeEnum>;
@@ -602,6 +695,15 @@ export type ExtractedRelationship = z.infer<typeof ExtractedRelationshipSchema>;
 export type TripleExtraction = z.infer<typeof TripleExtractionSchema>;
 export type AssetLicenseRegistry = z.infer<typeof AssetLicenseRegistrySchema>;
 export type MediaAssetRegistryEntry = AssetLicenseRegistry;
+
+export type GoldReasoningTriple = z.infer<typeof GoldReasoningTripleSchema>;
+export type GroundTruthChunk = z.infer<typeof GroundTruthChunkSchema>;
+export type ChronoevalDatasetItem = z.infer<typeof ChronoevalDatasetItemSchema>;
+export type ClaimVerification = z.infer<typeof ClaimVerificationSchema>;
+export type AblationConfig = z.infer<typeof AblationConfigSchema>;
+export type ComponentBenchmarkReport = z.infer<typeof ComponentBenchmarkReportSchema>;
+export type RegressionQualityGate = z.infer<typeof RegressionQualityGateSchema>;
+
 
 
 

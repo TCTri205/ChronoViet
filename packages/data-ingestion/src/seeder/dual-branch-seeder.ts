@@ -5,7 +5,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { IIngestionPipeline, IngestionOptions, IngestionResult, SourceReliability } from '@chronoviet/shared-spec';
+import { IIngestionPipeline, IngestionOptions, IngestionResult, SourceReliability, createLogger } from '@chronoviet/shared-spec';
 import { isPgAvailable, query, withTransaction, inMemoryStore, DbEntity, DbDocumentChunk, resolveHistoricalEpochs } from '@chronoviet/shared-spec';
 import { normalizeText } from '../text/text-normalizer.js';
 import { chunkDocumentHierarchical, ProcessedHierarchicalChunk } from '../chunking/hierarchical-chunker.js';
@@ -13,6 +13,8 @@ import { resolveCanonicalEntity, resolveLocationMapping } from '../text/historic
 import { extractTriplesFromTextAsync, ExtractedTriple } from '../triple-extractor.js';
 import { generateEmbedding } from '../embedding-service.js';
 import { PdfExtractor } from '../pdf/pdf-extractor.js';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 export interface IngestionDocMetadata {
   title: string;
@@ -72,7 +74,8 @@ function parseFrontmatter(rawText: string): { body: string; metadata: Record<str
  */
 export async function seedDualBranch(
   content: string,
-  metadata: IngestionDocMetadata
+  metadata: IngestionDocMetadata,
+  options?: { strict?: boolean }
 ): Promise<DualBranchSeedResult> {
   const startTime = Date.now();
   const cleanedText = normalizeText(content);
@@ -97,7 +100,7 @@ export async function seedDualBranch(
 
   for (const chunk of allChunks) {
     const chunkEntityIds = new Set<string>();
-    const triples = await extractTriplesFromTextAsync(chunk.textContent);
+    const triples = await extractTriplesFromTextAsync(chunk.textContent, options);
     allTriples.push(...triples);
 
     for (const t of triples) {
@@ -171,40 +174,73 @@ export async function seedDualBranch(
   if (pgConnected) {
     // 3. PostgreSQL Ingestion Mode (Transactional using dedicated pool client)
     await withTransaction(async (execQuery) => {
-      // 3a. Ingest Graph Entities
-      for (const entity of entityMap.values()) {
-        await execQuery(
-          `INSERT INTO entities (id, name, type, aliases, metadata)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (id) DO UPDATE SET aliases = EXCLUDED.aliases;`,
-          [entity.id, entity.name, entity.type, entity.aliases, JSON.stringify(entity.metadata)]
-        );
+      // 3a. Batch Ingest Graph Entities (200 entities per batch)
+      const allEntities = Array.from(entityMap.values());
+      for (let i = 0; i < allEntities.length; i += 200) {
+        const batch = allEntities.slice(i, i + 200);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach((entity, idx) => {
+          const offset = idx * 5;
+          valueRows.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5})`);
+          values.push(entity.id, entity.name, entity.type, entity.aliases, JSON.stringify(entity.metadata));
+        });
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO entities (id, name, type, aliases, metadata)
+             VALUES ${valueRows.join(', ')}
+             ON CONFLICT (id) DO UPDATE SET aliases = EXCLUDED.aliases;`,
+            values
+          );
+        }
       }
 
-      // 3b. Ingest Graph Relationships (Triples)
-      for (const triple of allTriples) {
-        if (triple.targetEntityId === 'doc:historical_context') continue;
-        await execQuery(
-          `INSERT INTO relationships (source_entity_id, target_entity_id, relation_type, confidence)
-           VALUES ($1, $2, $3, $4);`,
-          [triple.sourceEntityId, triple.targetEntityId, triple.relationType, triple.confidence]
-        );
+      // 3b. Batch Ingest Graph Relationships (Triples) (200 triples per batch)
+      const uniqueTriplesMap = new Map<string, ExtractedTriple>();
+      for (const t of allTriples) {
+        if (t.targetEntityId === 'doc:historical_context') continue;
+        const key = `${t.sourceEntityId}|${t.targetEntityId}|${t.relationType}`;
+        const existing = uniqueTriplesMap.get(key);
+        if (!existing || t.confidence > existing.confidence) {
+          uniqueTriplesMap.set(key, t);
+        }
+      }
+      const validTriples = Array.from(uniqueTriplesMap.values());
+
+      for (let i = 0; i < validTriples.length; i += 200) {
+        const batch = validTriples.slice(i, i + 200);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach((triple, idx) => {
+          const offset = idx * 4;
+          valueRows.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`);
+          values.push(triple.sourceEntityId, triple.targetEntityId, triple.relationType, triple.confidence);
+        });
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO relationships (source_entity_id, target_entity_id, relation_type, confidence)
+             VALUES ${valueRows.join(', ')}
+             ON CONFLICT (source_entity_id, target_entity_id, relation_type) DO UPDATE SET confidence = EXCLUDED.confidence;`,
+            values
+          );
+        }
       }
 
-      // 3c. Ingest Document Chunks & Vector Embeddings
-      for (const { chunk, embedding } of chunkEmbeddings) {
-        const epochIds = chunk.metadata.epochIds && chunk.metadata.epochIds.length > 0
-          ? chunk.metadata.epochIds
-          : resolveHistoricalEpochs(chunk.metadata.timeStart, chunk.metadata.timeEnd);
+      // 3c. Batch Ingest Document Chunks & Vector Embeddings (100 chunks per batch)
+      for (let i = 0; i < chunkEmbeddings.length; i += 100) {
+        const batch = chunkEmbeddings.slice(i, i + 100);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach(({ chunk, embedding }, idx) => {
+          const offset = idx * 13;
+          const epochIds = chunk.metadata.epochIds && chunk.metadata.epochIds.length > 0
+            ? chunk.metadata.epochIds
+            : resolveHistoricalEpochs(chunk.metadata.timeStart, chunk.metadata.timeEnd);
 
-        await execQuery(
-          `INSERT INTO document_chunks (
-            id, title, text_content, dynasty, epoch_ids, source_reliability, parent_chunk_id,
-            time_start, time_end, key_figures, location, page_number, embedding
-           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::vector)
-           ON CONFLICT (id) DO UPDATE SET text_content = EXCLUDED.text_content;`,
-          [
+          valueRows.push(
+            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}::vector)`
+          );
+          values.push(
             chunk.id,
             chunk.title,
             chunk.textContent,
@@ -217,18 +253,50 @@ export async function seedDualBranch(
             chunk.metadata.keyFigures || [],
             chunk.metadata.location || null,
             chunk.metadata.pageNumber || null,
-            JSON.stringify(embedding),
-          ]
-        );
+            JSON.stringify(embedding)
+          );
+        });
 
-        // 3d. Ingest Entity-Chunk Cross-Links for THIS specific chunk
-        const specificEntityIds = chunkEntityMap.get(chunk.id) || new Set<string>();
-        for (const entityId of specificEntityIds) {
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO document_chunks (
+              id, title, text_content, dynasty, epoch_ids, source_reliability, parent_chunk_id,
+              time_start, time_end, key_figures, location, page_number, embedding
+             )
+             VALUES ${valueRows.join(', ')}
+             ON CONFLICT (id) DO UPDATE SET text_content = EXCLUDED.text_content, embedding = EXCLUDED.embedding, epoch_ids = EXCLUDED.epoch_ids;`,
+            values
+          );
+        }
+      }
+
+      // 3d. Batch Ingest Entity-Chunk Cross-Links (500 cross-links per batch)
+      const entityChunkSet = new Set<string>();
+      const allEntityChunks: { entityId: string; chunkId: string }[] = [];
+      for (const [chunkId, entityIds] of chunkEntityMap.entries()) {
+        for (const entityId of entityIds) {
+          const key = `${entityId}|${chunkId}`;
+          if (!entityChunkSet.has(key)) {
+            entityChunkSet.add(key);
+            allEntityChunks.push({ entityId, chunkId });
+          }
+        }
+      }
+      for (let i = 0; i < allEntityChunks.length; i += 500) {
+        const batch = allEntityChunks.slice(i, i + 500);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach((ec, idx) => {
+          const offset = idx * 2;
+          valueRows.push(`($${offset + 1}, $${offset + 2})`);
+          values.push(ec.entityId, ec.chunkId);
+        });
+        if (valueRows.length > 0) {
           await execQuery(
             `INSERT INTO entity_chunks (entity_id, chunk_id)
-             VALUES ($1, $2)
+             VALUES ${valueRows.join(', ')}
              ON CONFLICT DO NOTHING;`,
-            [entityId, chunk.id]
+            values
           );
         }
       }
@@ -302,7 +370,7 @@ export async function seedDualBranch(
 export class DualBranchSeeder implements IIngestionPipeline {
   private pdfExtractor = new PdfExtractor();
 
-  public async run(inputPath: string, _options?: IngestionOptions): Promise<IngestionResult> {
+  public async run(inputPath: string, options?: IngestionOptions & { strict?: boolean }): Promise<IngestionResult> {
     const startTime = Date.now();
     let documentsProcessed = 0;
     let chunksCreated = 0;
@@ -317,6 +385,10 @@ export class DualBranchSeeder implements IIngestionPipeline {
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
         if (entry.isDirectory()) {
+          // If directory is raw pdf binary folder or legacy pdf_markdown duplicate, skip it in favor of pdf_extracted
+          if (entry.name === 'pdf' || entry.name === 'pdf_markdown') {
+            continue;
+          }
           await collectFiles(fullPath);
         } else if (entry.isFile()) {
           const ext = path.extname(entry.name).toLowerCase();
@@ -365,32 +437,55 @@ export class DualBranchSeeder implements IIngestionPipeline {
             content = parsed.content || parsed.text || rawText;
             title = parsed.title || title;
             dynasty = parsed.dynasty || dynasty;
-          } catch (_err) {
+          } catch (err) {
+            log.warn('seeder.json_parse_fallback', 'JSON parse failed; using raw text body', { filePath, error: err });
             content = body;
           }
         }
       }
 
       if (!content || content.trim().length === 0) {
+        log.warn('seeder.empty_document_skipped', 'Skipping empty document', { filePath });
         continue;
       }
 
-      console.log(`  [${documentsProcessed + 1}/${filesToProcess.length}] Ingesting: ${title} (${baseName})...`);
-
-      const seedResult = await seedDualBranch(content, {
-        title,
-        sourceName: baseName,
-        dynasty,
-        sourceReliability,
-      });
+      const seedResult = await seedDualBranch(
+        content,
+        {
+          title,
+          sourceName: baseName,
+          dynasty,
+          sourceReliability,
+        },
+        options
+      );
 
       documentsProcessed++;
       chunksCreated += seedResult.chunksIngested;
       entitiesExtracted += seedResult.entitiesExtracted;
       relationshipsExtracted += seedResult.triplesExtracted;
+
+      log.info('seeder.document_ingested', 'Document ingested into dual-branch store', {
+        title,
+        baseName,
+        index: documentsProcessed,
+        total: filesToProcess.length,
+        chunks: seedResult.chunksIngested,
+        entities: seedResult.entitiesExtracted,
+        triples: seedResult.triplesExtracted,
+        pgMode: seedResult.isPgMode,
+      });
     }
 
     const durationMs = Date.now() - startTime;
+
+    log.info('seeder.batch_completed', 'Dual-branch seeding batch completed', {
+      documentsProcessed,
+      chunksCreated,
+      entitiesExtracted,
+      relationshipsExtracted,
+      durationMs,
+    });
 
     return {
       documentsProcessed,

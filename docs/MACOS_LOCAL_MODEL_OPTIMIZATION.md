@@ -242,7 +242,7 @@ Quốc ngữ Cổ Engine       Hán / Nôm Engine           Ấn triện / VLM
 
 ### 3.6. VieNeu TTS Engine & Heritage Speech Evaluation (`services/vieneu-tts`)
 
-Dịch vụ tổng hợp giọng đọc di sản đã được triển khai hoàn chỉnh tại [`services/vieneu-tts`](file:///Users/congtri/IT/Personal_Projects/ChronoViet/services/vieneu-tts) với kiến trúc 2 lớp phòng thủ **Dual-Layer Architecture (Zero-Downtime Fallback)**:
+Dịch vụ tổng hợp giọng đọc di sản đã được triển khai hoàn chỉnh tại [`services/vieneu-tts`](../services/vieneu-tts) với kiến trúc 2 lớp phòng thủ **Dual-Layer Architecture (Zero-Downtime Fallback)**:
 
 ```mermaid
 flowchart TD

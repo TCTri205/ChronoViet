@@ -1,11 +1,13 @@
-import { query, isPgAvailable } from '../packages/shared-spec/src/index.js';
+import { query, isPgAvailable, createLogger } from '../packages/shared-spec/src/index.js';
+
+const log = createLogger({ service: 'ops', correlationId: 'db-health-audit' });
 
 async function verifyDbHealth() {
-  console.log('🔍 Executing Deep DB Health Audit...');
+  log.info('ops.db_health_started', 'Executing Deep DB Health Audit');
 
   const available = await isPgAvailable();
   if (!available) {
-    console.error('❌ PostgreSQL is not accessible.');
+    log.error('ops.db_unavailable', 'PostgreSQL is not accessible');
     process.exit(1);
   }
 
@@ -42,9 +44,9 @@ async function verifyDbHealth() {
   console.log('\n--- [4. AUDIT LOGS AUDIT] ---');
   console.log(`• Audit Log Records:   ${totalLogs[0].count} ${parseInt(totalLogs[0].count, 10) > 0 ? '✅ (Active)' : '⚠️ (Empty)'}`);
 
-  const isHealthy = 
-    selfLoops[0].count === '0' && 
-    totalRels[0].count === distinctRels[0].count && 
+  const isHealthy =
+    selfLoops[0].count === '0' &&
+    totalRels[0].count === distinctRels[0].count &&
     indexes.length > 0 &&
     nullTitles[0].count === '0' &&
     nullTypes[0].count === '0';
@@ -53,10 +55,23 @@ async function verifyDbHealth() {
   console.log(` OVERALL DATABASE INTEGRITY STATUS: ${isHealthy ? '✅ PERFECTLY STABLE & HEALTHY' : '❌ UNHEALTHY'}`);
   console.log('==================================================\n');
 
+  log.info('ops.db_health_completed', 'DB health audit finished', {
+    isHealthy,
+    totalRelationships: parseInt(totalRels[0].count, 10),
+    selfLoops: parseInt(selfLoops[0].count, 10),
+    distinctTuples: parseInt(distinctRels[0].count, 10),
+    uniqueIndexActive: indexes.length > 0,
+    totalChunks: parseInt(totalChunks[0].count, 10),
+    emptyTitles: parseInt(nullTitles[0].count, 10),
+    totalEntities: parseInt(totalEntities[0].count, 10),
+    malformedEntities: parseInt(nullTypes[0].count, 10),
+    auditLogRecords: parseInt(totalLogs[0].count, 10),
+  });
+
   if (!isHealthy) process.exit(1);
 }
 
-verifyDbHealth().catch(err => {
-  console.error('❌ Audit Error:', err);
+verifyDbHealth().catch((err) => {
+  log.error('ops.db_health_failed', 'DB health audit error', { error: err });
   process.exit(1);
 });

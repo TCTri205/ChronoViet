@@ -1,0 +1,161 @@
+[
+  {
+    "id": "eval_001",
+    "domain": "MULTI_HOP",
+    "question": "Trận Ngọc Hồi - Đống Đa năm 1789 do ai chỉ huy và diễn ra ở đâu?",
+    "groundTruthCanonical": "Quang Trung",
+    "expectedAliases": ["Nguyễn Huệ", "Hồ Thơm", "Bắc Bình Vương"],
+    "expectedLocation": "Hà Nội",
+    "expectedDynasty": "Nhà Tây Sơn",
+    "requiredFacts": ["Quang Trung chỉ huy", "Năm 1789", "Đánh tan quân Thanh"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_002",
+    "domain": "BIOGRAPHY",
+    "question": "Trần Hưng Đạo tên thật là gì và ông có danh hiệu cùng tác phẩm quân sự nổi tiếng nào?",
+    "groundTruthCanonical": "Trần Hưng Đạo",
+    "expectedAliases": ["Trần Quốc Tuấn", "Hưng Đạo Đại Vương", "Hưng Đạo Vương"],
+    "expectedLocation": "Thăng Long",
+    "expectedDynasty": "Nhà Trần",
+    "requiredFacts": ["Tên thật là Trần Quốc Tuấn", "Hưng Đạo Đại Vương", "Hịch Tướng Sĩ"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_003",
+    "domain": "DYNASTY",
+    "question": "Lê Lợi khởi nghĩa tại đâu và lập ra triều đại nào?",
+    "groundTruthCanonical": "Lê Lợi",
+    "expectedAliases": ["Lê Thái Tổ", "Bình Định Vương"],
+    "expectedLocation": "Lam Sơn",
+    "expectedDynasty": "Nhà Lê",
+    "requiredFacts": ["Khởi nghĩa Lam Sơn", "Đánh đuổi quân Minh", "Lập ra nhà Lê"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_004",
+    "domain": "AMBIGUITY_DISAMBIGUATION",
+    "question": "Ngô Quyền đánh tan quân Nam Hán trên sông Bạch Đằng năm nào và dùng chiến thuật gì?",
+    "groundTruthCanonical": "Ngô Quyền",
+    "expectedAliases": ["Tiền Ngô Vương"],
+    "expectedLocation": "Sông Bạch Đằng",
+    "expectedDynasty": "Nhà Ngô",
+    "requiredFacts": ["Năm 938", "Sử dụng cọc gỗ bọc sắt", "Chấm dứt 1000 năm bắc thuộc"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_005",
+    "domain": "ARTIFACT_CULTURE",
+    "question": "Trống đồng Đông Sơn và Ngọc Lũ mang hoa văn trang trí tiêu biểu nào?",
+    "groundTruthCanonical": "Trống đồng Ngọc Lũ",
+    "expectedAliases": ["Trống đồng Đông Sơn", "Văn hóa Đông Sơn"],
+    "expectedLocation": "Thanh Hóa",
+    "expectedDynasty": "Văn Lang",
+    "requiredFacts": ["Kỷ nguyên đồ đồng", "Chim Lạc và hình thuyền", "Bảo vật quốc gia"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_006",
+    "domain": "MYSTERY",
+    "question": "Vụ án Lệ Chi Viên liên quan đến danh nhân văn hóa nào và ai đã minh oan cho ông?",
+    "groundTruthCanonical": "Nguyễn Trãi",
+    "expectedAliases": ["Ức Trai"],
+    "expectedLocation": "Lệ Chi Viên",
+    "expectedDynasty": "Nhà Lê",
+    "requiredFacts": ["Nguyễn Trãi bị oan thảm án", "Vua Lê Thái Tông qua đời", "Lê Thánh Tông minh oan"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_007",
+    "domain": "HISTORICAL_ALIAS",
+    "question": "Đô thành Thăng Long thời Nhà Lý tương ứng với tên gọi địa danh nào ngày nay?",
+    "groundTruthCanonical": "Hà Nội",
+    "expectedAliases": ["Thăng Long", "Hà Nội", "Đại La", "Đông Kinh"],
+    "expectedLocation": "Hà Nội",
+    "expectedDynasty": "Nhà Lý",
+    "requiredFacts": ["Thăng Long", "Hà Nội", "Lý Thái Tổ năm 1010"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_008",
+    "domain": "AMBIGUITY_DISAMBIGUATION",
+    "question": "Phân biệt ba chiến thắng trên sông Bạch Đằng năm 938, 981 và 1288 do những ai chỉ huy?",
+    "groundTruthCanonical": "Ngô Quyền, Lê Đại Hành, Trần Hưng Đạo",
+    "expectedAliases": ["Tiền Ngô Vương", "Lê Hoàn", "Trần Quốc Tuấn"],
+    "expectedLocation": "Sông Bạch Đằng",
+    "expectedDynasty": "Nhà Ngô - Tiền Lê - Trần",
+    "requiredFacts": ["Ngô Quyền năm 938", "Lê Đại Hành năm 981", "Trần Hưng Đạo năm 1288"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_009",
+    "domain": "TEMPORAL_EPOCH",
+    "question": "Trong giai đoạn 1771 đến 1777, cuộc khởi nghĩa Tây Sơn do ai lãnh đạo và chống lại thế lực nào?",
+    "groundTruthCanonical": "Nhà Tây Sơn",
+    "expectedAliases": ["Nguyễn Nhạc", "Nguyễn Huệ", "Chúa Nguyễn"],
+    "expectedLocation": "Quy Nhơn",
+    "expectedDynasty": "Nhà Tây Sơn",
+    "requiredFacts": ["Năm 1771", "Nguyễn Nhạc khởi binh", "Quy Nhơn"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_010",
+    "domain": "ARTIFACT_CULTURE",
+    "question": "Thành Cổ Loa gắn liền với vị vua Thục Phán An Dương Vương và bảo vật truyền thuyết gì?",
+    "groundTruthCanonical": "An Dương Vương",
+    "expectedAliases": ["Thục Phán", "Nỏ thần", "Nỏ Liên Châu"],
+    "expectedLocation": "Cổ Loa",
+    "expectedDynasty": "Âu Lạc",
+    "requiredFacts": ["An Dương Vương", "Thục Phán", "Nỏ Liên Châu"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_011",
+    "domain": "MULTI_HOP",
+    "question": "Vua Lý Thái Tổ quyết định dời đô từ Hoa Lư về Thăng Long năm 1010 mang ý nghĩa lịch sử gì?",
+    "groundTruthCanonical": "Lý Thái Tổ",
+    "expectedAliases": ["Lý Công Uẩn", "Hoa Lư", "Thăng Long"],
+    "expectedLocation": "Hà Nội",
+    "expectedDynasty": "Nhà Lý",
+    "requiredFacts": ["Lý Thái Tổ", "Năm 1010", "Thăng Long"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_012",
+    "domain": "HISTORICAL_ALIAS",
+    "question": "Danh xưng Phú Xuân thời Chúa Nguyễn và Nhà Tây Sơn tương ứng với tỉnh/thành phố nào ngày nay?",
+    "groundTruthCanonical": "Huế",
+    "expectedAliases": ["Thuận Hóa", "Phú Xuân", "Thừa Thiên Huế"],
+    "expectedLocation": "Huế",
+    "expectedDynasty": "Nhà Nguyễn",
+    "requiredFacts": ["Phú Xuân", "Kinh đô Huế", "Thuận Hóa"],
+    "isAnswerable": true
+  },
+  {
+    "id": "eval_013",
+    "domain": "ADVERSARIAL_NEGATIVE",
+    "question": "Vua Quang Trung đã trực tiếp chỉ huy chiến dịch Điện Biên Phủ năm 1954 đúng hay sai?",
+    "groundTruthCanonical": "Không đúng / Sai lệch lịch sử",
+    "expectedAliases": [],
+    "requiredFacts": ["Quang Trung qua đời năm 1792"],
+    "isAnswerable": false
+  },
+  {
+    "id": "eval_014",
+    "domain": "ADVERSARIAL_NEGATIVE",
+    "question": "Trần Hưng Đạo đã đại diện Việt Nam ký Hiệp định Genève năm 1954 tại Thụy Sĩ đúng không?",
+    "groundTruthCanonical": "Không đúng / Sai lệch lịch sử",
+    "expectedAliases": [],
+    "requiredFacts": ["Trần Hưng Đạo sống thời Nhà Trần"],
+    "isAnswerable": false
+  },
+  {
+    "id": "eval_015",
+    "domain": "ADVERSARIAL_NEGATIVE",
+    "question": "Ngô Quyền đã lãnh đạo cuộc kháng chiến chống quân Minh năm 1418 tại Lam Sơn?",
+    "groundTruthCanonical": "Không đúng / Sai lệch lịch sử",
+    "expectedAliases": [],
+    "requiredFacts": ["Ngô Quyền sống thế kỷ X"],
+    "isAnswerable": false
+  }
+]

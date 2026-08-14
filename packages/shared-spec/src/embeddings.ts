@@ -3,7 +3,9 @@
  */
 
 import { envConfig } from './config.js';
-import { logFallbackAlert } from './logger.js';
+import { logFallbackAlert, createLogger } from './logger.js';
+
+const log = createLogger({ service: 'shared-spec' });
 
 export const EMBEDDING_DIMENSION = envConfig.EMBEDDING_DIMENSION;
 
@@ -19,18 +21,44 @@ function hashString(str: string): number {
 }
 
 function generatePseudoRandomEmbedding(text: string): number[] {
-  if (!text) {
+  if (!text || !text.trim()) {
     return new Array(EMBEDDING_DIMENSION).fill(0);
   }
 
-  const seed = hashString(text);
-  const vector: number[] = new Array(EMBEDDING_DIMENSION);
-  let normSquare = 0;
+  const vector: number[] = new Array(EMBEDDING_DIMENSION).fill(0);
+  const clean = text.toLowerCase().trim();
+  const words = clean.split(/\s+/).filter(Boolean);
 
+  // 1. Unigram word hashing
+  for (const w of words) {
+    const wHash = Math.abs(hashString(w));
+    const idx = wHash % EMBEDDING_DIMENSION;
+    vector[idx] += 1.5;
+    // Secondary distributed projection
+    const idx2 = (wHash * 31 + 17) % EMBEDDING_DIMENSION;
+    vector[idx2] += 0.8;
+  }
+
+  // 2. Bigram hashing for phrase capture
+  for (let i = 0; i < words.length - 1; i++) {
+    const bigram = `${words[i]} ${words[i + 1]}`;
+    const bHash = Math.abs(hashString(bigram));
+    const idx = bHash % EMBEDDING_DIMENSION;
+    vector[idx] += 2.0;
+  }
+
+  // 3. Character 3-gram hashing for subword robustness
+  for (let i = 0; i < clean.length - 2; i++) {
+    const tri = clean.slice(i, i + 3);
+    const tHash = Math.abs(hashString(tri));
+    const idx = tHash % EMBEDDING_DIMENSION;
+    vector[idx] += 0.3;
+  }
+
+  // Normalize vector to unit L2 norm
+  let normSquare = 0;
   for (let i = 0; i < EMBEDDING_DIMENSION; i++) {
-    const val = Math.sin(seed * 0.0001 + i * 0.173) * 2 - 1;
-    vector[i] = val;
-    normSquare += val * val;
+    normSquare += vector[i] * vector[i];
   }
 
   const norm = Math.sqrt(normSquare) || 1;
@@ -44,6 +72,7 @@ function generatePseudoRandomEmbedding(text: string): number[] {
 const embeddingCache = new Map<string, number[]>();
 const MAX_CACHE_SIZE = 2000;
 let warnedMissingApiUrl = false;
+let warnedFailedApiUrl = false;
 
 function normalizeVector(vector: number[]): number[] {
   let normSquare = 0;
@@ -65,6 +94,8 @@ function adaptDimension(vector: number[], targetDim: number): number[] {
  * Connects to real BGE-M3 / TEI / Ollama / OpenAI embedding server if EMBEDDING_API_URL is set.
  * Uses pseudo-random hash generator as fallback when EMBEDDING_API_URL is unconfigured or request fails.
  */
+let serverUnreachable = false;
+
 export async function generateEmbedding(text: string): Promise<number[]> {
   if (!text || !text.trim()) {
     return new Array(EMBEDDING_DIMENSION).fill(0);
@@ -76,8 +107,12 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 
   const apiUrl = envConfig.EMBEDDING_API_URL;
-  if (!apiUrl) {
-    if (!warnedMissingApiUrl && typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
+  if (!apiUrl || serverUnreachable) {
+    if (!warnedMissingApiUrl && typeof process !== 'undefined' && process.env.NODE_ENV !== 'test' && !serverUnreachable) {
+      log.warn('embedding.api_unconfigured', 'Embedding API URL is not configured; using pseudo-random fallback', {
+        fallback: 'Deterministic Pseudo-Random Vector Generator',
+        actionRequired: 'Set EMBEDDING_API_URL=http://localhost:8080/v1/embeddings in .env',
+      });
       logFallbackAlert({
         subsystem: 'EMBEDDING',
         primaryTarget: `Embedding API Server (${envConfig.LOCAL_EMBEDDING_DEFAULT})`,
@@ -111,6 +146,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       method: 'POST',
       headers,
       body: JSON.stringify(reqBody),
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!res.ok) {
@@ -145,15 +181,26 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     embeddingCache.set(trimmed, normalized);
     return normalized;
   } catch (err) {
+    serverUnreachable = true;
     const errMsg = err instanceof Error ? err.message : String(err);
-    logFallbackAlert({
-      subsystem: 'EMBEDDING',
-      primaryTarget: `Embedding API Server (${apiUrl}) [${envConfig.LOCAL_EMBEDDING_DEFAULT}]`,
-      fallbackTarget: 'Deterministic Pseudo-Random Vector Generator',
-      reason: errMsg,
-      actionRequired: `Verify embedding server is running on ${apiUrl}`,
+    log.error('embedding.api_failed', 'Embedding API request failed; using pseudo-random fallback', {
+      error: err,
+      apiUrl,
     });
-    return generatePseudoRandomEmbedding(trimmed);
+    if (!warnedFailedApiUrl) {
+      logFallbackAlert({
+        subsystem: 'EMBEDDING',
+        primaryTarget: `Embedding API Server (${apiUrl}) [${envConfig.LOCAL_EMBEDDING_DEFAULT}]`,
+        fallbackTarget: 'Deterministic Pseudo-Random Vector Generator',
+        reason: errMsg,
+        actionRequired: `Verify embedding server is running on ${apiUrl}`,
+      });
+      warnedFailedApiUrl = true;
+    }
+    const fallbackVec = generatePseudoRandomEmbedding(trimmed);
+    if (embeddingCache.size >= MAX_CACHE_SIZE) embeddingCache.clear();
+    embeddingCache.set(trimmed, fallbackVec);
+    return fallbackVec;
   }
 }
 
@@ -188,3 +235,50 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   }
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
+
+/**
+ * Pre-flight health check for Embedding Service
+ */
+export async function isEmbeddingServiceHealthy(): Promise<{ healthy: boolean; provider: string; details?: string }> {
+  const apiUrl = envConfig.EMBEDDING_API_URL;
+  if (!apiUrl) {
+    return {
+      healthy: false,
+      provider: 'FALLBACK_PSEUDO_RANDOM',
+      details: 'EMBEDDING_API_URL is unconfigured in .env',
+    };
+  }
+
+  try {
+    const isOllama = apiUrl.includes('11434') || apiUrl.includes('/api/embeddings');
+    const reqBody = isOllama
+      ? { model: envConfig.LOCAL_EMBEDDING_DEFAULT, prompt: 'health_check' }
+      : { model: envConfig.LOCAL_EMBEDDING_DEFAULT, input: 'health_check' };
+
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reqBody),
+      signal: AbortSignal.timeout(3000),
+    });
+
+    if (res.ok) {
+      return {
+        healthy: true,
+        provider: `REAL_EMBEDDING_SERVER (${apiUrl})`,
+      };
+    }
+    return {
+      healthy: false,
+      provider: 'FALLBACK_PSEUDO_RANDOM',
+      details: `HTTP ${res.status}: ${res.statusText}`,
+    };
+  } catch (err) {
+    return {
+      healthy: false,
+      provider: 'FALLBACK_PSEUDO_RANDOM',
+      details: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+

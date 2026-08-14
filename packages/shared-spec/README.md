@@ -29,6 +29,13 @@ Gói `@chronoviet/shared-spec` đóng vai trò là **Hợp đồng Dữ liệu D
    * `TimelineSceneSchema`: Schema của từng phân cảnh trong video.
    * `AssetLicenseRegistrySchema`: Schema đăng ký bản quyền tài nguyên hình ảnh/âm thanh.
 
+3. **Unified Structured Logger (`logger.ts`):**
+   * `createLogger({ service, correlationId?, baseFields? })` — JSON Lines ở production, pretty ở dev, level filter qua `LOG_LEVEL`, redaction secrets tự động.
+   * `log.child({ fields })` — logger có context bổ sung (projectId, runId, entityId...).
+   * `serializeError(err)` / `sanitizePayload(value)` — serialize Error đầy đủ `name/message/stack/cause`, chặn secret key trước khi vào log stream.
+   * `logFallbackAlert(payload)` — event `system.fallback_activated` (level warn) cho các fallback hệ thống.
+   * Chi tiết: [docs/architecture/06_OBSERVABILITY_AND_LOGGING.md](../../docs/architecture/06_OBSERVABILITY_AND_LOGGING.md).
+
 ---
 
 ## ⚡ 3. Hướng Dẫn Sử Dụng (Usage)

@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "linear": {
+      "transport": "http",
+      "enabled": true,
+      "url": "https://mcp.linear.app/mcp",
+      "oauth": {
+        "authorizationUrl": "https://mcp.linear.app/authorize",
+        "tokenUrl": "https://mcp.linear.app/token",
+        "clientId": "NuIY9O5qfV_giTLZ",
+        "scopes": [
+          "read",
+          "write"
+        ]
+      }
+    }
+  }
+}

@@ -85,8 +85,8 @@ graph TD
 - **Mục tiêu:** Hoàn thiện Zod schema & TypeScript interfaces tại `packages/shared-spec` và triển khai script khởi tạo bảng DB đầy đủ chỉ mục HNSW + Full-Text Search GIN trong `packages/rag-engine`.
 - **Mô tả chi tiết:**
   - Bổ sung `RagSearchRequestSchema`, `RagSearchResponseSchema`, `HistoricalContextEntitySchema` vào `packages/shared-spec/src/schema.ts` và export kiểu từ `interfaces.ts`.
-  - Cập nhật SQL migration script trong `packages/rag-engine/src/db/schema.ts` tạo đủ 4 bảng (`entities`, `relationships`, `document_chunks`, `entity_chunks`), cột `tsv tsvector`, chỉ mục `HNSW` và các chỉ mục `GIN` phụ trợ.
-  - Viết Postgres client pool (`packages/rag-engine/src/db/client.ts`) sử dụng `pg` kết nối tới PostgreSQL container với retry strategy và connection pooling configuration.
+  - Cập nhật SQL migration script trong `packages/shared-spec/src/db/schema.ts` tạo đủ 4 bảng (`entities`, `relationships`, `document_chunks`, `entity_chunks`), cột `tsv tsvector`, chỉ mục `HNSW` và các chỉ mục `GIN` phụ trợ.
+  - Viết Postgres client pool (`packages/shared-spec/src/db/client.ts`) sử dụng `pg` kết nối tới PostgreSQL container với retry strategy và connection pooling configuration.
 - **Tiêu chí nghiệm thu (Acceptance Criteria):**
   - [ ] `pnpm --filter @chronoviet/shared-spec typecheck` đạt 0 lỗi TypeScript.
   - [ ] Script `INITIAL_RAG_SCHEMA_SQL` thực thi thành công trên PostgreSQL 15+, tạo đủ 4 bảng, extension `vector`, cột `tsv tsvector`, và 4 chỉ mục (`idx_chunks_embedding_hnsw`, `idx_chunks_fts`, `idx_entities_aliases`, `idx_rel_source`).
@@ -97,8 +97,8 @@ graph TD
 - **Tệp liên quan:**
   - `packages/shared-spec/src/schema.ts`
   - `packages/shared-spec/src/interfaces.ts`
-  - `packages/rag-engine/src/db/schema.ts`
-  - `packages/rag-engine/src/db/client.ts`
+  - `packages/shared-spec/src/db/schema.ts`
+  - `packages/shared-spec/src/db/client.ts`
 - **Quy mô dự kiến:** Medium (4 tệp)
 
 ---
@@ -118,9 +118,9 @@ graph TD
   - [ ] Unit tests cho `chunker.ts` và `entity-disambiguator.ts`.
 - **Phụ thuộc:** Task 1.
 - **Tệp liên quan:**
-  - `packages/rag-engine/src/ingestion/text-cleaner.ts`
-  - `packages/rag-engine/src/ingestion/entity-disambiguator.ts`
-  - `packages/rag-engine/src/ingestion/chunker.ts`
+  - `packages/data-ingestion/src/text-cleaner.ts`
+  - `packages/data-ingestion/src/entity-disambiguator.ts`
+  - `packages/data-ingestion/src/chunker.ts`
 - **Quy mô dự kiến:** Medium (3 tệp)
 
 #### Task 3: Dual-Branch Ingestion Pipeline & Cross-Linking
@@ -136,9 +136,9 @@ graph TD
   - [ ] Integration test nạp văn bản mẫu vào PostgreSQL test container.
 - **Phụ thuộc:** Task 2.
 - **Tệp liên quan:**
-  - `packages/rag-engine/src/ingestion/triple-extractor.ts`
-  - `packages/rag-engine/src/ingestion/embedding-service.ts`
-  - `packages/rag-engine/src/ingestion/ingest-pipeline.ts`
+  - `packages/data-ingestion/src/triple-extractor.ts`
+  - `packages/data-ingestion/src/embedding-service.ts`
+  - `packages/data-ingestion/src/ingest-pipeline.ts`
 - **Quy mô dự kiến:** Medium (3 tệp)
 
 ---

@@ -2,7 +2,9 @@
  * Local Subgraph Search using PostgreSQL Recursive CTEs ($k=1, 2$) & In-Memory Fallback
  */
 
-import { isPgAvailable, query, inMemoryStore, buildAliasTable } from '@chronoviet/shared-spec';
+import { createLogger, isPgAvailable, query, inMemoryStore, buildAliasTable } from '@chronoviet/shared-spec';
+
+const log = createLogger({ service: 'rag-engine' });
 
 
 export interface GraphTriple {
@@ -53,18 +55,22 @@ export async function searchLocalGraphCTE(
       depth: number;
     }>(sql, [entityIds, maxHops]);
 
-    for (const r of rows) {
-      triples.push({
-        sourceEntityId: r.source_entity_id,
-        relationType: r.relation_type,
-        targetEntityId: r.target_entity_id,
-        confidence: r.confidence,
-        hopCount: r.depth,
-      });
-      visitedEntities.add(r.source_entity_id);
-      visitedEntities.add(r.target_entity_id);
+    if (rows && rows.length > 0) {
+      for (const r of rows) {
+        triples.push({
+          sourceEntityId: r.source_entity_id,
+          relationType: r.relation_type,
+          targetEntityId: r.target_entity_id,
+          confidence: r.confidence,
+          hopCount: r.depth,
+        });
+        visitedEntities.add(r.source_entity_id);
+        visitedEntities.add(r.target_entity_id);
+      }
     }
-  } else {
+  }
+
+  if (triples.length === 0) {
     // In-Memory Graph Recursive Traversal Fallback
     let currentFrontier = new Set<string>(entityIds);
 
@@ -92,6 +98,13 @@ export async function searchLocalGraphCTE(
 
   const allEntityIds = Array.from(visitedEntities);
   const aliasTable = buildAliasTable(allEntityIds);
+
+  log.debug('rag.graph_search_done', 'Local subgraph CTE search completed', {
+    seedEntityIds: entityIds.length,
+    triplesFound: triples.length,
+    entityIdsTotal: allEntityIds.length,
+    pgMode: pgConnected,
+  });
 
   return {
     triples,

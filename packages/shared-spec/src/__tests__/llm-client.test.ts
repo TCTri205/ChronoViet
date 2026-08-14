@@ -1,18 +1,34 @@
-import { describe, it, expect } from 'vitest';
-import { generateLLMCompletion } from '../llm-client.js';
+import { describe, it, expect, vi } from 'vitest';
+import { generateLLMCompletion, isLLMServiceHealthy } from '../llm-client.js';
 
-describe('Local LLM Gateway Client Adaptation Test', () => {
-  it('successfully generates response from running Qwen3.5-27B-Q4_K_M server', async () => {
-    const res = await generateLLMCompletion(
-      [
-        { role: 'system', content: 'Bạn là trợ lý AI Lịch sử Việt Nam của ChronoViet.' },
-        { role: 'user', content: 'Trả lời ngắn 1 câu: Năm 1789 gắn liền với chiến thắng lịch sử nào?' },
-      ],
-      { max_tokens: 256, temperature: 0.1 }
-    );
+describe('LLM Gateway Client', () => {
+  it('checks service health gracefully', async () => {
+    const health = await isLLMServiceHealthy();
+    expect(health).toHaveProperty('healthy');
+    expect(health).toHaveProperty('provider');
+  });
 
-    expect(res).toBeDefined();
-    expect(res.provider).toBe('LOCAL_LLM');
-    expect(res.content || res.reasoningContent).toBeTruthy();
-  }, 60000);
+  it('handles completion with mock local response', async () => {
+    const mockResponse = {
+      choices: [{ message: { content: 'Chiến thắng Ngọc Hồi - Đống Đa năm 1789.' } }],
+      model: 'qwen3.5-27b-instruct-q4_k_m',
+      usage: { prompt_tokens: 10, completion_tokens: 15, total_tokens: 25 },
+    };
+
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    } as any);
+
+    try {
+      const res = await generateLLMCompletion([
+        { role: 'user', content: 'Năm 1789 gắn liền với sự kiện gì?' },
+      ]);
+      expect(res.provider).toBe('LOCAL_LLM');
+      expect(res.content).toContain('Ngọc Hồi - Đống Đa');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
 });

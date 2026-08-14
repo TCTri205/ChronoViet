@@ -9,14 +9,15 @@ Chào mừng bạn đến với Trung tâm Tài liệu Kỹ thuật và Kiến t
 Tài liệu dự án được tổ chức thành 4 nhóm chính theo tầng kiến trúc, được đánh dấu rõ rệt giữa **[✅ ĐÃ IMPLEMENTED]** (Code Engine đã hoàn thiện) và **[📐 THIẾT KẾ KẾ HOẠCH / ROADMAP]**:
 
 ```
-d:\Persional_Projects\ChronoViet\docs\
+docs/
 ├── 🏛️ architecture/                           [KIẾN TRÚC HỆ THỐNG & HẠ TẦNG KỸ THUẬT]
 │   ├── architecture/README.md                 [Tổng quan Kiến trúc Hệ thống & Hạ tầng]
 │   ├── architecture/01_ARCHITECTURAL_STYLE.md [Kiểu Kiến trúc: Event-Driven + Decoupled Pipeline]
 │   ├── architecture/02_COMMUNICATION_AND_QUEUES.md [Giao tiếp IPC, Message Queue (BullMQ/RabbitMQ)]
 │   ├── architecture/03_DATA_STORAGE_AND_CACHE.md [Cơ sở dữ liệu (Postgres pgvector SSOT) & Cache (Redis)]
 │   ├── architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md [Quản lý State (LangGraph.js), VPS Docker Compose Caddy Deploy]
-│   └── architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md [Tối ưu Sản xuất & VieNeu TTS Engine]
+│   ├── architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md [Tối ưu Sản xuất & VieNeu TTS Engine]
+│   └── architecture/06_OBSERVABILITY_AND_LOGGING.md [Unified Structured Logging & Hướng dẫn Truy vết]
 │
 ├── ⚙️ modules/                                [CHI TIẾT 5 MÔ-ĐUN XỬ LÝ PIPELINE]
 │   ├── modules/README.md                      [Tổng quan 5 Mô-đun Xử lý Dữ liệu]
@@ -31,10 +32,13 @@ d:\Persional_Projects\ChronoViet\docs\
 ├── 💻 MACOS_LOCAL_MODEL_OPTIMIZATION.md       [Hướng dẫn Tối ưu hóa Mô hình Local trên macOS (Apple Silicon)]
 ├── 📘 SystemOverview.md                       [Kiến trúc RAG + Multi-Agent + VLM + Remotion [✅ Engine & TTS / 📐 Agent Roadmap]]
 ├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai, Phân tích Song song & Khung Đánh giá [✅ Phase 1 DONE / 📐 Phase 2-5]]
+├── 📊 RAG_COMPONENT_BENCHMARK_SPEC.md        [★ Benchmark Chi tiết từng Component RAG: C0-C10, Dataset, Metrics & Regression Gate [✅]]
 │
 ├── ⚙️ EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 31 LayoutMode, 19 Transition, Zod Schema, 11 Compositions [✅]]
 ├── 📜 REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v4.1, Lego Components [✅]]
-└── 🧠 KNOWLEDGE_DATA_GOVERNANCE_SPEC.md      [★ Source of Truth: Quản trị Số lượng, Chất lượng & Giải quyết Xung đột Sử liệu [✅]]
+├── 🧠 KNOWLEDGE_DATA_GOVERNANCE_SPEC.md      [★ Source of Truth: Quản trị Số lượng, Chất lượng & Giải quyết Xung đột Sử liệu [✅]]
+├── 📋 RAG_plan.md                            [★ Kế hoạch triển khai RAG Engine chi tiết (Phase 1-4) [✅]]
+├── 🗄️ data_preprocessing_plan.md             [★ Kế hoạch tiền xử lý & nạp dữ liệu chi tiết [✅]]
 │
 ├── 🎨 3. HƯỚNG DẪN THIẾT KẾ & VISUAL DESIGN
 │   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md          [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]
@@ -91,21 +95,29 @@ d:\Persional_Projects\ChronoViet\docs\
 ### 2.7. [script_examples/](script_examples) — Kịch Bản Mẫu
 - 5 kịch bản chuẩn domain (BIOGRAPHY, BATTLE, DYNASTY, MYSTERY, ARTIFACT) + 3 kịch bản legacy (Quang Trung, Hai Bà Trưng, Mông Cổ lần 2) — **tất cả file đều có JSON template chuẩn Schema v4.1**.
 
+### 2.8. [06_OBSERVABILITY_AND_LOGGING.md](architecture/06_OBSERVABILITY_AND_LOGGING.md) — Unified Structured Logging
+- **Mục đích:** Mô tả logger dùng chung đặt tại `@chronoviet/shared-spec/src/logger.ts` (JSON Lines, level filter, correlation ID, redaction secrets) và cách truy vết log toàn monorepo bằng `jq`.
+- **Trạng thái:** **[✅ IMPLEMENTED]** Toàn bộ `packages/*`, `apps/*`, `services/*`, `scripts/*`, `eval/` đã migrate sang structured logger; kèm danh sách pre-existing bugs đã phát hiện & sửa nhờ audit (§7).
+- **Quy ước:** Event name `subsystem.hành_động.kết_quả` (vd `rag.search_completed`, `tts.synthesize_failed`, `ops.db_health_completed`); level `debug|info|warn|error`; correlation ID qua `x-request-id` (TTS), `projectId` (orchestrator), run id (CLI).
+
 ---
 
 ## ⚡ 3. Quickstart: Lệnh Render Video Remotion Nhanh (Chạy tại Root Monorepo)
 
 ```bash
 # 1. Khởi tạo CSDL PostgreSQL pgvector & Relational Graph Schema
-pnpm --filter @chronoviet/rag-engine db:init
+pnpm --filter @chronoviet/data-ingestion db:init
 
 # 2. Cào TỰ ĐỘNG toàn bộ 15 Thời kỳ Lịch sử Việt Nam
 pnpm crawl:all
 
 # 3. Tiền xử lý & Nạp kho tri thức vào CSDL
-pnpm --filter @chronoviet/rag-engine ingest:knowledge
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge
 
-# 4. Render các kịch bản domain chuẩn ra MP4 từ root monorepo
+# 4. Trải nghiệm Chatbot RAG tương tác trực tiếp trên Terminal CLI
+pnpm rag:chat
+
+# 5. Render các kịch bản domain chuẩn ra MP4 từ root monorepo
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/rendered-videos/biography.mp4
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/rendered-videos/battle.mp4
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
@@ -129,3 +141,4 @@ pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_
 | Trạng thái hiện tại: Đã implement vs Thiết kế tương lai? | [SystemOverview.md §1 & §2](SystemOverview.md) |
 | Lộ trình triển khai 5 giai đoạn & phân tích song song? | [IMPLEMENTATION_PLAN.md §2 & §3](IMPLEMENTATION_PLAN.md) |
 | Ma trận đánh giá KPI & quản trị rủi ro hệ thống? | [IMPLEMENTATION_PLAN.md §4 & §5](IMPLEMENTATION_PLAN.md) |
+| Cách dùng logger thống nhất, correlation ID, event names, truy vết lỗi? | [06_OBSERVABILITY_AND_LOGGING.md](architecture/06_OBSERVABILITY_AND_LOGGING.md) |

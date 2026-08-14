@@ -4,6 +4,14 @@
  */
 
 import { SourceReliability } from '@chronoviet/shared-spec';
+import {
+  CHUNK_PARENT_MIN_WORDS,
+  CHUNK_PARENT_MAX_WORDS,
+  CHUNK_CHILD_MIN_WORDS,
+  CHUNK_CHILD_MAX_WORDS,
+  CHUNK_CHILD_TARGET_WORDS,
+  CHUNK_CHILD_OVERLAP_WORDS,
+} from '@chronoviet/shared-spec';
 import { enrichChunkMetadata, EnrichedMetadata } from './metadata-enricher.js';
 
 export interface ProcessedHierarchicalChunk {
@@ -21,7 +29,6 @@ export interface HierarchicalChunkingOptions {
   childTargetWords?: number; // Default 400 (range 300-500)
   childOverlapWords?: number; // Default 40
 }
-
 export interface HierarchicalChunkingResult {
   parentChunks: ProcessedHierarchicalChunk[];
   childChunks: ProcessedHierarchicalChunk[];
@@ -66,10 +73,10 @@ export function chunkDocumentHierarchical(
   },
   options: HierarchicalChunkingOptions = {}
 ): HierarchicalChunkingResult {
-  const parentMinWords = options.parentMinWords ?? 2000;
-  const parentMaxWords = options.parentMaxWords ?? 3000;
-  const childTargetWords = options.childTargetWords ?? 400;
-  const childOverlapWords = options.childOverlapWords ?? 40;
+  const parentMinWords = options.parentMinWords ?? CHUNK_PARENT_MIN_WORDS;
+  const parentMaxWords = options.parentMaxWords ?? CHUNK_PARENT_MAX_WORDS;
+  const childTargetWords = options.childTargetWords ?? CHUNK_CHILD_TARGET_WORDS;
+  const childOverlapWords = options.childOverlapWords ?? CHUNK_CHILD_OVERLAP_WORDS;
 
   const paragraphs = splitParagraphs(text);
   const parentChunks: ProcessedHierarchicalChunk[] = [];
@@ -78,7 +85,6 @@ export function chunkDocumentHierarchical(
   let currentParentParagraphs: string[] = [];
   let currentParentWordCount = 0;
   let parentIndex = 1;
-  const timestamp = Date.now();
 
   const totalWords = countWords(text);
 
@@ -92,7 +98,7 @@ export function chunkDocumentHierarchical(
 
     const parentContent = currentParentParagraphs.join('\n\n');
     const parentWords = countWords(parentContent);
-    const parentId = `parent_chunk_${timestamp}_${titleHash}_${parentIndex}`;
+    const parentId = `parent_chunk_${titleHash}_${parentIndex}`;
 
     // 1. Create Parent Chunk with enriched metadata
     const parentMetadata = enrichChunkMetadata(parentContent, {
@@ -120,25 +126,59 @@ export function chunkDocumentHierarchical(
     let childIndex = 1;
     let wordCursor = 0;
 
+    // A "good remainder" is a leftover tail that can itself be chunked validly:
+    //   - 0 words (end of text)
+    //   - between MIN and MAX words (one final chunk)
+    //   - at least 2*MIN words (can keep splitting)
+    // The "dead zone" (MAX < tail < 2*MIN) is avoided so no tail chunk falls short.
+    const isGoodRemainder = (end: number): boolean => {
+      const rem = words.length - end;
+      return rem === 0 || (rem >= CHUNK_CHILD_MIN_WORDS && rem <= CHUNK_CHILD_MAX_WORDS) || rem >= 2 * CHUNK_CHILD_MIN_WORDS;
+    };
+
     while (wordCursor < words.length) {
-      let targetEnd = Math.min(wordCursor + childTargetWords, words.length);
-      let actualEnd = targetEnd;
+      const remaining = words.length - wordCursor;
+      let actualEnd = Math.min(wordCursor + childTargetWords, words.length);
 
-      // Sentence boundary snapping: search for nearest sentence ending punctuation in ±40 words window
-      if (targetEnd < words.length) {
-        let foundSentenceEnd = false;
-        const searchMin = Math.max(wordCursor + Math.floor(childTargetWords * 0.7), targetEnd - 40);
-        const searchMax = Math.min(words.length - 1, targetEnd + 40);
-
+      // 1. If the whole remainder fits in one chunk, take it all.
+      if (remaining <= CHUNK_CHILD_MAX_WORDS) {
+        actualEnd = words.length;
+      } else {
+        // 2. Try sentence-boundary snapping first (must preserve validity).
+        let snappedEnd = -1;
+        const searchMin = Math.max(wordCursor + Math.floor(childTargetWords * 0.7), actualEnd - 40);
+        const searchMax = Math.min(words.length - 1, actualEnd + 40);
         for (let i = searchMin; i <= searchMax; i++) {
           if (/[.!?]["'”’)]?$/.test(words[i])) {
-            actualEnd = i + 1;
-            foundSentenceEnd = true;
+            const candidateEnd = i + 1;
+            const candidateSize = candidateEnd - wordCursor;
+            if (candidateSize >= CHUNK_CHILD_MIN_WORDS && candidateSize <= CHUNK_CHILD_MAX_WORDS && isGoodRemainder(candidateEnd)) {
+              snappedEnd = candidateEnd;
+            }
             break;
           }
         }
-        if (!foundSentenceEnd) {
-          actualEnd = targetEnd;
+
+        const targetIsGood = isGoodRemainder(actualEnd) && actualEnd - wordCursor <= CHUNK_CHILD_MAX_WORDS;
+        if (snappedEnd > 0) {
+          actualEnd = snappedEnd;
+        } else if (!targetIsGood) {
+          // 3. No valid snap: adjust the target so the remainder is good.
+          const remAfterTarget = words.length - actualEnd;
+          if (remAfterTarget < CHUNK_CHILD_MIN_WORDS) {
+            // Short tail: if the whole remainder fits in one chunk, absorb it all;
+            // otherwise leave exactly MIN words for the final chunk.
+            actualEnd = remaining <= CHUNK_CHILD_MAX_WORDS ? words.length : words.length - CHUNK_CHILD_MIN_WORDS;
+          } else if (remAfterTarget > CHUNK_CHILD_MAX_WORDS) {
+            // Extend this chunk so the leftover tail is exactly MAX (single valid chunk).
+            actualEnd = words.length - CHUNK_CHILD_MAX_WORDS;
+          } else {
+            // Pull back so the remainder is exactly MAX.
+            actualEnd = words.length - CHUNK_CHILD_MAX_WORDS;
+          }
+          if (actualEnd - wordCursor < CHUNK_CHILD_MIN_WORDS) {
+            actualEnd = words.length;
+          }
         }
       }
 
@@ -164,11 +204,20 @@ export function chunkDocumentHierarchical(
       });
 
       childIndex++;
-      // Advance cursor with overlap if not reached end
+      // Advance cursor with overlap only when it keeps every future chunk valid.
       if (actualEnd >= words.length) {
         break;
       }
-      wordCursor = Math.max(wordCursor + 1, actualEnd - childOverlapWords);
+      const overlapCursor = actualEnd - CHUNK_CHILD_OVERLAP_WORDS;
+      // Overlap is safe only if the next chunk size stays within [MIN, MAX] bounds.
+      const nextSize = words.length - overlapCursor;
+      const nextSizeValid =
+        nextSize >= CHUNK_CHILD_MIN_WORDS && nextSize <= CHUNK_CHILD_MAX_WORDS;
+      if (overlapCursor > wordCursor && nextSizeValid && isGoodRemainder(overlapCursor)) {
+        wordCursor = overlapCursor;
+      } else {
+        wordCursor = actualEnd;
+      }
     }
 
     parentIndex++;

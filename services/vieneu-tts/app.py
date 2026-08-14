@@ -2,13 +2,17 @@ import os
 import time
 import math
 import wave
+import logging
 import numpy as np
 import soundfile as sf
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from vieneu import Vieneu
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s [vieneu-tts-python] %(message)s")
+log = logging.getLogger("vieneu-tts-python")
 
 app = FastAPI(title="VieNeu TTS Real Engine Service")
 
@@ -26,9 +30,9 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 app.mount("/static/audio", StaticFiles(directory=CACHE_DIR), name="static_audio")
 
-print("[VieNeu] Loading VieNeu ONNX Neural Engine...")
+log.info("Loading VieNeu ONNX Neural Engine...")
 tts_engine = Vieneu()
-print("[VieNeu] VieNeu ONNX Engine ready!")
+log.info("VieNeu ONNX Engine ready!")
 
 class VieNeuRequest(BaseModel):
     text: str
@@ -43,10 +47,15 @@ def health():
     return {"status": "OK", "service": "vieneu-tts-python-onnx", "engine": "VieNeu v3 Turbo"}
 
 @app.post("/api/v1/synthesize")
-def synthesize(req: VieNeuRequest):
+def synthesize(req: VieNeuRequest, request: Request):
+    request_id = request.headers.get("x-request-id", "")
     text = req.text.strip()
     if not text:
+        log.warning("Empty text in synthesize request, request_id=%s", request_id)
         raise HTTPException(status_code=400, detail="Text cannot be empty")
+
+    start_time = time.time()
+    log.info("Synthesis started, request_id=%s text_len=%d", request_id, len(text))
 
     import hashlib
     file_hash = hashlib.sha256(f"{text}_{req.speakerId}_{req.speedRatio}_{req.sampleRate}".encode('utf-8')).hexdigest()[:16]
@@ -62,7 +71,8 @@ def synthesize(req: VieNeuRequest):
         if hasattr(tts_engine, 'save') and callable(getattr(tts_engine, 'save')):
             try:
                 tts_engine.save(audio_data, file_path)
-            except Exception:
+            except Exception as exc:
+                log.warning("tts.save failed, falling back to soundfile, request_id=%s error=%s", request_id, exc)
                 audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
                 sf.write(file_path, audio_int16, sample_rate, subtype='PCM_16')
         else:
@@ -70,6 +80,7 @@ def synthesize(req: VieNeuRequest):
             sf.write(file_path, audio_int16, sample_rate, subtype='PCM_16')
 
     if not os.path.exists(file_path):
+        log.error("Failed to write audio file, request_id=%s file=%s", request_id, file_path)
         raise HTTPException(status_code=500, detail="Failed to write audio file")
 
     with wave.open(file_path, 'rb') as wf:
@@ -100,6 +111,9 @@ def synthesize(req: VieNeuRequest):
             end_ms = int(curr_ms + scaled_dur)
             word_timestamps.append({"word": w, "startMs": start_ms, "endMs": end_ms})
             curr_ms += scaled_dur
+
+    log.info("Synthesis completed, request_id=%s duration_ms=%d words=%d elapsed_ms=%.1f",
+             request_id, duration_ms, len(words), (time.time() - start_time) * 1000)
 
     return {
         "status": "SUCCESS",

@@ -5,8 +5,11 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
+import { createLogger } from '@chronoviet/shared-spec';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 import { HISTORICAL_PDF_REGISTRY } from '../pdf/pdf-extractor.js';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 interface WikiApiQueryResponse {
   query?: {
@@ -87,7 +90,8 @@ async function fetchWikiExtract(domain: string, title: string): Promise<string> 
     const page = pages[pageId];
     if (!page || page.missing || !page.extract) return '';
     return cleanWikiExtract(page.extract);
-  } catch (_e) {
+  } catch (err) {
+    log.debug('crawl_pdf.wiki_fetch_failed', 'Wiki extract fetch failed', { domain, title, error: err });
     return '';
   }
 }
@@ -106,7 +110,8 @@ async function searchWikisourcePrefixes(prefix: string): Promise<string[]> {
     const data = (await res.json()) as WikiApiQueryResponse;
     const results = data.query?.prefixsearch || [];
     return results.map((r) => r.title);
-  } catch (_e) {
+  } catch (err) {
+    log.debug('crawl_pdf.prefix_search_failed', 'Wikisource prefix search failed', { prefix, error: err });
     return [];
   }
 }
@@ -116,15 +121,21 @@ async function main() {
   const outputDir = path.resolve(root, 'data', 'raw_corpus', 'pdf_extracted');
   await fs.mkdir(outputDir, { recursive: true });
 
-  console.log('📚 Starting Master Historical Corpus Full Text Crawling & Markdown Export...');
-  console.log(`📁 Target Output Directory: ${outputDir}\n`);
+  log.info('crawl_pdf.started', 'Starting Master Historical Corpus Full Text Crawling & Markdown Export', {
+    outputDir,
+    registryCount: Object.keys(HISTORICAL_PDF_REGISTRY).length,
+  });
 
   const entries = Object.entries(HISTORICAL_PDF_REGISTRY);
   let processedCount = 0;
 
   for (const [slug, meta] of entries) {
     processedCount++;
-    console.log(`[${processedCount}/${entries.length}] Crawling complete text for: "${meta.title}" (${slug})...`);
+    log.info('crawl_pdf.item_started', `Crawling complete text for "${meta.title}"`, {
+      slug,
+      index: processedCount,
+      total: entries.length,
+    });
 
     const outPath = path.join(outputDir, `${slug}.md`);
     const searchTerms = WIKISOURCE_SEARCH_MAP[slug] || [meta.title];
@@ -134,7 +145,7 @@ async function main() {
     for (const term of searchTerms) {
       const subpages = await searchWikisourcePrefixes(term);
       if (subpages.length > 0) {
-        console.log(`   Found ${subpages.length} subpages/chapters on Wikisource for "${term}"`);
+        log.debug('crawl_pdf.subpages_found', `Found ${subpages.length} subpages/chapters on Wikisource`, { term, subpageCount: subpages.length });
         for (const subpage of subpages) {
           const text = await fetchWikiExtract('vi.wikisource.org', subpage);
           if (text && text.length > 50) {
@@ -157,7 +168,10 @@ async function main() {
     let wordCount = combinedText.split(/\s+/).filter(Boolean).length;
 
     if (wordCount < 300) {
-      console.log(`   ⚠️ Wikisource content insufficient (${wordCount} words). Fetching from vi.wikipedia.org...`);
+      log.warn('crawl_pdf.wikisource_insufficient', 'Wikisource content insufficient; fetching from Wikipedia', {
+        slug,
+        wordCount,
+      });
       for (const term of searchTerms) {
         const wikiText = await fetchWikiExtract('vi.wikipedia.org', term);
         if (wikiText && wikiText.length > 100) {
@@ -203,16 +217,21 @@ ${combinedText}
 `;
 
     await fs.writeFile(outPath, mdContent, 'utf-8');
-    console.log(`   ✅ Saved Clean Markdown: ${outPath} (${wordCount} words, ~${estimatedPages} pages)\n`);
+    log.info('crawl_pdf.item_saved', 'Crawled document saved as Markdown', {
+      slug,
+      outPath,
+      wordCount,
+      estimatedPages,
+    });
   }
 
-  console.log('======================================================');
-  console.log('🎉 All 12 Master Historical Corpus Files Successfully Crawled and Exported!');
-  console.log(`📁 Output Folder: ${outputDir}`);
-  console.log('======================================================\n');
+  log.info('crawl_pdf.completed', 'All master historical corpus files successfully crawled and exported', {
+    total: processedCount,
+    outputDir,
+  });
 }
 
 main().catch((err) => {
-  console.error('❌ Fatal Crawling Error:', err);
+  log.error('crawl_pdf.fatal_error', 'Fatal Crawling Error', { error: err });
   process.exit(1);
 });

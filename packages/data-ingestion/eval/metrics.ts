@@ -7,6 +7,13 @@
  * 4. Hierarchical Parent/Child Chunk Structural Quality (100%)
  */
 
+import {
+  CHUNK_PARENT_MIN_WORDS,
+  CHUNK_PARENT_MAX_WORDS,
+  CHUNK_CHILD_MIN_WORDS,
+  CHUNK_CHILD_MAX_WORDS,
+} from '@chronoviet/shared-spec';
+
 export interface EntityDisambiguationTestCase {
   input: string;
   expectedCanonicalId: string;
@@ -74,6 +81,10 @@ export interface IngestKpiReport {
       domain: string;
       parentChunksCount: number;
       childChunksCount: number;
+      entitiesResolved: number;
+      entitiesTotal: number;
+      triplesResolved: number;
+      triplesTotal: number;
       passed: boolean;
       error?: string;
     }>;
@@ -82,8 +93,8 @@ export interface IngestKpiReport {
 
 /**
  * Validate hierarchical chunking rules:
- * - Parent chunk: token length between 300..1200 words
- * - Child chunk: token length between 50..300 words
+ * - Parent chunk: token length between 2000..3000 words
+ * - Child chunk: token length between 300..500 words
  * - Metadata enrichment: contains title, sourceName, sourceReliability
  */
 export function evaluateChunkQuality(chunk: {
@@ -103,15 +114,15 @@ export function evaluateChunkQuality(chunk: {
 
   if (isParent) {
     // Parent chunk bound
-    validTokenBounds = tokenCount >= 20 && tokenCount <= 2000;
+    validTokenBounds = tokenCount >= CHUNK_PARENT_MIN_WORDS && tokenCount <= CHUNK_PARENT_MAX_WORDS;
     if (!validTokenBounds) {
-      errors.push(`Parent chunk token count ${tokenCount} outside bounds [20, 2000]`);
+      errors.push(`Parent chunk token count ${tokenCount} outside bounds [${CHUNK_PARENT_MIN_WORDS}, ${CHUNK_PARENT_MAX_WORDS}]`);
     }
   } else {
     // Child chunk bound
-    validTokenBounds = tokenCount >= 10 && tokenCount <= 600;
+    validTokenBounds = tokenCount >= CHUNK_CHILD_MIN_WORDS && tokenCount <= CHUNK_CHILD_MAX_WORDS;
     if (!validTokenBounds) {
-      errors.push(`Child chunk token count ${tokenCount} outside bounds [10, 600]`);
+      errors.push(`Child chunk token count ${tokenCount} outside bounds [${CHUNK_CHILD_MIN_WORDS}, ${CHUNK_CHILD_MAX_WORDS}]`);
     }
   }
 

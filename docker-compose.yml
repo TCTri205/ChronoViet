@@ -44,6 +44,7 @@ services:
     restart: always
     environment:
       - NODE_ENV=production
+      - LOG_FORMAT=json
       - TTS_SERVICE_PORT=8080
       - MODEL_PATH=/app/models/vieneu-historical-onnx
     ports:
@@ -58,6 +59,7 @@ services:
     restart: always
     environment:
       - NODE_ENV=production
+      - LOG_FORMAT=json
       - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
       - GEMINI_API_KEY=${GEMINI_API_KEY}
@@ -79,6 +81,7 @@ services:
           memory: 4000M
     environment:
       - NODE_ENV=production
+      - LOG_FORMAT=json
       - CONCURRENCY=1
       - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379

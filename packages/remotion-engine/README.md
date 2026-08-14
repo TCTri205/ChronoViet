@@ -100,7 +100,7 @@ pnpm --filter @chronoviet/remotion-engine eval [-t <testCasesDir>] [-o <outDir>]
 
 ## 📊 Evaluation Suite (`eval/`)
 
-Thư mục [`eval/`](file:///D:/Persional_Projects/ChronoViet/packages/remotion-engine/eval) cung cấp bộ công cụ tự động kiểm định 18 LayoutModes và 15 Transitions, đồng thời mở Remotion Studio cho Human trực tiếp đánh giá (Tất cả lệnh chạy tại **Root Monorepo**):
+Thư mục [`eval/`](eval) cung cấp bộ công cụ tự động kiểm định 18 LayoutModes và 15 Transitions, đồng thời mở Remotion Studio cho Human trực tiếp đánh giá (Tất cả lệnh chạy tại **Root Monorepo**):
 
 ```bash
 # Chạy suite đánh giá tự động -> Tự động mở Remotion Studio GUI (giữ eval/out sạch 100%)

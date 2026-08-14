@@ -5,7 +5,7 @@
 
 ## 1. Mục Đích & Định Vị Kiến Trúc
 
-Mô-đun **VLM Inspector Sub-Agent** là tài liệu phân tích kỹ thuật chi tiết cho một **Sub-Agent / Tool Thẩm Định Thị Giác & Bản Quyền** thuộc hệ thống [Multi-Agent Orchestrator](file:///d:/Persional_Projects/ChronoViet/docs/modules/02_MULTI_AGENT_ORCHESTRATOR.md).
+Mô-đun **VLM Inspector Sub-Agent** là tài liệu phân tích kỹ thuật chi tiết cho một **Sub-Agent / Tool Thẩm Định Thị Giác & Bản Quyền** thuộc hệ thống [Multi-Agent Orchestrator](02_MULTI_AGENT_ORCHESTRATOR.md).
 
 Khi thu thập hình ảnh tư liệu lịch sử Việt Nam tự động từ Internet, các hệ thống AI thông thường đối mặt với 4 nguy cơ nghiêm trọng:
 1. **Sai lệch bối cảnh văn hóa (Cultural Anachronism):** Crawl nhầm ảnh phim cổ trang Trung Quốc, Hàn Quốc, hoặc trang phục triều đại không đúng thời kỳ lịch sử Việt Nam.
