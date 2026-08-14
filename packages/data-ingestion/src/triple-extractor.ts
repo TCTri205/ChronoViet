@@ -88,7 +88,7 @@ const HISTORICAL_PATTERNS: Array<{
   },
   // ALIAS_OF: e.g. "Quang Trung tức là Nguyễn Huệ", "Nguyễn Huệ tên thật là Hồ Thơm"
   {
-    regex: new RegExp(`\\b${PROPER_NOUN_PATTERN}\\s+(?:tức là|còn gọi là|tên thật là|tên hiệu là)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
+    regex: new RegExp(`\\b${PROPER_NOUN_PATTERN}\\s+(?:tức là|còn gọi là|tên thật là|tên hiệu là|tên gọi khác là)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
     relation: 'ALIAS_OF',
     sourceGroup: 1,
     targetGroup: 2,
@@ -100,7 +100,7 @@ const HISTORICAL_PATTERNS: Array<{
  * Extracts triples from historical text content using pattern-based extraction & canonical dictionary detection
  */
 export function extractTriplesFromText(text: string): ExtractedTriple[] {
-  const triples: ExtractedTriple[] = [];
+  const rawTriples: ExtractedTriple[] = [];
   const sentences = text.split(/(?<=[.!?\n])\s+/);
 
   for (const sentence of sentences) {
@@ -125,7 +125,7 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
           const sourceEntity = resolveCanonicalEntity(rawSource);
           const targetEntity = resolveCanonicalEntity(rawTarget);
 
-          triples.push({
+          rawTriples.push({
             sourceEntityId: sourceEntity.entityId,
             sourceEntityName: sourceEntity.canonicalName,
             relationType: pattern.relation,
@@ -143,7 +143,7 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
         cleanSentence.includes(person.canonicalName) ||
         person.aliases.some((a) => a.length >= 3 && cleanSentence.includes(a))
       ) {
-        triples.push({
+        rawTriples.push({
           sourceEntityId: person.entityId,
           sourceEntityName: person.canonicalName,
           relationType: 'MENTIONED_IN',
@@ -159,7 +159,7 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
         cleanSentence.includes(loc.canonicalName) ||
         loc.aliases.some((a) => a.length >= 3 && cleanSentence.includes(a))
       ) {
-        triples.push({
+        rawTriples.push({
           sourceEntityId: loc.entityId,
           sourceEntityName: loc.canonicalName,
           relationType: 'HAPPENED_AT',
@@ -171,7 +171,17 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
     }
   }
 
-  return triples;
+  // Deduplicate triples preserving highest confidence
+  const uniqueMap = new Map<string, ExtractedTriple>();
+  for (const t of rawTriples) {
+    const key = `${t.sourceEntityId}:${t.relationType}:${t.targetEntityId}`;
+    const existing = uniqueMap.get(key);
+    if (!existing || t.confidence > existing.confidence) {
+      uniqueMap.set(key, t);
+    }
+  }
+
+  return Array.from(uniqueMap.values());
 }
 
 let warnedLlmOffline = false;

@@ -11,6 +11,7 @@
     "lint": "tsc --noEmit",
     "eval": "tsx eval/benchmarks/index.ts",
     "test": "vitest run",
+    "test:eval": "vitest run --dir eval/",
     "chat": "tsx src/cli/chat-cli.ts"
   },
   "dependencies": {

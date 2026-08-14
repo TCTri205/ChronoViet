@@ -8,6 +8,7 @@
     "build": "pnpm --recursive --workspace-concurrency=1 run build",
     "lint": "pnpm --recursive --workspace-concurrency=1 run lint",
     "test": "pnpm --recursive --workspace-concurrency=1 run test",
+    "test:eval": "pnpm --recursive --workspace-concurrency=1 run test:eval",
     "typecheck": "pnpm --recursive --workspace-concurrency=1 run typecheck",
     "typecheck:extras": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --strict eval/runner.ts scripts/verify-db-health.ts scripts/clean-db-duplicates.ts",
     "eval": "tsx eval/runner.ts",

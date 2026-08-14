@@ -56,8 +56,9 @@ This document outlines the core principles, development workflows, and tool usag
   4. **Tier 4:** `pnpm eval:all` or `pnpm --filter <package> eval` (Module eval & unit tests).
 
 * **Test vs. Eval Distinction:**
-  * **Unit & Integration Tests (`npx vitest`):** Focus on verifying deterministic code correctness, schema validation, data contracts, and edge cases. Results must yield strict binary outcomes (Pass/Fail).
-  * **Evaluation Suite (`packages/<module>/eval/`):** Focus on measuring non-deterministic system aspects such as AI/RAG generation quality, prompt responsiveness, render engine output integrity, latency benchmarks, and regression scores against datasets.
+  * **Unit & Integration Tests (`pnpm test`):** Focus on verifying deterministic code correctness, schema validation, data contracts, and edge cases. Results must yield strict binary outcomes (Pass/Fail). Vitest config mỗi package (`vitest.config.ts`) **exclude `**/eval/**`** — `pnpm test` chỉ chạy unit tests (`src/__tests__`).
+  * **Eval Metric Unit Tests (`pnpm test:eval`):** Unit test cho các metric function trong `eval/` (NDCG/MRR/chunk quality...) — deterministic, chạy riêng qua `vitest run --dir eval/`.
+  * **Evaluation Suite (`packages/<module>/eval/`):** Focus on measuring non-deterministic system aspects such as AI/RAG generation quality, prompt responsiveness, render engine output integrity, latency benchmarks, and regression scores against datasets. Chạy thủ công qua `pnpm eval:*` — **KHÔNG nằm trong CI**.
 
 * **Protect Test Suite Integrity:** Strictly do not relax or modify test cases solely to force tests to pass.
 * **Log-First Debugging:** Read detailed logs before editing code to correctly distinguish failure axes:
@@ -102,3 +103,10 @@ pnpm eval:all --fresh
 # Run eval runner for Remotion Engine specifically
 pnpm --filter @chronoviet/remotion-engine eval -- --fresh
 ```
+
+## 6. CI/CD (GitHub Actions)
+
+* **Quality gates bắt buộc trên mọi PR/push `main`**: `.github/workflows/ci.yml` chạy song song `lint`, `typecheck`, `unit-tests`, `build`, `audit`, và `integration` (Postgres pgvector + Redis services → `pnpm db:init` → `verify-db-health.ts`).
+* **CI chỉ quan tâm deterministic checks** (lint/types/tests/build/audit). **Eval suite (`pnpm eval:*`) KHÔNG chạy trong CI** — là benchmark phi-deterministic, chạy thủ công.
+* **Trước khi push, phải chạy tương đương cục bộ**: `pnpm lint && pnpm typecheck && pnpm test && pnpm build` (hoặc `pnpm typecheck` đơn lẻ để nhanh).
+* Dependabot tự cập nhật dependency `npm` + `github-actions` hàng tuần (`.github/dependabot.yml`).

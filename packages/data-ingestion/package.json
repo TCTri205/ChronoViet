@@ -11,6 +11,7 @@
     "lint": "tsc --noEmit",
     "eval": "tsx eval/runner.ts",
     "test": "vitest run",
+    "test:eval": "vitest run --dir eval/",
     "db:init": "tsx src/cli/init-db.ts",
     "ingest:knowledge": "tsx src/cli/ingest-knowledge.ts",
     "crawl:corpus": "tsx src/cli/crawl-corpus.ts",

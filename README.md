@@ -156,7 +156,32 @@ pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_
 
 ---
 
-## 🐳 5. Triển Khai Hạ Tầng Qua Docker Compose
+## 🔄 5. CI/CD (GitHub Actions)
+
+Pipeline tự động chạy trên **mọi Pull Request và push lên `main`** — tất cả quality gates bắt buộc phải PASS trước khi merge:
+
+| Job | Nội dung |
+| :--- | :--- |
+| **Lint** | `pnpm lint` (tsc `--noEmit` recursive) |
+| **Typecheck** | `pnpm typecheck` + `pnpm typecheck:extras` (eval & scripts) |
+| **Unit Tests** | `pnpm test` (vitest recursive — chỉ chạy `src/__tests__`, eval bị exclude) |
+| **Build** | `pnpm build` (build toàn bộ monorepo) |
+| **Security Audit** | `pnpm audit --audit-level=high` |
+| **Integration** | Postgres pgvector + Redis services → `pnpm db:init` → `verify-db-health.ts` |
+
+> **Eval suite (`pnpm eval:*`) không nằm trong CI** — là các benchmark phi-deterministic (chất lượng AI/RAG/render), chạy thủ công theo hướng dẫn ở mục 4. Unit test của eval-infra (metric functions) chạy riêng qua `pnpm test:eval`, tách hẳn khỏi `pnpm test`.
+
+Chạy tương đương cục bộ:
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
+```
+
+Dependency updates tự động qua Dependabot (`npm` + `github-actions`, hàng tuần).
+
+---
+
+## 🐳 6. Triển Khai Hạ Tầng Qua Docker Compose
 
 Hệ thống được cấu hình sẵn với `docker-compose.yml` phục vụ môi trường Production / VPS:
 
@@ -167,7 +192,7 @@ docker compose up -d --build
 
 ---
 
-## 📚 6. Trung Tâm Tài Liệu Dự Án (Documentation Portal)
+## 📚 7. Trung Tâm Tài Liệu Dự Án (Documentation Portal)
 
 Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật nằm tại thư mục [`docs/`](docs/):
 
@@ -182,7 +207,7 @@ Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật n�
 
 ---
 
-## 📄 7. Giấy Phép (License)
+## 📄 8. Giấy Phép (License)
 
 Dự án thuộc sở hữu riêng của **ChronoViet Team**. Mọi quyền được bảo lưu.
 
