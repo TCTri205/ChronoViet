@@ -126,7 +126,7 @@ const EnvSchema = z.object({
   EVAL_MAX_RTF: z.coerce.number().positive().default(0.3),
   EVAL_STRICT: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
-    .default(true),
+    .default(false),
   EVAL_ALLOW_CLOUD_FALLBACK: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(false),

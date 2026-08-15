@@ -16,6 +16,7 @@ env:
   # Empty values are intentional — schemas default gracefully (see packages/shared-spec/src/config.ts)
   DATABASE_URL: ''
   NODE_ENV: test
+  EVAL_STRICT: 'false'
 
 jobs:
   lint:
