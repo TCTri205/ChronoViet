@@ -31,6 +31,8 @@ jobs:
           corepack enable
           corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
       - run: pnpm install --frozen-lockfile
+      - name: Build monorepo
+        run: pnpm build
       - name: Lint (recursive)
         run: pnpm lint
 
@@ -47,8 +49,8 @@ jobs:
           corepack enable
           corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
       - run: pnpm install --frozen-lockfile
-      - name: Build shared-spec first (required by tsconfig paths)
-        run: pnpm --filter @chronoviet/shared-spec build
+      - name: Build monorepo
+        run: pnpm build
       - name: Typecheck (recursive)
         run: pnpm typecheck
       - name: Typecheck extras (eval & scripts)
@@ -67,8 +69,8 @@ jobs:
           corepack enable
           corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
       - run: pnpm install --frozen-lockfile
-      - name: Build shared-spec first (required by tsconfig paths)
-        run: pnpm --filter @chronoviet/shared-spec build
+      - name: Build monorepo
+        run: pnpm build
       - name: Run unit tests (recursive)
         run: pnpm test
 
