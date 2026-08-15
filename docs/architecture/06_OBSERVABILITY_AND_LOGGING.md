@@ -244,7 +244,7 @@ LOG_LEVEL=error pnpm ingest:knowledge
 `eval/` và `scripts/` không thuộc pnpm workspace, nên trước đây không được CI typecheck — điều này từng che giấu lỗi schema cũ (xem §7). Giờ có script riêng:
 
 ```bash
-pnpm typecheck:extras   # tsc strict cho eval/runner.ts + scripts/verify-db-health.ts + scripts/clean-db-duplicates.ts
+pnpm typecheck:extras   # tsc --noEmit -p tsconfig.extras.json (bao phủ toàn bộ eval/**/*.ts và scripts/**/*.ts)
 ```
 
 ---

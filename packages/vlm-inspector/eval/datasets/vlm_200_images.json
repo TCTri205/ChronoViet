@@ -1,0 +1,3202 @@
+[
+  {
+    "id": "vlm_case_001",
+    "topic": "Hồng Bàng & Văn Lang (Case 1)",
+    "eventDescription": "Thời kỳ Hùng Vương dựng nước Văn Lang, kinh đô Phong Châu, rực rỡ văn hóa Đông Sơn và Trống Đồng Ngọc Lũ.",
+    "candidate": {
+      "candidateId": "cand_001",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tr%E1%BB%91ng%20%C4%90%E1%BB%93ng%20%C4%90%C3%B4ng%20S%C6%A1n%20Ng%E1%BB%8Dc%20L%C5%A9%20th%E1%BB%9Di%20H%C3%B9ng%20V%C6%B0%C6%A1ng.jpg",
+      "title": "Tư liệu lịch sử Trống Đồng Đông Sơn Ngọc Lũ thời Hùng Vương",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_002",
+    "topic": "Hồng Bàng & Văn Lang (Case 2)",
+    "eventDescription": "Truyền thuyết Thánh Gióng cưỡi ngựa sắt dẹp giặc Ân bảo vệ bờ cõi non sông Văn Lang.",
+    "candidate": {
+      "candidateId": "cand_002",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Th%C3%A1nh%20Gi%C3%B3ng%20n%C3%BAi%20S%C3%B3c%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Thánh Gióng núi Sóc Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_003",
+    "topic": "Hồng Bàng & Văn Lang (Case 3)",
+    "eventDescription": "An Dương Vương xây dựng thành Cổ Loa hình xoáy ốc, chế tác nỏ liên châu giữ gìn Âu Lạc.",
+    "candidate": {
+      "candidateId": "cand_003",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Th%C3%A0nh%20C%E1%BB%95%20Loa%20%C4%90%C3%B4ng%20Anh%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Thành Cổ Loa Đông Anh Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_004",
+    "topic": "Hồng Bàng & Văn Lang (Case 4)",
+    "eventDescription": "Văn hóa đồ đồng Đông Sơn với dao găm cán người và thạp đồng Đào Thịnh.",
+    "candidate": {
+      "candidateId": "cand_004",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BA%A1p%20%C4%91%E1%BB%93ng%20%C4%90%C3%A0o%20Th%E1%BB%8Bnh%20b%E1%BA%A3o%20v%E1%BA%ADt%20qu%E1%BB%91c%20gia.jpg",
+      "title": "Tư liệu lịch sử Thạp đồng Đào Thịnh bảo vật quốc gia",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_005",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 5)",
+    "eventDescription": "Năm 40 sau Công Nguyên, Hai Bà Trưng phất cờ khởi nghĩa tại Hát Môn, đánh đuổi thái thú Tô Định.",
+    "candidate": {
+      "candidateId": "cand_005",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20%C4%90%C3%B4ng%20H%E1%BB%93%20Hai%20B%C3%A0%20Tr%C6%B0ng%20c%C6%B0%E1%BB%A1i%20voi%20ra%20tr%E1%BA%ADn.jpg",
+      "title": "Tư liệu lịch sử Tranh Đông Hồ Hai Bà Trưng cưỡi voi ra trận",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_006",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 6)",
+    "eventDescription": "Lễ hội Đền Hát Môn tưởng nhớ công đức Hai Bà Trưng lập nên chính quyền độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_006",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20H%C3%A1t%20M%C3%B4n%20Ph%C3%BAc%20Th%E1%BB%8D%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Hát Môn Phúc Thọ Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_007",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 7)",
+    "eventDescription": "Bà Triệu cưỡi voi xông trận năm 248 tại Căn cứ Phú Điền Hậu Lộc Thanh Hóa chống quân Đông Ngô.",
+    "candidate": {
+      "candidateId": "cand_007",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20%C4%90%E1%BB%81n%20B%C3%A0%20Tri%E1%BB%87u%20n%C3%BAi%20T%C3%B9ng%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Đền Bà Triệu núi Tùng Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_008",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 8)",
+    "eventDescription": "Ngô Quyền cắm cọc vạt nhọn tại cửa sông Bạch Đằng, tận dụng thủy triều tiêu diệt thủy quân Nam Hán.",
+    "candidate": {
+      "candidateId": "cand_008",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20Giang%20Th%E1%BB%A7y%20Nguy%C3%AAn%20H%E1%BA%A3i%20Ph%C3%B2ng.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Bạch Đằng Giang Thủy Nguyên Hải Phòng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_009",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 9)",
+    "eventDescription": "Chiến thắng Bạch Đằng năm 938 chấm dứt hơn 1000 năm Bắc thuộc, mở ra kỷ nguyên độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_009",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20%C4%90%E1%BB%A9c%20V%C6%B0%C6%A1ng%20Ng%C3%B4%20Quy%E1%BB%81n%20t%E1%BA%A1i%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Đức Vương Ngô Quyền tại Bạch Đằng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_010",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 10)",
+    "eventDescription": "Bãi cọc Bạch Đằng di tích khảo cổ học minh chứng chiến thuật quân sự thiên tài.",
+    "candidate": {
+      "candidateId": "cand_010",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hi%E1%BB%87n%20v%E1%BA%ADt%20c%E1%BB%8Dc%20g%E1%BB%97%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20t%E1%BA%A1i%20B%E1%BA%A3o%20t%C3%A0ng%20L%E1%BB%8Bch%20s%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Hiện vật cọc gỗ Bạch Đằng tại Bảo tàng Lịch sử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_011",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 11)",
+    "eventDescription": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân, thống nhất đất nước, xưng Đại Thắng Minh Hoàng Đế, lập kinh đô Hoa Lư.",
+    "candidate": {
+      "candidateId": "cand_011",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kinh%20th%C3%A0nh%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0%20Ninh%20B%C3%ACnh.jpg",
+      "title": "Tư liệu lịch sử Kinh thành Cố đô Hoa Lư Ninh Bình",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_012",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 12)",
+    "eventDescription": "Lê Hoàn lãnh đạo quân dân Đại Cồ Việt đánh tan quân Tống xâm lược trên sông Bạch Đằng năm 981.",
+    "candidate": {
+      "candidateId": "cand_012",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20Vua%20L%C3%AA%20%C4%90%E1%BA%A1i%20H%C3%A0nh%20t%E1%BA%A1i%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Vua Lê Đại Hành tại Cố đô Hoa Lư",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_013",
+    "topic": "Triều Lý & Thăng Long (Case 13)",
+    "eventDescription": "Năm 1010, Vua Lý Thái Tổ ban Chiếu dời đô từ Hoa Lư về thành Đại La, đổi tên thành Thăng Long rực rỡ.",
+    "candidate": {
+      "candidateId": "cand_013",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Vua%20L%C3%BD%20Th%C3%A1i%20T%E1%BB%95%20h%E1%BB%93%20Ho%C3%A0n%20Ki%E1%BA%BFm%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Vua Lý Thái Tổ hồ Hoàn Kiếm Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_014",
+    "topic": "Triều Lý & Thăng Long (Case 14)",
+    "eventDescription": "Thái úy Lý Thường Kiệt lập phòng tuyến sông Như Nguyệt, vang vọng bản tuyên ngôn Nam Quốc Sơn Hà.",
+    "candidate": {
+      "candidateId": "cand_014",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20X%C3%A0%20ph%C3%B2ng%20tuy%E1%BA%BFn%20s%C3%B4ng%20C%E1%BA%A7u%20Nh%C6%B0%20Nguy%E1%BB%87t.jpg",
+      "title": "Tư liệu lịch sử Đền Xà phòng tuyến sông Cầu Như Nguyệt",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_015",
+    "topic": "Triều Lý & Thăng Long (Case 15)",
+    "eventDescription": "Văn Miếu - Quốc Tử Giám trường đại học đầu tiên đào tạo nhân tài và nho học Đại Việt.",
+    "candidate": {
+      "candidateId": "cand_015",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%C3%AA%20V%C4%83n%20C%C3%A1c%20V%C4%83n%20Mi%E1%BA%BFu%20Qu%E1%BB%91c%20T%E1%BB%AD%20Gi%C3%A1m%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khuê Văn Các Văn Miếu Quốc Tử Giám Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_016",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 16)",
+    "eventDescription": "Hội nghị Diên Hồng và Bình Than thể hiện ý chí muôn người như một quyết chiến thắng giặc Thát.",
+    "candidate": {
+      "candidateId": "cand_016",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Qu%E1%BB%91c%20C%C3%B4ng%20Ti%E1%BA%BFt%20Ch%E1%BA%BF%20Tr%E1%BA%A7n%20H%C6%B0ng%20%C4%90%E1%BA%A1o.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Quốc Công Tiết Chế Trần Hưng Đạo",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_017",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 17)",
+    "eventDescription": "Chiến thắng Bạch Đằng 1288 bắt sống tướng giặc Ô Mã Nhi, đập tan mộng xâm lược của đế chế Mông Cổ.",
+    "candidate": {
+      "candidateId": "cand_017",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20di%E1%BB%85n%20h%E1%BB%8Da%20chi%E1%BA%BFn%20th%E1%BA%AFng%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%201288.jpg",
+      "title": "Tư liệu lịch sử Tranh diễn họa chiến thắng Bạch Đằng 1288",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_018",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 18)",
+    "eventDescription": "Phật hoàng Trần Nhân Tông sau khi thắng giặc đã nhường ngôi, sáng lập Thiền phái Trúc Lâm Yên Tử.",
+    "candidate": {
+      "candidateId": "cand_018",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%C3%A1p%20Hu%E1%BB%87%20Quang%20ch%C3%B9a%20Hoa%20Y%C3%AAn%20Tr%C3%BAc%20L%C3%A2m%20Y%C3%AAn%20T%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Tháp Huệ Quang chùa Hoa Yên Trúc Lâm Yên Tử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_019",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 19)",
+    "eventDescription": "Lê Lợi dựng cờ khởi nghĩa Lam Sơn cùng Nguyễn Trãi soạn Bình Ngô Đại Cáo giành lại non sông.",
+    "candidate": {
+      "candidateId": "cand_019",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Qu%E1%BB%91c%20gia%20%C4%91%E1%BA%B7c%20bi%E1%BB%87t%20Lam%20Kinh%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Quốc gia đặc biệt Lam Kinh Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_020",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 20)",
+    "eventDescription": "Vua Lê Thánh Tông ban hành Luật Hồng Đức và cho vẽ bản đồ Hồng Đức khẳng định chủ quyền cương vực.",
+    "candidate": {
+      "candidateId": "cand_020",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bia%20ti%E1%BA%BFn%20s%C4%A9%20V%C4%83n%20Mi%E1%BA%BFu%20th%E1%BB%9Di%20L%C3%AA%20Th%C3%A1nh%20T%C3%B4ng.jpg",
+      "title": "Tư liệu lịch sử Bia tiến sĩ Văn Miếu thời Lê Thánh Tông",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_021",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 21)",
+    "eventDescription": "Ba anh em Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ khởi nghĩa Tây Sơn diệt Trịnh Nguyễn phân tranh.",
+    "candidate": {
+      "candidateId": "cand_021",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Ba_anh_em_nh%C3%A0_h%E1%BB%8D_Nh%E1%BA%A1c.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20ba%20anh%20em%20T%C3%A2y%20S%C6%A1n%20t%E1%BA%A1i%20B%C3%ACnh%20%C4%90%E1%BB%8Bnh.jpg",
+      "title": "Tư liệu lịch sử Tượng đài ba anh em Tây Sơn tại Bình Định",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_022",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 22)",
+    "eventDescription": "Đại thắng Rạch Gầm - Xoài Mút 1785 tiêu diệt 5 vạn quân Xiêm xâm lược trên sông Tiền.",
+    "candidate": {
+      "candidateId": "cand_022",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e4/S%C3%B4ng_Ti%E1%BB%81n%2C_%C4%91o%E1%BA%A1n_R%E1%BA%A1ch_G%E1%BA%A7m-Xo%C3%A0i_M%C3%BAt.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BB%B1c%20%C4%91%E1%BB%8Ba%20s%C3%B4ng%20Ti%E1%BB%81n%20%C4%91o%E1%BA%A1n%20R%E1%BA%A1ch%20G%E1%BA%A7m%20Xo%C3%A0i%20M%C3%BAt.jpg",
+      "title": "Tư liệu lịch sử Thực địa sông Tiền đoạn Rạch Gầm Xoài Mút",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_023",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 23)",
+    "eventDescription": "Hoàng đế Quang Trung hành quân thần tốc, đại phá 29 vạn quân Thanh tại Ngọc Hồi Đống Đa Tết Kỷ Dậu 1789.",
+    "candidate": {
+      "candidateId": "cand_023",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Ho%C3%A0ng%20%C4%91%E1%BA%BF%20Quang%20Trung%20t%E1%BA%A1i%20G%C3%B2%20%C4%90%E1%BB%91ng%20%C4%90a.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Hoàng đế Quang Trung tại Gò Đống Đa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_024",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 24)",
+    "eventDescription": "Chân dung Vua Quang Trung Nguyễn Huệ vẽ vào thế kỷ 18 thời Càn Long bảo lưu trong sử liệu.",
+    "candidate": {
+      "candidateId": "cand_024",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/A_portrait_painting_depicting_Annam_King%2C_Ruan_Guangping.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20v%E1%BA%BD%20Vua%20Quang%20Trung%20tri%E1%BB%81u%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Chân dung vẽ Vua Quang Trung triều Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_025",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 25)",
+    "eventDescription": "Đồng tiền Quang Trung thông bảo và đại bảo minh chứng chính sách kinh tế phát triển của Tây Sơn.",
+    "candidate": {
+      "candidateId": "cand_025",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Quang_Trung_dai_bao.png",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ti%E1%BB%81n%20c%E1%BB%95%20Quang%20Trung%20%C4%91%E1%BA%A1i%20b%E1%BA%A3o%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tiền cổ Quang Trung đại bảo Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_026",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 26)",
+    "eventDescription": "Hoàng thành Huế và quần thể lăng tẩm các vua triều Nguyễn di sản văn hóa thế giới UNESCO.",
+    "candidate": {
+      "candidateId": "cand_026",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%95ng%20Ng%E1%BB%8D%20M%C3%B4n%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Kinh%20th%C3%A0nh%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Cổng Ngọ Môn Đại Nội Kinh thành Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_027",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 27)",
+    "eventDescription": "Cột cờ Kinh thành Huế Kỳ Đài uy nghiêm bên dòng sông Hương thơ mộng.",
+    "candidate": {
+      "candidateId": "cand_027",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:K%E1%BB%B3%20%C4%90%C3%A0i%20C%E1%BB%99t%20c%E1%BB%9D%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Kỳ Đài Cột cờ Đại Nội Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_028",
+    "topic": "Phong Trào Cần Vương & Chống Pháp (Case 28)",
+    "eventDescription": "Tổng đốc Hoàng Diệu và Nguyễn Tri Phương tuẫn tiết quyết tử bảo vệ Thành Hà Nội.",
+    "candidate": {
+      "candidateId": "cand_028",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%ADa%20B%E1%BA%AFc%20Th%C3%A0nh%20C%E1%BB%95%20H%C3%A0%20N%E1%BB%99i%20d%E1%BA%A5u%20v%E1%BA%BFt%20%C4%91%E1%BA%A1n%20ph%C3%A1o%20Ph%C3%A1p.jpg",
+      "title": "Tư liệu lịch sử Cửa Bắc Thành Cổ Hà Nội dấu vết đạn pháo Pháp",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_029",
+    "topic": "Phong Trào Cần Vương & Chống Pháp (Case 29)",
+    "eventDescription": "Chí sĩ Phan Bội Châu khởi xướng Phong trào Đông Du đào tạo thế hệ thanh niên yêu nước.",
+    "candidate": {
+      "candidateId": "cand_029",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20Nh%C3%A0%20ch%C3%AD%20s%C4%A9%20y%C3%AAu%20n%C6%B0%E1%BB%9Bc%20Phan%20B%E1%BB%99i%20Ch%C3%A2u.jpg",
+      "title": "Tư liệu lịch sử Chân dung Nhà chí sĩ yêu nước Phan Bội Châu",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_030",
+    "topic": "Cách Mạng Tháng Tám & Điện Biên Phủ (Case 30)",
+    "eventDescription": "Chủ tịch Hồ Chí Minh đọc Tuyên ngôn Độc lập tại Quảng trường Ba Đình ngày 2 tháng 9 năm 1945.",
+    "candidate": {
+      "candidateId": "cand_030",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Qu%E1%BA%A3ng%20tr%C6%B0%E1%BB%9Dng%20Ba%20%C4%90%C3%ACnh%20L%C4%83ng%20Ch%E1%BB%A7%20t%E1%BB%8Bch%20H%E1%BB%93%20Ch%C3%AD%20Minh.jpg",
+      "title": "Tư liệu lịch sử Quảng trường Ba Đình Lăng Chủ tịch Hồ Chí Minh",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_031",
+    "topic": "Cách Mạng Tháng Tám & Điện Biên Phủ (Case 31)",
+    "eventDescription": "Chiến dịch Điện Biên Phủ 1954 lừng lẫy năm châu, chấn động địa cầu kết thúc thắng lợi.",
+    "candidate": {
+      "candidateId": "cand_031",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:H%E1%BA%A7m%20Ch%E1%BB%89%20huy%20T%C6%B0%E1%BB%9Bng%20De%20Castries%20%C4%90i%E1%BB%87n%20Bi%C3%AAn%20Ph%E1%BB%A7.jpg",
+      "title": "Tư liệu lịch sử Hầm Chỉ huy Tướng De Castries Điện Biên Phủ",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_032",
+    "topic": "Hồng Bàng & Văn Lang (Case 32)",
+    "eventDescription": "Thời kỳ Hùng Vương dựng nước Văn Lang, kinh đô Phong Châu, rực rỡ văn hóa Đông Sơn và Trống Đồng Ngọc Lũ.",
+    "candidate": {
+      "candidateId": "cand_032",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tr%E1%BB%91ng%20%C4%90%E1%BB%93ng%20%C4%90%C3%B4ng%20S%C6%A1n%20Ng%E1%BB%8Dc%20L%C5%A9%20th%E1%BB%9Di%20H%C3%B9ng%20V%C6%B0%C6%A1ng.jpg",
+      "title": "Tư liệu lịch sử Trống Đồng Đông Sơn Ngọc Lũ thời Hùng Vương",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_033",
+    "topic": "Hồng Bàng & Văn Lang (Case 33)",
+    "eventDescription": "Truyền thuyết Thánh Gióng cưỡi ngựa sắt dẹp giặc Ân bảo vệ bờ cõi non sông Văn Lang.",
+    "candidate": {
+      "candidateId": "cand_033",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Th%C3%A1nh%20Gi%C3%B3ng%20n%C3%BAi%20S%C3%B3c%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Thánh Gióng núi Sóc Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_034",
+    "topic": "Hồng Bàng & Văn Lang (Case 34)",
+    "eventDescription": "An Dương Vương xây dựng thành Cổ Loa hình xoáy ốc, chế tác nỏ liên châu giữ gìn Âu Lạc.",
+    "candidate": {
+      "candidateId": "cand_034",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Th%C3%A0nh%20C%E1%BB%95%20Loa%20%C4%90%C3%B4ng%20Anh%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Thành Cổ Loa Đông Anh Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_035",
+    "topic": "Hồng Bàng & Văn Lang (Case 35)",
+    "eventDescription": "Văn hóa đồ đồng Đông Sơn với dao găm cán người và thạp đồng Đào Thịnh.",
+    "candidate": {
+      "candidateId": "cand_035",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BA%A1p%20%C4%91%E1%BB%93ng%20%C4%90%C3%A0o%20Th%E1%BB%8Bnh%20b%E1%BA%A3o%20v%E1%BA%ADt%20qu%E1%BB%91c%20gia.jpg",
+      "title": "Tư liệu lịch sử Thạp đồng Đào Thịnh bảo vật quốc gia",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_036",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 36)",
+    "eventDescription": "Năm 40 sau Công Nguyên, Hai Bà Trưng phất cờ khởi nghĩa tại Hát Môn, đánh đuổi thái thú Tô Định.",
+    "candidate": {
+      "candidateId": "cand_036",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20%C4%90%C3%B4ng%20H%E1%BB%93%20Hai%20B%C3%A0%20Tr%C6%B0ng%20c%C6%B0%E1%BB%A1i%20voi%20ra%20tr%E1%BA%ADn.jpg",
+      "title": "Tư liệu lịch sử Tranh Đông Hồ Hai Bà Trưng cưỡi voi ra trận",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_037",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 37)",
+    "eventDescription": "Lễ hội Đền Hát Môn tưởng nhớ công đức Hai Bà Trưng lập nên chính quyền độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_037",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20H%C3%A1t%20M%C3%B4n%20Ph%C3%BAc%20Th%E1%BB%8D%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Hát Môn Phúc Thọ Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_038",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 38)",
+    "eventDescription": "Bà Triệu cưỡi voi xông trận năm 248 tại Căn cứ Phú Điền Hậu Lộc Thanh Hóa chống quân Đông Ngô.",
+    "candidate": {
+      "candidateId": "cand_038",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20%C4%90%E1%BB%81n%20B%C3%A0%20Tri%E1%BB%87u%20n%C3%BAi%20T%C3%B9ng%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Đền Bà Triệu núi Tùng Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_039",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 39)",
+    "eventDescription": "Ngô Quyền cắm cọc vạt nhọn tại cửa sông Bạch Đằng, tận dụng thủy triều tiêu diệt thủy quân Nam Hán.",
+    "candidate": {
+      "candidateId": "cand_039",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20Giang%20Th%E1%BB%A7y%20Nguy%C3%AAn%20H%E1%BA%A3i%20Ph%C3%B2ng.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Bạch Đằng Giang Thủy Nguyên Hải Phòng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_040",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 40)",
+    "eventDescription": "Chiến thắng Bạch Đằng năm 938 chấm dứt hơn 1000 năm Bắc thuộc, mở ra kỷ nguyên độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_040",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20%C4%90%E1%BB%A9c%20V%C6%B0%C6%A1ng%20Ng%C3%B4%20Quy%E1%BB%81n%20t%E1%BA%A1i%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Đức Vương Ngô Quyền tại Bạch Đằng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_041",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 41)",
+    "eventDescription": "Bãi cọc Bạch Đằng di tích khảo cổ học minh chứng chiến thuật quân sự thiên tài.",
+    "candidate": {
+      "candidateId": "cand_041",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hi%E1%BB%87n%20v%E1%BA%ADt%20c%E1%BB%8Dc%20g%E1%BB%97%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20t%E1%BA%A1i%20B%E1%BA%A3o%20t%C3%A0ng%20L%E1%BB%8Bch%20s%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Hiện vật cọc gỗ Bạch Đằng tại Bảo tàng Lịch sử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_042",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 42)",
+    "eventDescription": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân, thống nhất đất nước, xưng Đại Thắng Minh Hoàng Đế, lập kinh đô Hoa Lư.",
+    "candidate": {
+      "candidateId": "cand_042",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kinh%20th%C3%A0nh%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0%20Ninh%20B%C3%ACnh.jpg",
+      "title": "Tư liệu lịch sử Kinh thành Cố đô Hoa Lư Ninh Bình",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_043",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 43)",
+    "eventDescription": "Lê Hoàn lãnh đạo quân dân Đại Cồ Việt đánh tan quân Tống xâm lược trên sông Bạch Đằng năm 981.",
+    "candidate": {
+      "candidateId": "cand_043",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20Vua%20L%C3%AA%20%C4%90%E1%BA%A1i%20H%C3%A0nh%20t%E1%BA%A1i%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Vua Lê Đại Hành tại Cố đô Hoa Lư",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_044",
+    "topic": "Triều Lý & Thăng Long (Case 44)",
+    "eventDescription": "Năm 1010, Vua Lý Thái Tổ ban Chiếu dời đô từ Hoa Lư về thành Đại La, đổi tên thành Thăng Long rực rỡ.",
+    "candidate": {
+      "candidateId": "cand_044",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Vua%20L%C3%BD%20Th%C3%A1i%20T%E1%BB%95%20h%E1%BB%93%20Ho%C3%A0n%20Ki%E1%BA%BFm%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Vua Lý Thái Tổ hồ Hoàn Kiếm Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_045",
+    "topic": "Triều Lý & Thăng Long (Case 45)",
+    "eventDescription": "Thái úy Lý Thường Kiệt lập phòng tuyến sông Như Nguyệt, vang vọng bản tuyên ngôn Nam Quốc Sơn Hà.",
+    "candidate": {
+      "candidateId": "cand_045",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20X%C3%A0%20ph%C3%B2ng%20tuy%E1%BA%BFn%20s%C3%B4ng%20C%E1%BA%A7u%20Nh%C6%B0%20Nguy%E1%BB%87t.jpg",
+      "title": "Tư liệu lịch sử Đền Xà phòng tuyến sông Cầu Như Nguyệt",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_046",
+    "topic": "Triều Lý & Thăng Long (Case 46)",
+    "eventDescription": "Văn Miếu - Quốc Tử Giám trường đại học đầu tiên đào tạo nhân tài và nho học Đại Việt.",
+    "candidate": {
+      "candidateId": "cand_046",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%C3%AA%20V%C4%83n%20C%C3%A1c%20V%C4%83n%20Mi%E1%BA%BFu%20Qu%E1%BB%91c%20T%E1%BB%AD%20Gi%C3%A1m%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khuê Văn Các Văn Miếu Quốc Tử Giám Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_047",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 47)",
+    "eventDescription": "Hội nghị Diên Hồng và Bình Than thể hiện ý chí muôn người như một quyết chiến thắng giặc Thát.",
+    "candidate": {
+      "candidateId": "cand_047",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Qu%E1%BB%91c%20C%C3%B4ng%20Ti%E1%BA%BFt%20Ch%E1%BA%BF%20Tr%E1%BA%A7n%20H%C6%B0ng%20%C4%90%E1%BA%A1o.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Quốc Công Tiết Chế Trần Hưng Đạo",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_048",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 48)",
+    "eventDescription": "Chiến thắng Bạch Đằng 1288 bắt sống tướng giặc Ô Mã Nhi, đập tan mộng xâm lược của đế chế Mông Cổ.",
+    "candidate": {
+      "candidateId": "cand_048",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20di%E1%BB%85n%20h%E1%BB%8Da%20chi%E1%BA%BFn%20th%E1%BA%AFng%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%201288.jpg",
+      "title": "Tư liệu lịch sử Tranh diễn họa chiến thắng Bạch Đằng 1288",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_049",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 49)",
+    "eventDescription": "Phật hoàng Trần Nhân Tông sau khi thắng giặc đã nhường ngôi, sáng lập Thiền phái Trúc Lâm Yên Tử.",
+    "candidate": {
+      "candidateId": "cand_049",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%C3%A1p%20Hu%E1%BB%87%20Quang%20ch%C3%B9a%20Hoa%20Y%C3%AAn%20Tr%C3%BAc%20L%C3%A2m%20Y%C3%AAn%20T%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Tháp Huệ Quang chùa Hoa Yên Trúc Lâm Yên Tử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_050",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 50)",
+    "eventDescription": "Lê Lợi dựng cờ khởi nghĩa Lam Sơn cùng Nguyễn Trãi soạn Bình Ngô Đại Cáo giành lại non sông.",
+    "candidate": {
+      "candidateId": "cand_050",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Qu%E1%BB%91c%20gia%20%C4%91%E1%BA%B7c%20bi%E1%BB%87t%20Lam%20Kinh%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Quốc gia đặc biệt Lam Kinh Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_051",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 51)",
+    "eventDescription": "Vua Lê Thánh Tông ban hành Luật Hồng Đức và cho vẽ bản đồ Hồng Đức khẳng định chủ quyền cương vực.",
+    "candidate": {
+      "candidateId": "cand_051",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bia%20ti%E1%BA%BFn%20s%C4%A9%20V%C4%83n%20Mi%E1%BA%BFu%20th%E1%BB%9Di%20L%C3%AA%20Th%C3%A1nh%20T%C3%B4ng.jpg",
+      "title": "Tư liệu lịch sử Bia tiến sĩ Văn Miếu thời Lê Thánh Tông",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_052",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 52)",
+    "eventDescription": "Ba anh em Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ khởi nghĩa Tây Sơn diệt Trịnh Nguyễn phân tranh.",
+    "candidate": {
+      "candidateId": "cand_052",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Ba_anh_em_nh%C3%A0_h%E1%BB%8D_Nh%E1%BA%A1c.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20ba%20anh%20em%20T%C3%A2y%20S%C6%A1n%20t%E1%BA%A1i%20B%C3%ACnh%20%C4%90%E1%BB%8Bnh.jpg",
+      "title": "Tư liệu lịch sử Tượng đài ba anh em Tây Sơn tại Bình Định",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_053",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 53)",
+    "eventDescription": "Đại thắng Rạch Gầm - Xoài Mút 1785 tiêu diệt 5 vạn quân Xiêm xâm lược trên sông Tiền.",
+    "candidate": {
+      "candidateId": "cand_053",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e4/S%C3%B4ng_Ti%E1%BB%81n%2C_%C4%91o%E1%BA%A1n_R%E1%BA%A1ch_G%E1%BA%A7m-Xo%C3%A0i_M%C3%BAt.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BB%B1c%20%C4%91%E1%BB%8Ba%20s%C3%B4ng%20Ti%E1%BB%81n%20%C4%91o%E1%BA%A1n%20R%E1%BA%A1ch%20G%E1%BA%A7m%20Xo%C3%A0i%20M%C3%BAt.jpg",
+      "title": "Tư liệu lịch sử Thực địa sông Tiền đoạn Rạch Gầm Xoài Mút",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_054",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 54)",
+    "eventDescription": "Hoàng đế Quang Trung hành quân thần tốc, đại phá 29 vạn quân Thanh tại Ngọc Hồi Đống Đa Tết Kỷ Dậu 1789.",
+    "candidate": {
+      "candidateId": "cand_054",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Ho%C3%A0ng%20%C4%91%E1%BA%BF%20Quang%20Trung%20t%E1%BA%A1i%20G%C3%B2%20%C4%90%E1%BB%91ng%20%C4%90a.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Hoàng đế Quang Trung tại Gò Đống Đa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_055",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 55)",
+    "eventDescription": "Chân dung Vua Quang Trung Nguyễn Huệ vẽ vào thế kỷ 18 thời Càn Long bảo lưu trong sử liệu.",
+    "candidate": {
+      "candidateId": "cand_055",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/A_portrait_painting_depicting_Annam_King%2C_Ruan_Guangping.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20v%E1%BA%BD%20Vua%20Quang%20Trung%20tri%E1%BB%81u%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Chân dung vẽ Vua Quang Trung triều Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_056",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 56)",
+    "eventDescription": "Đồng tiền Quang Trung thông bảo và đại bảo minh chứng chính sách kinh tế phát triển của Tây Sơn.",
+    "candidate": {
+      "candidateId": "cand_056",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Quang_Trung_dai_bao.png",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ti%E1%BB%81n%20c%E1%BB%95%20Quang%20Trung%20%C4%91%E1%BA%A1i%20b%E1%BA%A3o%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tiền cổ Quang Trung đại bảo Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_057",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 57)",
+    "eventDescription": "Hoàng thành Huế và quần thể lăng tẩm các vua triều Nguyễn di sản văn hóa thế giới UNESCO.",
+    "candidate": {
+      "candidateId": "cand_057",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%95ng%20Ng%E1%BB%8D%20M%C3%B4n%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Kinh%20th%C3%A0nh%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Cổng Ngọ Môn Đại Nội Kinh thành Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_058",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 58)",
+    "eventDescription": "Cột cờ Kinh thành Huế Kỳ Đài uy nghiêm bên dòng sông Hương thơ mộng.",
+    "candidate": {
+      "candidateId": "cand_058",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:K%E1%BB%B3%20%C4%90%C3%A0i%20C%E1%BB%99t%20c%E1%BB%9D%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Kỳ Đài Cột cờ Đại Nội Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_059",
+    "topic": "Phong Trào Cần Vương & Chống Pháp (Case 59)",
+    "eventDescription": "Tổng đốc Hoàng Diệu và Nguyễn Tri Phương tuẫn tiết quyết tử bảo vệ Thành Hà Nội.",
+    "candidate": {
+      "candidateId": "cand_059",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%ADa%20B%E1%BA%AFc%20Th%C3%A0nh%20C%E1%BB%95%20H%C3%A0%20N%E1%BB%99i%20d%E1%BA%A5u%20v%E1%BA%BFt%20%C4%91%E1%BA%A1n%20ph%C3%A1o%20Ph%C3%A1p.jpg",
+      "title": "Tư liệu lịch sử Cửa Bắc Thành Cổ Hà Nội dấu vết đạn pháo Pháp",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_060",
+    "topic": "Phong Trào Cần Vương & Chống Pháp (Case 60)",
+    "eventDescription": "Chí sĩ Phan Bội Châu khởi xướng Phong trào Đông Du đào tạo thế hệ thanh niên yêu nước.",
+    "candidate": {
+      "candidateId": "cand_060",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20Nh%C3%A0%20ch%C3%AD%20s%C4%A9%20y%C3%AAu%20n%C6%B0%E1%BB%9Bc%20Phan%20B%E1%BB%99i%20Ch%C3%A2u.jpg",
+      "title": "Tư liệu lịch sử Chân dung Nhà chí sĩ yêu nước Phan Bội Châu",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_061",
+    "topic": "Cách Mạng Tháng Tám & Điện Biên Phủ (Case 61)",
+    "eventDescription": "Chủ tịch Hồ Chí Minh đọc Tuyên ngôn Độc lập tại Quảng trường Ba Đình ngày 2 tháng 9 năm 1945.",
+    "candidate": {
+      "candidateId": "cand_061",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Qu%E1%BA%A3ng%20tr%C6%B0%E1%BB%9Dng%20Ba%20%C4%90%C3%ACnh%20L%C4%83ng%20Ch%E1%BB%A7%20t%E1%BB%8Bch%20H%E1%BB%93%20Ch%C3%AD%20Minh.jpg",
+      "title": "Tư liệu lịch sử Quảng trường Ba Đình Lăng Chủ tịch Hồ Chí Minh",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_062",
+    "topic": "Cách Mạng Tháng Tám & Điện Biên Phủ (Case 62)",
+    "eventDescription": "Chiến dịch Điện Biên Phủ 1954 lừng lẫy năm châu, chấn động địa cầu kết thúc thắng lợi.",
+    "candidate": {
+      "candidateId": "cand_062",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:H%E1%BA%A7m%20Ch%E1%BB%89%20huy%20T%C6%B0%E1%BB%9Bng%20De%20Castries%20%C4%90i%E1%BB%87n%20Bi%C3%AAn%20Ph%E1%BB%A7.jpg",
+      "title": "Tư liệu lịch sử Hầm Chỉ huy Tướng De Castries Điện Biên Phủ",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_063",
+    "topic": "Hồng Bàng & Văn Lang (Case 63)",
+    "eventDescription": "Thời kỳ Hùng Vương dựng nước Văn Lang, kinh đô Phong Châu, rực rỡ văn hóa Đông Sơn và Trống Đồng Ngọc Lũ.",
+    "candidate": {
+      "candidateId": "cand_063",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tr%E1%BB%91ng%20%C4%90%E1%BB%93ng%20%C4%90%C3%B4ng%20S%C6%A1n%20Ng%E1%BB%8Dc%20L%C5%A9%20th%E1%BB%9Di%20H%C3%B9ng%20V%C6%B0%C6%A1ng.jpg",
+      "title": "Tư liệu lịch sử Trống Đồng Đông Sơn Ngọc Lũ thời Hùng Vương",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_064",
+    "topic": "Hồng Bàng & Văn Lang (Case 64)",
+    "eventDescription": "Truyền thuyết Thánh Gióng cưỡi ngựa sắt dẹp giặc Ân bảo vệ bờ cõi non sông Văn Lang.",
+    "candidate": {
+      "candidateId": "cand_064",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Th%C3%A1nh%20Gi%C3%B3ng%20n%C3%BAi%20S%C3%B3c%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Thánh Gióng núi Sóc Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_065",
+    "topic": "Hồng Bàng & Văn Lang (Case 65)",
+    "eventDescription": "An Dương Vương xây dựng thành Cổ Loa hình xoáy ốc, chế tác nỏ liên châu giữ gìn Âu Lạc.",
+    "candidate": {
+      "candidateId": "cand_065",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Th%C3%A0nh%20C%E1%BB%95%20Loa%20%C4%90%C3%B4ng%20Anh%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Thành Cổ Loa Đông Anh Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_066",
+    "topic": "Hồng Bàng & Văn Lang (Case 66)",
+    "eventDescription": "Văn hóa đồ đồng Đông Sơn với dao găm cán người và thạp đồng Đào Thịnh.",
+    "candidate": {
+      "candidateId": "cand_066",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BA%A1p%20%C4%91%E1%BB%93ng%20%C4%90%C3%A0o%20Th%E1%BB%8Bnh%20b%E1%BA%A3o%20v%E1%BA%ADt%20qu%E1%BB%91c%20gia.jpg",
+      "title": "Tư liệu lịch sử Thạp đồng Đào Thịnh bảo vật quốc gia",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_067",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 67)",
+    "eventDescription": "Năm 40 sau Công Nguyên, Hai Bà Trưng phất cờ khởi nghĩa tại Hát Môn, đánh đuổi thái thú Tô Định.",
+    "candidate": {
+      "candidateId": "cand_067",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20%C4%90%C3%B4ng%20H%E1%BB%93%20Hai%20B%C3%A0%20Tr%C6%B0ng%20c%C6%B0%E1%BB%A1i%20voi%20ra%20tr%E1%BA%ADn.jpg",
+      "title": "Tư liệu lịch sử Tranh Đông Hồ Hai Bà Trưng cưỡi voi ra trận",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_068",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 68)",
+    "eventDescription": "Lễ hội Đền Hát Môn tưởng nhớ công đức Hai Bà Trưng lập nên chính quyền độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_068",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20H%C3%A1t%20M%C3%B4n%20Ph%C3%BAc%20Th%E1%BB%8D%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Hát Môn Phúc Thọ Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_069",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 69)",
+    "eventDescription": "Bà Triệu cưỡi voi xông trận năm 248 tại Căn cứ Phú Điền Hậu Lộc Thanh Hóa chống quân Đông Ngô.",
+    "candidate": {
+      "candidateId": "cand_069",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20%C4%90%E1%BB%81n%20B%C3%A0%20Tri%E1%BB%87u%20n%C3%BAi%20T%C3%B9ng%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Đền Bà Triệu núi Tùng Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_070",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 70)",
+    "eventDescription": "Ngô Quyền cắm cọc vạt nhọn tại cửa sông Bạch Đằng, tận dụng thủy triều tiêu diệt thủy quân Nam Hán.",
+    "candidate": {
+      "candidateId": "cand_070",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20Giang%20Th%E1%BB%A7y%20Nguy%C3%AAn%20H%E1%BA%A3i%20Ph%C3%B2ng.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Bạch Đằng Giang Thủy Nguyên Hải Phòng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_071",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 71)",
+    "eventDescription": "Chiến thắng Bạch Đằng năm 938 chấm dứt hơn 1000 năm Bắc thuộc, mở ra kỷ nguyên độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_071",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20%C4%90%E1%BB%A9c%20V%C6%B0%C6%A1ng%20Ng%C3%B4%20Quy%E1%BB%81n%20t%E1%BA%A1i%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Đức Vương Ngô Quyền tại Bạch Đằng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_072",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 72)",
+    "eventDescription": "Bãi cọc Bạch Đằng di tích khảo cổ học minh chứng chiến thuật quân sự thiên tài.",
+    "candidate": {
+      "candidateId": "cand_072",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hi%E1%BB%87n%20v%E1%BA%ADt%20c%E1%BB%8Dc%20g%E1%BB%97%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20t%E1%BA%A1i%20B%E1%BA%A3o%20t%C3%A0ng%20L%E1%BB%8Bch%20s%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Hiện vật cọc gỗ Bạch Đằng tại Bảo tàng Lịch sử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_073",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 73)",
+    "eventDescription": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân, thống nhất đất nước, xưng Đại Thắng Minh Hoàng Đế, lập kinh đô Hoa Lư.",
+    "candidate": {
+      "candidateId": "cand_073",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kinh%20th%C3%A0nh%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0%20Ninh%20B%C3%ACnh.jpg",
+      "title": "Tư liệu lịch sử Kinh thành Cố đô Hoa Lư Ninh Bình",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_074",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 74)",
+    "eventDescription": "Lê Hoàn lãnh đạo quân dân Đại Cồ Việt đánh tan quân Tống xâm lược trên sông Bạch Đằng năm 981.",
+    "candidate": {
+      "candidateId": "cand_074",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20Vua%20L%C3%AA%20%C4%90%E1%BA%A1i%20H%C3%A0nh%20t%E1%BA%A1i%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Vua Lê Đại Hành tại Cố đô Hoa Lư",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_075",
+    "topic": "Triều Lý & Thăng Long (Case 75)",
+    "eventDescription": "Năm 1010, Vua Lý Thái Tổ ban Chiếu dời đô từ Hoa Lư về thành Đại La, đổi tên thành Thăng Long rực rỡ.",
+    "candidate": {
+      "candidateId": "cand_075",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Vua%20L%C3%BD%20Th%C3%A1i%20T%E1%BB%95%20h%E1%BB%93%20Ho%C3%A0n%20Ki%E1%BA%BFm%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Vua Lý Thái Tổ hồ Hoàn Kiếm Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_076",
+    "topic": "Triều Lý & Thăng Long (Case 76)",
+    "eventDescription": "Thái úy Lý Thường Kiệt lập phòng tuyến sông Như Nguyệt, vang vọng bản tuyên ngôn Nam Quốc Sơn Hà.",
+    "candidate": {
+      "candidateId": "cand_076",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20X%C3%A0%20ph%C3%B2ng%20tuy%E1%BA%BFn%20s%C3%B4ng%20C%E1%BA%A7u%20Nh%C6%B0%20Nguy%E1%BB%87t.jpg",
+      "title": "Tư liệu lịch sử Đền Xà phòng tuyến sông Cầu Như Nguyệt",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_077",
+    "topic": "Triều Lý & Thăng Long (Case 77)",
+    "eventDescription": "Văn Miếu - Quốc Tử Giám trường đại học đầu tiên đào tạo nhân tài và nho học Đại Việt.",
+    "candidate": {
+      "candidateId": "cand_077",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%C3%AA%20V%C4%83n%20C%C3%A1c%20V%C4%83n%20Mi%E1%BA%BFu%20Qu%E1%BB%91c%20T%E1%BB%AD%20Gi%C3%A1m%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khuê Văn Các Văn Miếu Quốc Tử Giám Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_078",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 78)",
+    "eventDescription": "Hội nghị Diên Hồng và Bình Than thể hiện ý chí muôn người như một quyết chiến thắng giặc Thát.",
+    "candidate": {
+      "candidateId": "cand_078",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Qu%E1%BB%91c%20C%C3%B4ng%20Ti%E1%BA%BFt%20Ch%E1%BA%BF%20Tr%E1%BA%A7n%20H%C6%B0ng%20%C4%90%E1%BA%A1o.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Quốc Công Tiết Chế Trần Hưng Đạo",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_079",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 79)",
+    "eventDescription": "Chiến thắng Bạch Đằng 1288 bắt sống tướng giặc Ô Mã Nhi, đập tan mộng xâm lược của đế chế Mông Cổ.",
+    "candidate": {
+      "candidateId": "cand_079",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20di%E1%BB%85n%20h%E1%BB%8Da%20chi%E1%BA%BFn%20th%E1%BA%AFng%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%201288.jpg",
+      "title": "Tư liệu lịch sử Tranh diễn họa chiến thắng Bạch Đằng 1288",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_080",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 80)",
+    "eventDescription": "Phật hoàng Trần Nhân Tông sau khi thắng giặc đã nhường ngôi, sáng lập Thiền phái Trúc Lâm Yên Tử.",
+    "candidate": {
+      "candidateId": "cand_080",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%C3%A1p%20Hu%E1%BB%87%20Quang%20ch%C3%B9a%20Hoa%20Y%C3%AAn%20Tr%C3%BAc%20L%C3%A2m%20Y%C3%AAn%20T%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Tháp Huệ Quang chùa Hoa Yên Trúc Lâm Yên Tử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_081",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 81)",
+    "eventDescription": "Lê Lợi dựng cờ khởi nghĩa Lam Sơn cùng Nguyễn Trãi soạn Bình Ngô Đại Cáo giành lại non sông.",
+    "candidate": {
+      "candidateId": "cand_081",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Qu%E1%BB%91c%20gia%20%C4%91%E1%BA%B7c%20bi%E1%BB%87t%20Lam%20Kinh%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Quốc gia đặc biệt Lam Kinh Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_082",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 82)",
+    "eventDescription": "Vua Lê Thánh Tông ban hành Luật Hồng Đức và cho vẽ bản đồ Hồng Đức khẳng định chủ quyền cương vực.",
+    "candidate": {
+      "candidateId": "cand_082",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bia%20ti%E1%BA%BFn%20s%C4%A9%20V%C4%83n%20Mi%E1%BA%BFu%20th%E1%BB%9Di%20L%C3%AA%20Th%C3%A1nh%20T%C3%B4ng.jpg",
+      "title": "Tư liệu lịch sử Bia tiến sĩ Văn Miếu thời Lê Thánh Tông",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_083",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 83)",
+    "eventDescription": "Ba anh em Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ khởi nghĩa Tây Sơn diệt Trịnh Nguyễn phân tranh.",
+    "candidate": {
+      "candidateId": "cand_083",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Ba_anh_em_nh%C3%A0_h%E1%BB%8D_Nh%E1%BA%A1c.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20ba%20anh%20em%20T%C3%A2y%20S%C6%A1n%20t%E1%BA%A1i%20B%C3%ACnh%20%C4%90%E1%BB%8Bnh.jpg",
+      "title": "Tư liệu lịch sử Tượng đài ba anh em Tây Sơn tại Bình Định",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_084",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 84)",
+    "eventDescription": "Đại thắng Rạch Gầm - Xoài Mút 1785 tiêu diệt 5 vạn quân Xiêm xâm lược trên sông Tiền.",
+    "candidate": {
+      "candidateId": "cand_084",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e4/S%C3%B4ng_Ti%E1%BB%81n%2C_%C4%91o%E1%BA%A1n_R%E1%BA%A1ch_G%E1%BA%A7m-Xo%C3%A0i_M%C3%BAt.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BB%B1c%20%C4%91%E1%BB%8Ba%20s%C3%B4ng%20Ti%E1%BB%81n%20%C4%91o%E1%BA%A1n%20R%E1%BA%A1ch%20G%E1%BA%A7m%20Xo%C3%A0i%20M%C3%BAt.jpg",
+      "title": "Tư liệu lịch sử Thực địa sông Tiền đoạn Rạch Gầm Xoài Mút",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_085",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 85)",
+    "eventDescription": "Hoàng đế Quang Trung hành quân thần tốc, đại phá 29 vạn quân Thanh tại Ngọc Hồi Đống Đa Tết Kỷ Dậu 1789.",
+    "candidate": {
+      "candidateId": "cand_085",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Ho%C3%A0ng%20%C4%91%E1%BA%BF%20Quang%20Trung%20t%E1%BA%A1i%20G%C3%B2%20%C4%90%E1%BB%91ng%20%C4%90a.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Hoàng đế Quang Trung tại Gò Đống Đa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_086",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 86)",
+    "eventDescription": "Chân dung Vua Quang Trung Nguyễn Huệ vẽ vào thế kỷ 18 thời Càn Long bảo lưu trong sử liệu.",
+    "candidate": {
+      "candidateId": "cand_086",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/A_portrait_painting_depicting_Annam_King%2C_Ruan_Guangping.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20v%E1%BA%BD%20Vua%20Quang%20Trung%20tri%E1%BB%81u%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Chân dung vẽ Vua Quang Trung triều Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_087",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 87)",
+    "eventDescription": "Đồng tiền Quang Trung thông bảo và đại bảo minh chứng chính sách kinh tế phát triển của Tây Sơn.",
+    "candidate": {
+      "candidateId": "cand_087",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Quang_Trung_dai_bao.png",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ti%E1%BB%81n%20c%E1%BB%95%20Quang%20Trung%20%C4%91%E1%BA%A1i%20b%E1%BA%A3o%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tiền cổ Quang Trung đại bảo Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_088",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 88)",
+    "eventDescription": "Hoàng thành Huế và quần thể lăng tẩm các vua triều Nguyễn di sản văn hóa thế giới UNESCO.",
+    "candidate": {
+      "candidateId": "cand_088",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%95ng%20Ng%E1%BB%8D%20M%C3%B4n%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Kinh%20th%C3%A0nh%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Cổng Ngọ Môn Đại Nội Kinh thành Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_089",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 89)",
+    "eventDescription": "Cột cờ Kinh thành Huế Kỳ Đài uy nghiêm bên dòng sông Hương thơ mộng.",
+    "candidate": {
+      "candidateId": "cand_089",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:K%E1%BB%B3%20%C4%90%C3%A0i%20C%E1%BB%99t%20c%E1%BB%9D%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Kỳ Đài Cột cờ Đại Nội Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_090",
+    "topic": "Phong Trào Cần Vương & Chống Pháp (Case 90)",
+    "eventDescription": "Tổng đốc Hoàng Diệu và Nguyễn Tri Phương tuẫn tiết quyết tử bảo vệ Thành Hà Nội.",
+    "candidate": {
+      "candidateId": "cand_090",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%ADa%20B%E1%BA%AFc%20Th%C3%A0nh%20C%E1%BB%95%20H%C3%A0%20N%E1%BB%99i%20d%E1%BA%A5u%20v%E1%BA%BFt%20%C4%91%E1%BA%A1n%20ph%C3%A1o%20Ph%C3%A1p.jpg",
+      "title": "Tư liệu lịch sử Cửa Bắc Thành Cổ Hà Nội dấu vết đạn pháo Pháp",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_091",
+    "topic": "Phong Trào Cần Vương & Chống Pháp (Case 91)",
+    "eventDescription": "Chí sĩ Phan Bội Châu khởi xướng Phong trào Đông Du đào tạo thế hệ thanh niên yêu nước.",
+    "candidate": {
+      "candidateId": "cand_091",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20Nh%C3%A0%20ch%C3%AD%20s%C4%A9%20y%C3%AAu%20n%C6%B0%E1%BB%9Bc%20Phan%20B%E1%BB%99i%20Ch%C3%A2u.jpg",
+      "title": "Tư liệu lịch sử Chân dung Nhà chí sĩ yêu nước Phan Bội Châu",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_092",
+    "topic": "Cách Mạng Tháng Tám & Điện Biên Phủ (Case 92)",
+    "eventDescription": "Chủ tịch Hồ Chí Minh đọc Tuyên ngôn Độc lập tại Quảng trường Ba Đình ngày 2 tháng 9 năm 1945.",
+    "candidate": {
+      "candidateId": "cand_092",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Qu%E1%BA%A3ng%20tr%C6%B0%E1%BB%9Dng%20Ba%20%C4%90%C3%ACnh%20L%C4%83ng%20Ch%E1%BB%A7%20t%E1%BB%8Bch%20H%E1%BB%93%20Ch%C3%AD%20Minh.jpg",
+      "title": "Tư liệu lịch sử Quảng trường Ba Đình Lăng Chủ tịch Hồ Chí Minh",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_093",
+    "topic": "Cách Mạng Tháng Tám & Điện Biên Phủ (Case 93)",
+    "eventDescription": "Chiến dịch Điện Biên Phủ 1954 lừng lẫy năm châu, chấn động địa cầu kết thúc thắng lợi.",
+    "candidate": {
+      "candidateId": "cand_093",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:H%E1%BA%A7m%20Ch%E1%BB%89%20huy%20T%C6%B0%E1%BB%9Bng%20De%20Castries%20%C4%90i%E1%BB%87n%20Bi%C3%AAn%20Ph%E1%BB%A7.jpg",
+      "title": "Tư liệu lịch sử Hầm Chỉ huy Tướng De Castries Điện Biên Phủ",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_094",
+    "topic": "Hồng Bàng & Văn Lang (Case 94)",
+    "eventDescription": "Thời kỳ Hùng Vương dựng nước Văn Lang, kinh đô Phong Châu, rực rỡ văn hóa Đông Sơn và Trống Đồng Ngọc Lũ.",
+    "candidate": {
+      "candidateId": "cand_094",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tr%E1%BB%91ng%20%C4%90%E1%BB%93ng%20%C4%90%C3%B4ng%20S%C6%A1n%20Ng%E1%BB%8Dc%20L%C5%A9%20th%E1%BB%9Di%20H%C3%B9ng%20V%C6%B0%C6%A1ng.jpg",
+      "title": "Tư liệu lịch sử Trống Đồng Đông Sơn Ngọc Lũ thời Hùng Vương",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_095",
+    "topic": "Hồng Bàng & Văn Lang (Case 95)",
+    "eventDescription": "Truyền thuyết Thánh Gióng cưỡi ngựa sắt dẹp giặc Ân bảo vệ bờ cõi non sông Văn Lang.",
+    "candidate": {
+      "candidateId": "cand_095",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Th%C3%A1nh%20Gi%C3%B3ng%20n%C3%BAi%20S%C3%B3c%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Thánh Gióng núi Sóc Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_096",
+    "topic": "Hồng Bàng & Văn Lang (Case 96)",
+    "eventDescription": "An Dương Vương xây dựng thành Cổ Loa hình xoáy ốc, chế tác nỏ liên châu giữ gìn Âu Lạc.",
+    "candidate": {
+      "candidateId": "cand_096",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Th%C3%A0nh%20C%E1%BB%95%20Loa%20%C4%90%C3%B4ng%20Anh%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Thành Cổ Loa Đông Anh Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_097",
+    "topic": "Hồng Bàng & Văn Lang (Case 97)",
+    "eventDescription": "Văn hóa đồ đồng Đông Sơn với dao găm cán người và thạp đồng Đào Thịnh.",
+    "candidate": {
+      "candidateId": "cand_097",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BA%A1p%20%C4%91%E1%BB%93ng%20%C4%90%C3%A0o%20Th%E1%BB%8Bnh%20b%E1%BA%A3o%20v%E1%BA%ADt%20qu%E1%BB%91c%20gia.jpg",
+      "title": "Tư liệu lịch sử Thạp đồng Đào Thịnh bảo vật quốc gia",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_098",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 98)",
+    "eventDescription": "Năm 40 sau Công Nguyên, Hai Bà Trưng phất cờ khởi nghĩa tại Hát Môn, đánh đuổi thái thú Tô Định.",
+    "candidate": {
+      "candidateId": "cand_098",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20%C4%90%C3%B4ng%20H%E1%BB%93%20Hai%20B%C3%A0%20Tr%C6%B0ng%20c%C6%B0%E1%BB%A1i%20voi%20ra%20tr%E1%BA%ADn.jpg",
+      "title": "Tư liệu lịch sử Tranh Đông Hồ Hai Bà Trưng cưỡi voi ra trận",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_099",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 99)",
+    "eventDescription": "Lễ hội Đền Hát Môn tưởng nhớ công đức Hai Bà Trưng lập nên chính quyền độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_099",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20H%C3%A1t%20M%C3%B4n%20Ph%C3%BAc%20Th%E1%BB%8D%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Hát Môn Phúc Thọ Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_100",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 100)",
+    "eventDescription": "Bà Triệu cưỡi voi xông trận năm 248 tại Căn cứ Phú Điền Hậu Lộc Thanh Hóa chống quân Đông Ngô.",
+    "candidate": {
+      "candidateId": "cand_100",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20%C4%90%E1%BB%81n%20B%C3%A0%20Tri%E1%BB%87u%20n%C3%BAi%20T%C3%B9ng%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Đền Bà Triệu núi Tùng Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_101",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 101)",
+    "eventDescription": "Ngô Quyền cắm cọc vạt nhọn tại cửa sông Bạch Đằng, tận dụng thủy triều tiêu diệt thủy quân Nam Hán.",
+    "candidate": {
+      "candidateId": "cand_101",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20Giang%20Th%E1%BB%A7y%20Nguy%C3%AAn%20H%E1%BA%A3i%20Ph%C3%B2ng.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Bạch Đằng Giang Thủy Nguyên Hải Phòng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_102",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 102)",
+    "eventDescription": "Chiến thắng Bạch Đằng năm 938 chấm dứt hơn 1000 năm Bắc thuộc, mở ra kỷ nguyên độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_102",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20%C4%90%E1%BB%A9c%20V%C6%B0%C6%A1ng%20Ng%C3%B4%20Quy%E1%BB%81n%20t%E1%BA%A1i%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Đức Vương Ngô Quyền tại Bạch Đằng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_103",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 103)",
+    "eventDescription": "Bãi cọc Bạch Đằng di tích khảo cổ học minh chứng chiến thuật quân sự thiên tài.",
+    "candidate": {
+      "candidateId": "cand_103",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hi%E1%BB%87n%20v%E1%BA%ADt%20c%E1%BB%8Dc%20g%E1%BB%97%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20t%E1%BA%A1i%20B%E1%BA%A3o%20t%C3%A0ng%20L%E1%BB%8Bch%20s%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Hiện vật cọc gỗ Bạch Đằng tại Bảo tàng Lịch sử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_104",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 104)",
+    "eventDescription": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân, thống nhất đất nước, xưng Đại Thắng Minh Hoàng Đế, lập kinh đô Hoa Lư.",
+    "candidate": {
+      "candidateId": "cand_104",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kinh%20th%C3%A0nh%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0%20Ninh%20B%C3%ACnh.jpg",
+      "title": "Tư liệu lịch sử Kinh thành Cố đô Hoa Lư Ninh Bình",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_105",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 105)",
+    "eventDescription": "Lê Hoàn lãnh đạo quân dân Đại Cồ Việt đánh tan quân Tống xâm lược trên sông Bạch Đằng năm 981.",
+    "candidate": {
+      "candidateId": "cand_105",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20Vua%20L%C3%AA%20%C4%90%E1%BA%A1i%20H%C3%A0nh%20t%E1%BA%A1i%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Vua Lê Đại Hành tại Cố đô Hoa Lư",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_106",
+    "topic": "Triều Lý & Thăng Long (Case 106)",
+    "eventDescription": "Năm 1010, Vua Lý Thái Tổ ban Chiếu dời đô từ Hoa Lư về thành Đại La, đổi tên thành Thăng Long rực rỡ.",
+    "candidate": {
+      "candidateId": "cand_106",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Vua%20L%C3%BD%20Th%C3%A1i%20T%E1%BB%95%20h%E1%BB%93%20Ho%C3%A0n%20Ki%E1%BA%BFm%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Vua Lý Thái Tổ hồ Hoàn Kiếm Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_107",
+    "topic": "Triều Lý & Thăng Long (Case 107)",
+    "eventDescription": "Thái úy Lý Thường Kiệt lập phòng tuyến sông Như Nguyệt, vang vọng bản tuyên ngôn Nam Quốc Sơn Hà.",
+    "candidate": {
+      "candidateId": "cand_107",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20X%C3%A0%20ph%C3%B2ng%20tuy%E1%BA%BFn%20s%C3%B4ng%20C%E1%BA%A7u%20Nh%C6%B0%20Nguy%E1%BB%87t.jpg",
+      "title": "Tư liệu lịch sử Đền Xà phòng tuyến sông Cầu Như Nguyệt",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_108",
+    "topic": "Triều Lý & Thăng Long (Case 108)",
+    "eventDescription": "Văn Miếu - Quốc Tử Giám trường đại học đầu tiên đào tạo nhân tài và nho học Đại Việt.",
+    "candidate": {
+      "candidateId": "cand_108",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%C3%AA%20V%C4%83n%20C%C3%A1c%20V%C4%83n%20Mi%E1%BA%BFu%20Qu%E1%BB%91c%20T%E1%BB%AD%20Gi%C3%A1m%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khuê Văn Các Văn Miếu Quốc Tử Giám Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_109",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 109)",
+    "eventDescription": "Hội nghị Diên Hồng và Bình Than thể hiện ý chí muôn người như một quyết chiến thắng giặc Thát.",
+    "candidate": {
+      "candidateId": "cand_109",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Qu%E1%BB%91c%20C%C3%B4ng%20Ti%E1%BA%BFt%20Ch%E1%BA%BF%20Tr%E1%BA%A7n%20H%C6%B0ng%20%C4%90%E1%BA%A1o.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Quốc Công Tiết Chế Trần Hưng Đạo",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_110",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 110)",
+    "eventDescription": "Chiến thắng Bạch Đằng 1288 bắt sống tướng giặc Ô Mã Nhi, đập tan mộng xâm lược của đế chế Mông Cổ.",
+    "candidate": {
+      "candidateId": "cand_110",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20di%E1%BB%85n%20h%E1%BB%8Da%20chi%E1%BA%BFn%20th%E1%BA%AFng%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%201288.jpg",
+      "title": "Tư liệu lịch sử Tranh diễn họa chiến thắng Bạch Đằng 1288",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_111",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 111)",
+    "eventDescription": "Phật hoàng Trần Nhân Tông sau khi thắng giặc đã nhường ngôi, sáng lập Thiền phái Trúc Lâm Yên Tử.",
+    "candidate": {
+      "candidateId": "cand_111",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%C3%A1p%20Hu%E1%BB%87%20Quang%20ch%C3%B9a%20Hoa%20Y%C3%AAn%20Tr%C3%BAc%20L%C3%A2m%20Y%C3%AAn%20T%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Tháp Huệ Quang chùa Hoa Yên Trúc Lâm Yên Tử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_112",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 112)",
+    "eventDescription": "Lê Lợi dựng cờ khởi nghĩa Lam Sơn cùng Nguyễn Trãi soạn Bình Ngô Đại Cáo giành lại non sông.",
+    "candidate": {
+      "candidateId": "cand_112",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Qu%E1%BB%91c%20gia%20%C4%91%E1%BA%B7c%20bi%E1%BB%87t%20Lam%20Kinh%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Quốc gia đặc biệt Lam Kinh Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_113",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 113)",
+    "eventDescription": "Vua Lê Thánh Tông ban hành Luật Hồng Đức và cho vẽ bản đồ Hồng Đức khẳng định chủ quyền cương vực.",
+    "candidate": {
+      "candidateId": "cand_113",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bia%20ti%E1%BA%BFn%20s%C4%A9%20V%C4%83n%20Mi%E1%BA%BFu%20th%E1%BB%9Di%20L%C3%AA%20Th%C3%A1nh%20T%C3%B4ng.jpg",
+      "title": "Tư liệu lịch sử Bia tiến sĩ Văn Miếu thời Lê Thánh Tông",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_114",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 114)",
+    "eventDescription": "Ba anh em Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ khởi nghĩa Tây Sơn diệt Trịnh Nguyễn phân tranh.",
+    "candidate": {
+      "candidateId": "cand_114",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Ba_anh_em_nh%C3%A0_h%E1%BB%8D_Nh%E1%BA%A1c.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20ba%20anh%20em%20T%C3%A2y%20S%C6%A1n%20t%E1%BA%A1i%20B%C3%ACnh%20%C4%90%E1%BB%8Bnh.jpg",
+      "title": "Tư liệu lịch sử Tượng đài ba anh em Tây Sơn tại Bình Định",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_115",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 115)",
+    "eventDescription": "Đại thắng Rạch Gầm - Xoài Mút 1785 tiêu diệt 5 vạn quân Xiêm xâm lược trên sông Tiền.",
+    "candidate": {
+      "candidateId": "cand_115",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e4/S%C3%B4ng_Ti%E1%BB%81n%2C_%C4%91o%E1%BA%A1n_R%E1%BA%A1ch_G%E1%BA%A7m-Xo%C3%A0i_M%C3%BAt.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BB%B1c%20%C4%91%E1%BB%8Ba%20s%C3%B4ng%20Ti%E1%BB%81n%20%C4%91o%E1%BA%A1n%20R%E1%BA%A1ch%20G%E1%BA%A7m%20Xo%C3%A0i%20M%C3%BAt.jpg",
+      "title": "Tư liệu lịch sử Thực địa sông Tiền đoạn Rạch Gầm Xoài Mút",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_116",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 116)",
+    "eventDescription": "Hoàng đế Quang Trung hành quân thần tốc, đại phá 29 vạn quân Thanh tại Ngọc Hồi Đống Đa Tết Kỷ Dậu 1789.",
+    "candidate": {
+      "candidateId": "cand_116",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Ho%C3%A0ng%20%C4%91%E1%BA%BF%20Quang%20Trung%20t%E1%BA%A1i%20G%C3%B2%20%C4%90%E1%BB%91ng%20%C4%90a.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Hoàng đế Quang Trung tại Gò Đống Đa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_117",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 117)",
+    "eventDescription": "Chân dung Vua Quang Trung Nguyễn Huệ vẽ vào thế kỷ 18 thời Càn Long bảo lưu trong sử liệu.",
+    "candidate": {
+      "candidateId": "cand_117",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/A_portrait_painting_depicting_Annam_King%2C_Ruan_Guangping.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20v%E1%BA%BD%20Vua%20Quang%20Trung%20tri%E1%BB%81u%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Chân dung vẽ Vua Quang Trung triều Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_118",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 118)",
+    "eventDescription": "Đồng tiền Quang Trung thông bảo và đại bảo minh chứng chính sách kinh tế phát triển của Tây Sơn.",
+    "candidate": {
+      "candidateId": "cand_118",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Quang_Trung_dai_bao.png",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ti%E1%BB%81n%20c%E1%BB%95%20Quang%20Trung%20%C4%91%E1%BA%A1i%20b%E1%BA%A3o%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tiền cổ Quang Trung đại bảo Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_119",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 119)",
+    "eventDescription": "Hoàng thành Huế và quần thể lăng tẩm các vua triều Nguyễn di sản văn hóa thế giới UNESCO.",
+    "candidate": {
+      "candidateId": "cand_119",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%95ng%20Ng%E1%BB%8D%20M%C3%B4n%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Kinh%20th%C3%A0nh%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Cổng Ngọ Môn Đại Nội Kinh thành Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_120",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 120)",
+    "eventDescription": "Cột cờ Kinh thành Huế Kỳ Đài uy nghiêm bên dòng sông Hương thơ mộng.",
+    "candidate": {
+      "candidateId": "cand_120",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:K%E1%BB%B3%20%C4%90%C3%A0i%20C%E1%BB%99t%20c%E1%BB%9D%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Kỳ Đài Cột cờ Đại Nội Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_121",
+    "topic": "Phong Trào Cần Vương & Chống Pháp (Case 121)",
+    "eventDescription": "Tổng đốc Hoàng Diệu và Nguyễn Tri Phương tuẫn tiết quyết tử bảo vệ Thành Hà Nội.",
+    "candidate": {
+      "candidateId": "cand_121",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%ADa%20B%E1%BA%AFc%20Th%C3%A0nh%20C%E1%BB%95%20H%C3%A0%20N%E1%BB%99i%20d%E1%BA%A5u%20v%E1%BA%BFt%20%C4%91%E1%BA%A1n%20ph%C3%A1o%20Ph%C3%A1p.jpg",
+      "title": "Tư liệu lịch sử Cửa Bắc Thành Cổ Hà Nội dấu vết đạn pháo Pháp",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_122",
+    "topic": "Phong Trào Cần Vương & Chống Pháp (Case 122)",
+    "eventDescription": "Chí sĩ Phan Bội Châu khởi xướng Phong trào Đông Du đào tạo thế hệ thanh niên yêu nước.",
+    "candidate": {
+      "candidateId": "cand_122",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20Nh%C3%A0%20ch%C3%AD%20s%C4%A9%20y%C3%AAu%20n%C6%B0%E1%BB%9Bc%20Phan%20B%E1%BB%99i%20Ch%C3%A2u.jpg",
+      "title": "Tư liệu lịch sử Chân dung Nhà chí sĩ yêu nước Phan Bội Châu",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_123",
+    "topic": "Cách Mạng Tháng Tám & Điện Biên Phủ (Case 123)",
+    "eventDescription": "Chủ tịch Hồ Chí Minh đọc Tuyên ngôn Độc lập tại Quảng trường Ba Đình ngày 2 tháng 9 năm 1945.",
+    "candidate": {
+      "candidateId": "cand_123",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Qu%E1%BA%A3ng%20tr%C6%B0%E1%BB%9Dng%20Ba%20%C4%90%C3%ACnh%20L%C4%83ng%20Ch%E1%BB%A7%20t%E1%BB%8Bch%20H%E1%BB%93%20Ch%C3%AD%20Minh.jpg",
+      "title": "Tư liệu lịch sử Quảng trường Ba Đình Lăng Chủ tịch Hồ Chí Minh",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_124",
+    "topic": "Cách Mạng Tháng Tám & Điện Biên Phủ (Case 124)",
+    "eventDescription": "Chiến dịch Điện Biên Phủ 1954 lừng lẫy năm châu, chấn động địa cầu kết thúc thắng lợi.",
+    "candidate": {
+      "candidateId": "cand_124",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:H%E1%BA%A7m%20Ch%E1%BB%89%20huy%20T%C6%B0%E1%BB%9Bng%20De%20Castries%20%C4%90i%E1%BB%87n%20Bi%C3%AAn%20Ph%E1%BB%A7.jpg",
+      "title": "Tư liệu lịch sử Hầm Chỉ huy Tướng De Castries Điện Biên Phủ",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_125",
+    "topic": "Hồng Bàng & Văn Lang (Case 125)",
+    "eventDescription": "Thời kỳ Hùng Vương dựng nước Văn Lang, kinh đô Phong Châu, rực rỡ văn hóa Đông Sơn và Trống Đồng Ngọc Lũ.",
+    "candidate": {
+      "candidateId": "cand_125",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tr%E1%BB%91ng%20%C4%90%E1%BB%93ng%20%C4%90%C3%B4ng%20S%C6%A1n%20Ng%E1%BB%8Dc%20L%C5%A9%20th%E1%BB%9Di%20H%C3%B9ng%20V%C6%B0%C6%A1ng.jpg",
+      "title": "Tư liệu lịch sử Trống Đồng Đông Sơn Ngọc Lũ thời Hùng Vương",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_126",
+    "topic": "Hồng Bàng & Văn Lang (Case 126)",
+    "eventDescription": "Truyền thuyết Thánh Gióng cưỡi ngựa sắt dẹp giặc Ân bảo vệ bờ cõi non sông Văn Lang.",
+    "candidate": {
+      "candidateId": "cand_126",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Th%C3%A1nh%20Gi%C3%B3ng%20n%C3%BAi%20S%C3%B3c%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Thánh Gióng núi Sóc Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_127",
+    "topic": "Hồng Bàng & Văn Lang (Case 127)",
+    "eventDescription": "An Dương Vương xây dựng thành Cổ Loa hình xoáy ốc, chế tác nỏ liên châu giữ gìn Âu Lạc.",
+    "candidate": {
+      "candidateId": "cand_127",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Th%C3%A0nh%20C%E1%BB%95%20Loa%20%C4%90%C3%B4ng%20Anh%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Thành Cổ Loa Đông Anh Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_128",
+    "topic": "Hồng Bàng & Văn Lang (Case 128)",
+    "eventDescription": "Văn hóa đồ đồng Đông Sơn với dao găm cán người và thạp đồng Đào Thịnh.",
+    "candidate": {
+      "candidateId": "cand_128",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BA%A1p%20%C4%91%E1%BB%93ng%20%C4%90%C3%A0o%20Th%E1%BB%8Bnh%20b%E1%BA%A3o%20v%E1%BA%ADt%20qu%E1%BB%91c%20gia.jpg",
+      "title": "Tư liệu lịch sử Thạp đồng Đào Thịnh bảo vật quốc gia",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_129",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 129)",
+    "eventDescription": "Năm 40 sau Công Nguyên, Hai Bà Trưng phất cờ khởi nghĩa tại Hát Môn, đánh đuổi thái thú Tô Định.",
+    "candidate": {
+      "candidateId": "cand_129",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20%C4%90%C3%B4ng%20H%E1%BB%93%20Hai%20B%C3%A0%20Tr%C6%B0ng%20c%C6%B0%E1%BB%A1i%20voi%20ra%20tr%E1%BA%ADn.jpg",
+      "title": "Tư liệu lịch sử Tranh Đông Hồ Hai Bà Trưng cưỡi voi ra trận",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_130",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 130)",
+    "eventDescription": "Lễ hội Đền Hát Môn tưởng nhớ công đức Hai Bà Trưng lập nên chính quyền độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_130",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20H%C3%A1t%20M%C3%B4n%20Ph%C3%BAc%20Th%E1%BB%8D%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Hát Môn Phúc Thọ Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_131",
+    "topic": "Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 131)",
+    "eventDescription": "Bà Triệu cưỡi voi xông trận năm 248 tại Căn cứ Phú Điền Hậu Lộc Thanh Hóa chống quân Đông Ngô.",
+    "candidate": {
+      "candidateId": "cand_131",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20%C4%90%E1%BB%81n%20B%C3%A0%20Tri%E1%BB%87u%20n%C3%BAi%20T%C3%B9ng%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Đền Bà Triệu núi Tùng Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_132",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 132)",
+    "eventDescription": "Ngô Quyền cắm cọc vạt nhọn tại cửa sông Bạch Đằng, tận dụng thủy triều tiêu diệt thủy quân Nam Hán.",
+    "candidate": {
+      "candidateId": "cand_132",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20Giang%20Th%E1%BB%A7y%20Nguy%C3%AAn%20H%E1%BA%A3i%20Ph%C3%B2ng.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Bạch Đằng Giang Thủy Nguyên Hải Phòng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_133",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 133)",
+    "eventDescription": "Chiến thắng Bạch Đằng năm 938 chấm dứt hơn 1000 năm Bắc thuộc, mở ra kỷ nguyên độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_133",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20%C4%90%E1%BB%A9c%20V%C6%B0%C6%A1ng%20Ng%C3%B4%20Quy%E1%BB%81n%20t%E1%BA%A1i%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Đức Vương Ngô Quyền tại Bạch Đằng",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_134",
+    "topic": "Ngô Quyền - Bạch Đằng 938 (Case 134)",
+    "eventDescription": "Bãi cọc Bạch Đằng di tích khảo cổ học minh chứng chiến thuật quân sự thiên tài.",
+    "candidate": {
+      "candidateId": "cand_134",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hi%E1%BB%87n%20v%E1%BA%ADt%20c%E1%BB%8Dc%20g%E1%BB%97%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%20t%E1%BA%A1i%20B%E1%BA%A3o%20t%C3%A0ng%20L%E1%BB%8Bch%20s%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Hiện vật cọc gỗ Bạch Đằng tại Bảo tàng Lịch sử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_135",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 135)",
+    "eventDescription": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân, thống nhất đất nước, xưng Đại Thắng Minh Hoàng Đế, lập kinh đô Hoa Lư.",
+    "candidate": {
+      "candidateId": "cand_135",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kinh%20th%C3%A0nh%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0%20Ninh%20B%C3%ACnh.jpg",
+      "title": "Tư liệu lịch sử Kinh thành Cố đô Hoa Lư Ninh Bình",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_136",
+    "topic": "Đinh Tiên Hoàng & Tiền Lê (Case 136)",
+    "eventDescription": "Lê Hoàn lãnh đạo quân dân Đại Cồ Việt đánh tan quân Tống xâm lược trên sông Bạch Đằng năm 981.",
+    "candidate": {
+      "candidateId": "cand_136",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20th%E1%BB%9D%20Vua%20L%C3%AA%20%C4%90%E1%BA%A1i%20H%C3%A0nh%20t%E1%BA%A1i%20C%E1%BB%91%20%C4%91%C3%B4%20Hoa%20L%C6%B0.jpg",
+      "title": "Tư liệu lịch sử Đền thờ Vua Lê Đại Hành tại Cố đô Hoa Lư",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_137",
+    "topic": "Triều Lý & Thăng Long (Case 137)",
+    "eventDescription": "Năm 1010, Vua Lý Thái Tổ ban Chiếu dời đô từ Hoa Lư về thành Đại La, đổi tên thành Thăng Long rực rỡ.",
+    "candidate": {
+      "candidateId": "cand_137",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Vua%20L%C3%BD%20Th%C3%A1i%20T%E1%BB%95%20h%E1%BB%93%20Ho%C3%A0n%20Ki%E1%BA%BFm%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Vua Lý Thái Tổ hồ Hoàn Kiếm Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_138",
+    "topic": "Triều Lý & Thăng Long (Case 138)",
+    "eventDescription": "Thái úy Lý Thường Kiệt lập phòng tuyến sông Như Nguyệt, vang vọng bản tuyên ngôn Nam Quốc Sơn Hà.",
+    "candidate": {
+      "candidateId": "cand_138",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%81n%20X%C3%A0%20ph%C3%B2ng%20tuy%E1%BA%BFn%20s%C3%B4ng%20C%E1%BA%A7u%20Nh%C6%B0%20Nguy%E1%BB%87t.jpg",
+      "title": "Tư liệu lịch sử Đền Xà phòng tuyến sông Cầu Như Nguyệt",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_139",
+    "topic": "Triều Lý & Thăng Long (Case 139)",
+    "eventDescription": "Văn Miếu - Quốc Tử Giám trường đại học đầu tiên đào tạo nhân tài và nho học Đại Việt.",
+    "candidate": {
+      "candidateId": "cand_139",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%C3%AA%20V%C4%83n%20C%C3%A1c%20V%C4%83n%20Mi%E1%BA%BFu%20Qu%E1%BB%91c%20T%E1%BB%AD%20Gi%C3%A1m%20H%C3%A0%20N%E1%BB%99i.jpg",
+      "title": "Tư liệu lịch sử Khuê Văn Các Văn Miếu Quốc Tử Giám Hà Nội",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_140",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 140)",
+    "eventDescription": "Hội nghị Diên Hồng và Bình Than thể hiện ý chí muôn người như một quyết chiến thắng giặc Thát.",
+    "candidate": {
+      "candidateId": "cand_140",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Qu%E1%BB%91c%20C%C3%B4ng%20Ti%E1%BA%BFt%20Ch%E1%BA%BF%20Tr%E1%BA%A7n%20H%C6%B0ng%20%C4%90%E1%BA%A1o.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Quốc Công Tiết Chế Trần Hưng Đạo",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_141",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 141)",
+    "eventDescription": "Chiến thắng Bạch Đằng 1288 bắt sống tướng giặc Ô Mã Nhi, đập tan mộng xâm lược của đế chế Mông Cổ.",
+    "candidate": {
+      "candidateId": "cand_141",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tranh%20di%E1%BB%85n%20h%E1%BB%8Da%20chi%E1%BA%BFn%20th%E1%BA%AFng%20B%E1%BA%A1ch%20%C4%90%E1%BA%B1ng%201288.jpg",
+      "title": "Tư liệu lịch sử Tranh diễn họa chiến thắng Bạch Đằng 1288",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_142",
+    "topic": "Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 142)",
+    "eventDescription": "Phật hoàng Trần Nhân Tông sau khi thắng giặc đã nhường ngôi, sáng lập Thiền phái Trúc Lâm Yên Tử.",
+    "candidate": {
+      "candidateId": "cand_142",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%C3%A1p%20Hu%E1%BB%87%20Quang%20ch%C3%B9a%20Hoa%20Y%C3%AAn%20Tr%C3%BAc%20L%C3%A2m%20Y%C3%AAn%20T%E1%BB%AD.jpg",
+      "title": "Tư liệu lịch sử Tháp Huệ Quang chùa Hoa Yên Trúc Lâm Yên Tử",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_143",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 143)",
+    "eventDescription": "Lê Lợi dựng cờ khởi nghĩa Lam Sơn cùng Nguyễn Trãi soạn Bình Ngô Đại Cáo giành lại non sông.",
+    "candidate": {
+      "candidateId": "cand_143",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Khu%20di%20t%C3%ADch%20Qu%E1%BB%91c%20gia%20%C4%91%E1%BA%B7c%20bi%E1%BB%87t%20Lam%20Kinh%20Thanh%20H%C3%B3a.jpg",
+      "title": "Tư liệu lịch sử Khu di tích Quốc gia đặc biệt Lam Kinh Thanh Hóa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_144",
+    "topic": "Khởi Nghĩa Lam Sơn & Hậu Lê (Case 144)",
+    "eventDescription": "Vua Lê Thánh Tông ban hành Luật Hồng Đức và cho vẽ bản đồ Hồng Đức khẳng định chủ quyền cương vực.",
+    "candidate": {
+      "candidateId": "cand_144",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bia%20ti%E1%BA%BFn%20s%C4%A9%20V%C4%83n%20Mi%E1%BA%BFu%20th%E1%BB%9Di%20L%C3%AA%20Th%C3%A1nh%20T%C3%B4ng.jpg",
+      "title": "Tư liệu lịch sử Bia tiến sĩ Văn Miếu thời Lê Thánh Tông",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_145",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 145)",
+    "eventDescription": "Ba anh em Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ khởi nghĩa Tây Sơn diệt Trịnh Nguyễn phân tranh.",
+    "candidate": {
+      "candidateId": "cand_145",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Ba_anh_em_nh%C3%A0_h%E1%BB%8D_Nh%E1%BA%A1c.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20ba%20anh%20em%20T%C3%A2y%20S%C6%A1n%20t%E1%BA%A1i%20B%C3%ACnh%20%C4%90%E1%BB%8Bnh.jpg",
+      "title": "Tư liệu lịch sử Tượng đài ba anh em Tây Sơn tại Bình Định",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_146",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 146)",
+    "eventDescription": "Đại thắng Rạch Gầm - Xoài Mút 1785 tiêu diệt 5 vạn quân Xiêm xâm lược trên sông Tiền.",
+    "candidate": {
+      "candidateId": "cand_146",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e4/S%C3%B4ng_Ti%E1%BB%81n%2C_%C4%91o%E1%BA%A1n_R%E1%BA%A1ch_G%E1%BA%A7m-Xo%C3%A0i_M%C3%BAt.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Th%E1%BB%B1c%20%C4%91%E1%BB%8Ba%20s%C3%B4ng%20Ti%E1%BB%81n%20%C4%91o%E1%BA%A1n%20R%E1%BA%A1ch%20G%E1%BA%A7m%20Xo%C3%A0i%20M%C3%BAt.jpg",
+      "title": "Tư liệu lịch sử Thực địa sông Tiền đoạn Rạch Gầm Xoài Mút",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_147",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 147)",
+    "eventDescription": "Hoàng đế Quang Trung hành quân thần tốc, đại phá 29 vạn quân Thanh tại Ngọc Hồi Đống Đa Tết Kỷ Dậu 1789.",
+    "candidate": {
+      "candidateId": "cand_147",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng%20%C4%91%C3%A0i%20Ho%C3%A0ng%20%C4%91%E1%BA%BF%20Quang%20Trung%20t%E1%BA%A1i%20G%C3%B2%20%C4%90%E1%BB%91ng%20%C4%90a.jpg",
+      "title": "Tư liệu lịch sử Tượng đài Hoàng đế Quang Trung tại Gò Đống Đa",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_148",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 148)",
+    "eventDescription": "Chân dung Vua Quang Trung Nguyễn Huệ vẽ vào thế kỷ 18 thời Càn Long bảo lưu trong sử liệu.",
+    "candidate": {
+      "candidateId": "cand_148",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/A_portrait_painting_depicting_Annam_King%2C_Ruan_Guangping.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ch%C3%A2n%20dung%20v%E1%BA%BD%20Vua%20Quang%20Trung%20tri%E1%BB%81u%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Chân dung vẽ Vua Quang Trung triều Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_149",
+    "topic": "Phong Trào Tây Sơn & Quang Trung (Case 149)",
+    "eventDescription": "Đồng tiền Quang Trung thông bảo và đại bảo minh chứng chính sách kinh tế phát triển của Tây Sơn.",
+    "candidate": {
+      "candidateId": "cand_149",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Quang_Trung_dai_bao.png",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ti%E1%BB%81n%20c%E1%BB%95%20Quang%20Trung%20%C4%91%E1%BA%A1i%20b%E1%BA%A3o%20T%C3%A2y%20S%C6%A1n.jpg",
+      "title": "Tư liệu lịch sử Tiền cổ Quang Trung đại bảo Tây Sơn",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_150",
+    "topic": "Triều Nguyễn & Kinh Thành Huế (Case 150)",
+    "eventDescription": "Hoàng thành Huế và quần thể lăng tẩm các vua triều Nguyễn di sản văn hóa thế giới UNESCO.",
+    "candidate": {
+      "candidateId": "cand_150",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:C%E1%BB%95ng%20Ng%E1%BB%8D%20M%C3%B4n%20%C4%90%E1%BA%A1i%20N%E1%BB%99i%20Kinh%20th%C3%A0nh%20Hu%E1%BA%BF.jpg",
+      "title": "Tư liệu lịch sử Cổng Ngọ Môn Đại Nội Kinh thành Huế",
+      "author": "Bảo tàng Lịch sử Quốc gia / Wikimedia Commons Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_151",
+    "topic": "[License Audit Test] Hồng Bàng & Văn Lang (Case 151)",
+    "eventDescription": "Thời kỳ Hùng Vương dựng nước Văn Lang, kinh đô Phong Châu, rực rỡ văn hóa Đông Sơn và Trống Đồng Ngọc Lũ.",
+    "candidate": {
+      "candidateId": "cand_151",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_151",
+      "title": "Bản quyền hạn chế Trống Đồng Đông Sơn Ngọc Lũ thời Hùng Vương",
+      "author": "Private Commercial Stock Agency",
+      "license": "ALL_RIGHTS_RESERVED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_152",
+    "topic": "[License Audit Test] Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 152)",
+    "eventDescription": "Lễ hội Đền Hát Môn tưởng nhớ công đức Hai Bà Trưng lập nên chính quyền độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_152",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_152",
+      "title": "Bản quyền hạn chế Đền thờ Hát Môn Phúc Thọ Hà Nội",
+      "author": "Private Commercial Stock Agency",
+      "license": "COPYRIGHT_STRICT"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_153",
+    "topic": "[License Audit Test] Ngô Quyền - Bạch Đằng 938 (Case 153)",
+    "eventDescription": "Bãi cọc Bạch Đằng di tích khảo cổ học minh chứng chiến thuật quân sự thiên tài.",
+    "candidate": {
+      "candidateId": "cand_153",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_153",
+      "title": "Bản quyền hạn chế Hiện vật cọc gỗ Bạch Đằng tại Bảo tàng Lịch sử",
+      "author": "Private Commercial Stock Agency",
+      "license": "CC_NC_4_0"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_154",
+    "topic": "[License Audit Test] Đinh Tiên Hoàng & Tiền Lê (Case 154)",
+    "eventDescription": "Lê Hoàn lãnh đạo quân dân Đại Cồ Việt đánh tan quân Tống xâm lược trên sông Bạch Đằng năm 981.",
+    "candidate": {
+      "candidateId": "cand_154",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_154",
+      "title": "Bản quyền hạn chế Đền thờ Vua Lê Đại Hành tại Cố đô Hoa Lư",
+      "author": "Private Commercial Stock Agency",
+      "license": "COMMERCIAL_RESTRICTED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_155",
+    "topic": "[License Audit Test] Triều Lý & Thăng Long (Case 155)",
+    "eventDescription": "Thái úy Lý Thường Kiệt lập phòng tuyến sông Như Nguyệt, vang vọng bản tuyên ngôn Nam Quốc Sơn Hà.",
+    "candidate": {
+      "candidateId": "cand_155",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_155",
+      "title": "Bản quyền hạn chế Đền Xà phòng tuyến sông Cầu Như Nguyệt",
+      "author": "Private Commercial Stock Agency",
+      "license": "ALL_RIGHTS_RESERVED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_156",
+    "topic": "[License Audit Test] Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 156)",
+    "eventDescription": "Phật hoàng Trần Nhân Tông sau khi thắng giặc đã nhường ngôi, sáng lập Thiền phái Trúc Lâm Yên Tử.",
+    "candidate": {
+      "candidateId": "cand_156",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_156",
+      "title": "Bản quyền hạn chế Tháp Huệ Quang chùa Hoa Yên Trúc Lâm Yên Tử",
+      "author": "Private Commercial Stock Agency",
+      "license": "COPYRIGHT_STRICT"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_157",
+    "topic": "[License Audit Test] Khởi Nghĩa Lam Sơn & Hậu Lê (Case 157)",
+    "eventDescription": "Lê Lợi dựng cờ khởi nghĩa Lam Sơn cùng Nguyễn Trãi soạn Bình Ngô Đại Cáo giành lại non sông.",
+    "candidate": {
+      "candidateId": "cand_157",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_157",
+      "title": "Bản quyền hạn chế Khu di tích Quốc gia đặc biệt Lam Kinh Thanh Hóa",
+      "author": "Private Commercial Stock Agency",
+      "license": "CC_NC_4_0"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_158",
+    "topic": "[License Audit Test] Phong Trào Tây Sơn & Quang Trung (Case 158)",
+    "eventDescription": "Hoàng đế Quang Trung hành quân thần tốc, đại phá 29 vạn quân Thanh tại Ngọc Hồi Đống Đa Tết Kỷ Dậu 1789.",
+    "candidate": {
+      "candidateId": "cand_158",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://restricted-archive.example.com/asset_158",
+      "title": "Bản quyền hạn chế Tượng đài Hoàng đế Quang Trung tại Gò Đống Đa",
+      "author": "Private Commercial Stock Agency",
+      "license": "COMMERCIAL_RESTRICTED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_159",
+    "topic": "[License Audit Test] Triều Nguyễn & Kinh Thành Huế (Case 159)",
+    "eventDescription": "Hoàng thành Huế và quần thể lăng tẩm các vua triều Nguyễn di sản văn hóa thế giới UNESCO.",
+    "candidate": {
+      "candidateId": "cand_159",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://restricted-archive.example.com/asset_159",
+      "title": "Bản quyền hạn chế Cổng Ngọ Môn Đại Nội Kinh thành Huế",
+      "author": "Private Commercial Stock Agency",
+      "license": "ALL_RIGHTS_RESERVED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_160",
+    "topic": "[License Audit Test] Phong Trào Cần Vương & Chống Pháp (Case 160)",
+    "eventDescription": "Chí sĩ Phan Bội Châu khởi xướng Phong trào Đông Du đào tạo thế hệ thanh niên yêu nước.",
+    "candidate": {
+      "candidateId": "cand_160",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://restricted-archive.example.com/asset_160",
+      "title": "Bản quyền hạn chế Chân dung Nhà chí sĩ yêu nước Phan Bội Châu",
+      "author": "Private Commercial Stock Agency",
+      "license": "COPYRIGHT_STRICT"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_161",
+    "topic": "[License Audit Test] Cách Mạng Tháng Tám & Điện Biên Phủ (Case 161)",
+    "eventDescription": "Chủ tịch Hồ Chí Minh đọc Tuyên ngôn Độc lập tại Quảng trường Ba Đình ngày 2 tháng 9 năm 1945.",
+    "candidate": {
+      "candidateId": "cand_161",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://restricted-archive.example.com/asset_161",
+      "title": "Bản quyền hạn chế Quảng trường Ba Đình Lăng Chủ tịch Hồ Chí Minh",
+      "author": "Private Commercial Stock Agency",
+      "license": "CC_NC_4_0"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_162",
+    "topic": "[License Audit Test] Hồng Bàng & Văn Lang (Case 162)",
+    "eventDescription": "Văn hóa đồ đồng Đông Sơn với dao găm cán người và thạp đồng Đào Thịnh.",
+    "candidate": {
+      "candidateId": "cand_162",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_162",
+      "title": "Bản quyền hạn chế Thạp đồng Đào Thịnh bảo vật quốc gia",
+      "author": "Private Commercial Stock Agency",
+      "license": "COMMERCIAL_RESTRICTED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_163",
+    "topic": "[License Audit Test] Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 163)",
+    "eventDescription": "Năm 40 sau Công Nguyên, Hai Bà Trưng phất cờ khởi nghĩa tại Hát Môn, đánh đuổi thái thú Tô Định.",
+    "candidate": {
+      "candidateId": "cand_163",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_163",
+      "title": "Bản quyền hạn chế Tranh Đông Hồ Hai Bà Trưng cưỡi voi ra trận",
+      "author": "Private Commercial Stock Agency",
+      "license": "ALL_RIGHTS_RESERVED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_164",
+    "topic": "[License Audit Test] Ngô Quyền - Bạch Đằng 938 (Case 164)",
+    "eventDescription": "Chiến thắng Bạch Đằng năm 938 chấm dứt hơn 1000 năm Bắc thuộc, mở ra kỷ nguyên độc lập tự chủ.",
+    "candidate": {
+      "candidateId": "cand_164",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://restricted-archive.example.com/asset_164",
+      "title": "Bản quyền hạn chế Tượng đài Đức Vương Ngô Quyền tại Bạch Đằng",
+      "author": "Private Commercial Stock Agency",
+      "license": "COPYRIGHT_STRICT"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_165",
+    "topic": "[License Audit Test] Đinh Tiên Hoàng & Tiền Lê (Case 165)",
+    "eventDescription": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân, thống nhất đất nước, xưng Đại Thắng Minh Hoàng Đế, lập kinh đô Hoa Lư.",
+    "candidate": {
+      "candidateId": "cand_165",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_165",
+      "title": "Bản quyền hạn chế Kinh thành Cố đô Hoa Lư Ninh Bình",
+      "author": "Private Commercial Stock Agency",
+      "license": "CC_NC_4_0"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_166",
+    "topic": "[License Audit Test] Triều Lý & Thăng Long (Case 166)",
+    "eventDescription": "Năm 1010, Vua Lý Thái Tổ ban Chiếu dời đô từ Hoa Lư về thành Đại La, đổi tên thành Thăng Long rực rỡ.",
+    "candidate": {
+      "candidateId": "cand_166",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://restricted-archive.example.com/asset_166",
+      "title": "Bản quyền hạn chế Tượng đài Vua Lý Thái Tổ hồ Hoàn Kiếm Hà Nội",
+      "author": "Private Commercial Stock Agency",
+      "license": "COMMERCIAL_RESTRICTED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_167",
+    "topic": "[License Audit Test] Triều Trần & Ba Lần Kháng Chiến Nguyên Mông (Case 167)",
+    "eventDescription": "Chiến thắng Bạch Đằng 1288 bắt sống tướng giặc Ô Mã Nhi, đập tan mộng xâm lược của đế chế Mông Cổ.",
+    "candidate": {
+      "candidateId": "cand_167",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_167",
+      "title": "Bản quyền hạn chế Tranh diễn họa chiến thắng Bạch Đằng 1288",
+      "author": "Private Commercial Stock Agency",
+      "license": "ALL_RIGHTS_RESERVED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_168",
+    "topic": "[License Audit Test] Khởi Nghĩa Lam Sơn & Hậu Lê (Case 168)",
+    "eventDescription": "Vua Lê Thánh Tông ban hành Luật Hồng Đức và cho vẽ bản đồ Hồng Đức khẳng định chủ quyền cương vực.",
+    "candidate": {
+      "candidateId": "cand_168",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_168",
+      "title": "Bản quyền hạn chế Bia tiến sĩ Văn Miếu thời Lê Thánh Tông",
+      "author": "Private Commercial Stock Agency",
+      "license": "COPYRIGHT_STRICT"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_169",
+    "topic": "[License Audit Test] Phong Trào Tây Sơn & Quang Trung (Case 169)",
+    "eventDescription": "Chân dung Vua Quang Trung Nguyễn Huệ vẽ vào thế kỷ 18 thời Càn Long bảo lưu trong sử liệu.",
+    "candidate": {
+      "candidateId": "cand_169",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/A_portrait_painting_depicting_Annam_King%2C_Ruan_Guangping.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_169",
+      "title": "Bản quyền hạn chế Chân dung vẽ Vua Quang Trung triều Tây Sơn",
+      "author": "Private Commercial Stock Agency",
+      "license": "CC_NC_4_0"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_170",
+    "topic": "[License Audit Test] Triều Nguyễn & Kinh Thành Huế (Case 170)",
+    "eventDescription": "Cột cờ Kinh thành Huế Kỳ Đài uy nghiêm bên dòng sông Hương thơ mộng.",
+    "candidate": {
+      "candidateId": "cand_170",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Festival_Hu%E1%BA%BF_2008-8.JPG",
+      "sourceUrl": "https://restricted-archive.example.com/asset_170",
+      "title": "Bản quyền hạn chế Kỳ Đài Cột cờ Đại Nội Huế",
+      "author": "Private Commercial Stock Agency",
+      "license": "COMMERCIAL_RESTRICTED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_171",
+    "topic": "[License Audit Test] Phong Trào Cần Vương & Chống Pháp (Case 171)",
+    "eventDescription": "Tổng đốc Hoàng Diệu và Nguyễn Tri Phương tuẫn tiết quyết tử bảo vệ Thành Hà Nội.",
+    "candidate": {
+      "candidateId": "cand_171",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_171",
+      "title": "Bản quyền hạn chế Cửa Bắc Thành Cổ Hà Nội dấu vết đạn pháo Pháp",
+      "author": "Private Commercial Stock Agency",
+      "license": "ALL_RIGHTS_RESERVED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_172",
+    "topic": "[License Audit Test] Cách Mạng Tháng Tám & Điện Biên Phủ (Case 172)",
+    "eventDescription": "Chiến dịch Điện Biên Phủ 1954 lừng lẫy năm châu, chấn động địa cầu kết thúc thắng lợi.",
+    "candidate": {
+      "candidateId": "cand_172",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_172",
+      "title": "Bản quyền hạn chế Hầm Chỉ huy Tướng De Castries Điện Biên Phủ",
+      "author": "Private Commercial Stock Agency",
+      "license": "COPYRIGHT_STRICT"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_173",
+    "topic": "[License Audit Test] Hồng Bàng & Văn Lang (Case 173)",
+    "eventDescription": "An Dương Vương xây dựng thành Cổ Loa hình xoáy ốc, chế tác nỏ liên châu giữ gìn Âu Lạc.",
+    "candidate": {
+      "candidateId": "cand_173",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_173",
+      "title": "Bản quyền hạn chế Khu di tích Thành Cổ Loa Đông Anh Hà Nội",
+      "author": "Private Commercial Stock Agency",
+      "license": "CC_NC_4_0"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_174",
+    "topic": "[License Audit Test] Khởi Nghĩa Hai Bà Trưng & Bà Triệu (Case 174)",
+    "eventDescription": "Bà Triệu cưỡi voi xông trận năm 248 tại Căn cứ Phú Điền Hậu Lộc Thanh Hóa chống quân Đông Ngô.",
+    "candidate": {
+      "candidateId": "cand_174",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/%C4%90%E1%BB%81n_H%C3%A1t_M%C3%B4n.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_174",
+      "title": "Bản quyền hạn chế Khu di tích Đền Bà Triệu núi Tùng Thanh Hóa",
+      "author": "Private Commercial Stock Agency",
+      "license": "COMMERCIAL_RESTRICTED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_175",
+    "topic": "[License Audit Test] Ngô Quyền - Bạch Đằng 938 (Case 175)",
+    "eventDescription": "Ngô Quyền cắm cọc vạt nhọn tại cửa sông Bạch Đằng, tận dụng thủy triều tiêu diệt thủy quân Nam Hán.",
+    "candidate": {
+      "candidateId": "cand_175",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/8/86/Battle_at_the_River_Tho-xuong.jpg",
+      "sourceUrl": "https://restricted-archive.example.com/asset_175",
+      "title": "Bản quyền hạn chế Khu di tích Bạch Đằng Giang Thủy Nguyên Hải Phòng",
+      "author": "Private Commercial Stock Agency",
+      "license": "ALL_RIGHTS_RESERVED"
+    },
+    "expectedLicenseValid": false,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_176",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 176)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_176",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_177",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 177)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_177",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_178",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 178)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_178",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_179",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 179)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_179",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_180",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 180)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_180",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_181",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 181)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_181",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_182",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 182)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_182",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_183",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 183)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_183",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_184",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 184)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_184",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_185",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 185)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_185",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_186",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 186)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_186",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_187",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 187)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_187",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_188",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 188)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_188",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_189",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 189)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_189",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_190",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 190)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_190",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_191",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 191)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_191",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_192",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 192)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_192",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_193",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 193)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_193",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_194",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 194)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_194",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_195",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 195)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_195",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_196",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 196)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_196",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_197",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 197)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_197",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_198",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 198)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_198",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "CC_BY_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  },
+  {
+    "id": "vlm_case_199",
+    "topic": "[Context Mismatch Test] Lạc đề Ngô Quyền Bạch Đằng (Case 199)",
+    "eventDescription": "Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    "candidate": {
+      "candidateId": "cand_199",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_Concept_Car.jpg",
+      "title": "Xe hơi thể thao hiện đại đời mới công nghệ số",
+      "author": "Automotive Showcase Contributor",
+      "license": "CC_BY_SA_4_0"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": true,
+    "expectedContextMatch": false
+  },
+  {
+    "id": "vlm_case_200",
+    "topic": "[Visual Noise Test] Nhiễu mờ hạt hiện vật thời Hùng Vương (Case 200)",
+    "eventDescription": "Thời kỳ các vua Hùng dựng nước Văn Lang, khảo cổ đồ đồng Đông Sơn.",
+    "candidate": {
+      "candidateId": "cand_200",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Noise_Sample.jpg",
+      "title": "Ảnh tư liệu khảo cổ Trống Đồng Đông Sơn thời Hùng Vương chụp mờ nhiễu nhiều hạt vỡ nét watermark lớn",
+      "author": "Unknown Contributor",
+      "license": "PUBLIC_DOMAIN"
+    },
+    "expectedLicenseValid": true,
+    "expectedNoiseFree": false,
+    "expectedContextMatch": true
+  }
+]

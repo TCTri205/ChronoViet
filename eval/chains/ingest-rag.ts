@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { seedDualBranch, DualBranchSeedResult } from '../../packages/data-ingestion/src';
 import { ChronoRagEngine, extractQueryEntities, searchLocalGraphCTE } from '../../packages/rag-engine/src';
-import { query, inMemoryStore } from '../../packages/shared-spec/src';
+import { query, inMemoryStore, envConfig } from '../../packages/shared-spec/src';
+import { assertEvalPreflight } from '../utils/preflight';
 
 export interface ProductionBenchmarkTestCase {
   id: string;
@@ -38,6 +39,7 @@ export interface ProductionRagQualityReport {
   chainName: 'data-ingestion -> rag-engine';
   evalMode: 'PRODUCTION_FULL_CORPUS_BENCHMARK';
   isPgMode: boolean;
+  preflight: unknown;
   totalCorpusChunksCount: number;
   totalCorpusEntitiesCount: number;
   // Key Production IR & Quality Metrics
@@ -95,6 +97,10 @@ export async function runIngestRagChain(options: {
   // PHASE 1: FULL CORPUS PREPARATION & INTEGRITY CHECK
   // ----------------------------------------------------------------
   console.log('--- [PHASE 1] FULL-SCALE PRODUCTION CORPUS & VECTOR STORE CHECK ---');
+
+  // Eval Integrity: LLM + embedding must be real in strict mode
+  const preflight = await assertEvalPreflight(['llm', 'embedding']);
+
   const ragEngine = new ChronoRagEngine();
 
   // Test Seeding 5 Golden Datasets to ensure DB contracts
@@ -120,6 +126,10 @@ export async function runIngestRagChain(options: {
     totalCorpusChunksCount = parseInt(chunkRes[0]?.count || '0', 10);
     totalCorpusEntitiesCount = parseInt(entityRes[0]?.count || '0', 10);
   } else {
+    // Eval Integrity: strict mode must benchmark against real Postgres, not in-memory store
+    if (envConfig.EVAL_STRICT) {
+      throw new Error('[EVAL_STRICT] Postgres is unavailable — ingest-rag chain requires real pgvector DB during evaluation');
+    }
     totalCorpusChunksCount = inMemoryStore.documentChunks.size;
     totalCorpusEntitiesCount = inMemoryStore.entities.size;
   }
@@ -356,6 +366,7 @@ export async function runIngestRagChain(options: {
     chainName: 'data-ingestion -> rag-engine',
     evalMode: 'PRODUCTION_FULL_CORPUS_BENCHMARK',
     isPgMode,
+    preflight,
     totalCorpusChunksCount,
     totalCorpusEntitiesCount,
     meanReciprocalRank,

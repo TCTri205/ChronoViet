@@ -3,6 +3,7 @@
  * Ensures crawled historical text is clean, structured, and meets minimum quality thresholds.
  */
 
+import * as crypto from 'crypto';
 import { SourceReliability } from '@chronoviet/shared-spec';
 
 export interface RawCrawledContent {
@@ -109,7 +110,7 @@ ${cleaned}
   }
 
   public slugify(text: string): string {
-    return text
+    const clean = text
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -117,5 +118,9 @@ ${cleaned}
       .replace(/Đ/g, 'd')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+
+    if (clean) return clean;
+    const hash = crypto.createHash('md5').update(text || 'doc').digest('hex').slice(0, 8);
+    return `doc-${hash}`;
   }
 }

@@ -1,11 +1,6 @@
-import { loadFont as loadMerriweather } from '@remotion/google-fonts/Merriweather';
-import { loadFont as loadBeVietnamPro } from '@remotion/google-fonts/BeVietnamPro';
-
-// Load Be Vietnam Pro font stack (supports complete Vietnamese diacritics and glyphs)
-export const { fontFamily: beVietnamFont } = loadBeVietnamPro();
-
-// Load Merriweather font stack for serif historical quotes
-export const { fontFamily: merriweatherFont } = loadMerriweather();
+// Offline-safe Vietnamese font stack definitions
+export const beVietnamFont = "'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+export const merriweatherFont = "'Merriweather', 'Times New Roman', Times, Georgia, serif";
 
 /**
  * Normalizes Vietnamese text strings to Unicode Normalization Form C (NFC).
@@ -34,24 +29,12 @@ export function toVietnameseUpperCase(text?: string | null): string {
  */
 export function getSafeFontFamily(customFont?: string, isSerif: boolean = false): string {
   const defaultFont = isSerif
-    ? `"${merriweatherFont}", "${beVietnamFont}", serif`
-    : `"${beVietnamFont}", "${merriweatherFont}", sans-serif`;
+    ? `${merriweatherFont}, ${beVietnamFont}, serif`
+    : `${beVietnamFont}, ${merriweatherFont}, sans-serif`;
 
   if (!customFont) {
     return defaultFont;
   }
 
-  // If customFont contains fonts known to lack full Vietnamese diacritics on Windows
-  if (
-    customFont.includes('Georgia') ||
-    customFont.includes('Impact') ||
-    customFont.includes('Arial Black') ||
-    customFont.includes('system-ui')
-  ) {
-    return isSerif
-      ? `"${merriweatherFont}", "${beVietnamFont}", ${customFont}`
-      : `"${beVietnamFont}", "${merriweatherFont}", ${customFont}`;
-  }
-
-  return `"${beVietnamFont}", "${merriweatherFont}", ${customFont}`;
+  return `${customFont}, ${defaultFont}`;
 }

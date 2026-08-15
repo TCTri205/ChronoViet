@@ -11,6 +11,11 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "baseUrl": ".",
+    "paths": {
+      "@chronoviet/shared-spec/schema": ["../shared-spec/src/schema.ts"],
+      "@chronoviet/shared-spec/interfaces": ["../shared-spec/src/interfaces.ts"],
+      "@chronoviet/shared-spec": ["../shared-spec/src/index.ts"]
+    },
     "outDir": "dist",
     "declaration": true
   },

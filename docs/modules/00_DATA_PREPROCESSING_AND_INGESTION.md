@@ -185,7 +185,7 @@ DUAL-BRANCH INDEXING PIPELINE
   ```
 
 ### 4.2. Nhánh 2: Graph Branch (Structured Knowledge Layer)
-Sử dụng LLM (Gemini 1.5 Flash hoặc Qwen2.5-72B-Instruct) ép kiểu trả về JSON chứa các bộ ba $(Entity \rightarrow Relationship \rightarrow Entity)$ dựa theo Ontology Lịch sử:
+Sử dụng LLM (qua `generateLLMCompletion`: local llama-server `qwen3.5-27b` primary, Agnes cloud fallback khi `EVAL_STRICT=false`) ép kiểu trả về JSON chứa các bộ ba $(Entity \rightarrow Relationship \rightarrow Entity)$ dựa theo Ontology Lịch sử. Khi `EVAL_STRICT=true`, LLM fail → throw `[EVAL_STRICT]` (không dùng regex fallback):
 
 * **Prompt Few-Shot Trích Xuất Bộ Ba (Triple Extraction Prompt)**:
   ```text
@@ -256,15 +256,11 @@ Mỗi ảnh nạp vào thư mục `/media/raw-assets/` bắt buộc đăng ký v
 ```
 
 
-### 5.2. Audio & SFX Asset Ingestion Pipeline
-Nhạc nền (BGM) và hiệu ứng âm thanh (SFX) được nạp qua script setup tự động `pnpm --filter @chronoviet/remotion-engine setup-assets`:
-
-1. **Chuẩn Hóa Âm Lượng (EBU R128 Normalization)**: Toàn bộ file SFX (`.mp3`/`.wav`) được đưa về mức chuẩn **-14 LUFS** (đối với BGM) và **-6 LUFS Peak** (đối với SFX) để tránh tình trạng âm thanh chênh lệch âm lượng khi render video.
-2. **Phân Loại Danh Mục Âm Thanh (Audio Category Cataloging)**:
-   * `sfx_drum_war.wav`: Tiếng trống trận (dùng cho domain `BATTLE`).
-   * `sfx_sword_clash.wav`: Tiếng binh khí va chạm.
-   * `sfx_court_gong.wav`: Tiếng chuông/khánh triều đình (dùng cho domain `DYNASTY`).
-   * `sfx_thunder_mystery.wav`: Tiếng sấm âm u (dùng cho domain `MYSTERY`).
+### 5.2. Audio & Visual Asset Runtime Responsibilities
+Theo kiến trúc chuẩn phân tách trách nhiệm (Separation of Concerns):
+- **Tài nguyên thị giác (Visual Assets):** Kiểm định chất lượng (Quality Gate độ phân giải >= 720p, tỷ lệ khung hình, pHash) và kiểm toán bản quyền (License Audit) được xử lý trực tiếp trong quy trình Online Runtime tại [`packages/vlm-inspector`](../packages/vlm-inspector) (`VisualQualityGate`).
+- **Tài nguyên âm thanh (Audio Assets):** Chuẩn hóa âm lượng (-14 LUFS cho BGM, -6 LUFS Peak cho SFX) được xử lý trong quy trình Online Audio tại [`services/vieneu-tts`](../services/vieneu-tts) (`AudioNormalizer`).
+- **Mô-đun 0 (`packages/data-ingestion`):** Tập trung 100% vào tiền xử lý kho tri thức ngoại tuyến (Offline Knowledge Ingestion, Hierarchical Chunking, Knowledge Graph Triples, Vector Seeding).
 
 ---
 
@@ -287,13 +283,10 @@ pnpm --filter @chronoviet/data-ingestion ingest:knowledge --input=data/raw_corpu
 # 4. Hợp giải mâu thuẫn thực thể & ghi vết nhật ký audit log
 pnpm --filter @chronoviet/data-ingestion rag:re-resolve
 
-# 5. Chạy pipeline kiểm định bản quyền & nạp tài nguyên hình ảnh/âm thanh
-pnpm setup-assets # hoặc pnpm --filter @chronoviet/data-ingestion setup-assets
-
-# 6. Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
+# 5. Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
 pnpm eval:seed # hoặc pnpm --filter @chronoviet/data-ingestion eval:seed
 
-# 7. Chạy bộ kiểm thử Benchmark đo lường 3 chỉ số KPI Mô-đun 0
+# 6. Chạy bộ kiểm thử Benchmark đo lường 4 chỉ số KPI Mô-đun 0
 pnpm eval:ingest # hoặc pnpm --filter @chronoviet/data-ingestion eval
 ```
 

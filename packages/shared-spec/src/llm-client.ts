@@ -58,6 +58,11 @@ export async function generateLLMCompletion(
     messageCount: messages.length,
   });
 
+  // Eval Integrity: strict mode requires the local LLM server (no cloud fallback)
+  if (envConfig.EVAL_STRICT && !envConfig.USE_LOCAL_LLM) {
+    throw new Error('[EVAL_STRICT] USE_LOCAL_LLM must be true during evaluation');
+  }
+
   // 1. Attempt Primary Local LLM (llama-server)
   if (envConfig.USE_LOCAL_LLM) {
     try {
@@ -138,6 +143,11 @@ export async function generateLLMCompletion(
 
       if (!envConfig.ENABLE_CLOUD_FALLBACK) {
         throw new Error(`Local LLM failed and Cloud Fallback is disabled: ${errMsg}`);
+      }
+
+      // Eval Integrity: strict mode forbids silent cloud substitution during evaluation
+      if (envConfig.EVAL_STRICT && !envConfig.EVAL_ALLOW_CLOUD_FALLBACK) {
+        throw new Error(`[EVAL_STRICT] Local LLM failed during evaluation: ${errMsg}`);
       }
     }
   }
@@ -255,4 +265,17 @@ export async function isLLMServiceHealthy(): Promise<{ healthy: boolean; provide
     details: `Local LLM at ${envConfig.LLM_BASE_URL} is unreachable and no valid cloud API key is configured`,
   };
 }
+
+export async function callLlm(params: {
+  messages: ChatMessage[];
+  temperature?: number;
+  maxTokens?: number;
+  responseFormat?: string;
+}): Promise<LLMCompletionResponse> {
+  return generateLLMCompletion(params.messages, {
+    temperature: params.temperature,
+    max_tokens: params.maxTokens,
+  });
+}
+
 

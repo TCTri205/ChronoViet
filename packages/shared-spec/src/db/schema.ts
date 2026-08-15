@@ -65,6 +65,16 @@ CREATE TABLE IF NOT EXISTS entity_audit_logs (
     rationale TEXT
 );
 
+-- 7. Orchestrator State Checkpoints Table (LangGraph Persistence)
+CREATE TABLE IF NOT EXISTS orchestrator_checkpoints (
+    project_id TEXT PRIMARY KEY,
+    current_step INT NOT NULL,
+    status TEXT NOT NULL,
+    state_data JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Migrations for existing tables (Upgrading to TEXT type for zero length restrictions)
 ALTER TABLE document_chunks DROP COLUMN IF EXISTS tsv;
 
@@ -101,4 +111,5 @@ WITH (m = 16, ef_construction = 64);
 
 CREATE INDEX IF NOT EXISTS idx_chunks_fts ON document_chunks USING GIN (tsv);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON entity_audit_logs (entity_id);
+CREATE INDEX IF NOT EXISTS idx_checkpoints_status ON orchestrator_checkpoints (status);
 `;

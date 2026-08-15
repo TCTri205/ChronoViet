@@ -271,8 +271,8 @@ ${text.slice(0, 3500)}
       error: err,
     });
 
-    if (options?.strict) {
-      throw new Error(`[STRICT MODE] LLM Triple Extraction failed: ${errMsg}`);
+    if (options?.strict || envConfig.EVAL_STRICT) {
+      throw new Error(`[EVAL_STRICT] LLM Triple Extraction failed: ${errMsg}`);
     }
 
     if (!warnedLlmOffline) {

@@ -26,8 +26,8 @@
 | **Engine Render (Remotion)** | React 18 + Remotion v4, Ken Burns, 31 LayoutMode, Zod Discriminated Unions, Audio-Driven Timing, Fallback Overlay Data, Karaoke Sync | **[✅ IMPLEMENTED]** (100% Codebase) | Engine cốt lõi đã hoàn thiện, nhận JSON schema v4.1 để render MP4 mượt mà 0% vỡ layout. |
 | **Tạo Giọng Đọc (TTS)** | Self-Hosted VieNeu Neural TTS (`vieneu.io`), FastAPI Python ONNX Engine + Node.js Dual-Layer Fallback, Word Timestamps | **[✅ IMPLEMENTED]** (Phase 1 Microservice & Eval Suite) | Giọng thuyết minh lịch sử truyền cảm, ngắt nghỉ chuẩn, sinh Word Timestamps cho chữ Karaoke, kèm bộ kiểm thử `services/vieneu-tts/eval/`. |
 | **Dữ liệu & Tri thức (RAG)** | PostgreSQL-Powered GraphRAG (`pgvector` Dense BGE-M3 1024d + Relational Graph CTEs), SGK & Sử liệu cổ. | **[✅ IMPLEMENTED]** (100% Codebase & Eval) | Mô-đun 1: Hybrid GraphRAG (pgvector + Relational Graph CTEs k=1,2 + BM25 FTS + RRF). Đã vượt KPI: Fact Precision 100%, Hallucination Rate 0%, Citation Traceability 100%. |
-| **Đội ngũ Agent (Multi-Agent)** | LangGraph.js Agentic Orchestrator (Node.js/TS) + PostgreSQL State Checkpointer + Automated Guardrails. | **[✅ IMPLEMENTED]** (100% Codebase & Eval) | Mô-đun 2: Quy trình chia phân cảnh & 5 Micro-Steps kịch bản (kèm Narrative Context & Duration Reconcile), NLI Entailment Hallucination Judge & Folklore Guardrail Gate. |
-| **Thẩm định Hình ảnh (VLM)** | Hybrid VLM (Google Gemini 2.5 Flash Cloud + Local CLIP ONNX Fallback) + Dual-Layer Cache. | **[📐 ARCHITECTURE DESIGN]** (v3.2 Spec) | Mô-đun 3: Thẩm định bối cảnh lịch sử theo Chiến lược 3+3 Candidates, lọc giấy phép Whitelisted (`Public Domain`, `CC0`, `CC-BY`), tự động chọn Fallback Pure Code Layout Rotation. |
+| **Đội ngũ Agent (Multi-Agent)** | LangGraph.js Agentic Orchestrator (Node.js/TS) + PostgreSQL State Checkpointer + Automated Guardrails + Research Agent (online image search). | **[✅ IMPLEMENTED]** (100% Codebase & Eval) | Mô-đun 2: Quy trình chia phân cảnh & 5 Micro-Steps kịch bản (kèm Narrative Context & Duration Reconcile), Research Agent (Micro-Step 1C) dùng provider chain SerpAPI/Tavily/Brave/Wikimedia/Catalog để tìm ảnh, NLI Entailment Hallucination Judge & Folklore Guardrail Gate. |
+| **Thẩm định Hình ảnh (VLM)** | Hybrid VLM (Google Gemini 2.5 Flash Cloud + Local CLIP ONNX Fallback) + Dual-Layer Cache + Research Agent candidate pool. | **[✅ IMPLEMENTED]** | Mô-đun 3: Thẩm định bối cảnh lịch sử theo Chiến lược 3+3 Candidates (nhận candidate từ Research Agent), lọc giấy phép Whitelisted (`Public Domain`, `CC0`, `CC-BY`), tự động chọn Fallback Pure Code Layout Rotation. |
 
 > 🔗 **Tài liệu Chi tiết:** Tra cứu [architecture/](architecture) cho Kiến trúc Hệ thống & Hạ tầng và [modules/](modules) cho 5 Mô-đun Pipeline.
 
@@ -74,8 +74,8 @@
                                              ┌───────────────────────────────────────┴───────────────────────────────────────┐
                                              ▼                                                                               ▼
                               ┌─────────────────────────────┐                                                 ┌─────────────────────────────┐
-                              │ Parallel Worker A: TTS      │                                                 │ Parallel Worker B: Crawler  │
-                              │ (VieNeu ONNX Engine)        │                                                 │ + Mô-đun 3: Hybrid VLM      │
+                              │ Parallel Worker A: TTS      │                                                 │ Parallel Worker B: Research │
+                              │ (VieNeu ONNX Engine)        │                                                 │ Agent (1C) -> VLM Inspector │
                               └──────────────┬──────────────┘                                                 │ + License Filter (PD, CC0)  │
                                              │                                                                └──────────────┬──────────────┘
                                              └───────────────────────────────┬───────────────────────────────┘
@@ -102,12 +102,13 @@
 
 ## 4. Quy trình Kiểm định Hình ảnh bằng VLM (VLM Inspector Pipeline)
 
-Để giải quyết triệt để vấn đề lấy sai ảnh lịch sử (ví dụ: crawl nhầm ảnh phim cổ trang Trung Quốc hoặc ảnh sai thời kỳ), Agent VLM hoạt động theo cơ chế 3 lớp kết hợp Chiến lược 3+3 Candidates:
+Để giải quyết triệt để vấn đề lấy sai ảnh lịch sử (ví dụ: crawl nhầm ảnh phim cổ trang Trung Quốc hoặc ảnh sai thời kỳ), Agent VLM hoạt động theo cơ chế 3 lớp kết hợp Chiến lược 3+3 Candidates. **Trước đó, Research Agent (Micro-Step 1C)** đã tìm candidate pool online qua provider chain (SerpAPI/Tavily/Brave/Wikimedia/Catalog) với **domain whitelist** — nên VLM chỉ nhận ảnh đã an toàn nguồn gốc:
 
-1. **Lớp 1: Filter kỹ thuật sơ cấp (Metadata Filter)**
+1. **Lớp 0: Nhận candidate từ Research Agent** — `researchResults[sceneId]` (kèm provenance provider/latency). Fallback gọi `resolveImageCandidates` inline nếu chưa có.
+2. **Lớp 1: Filter kỹ thuật sơ cấp (Metadata Filter)**
    - Kiểm tra độ phân giải, tỉ lệ khung hình (> 600×600), định dạng hợp lệ.
 
-2. **Lớp 2: Phân tích Thị giác bằng VLM (Gemini 2.5 Flash Cloud API) & Chiến lược 3+3 Candidates**
+3. **Lớp 2: Phân tích Thị giác bằng VLM (Gemini 2.5 Flash Cloud API) & Chiến lược 3+3 Candidates**
    - *Đầu vào:* Hình ảnh crawl được + Từ khóa sự kiện + Mô tả bối cảnh từ RAG.
    - *Tiêu chí chấm điểm (Score 0–100):*
      - **Historical Context Score:** Trang phục, kiến trúc có đúng bối cảnh Việt Nam không? (Loại bỏ ảnh có cờ, trang phục triều đại phong kiến Trung Quốc/Triều Tiên).
@@ -115,7 +116,7 @@
      - **Artistic Fit Score:** Ảnh chụp thật, tranh vẽ lịch sử hay sơ đồ địa hình?
    - *Bộ đệm 2 lớp (Redis Dual-Layer Cache):* Hash SHA-256 và Perceptual Hash (pHash) trong Redis (TTL 30 ngày) giúp lấy kết quả audit trong 1ms đối với ảnh trùng lặp.
 
-3. **Lớp 3: Phương án Dự phòng (Fallback Mechanism)**
+4. **Lớp 3: Phương án Dự phòng (Fallback Mechanism)**
    - Nguồn ảnh trong ChronoViet là **100% Crawl từ Internet/Kho tư liệu** (không dùng Generative AI).
    - Nếu điểm VLM < 60: Tự động chuyển hướng sang Re-crawl tìm **Sơ đồ trận đánh / Bản đồ cổ / Ảnh di tích cổ**, hoặc tự động fallback sang các **Pure Code LayoutMode** (`STAT_CARD`, `QUOTE_SLIDE`, `TIMELINE_CHRONO`...) để đảm bảo video render thành công 100% không bị hỏng layout.
 

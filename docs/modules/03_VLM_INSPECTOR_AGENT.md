@@ -1,5 +1,8 @@
 # CHI TIẾT MÔ-ĐUN 3: VLM INSPECTOR SUB-AGENT
-## (Visual Quality Control, Whitelisted Licensing & Hybrid Fallback Sub-Agent Specification v3.2)
+## (Visual Quality Control, Whitelisted Licensing & Hybrid Fallback Sub-Agent Specification v3.3)
+
+> **Trạng thái:** `[✅ IMPLEMENTED — Visual Quality Control, Local VLM & Cloud Gemini Scorers v3.3]`
+> **Cập nhật:** Eval Integrity Gates — khi `EVAL_STRICT=true`, VLM Inspector dùng **Local VLM (`qwen3-vl-8b` qua llama-server)** làm scorer bắt buộc; Gemini cloud & CLIP heuristic chỉ là chế độ dev (`EVAL_STRICT=false`).
 
 ---
 
@@ -15,9 +18,13 @@ Khi thu thập hình ảnh tư liệu lịch sử Việt Nam tự động từ I
 
 **Quy tắc nguồn tư liệu cốt lõi:** Trong hệ thống ChronoViet:
 - **NGUỒN ẢNH CHỈ DUY NHẤT LÀ CRAWL** (từ Wikimedia Commons, kho ảnh bảo tàng, Flickr Creative Commons, thư viện ảnh cổ). Hệ thống **tuyệt đối không sử dụng các mô hình Generative AI để sinh ảnh giả lập**.
+- **Research Agent (Micro-Step 1C)** tìm ảnh online qua provider chain (SerpAPI / Tavily / Brave Search API → Wikimedia Commons → Curated Catalog) và chỉ chấp nhận ảnh từ **domain whitelist**; VLM Inspector chỉ chấm điểm/lọc candidate đã được research.
 - **100% ẢNH CRAWL PHẢI THUỘC WHITELIST LICENSE** (`Public Domain`, `CC0`, `CC-BY-4.0`, `CC-BY-SA-4.0`) và đi kèm thông tin `attribution`.
 
-VLM Inspector Sub-Agent sử dụng mô hình **Google Gemini 2.5 Flash Cloud API (Primary Scorer)** với độ trễ sub-second (< 500ms/ảnh) và bộ đệm Redis 2 lớp (SHA-256 + pHash). Đồng thời tích hợp **Local CLIP/SigLIP Cosine Similarity Scorer (Offline Fallback Scorer)** chạy ONNX local khi gặp rủi ro rate-limit (HTTP 429), ngắt kết nối API hoặc timeout.
+VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiên thay đổi theo chế độ:
+- **Eval strict (`EVAL_STRICT=true`, mặc định):** **Local VLM (`qwen3-vl-8b`) qua llama-server** (`LLM_BASE_URL`) là scorer bắt buộc. Local VLM fail → eval FAIL ngay, **không** rơi vào Gemini/CLIP.
+- **Dev (`EVAL_STRICT=false`):** Gemini 2.5 Flash Cloud API (Primary, khi có `GEMINI_API_KEY`) → Local CLIP/SigLIP Cosine Similarity Scorer (Offline Fallback khi rate-limit HTTP 429, mất kết nối hoặc timeout).
+- Dual-Cache Redis 2 lớp (SHA-256 + pHash) luôn được kiểm tra trước mọi scorer.
 
 ---
 
@@ -53,8 +60,9 @@ VLM Inspector Sub-Agent sử dụng mô hình **Google Gemini 2.5 Flash Cloud AP
                                        ▼
   ┌────────────────────────────────────────────────────────────────────────────┐
   │ LỚP 3: HYBRID VLM VISUAL & CONTEXT SCORING                                 │
-  │ ├─ Primary: Cloud Gemini 2.5 Flash API                                    │
-  │ └─ Fallback (Nếu 429/500/Timeout): Local CLIP/SigLIP Cosine Scorer        │
+  │ ├─ Eval strict: Local VLM (qwen3-vl-8b qua llama-server) — bắt buộc       │
+  │ ├─ Dev primary: Cloud Gemini 2.5 Flash API (khi có GEMINI_API_KEY)         │
+  │ └─ Dev fallback (429/500/Timeout): Local CLIP/SigLIP Cosine Scorer        │
   │ - Historical Context Score (0-40): Đúng trang phục, cờ, kiến trúc VN?     │
   │ - Visual Noise Score (0-30): Có watermark, logo, chữ đè không?            │
   │ - Artistic & Resolution Fit (0-30): Độ sắc nét, phong cách nghệ thuật?   │
@@ -127,7 +135,8 @@ VLM Inspector Sub-Agent phối hợp cùng Orchestrator theo chiến lược 3+3
 | Trường Hợp Thất Bại | Chiến Lược Xử Lý (Strategy 3+3 & Fallback) | Cập Nhật JSON Kịch Bản |
 | :--- | :--- | :--- |
 | **Ảnh không thuộc Whitelisted License** | Loại bỏ ngay ở Lớp 0, không gọi VLM | Chuyển sang candidate tiếp theo hoặc Crawl Batch 2 |
-| **Cloud VLM API bị Rate Limit (HTTP 429/500)** | Tự động chuyển sang **Local CLIP Cosine Scorer** (Offline) | Gắn cờ `vlmScorerType: "LOCAL_CLIP"` vào Scene Props |
+| **Local VLM (strict) lỗi / server down** | **FAIL eval ngay** (`[EVAL_STRICT] Local VLM failed`) — không dùng Gemini/CLIP | Không xuất report PASS |
+| **Dev: Cloud VLM API bị Rate Limit (HTTP 429/500)** | Tự động chuyển sang **Local CLIP Cosine Scorer** (Offline, chỉ khi `EVAL_STRICT=false`) | Gắn cờ `vlmScorerType: "LOCAL_CLIP"` vào Scene Props |
 | **Ảnh đợt 1 dính watermark / vỡ nét / điểm < 60** | Kích hoạt Crawl Batch 2 (3 ảnh mở rộng về **Sơ đồ trận đánh / Bản đồ cổ / Di tích**) | VLM so sánh toàn bộ 6 ảnh ứng viên để chọn ảnh đạt score cao nhất |
 | **Cả 6 ảnh ứng viên đều < 60 điểm (hoặc nhầm bối cảnh văn hóa)** | Loại bỏ hoàn toàn hình ảnh, kích hoạt **PURE_CODE Layout Rotation Engine** | Xóa `assetUrl`, Code Rules Engine tự chọn layout xoay vòng (`STAT_CARD`, `QUOTE_SLIDE`, `TIMELINE_CHRONO`...) |
 | **Crawl 404 / Không có dữ liệu mạng** | Ép chuyển thẳng sang **Pure Code LayoutMode** (Render 100% bằng Code) | Xóa `assetUrl`, chọn trong 11 Pure Code LayoutModes mà KHÔNG cần tốn token gọi lại LLM |
@@ -144,6 +153,8 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
 
 ## 5. Tương Tác Giữa VLM Sub-Agent Và Multi-Agent Orchestrator
 
+**Đầu vào candidate:** VLM Inspector **nhận candidate pool từ Research Agent (Micro-Step 1C)** qua state `researchResults[sceneId]`. Research Agent dùng provider chain online (SerpAPI / Tavily / Brave Search API → Wikimedia Commons → Curated Catalog) và chỉ chấp nhận ảnh từ domain whitelist, nên VLM Inspector không phải lọc nguồn rác — chỉ tập trung chấm điểm bối cảnh lịch sử, nhiễu thị giác và thẩm mỹ.
+
 ```json
 // Output trả về từ VLM Sub-Agent gửi đến Master Orchestrator:
 {
@@ -157,7 +168,7 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
   "vlm_inspection": {
     "total_score": 85,
     "verdict": "APPROVED",
-    "scorer_type": "CLOUD_GEMINI",
+    "scorer_type": "LOCAL_VLM", // hoặc GEMINI_CLOUD khi EVAL_STRICT=false
     "reason": "Ảnh sắc nét, chuẩn bối cảnh trận Bạch Đằng 1288, thuộc giấy phép CC-BY-SA-4.0 hợp lệ."
   },
   "action_taken": "USE_IMAGE",
@@ -177,6 +188,6 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
 
 ---
 
-## 6. Ý Nghĩa Kỹ Thuật Của VLM Inspector Sub-Agent (v3.2)
+## 6. Ý Nghĩa Kỹ Thuật Của VLM Inspector Sub-Agent (v3.3)
 
-Nhờ Sub-Agent VLM Inspector (Hybrid Gemini + Local CLIP, License Whitelist Filter và Redis Caching) và cơ chế Fallback Pure Code, ChronoViet giải quyết triệt để rủi ro lớn nhất của các hệ thống tự động hóa video: **Hệ thống luôn luôn render xuất ra được video hoàn chỉnh, đẹp mắt, an toàn về mặt văn hóa/lịch sử và tuân thủ bản quyền thương mại 100% ngay cả khi nguồn dữ liệu crawl trên internet bị thiếu sót hoặc cloud API gặp sự cố.**
+Nhờ Sub-Agent VLM Inspector (Local VLM `qwen3-vl-8b` cho eval strict, Hybrid Gemini + Local CLIP cho dev, License Whitelist Filter và Redis Caching) và cơ chế Fallback Pure Code, ChronoViet giải quyết triệt để rủi ro lớn nhất của các hệ thống tự động hóa video: **Hệ thống luôn luôn render xuất ra được video hoàn chỉnh, đẹp mắt, an toàn về mặt văn hóa/lịch sử và tuân thủ bản quyền thương mại 100% ngay cả khi nguồn dữ liệu crawl trên internet bị thiếu sót hoặc cloud API gặp sự cố.**

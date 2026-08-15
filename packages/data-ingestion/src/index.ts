@@ -2,7 +2,6 @@ export * from './types.js';
 export * from './text/index.js';
 export * from './chunking/index.js';
 export * from './seeder/index.js';
-export * from './media/index.js';
 export * from './crawler/index.js';
 export * from './pdf/pdf-extractor.js';
 export * from './text-cleaner.js';

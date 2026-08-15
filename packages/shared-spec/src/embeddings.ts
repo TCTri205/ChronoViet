@@ -94,7 +94,7 @@ function adaptDimension(vector: number[], targetDim: number): number[] {
  * Connects to real BGE-M3 / TEI / Ollama / OpenAI embedding server if EMBEDDING_API_URL is set.
  * Uses pseudo-random hash generator as fallback when EMBEDDING_API_URL is unconfigured or request fails.
  */
-let serverUnreachable = false;
+let serverUnreachableUntil = 0;
 
 export async function generateEmbedding(text: string): Promise<number[]> {
   if (!text || !text.trim()) {
@@ -107,8 +107,13 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 
   const apiUrl = envConfig.EMBEDDING_API_URL;
-  if (!apiUrl || serverUnreachable) {
-    if (!warnedMissingApiUrl && typeof process !== 'undefined' && process.env.NODE_ENV !== 'test' && !serverUnreachable) {
+  const isCircuitOpen = serverUnreachableUntil > Date.now();
+
+  if (!apiUrl || isCircuitOpen) {
+    if (envConfig.EVAL_STRICT) {
+      throw new Error('[EVAL_STRICT] Embedding server unavailable during evaluation; pseudo-random fallback disabled');
+    }
+    if (!warnedMissingApiUrl && typeof process !== 'undefined' && process.env.NODE_ENV !== 'test' && !isCircuitOpen) {
       log.warn('embedding.api_unconfigured', 'Embedding API URL is not configured; using pseudo-random fallback', {
         fallback: 'Deterministic Pseudo-Random Vector Generator',
         actionRequired: 'Set EMBEDDING_API_URL=http://localhost:8080/v1/embeddings in .env',
@@ -181,8 +186,11 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     embeddingCache.set(trimmed, normalized);
     return normalized;
   } catch (err) {
-    serverUnreachable = true;
+    serverUnreachableUntil = Date.now() + 30000; // Retry after 30s cooldown
     const errMsg = err instanceof Error ? err.message : String(err);
+    if (envConfig.EVAL_STRICT) {
+      throw new Error(`[EVAL_STRICT] Embedding server unavailable during evaluation; pseudo-random fallback disabled: ${errMsg}`);
+    }
     log.error('embedding.api_failed', 'Embedding API request failed; using pseudo-random fallback', {
       error: err,
       apiUrl,

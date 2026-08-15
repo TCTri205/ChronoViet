@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateChunkQuality } from './metrics.js';
+import { evaluateChunkQuality } from '../metrics.js';
 import { CHUNK_PARENT_MIN_WORDS, CHUNK_CHILD_MIN_WORDS } from '@chronoviet/shared-spec';
 
 function makeText(n: number): string {

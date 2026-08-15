@@ -445,6 +445,8 @@ export type TimelineSceneInput = z.input<typeof TimelineSceneSchema>;
 export type TimelineScene = z.output<typeof TimelineSceneSchema>;
 export type ChronoVideoScript = z.infer<typeof ChronoVideoScriptSchema>;
 export type ChronoVideoProps = ChronoVideoScript;
+export const VideoProjectSchema = ChronoVideoScriptSchema;
+export type VideoProject = ChronoVideoScript;
 
 export type RagSearchRequestInput = z.input<typeof RagSearchRequestSchema>;
 export type RagSearchRequest = z.output<typeof RagSearchRequestSchema>;
@@ -703,6 +705,87 @@ export type ClaimVerification = z.infer<typeof ClaimVerificationSchema>;
 export type AblationConfig = z.infer<typeof AblationConfigSchema>;
 export type ComponentBenchmarkReport = z.infer<typeof ComponentBenchmarkReportSchema>;
 export type RegressionQualityGate = z.infer<typeof RegressionQualityGateSchema>;
+
+// ============================================================================
+// 11. WORKSPACE, CHAPTERING & MULTI-AGENT ORCHESTRATION SCHEMAS
+// ============================================================================
+
+export const ProjectWorkspaceConfigSchema = z.object({
+  projectId: z.string().min(1),
+  baseDir: z.string().default('/media/projects'),
+  assetsDir: z.string().optional(),
+  audioDir: z.string().optional(),
+  captionsDir: z.string().optional(),
+  tempDir: z.string().optional(),
+  outputDir: z.string().optional(),
+  cleanupOnComplete: z.boolean().default(true),
+  maxDiskUsageMb: z.number().positive().default(2048),
+});
+
+export const ChapterPlanSchema = z.object({
+  chapterIndex: z.number().int().min(0),
+  title: z.string().min(1),
+  summary: z.string(),
+  targetDurationSeconds: z.number().positive(),
+  keyEvents: z.array(z.string()).default([]),
+  introducedEntities: z.array(z.string()).default([]),
+  transitionHook: z.string().optional(),
+  establishedTone: z.string().optional(),
+});
+
+export const VisualCandidateSchema = z.object({
+  candidateId: z.string(),
+  imageUrl: z.string().url(),
+  sourceUrl: z.string().url().optional(),
+  title: z.string().optional(),
+  author: z.string().optional(),
+  license: LicenseTypeSchema,
+  localPath: z.string().optional(),
+  sha256: z.string().optional(),
+  pHash: z.string().optional(),
+  score: z
+    .object({
+      historicalContextScore: z.number().min(0).max(100),
+      visualNoiseScore: z.number().min(0).max(100),
+      artisticFitScore: z.number().min(0).max(100),
+      overallScore: z.number().min(0).max(100),
+    })
+    .optional(),
+  verdict: z.enum(['PASS', 'REJECT']).optional(),
+  candidateBatch: z.union([z.literal(1), z.literal(2)]).default(1),
+});
+
+export const SceneGenerationSchema = z.object({
+  sceneId: z.string(),
+  sceneIndex: z.number().int().min(0),
+  voiceoverText: z.string().min(1),
+  layoutMode: LayoutModeSchema,
+  contentType: z.enum(['IMAGE', 'PURE_CODE']).default('IMAGE'),
+  targetDurationSeconds: z.number().positive(),
+  searchKeywords: z.array(z.string()).default([]),
+  candidates: z.array(VisualCandidateSchema).default([]),
+  selectedAsset: VisualCandidateSchema.optional(),
+  audioPath: z.string().optional(),
+  audioDurationSeconds: z.number().optional(),
+  wordTimestamps: z.array(WordTimestampSchema).optional(),
+  usePureCodeFallback: z.boolean().default(false),
+});
+
+export const MediaAssetRegistrySchema = z.object({
+  projectId: z.string(),
+  assets: z.array(AssetLicenseRegistrySchema).default([]),
+  totalAssets: z.number().int().min(0).default(0),
+  allWhitelisted: z.boolean().default(true),
+  createdAt: z.string().default(() => new Date().toISOString()),
+  updatedAt: z.string().default(() => new Date().toISOString()),
+});
+
+export type ProjectWorkspaceConfig = z.infer<typeof ProjectWorkspaceConfigSchema>;
+export type ChapterPlan = z.infer<typeof ChapterPlanSchema>;
+export type VisualCandidate = z.infer<typeof VisualCandidateSchema>;
+export type SceneGeneration = z.infer<typeof SceneGenerationSchema>;
+export type MediaAssetRegistry = z.infer<typeof MediaAssetRegistrySchema>;
+
 
 
 

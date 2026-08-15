@@ -106,9 +106,31 @@ const EnvSchema = z.object({
   AUDIO_CACHE_DIR: z.string().default('./media/audio-cache'),
 
   // ==========================================
+  // Image Research Agent (Online Search Providers)
+  // ==========================================
+  SERPAPI_API_KEY: z.string().optional(),
+  TAVILY_API_KEY: z.string().optional(),
+  BRAVE_API_KEY: z.string().optional(),
+  // Comma-separated priority chain of image search providers.
+  // Supported: serpapi, tavily, brave, wikimedia, catalog
+  IMAGE_SEARCH_PROVIDER_CHAIN: z.string().default('serpapi,tavily,brave,wikimedia,catalog'),
+  IMAGE_DOMAIN_WHITELIST: z
+    .string()
+    .default(
+      'upload.wikimedia.org,commons.wikimedia.org,live.staticflickr.com,flickr.com'
+    ),
+
+  // ==========================================
   // Evaluation
   // ==========================================
   EVAL_MAX_RTF: z.coerce.number().positive().default(0.3),
+  EVAL_STRICT: z
+    .union([z.boolean(), z.string().transform((v) => v === 'true')])
+    .default(true),
+  EVAL_ALLOW_CLOUD_FALLBACK: z
+    .union([z.boolean(), z.string().transform((v) => v === 'true')])
+    .default(false),
+  EVAL_VLM_MODEL: z.string().default('qwen3-vl-8b'),
 
   // ==========================================
   // Logging

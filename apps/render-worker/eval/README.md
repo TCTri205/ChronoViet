@@ -12,3 +12,5 @@ Bộ công cụ đánh giá dành riêng cho **Render Worker App** (BullMQ Task 
 ```bash
 pnpm --filter @chronoviet/render-worker eval
 ```
+
+> ⚠️ **Preflight bắt buộc (Eval Integrity):** Khi `EVAL_STRICT=true` (mặc định), eval fail-fast nếu **VieNeu Python ONNX TTS** (`VIENEU_PYTHON_URL`) không hoạt động — `processTTSJob` không được fallback sang word-timing heuristic hay synthetic WAV. Dev-mode: `EVAL_STRICT=false`.

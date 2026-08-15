@@ -18,12 +18,25 @@ interface SlideImageProps {
 }
 
 const normalizePath = (url: string) => {
-  if (url.startsWith('http') || url.startsWith('data:')) return url;
-  const clean = url.startsWith('/') ? url : `/${url}`;
-  return staticFile(clean);
+  if (!url) return '';
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:') ||
+    url.startsWith('blob:')
+  ) {
+    return url;
+  }
+  const clean = url.startsWith('/') ? url.slice(1) : url;
+  try {
+    return staticFile(clean);
+  } catch {
+    return url;
+  }
 };
 
-const FALLBACK_SRC = normalizePath('assets/battle/bach_dang_river.jpg');
+const FALLBACK_SRC =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%231a1412"/><stop offset="100%" stop-color="%230c0a09"/></linearGradient></defs><rect width="1920" height="1080" fill="url(%23bg)"/><text x="960" y="540" font-family="serif" font-size="42" fill="%23d4af37" text-anchor="middle" dominant-baseline="middle" opacity="0.6">ChronoViet Historical Visual</text></svg>';
 
 const resolveUrl = (url?: string, isError?: boolean) => {
   if (isError || !url) return FALLBACK_SRC;

@@ -10,7 +10,7 @@
     "test": "pnpm --recursive --workspace-concurrency=1 run test",
     "test:eval": "pnpm --recursive --workspace-concurrency=1 run test:eval",
     "typecheck": "pnpm --recursive --workspace-concurrency=1 run typecheck",
-    "typecheck:extras": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --strict eval/runner.ts scripts/verify-db-health.ts scripts/clean-db-duplicates.ts",
+    "typecheck:extras": "tsc --noEmit -p tsconfig.extras.json",
     "eval": "tsx eval/runner.ts",
     "eval:all": "tsx eval/runner.ts --all",
     "eval:chain": "tsx eval/runner.ts --chain vieneu-remotion",
@@ -23,7 +23,7 @@
     "eval:ingest": "pnpm --filter @chronoviet/data-ingestion eval",
     "crawl:corpus": "pnpm --filter @chronoviet/data-ingestion crawl:corpus",
     "crawl:all": "pnpm --filter @chronoviet/data-ingestion crawl:corpus --all",
-    "setup-assets": "pnpm --filter @chronoviet/data-ingestion setup-assets",
+    "setup-assets": "pnpm --filter @chronoviet/remotion-engine setup-assets",
     "remotion:studio": "pnpm --filter @chronoviet/remotion-engine start",
     "remotion:render": "pnpm --filter @chronoviet/remotion-engine build"
   },

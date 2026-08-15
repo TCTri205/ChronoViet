@@ -8,5 +8,6 @@ export * from './db/client.js';
 export * from './db/schema.js';
 export * from './llm-client.js';
 export * from './logger.js';
-
+export * from './workspace.js';
+export * from './image-search.js';
 

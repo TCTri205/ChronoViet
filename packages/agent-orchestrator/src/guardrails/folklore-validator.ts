@@ -42,7 +42,7 @@ export function validateFolkloreHypothesisTone(
     }
   }
 
-  const isValid = failingSentences.length === 0 || matchedSignals.length > 0;
+  const isValid = failingSentences.length === 0;
 
   if (isValid) {
     return { isValid: true, matchedSignals, failingSentences: [] };

@@ -56,8 +56,8 @@ This document outlines the core principles, development workflows, and tool usag
   4. **Tier 4:** `pnpm eval:all` or `pnpm --filter <package> eval` (Module eval & unit tests).
 
 * **Test vs. Eval Distinction:**
-  * **Unit & Integration Tests (`pnpm test`):** Focus on verifying deterministic code correctness, schema validation, data contracts, and edge cases. Results must yield strict binary outcomes (Pass/Fail). Vitest config mỗi package (`vitest.config.ts`) **exclude `**/eval/**`** — `pnpm test` chỉ chạy unit tests (`src/__tests__`).
-  * **Eval Metric Unit Tests (`pnpm test:eval`):** Unit test cho các metric function trong `eval/` (NDCG/MRR/chunk quality...) — deterministic, chạy riêng qua `vitest run --dir eval/`.
+  * **Unit & Integration Tests (`pnpm test`):** Focus on verifying deterministic code correctness, schema validation, data contracts, and edge cases. Results must yield strict binary outcomes (Pass/Fail). Mọi package chạy trực tiếp `vitest run --dir src/ --passWithNoTests` — `pnpm test` chỉ quét code nguồn trong `src/`.
+  * **Eval Metric Unit Tests (`pnpm test:eval`):** Unit test cho các metric function trong `eval/__tests__/` (NDCG/MRR/chunk quality...) — deterministic, chạy riêng qua `vitest run --dir eval/ --passWithNoTests`.
   * **Evaluation Suite (`packages/<module>/eval/`):** Focus on measuring non-deterministic system aspects such as AI/RAG generation quality, prompt responsiveness, render engine output integrity, latency benchmarks, and regression scores against datasets. Chạy thủ công qua `pnpm eval:*` — **KHÔNG nằm trong CI**.
 
 * **Protect Test Suite Integrity:** Strictly do not relax or modify test cases solely to force tests to pass.

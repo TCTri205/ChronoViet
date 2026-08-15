@@ -5,6 +5,7 @@ import { VieNeuEngine } from '../src/engine';
 import { envConfig } from '@chronoviet/shared-spec';
 import { SentenceEvalMetric, SummaryEvalReport, saveEvalReport } from './reports/report_generator';
 import { cleanEvalArtifacts } from '../../../eval/utils/cleaner';
+import { assertEvalPreflight } from '../../../eval/utils/preflight';
 
 interface DatasetItem {
   id: string;
@@ -56,6 +57,7 @@ async function runVieNeuTtsEvaluation() {
   console.log(`────────────────────────────────────────────────────────────────────────────`);
 
   const engine = new VieNeuEngine();
+  const preflight = await assertEvalPreflight(['tts']);
   const results: SentenceEvalMetric[] = [];
 
   let totalRtf = 0;
@@ -135,6 +137,7 @@ async function runVieNeuTtsEvaluation() {
 
   const summaryReport: SummaryEvalReport = {
     timestamp: new Date().toISOString(),
+    preflight,
     totalSentences: dataset.length,
     passedCount,
     failedCount,
@@ -144,6 +147,7 @@ async function runVieNeuTtsEvaluation() {
     avgAlignmentErrorMs,
     maxAlignmentErrorMs: maxAlignmentError,
     maxFrameCalcError,
+    engineType: detectedEngine.startsWith('REAL_NEURAL_ONNX') ? 'REAL_NEURAL_ONNX' : 'SYNTHETIC_FALLBACK_TONE',
     overallStatus,
     results,
   };

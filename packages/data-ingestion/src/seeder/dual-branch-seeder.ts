@@ -5,7 +5,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { IIngestionPipeline, IngestionOptions, IngestionResult, SourceReliability, createLogger } from '@chronoviet/shared-spec';
+import { IIngestionPipeline, IngestionOptions, IngestionResult, SourceReliability, createLogger, envConfig } from '@chronoviet/shared-spec';
 import { isPgAvailable, query, withTransaction, inMemoryStore, DbEntity, DbDocumentChunk, resolveHistoricalEpochs } from '@chronoviet/shared-spec';
 import { normalizeText } from '../text/text-normalizer.js';
 import { chunkDocumentHierarchical, ProcessedHierarchicalChunk } from '../chunking/hierarchical-chunker.js';
@@ -170,6 +170,11 @@ export async function seedDualBranch(
   );
 
   const pgConnected = await isPgAvailable();
+
+  // Eval Integrity: strict mode requires real Postgres — in-memory seeding is not a valid benchmark
+  if (envConfig.EVAL_STRICT && !pgConnected) {
+    throw new Error('[EVAL_STRICT] PostgreSQL is unavailable — Dual-Branch seeding requires real pgvector DB during evaluation');
+  }
 
   if (pgConnected) {
     // 3. PostgreSQL Ingestion Mode (Transactional using dedicated pool client)

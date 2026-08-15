@@ -92,8 +92,15 @@ packages/*/eval/reports/*.json
 packages/*/eval/reports/*.md
 packages/*/eval/out/*
 !packages/*/eval/out/.gitkeep
+apps/*/eval/reports/*.json
+apps/*/eval/reports/*.md
 services/*/eval/reports/*.json
 services/*/eval/reports/*.md
+
+media/projects/*
+!media/projects/.gitkeep
+apps/*/media/
+packages/*/media/
 
 # Eval-generated audio caches
 packages/remotion-engine/eval/public/audio/*

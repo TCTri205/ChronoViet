@@ -5,6 +5,7 @@ import { execSync } from 'child_process';
 import { ChronoVideoSchema, ChronoVideoProps, envConfig } from '../../packages/shared-spec/src';
 import { VieNeuEngine, convertVieNeuTimestampsToCaptions } from '../../services/vieneu-tts/src';
 import { cleanEvalArtifacts, isPortInUseSync, killPortProcessSync } from '../utils/cleaner';
+import { assertEvalPreflight } from '../utils/preflight';
 
 export interface ChainEvalResult {
   testCaseFile: string;
@@ -23,6 +24,7 @@ export interface ChainEvalResult {
 export interface IntegratedChainReport {
   timestamp: string;
   chainName: 'vieneu-tts -> remotion-engine';
+  preflight: unknown;
   selectedTestCase: string;
   schemaValid: boolean;
   engineType: string;
@@ -107,6 +109,8 @@ export async function runVieNeuRemotionChain(options: {
   console.log(' CHUOI DANH GIA TICH HOP: VieNeu TTS -> Remotion Render Engine');
   console.log(' Quy chuan: 1 Kich ban - Zero Screenshot Policy - Remotion Studio GUI');
   console.log('================================================================\n');
+
+  const preflight = await assertEvalPreflight(['tts']);
 
   if (!fs.existsSync(testCasesDir)) {
     throw new Error(`[!] Khong tim thay thu muc kich ban mau: ${testCasesDir}`);
@@ -226,6 +230,12 @@ export async function runVieNeuRemotionChain(options: {
     console.error(` [!] Zod Schema Error in ${selectedFile}:`, err);
   }
 
+  // Eval Integrity: strict mode rejects synthetic sine-wave TTS
+  if (envConfig.EVAL_STRICT && detectedEngineType === 'SYNTHETIC_FALLBACK_TONE') {
+    console.error('[EVAL_STRICT] TTS used SYNTHETIC_FALLBACK_TONE during evaluation — marking chain FAIL.');
+    schemaValid = false;
+  }
+
   // 3. Save enriched JSON script for Remotion Studio preview
   const enrichedJsonPath = path.join(engineOutDir, 'pipeline_generated_video.json');
   fs.writeFileSync(enrichedJsonPath, JSON.stringify(jsonProps, null, 2));
@@ -251,6 +261,7 @@ export async function runVieNeuRemotionChain(options: {
   const report: IntegratedChainReport = {
     timestamp: new Date().toISOString(),
     chainName: 'vieneu-tts -> remotion-engine',
+    preflight,
     selectedTestCase: selectedFile,
     schemaValid,
     engineType: detectedEngineType,

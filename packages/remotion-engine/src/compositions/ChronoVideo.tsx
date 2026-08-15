@@ -14,9 +14,20 @@ import { getMergedTheme } from '../utils/themeUtils';
 
 const resolveMediaUrl = (url?: string): string => {
   if (!url) return '';
-  if (url.startsWith('http') || url.startsWith('data:')) return url;
-  const clean = url.startsWith('/') ? url : `/${url}`;
-  return staticFile(clean);
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:') ||
+    url.startsWith('blob:')
+  ) {
+    return url;
+  }
+  const clean = url.startsWith('/') ? url.slice(1) : url;
+  try {
+    return staticFile(clean);
+  } catch {
+    return url;
+  }
 };
 
 const transitionPresentationCache = new Map<string, any>();
@@ -259,22 +270,14 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
                 {/* Per-Scene Primary Audio */}
                 {scene.sceneAudioUrl && (
                   <Audio
-                    src={
-                      scene.sceneAudioUrl.startsWith('http')
-                        ? scene.sceneAudioUrl
-                        : staticFile(scene.sceneAudioUrl)
-                    }
+                    src={resolveMediaUrl(scene.sceneAudioUrl)}
                     volume={1.0}
                   />
                 )}
                 {/* Legacy single SFX */}
                 {scene.sfxUrl && (
                   <Audio
-                    src={
-                      scene.sfxUrl.startsWith('http')
-                        ? scene.sfxUrl
-                        : staticFile(scene.sfxUrl)
-                    }
+                    src={resolveMediaUrl(scene.sfxUrl)}
                     volume={0.85}
                   />
                 )}
@@ -283,11 +286,7 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
                   scene.soundEffects.map((sfx, sfxIdx) => (
                     <Sequence key={`sfx-${sfxIdx}`} from={sfx.offsetFrame || 0}>
                       <Audio
-                        src={
-                          sfx.sfxUrl.startsWith('http')
-                            ? sfx.sfxUrl
-                            : staticFile(sfx.sfxUrl)
-                        }
+                        src={resolveMediaUrl(sfx.sfxUrl)}
                         volume={sfx.volume ?? 0.85}
                       />
                     </Sequence>

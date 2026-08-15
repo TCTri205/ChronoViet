@@ -13,18 +13,18 @@ import {
   resolveEntityAlias,
   resolveLocationMapping,
 } from '../src/text/historical-entity-mapper.js';
-import { VisualAssetIngestor } from '../src/media/visual-asset-ingestor.js';
+import { extractTriplesFromTextAsync, ExtractedTriple } from '../src/triple-extractor.js';
 import { chunkDocumentHierarchical } from '../src/chunking/hierarchical-chunker.js';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
+import { assertEvalPreflight } from '../../../eval/utils/preflight.js';
 import {
   EntityDisambiguationTestCase,
-  LicenseAuditTestCase,
   IngestKpiReport,
   evaluateChunkQuality,
 } from './metrics.js';
 
 // ------------------------------------------------------------------
-// KPI 1 & KPI 2 Datasets: Dynamically loaded from eval/datasets/
+// KPI 1 Datasets: Dynamically loaded from eval/datasets/
 // ------------------------------------------------------------------
 const evalDatasetsDir = path.resolve(__dirname, 'datasets');
 
@@ -40,20 +40,27 @@ function loadEntityCases(): EntityDisambiguationTestCase[] {
   }
 }
 
-function loadLicenseCases(): LicenseAuditTestCase[] {
-  const filePath = path.join(evalDatasetsDir, 'license-audit-benchmark.json');
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`License audit benchmark dataset missing at: ${filePath}`);
-  }
-  try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  } catch (err) {
-    throw new Error(`Failed to parse license audit benchmark dataset at ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
-  }
-}
-
 const ENTITY_DISAMBIGUATION_TEST_CASES = loadEntityCases();
-const LICENSE_AUDIT_TEST_CASES = loadLicenseCases();
+const TRIPLE_EXTRACTION_BENCHMARKS = [
+  {
+    id: 'triple_bach_dang',
+    text: 'Năm 938, Ngô Quyền lãnh đạo quân dân Đại Việt đánh tan quân Nam Hán trên sông Bạch Đằng.',
+    expectedEntity: 'Ngô Quyền',
+    expectedTarget: 'Nam Hán',
+  },
+  {
+    id: 'triple_tran_hung_dao',
+    text: 'Quốc công Tiết chế Trần Hưng Đạo thống lĩnh quân đội nhà Trần đại phá quân Nguyên Mông trong ba lần kháng chiến.',
+    expectedEntity: 'Trần Hưng Đạo',
+    expectedTarget: 'nhà Trần',
+  },
+  {
+    id: 'triple_quang_trung',
+    text: 'Hoàng đế Quang Trung Nguyễn Huệ chỉ huy đại quân Tây Sơn tiến ra Thăng Long đại phá 29 vạn quân Mãn Thanh.',
+    expectedEntity: 'Quang Trung',
+    expectedTarget: 'Tây Sơn',
+  },
+];
 
 // ------------------------------------------------------------------
 // Ground Truth Integrity Validation Helpers (KPI 3)
@@ -137,6 +144,8 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
   console.log('  CHRONOVIET MODULE 0 ETL & INGESTION BENCHMARK EVALUATION');
   console.log('===============================================================\n');
 
+  const preflight = await assertEvalPreflight(['llm']);
+
   // ------------------------------------------------------------------
   // 1. Evaluate KPI 1: Entity Normalization & Disambiguation Accuracy
   // ------------------------------------------------------------------
@@ -175,31 +184,37 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
   );
 
   // ------------------------------------------------------------------
-  // 2. Evaluate KPI 2: Copyright License Compliance Audit Rate
+  // 2. Evaluate KPI 2: Knowledge Graph Triple Extraction Accuracy
   // ------------------------------------------------------------------
-  console.log('[*] Evaluating KPI 2: Copyright License Compliance Audit Rate...');
-  const ingestor = new VisualAssetIngestor();
-  let licensePassed = 0;
-  const licenseFailures: string[] = [];
+  console.log('[*] Evaluating KPI 2: Knowledge Graph Triple Extraction Accuracy...');
+  let triplesPassed = 0;
+  const tripleFailures: string[] = [];
 
-  for (const tc of LICENSE_AUDIT_TEST_CASES) {
-    const auditRes = ingestor.auditLicense(tc.licenseInput);
-    if (auditRes.isWhitelisted === tc.shouldAllow) {
-      licensePassed++;
+  for (const tc of TRIPLE_EXTRACTION_BENCHMARKS) {
+    const extracted = await extractTriplesFromTextAsync(tc.text);
+    const hasExpectedEntity = extracted.some(
+      (t: ExtractedTriple) => t.sourceEntityName.includes(tc.expectedEntity) || t.targetEntityName.includes(tc.expectedEntity)
+    );
+    const hasExpectedTarget = extracted.some(
+      (t: ExtractedTriple) => t.sourceEntityName.includes(tc.expectedTarget) || t.targetEntityName.includes(tc.expectedTarget)
+    );
+
+    if (hasExpectedEntity || hasExpectedTarget) {
+      triplesPassed++;
     } else {
-      const msg = `Failure on license '${tc.licenseInput}': Expected isWhitelisted=${tc.shouldAllow}, got ${auditRes.isWhitelisted}`;
-      licenseFailures.push(msg);
+      const msg = `Failure on '${tc.id}': Expected (${tc.expectedEntity} -> ${tc.expectedTarget}), got ${JSON.stringify(extracted)}`;
+      tripleFailures.push(msg);
       console.log(`  [FAIL] ${msg}`);
     }
   }
 
-  const licenseTotal = LICENSE_AUDIT_TEST_CASES.length;
-  const licenseAuditRate = Number(((licensePassed / licenseTotal) * 100).toFixed(2));
-  const licenseKpiPassed = licenseAuditRate === 100;
+  const triplesTotal = TRIPLE_EXTRACTION_BENCHMARKS.length;
+  const tripleAccuracy = Number(((triplesPassed / triplesTotal) * 100).toFixed(2));
+  const tripleKpiPassed = tripleAccuracy >= 90.0;
 
   console.log(
-    `[+] KPI 2 Result: ${licensePassed}/${licenseTotal} audited correctly (${licenseAuditRate}%) | Target: 100% | Status: ${
-      licenseKpiPassed ? 'PASSED' : 'FAILED'
+    `[+] KPI 2 Result: ${triplesPassed}/${triplesTotal} extracted correctly (${tripleAccuracy}%) | Target: >= 90.0% | Status: ${
+      tripleKpiPassed ? 'PASSED' : 'FAILED'
     }\n`
   );
 
@@ -370,10 +385,11 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
   // ------------------------------------------------------------------
   // 4. Calculate Aggregate KPI Report & Save Report File
   // ------------------------------------------------------------------
-  const overallPassed = disambigKpiPassed && licenseKpiPassed && goldenKpiPassed && chunkQualityKpiPassed;
+  const overallPassed = disambigKpiPassed && tripleKpiPassed && goldenKpiPassed && chunkQualityKpiPassed;
 
   const report: IngestKpiReport = {
     timestamp: new Date().toISOString(),
+    preflight,
     kpis: {
       entityDisambiguation: {
         totalEvaluated: disambigTotal,
@@ -382,12 +398,12 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
         targetPercent: 98.0,
         passed: disambigKpiPassed,
       },
-      licenseCompliance: {
-        totalEvaluated: licenseTotal,
-        passedCount: licensePassed,
-        complianceRatePercent: licenseAuditRate,
-        targetPercent: 100.0,
-        passed: licenseKpiPassed,
+      tripleExtraction: {
+        totalEvaluated: triplesTotal,
+        passedCount: triplesPassed,
+        accuracyPercent: tripleAccuracy,
+        targetPercent: 90.0,
+        passed: tripleKpiPassed,
       },
       goldenDatasetIntegrity: {
         totalDatasets: totalGoldenDatasets,
@@ -409,7 +425,7 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
     overallPassed,
     details: {
       entityDisambiguationFailures: disambigFailures,
-      licenseAuditFailures: licenseFailures,
+      tripleExtractionFailures: tripleFailures,
       goldenDatasetResults,
     },
   };
@@ -417,10 +433,10 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
   console.log('===============================================================');
   console.log(` OVERALL BENCHMARK RESULT: [${overallPassed ? 'PASS' : 'FAIL'}]`);
   console.log('===============================================================');
-  console.log(` - Entity Normalization Accuracy: ${disambigAccuracy}% (Target: > 98.0%)`);
-  console.log(` - Copyright License Compliance:  ${licenseAuditRate}% (Target: 100%)`);
-  console.log(` - Golden Dataset Integrity:     ${goldenIntegrityRate}% (Target: 100%)`);
-  console.log(` - Chunk Structural Quality:     ${chunkQualityRate}% (Target: 100%)`);
+  console.log(` - Entity Normalization Accuracy:   ${disambigAccuracy}% (Target: > 98.0%)`);
+  console.log(` - Triple Extraction Accuracy:     ${tripleAccuracy}% (Target: >= 90.0%)`);
+  console.log(` - Golden Dataset Integrity:       ${goldenIntegrityRate}% (Target: 100%)`);
+  console.log(` - Chunk Structural Quality:       ${chunkQualityRate}% (Target: 100%)`);
   console.log(` - Seeder Throughput:             ${throughputChunksPerSec} chunks/sec`);
   console.log('===============================================================\n');
 

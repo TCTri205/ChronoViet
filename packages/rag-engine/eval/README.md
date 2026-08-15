@@ -34,6 +34,13 @@ This package contains the automated component-level and end-to-end benchmark sui
 
 ## 3. Running Benchmarks
 
+> ⚠️ **Preflight bắt buộc (Eval Integrity):** Khi `EVAL_STRICT=true` (mặc định), eval sẽ fail-fast nếu:
+> - LLM server (`LLM_BASE_URL`) không hoạt động — KHÔNG dùng Agnes cloud fallback.
+> - Embedding server (`EMBEDDING_API_URL`) không hoạt động — KHÔNG dùng pseudo-random vector.
+> - PostgreSQL (`DATABASE_URL`) không khả dụng cho `ChronoRagEngine.search` / `seedDualBranch` (in-memory fallback bị chặn).
+>
+> Để chạy dev-mode (cho phép fallback, KHÔNG hợp lệ làm benchmark): đặt `EVAL_STRICT=false` trong `.env`.
+
 ```bash
 # Run all 11 component benchmarks + System Ablation + CI/CD Quality Gates
 pnpm --filter @chronoviet/rag-engine eval

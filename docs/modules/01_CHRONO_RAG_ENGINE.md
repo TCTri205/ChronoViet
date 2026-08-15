@@ -275,3 +275,5 @@ Engine được kiểm thử liên tục qua bộ Benchmark nội bộ **ChronoE
 * **Source Citation Traceability:** 100% thông tin xuất ra đều gắn kèm Citation ID dẫn về trang/tập trong tài liệu gốc.
 * **Retrieval Latency SLA:** < 300ms (PostgreSQL `pgvector` + Graph CTEs Online DB) / < 1500ms (Offline Dev Benchmark SLA).
 
+> ⚠️ **Eval Integrity Gates:** Khi `EVAL_STRICT=true`, `ChronoRagEngine.search` và `seedDualBranch` yêu cầu **PostgreSQL pgvector thật** (`isPgAvailable`) — in-memory store / offline context nhồi sẵn sẽ throw `[EVAL_STRICT]`. Embedding server (`EMBEDDING_API_URL`) phải hoạt động, không dùng pseudo-random vector. Các benchmark C4/C5/SYS chạy trên in-memory corpus vẫn hợp lệ miễn vector embedding là thật.
+

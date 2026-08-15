@@ -1,9 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
-import { runVieNeuRemotionChain, IntegratedChainReport } from './chains/vieneu-remotion';
-import { runIngestRagChain, ProductionRagQualityReport } from './chains/ingest-rag';
-import { cleanEvalArtifacts } from './utils/cleaner';
+import { runVieNeuRemotionChain, IntegratedChainReport } from './chains/vieneu-remotion.js';
+import { runIngestRagChain, ProductionRagQualityReport } from './chains/ingest-rag.js';
+import { runOrchestratorRemotionChain, OrchestratorRemotionChainReport } from './chains/orchestrator-remotion.js';
+import { cleanEvalArtifacts } from './utils/cleaner.js';
+import { assertEvalPreflight, PreflightResult } from './utils/preflight.js';
 import { envConfig, createLogger } from '../packages/shared-spec/src/index.js';
 
 const log = createLogger({ service: 'eval-runner' });
@@ -13,14 +15,15 @@ interface MasterEvalReport {
   mode: string;
   isolatedModulesEvaluated: string[];
   chainsEvaluated: string[];
-  chainReports: Record<string, IntegratedChainReport | ProductionRagQualityReport>;
+  chainReports: Record<string, IntegratedChainReport | ProductionRagQualityReport | OrchestratorRemotionChainReport>;
+  preflight: PreflightResult;
   overallStatus: 'PASS' | 'FAIL';
 }
 
 function parseCliArgs() {
   const args = process.argv.slice(2);
-  let mode: 'all' | 'chain' | 'module' = 'chain'; // Default to chain integration
-  let chainName: string | undefined = 'vieneu-remotion';
+  let mode: 'all' | 'chain' | 'module' = 'all'; // Default to full comprehensive eval
+  let chainName: string | undefined;
   let moduleName: string | undefined;
   let testCaseName: string | undefined;
   let noStudio = false;
@@ -77,23 +80,34 @@ async function main() {
   }
 
   console.log('\n================================================================');
-  console.log(' CHRONOVIET GLOBAL EVALUATION RUNNER');
-  console.log(' Quy chuan: 1 Kich ban - Zero Screenshot - Mo Remotion Studio o buoc cuoi');
+  console.log(' CHRONOVIET GLOBAL MASTER EVALUATION RUNNER');
+  console.log(' Modules: 7 Modules & 3 E2E Integration Chains');
   console.log('================================================================');
   console.log(` [*] Mode: ${mode.toUpperCase()}`);
 
+  // Eval Integrity: fail-fast when required services are down (strict mode)
+  const preflight = await assertEvalPreflight(['llm', 'embedding', 'tts', 'vlm']);
+
   const isolatedModules: string[] = [];
   const chainsEvaluated: string[] = [];
-  const chainReports: Record<string, IntegratedChainReport | ProductionRagQualityReport> = {};
+  const chainReports: Record<string, IntegratedChainReport | ProductionRagQualityReport | OrchestratorRemotionChainReport> = {};
   let overallPass = true;
 
   // 1. Module-level isolated evals (only if --all or --module)
   if (mode === 'all' || mode === 'module') {
     const targetModules = moduleName
       ? [moduleName]
-      : ['@chronoviet/data-ingestion', '@chronoviet/rag-engine', '@chronoviet/vieneu-tts', '@chronoviet/remotion-engine'];
+      : [
+          '@chronoviet/data-ingestion',
+          '@chronoviet/rag-engine',
+          '@chronoviet/vieneu-tts',
+          '@chronoviet/vlm-inspector',
+          '@chronoviet/agent-orchestrator',
+          '@chronoviet/render-worker',
+          '@chronoviet/remotion-engine',
+        ];
 
-    console.log('\n--- [PHASE 1] RUNNING ISOLATED MODULE EVALUATIONS ---');
+    console.log('\n--- [PHASE 1] RUNNING 7 ISOLATED MODULE EVALUATIONS ---');
 
     for (const mod of targetModules) {
       console.log(`\n[*] Executing isolated eval for module: ${mod}...`);
@@ -115,43 +129,46 @@ async function main() {
   if (mode === 'all' || mode === 'chain') {
     const targetChains = chainName
       ? [chainName]
-      : ['ingest-rag', 'vieneu-remotion'];
+      : ['ingest-rag', 'orchestrator-remotion', 'vieneu-remotion'];
 
     console.log('\n--- [PHASE 2] RUNNING MULTI-MODULE INTEGRATION CHAINS ---');
 
-    for (const chain of targetChains) {
-      if (chain === 'ingest-rag') {
-        try {
-          const report = await runIngestRagChain({ verbose });
-          chainsEvaluated.push(chain);
-          chainReports[chain] = report;
-          if (report.qualityStatus !== 'PASS') {
-            overallPass = false;
-          }
-        } catch (err) {
-          console.error(`[!] Chain ${chain} FAILED:`, err);
-          log.error('eval.chain_failed', 'Integration chain eval failed', { chain, error: err });
+    async function executeChain<T extends IntegratedChainReport | ProductionRagQualityReport | OrchestratorRemotionChainReport>(
+      name: string,
+      runner: () => Promise<T>,
+      isPass: (report: T) => boolean
+    ) {
+      try {
+        const report = await runner();
+        chainsEvaluated.push(name);
+        chainReports[name] = report;
+        if (!isPass(report)) {
           overallPass = false;
         }
+      } catch (err) {
+        console.error(`[!] Chain ${name} FAILED:`, err);
+        log.error('eval.chain_failed', 'Integration chain eval failed', { chain: name, error: err });
+        overallPass = false;
+      }
+    }
+
+    for (const chain of targetChains) {
+      if (chain === 'ingest-rag') {
+        await executeChain('ingest-rag', () => runIngestRagChain({ verbose }), (r) => r.qualityStatus === 'PASS');
+      } else if (chain === 'orchestrator-remotion') {
+        await executeChain('orchestrator-remotion', () => runOrchestratorRemotionChain({ verbose }), (r) => r.qualityStatus === 'PASS');
       } else if (chain === 'vieneu-remotion') {
-        try {
-          const report = await runVieNeuRemotionChain({
+        await executeChain(
+          'vieneu-remotion',
+          () => runVieNeuRemotionChain({
             testCaseName,
             openStudio: !noStudio,
             verbose,
             port,
             cleanBeforeRun: fresh,
-          });
-          chainsEvaluated.push(chain);
-          chainReports[chain] = report;
-          if (!report.schemaValid) {
-            overallPass = false;
-          }
-        } catch (err) {
-          console.error(`[!] Chain ${chain} FAILED:`, err);
-          log.error('eval.chain_failed', 'Integration chain eval failed', { chain, error: err });
-          overallPass = false;
-        }
+          }),
+          (r) => r.schemaValid
+        );
       } else {
         console.warn(`[!] Unknown chain specified: ${chain}`);
         log.warn('eval.unknown_chain', 'Unknown chain specified', { chain });
@@ -166,6 +183,7 @@ async function main() {
     isolatedModulesEvaluated: isolatedModules,
     chainsEvaluated,
     chainReports,
+    preflight,
     overallStatus: overallPass ? 'PASS' : 'FAIL',
   };
 
@@ -173,7 +191,7 @@ async function main() {
   fs.writeFileSync(masterReportPath, JSON.stringify(globalReport, null, 2));
 
   console.log('\n================================================================');
-  console.log(` MASTER EVALUATION COMPLETED: ${overallPass ? '[+] PASS' : '[!] FAIL'}`);
+  console.log(` MASTER EVALUATION COMPLETED: ${overallPass ? '[+] PASS (100% QUALITY GATES MET)' : '[!] FAIL'}`);
   console.log(` File Report global: file:///${masterReportPath.replace(/\\/g, '/')}`);
   console.log('================================================================\n');
 

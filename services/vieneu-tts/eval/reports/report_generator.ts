@@ -17,6 +17,7 @@ export interface SentenceEvalMetric {
 
 export interface SummaryEvalReport {
   timestamp: string;
+  preflight?: unknown;
   totalSentences: number;
   passedCount: number;
   failedCount: number;
@@ -26,6 +27,7 @@ export interface SummaryEvalReport {
   avgAlignmentErrorMs: number;
   maxAlignmentErrorMs: number;
   maxFrameCalcError: number;
+  engineType: 'REAL_NEURAL_ONNX' | 'SYNTHETIC_FALLBACK_TONE';
   overallStatus: 'PASS' | 'FAIL';
   results: SentenceEvalMetric[];
 }
@@ -34,6 +36,7 @@ export function generateEvalMarkdownReport(report: SummaryEvalReport, targetRtf 
   const lines: string[] = [];
   lines.push(`# Báo Cáo Đánh Giá Chất Lượng Dịch Vụ VieNeu TTS Service`);
   lines.push(`**Thời gian chạy:** ${report.timestamp}`);
+  lines.push(`**Engine Mode:** ${report.engineType === 'REAL_NEURAL_ONNX' ? 'REAL_NEURAL_ONNX (VieNeu ONNX Service)' : 'SYNTHETIC_FALLBACK_TONE (Sine Wave Generator)'}`);
   lines.push(`**Tổng số mẫu câu:** ${report.totalSentences}`);
   lines.push(`**Kết quả chung:** ${report.overallStatus === 'PASS' ? '✅ PASS (ĐẠT CHUẨN KPI)' : '❌ FAIL (KHÔNG ĐẠT)'}`);
   lines.push(``);

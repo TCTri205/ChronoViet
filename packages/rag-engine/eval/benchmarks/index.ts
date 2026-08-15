@@ -20,6 +20,7 @@ import { runC10Benchmark } from './c10-robustness-reasoning.bench.js';
 import { runSystemAblation } from './sys-ablation-regression.bench.js';
 import { evaluateRegressionGates } from './regression-gate.js';
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
+import { assertEvalPreflight } from '../../../../eval/utils/preflight.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,6 +43,8 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
   console.log('\n================================================================================');
   console.log('🏛️  CHRONOEVAL v2.0: COMPREHENSIVE COMPONENT-LEVEL & E2E EVALUATION SUITE');
   console.log('================================================================================\n');
+
+  const preflight = await assertEvalPreflight(['llm', 'embedding']);
 
   const reports: ComponentBenchmarkReport[] = [];
 
@@ -133,7 +136,7 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
   if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true });
   fs.writeFileSync(
     path.join(reportsDir, 'component-benchmark-report.json'),
-    JSON.stringify({ timestamp: new Date().toISOString(), reports, regressionCheck }, null, 2)
+    JSON.stringify({ timestamp: new Date().toISOString(), preflight, reports, regressionCheck }, null, 2)
   );
 
   console.log('\n================================================================================');

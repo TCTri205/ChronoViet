@@ -17,8 +17,8 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 | **Mô-đun 4: Remotion Render Engine** | **[✅ IMPLEMENTED]** | Trung bình | **100% Hoàn thiện codebase** (`packages/remotion-engine/src/`). Đã có 31 `LayoutMode`, 19 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 19 UI Components, 11 Compositions. | `packages/remotion-engine/eval/` |
 | **Dịch vụ VieNeu TTS (ONNX Engine)** | **[✅ IMPLEMENTED]** (Phase 1) | Thấp - Trung bình | Đã hoàn thiện microservice Node.js Dual-Layer (`VieNeuEngine` + `SyntheticTTSFallbackEngine`), Python FastAPI ONNX Engine (`app.py`), Zod Schema Validation, `wordTimestamps` -> Caption Frames Converter, và bộ Eval Suite `services/vieneu-tts/eval/` với 3 KPI: RTF, Alignment Error, Frame Error. | `services/vieneu-tts/eval/` |
 | **Mô-đun 1: Chrono-RAG Engine** | **[✅ IMPLEMENTED]** | Phức tạp | **100% Hoàn thiện codebase & Eval suite** (`packages/rag-engine/src/`, `eval/`). Hybrid GraphRAG dùng PostgreSQL 15+ (`pgvector` Dense Embedding 1024d + Relational Graph Schema CTEs $k=1,2$ + BM25 FTS + RRF + Integrated BGE Reranker v2). Đã vượt ma trận KPI: Fact Precision 100%, Hallucination Rate 0%, Citation Traceability 100%. | `packages/rag-engine/eval/` |
-| **Mô-đun 2: Multi-Agent Orchestrator** | **[📐 ROADMAP Spec]** | Rất Phức tạp | LangGraph.js State Machine trên Node.js/TS, Postgres Checkpointer SSOT, quy trình 12 trạng thái, Chaptering Agent + 5 Script Micro-Steps, Duration Reconciler, Alias Table Fact-Checker. | `packages/agent-orchestrator/eval/` |
-| **Mô-đun 3: VLM Inspector Sub-Agent** | **[📐 ROADMAP Spec]** | Trung bình | Gemini 2.5 Flash Cloud Primary + Local CLIP ONNX Fallback + Whitelisted License Filter (CC0/PD/CC-BY) + Unified Redis Cache (SHA-256/pHash) + Chiến lược 3+3 Candidates. | `packages/vlm-inspector/eval/` |
+| **Mô-đun 2: Multi-Agent Orchestrator** | **[✅ IMPLEMENTED]** | Rất Phức tạp | LangGraph.js State Machine trên Node.js/TS, Postgres Checkpointer SSOT, quy trình 12 trạng thái, Chaptering Agent + 5 Script Micro-Steps, Duration Reconciler, Alias Table Fact-Checker, Keyword Extractor + Research Agent (Micro-Step 1C) tìm ảnh online qua SerpAPI/Tavily/Brave/Wikimedia/Catalog. | `packages/agent-orchestrator/eval/` |
+| **Mô-đun 3: VLM Inspector Sub-Agent** | **[✅ IMPLEMENTED]** | Trung bình | Gemini 2.5 Flash Cloud Primary + Local CLIP ONNX Fallback + Whitelisted License Filter (CC0/PD/CC-BY) + Unified Redis Cache (SHA-256/pHash) + Chiến lược 3+3 Candidates (nhận candidate từ Research Agent + domain whitelist). | `packages/vlm-inspector/eval/` |
 | **Hạ tầng Worker & Render Queue** | **[📐 ROADMAP Spec]** | Trung bình | Docker Compose (Caddy Reverse Proxy, PostgreSQL `pgvector`, Redis 7 BullMQ, App Monolith Fastify/Next.js, Worker). | `apps/render-worker/eval/` |
 
 ### 1.2. Nguyên Tắc Bắt Buộc: Module-Level Evaluation (`eval/` per Module)
@@ -26,6 +26,37 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 > 🎯 **NGUYÊN TẮC THIẾT KẾ ĐÁNH GIÁ LÕI:**
 > **Mọi mô-đun/dịch vụ/gói trong dự án ChronoViet BẮT BUỘC phải đi kèm một thư mục `eval/` độc lập.**
 > Mô-đun chỉ được coi là hoàn thiện (`DONE`) khi bộ công cụ đánh giá `eval/` tương ứng được viết xong, có khả năng chạy tự động và vượt qua ma trận KPI đã đề ra.
+
+### 1.2a. Eval Integrity Gates (Bắt Buộc — Chống Eval Chạy Trên Dữ Liệu Giả/Cloud)
+
+> 🛡️ **NGUYÊN TẮC: Eval đo CHẤT LƯỢNG hệ thống, không phải xem hệ thống có "sống" hay không (đó là test).**
+> Eval KHÔNG được chạy khi service cần thiết không hoạt động, và KHÔNG được lặng lẽ chuyển sang cloud/fallback trong lúc đánh giá.
+
+**Cơ chế (triển khai từ `EVAL_STRICT=true` mặc định):**
+
+1. **Preflight fail-fast** (`eval/utils/preflight.ts`): mọi eval runner gọi `assertEvalPreflight(...)` ở đầu. Service nào down → dừng ngay với exit code 1, in rõ service + cách bật.
+2. **Cấm cloud fallback**: `llm-client.ts` throw `[EVAL_STRICT]` khi local LLM fail — không âm thầm gọi Agnes (`ENABLE_CLOUD_FALLBACK`).
+3. **Cấm fallback giả** (khi strict):
+   - Embedding server down → `[EVAL_STRICT] Embedding server unavailable` (không dùng pseudo-random vector).
+   - Python TTS down → `[EVAL_STRICT] VieNeu Python ONNX service unavailable` (không dùng sine-wave 480Hz).
+   - VLM không có local model → `[EVAL_STRICT] Local VLM failed` (không dùng CLIP heuristic).
+   - RAG DB search fail → `[EVAL_STRICT] PostgreSQL is unavailable` (không dùng in-memory store / offline context nhồi sẵn).
+   - LLM fail trong chaptering/scriptwriter/fact-checker → throw (không dùng văn mẫu deterministic).
+   - Triple extraction LLM fail → throw (không dùng regex fallback).
+   - TTS không tạo được audio file → throw (không tạo synthetic WAV).
+4. **Ghi provenance**: mọi report JSON ghi `preflight` (kết quả health check) + provider thực tế (`LOCAL_LLM`, `REAL_EMBEDDING_SERVER`, `REAL_NEURAL_ONNX`, `LOCAL_VLM`, `scorerType`, `engineType`).
+
+**Service bắt buộc khi chạy eval (strict):**
+
+| Service | Cấu hình | Lệnh khởi động gợi ý |
+| :--- | :--- | :--- |
+| LLM Server (llama-server) | `LLM_BASE_URL` (vd `http://localhost:8091`) | `llama-server -m models/qwen3.5-27b-q4_k_m.gguf --port 8091` |
+| Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `qwen3-embedding-0.6b` |
+| VieNeu Python TTS | `VIENEU_PYTHON_URL` (vd `http://localhost:8080`) | `python app.py` trong `services/vieneu-tts/` |
+| VLM Local | `EVAL_VLM_MODEL` (mặc định `qwen3-vl-8b`) qua llama-server | llama-server serve model vision `qwen3-vl-8b` |
+| PostgreSQL pgvector | `DATABASE_URL` | `docker compose up -d db` |
+
+**Tắt strict (dev-only, KHÔNG hợp lệ làm benchmark):** đặt `EVAL_STRICT=false` trong `.env` — khi đó các fallback cũ (Agnes cloud, pseudo-random, sine-wave, CLIP) được phép dùng lại cho dev.
 
 Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 ```
@@ -207,7 +238,7 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
    - **Micro-Step 1A-Audit:** Fact-Checker Agent (Duyệt Alias Table, Thang Escalation 4 Tầng).
    - **Micro-Step 1B:** Scene Segmenter.
    - **Micro-Step 1B-Reconcile:** Duration Reconciler (Đối soát thời lượng Audio VieNeu vs Target Chapter duration, Time-Stretch $\pm 10\%$).
-   - **Micro-Step 1C:** Keyword Extractor.
+   - **Micro-Step 1C:** Keyword Extractor + **Research Agent** (tìm ảnh online qua provider chain `SerpAPI → Tavily → Brave → Wikimedia → Catalog`; domain whitelist; lưu `researchResults[sceneId]` + provenance).
 3. **Triển khai `packages/agent-orchestrator/eval/`:**
    - Xây dựng 20 kịch bản lịch sử phức tạp (video 3 phút đến 15 phút).
    - Viết runner đánh giá:

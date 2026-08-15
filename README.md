@@ -164,7 +164,7 @@ Pipeline tự động chạy trên **mọi Pull Request và push lên `main`** �
 | :--- | :--- |
 | **Lint** | `pnpm lint` (tsc `--noEmit` recursive) |
 | **Typecheck** | `pnpm typecheck` + `pnpm typecheck:extras` (eval & scripts) |
-| **Unit Tests** | `pnpm test` (vitest recursive — chỉ chạy `src/__tests__`, eval bị exclude) |
+| **Unit Tests** | `pnpm test` (vitest recursive với `--dir src/` — chỉ quét `src/`) |
 | **Build** | `pnpm build` (build toàn bộ monorepo) |
 | **Security Audit** | `pnpm audit --audit-level=high` |
 | **Integration** | Postgres pgvector + Redis services → `pnpm db:init` → `verify-db-health.ts` |

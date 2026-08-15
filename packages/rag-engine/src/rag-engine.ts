@@ -8,6 +8,8 @@ import {
   RagSearchResponse,
   HistoricalContextEntity,
   createLogger,
+  envConfig,
+  isPgAvailable,
 } from '@chronoviet/shared-spec';
 
 import { initSchema, generateEmbedding, ingestHistoricalDocument, resolveCanonicalEntity } from '@chronoviet/shared-spec';
@@ -36,6 +38,14 @@ export class ChronoRagEngine implements IRagEngine {
   async search(request: RagSearchRequest): Promise<RagSearchResponse> {
     const startTime = Date.now();
     await this.ensureInitialized();
+
+    // Eval Integrity: strict mode requires real Postgres — in-memory fallback is not a valid benchmark
+    if (envConfig.EVAL_STRICT) {
+      const pgUp = await isPgAvailable(true);
+      if (!pgUp) {
+        throw new Error('[EVAL_STRICT] PostgreSQL is unavailable — RAG retrieval requires real pgvector DB during evaluation');
+      }
+    }
 
     const queryText = request.query;
     const rerankTopK = request.rerankTopK || 5;

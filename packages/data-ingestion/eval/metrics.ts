@@ -22,9 +22,14 @@ export interface EntityDisambiguationTestCase {
   expectedModernLocation?: string;
 }
 
-export interface LicenseAuditTestCase {
-  licenseInput: string;
-  shouldAllow: boolean;
+export interface TripleExtractionTestCase {
+  id: string;
+  sourceText: string;
+  expectedTriples: Array<{
+    source: string;
+    relation: string;
+    target: string;
+  }>;
 }
 
 export interface ChunkQualityResult {
@@ -39,6 +44,7 @@ export interface ChunkQualityResult {
 
 export interface IngestKpiReport {
   timestamp: string;
+  preflight?: unknown;
   kpis: {
     entityDisambiguation: {
       totalEvaluated: number;
@@ -47,10 +53,10 @@ export interface IngestKpiReport {
       targetPercent: number;
       passed: boolean;
     };
-    licenseCompliance: {
+    tripleExtraction: {
       totalEvaluated: number;
       passedCount: number;
-      complianceRatePercent: number;
+      accuracyPercent: number;
       targetPercent: number;
       passed: boolean;
     };
@@ -74,7 +80,7 @@ export interface IngestKpiReport {
   overallPassed: boolean;
   details: {
     entityDisambiguationFailures: string[];
-    licenseAuditFailures: string[];
+    tripleExtractionFailures: string[];
     goldenDatasetResults: Array<{
       filename: string;
       title: string;

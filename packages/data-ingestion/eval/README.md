@@ -22,6 +22,8 @@ The bounds live in `@chronoviet/shared-spec` (`src/chunking.ts`) as the single s
 
 ## Running Evaluation
 
+> ⚠️ **Preflight bắt buộc (Eval Integrity):** Khi `EVAL_STRICT=true` (mặc định), eval fail-fast nếu **LLM server** (`LLM_BASE_URL`) không hoạt động — triple extraction không được fallback sang regex/dict. `seedDualBranch` yêu cầu **PostgreSQL pgvector thật** khi được gọi qua ingest-rag chain. Dev-mode: `EVAL_STRICT=false` (KHÔNG hợp lệ làm benchmark).
+
 ```bash
 # Run evaluation specifically for Data Ingestion Engine
 pnpm --filter @chronoviet/data-ingestion eval

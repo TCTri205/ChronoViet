@@ -59,4 +59,6 @@ npx tsx services/vieneu-tts/eval/scripts/extract_remotion_dataset.ts
 ## 📈 Engine Detection & Dual-Layer Mode
 Khi thực thi `runner.ts`, bộ đánh giá tự động nhận diện chế độ engine đang hoạt động:
 * 🤖 **REAL_NEURAL_ONNX**: Kết nối trực tiếp Python FastAPI Microservice (`app.py`, 24kHz NeuCodec ONNX).
-* ⚙️ **SYNTHETIC_FALLBACK_TONE**: Tự động kích hoạt khi microservice Python chưa bật, sử dụng Sine Wave Generator để kiểm thử toán học khung hình không gián đoạn.
+* ⚙️ **SYNTHETIC_FALLBACK_TONE**: Chỉ xuất hiện khi `EVAL_STRICT=false` (dev) — microservice Python chưa bật, dùng Sine Wave Generator.
+
+> ⚠️ **Preflight bắt buộc (Eval Integrity):** Khi `EVAL_STRICT=true` (mặc định), eval fail-fast nếu **VieNeu Python ONNX service** (`VIENEU_PYTHON_URL`, endpoint `GET /health`) không hoạt động — không dùng sine-wave giả. Report JSON ghi rõ `preflight` + `engineType`. Dev-mode: `EVAL_STRICT=false` (KHÔNG hợp lệ làm benchmark).

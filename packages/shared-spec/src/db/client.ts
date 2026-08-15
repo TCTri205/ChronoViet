@@ -229,3 +229,8 @@ export async function logEntityAuditAction(params: DbEntityAuditLog): Promise<vo
     });
   }
 }
+
+export function getDatabaseClient(): Pool | null {
+  return pgPool;
+}
+

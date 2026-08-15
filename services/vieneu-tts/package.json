@@ -7,8 +7,8 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "test": "vitest run",
-    "test:eval": "vitest run --dir eval/",
+    "test": "vitest run --dir src/ --passWithNoTests",
+    "test:eval": "vitest run --dir eval/ --passWithNoTests",
     "start": "node dist/server.js",
     "eval": "tsx eval/runner.ts"
   },

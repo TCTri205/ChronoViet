@@ -14,7 +14,7 @@ export interface IVieNeuEngine {
  * Generate a valid PCM 16-bit Mono WAV Buffer for testing and fallback synthesis.
  * Produces clear audible test audio pulses corresponding to synthesized word timestamps.
  */
-function createSyntheticWavBuffer(
+export function createSyntheticWavBuffer(
   durationMs: number,
   wordTimestamps: WordTimestamp[],
   sampleRate = 24000
@@ -203,6 +203,10 @@ export class VieNeuEngine implements IVieNeuEngine {
     } catch (err: any) {
       // If Python ONNX microservice is offline, seamlessly switch to Fallback Engine with warning log
       const reason = err?.message || 'Connection refused or offline';
+      // Eval Integrity: strict mode must not substitute synthetic sine-wave audio
+      if (envConfig.EVAL_STRICT) {
+        throw new Error(`[EVAL_STRICT] VieNeu Python ONNX service unavailable: ${reason}`);
+      }
       log.warn('tts.python_engine_failed', 'VieNeu Python ONNX engine failed; falling back to synthetic engine', {
         error: err,
         pythonUrl: this.pythonUrl,
