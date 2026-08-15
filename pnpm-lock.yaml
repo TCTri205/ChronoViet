@@ -4,10 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  langsmith: '>=0.3.45'
-  adm-zip: '>=0.5.14'
-
 importers:
 
   .:
