@@ -12,7 +12,7 @@ concurrency:
 
 env:
   NODE_VERSION: '22'
-  PNPM_VERSION: '10'
+  PNPM_VERSION: '10.6.2'
   # Empty values are intentional — schemas default gracefully (see packages/shared-spec/src/config.ts)
   DATABASE_URL: ''
   NODE_ENV: test
