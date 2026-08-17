@@ -36,5 +36,12 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msgpackr-extract",
+      "onnxruntime-node"
+    ]
+  },
   "packageManager": "pnpm@10.6.2"
 }

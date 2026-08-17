@@ -31,14 +31,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          standalone: true
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+      - name: Setup pnpm via Corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+      - name: Expose pnpm store path
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
       - name: Build shared-spec
         run: pnpm --filter @chronoviet/shared-spec build
@@ -50,14 +59,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          standalone: true
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+      - name: Setup pnpm via Corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+      - name: Expose pnpm store path
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
       - name: Build shared-spec
         run: pnpm --filter @chronoviet/shared-spec build
@@ -71,14 +89,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          standalone: true
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+      - name: Setup pnpm via Corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+      - name: Expose pnpm store path
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
       - name: Build shared-spec
         run: pnpm --filter @chronoviet/shared-spec build
@@ -90,14 +117,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          standalone: true
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+      - name: Setup pnpm via Corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+      - name: Expose pnpm store path
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
       - name: Build monorepo (recursive)
         run: pnpm build
@@ -132,14 +168,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          standalone: true
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+      - name: Setup pnpm via Corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+      - name: Expose pnpm store path
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
       - name: pnpm audit (high+)
         run: pnpm audit --audit-level=high
@@ -178,14 +223,23 @@ jobs:
       NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          standalone: true
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+      - name: Setup pnpm via Corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+      - name: Expose pnpm store path
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
       - name: Build shared-spec first (required by tsconfig paths)
         run: pnpm --filter @chronoviet/shared-spec build
