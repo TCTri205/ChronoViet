@@ -10,6 +10,8 @@ import {
 
 const log = createLogger({ service: 'web-api-video' });
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }

@@ -11,6 +11,8 @@ import {
 
 const log = createLogger({ service: 'web-api-chat' });
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();

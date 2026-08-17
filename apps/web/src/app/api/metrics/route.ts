@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getMetricsSnapshot, getMetricsContentType } from '@chronoviet/shared-spec';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const metrics = await getMetricsSnapshot();

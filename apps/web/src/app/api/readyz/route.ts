@@ -4,6 +4,8 @@ import { getRedisClient } from '../../../lib/redis';
 
 const log = createLogger({ service: 'web-api-readyz' });
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const checks: Record<string, { status: string; latencyMs?: number; error?: string }> = {};
   let allHealthy = true;

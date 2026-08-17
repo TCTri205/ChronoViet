@@ -12,6 +12,8 @@ import {
 
 const log = createLogger({ service: 'web-api-project-detail' });
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }

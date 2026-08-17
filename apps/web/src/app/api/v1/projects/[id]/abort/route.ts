@@ -12,6 +12,8 @@ import { cancelRenderJob } from '../../../../../../lib/queues';
 const log = createLogger({ service: 'web-api-abort' });
 const pubsub = new RedisPubSubManager();
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }

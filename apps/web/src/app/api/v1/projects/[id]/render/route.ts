@@ -10,6 +10,8 @@ import { enqueueRenderJob } from '../../../../../../lib/queues';
 
 const log = createLogger({ service: 'web-api-render' });
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
