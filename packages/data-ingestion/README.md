@@ -56,26 +56,36 @@ packages/data-ingestion/
 Tất cả các lệnh có thể thực thi từ root monorepo:
 
 ```bash
-# 1. Khởi tạo SQL Schema & chỉ mục HNSW vector trên PostgreSQL
+# 1. Khởi động hạ tầng CSDL PostgreSQL (pgvector HNSW) & Redis
+docker compose up -d postgres redis
+
+# 2. Khởi tạo SQL Schema & chỉ mục HNSW vector trên PostgreSQL
 pnpm --filter @chronoviet/data-ingestion db:init
 
-# 2. Cào TỰ ĐỘNG TOÀN BỘ 15 Thời kỳ Lịch sử Việt Nam (Master Corpus Crawl)
+# 3. Cào TỰ ĐỘNG TOÀN BỘ 15 Thời kỳ Lịch sử Việt Nam (Master Corpus Crawl)
 pnpm crawl:all
-
 # Hoặc cào riêng 1 Epoch:
 pnpm --filter @chronoviet/data-ingestion crawl:corpus --epoch=EPOCH_05
 
-# 3. Chạy đường ống làm sạch & nạp kho tri thức văn bản (Text Ingestion ETL)
-pnpm --filter @chronoviet/data-ingestion ingest:knowledge --input=data/raw_corpus/
+# 4. Nạp kho tri thức vào CSDL thật (Text & Graph ETL với chế độ STRICT kiểm soát AI Gateway)
+pnpm ingest:knowledge --strict
+# Hoặc chỉ định thư mục nguồn:
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge --input=data/raw_corpus/ --strict
 
-# 4. Hợp giải mâu thuẫn thực thể & ghi vết nhật ký audit log
+# 5. Hợp giải mâu thuẫn thực thể & ghi vết nhật ký audit log
 pnpm --filter @chronoviet/data-ingestion rag:re-resolve
 
-# 5. Chạy đường ống nạp & kiểm định bản quyền tài nguyên media (Media ETL)
+# 6. Chẩn đoán & kiểm tra chất lượng dữ liệu nạp thật (Chunks, Unmapped Entities, Quarantine Triples)
+pnpm eval:ingest:diagnostic
+
+# 7. Chạy đường ống nạp & kiểm định bản quyền tài nguyên media (Media ETL)
 pnpm setup-assets
 
-# 6. Chạy bộ kiểm thử Benchmark đo lường KPI Mô-đun 0 (Data Ingestion)
+# 8. Chạy bộ kiểm thử Benchmark đo lường KPI cục bộ Mô-đun 0 (In-memory Fast Check)
 pnpm --filter @chronoviet/data-ingestion eval
+
+# 9. Đánh giá chất lượng tri thức toàn diện trên CSDL thật (PostgreSQL + RAG Search Chain)
+pnpm eval --chain ingest-rag
 ```
 
 ---

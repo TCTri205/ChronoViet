@@ -11,7 +11,7 @@ describe('LLM Gateway Client', () => {
   it('handles completion with mock local response', async () => {
     const mockResponse = {
       choices: [{ message: { content: 'Chiến thắng Ngọc Hồi - Đống Đa năm 1789.' } }],
-      model: 'qwen3.5-27b-instruct-q4_k_m',
+      model: 'qwen3.8-27b-instruct-q4_k_m',
       usage: { prompt_tokens: 10, completion_tokens: 15, total_tokens: 25 },
     };
 

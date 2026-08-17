@@ -36,10 +36,10 @@ Từ khi kích hoạt `EVAL_STRICT=true` (mặc định), mọi eval runner sẽ
 
 | Service | Cấu hình | Lệnh khởi động gợi ý |
 | :--- | :--- | :--- |
-| LLM Server (llama-server) | `LLM_BASE_URL` (vd `http://localhost:8091`) | `llama-server -m models/qwen3.5-27b-q4_k_m.gguf --port 8091` |
-| Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `qwen3-embedding-0.6b` |
+| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8091`) | `llama-server -m models/qwen3.8-27b-q4_k_m.gguf --mmproj models/qwen3.8-27b-mmproj.gguf --port 8091` |
+| Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `bge-m3` (1024 dimensions) |
 | VieNeu Python TTS | `VIENEU_PYTHON_URL` (vd `http://localhost:8080`) | `python app.py` trong `services/vieneu-tts/` |
-| VLM Local | `EVAL_VLM_MODEL` (mặc định `qwen3-vl-8b`) qua llama-server | llama-server serve model vision `qwen3-vl-8b` |
+| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.8-27b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8091) |
 | PostgreSQL pgvector | `DATABASE_URL` | `docker compose up -d db` |
 
 **Tắt strict (dev-only, KHÔNG hợp lệ làm benchmark):** đặt `EVAL_STRICT=false` trong `.env` — khi đó các fallback cũ được phép dùng lại.

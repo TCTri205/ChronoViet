@@ -12,6 +12,7 @@ export {
   resolveEntityAlias,
   resolveHistoricalEpochs,
   resolveCanonicalEntity,
+  isKnownMasterEntity,
   formatSameAsLocationRelations,
   formatAliasOfRelations,
   buildAliasTable,

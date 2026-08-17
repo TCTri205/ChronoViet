@@ -6,10 +6,12 @@
 import { Worker, Job } from 'bullmq';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import {
   cleanProjectWorkspace,
   createLogger,
   ensureProjectAssetsReady,
+  envConfig,
   formatErrorMessage,
   initProjectWorkspace,
   loadProjectSchema,
@@ -128,7 +130,8 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     throw new Error(errorMsg);
   }
 
-  const renderConcurrency = process.env.RENDER_CONCURRENCY || process.env.CONCURRENCY || '1';
+  const defaultConcurrency = Math.max(1, Math.min(os.cpus().length - 1, 4));
+  const renderConcurrency = String(envConfig.RENDER_CONCURRENCY || process.env.RENDER_CONCURRENCY || defaultConcurrency);
 
   log.info('worker.remotion_rendering', `Invoking Remotion engine for ${projectId} with concurrency=${renderConcurrency}`, {
     remotionEntry,
@@ -274,7 +277,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
 
 export function startRenderWorker(): Worker<RenderJobData, RenderJobResult> {
   const connection = getBullMqRedis();
-  const workerConcurrency = Number(process.env.RENDER_CONCURRENCY || process.env.CONCURRENCY || 1);
+  const workerConcurrency = envConfig.RENDER_CONCURRENCY || 1;
 
   const worker = new Worker<RenderJobData, RenderJobResult>(
     QUEUE_NAMES.REMOTION_RENDER,

@@ -8,20 +8,26 @@ import { ChronoGraphState } from '../state.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
 
-const DEFAULT_LAYOUTS: LayoutMode[] = [
-  'HISTORICAL_FRAME',
-  'TIMELINE_CHRONO',
-  'QUOTE_SLIDE',
-  'STAT_CARD',
-  'CENTER_SCALE',
-  'FULL_COVER',
-];
+const TEMPLATE_LAYOUTS: Record<string, LayoutMode[]> = {
+  QUICK_SHORTS: ['FULL_COVER', 'CENTER_SCALE', 'QUOTE_SLIDE', 'STAT_CARD'],
+  MODERN_NEWS: ['STAT_CARD', 'TIMELINE_CHRONO', 'FULL_COVER', 'HISTORICAL_FRAME'],
+  HISTORICAL_DOCUMENTARY: [
+    'HISTORICAL_FRAME',
+    'TIMELINE_CHRONO',
+    'QUOTE_SLIDE',
+    'STAT_CARD',
+    'CENTER_SCALE',
+    'FULL_COVER',
+  ],
+};
 
 export async function segmenterNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   log.info('orchestrator.segmenter_started', `Segmenting chapter scripts into scenes`, {
     projectId: state.projectId,
+    templateId: state.templateId,
   });
 
+  const availableLayouts = TEMPLATE_LAYOUTS[state.templateId || 'HISTORICAL_DOCUMENTARY'] || TEMPLATE_LAYOUTS.HISTORICAL_DOCUMENTARY;
   const scenes: SceneGeneration[] = [];
   let globalSceneIdx = 0;
 
@@ -57,11 +63,11 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
       const voiceoverText = sceneChunks[i];
       const wordCount = voiceoverText.split(/\s+/).length;
       const targetDurationSeconds = Math.max(5, Math.ceil(wordCount / 2.5));
-      const layoutMode = DEFAULT_LAYOUTS[globalSceneIdx % DEFAULT_LAYOUTS.length];
+      const layoutMode = availableLayouts[globalSceneIdx % availableLayouts.length];
 
-      // Extract search keywords from text
+      // Extract search keywords from text (including Vietnamese quotes and punctuation)
       const words = voiceoverText
-        .replace(/[,.!?]/g, '')
+        .replace(/[.,!?;:"'()“”‘’—…[\]]/g, ' ')
         .split(/\s+/)
         .filter((w) => w.length > 3)
         .slice(0, 4);

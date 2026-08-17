@@ -18,6 +18,13 @@ if [ -f "${ROOT_DIR}/.env" ]; then
   set +a
 fi
 
+# Auto-derive port from URL config if not explicitly set
+if [ -z "${TTS_SERVICE_PORT:-}" ] && [ -n "${VIENEU_PYTHON_URL:-}" ]; then
+  PARSED_TTS_PORT=$(echo "${VIENEU_PYTHON_URL}" | sed -E 's|^https?://[^:/]+:([0-9]+).*|\1|')
+  if [ "${PARSED_TTS_PORT}" != "${VIENEU_PYTHON_URL}" ] && [ -n "${PARSED_TTS_PORT}" ]; then
+    TTS_SERVICE_PORT="${PARSED_TTS_PORT}"
+  fi
+fi
 TTS_PORT="${TTS_SERVICE_PORT:-8080}"
 HYBRID_DEV="${HYBRID_DEV:-false}"
 PYTHON_APP="${ROOT_DIR}/services/vieneu-tts/app.py"

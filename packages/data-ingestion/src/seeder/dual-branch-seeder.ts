@@ -6,15 +6,27 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { IIngestionPipeline, IngestionOptions, IngestionResult, SourceReliability, createLogger, envConfig } from '@chronoviet/shared-spec';
-import { isPgAvailable, query, withTransaction, inMemoryStore, DbEntity, DbDocumentChunk, resolveHistoricalEpochs } from '@chronoviet/shared-spec';
+import {
+  isPgAvailable,
+  query,
+  withTransaction,
+  inMemoryStore,
+  DbEntity,
+  DbDocumentChunk,
+  DbQuarantineTriple,
+  DbUnmappedEntity,
+  resolveHistoricalEpochs,
+} from '@chronoviet/shared-spec';
 import { normalizeText } from '../text/text-normalizer.js';
 import { chunkDocumentHierarchical, ProcessedHierarchicalChunk } from '../chunking/hierarchical-chunker.js';
-import { resolveCanonicalEntity, resolveLocationMapping } from '../text/historical-entity-mapper.js';
+import { resolveCanonicalEntity, resolveLocationMapping, isKnownMasterEntity } from '../text/historical-entity-mapper.js';
 import { extractTriplesFromTextAsync, ExtractedTriple, ExtractionOptions } from '../triple-extractor.js';
 import { generateEmbedding } from '../embedding-service.js';
 import { PdfExtractor } from '../pdf/pdf-extractor.js';
 
 const log = createLogger({ service: 'data-ingestion' });
+
+export const CONFIDENCE_PRODUCTION_THRESHOLD = 0.85;
 
 export interface IngestionDocMetadata {
   title: string;
@@ -32,6 +44,9 @@ export interface DualBranchSeedResult {
   childChunksCount: number;
   entitiesExtracted: number;
   triplesExtracted: number;
+  highConfidenceTriplesCount: number;
+  quarantinedTriplesCount: number;
+  unmappedEntitiesCount: number;
   chunksIngested: number;
   durationMs: number;
   isPgMode: boolean;
@@ -78,7 +93,8 @@ export async function seedDualBranch(
   options?: ExtractionOptions
 ): Promise<DualBranchSeedResult> {
   const startTime = Date.now();
-  const cleanedText = normalizeText(content);
+  try {
+    const cleanedText = normalizeText(content);
 
   // 1. Dynamic Hierarchical Temporal Chunking
   const { parentChunks, childChunks } = chunkDocumentHierarchical(cleanedText, {
@@ -94,8 +110,11 @@ export async function seedDualBranch(
   const allChunks: ProcessedHierarchicalChunk[] = [...parentChunks, ...childChunks];
   const allTriples: ExtractedTriple[] = [];
   const entityMap = new Map<string, DbEntity>();
+  const productionTriplesMap = new Map<string, ExtractedTriple>();
+  const quarantineTriplesList: DbQuarantineTriple[] = [];
+  const unmappedEntitiesMap = new Map<string, DbUnmappedEntity>();
 
-  // 2. Extract Triples & Resolve Canonical Entities
+  // 2. Extract Triples & Resolve Canonical Entities with Confidence Tiering
   const chunkEntityMap = new Map<string, Set<string>>(); // chunkId -> Set of entityIds
 
   for (const chunk of allChunks) {
@@ -105,17 +124,87 @@ export async function seedDualBranch(
 
     for (const t of triples) {
       const srcEntity = resolveCanonicalEntity(t.sourceEntityName);
-      entityMap.set(srcEntity.entityId, {
-        id: srcEntity.entityId,
-        name: srcEntity.canonicalName,
-        type: srcEntity.type,
-        aliases: srcEntity.aliases,
-        metadata: {},
-      });
-      chunkEntityIds.add(srcEntity.entityId);
+      const isSrcMaster = isKnownMasterEntity(t.sourceEntityName);
+      if (!isSrcMaster) {
+        const existing = unmappedEntitiesMap.get(srcEntity.entityId);
+        unmappedEntitiesMap.set(srcEntity.entityId, {
+          id: srcEntity.entityId,
+          raw_name: t.sourceEntityName,
+          inferred_type: srcEntity.type,
+          occurrence_count: (existing?.occurrence_count || 0) + 1,
+          sample_context: chunk.textContent.slice(0, 300),
+          chunk_id: chunk.id,
+          status: 'PENDING_TRIAGE',
+        });
+      }
 
+      let isTgtMaster = false;
+      let tgtEntity: ReturnType<typeof resolveCanonicalEntity> | null = null;
       if (t.targetEntityId !== 'doc:historical_context') {
-        const tgtEntity = resolveCanonicalEntity(t.targetEntityName);
+        tgtEntity = resolveCanonicalEntity(t.targetEntityName);
+        isTgtMaster = isKnownMasterEntity(t.targetEntityName);
+        if (!isTgtMaster) {
+          const existing = unmappedEntitiesMap.get(tgtEntity.entityId);
+          unmappedEntitiesMap.set(tgtEntity.entityId, {
+            id: tgtEntity.entityId,
+            raw_name: t.targetEntityName,
+            inferred_type: tgtEntity.type,
+            occurrence_count: (existing?.occurrence_count || 0) + 1,
+            sample_context: chunk.textContent.slice(0, 300),
+            chunk_id: chunk.id,
+            status: 'PENDING_TRIAGE',
+          });
+        }
+      }
+
+      // Quality Validation Gate: Route to Quarantine or Production Graph
+      if (t.confidence < CONFIDENCE_PRODUCTION_THRESHOLD) {
+        quarantineTriplesList.push({
+          source_entity_id: srcEntity.entityId,
+          target_entity_id: tgtEntity?.entityId || t.targetEntityId,
+          source_name: t.sourceEntityName,
+          target_name: t.targetEntityName,
+          relation_type: t.relationType,
+          confidence: t.confidence,
+          chunk_id: chunk.id,
+          reason: 'LOW_CONFIDENCE',
+          status: 'PENDING_REVIEW',
+          metadata: { threshold: CONFIDENCE_PRODUCTION_THRESHOLD },
+        });
+      } else if (t.targetEntityId === 'doc:historical_context' || !tgtEntity) {
+        quarantineTriplesList.push({
+          source_entity_id: srcEntity.entityId,
+          target_entity_id: t.targetEntityId,
+          source_name: t.sourceEntityName,
+          target_name: t.targetEntityName,
+          relation_type: t.relationType,
+          confidence: t.confidence,
+          chunk_id: chunk.id,
+          reason: 'DANGLING_RELATION',
+          status: 'PENDING_REVIEW',
+        });
+      } else {
+        // High-confidence Verified Production Triple
+        const key = `${srcEntity.entityId}|${tgtEntity.entityId}|${t.relationType}`;
+        const existing = productionTriplesMap.get(key);
+        if (!existing || t.confidence > existing.confidence) {
+          productionTriplesMap.set(key, {
+            ...t,
+            sourceEntityId: srcEntity.entityId,
+            targetEntityId: tgtEntity.entityId,
+          });
+        }
+
+        // Register Production Entities
+        entityMap.set(srcEntity.entityId, {
+          id: srcEntity.entityId,
+          name: srcEntity.canonicalName,
+          type: srcEntity.type,
+          aliases: srcEntity.aliases,
+          metadata: {},
+        });
+        chunkEntityIds.add(srcEntity.entityId);
+
         entityMap.set(tgtEntity.entityId, {
           id: tgtEntity.entityId,
           name: tgtEntity.canonicalName,
@@ -200,17 +289,8 @@ export async function seedDualBranch(
         }
       }
 
-      // 3b. Batch Ingest Graph Relationships (Triples) (200 triples per batch)
-      const uniqueTriplesMap = new Map<string, ExtractedTriple>();
-      for (const t of allTriples) {
-        if (t.targetEntityId === 'doc:historical_context') continue;
-        const key = `${t.sourceEntityId}|${t.targetEntityId}|${t.relationType}`;
-        const existing = uniqueTriplesMap.get(key);
-        if (!existing || t.confidence > existing.confidence) {
-          uniqueTriplesMap.set(key, t);
-        }
-      }
-      const validTriples = Array.from(uniqueTriplesMap.values());
+      // 3b. Batch Ingest Verified Graph Relationships (Triples) (200 triples per batch)
+      const validTriples = Array.from(productionTriplesMap.values());
 
       for (let i = 0; i < validTriples.length; i += 200) {
         const batch = validTriples.slice(i, i + 200);
@@ -231,7 +311,72 @@ export async function seedDualBranch(
         }
       }
 
-      // 3c. Batch Ingest Document Chunks & Vector Embeddings (100 chunks per batch)
+      // 3c. Batch Ingest Quarantine Triples (200 per batch)
+      for (let i = 0; i < quarantineTriplesList.length; i += 200) {
+        const batch = quarantineTriplesList.slice(i, i + 200);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach((qt, idx) => {
+          const offset = idx * 10;
+          valueRows.push(
+            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10})`
+          );
+          values.push(
+            qt.source_entity_id || null,
+            qt.target_entity_id || null,
+            qt.source_name || null,
+            qt.target_name || null,
+            qt.relation_type || null,
+            qt.confidence,
+            qt.chunk_id || null,
+            qt.reason,
+            qt.status || 'PENDING_REVIEW',
+            JSON.stringify(qt.metadata || {})
+          );
+        });
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO quarantine_triples (
+              source_entity_id, target_entity_id, source_name, target_name,
+              relation_type, confidence, chunk_id, reason, status, metadata
+             ) VALUES ${valueRows.join(', ')};`,
+            values
+          );
+        }
+      }
+
+      // 3d. Batch Ingest Unmapped Entities (200 per batch)
+      const allUnmapped = Array.from(unmappedEntitiesMap.values());
+      for (let i = 0; i < allUnmapped.length; i += 200) {
+        const batch = allUnmapped.slice(i, i + 200);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach((ue, idx) => {
+          const offset = idx * 7;
+          valueRows.push(
+            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`
+          );
+          values.push(
+            ue.id,
+            ue.raw_name,
+            ue.inferred_type,
+            ue.occurrence_count || 1,
+            ue.sample_context || null,
+            ue.chunk_id || null,
+            ue.status || 'PENDING_TRIAGE'
+          );
+        });
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO unmapped_entities (id, raw_name, inferred_type, occurrence_count, sample_context, chunk_id, status)
+             VALUES ${valueRows.join(', ')}
+             ON CONFLICT (id) DO UPDATE SET occurrence_count = unmapped_entities.occurrence_count + EXCLUDED.occurrence_count, updated_at = CURRENT_TIMESTAMP;`,
+            values
+          );
+        }
+      }
+
+      // 3e. Batch Ingest Document Chunks & Vector Embeddings (100 chunks per batch)
       for (let i = 0; i < chunkEmbeddings.length; i += 100) {
         const batch = chunkEmbeddings.slice(i, i + 100);
         const values: unknown[] = [];
@@ -275,7 +420,7 @@ export async function seedDualBranch(
         }
       }
 
-      // 3d. Batch Ingest Entity-Chunk Cross-Links (500 cross-links per batch)
+      // 3f. Batch Ingest Entity-Chunk Cross-Links (500 cross-links per batch)
       const entityChunkSet = new Set<string>();
       const allEntityChunks: { entityId: string; chunkId: string }[] = [];
       for (const [chunkId, entityIds] of chunkEntityMap.entries()) {
@@ -312,14 +457,22 @@ export async function seedDualBranch(
       inMemoryStore.entities.set(entity.id, entity);
     }
 
-    for (const triple of allTriples) {
-      if (triple.targetEntityId === 'doc:historical_context') continue;
+    for (const triple of productionTriplesMap.values()) {
       inMemoryStore.relationships.push({
         id: inMemoryStore.nextRelId++,
         source_entity_id: triple.sourceEntityId,
         target_entity_id: triple.targetEntityId,
         relation_type: triple.relationType,
         confidence: triple.confidence,
+      });
+    }
+
+    inMemoryStore.quarantineTriples.push(...quarantineTriplesList);
+    for (const [id, ue] of unmappedEntitiesMap.entries()) {
+      const existing = inMemoryStore.unmappedEntities.get(id);
+      inMemoryStore.unmappedEntities.set(id, {
+        ...ue,
+        occurrence_count: (existing?.occurrence_count || 0) + (ue.occurrence_count || 1),
       });
     }
 
@@ -362,21 +515,34 @@ export async function seedDualBranch(
     parentChunks: parentChunks.length,
     childChunks: childChunks.length,
     entities: entityMap.size,
-    triples: allTriples.length,
+    triplesTotal: allTriples.length,
+    highConfidenceTriples: productionTriplesMap.size,
+    quarantinedTriples: quarantineTriplesList.length,
+    unmappedEntities: unmappedEntitiesMap.size,
     durationMs,
     mode: pgConnected ? 'postgres_pgvector' : 'in_memory',
   });
 
-  return {
-    title: metadata.title,
-    parentChunksCount: parentChunks.length,
-    childChunksCount: childChunks.length,
-    entitiesExtracted: entityMap.size,
-    triplesExtracted: allTriples.length,
-    chunksIngested: allChunks.length,
-    durationMs,
-    isPgMode: pgConnected,
-  };
+    return {
+      title: metadata.title,
+      parentChunksCount: parentChunks.length,
+      childChunksCount: childChunks.length,
+      entitiesExtracted: entityMap.size,
+      triplesExtracted: allTriples.length,
+      highConfidenceTriplesCount: productionTriplesMap.size,
+      quarantinedTriplesCount: quarantineTriplesList.length,
+      unmappedEntitiesCount: unmappedEntitiesMap.size,
+      chunksIngested: allChunks.length,
+      durationMs,
+      isPgMode: pgConnected,
+    };
+  } catch (err) {
+    log.error('ingest.doc_seeding_failed', 'Failed dual-branch seeding for document', {
+      title: metadata.title,
+      error: err,
+    });
+    throw err;
+  }
 }
 
 /**
@@ -391,6 +557,9 @@ export class DualBranchSeeder implements IIngestionPipeline {
     let chunksCreated = 0;
     let entitiesExtracted = 0;
     let relationshipsExtracted = 0;
+    let highConfidenceTriplesTotal = 0;
+    let quarantinedTriplesTotal = 0;
+    let unmappedEntitiesTotal = 0;
 
     const stat = await fs.stat(inputPath);
     const filesToProcess: string[] = [];
@@ -479,6 +648,9 @@ export class DualBranchSeeder implements IIngestionPipeline {
       chunksCreated += seedResult.chunksIngested;
       entitiesExtracted += seedResult.entitiesExtracted;
       relationshipsExtracted += seedResult.triplesExtracted;
+      highConfidenceTriplesTotal += seedResult.highConfidenceTriplesCount;
+      quarantinedTriplesTotal += seedResult.quarantinedTriplesCount;
+      unmappedEntitiesTotal += seedResult.unmappedEntitiesCount;
 
       log.info('seeder.document_ingested', 'Document ingested into dual-branch store', {
         title,
@@ -487,7 +659,9 @@ export class DualBranchSeeder implements IIngestionPipeline {
         total: filesToProcess.length,
         chunks: seedResult.chunksIngested,
         entities: seedResult.entitiesExtracted,
-        triples: seedResult.triplesExtracted,
+        verifiedTriples: seedResult.highConfidenceTriplesCount,
+        quarantinedTriples: seedResult.quarantinedTriplesCount,
+        unmappedEntities: seedResult.unmappedEntitiesCount,
         pgMode: seedResult.isPgMode,
       });
     }
@@ -499,6 +673,9 @@ export class DualBranchSeeder implements IIngestionPipeline {
       chunksCreated,
       entitiesExtracted,
       relationshipsExtracted,
+      highConfidenceTriplesTotal,
+      quarantinedTriplesTotal,
+      unmappedEntitiesTotal,
       durationMs,
     });
 

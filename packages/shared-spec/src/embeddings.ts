@@ -4,6 +4,7 @@
 
 import { envConfig } from './config.js';
 import { logFallbackAlert, createLogger } from './logger.js';
+import { getNextApiKey } from './api-key-rotator.js';
 
 const log = createLogger({ service: 'shared-spec' });
 
@@ -70,7 +71,7 @@ function generatePseudoRandomEmbedding(text: string): number[] {
 }
 
 const embeddingCache = new Map<string, number[]>();
-const MAX_CACHE_SIZE = 2000;
+const MAX_CACHE_SIZE = 5000;
 let warnedMissingApiUrl = false;
 let warnedFailedApiUrl = false;
 
@@ -113,17 +114,18 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     if (envConfig.EVAL_STRICT) {
       throw new Error('[EVAL_STRICT] Embedding server unavailable during evaluation; pseudo-random fallback disabled');
     }
-    if (!warnedMissingApiUrl && typeof process !== 'undefined' && process.env.NODE_ENV !== 'test' && !isCircuitOpen) {
+    const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
+    if (!warnedMissingApiUrl && envConfig.NODE_ENV !== 'test' && !isCircuitOpen) {
       log.warn('embedding.api_unconfigured', 'Embedding API URL is not configured; using pseudo-random fallback', {
         fallback: 'Deterministic Pseudo-Random Vector Generator',
-        actionRequired: 'Set EMBEDDING_API_URL=http://localhost:8080/v1/embeddings in .env',
+        actionRequired: 'Set EMBEDDING_API_URL=http://localhost:8090/v1/embeddings in .env',
       });
       logFallbackAlert({
         subsystem: 'EMBEDDING',
-        primaryTarget: `Embedding API Server (${envConfig.LOCAL_EMBEDDING_DEFAULT})`,
+        primaryTarget: `Embedding API Server (${resolvedEmbeddingModel})`,
         fallbackTarget: 'Deterministic Pseudo-Random Vector Generator',
         reason: 'EMBEDDING_API_URL environment variable is unconfigured',
-        actionRequired: 'Set EMBEDDING_API_URL=http://localhost:8080/v1/embeddings in .env',
+        actionRequired: 'Set EMBEDDING_API_URL=http://localhost:8090/v1/embeddings in .env',
       });
       warnedMissingApiUrl = true;
     }
@@ -134,18 +136,20 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 
   try {
+    const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
-    if (envConfig.GEMINI_API_KEY) {
-      headers['Authorization'] = `Bearer ${envConfig.GEMINI_API_KEY}`;
+    const geminiKey = getNextApiKey('gemini') || envConfig.GEMINI_API_KEY;
+    if (geminiKey) {
+      headers['Authorization'] = `Bearer ${geminiKey}`;
     }
 
     const isOllamaEmbeddingsEndpoint = apiUrl.includes('11434') || apiUrl.includes('/api/embeddings');
     const reqBody = isOllamaEmbeddingsEndpoint
-      ? { model: envConfig.LOCAL_EMBEDDING_DEFAULT, prompt: trimmed }
-      : { model: envConfig.LOCAL_EMBEDDING_DEFAULT, input: trimmed };
+      ? { model: resolvedEmbeddingModel, prompt: trimmed }
+      : { model: resolvedEmbeddingModel, input: trimmed };
 
     const res = await fetch(apiUrl, {
       method: 'POST',
@@ -195,10 +199,11 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       error: err,
       apiUrl,
     });
+    const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
     if (!warnedFailedApiUrl) {
       logFallbackAlert({
         subsystem: 'EMBEDDING',
-        primaryTarget: `Embedding API Server (${apiUrl}) [${envConfig.LOCAL_EMBEDDING_DEFAULT}]`,
+        primaryTarget: `Embedding API Server (${apiUrl}) [${resolvedEmbeddingModel}]`,
         fallbackTarget: 'Deterministic Pseudo-Random Vector Generator',
         reason: errMsg,
         actionRequired: `Verify embedding server is running on ${apiUrl}`,
@@ -258,10 +263,11 @@ export async function isEmbeddingServiceHealthy(): Promise<{ healthy: boolean; p
   }
 
   try {
+    const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
     const isOllama = apiUrl.includes('11434') || apiUrl.includes('/api/embeddings');
     const reqBody = isOllama
-      ? { model: envConfig.LOCAL_EMBEDDING_DEFAULT, prompt: 'health_check' }
-      : { model: envConfig.LOCAL_EMBEDDING_DEFAULT, input: 'health_check' };
+      ? { model: resolvedEmbeddingModel, prompt: 'health_check' }
+      : { model: resolvedEmbeddingModel, input: 'health_check' };
 
     const res = await fetch(apiUrl, {
       method: 'POST',

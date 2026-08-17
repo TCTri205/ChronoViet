@@ -18,52 +18,58 @@ export async function researchNode(state: ChronoGraphState): Promise<Partial<Chr
     projectId: state.projectId,
   });
 
-  const researchResults: Record<string, ResearchSceneResult> = {};
+  const researchResults: Record<string, ResearchSceneResult> = { ...(state.researchResults || {}) };
 
-  for (const scene of state.scenes) {
-    // Only IMAGE scenes need visual research; PURE_CODE scenes are skipped
-    if (scene.contentType !== 'IMAGE') {
-      log.debug('orchestrator.research_skip_pure_code', `Skipping research for PURE_CODE scene ${scene.sceneId}`);
-      continue;
-    }
+  const batchSize = 4;
+  for (let i = 0; i < state.scenes.length; i += batchSize) {
+    const batch = state.scenes.slice(i, i + batchSize);
+    await Promise.all(
+      batch.map(async (scene) => {
+        // Only IMAGE scenes need visual research; PURE_CODE scenes are skipped
+        if (scene.contentType !== 'IMAGE') {
+          log.debug('orchestrator.research_skip_pure_code', `Skipping research for PURE_CODE scene ${scene.sceneId}`);
+          return;
+        }
 
-    // Reuse already-researched results (idempotency / resume support)
-    const existing = state.researchResults?.[scene.sceneId];
-    if (existing && existing.candidates.length > 0) {
-      researchResults[scene.sceneId] = existing;
-      continue;
-    }
+        // Reuse already-researched results (idempotency / resume support)
+        const existing = state.researchResults?.[scene.sceneId];
+        if (existing && existing.candidates.length > 0) {
+          researchResults[scene.sceneId] = existing;
+          return;
+        }
 
-    const keywords = scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt;
-    const startedAt = Date.now();
+        const keywords = scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt;
+        const startedAt = Date.now();
 
-    try {
-      const { candidates, provenance } = await resolveImageCandidates(keywords, scene.sceneId, RESEARCH_CANDIDATE_LIMIT);
-      researchResults[scene.sceneId] = {
-        sceneId: scene.sceneId,
-        keywords,
-        candidates: candidates as VisualCandidate[],
-        provenance,
-        resolvedAt: new Date().toISOString(),
-      };
-      log.info('orchestrator.research_scene_done', `Researched ${candidates.length} candidates for scene ${scene.sceneId}`, {
-        sceneId: scene.sceneId,
-        keywords,
-        latencyMs: Date.now() - startedAt,
-      });
-    } catch (err: any) {
-      log.warn('orchestrator.research_scene_failed', `Research failed for scene ${scene.sceneId}: ${err.message}`, {
-        sceneId: scene.sceneId,
-        error: err.message,
-      });
-      researchResults[scene.sceneId] = {
-        sceneId: scene.sceneId,
-        keywords,
-        candidates: [],
-        provenance: [],
-        resolvedAt: new Date().toISOString(),
-      };
-    }
+        try {
+          const { candidates, provenance } = await resolveImageCandidates(keywords, scene.sceneId, RESEARCH_CANDIDATE_LIMIT);
+          researchResults[scene.sceneId] = {
+            sceneId: scene.sceneId,
+            keywords,
+            candidates: candidates as VisualCandidate[],
+            provenance,
+            resolvedAt: new Date().toISOString(),
+          };
+          log.info('orchestrator.research_scene_done', `Researched ${candidates.length} candidates for scene ${scene.sceneId}`, {
+            sceneId: scene.sceneId,
+            keywords,
+            latencyMs: Date.now() - startedAt,
+          });
+        } catch (err: any) {
+          log.warn('orchestrator.research_scene_failed', `Research failed for scene ${scene.sceneId}: ${err.message}`, {
+            sceneId: scene.sceneId,
+            error: err.message,
+          });
+          researchResults[scene.sceneId] = {
+            sceneId: scene.sceneId,
+            keywords,
+            candidates: [],
+            provenance: [],
+            resolvedAt: new Date().toISOString(),
+          };
+        }
+      })
+    );
   }
 
   return {

@@ -5,7 +5,7 @@
  * from producing a misleading PASS during evaluation.
  */
 
-import { envConfig, isLLMServiceHealthy, isEmbeddingServiceHealthy, createLogger } from '../../packages/shared-spec/src/index.js';
+import { envConfig, isLLMServiceHealthy, isEmbeddingServiceHealthy, createLogger, hasAvailableApiKeys } from '../../packages/shared-spec/src/index.js';
 
 const log = createLogger({ service: 'eval-preflight' });
 
@@ -65,13 +65,14 @@ async function checkVlmHealth(): Promise<PreflightCheck> {
   if (envConfig.USE_LOCAL_LLM) {
     try {
       const endpoint = `${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`;
+      const vlmModel = envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.8-27b-instruct-q4_k_m';
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: envConfig.EVAL_VLM_MODEL,
+          model: vlmModel,
           messages: [
             {
               role: 'user',
@@ -95,7 +96,7 @@ async function checkVlmHealth(): Promise<PreflightCheck> {
         return {
           service: 'vlm',
           healthy: true,
-          provider: `LOCAL_VLM (${envConfig.LLM_BASE_URL}) [${envConfig.EVAL_VLM_MODEL}]`,
+          provider: `LOCAL_VLM (${envConfig.LLM_BASE_URL}) [${vlmModel}]`,
           required: true,
         };
       }
@@ -119,7 +120,7 @@ async function checkVlmHealth(): Promise<PreflightCheck> {
   }
 
   // 2. Fallback: Gemini cloud key
-  if (envConfig.GEMINI_API_KEY) {
+  if (hasAvailableApiKeys('gemini') || envConfig.GEMINI_API_KEY) {
     return {
       service: 'vlm',
       healthy: true,
@@ -133,7 +134,7 @@ async function checkVlmHealth(): Promise<PreflightCheck> {
     healthy: false,
     provider: 'NONE',
     required: true,
-    details: 'No VLM available: USE_LOCAL_LLM is off and GEMINI_API_KEY is unset',
+    details: 'No VLM available: USE_LOCAL_LLM is off and GEMINI_API_KEYS is unset',
   };
 }
 
@@ -154,7 +155,7 @@ async function checkLlmHealth(): Promise<PreflightCheck> {
     };
   }
   // USE_LOCAL_LLM=false: only allowed in eval when cloud fallback is explicitly enabled
-  const cloudReady = envConfig.EVAL_ALLOW_CLOUD_FALLBACK && !!envConfig.AGNES_API_KEY;
+  const cloudReady = envConfig.EVAL_ALLOW_CLOUD_FALLBACK && (hasAvailableApiKeys('agnes') || !!envConfig.AGNES_API_KEY);
   return {
     service: 'llm',
     healthy: cloudReady,
@@ -162,7 +163,7 @@ async function checkLlmHealth(): Promise<PreflightCheck> {
     required: true,
     details: cloudReady
       ? undefined
-      : 'USE_LOCAL_LLM=false: set EVAL_ALLOW_CLOUD_FALLBACK=true and AGNES_API_KEY to use cloud in eval',
+      : 'USE_LOCAL_LLM=false: set EVAL_ALLOW_CLOUD_FALLBACK=true and AGNES_API_KEYS to use cloud in eval',
   };
 }
 
@@ -184,9 +185,9 @@ async function checkEmbeddingHealth(): Promise<PreflightCheck> {
  */
 async function checkSearchHealth(): Promise<PreflightCheck> {
   const present = [
-    envConfig.SERPAPI_API_KEY ? 'serpapi' : null,
-    envConfig.TAVILY_API_KEY ? 'tavily' : null,
-    envConfig.BRAVE_API_KEY ? 'brave' : null,
+    hasAvailableApiKeys('serpapi') || envConfig.SERPAPI_API_KEY ? 'serpapi' : null,
+    hasAvailableApiKeys('tavily') || envConfig.TAVILY_API_KEY ? 'tavily' : null,
+    hasAvailableApiKeys('brave') || envConfig.BRAVE_API_KEY ? 'brave' : null,
   ].filter(Boolean) as string[];
 
   if (present.length > 0) {

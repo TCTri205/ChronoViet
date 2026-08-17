@@ -51,7 +51,7 @@ export function Header({
       name: "LLM Agnes",
       status: "healthy",
       latencyMs: 120,
-      info: "Agnes 2.0 Flash / Qwen 2.5",
+      info: "Agnes 2.5 Flash / Qwen 3.8",
       icon: Cpu,
     },
   ]);

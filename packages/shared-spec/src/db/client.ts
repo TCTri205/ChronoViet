@@ -54,6 +54,34 @@ export interface DbEntityAuditLog {
   rationale?: string;
 }
 
+export interface DbQuarantineTriple {
+  id?: number;
+  source_entity_id?: string;
+  target_entity_id?: string;
+  source_name?: string;
+  target_name?: string;
+  relation_type?: string;
+  confidence: number;
+  chunk_id?: string;
+  reason: 'LOW_CONFIDENCE' | 'UNMAPPED_SOURCE' | 'UNMAPPED_TARGET' | 'DANGLING_RELATION' | 'GENERIC_TERM' | string;
+  status?: 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+}
+
+export interface DbUnmappedEntity {
+  id: string;
+  raw_name: string;
+  inferred_type: string;
+  occurrence_count?: number;
+  sample_context?: string;
+  chunk_id?: string;
+  status?: 'PENDING_TRIAGE' | 'MAPPED_TO_ALIAS' | 'DISCARDED_AS_NOISE';
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // In-Memory Database Fallback Store
 class InMemoryRagStore {
   entities = new Map<string, DbEntity>();
@@ -61,8 +89,11 @@ class InMemoryRagStore {
   documentChunks = new Map<string, DbDocumentChunk>();
   entityChunks: DbEntityChunk[] = [];
   auditLogs: DbEntityAuditLog[] = [];
+  quarantineTriples: DbQuarantineTriple[] = [];
+  unmappedEntities = new Map<string, DbUnmappedEntity>();
   nextRelId = 1;
   nextAuditLogId = 1;
+  nextQuarantineId = 1;
 
   clear() {
     this.entities.clear();
@@ -70,8 +101,11 @@ class InMemoryRagStore {
     this.documentChunks.clear();
     this.entityChunks = [];
     this.auditLogs = [];
+    this.quarantineTriples = [];
+    this.unmappedEntities.clear();
     this.nextRelId = 1;
     this.nextAuditLogId = 1;
+    this.nextQuarantineId = 1;
   }
 }
 
@@ -95,12 +129,12 @@ export function getPoolConfig() {
 }
 
 export async function isPgAvailable(forceCheck = false): Promise<boolean> {
-  if (Boolean(process.env.FORCE_OFFLINE) || Boolean(process.env.SKIP_PG)) {
+  if (Boolean(envConfig.FORCE_OFFLINE) || Boolean(envConfig.SKIP_PG)) {
     pgConnected = false;
     checkAttempted = true;
     log.warn('db.pg_forced_offline', 'PostgreSQL disabled via FORCE_OFFLINE/SKIP_PG; using in-memory store', {
-      forceOffline: Boolean(process.env.FORCE_OFFLINE),
-      skipPg: Boolean(process.env.SKIP_PG),
+      forceOffline: Boolean(envConfig.FORCE_OFFLINE),
+      skipPg: Boolean(envConfig.SKIP_PG),
     });
     return false;
   }

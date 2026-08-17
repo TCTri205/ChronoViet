@@ -3,7 +3,8 @@ import { durationReconciliationNode } from '../graph/nodes/reconciler-node.js';
 import { validateFolkloreHypothesisTone } from '../guardrails/folklore-validator.js';
 import { ChronoGraphState } from '../graph/state.js';
 import { defaultCheckpointer } from '../graph/checkpointer.js';
-import { runOrchestratorPipeline, resumeOrchestratorPipeline } from '../graph/orchestrator.js';
+import { runOrchestratorPipeline, resumeOrchestratorPipeline, streamOrchestratorPipeline } from '../graph/orchestrator.js';
+import { extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
 
 // Mock callLlm for deterministic unit testing
 vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
@@ -276,5 +277,85 @@ describe('Agent Orchestrator Unit Tests', () => {
       expect(finalState.pacingErrorPercentage).toBeDefined();
       expect(finalState.pacingErrorPercentage!).toBeLessThan(3.0);
     }, 30000);
+
+    it('should stream orchestrator events chunk by chunk', async () => {
+      const projectId = 'test_pipeline_stream_001';
+      const initialState: Partial<ChronoGraphState> = {
+        projectId,
+        userPrompt: 'Chiến thắng Bạch Đằng năm 938',
+        targetDurationMinutes: 1,
+        videoType: 'BATTLE',
+        templateId: 'HISTORICAL_DOCUMENTARY',
+        status: 'INIT',
+        currentStep: 1,
+      };
+
+      const emittedNodes: string[] = [];
+      for await (const chunk of streamOrchestratorPipeline(initialState as ChronoGraphState)) {
+        emittedNodes.push(chunk.nodeName);
+      }
+
+      expect(emittedNodes.length).toBeGreaterThan(0);
+      expect(emittedNodes).toContain('packager');
+    }, 30000);
+
+    it('should resume pipeline cleanly without duplicate scenes after human review approval', async () => {
+      const projectId = 'test_pipeline_resume_001';
+      const sampleCheckpoint: Partial<ChronoGraphState> = {
+        projectId,
+        userPrompt: 'Chiến dịch Điện Biên Phủ 1954',
+        targetDurationMinutes: 1,
+        videoType: 'BATTLE',
+        templateId: 'HISTORICAL_DOCUMENTARY',
+        status: 'NEEDS_HUMAN_REVIEW',
+        currentStep: 5,
+        needsHumanReview: true,
+        chapters: [
+          {
+            chapterIndex: 0,
+            title: 'Hồi 1: Kéo pháo vào trận địa',
+            summary: 'Bộ đội ta kéo pháo vào trận địa.',
+            targetDurationSeconds: 60,
+            keyEvents: ['Kéo pháo'],
+            introducedEntities: ['Võ Nguyên Giáp'],
+            transitionHook: '',
+            establishedTone: 'Hào hùng',
+          },
+        ],
+        chapterScripts: {
+          0: 'Năm 1954, Đại tướng Võ Nguyên Giáp chỉ huy chiến dịch Điện Biên Phủ.',
+        },
+      };
+
+      // Save initial checkpoint
+      await defaultCheckpointer.put(
+        { configurable: { thread_id: projectId } },
+        {
+          v: 1,
+          id: 'cp_resume_001',
+          ts: new Date().toISOString(),
+          channel_values: sampleCheckpoint,
+          channel_versions: {},
+          versions_seen: {},
+          pending_sends: [],
+        },
+        { source: 'update', step: 5, writes: {}, parents: {} }
+      );
+
+      // Resume pipeline
+      const resumedState = await resumeOrchestratorPipeline(projectId);
+      expect(resumedState.status).toBe('COMPLETED');
+      expect(resumedState.needsHumanReview).toBe(false);
+      expect(resumedState.videoProps).toBeDefined();
+      expect(resumedState.scenes.length).toBeGreaterThan(0);
+    }, 30000);
+
+    it('should correctly clean Vietnamese quotes and punctuation in extractSearchKeywordsFromText', () => {
+      const text = '“Chiến thắng Bạch Đằng năm 938” — mở ra thời kỳ ‘độc lập’ lâu dài… cho dân tộc!';
+      const keywords = extractSearchKeywordsFromText(text, ['Ngô Quyền'], 'Trận Bạch Đằng');
+      expect(keywords).toContain('Trận Bạch Đằng');
+      expect(keywords).toContain('Ngô Quyền');
+      expect(keywords.some((k) => k.includes('“') || k.includes('”') || k.includes('—'))).toBe(false);
+    });
   });
 });

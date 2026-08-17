@@ -73,6 +73,7 @@ export async function GET(
           'Accept-Ranges': 'bytes',
           'Content-Length': String(chunkSize),
           'Content-Type': 'video/mp4',
+          'Cache-Control': 'public, max-age=31536000, immutable',
         },
       });
     } else {
@@ -94,6 +95,7 @@ export async function GET(
           'Content-Length': String(fileSize),
           'Content-Type': 'video/mp4',
           'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=31536000, immutable',
         },
       });
     }

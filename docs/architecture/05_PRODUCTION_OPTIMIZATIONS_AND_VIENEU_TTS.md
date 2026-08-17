@@ -38,7 +38,7 @@ Việc thẩm định các bức ảnh tư liệu trong kịch bản qua mô hì
    * Lưu snapshot file ảnh + raw header + metadata bản quyền vào `/media/license-snapshots/` để minh bạch thông tin và bảo vệ pháp lý.
 2. **Multi-Provider VLM Routing & Zero-Downtime Fallback:**
    * *Primary Vision Router (`VLM_PROVIDER`):* Hỗ trợ `local` / `openai` / `gemini` / `auto`.
-   * *Local OpenAI-compatible Endpoint (`VLM_BASE_URL`):* Kết nối trực tiếp tới local/self-hosted vision models (như `qwen3-vl-8b`, `qwen2.5-vl`, vLLM, Ollama) với độ trễ tối ưu và bảo mật dữ liệu.
+   * *Local OpenAI-compatible Endpoint (`VLM_BASE_URL`):* Kết nối trực tiếp tới local/self-hosted vision models (như `qwen3.8-27b-instruct-q4_k_m`, `qwen2.5-vl`, llama-server `mmproj`, vLLM, Ollama) với độ trễ tối ưu và bảo mật dữ liệu.
    * *Cloud Vision Fallback (Gemini API):* Tự động dự phòng qua Gemini API khi có `GEMINI_API_KEY`.
    * *Deterministic Offline Fallback:* Tự động kích hoạt **Local CLIP/SigLIP Cosine Similarity Scorer** khi offline/không có GPU, bảo đảm quy trình render không bao giờ bị dừng.
 3. **Bộ Đệm Chấm Điểm 2 Lớp (Dual-Layer VLM Score Cache trong Unified Redis):**

@@ -8,7 +8,14 @@
  */
 
 import * as crypto from 'crypto';
-import { createLogger, envConfig, logFallbackAlert } from '@chronoviet/shared-spec';
+import {
+  createLogger,
+  envConfig,
+  logFallbackAlert,
+  executeWithKeyRotation,
+  hasAvailableApiKeys,
+  hybridInferenceDispatcher,
+} from '@chronoviet/shared-spec';
 import { getCachedVLMScore, setCachedVLMScore, VLMScoreResult } from './redis-cache.js';
 import { scoreImageWithLocalCLIP } from './clip-scorer.js';
 
@@ -68,8 +75,8 @@ export async function scoreImageWithLocalVLM(
   options: ScoreImageOptions = {}
 ): Promise<VLMScoreResult> {
   const prompt = buildScoringPrompt(eventDescription, options);
-  const baseUrl = (envConfig.VLM_BASE_URL || envConfig.LLM_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
-  const modelName = envConfig.VLM_MODEL || envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || 'qwen3-vl-8b';
+  const baseUrl = (envConfig.VLM_BASE_URL || envConfig.LLM_BASE_URL || 'http://localhost:8091').replace(/\/$/, '');
+  const modelName = envConfig.VLM_MODEL || envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.8-27b-instruct-q4_k_m';
   const endpoint = `${baseUrl}/v1/chat/completions`;
 
   let imagePart: { type: 'image_url'; image_url: { url: string } };
@@ -163,34 +170,39 @@ export async function scoreImageWithGeminiApi(
     parts.push({ text: `Image URL: ${imageUrl}` });
   }
 
-  const modelName = process.env.GEMINI_VISION_MODEL || 'gemini-2.0-flash';
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${envConfig.GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.1,
-        },
-      }),
-      signal: AbortSignal.timeout(30000),
+  const modelName = envConfig.GEMINI_VISION_MODEL || 'gemini-2.0-flash';
+
+  return executeWithKeyRotation('gemini', async (geminiKey: string) => {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 0.1,
+          },
+        }),
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    if (!res.ok) {
+      const err = new Error(`Gemini API HTTP ${res.status}: ${res.statusText}`);
+      (err as any).status = res.status;
+      throw err;
     }
-  );
 
-  if (!res.ok) {
-    throw new Error(`Gemini API HTTP ${res.status}: ${res.statusText}`);
-  }
+    const data = (await res.json()) as any;
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) {
+      throw new Error('Empty response from Gemini API');
+    }
 
-  const data = (await res.json()) as any;
-  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawText) {
-    throw new Error('Empty response from Gemini API');
-  }
-
-  return parseScoreJson(rawText, 'GEMINI_CLOUD');
+    return parseScoreJson(rawText, 'GEMINI_CLOUD');
+  });
 }
 
 /**
@@ -246,10 +258,34 @@ export async function scoreImageWithVLM(
   }
 
   const vlmProvider = envConfig.VLM_PROVIDER || 'auto';
-  const vlmModel = envConfig.VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || 'qwen3-vl-8b';
-  const vlmBaseUrl = envConfig.VLM_BASE_URL || envConfig.LLM_BASE_URL || 'http://localhost:8080';
+  const vlmModel = envConfig.VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.8-27b-instruct-q4_k_m';
+  const vlmBaseUrl = envConfig.VLM_BASE_URL || envConfig.LLM_BASE_URL || 'http://localhost:8091';
 
-  // 3. Attempt Local / OpenAI Vision Model if enabled or auto
+  // 3. Hybrid Round-Robin Mode (Rotates across Local Vision & Gemini Cloud Vision keys)
+  if (
+    envConfig.INFERENCE_ROUTING_MODE === 'hybrid_round_robin' &&
+    !envConfig.EVAL_STRICT &&
+    vlmProvider === 'auto'
+  ) {
+    const vlmTargets = hybridInferenceDispatcher.getInferenceTargets('vlm');
+    if (vlmTargets.length > 0) {
+      try {
+        const result = await hybridInferenceDispatcher.executeWithHybridRotation('vlm', async (target) => {
+          if (target.type === 'local') {
+            return await scoreImageWithLocalVLM(imageUrl, eventDescription, options);
+          } else {
+            return await scoreImageWithGeminiApi(imageUrl, eventDescription, options);
+          }
+        });
+        await setCachedVLMScore(result, cacheOpts);
+        return result;
+      } catch (hybridErr: any) {
+        log.warn('vlm.hybrid_targets_exhausted', `All VLM hybrid targets failed: ${hybridErr.message}; falling back to Priority/CLIP flow`);
+      }
+    }
+  }
+
+  // 4. Attempt Local / OpenAI Vision Model if enabled or auto
   if (vlmProvider === 'local' || vlmProvider === 'openai' || vlmProvider === 'auto') {
     try {
       const result = await scoreImageWithLocalVLM(imageUrl, eventDescription, options);
@@ -265,7 +301,7 @@ export async function scoreImageWithVLM(
       });
 
       // If explicitly configured for local/openai only and failed, don't silently jump to Gemini unless in auto mode
-      if (vlmProvider !== 'auto' && !envConfig.GEMINI_API_KEY) {
+      if (vlmProvider !== 'auto' && !hasAvailableApiKeys('gemini') && !envConfig.GEMINI_API_KEY) {
         logFallbackAlert({
           subsystem: 'VLM_INSPECTOR',
           primaryTarget: `VLM Model (${vlmBaseUrl}) [${vlmModel}]`,
@@ -282,7 +318,7 @@ export async function scoreImageWithVLM(
   }
 
   // 4. Attempt Gemini Cloud Vision API if configured
-  if (envConfig.GEMINI_API_KEY && (vlmProvider === 'gemini' || vlmProvider === 'auto')) {
+  if ((hasAvailableApiKeys('gemini') || envConfig.GEMINI_API_KEY) && (vlmProvider === 'gemini' || vlmProvider === 'auto')) {
     try {
       const result = await scoreImageWithGeminiApi(imageUrl, eventDescription, options);
       await setCachedVLMScore(result, cacheOpts);

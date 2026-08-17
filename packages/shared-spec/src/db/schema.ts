@@ -75,6 +75,36 @@ CREATE TABLE IF NOT EXISTS orchestrator_checkpoints (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 8. Quarantine Triples Table (Low confidence / unverified triples isolated from Production GraphRAG)
+CREATE TABLE IF NOT EXISTS quarantine_triples (
+    id SERIAL PRIMARY KEY,
+    source_entity_id TEXT,
+    target_entity_id TEXT,
+    source_name TEXT,
+    target_name TEXT,
+    relation_type TEXT,
+    confidence REAL DEFAULT 0.0,
+    chunk_id TEXT,
+    reason TEXT NOT NULL, -- LOW_CONFIDENCE, UNMAPPED_SOURCE, UNMAPPED_TARGET, DANGLING_RELATION, GENERIC_TERM
+    status TEXT DEFAULT 'PENDING_REVIEW', -- PENDING_REVIEW, APPROVED, REJECTED
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Unmapped Entities Table (Entities encountered in raw text without master ontology mapping)
+CREATE TABLE IF NOT EXISTS unmapped_entities (
+    id TEXT PRIMARY KEY,
+    raw_name TEXT NOT NULL,
+    inferred_type TEXT NOT NULL,
+    occurrence_count INT DEFAULT 1,
+    sample_context TEXT,
+    chunk_id TEXT,
+    status TEXT DEFAULT 'PENDING_TRIAGE', -- PENDING_TRIAGE, MAPPED_TO_ALIAS, DISCARDED_AS_NOISE
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Migrations for existing tables (Upgrading to TEXT type for zero length restrictions)
 ALTER TABLE document_chunks DROP COLUMN IF EXISTS tsv;
 
@@ -95,7 +125,7 @@ ALTER TABLE entity_audit_logs ALTER COLUMN entity_id TYPE TEXT;
 
 ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', title || ' ' || text_content)) STORED;
 
--- 7. Indexes
+-- 10. Indexes
 CREATE INDEX IF NOT EXISTS idx_entities_aliases ON entities USING GIN (aliases);
 
 CREATE INDEX IF NOT EXISTS idx_rel_source ON relationships (source_entity_id);
@@ -112,4 +142,8 @@ WITH (m = 16, ef_construction = 64);
 CREATE INDEX IF NOT EXISTS idx_chunks_fts ON document_chunks USING GIN (tsv);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON entity_audit_logs (entity_id);
 CREATE INDEX IF NOT EXISTS idx_checkpoints_status ON orchestrator_checkpoints (status);
+CREATE INDEX IF NOT EXISTS idx_quarantine_reason ON quarantine_triples (reason);
+CREATE INDEX IF NOT EXISTS idx_quarantine_status ON quarantine_triples (status);
+CREATE INDEX IF NOT EXISTS idx_unmapped_status ON unmapped_entities (status);
 `;
+

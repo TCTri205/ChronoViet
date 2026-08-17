@@ -27,14 +27,15 @@ export function extractSearchKeywordsFromText(
   ragEntities: string[] = [],
   userPrompt: string = ''
 ): string[] {
-  const cleaned = voiceoverText.replace(/[.,!?;:"'()[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleaned = voiceoverText.replace(/[.,!?;:"'()“”‘’—…[\]]/g, ' ').replace(/\s+/g, ' ').trim();
   const tokens = cleaned.split(' ').filter((w) => w.length > 2 && !VIETNAMESE_STOP_WORDS.has(w.toLowerCase()));
 
-  // Prefer canonical entity names + aliases from RAG when they appear in the text
+  // Prefer canonical entity names + aliases from RAG when they appear in the text, otherwise include top RAG entity
   const matchedEntities = ragEntities.filter((e) => {
     const lower = e.toLowerCase();
     return cleaned.toLowerCase().includes(lower);
   });
+  const entityKeywords = matchedEntities.length > 0 ? matchedEntities.slice(0, 4) : ragEntities.slice(0, 2);
 
   // Fallback: proper-noun-looking tokens (first letter uppercase) + years
   const properNouns = tokens.filter((w) => /^[A-ZÀ-Ỹ]/.test(w) && !/^\d+$/.test(w));
@@ -42,7 +43,7 @@ export function extractSearchKeywordsFromText(
 
   const keywords: string[] = [];
   if (userPrompt.trim()) keywords.push(userPrompt.trim());
-  keywords.push(...matchedEntities.slice(0, 4));
+  keywords.push(...entityKeywords);
   keywords.push(...properNouns.slice(0, 4));
   keywords.push(...years.slice(0, 2));
 

@@ -179,7 +179,7 @@ export interface ChronoLogger {
 }
 
 const THRESHOLD = LEVEL_PRIORITY[envConfig.LOG_LEVEL] ?? LEVEL_PRIORITY.info;
-const FORCE_JSON = envConfig.NODE_ENV === 'production' || process.env.LOG_FORMAT === 'json';
+const FORCE_JSON = envConfig.NODE_ENV === 'production' || envConfig.LOG_FORMAT === 'json';
 const OUTPUT: 'stdout' | 'stderr' = envConfig.NODE_ENV === 'test' ? 'stderr' : 'stdout';
 
 /**

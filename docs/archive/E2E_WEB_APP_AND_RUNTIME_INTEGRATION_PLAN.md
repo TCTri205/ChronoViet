@@ -13,7 +13,7 @@
 
 ### 1.1. Đánh giá Hiện trạng Hệ thống (Current State)
 Qua rà soát toàn diện codebase và đối chiếu hệ thống tài liệu kiến trúc, ChronoViet đã hoàn thiện các gói nghiệp vụ lõi (Core Backend Modules & Processing Services):
-- **`packages/shared-spec`**: Single Source of Truth (SSOT) Types, Zod Schemas (`ChronoVideoProps` / Video Script Schema v4.1, `TimelineScene`, `CaptionWord`, `WordTimestamp`), PostgreSQL Client (`pgvector`), Workspace Asset Manager (`initProjectWorkspace`, `cleanProjectWorkspace`), LLM Client (Qwen3.5 Local + Cloud Gemini/Agnes 2.0 Flash Fallback), Unified Logger.
+- **`packages/shared-spec`**: Single Source of Truth (SSOT) Types, Zod Schemas (`ChronoVideoProps` / Video Script Schema v4.1, `TimelineScene`, `CaptionWord`, `WordTimestamp`), PostgreSQL Client (`pgvector`), Workspace Asset Manager (`initProjectWorkspace`, `cleanProjectWorkspace`), LLM Client (Qwen3.8 Local + Cloud Gemini/Agnes 2.5 Flash Fallback), Unified Logger.
 - **`packages/rag-engine`**: Hybrid GraphRAG (PostgreSQL `pgvector` Dense 1024d + Graph CTEs + BM25 FTS + RRF + BGE Reranker v2), đạt chuẩn KPI benchmark (`rag-engine/eval/`).
 - **`packages/agent-orchestrator`**: LangGraph.js State Machine chuẩn 15 trạng thái, PostgreSQL Checkpointer, 5 Script Micro-Steps, Duration Reconciler, Research Agent (Crawl ảnh trực tuyến đa nguồn kèm Whitelist bản quyền) và JSON Schema Packager.
 - **`packages/vlm-inspector`**: Dual VLM Scorer (Local Qwen3-VL-8B / Cloud Gemini VLM / Local CLIP Fallback), Whitelisted License Filter (CC0, CC-BY, Public Domain), SHA-256 / pHash Redis Cache.
@@ -52,7 +52,7 @@ Hệ thống hiện tại chưa thể vận hành End-to-End (từ người dùn
 
 | Hạng Mục | Hiện Trạng Cũ / Lệch | Chuẩn Hóa SSOT Mới Nhất | Căn Cứ Kỹ Thuật |
 | :--- | :--- | :--- | :--- |
-| **Cloud LLM Fallback** | Gemini 2.5 Flash (`GEMINI_API_KEY`) | **Agnes 2.0 Flash (`AGNES_API_KEY`)** | `packages/shared-spec/src/llm-client.ts`, `.env.example` (model: `agnes-2.0-flash`). |
+| **Cloud LLM Fallback** | Gemini 2.5 Flash (`GEMINI_API_KEY`) | **Agnes 2.5 Flash (`AGNES_API_KEY`)** | `packages/shared-spec/src/llm-client.ts`, `.env.example` (model: `agnes-2.5-flash`). |
 | **Schema Versioning** | VideoProjectSchema v3.2 | **ChronoVideoScriptSchema v4.1** | `REMOTION_CONTENT_FORMATS_SPEC.md`, `SystemOverview.md`, `packages/shared-spec/src/schema.ts`. |
 | **PubSub & WS Channel** | `project_status:{project_id}` | **`project_events:${projectId}`** | Hỗ trợ tường minh event types (`RENDER_PROGRESS`, `RENDER_COMPLETED`, `RENDER_FAILED`). |
 | **12 Trạng Thái Vòng Đời** | Tên lệch giữa docs cũ (`DURATION_MISMATCH` vs `SCENES_SEGMENTED`) | **Chuẩn SSOT 12 trạng thái** theo `packages/agent-orchestrator/src/graph/state.ts` | Khớp 100% với LangGraph State Machine trong code lõi. |
@@ -200,7 +200,7 @@ Xây dựng bộ script điều hành hạ tầng để lập trình viên có t
    - Tự động kích hoạt virtual environment và khởi chạy `services/vieneu-tts/app.py` trên cổng 8080.
 3. **Local AI Model Starter (`scripts/start-local-ai.sh`)**:
    - Hỗ trợ khởi động `llama-server` cho LLM (Qwen-2.5) và Embedding server (`qwen3-embedding-0.6b`) khi chạy local Metal/CUDA.
-   - Hỗ trợ chế độ **Hybrid Dev Mode** (`HYBRID_DEV=true`): Tự động fallback sang **Agnes 2.0 Flash (`AGNES_API_KEY`)** để phát triển nhanh mà không yêu cầu máy cấu hình lớn.
+   - Hỗ trợ chế độ **Hybrid Dev Mode** (`HYBRID_DEV=true`): Tự động fallback sang **Agnes 2.5 Flash (`AGNES_API_KEY`)** để phát triển nhanh mà không yêu cầu máy cấu hình lớn.
 4. **Master Dev Command**:
    - Cập nhật `package.json` để lệnh `pnpm dev` thực sự khởi chạy song song Next.js App Server và BullMQ Render Worker.
 
@@ -215,7 +215,7 @@ Kế hoạch được chia làm 4 Sprint tuần tự:
 │ SPRINT 1: HẠ TẦNG RUNTIME, SCRIPT TIỆN ÍCH & WORKER REALTIME                           │
 │ • Thêm healthcheck vào `docker-compose.yml` & cấu hình lệnh `pnpm stack:infra`         │
 │ • Viết các script khởi động: `scripts/start-tts-local.sh`, `start-local-ai.sh`,        │
-│   `scripts/dev-stack.sh` (hỗ trợ Agnes 2.0 Flash Hybrid Dev Mode)                      │
+│   `scripts/dev-stack.sh` (hỗ trợ Agnes 2.5 Flash Hybrid Dev Mode)                      │
 │ • Bổ sung Redis PubSub (`project_events:${projectId}`) emitter vào `render-worker`     │
 │ • Triển khai `ensureProjectAssetsReady` (tải remote asset về `/media`) & giữ           │
 │   `CONCURRENCY=1` trong `render-worker`                                                │
@@ -249,7 +249,7 @@ Kế hoạch được chia làm 4 Sprint tuần tự:
 | STT | Tác Vụ | Tệp Tin Tác Động | Mô Tả Kỹ Thuật |
 | :---: | :--- | :--- | :--- |
 | **1.1** | Docker Compose Healthcheck & Infra Script | `docker-compose.yml`, `package.json` | Thêm healthcheck cho Postgres/Redis; bổ sung script `pnpm stack:infra`. |
-| **1.2** | Runtime Launch Scripts | `scripts/start-tts-local.sh`, `scripts/start-local-ai.sh`, `scripts/dev-stack.sh` | Viết scripts khởi chạy hạ tầng; hỗ trợ Agnes 2.0 Flash cho Hybrid Dev Mode; đồng bộ .env. |
+| **1.2** | Runtime Launch Scripts | `scripts/start-tts-local.sh`, `scripts/start-local-ai.sh`, `scripts/dev-stack.sh` | Viết scripts khởi chạy hạ tầng; hỗ trợ Agnes 2.5 Flash cho Hybrid Dev Mode; đồng bộ .env. |
 | **1.3** | Redis PubSub Progress Emitter | `apps/render-worker/src/workers/render-worker.ts` | Bổ sung Redis publish vào channel `project_events:${projectId}` khi render. |
 | **1.4** | Asset Pre-download & Workspace Prep | `apps/render-worker/src/workers/render-worker.ts` | Viết hàm `ensureProjectAssetsReady` tải remote assets về `/media/projects/:id/`. |
 | **2.1** | Cấu hình Dependencies cho `apps/web` | `apps/web/package.json`, `tsconfig.json` | Bổ sung `next`, `react`, `react-dom`, `ws`, `ioredis`, `bullmq`, `lucide-react`. |
@@ -278,7 +278,7 @@ Kế hoạch được chia làm 4 Sprint tuần tự:
    - Nhập prompt: *"Trận chiến Bạch Đằng năm 1288"* hoặc bấm "Tạo Video" từ đoạn chat $\rightarrow$ Hệ thống tự động RAG $\rightarrow$ Sinh kịch bản 3 hồi $\rightarrow$ Sinh giọng đọc VieNeu $\rightarrow$ Kiểm định ảnh VLM $\rightarrow$ Render xuất video MP4 $\rightarrow$ Video hiển thị phát được trên trình duyệt web.
 4. **Hạ Tầng & Cô Lập Tiến Trình**:
    - Render Worker tuân thủ `CONCURRENCY=1`, Chromium process được giải phóng hoàn toàn sau render.
-   - Hỗ trợ chạy Hybrid Dev Mode với fallback Agnes 2.0 Flash mượt mà.
+   - Hỗ trợ chạy Hybrid Dev Mode với fallback Agnes 2.5 Flash mượt mà.
 5. **Tuân thủ Chuẩn Monorepo**:
    - `pnpm typecheck` đạt 0 lỗi TypeScript toàn monorepo.
    - `pnpm lint` đạt chuẩn 100%.

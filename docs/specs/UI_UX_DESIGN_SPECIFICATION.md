@@ -278,7 +278,7 @@ Nhằm tối ưu hóa trải nghiệm trên mọi kích thước màn hình từ
   - `PostgreSQL`: Trạng thái kết nối DB và HNSW vector store (`< 5ms`).
   - `Redis`: Trạng thái hàng đợi BullMQ và PubSub gateway.
   - `VieNeu TTS (Port 8080)`: Trạng thái engine tổng hợp giọng đọc tiếng Việt ONNX.
-  - `LLM Provider`: Model đang kết nối (`Qwen Local` hoặc `Agnes 2.0 Flash Cloud`).
+  - `LLM Provider`: Model đang kết nối (`Qwen Local` hoặc `Agnes 2.5 Flash Cloud`).
 - **Project Context Switcher**: Dropdown (`Select` / `DropdownMenu`) chuyển đổi nhanh giữa các dự án đang tạo.
 
 ---

@@ -462,6 +462,42 @@ export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo 
 }
 
 /**
+ * Checks if an entity name or ID exists in the curated Master Historical Ontologies
+ */
+export function isKnownMasterEntity(nameOrId: string): boolean {
+  if (!nameOrId || typeof nameOrId !== 'string') return false;
+  const norm = normalizeKey(nameOrId);
+  const aliasMapping = resolveEntityAlias(nameOrId);
+  
+  if (HISTORICAL_PERSON_DICTIONARY[aliasMapping.canonicalId] || HISTORICAL_LOCATION_DICTIONARY[aliasMapping.canonicalId]) {
+    return true;
+  }
+  if (HISTORICAL_PERSON_DICTIONARY[nameOrId] || HISTORICAL_LOCATION_DICTIONARY[nameOrId]) {
+    return true;
+  }
+
+  // Check against location mappings
+  const loc = resolveLocationMapping(nameOrId);
+  if (loc) return true;
+
+  // Check aliases in person dictionary
+  for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
+    if (normalizeKey(person.canonicalName) === norm || person.aliases.some((a) => normalizeKey(a) === norm)) {
+      return true;
+    }
+  }
+
+  // Check aliases in location dictionary
+  for (const location of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
+    if (normalizeKey(location.canonicalName) === norm || location.aliases.some((a) => normalizeKey(a) === norm)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Builds SAME_AS_LOCATION relationship tuples for Graph Seeding
  */
 export function formatSameAsLocationRelations(): Array<{

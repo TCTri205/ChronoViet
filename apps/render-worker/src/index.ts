@@ -1,6 +1,7 @@
 import http from 'http';
 import {
   createLogger,
+  envConfig,
   getMetricsContentType,
   getMetricsSnapshot,
   formatErrorMessage,
@@ -42,7 +43,7 @@ export function initializeAllWorkers() {
   metricsInterval.unref();
 
   // Start lightweight HTTP probe server for HEALTHCHECK & /metrics
-  const probePort = parseInt(process.env.WORKER_PROBE_PORT || '3001', 10);
+  const probePort = envConfig.WORKER_PROBE_PORT || 3001;
   const probeServer = http.createServer(async (req, res) => {
     const url = req.url || '/';
 

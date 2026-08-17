@@ -149,3 +149,10 @@ export function evaluateChunkQuality(chunk: {
     errors,
   };
 }
+
+export {
+  DiagnosticIssueType,
+  IngestDiagnosticIssue,
+  IngestDiagnosticReport,
+} from '../src/diagnostics/diagnostic-types.js';
+

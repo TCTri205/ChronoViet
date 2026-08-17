@@ -26,7 +26,7 @@ describe('SerpApiImageSearchProvider', () => {
   });
 
   it('should skip when no API key is configured', async () => {
-    const provider = new SerpApiImageSearchProvider(undefined);
+    const provider = new SerpApiImageSearchProvider('');
     const result = await provider.search('Ngô Quyền', 3);
     expect(result).toEqual([]);
   });
@@ -66,7 +66,7 @@ describe('TavilyImageSearchProvider', () => {
   });
 
   it('should skip when no API key is configured', async () => {
-    const provider = new TavilyImageSearchProvider(undefined);
+    const provider = new TavilyImageSearchProvider('');
     expect(await provider.search('test', 3)).toEqual([]);
   });
 
@@ -91,7 +91,7 @@ describe('BraveImageSearchProvider', () => {
   });
 
   it('should skip when no API key is configured', async () => {
-    const provider = new BraveImageSearchProvider(undefined);
+    const provider = new BraveImageSearchProvider('');
     expect(await provider.search('test', 3)).toEqual([]);
   });
 

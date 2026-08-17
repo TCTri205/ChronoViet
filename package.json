@@ -23,6 +23,7 @@
     "rag:chat": "pnpm --filter @chronoviet/rag-engine chat",
     "eval:seed": "pnpm --filter @chronoviet/data-ingestion eval:seed",
     "eval:ingest": "pnpm --filter @chronoviet/data-ingestion eval",
+    "eval:ingest:diagnostic": "pnpm --filter @chronoviet/data-ingestion eval:diagnostic",
     "crawl:corpus": "pnpm --filter @chronoviet/data-ingestion crawl:corpus",
     "crawl:all": "pnpm --filter @chronoviet/data-ingestion crawl:corpus --all",
     "setup-assets": "pnpm --filter @chronoviet/remotion-engine setup-assets",

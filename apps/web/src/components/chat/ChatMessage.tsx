@@ -20,7 +20,7 @@ export interface ChatMessageProps {
   onCreateVideoFromTopic?: (topic: string) => void;
 }
 
-export function ChatMessage({
+function ChatMessageComponent({
   message,
   onCitationClick,
   onCreateVideoFromTopic,
@@ -109,3 +109,6 @@ export function ChatMessage({
     </div>
   );
 }
+
+export const ChatMessage = React.memo(ChatMessageComponent);
+

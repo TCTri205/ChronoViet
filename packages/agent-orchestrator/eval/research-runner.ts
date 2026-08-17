@@ -8,7 +8,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { envConfig } from '@chronoviet/shared-spec';
+import { envConfig, hasAvailableApiKeys } from '@chronoviet/shared-spec';
 import { buildProviderChain, resolveImageCandidates } from '@chronoviet/vlm-inspector';
 import { assertEvalPreflight } from '../../../eval/utils/preflight.js';
 
@@ -49,9 +49,9 @@ export async function runResearchEval(options: { verbose?: boolean } = {}): Prom
 
   const chain = buildProviderChain();
   const onlineKeysPresent = [
-    envConfig.SERPAPI_API_KEY ? 'serpapi' : null,
-    envConfig.TAVILY_API_KEY ? 'tavily' : null,
-    envConfig.BRAVE_API_KEY ? 'brave' : null,
+    hasAvailableApiKeys('serpapi') || envConfig.SERPAPI_API_KEY ? 'serpapi' : null,
+    hasAvailableApiKeys('tavily') || envConfig.TAVILY_API_KEY ? 'tavily' : null,
+    hasAvailableApiKeys('brave') || envConfig.BRAVE_API_KEY ? 'brave' : null,
   ].filter(Boolean) as string[];
 
   // Report search provider availability (non-blocking: no key -> offline fallback)

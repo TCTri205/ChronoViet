@@ -15,8 +15,8 @@ export async function chapteringNode(state: ChronoGraphState): Promise<Partial<C
   });
 
   const totalTargetSec = state.targetDurationMinutes * 60;
-  // Calculate number of chapters (each chapter 120-180 seconds)
-  const numChapters = Math.max(1, Math.min(6, Math.round(totalTargetSec / 150)));
+  // Calculate number of chapters (each chapter 120-180 seconds, minimum 1 chapter)
+  const numChapters = Math.max(1, Math.round(totalTargetSec / 150));
   const secPerChapter = Math.round(totalTargetSec / numChapters);
 
   const ragSummary = state.ragContext?.verifiedContext?.map((e) => `${e.canonicalName}: ${e.summary}`).join('\n') || '';

@@ -100,6 +100,8 @@ export function ChatContainer({
         let fullText = "";
         let citations: CitationItem[] = [];
 
+        let lastRenderTime = 0;
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -135,19 +137,36 @@ export function ChatContainer({
             }
           }
 
-          // Update streaming message
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? {
-                    ...msg,
-                    content: fullText,
-                    citations: citations.length > 0 ? citations : msg.citations,
-                  }
-                : msg
-            )
-          );
+          // Throttle UI re-renders to at most once per 50ms during streaming
+          const now = Date.now();
+          if (now - lastRenderTime >= 50) {
+            lastRenderTime = now;
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMsgId
+                  ? {
+                      ...msg,
+                      content: fullText,
+                      citations: citations.length > 0 ? citations : msg.citations,
+                    }
+                  : msg
+              )
+            );
+          }
         }
+
+        // Final flush to ensure complete text & citations are rendered
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId
+              ? {
+                  ...msg,
+                  content: fullText,
+                  citations: citations.length > 0 ? citations : msg.citations,
+                }
+              : msg
+          )
+        );
       }
     } catch (err: any) {
       // Fallback message for resilient offline/dev mode

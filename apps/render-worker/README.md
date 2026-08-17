@@ -42,7 +42,7 @@ Tiến trình xử lý hàng đợi tác vụ nặng (Background Worker Cluster)
 - Tự động fallback sang `SyntheticTTSFallbackEngine` khi dịch vụ Python tạm thời gián đoạn.
 
 ### 2. `vlm-inspect-queue` (VLM Inspector Worker):
-- Chấm điểm tư liệu ảnh theo chiến lược **3+3 Candidates** (kết hợp Google Gemini 2.5 Flash / Agnes 2.0 Flash / Local CLIP).
+- Chấm điểm tư liệu ảnh theo chiến lược **3+3 Candidates** (kết hợp Google Gemini 2.5 Flash / Agnes 2.5 Flash / Local CLIP).
 - Thẩm định giấy phép bản quyền Whitelisted (`CC0`, `Public Domain`, `CC-BY-4.0`).
 - Tự động chuyển phân cảnh sang chế độ đồ họa thư pháp cổ (`PURE_CODE`) nếu điểm số VLM < 60.
 

@@ -6,6 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ChronoVideoProps, VideoProjectSchema } from './schema.js';
+import { envConfig } from './config.js';
 
 export interface ProjectWorkspacePaths {
   projectId: string;
@@ -20,11 +21,11 @@ export interface ProjectWorkspacePaths {
 }
 
 export function getDefaultProjectsBaseDir(): string {
-  if (process.env.PROJECTS_MEDIA_ROOT) {
-    return process.env.PROJECTS_MEDIA_ROOT;
+  if (envConfig.PROJECTS_MEDIA_ROOT) {
+    return envConfig.PROJECTS_MEDIA_ROOT;
   }
-  if (process.env.MEDIA_DIR) {
-    return path.join(process.env.MEDIA_DIR, 'projects');
+  if (envConfig.MEDIA_DIR) {
+    return path.join(envConfig.MEDIA_DIR, 'projects');
   }
   // If running in Docker / Linux with /media/projects available
   if (fs.existsSync('/media/projects')) {

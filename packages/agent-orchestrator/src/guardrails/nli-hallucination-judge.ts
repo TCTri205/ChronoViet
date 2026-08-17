@@ -21,10 +21,10 @@ export interface NliJudgeResult {
 export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeResult {
   if (!request.scriptClaim.trim() || request.groundTruthChunks.length === 0) {
     return {
-      entailmentScore: 1.0,
+      entailmentScore: 0.0,
       isHallucinated: false,
-      verdict: 'ENTAILMENT',
-      explanation: 'No claims or ground truth chunks provided; default pass.',
+      verdict: 'NEUTRAL',
+      explanation: 'No claims or ground truth chunks provided; neutral unverified status.',
     };
   }
 

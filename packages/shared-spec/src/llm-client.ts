@@ -1,6 +1,6 @@
 /**
  * Local Model Gateway & Remote Fallback LLM Client Service
- * Connects to llama-server (Qwen3.5-27B-Q4_K_M) with automatic Agnes 2.0 Flash Cloud Fallback
+ * Connects to llama-server (Qwen3.8-27B-Q4_K_M) with automatic Agnes 2.5 Flash Cloud Fallback
  */
 
 import { envConfig } from './config.js';
@@ -11,6 +11,16 @@ import {
   circuitBreakerGauge,
   circuitBreakerFailuresGauge,
 } from './telemetry/metrics.js';
+import {
+  getNextApiKey,
+  hasAvailableApiKeys,
+  maskApiKey,
+  reportKeySuccess,
+  reportKeyFailure,
+  getApiKeyRotator,
+  hybridInferenceDispatcher,
+  InferenceTarget,
+} from './api-key-rotator.js';
 
 const log = createLogger({ service: 'shared-spec' });
 
@@ -146,31 +156,36 @@ export interface ActiveRemoteLLMConfig {
 }
 
 export function getActiveRemoteLLMConfig(): ActiveRemoteLLMConfig {
-  const apiKey = (
-    envConfig.AGNES_API_KEY ||
-    envConfig.REMOTE_LLM_API_KEY ||
-    envConfig.OPENROUTER_API_KEY ||
-    envConfig.OPENAI_API_KEY ||
-    ''
-  ).trim();
-
-  let baseUrl = (envConfig.REMOTE_LLM_BASE_URL || '').trim();
+  let apiKey = '';
   let providerName = 'REMOTE_CLOUD_LLM';
+  let baseUrl = (envConfig.REMOTE_LLM_BASE_URL || '').trim();
 
-  if (envConfig.AGNES_API_KEY) {
+  if (hasAvailableApiKeys('agnes')) {
+    apiKey = getNextApiKey('agnes') || '';
     baseUrl = baseUrl || 'https://apihub.agnes-ai.com/v1';
     providerName = 'AGNES_FLASH_GATEWAY';
-  } else if (envConfig.OPENROUTER_API_KEY || apiKey.startsWith('sk-or-')) {
+  } else if (hasAvailableApiKeys('openrouter') || (envConfig.OPENROUTER_API_KEY && envConfig.OPENROUTER_API_KEY.startsWith('sk-or-'))) {
+    apiKey = getNextApiKey('openrouter') || envConfig.OPENROUTER_API_KEY || '';
     baseUrl = baseUrl || 'https://openrouter.ai/api/v1';
     providerName = 'OPENROUTER_CLOUD';
-  } else if (envConfig.OPENAI_API_KEY) {
+  } else if (hasAvailableApiKeys('openai')) {
+    apiKey = getNextApiKey('openai') || envConfig.OPENAI_API_KEY || '';
     baseUrl = baseUrl || 'https://api.openai.com/v1';
     providerName = 'OPENAI_CLOUD';
-  } else if (baseUrl) {
-    providerName = `CUSTOM_REMOTE_LLM (${baseUrl})`;
   } else {
-    baseUrl = 'https://apihub.agnes-ai.com/v1';
-    providerName = 'AGNES_FLASH_GATEWAY';
+    apiKey = (
+      envConfig.AGNES_API_KEY ||
+      envConfig.REMOTE_LLM_API_KEY ||
+      envConfig.OPENROUTER_API_KEY ||
+      envConfig.OPENAI_API_KEY ||
+      ''
+    ).trim();
+    if (baseUrl) {
+      providerName = `CUSTOM_REMOTE_LLM (${baseUrl})`;
+    } else {
+      baseUrl = 'https://apihub.agnes-ai.com/v1';
+      providerName = 'AGNES_FLASH_GATEWAY';
+    }
   }
 
   const model = envConfig.REMOTE_FALLBACK_MODEL || 'agnes-2.5-flash';
@@ -181,6 +196,133 @@ export function getActiveRemoteLLMConfig(): ActiveRemoteLLMConfig {
     model,
     providerName,
   };
+}
+
+/**
+ * Internal executor for an individual inference target (Local or Cloud)
+ */
+async function executeTargetCompletion(
+  target: InferenceTarget,
+  messages: ChatMessage[],
+  options: LLMCompletionOptions,
+  startTime: number
+): Promise<LLMCompletionResponse> {
+  const temperature = options.temperature ?? 0.2;
+  const maxTokens = options.max_tokens ?? (target.type === 'local' ? 2048 : 8192);
+  const timeoutMs = options.timeoutMs ?? (target.type === 'local' ? 45000 : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    if (target.type === 'local') {
+      const endpoint = `${target.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: target.model,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+          ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
+          ...(options.response_format ? { response_format: options.response_format } : {}),
+        }),
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        throw new Error(`Local llama-server HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as any;
+      const choice = data?.choices?.[0];
+      if (!choice) throw new Error('Local LLM response missing choices array');
+
+      recordCircuitSuccess();
+      const durationSec = (Date.now() - startTime) / 1000;
+      llmRequestsTotal.inc({ provider: 'local_ollama', model: data.model || target.model, status: 'success' });
+      llmRequestDurationSeconds.observe({ provider: 'local_ollama', model: data.model || target.model }, durationSec);
+
+      return {
+        content: choice.message?.content || '',
+        reasoningContent: choice.message?.reasoning_content || undefined,
+        model: data.model || target.model,
+        provider: 'LOCAL_LLM',
+        finishReason: choice.finish_reason || 'stop',
+        usage: data.usage
+          ? {
+              promptTokens: data.usage.prompt_tokens || 0,
+              completionTokens: data.usage.completion_tokens || 0,
+              totalTokens: data.usage.total_tokens || 0,
+            }
+          : undefined,
+      };
+    } else {
+      // Cloud Target (Agnes, Gemini, OpenAI, OpenRouter)
+      const remoteEndpoint = target.baseUrl.includes('chat/completions')
+        ? target.baseUrl
+        : `${target.baseUrl.replace(/\/$/, '')}/chat/completions`;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${target.apiKey}`,
+      };
+
+      const response = await fetch(remoteEndpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: target.model,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+          ...(options.response_format ? { response_format: options.response_format } : {}),
+        }),
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        const err = new Error(`Remote Cloud LLM HTTP ${response.status} (${target.provider}): ${errText}`);
+        (err as any).status = response.status;
+        throw err;
+      }
+
+      const data = (await response.json()) as any;
+      const choice = data?.choices?.[0];
+      if (!choice) throw new Error('Remote LLM response missing choices array');
+
+      recordCloudCircuitSuccess();
+      const durationSec = (Date.now() - startTime) / 1000;
+      llmRequestsTotal.inc({ provider: 'remote_fallback', model: target.model, status: 'success' });
+      llmRequestDurationSeconds.observe({ provider: 'remote_fallback', model: target.model }, durationSec);
+
+      return {
+        content: choice.message?.content || '',
+        reasoningContent: choice.message?.reasoning_content || undefined,
+        model: data.model || target.model,
+        provider: 'AGNES_FLASH_FALLBACK',
+        finishReason: choice.finish_reason || 'stop',
+        usage: data.usage
+          ? {
+              promptTokens: data.usage.prompt_tokens || 0,
+              completionTokens: data.usage.completion_tokens || 0,
+              totalTokens: data.usage.total_tokens || 0,
+            }
+          : undefined,
+      };
+    }
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
 }
 
 /**
@@ -209,9 +351,30 @@ export async function generateLLMCompletion(
     throw new Error('[EVAL_STRICT] USE_LOCAL_LLM must be true during evaluation');
   }
 
+  // 1. Hybrid Round-Robin Mode (Rotates across Local + Cloud targets evenly with 1-day quarantine on quota limit)
+  if (
+    envConfig.INFERENCE_ROUTING_MODE === 'hybrid_round_robin' &&
+    !envConfig.EVAL_STRICT
+  ) {
+    const targets = hybridInferenceDispatcher.getInferenceTargets('llm');
+    if (targets.length > 0) {
+      try {
+        return await hybridInferenceDispatcher.executeWithHybridRotation(
+          'llm',
+          (target) => executeTargetCompletion(target, messages, options, startTime)
+        );
+      } catch (err: any) {
+        log.warn('llm.hybrid_dispatcher_exhausted', `All hybrid inference targets failed: ${err.message}`);
+        if (!envConfig.ENABLE_CLOUD_FALLBACK && !envConfig.USE_LOCAL_LLM) {
+          throw err;
+        }
+      }
+    }
+  }
+
   let localFailureReason: string | null = null;
 
-  // 1. Attempt Primary Local LLM (llama-server) if enabled and circuit allows
+  // 2. Attempt Primary Local LLM (llama-server) if enabled and circuit allows
   if (envConfig.USE_LOCAL_LLM) {
     const circuitAction = checkCircuitState();
     if (circuitAction === 'FAST_FAIL') {
@@ -318,7 +481,17 @@ export async function generateLLMCompletion(
   // 2. Fallback to Remote Cloud LLM (OpenAI / OpenRouter / Agnes) if key is available
   if (envConfig.ENABLE_CLOUD_FALLBACK) {
     const remoteCfg = getActiveRemoteLLMConfig();
-    if (isValidApiKey(remoteCfg.apiKey)) {
+    const providerKey = hasAvailableApiKeys('agnes')
+      ? 'agnes'
+      : hasAvailableApiKeys('openrouter')
+        ? 'openrouter'
+        : hasAvailableApiKeys('openai')
+          ? 'openai'
+          : 'agnes';
+    const rotator = getApiKeyRotator(providerKey);
+    const keyPoolSize = rotator.totalKeysCount;
+
+    if (isValidApiKey(remoteCfg.apiKey) || keyPoolSize > 0) {
       const cloudAction = checkCloudCircuitState();
       if (cloudAction === 'FAST_FAIL') {
         throw new Error(`Local LLM is offline (${localFailureReason}) and Cloud Fallback circuit is OPEN.`);
@@ -326,8 +499,10 @@ export async function generateLLMCompletion(
 
       const effectiveTimeout = options.timeoutMs ?? envConfig.REMOTE_FALLBACK_TIMEOUT_MS ?? 120000;
       let lastErr: unknown = null;
+      const maxAttempts = Math.max(2, keyPoolSize);
 
-      for (let attempt = 1; attempt <= 2; attempt++) {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const activeKey = rotator.getNextKey() || remoteCfg.apiKey;
         try {
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), effectiveTimeout);
@@ -335,7 +510,7 @@ export async function generateLLMCompletion(
           const remoteEndpoint = `${remoteCfg.baseUrl}/chat/completions`;
           const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${remoteCfg.apiKey}`,
+            Authorization: `Bearer ${activeKey}`,
           };
 
           const response = await fetch(remoteEndpoint, {
@@ -356,13 +531,16 @@ export async function generateLLMCompletion(
 
           if (!response.ok) {
             const errBody = await response.text().catch(() => '');
-            throw new Error(`Cloud LLM (${remoteCfg.baseUrl}) HTTP ${response.status}: ${response.statusText} ${errBody}`.trim());
+            const error = new Error(`Cloud LLM (${remoteCfg.baseUrl}) HTTP ${response.status}: ${response.statusText} ${errBody}`.trim());
+            (error as any).status = response.status;
+            throw error;
           }
 
           const data = (await response.json()) as any;
           const choice = data?.choices?.[0];
           const content = choice?.message?.content || '';
 
+          rotator.reportSuccess(activeKey);
           recordCloudCircuitSuccess();
           const durationSec = (Date.now() - startTime) / 1000;
           llmRequestsTotal.inc({ provider: 'cloud_fallback', model: remoteCfg.model, status: 'success' });
@@ -371,6 +549,7 @@ export async function generateLLMCompletion(
           log.debug('llm.cloud_success', 'Remote cloud fallback completion succeeded', {
             model: remoteCfg.model,
             endpoint: remoteCfg.baseUrl,
+            key: maskApiKey(activeKey),
             finishReason: choice?.finish_reason || 'stop',
             promptTokens: data.usage?.prompt_tokens,
             completionTokens: data.usage?.completion_tokens,
@@ -391,13 +570,16 @@ export async function generateLLMCompletion(
                 }
               : undefined,
           };
-        } catch (attemptErr) {
+        } catch (attemptErr: any) {
           lastErr = attemptErr;
-          if (attempt < 2) {
-            log.warn('llm.cloud_retry', `Remote cloud request attempt ${attempt} failed; retrying in 2s...`, {
+          rotator.reportFailure(activeKey, attemptErr);
+
+          if (attempt < maxAttempts) {
+            log.warn('llm.cloud_retry', `Remote cloud request attempt ${attempt}/${maxAttempts} failed with key [${maskApiKey(activeKey)}]; rotating to next key...`, {
               error: attemptErr instanceof Error ? attemptErr.message : String(attemptErr),
+              statusCode: attemptErr?.status,
             });
-            await new Promise((r) => setTimeout(r, 2000));
+            await new Promise((r) => setTimeout(r, 1000));
           }
         }
       }
@@ -406,7 +588,7 @@ export async function generateLLMCompletion(
       recordCloudCircuitFailure(fallbackErr);
       llmRequestsTotal.inc({ provider: 'cloud_fallback', model: remoteCfg.model, status: 'error' });
       const fallbackMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
-      log.warn('llm.cloud_fallback_failed', 'Cloud fallback request failed', {
+      log.warn('llm.cloud_fallback_failed', 'Cloud fallback request failed across all key attempts', {
         error: fallbackMsg,
         endpoint: remoteCfg.baseUrl,
       });
@@ -448,9 +630,10 @@ export async function isLLMServiceHealthy(): Promise<{ healthy: boolean; provide
   }
 
   // 2. Check Gemini API if key is present and valid
-  if (isValidApiKey(envConfig.GEMINI_API_KEY)) {
+  const geminiKey = getNextApiKey('gemini') || envConfig.GEMINI_API_KEY;
+  if (hasAvailableApiKeys('gemini') || isValidApiKey(geminiKey)) {
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${envConfig.GEMINI_API_KEY}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`, {
         signal: AbortSignal.timeout(3000),
         cache: 'no-store',
       });

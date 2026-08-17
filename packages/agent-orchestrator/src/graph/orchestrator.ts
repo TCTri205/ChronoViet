@@ -72,11 +72,7 @@ export function buildOrchestratorGraph() {
               },
             ],
             aliasTable: {
-              'Ngô Quyền': ['Tiền Ngô Vương', 'Vua Ngô'],
-              'Trần Hưng Đạo': ['Trần Quốc Tuấn', 'Quốc Công Tiết Chế', 'Hưng Đạo Đại Vương'],
-              'Quang Trung': ['Nguyễn Huệ', 'Vua Quang Trung', 'Bình Định Vương', 'Anh hùng áo vải'],
-              'Lý Thái Tổ': ['Lý Công Uẩn', 'Thái Tổ Hoàng đế'],
-              'Lê Lợi': ['Lê Thái Tổ', 'Bình Định Vương'],
+              [state.userPrompt]: [],
             },
             citations: ['Đại Việt Sử Ký Toàn Thư', 'Khâm Định Việt Sử Thông Giám Cương Mục'],
           };
@@ -138,8 +134,26 @@ export function buildOrchestratorGraph() {
       return packagerNode(state);
     });
 
-  // Flow & Edges
-  workflow.addEdge(START, 'rag_init');
+  // Flow & Edges with Conditional Resume Support
+  workflow.addConditionalEdges(
+    START,
+    (state: ChronoGraphState) => {
+      // If resuming after human review with approved chapter scripts, skip to segmenter directly
+      if (
+        state.status === 'CHAPTER_FACT_CHECKED' &&
+        state.chapterScripts &&
+        Object.keys(state.chapterScripts).length > 0 &&
+        !state.needsHumanReview
+      ) {
+        return 'to_segmenter';
+      }
+      return 'to_rag_init';
+    },
+    {
+      to_rag_init: 'rag_init',
+      to_segmenter: 'segmenter',
+    }
+  );
   workflow.addEdge('rag_init', 'chaptering');
   workflow.addEdge('chaptering', 'scriptwriter');
   workflow.addEdge('scriptwriter', 'fact_checker');

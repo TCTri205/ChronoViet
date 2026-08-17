@@ -45,33 +45,10 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
       }
     }
 
-    let sceneAudioUrl = scene.audioPath;
-    if (scene.audioPath && !scene.audioPath.startsWith('http') && !scene.audioPath.startsWith('data:')) {
-      if (fs.existsSync(scene.audioPath)) {
-        try {
-          const audioBuf = fs.readFileSync(scene.audioPath);
-          const mime = scene.audioPath.endsWith('.mp3') ? 'audio/mp3' : 'audio/wav';
-          sceneAudioUrl = `data:${mime};base64,${audioBuf.toString('base64')}`;
-        } catch {
-          // keep original
-        }
-      }
-    }
-
-    let assetUrl = scene.selectedAsset
+    const sceneAudioUrl = scene.audioPath;
+    const assetUrl = scene.selectedAsset
       ? scene.selectedAsset.localPath || scene.selectedAsset.imageUrl
       : undefined;
-    if (assetUrl && !assetUrl.startsWith('http') && !assetUrl.startsWith('data:')) {
-      if (fs.existsSync(assetUrl)) {
-        try {
-          const imgBuf = fs.readFileSync(assetUrl);
-          const mime = assetUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
-          assetUrl = `data:${mime};base64,${imgBuf.toString('base64')}`;
-        } catch {
-          // keep original
-        }
-      }
-    }
 
     const timelineScene: TimelineScene = {
       id: scene.sceneId,
@@ -94,9 +71,13 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
     currentGlobalFrame += durationInFrames;
   }
 
+  const templateId = state.templateId || 'HISTORICAL_DOCUMENTARY';
+  const aspectRatio = templateId === 'QUICK_SHORTS' ? '9:16' : '16:9';
+
   const rawVideoProps: ChronoVideoProps = {
     title: state.userPrompt,
-    aspectRatio: '16:9',
+    aspectRatio,
+    templateId,
     fps,
     defaultLayoutMode: 'HISTORICAL_FRAME',
     timeline,

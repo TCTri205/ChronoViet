@@ -12,3 +12,4 @@ export * from './workspace.js';
 export * from './image-search.js';
 export * from './realtime.js';
 export * from './telemetry/metrics.js';
+export * from './api-key-rotator.js';

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p eval/tsconfig.json",
     "lint": "tsc --noEmit",
     "eval": "tsx eval/runner.ts",
+    "eval:diagnostic": "tsx src/cli/ingest-diagnostic.ts",
     "test": "vitest run --dir src/ --passWithNoTests",
     "test:eval": "vitest run --dir eval/ --passWithNoTests",
     "db:init": "tsx src/cli/init-db.ts",
