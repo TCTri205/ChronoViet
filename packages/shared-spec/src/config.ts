@@ -61,17 +61,21 @@ const EnvSchema = z.object({
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(true),
   LOCAL_LLM_BACKEND: z.enum(['llama_cpp', 'ollama', 'mlx']).default('llama_cpp'),
-  LLM_BASE_URL: z.string().default('http://localhost:8080'),
+  LLM_BASE_URL: z.string().default('http://localhost:8091'),
   LOCAL_LLM_PRIMARY_MODEL: z.string().default('qwen3.5-27b-instruct-q4_k_m'),
   LOCAL_LLM_BENCHMARK_MODEL: z.string().default('qwen3.6-27b-instruct-q4_k_m'),
 
-  // Cloud API Fallback Configuration (Agnes 2.0 Flash)
+  // Cloud API Fallback Configuration (Agnes 2.5 Flash / OpenAI / OpenRouter / Gemini)
   ENABLE_CLOUD_FALLBACK: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(true),
-  REMOTE_FALLBACK_MODEL: z.string().default('agnes-2.0-flash'),
+  REMOTE_FALLBACK_MODEL: z.string().default('agnes-2.5-flash'),
+  REMOTE_LLM_BASE_URL: z.string().default('https://apihub.agnes-ai.com/v1'),
+  REMOTE_LLM_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional(),
   AGNES_API_KEY: z.string().optional(),
-  REMOTE_FALLBACK_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  REMOTE_FALLBACK_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
 
   // Embedding, Rerank & Vision Stack
   LOCAL_EMBEDDING_DEFAULT: z.string().default('qwen3-embedding-0.6b'),

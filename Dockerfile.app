@@ -2,8 +2,8 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm (matching packageManager in package.json)
+RUN corepack enable && corepack prepare pnpm@10.6.2 --activate
 
 # Copy monorepo config files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
@@ -20,4 +20,8 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/healthz || exit 1
+
 CMD ["node", "apps/web/dist/server.js"]
+

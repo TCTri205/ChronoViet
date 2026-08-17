@@ -137,7 +137,7 @@ export class RedisPubSubManager {
       lazyConnect: true,
     });
     client.on('error', (err) => {
-      log.debug('redis_pubsub.error', `Redis connection error: ${formatErrorMessage(err)}`);
+      log.warn('redis_pubsub.error', `Redis connection error: ${formatErrorMessage(err)}`);
     });
     return client;
   }

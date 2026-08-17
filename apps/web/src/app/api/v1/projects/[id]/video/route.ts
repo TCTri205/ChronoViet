@@ -1,7 +1,12 @@
 import { NextRequest } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
-import { initProjectWorkspace, createLogger } from '@chronoviet/shared-spec';
+import {
+  initProjectWorkspace,
+  createLogger,
+  httpRequestsTotal,
+  httpRequestDurationSeconds,
+} from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'web-api-video' });
 
@@ -9,15 +14,20 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const startTime = Date.now();
+  const projectId = params.id;
+  const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const reqLog = log.child({ correlationId, fields: { projectId } });
+
   try {
-    const projectId = params.id;
     const paths = initProjectWorkspace(projectId);
     const videoPath = path.join(paths.outputDir, 'video.mp4');
 
     if (!fs.existsSync(videoPath)) {
+      httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '4xx' });
       return new Response(JSON.stringify({ error: `Video not found for project: ${projectId}` }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-request-id': correlationId },
       });
     }
 

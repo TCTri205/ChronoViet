@@ -114,6 +114,10 @@ export const ChronoGraphAnnotation = Annotation.Root({
     reducer: updateValue,
     default: () => '',
   }),
+  correlationId: Annotation<string | undefined>({
+    reducer: updateValue,
+    default: () => undefined,
+  }),
   userPrompt: Annotation<string>({
     reducer: updateValue,
     default: () => '',

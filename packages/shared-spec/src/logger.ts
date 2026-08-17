@@ -38,8 +38,20 @@ export interface LoggerOptions {
 }
 
 export interface ChildLoggerOptions {
-  /** Bound fields for the child logger, e.g. { runId, entityId }. */
-  fields: Record<string, unknown>;
+  /** Correlation ID to override for the child logger (if not provided, inherits parent). */
+  correlationId?: string;
+  /** Bound fields for the child logger, e.g. { runId, entityId, projectId }. */
+  fields?: Record<string, unknown>;
+}
+
+/**
+ * Truncate long user input/topic strings before logging to avoid PII leak & log flooding.
+ */
+export function truncateSnippet(value: unknown, maxLen = 80): string {
+  if (value === null || value === undefined) return '';
+  const str = typeof value === 'string' ? value : String(value);
+  if (str.length <= maxLen) return str;
+  return `${str.slice(0, maxLen)}...[truncated ${str.length - maxLen} chars]`;
 }
 
 export interface LogRecord {
@@ -218,12 +230,15 @@ export function createLogger(opts: LoggerOptions): ChronoLogger {
     info: (event, msg, fields) => emit('info', service, event, msg, fields, correlationId, baseFields),
     warn: (event, msg, fields) => emit('warn', service, event, msg, fields, correlationId, baseFields),
     error: (event, msg, fields) => emit('error', service, event, msg, fields, correlationId, baseFields),
-    child: ({ fields }) =>
-      createLogger({
+    child: (childOpts) => {
+      const childFields = childOpts.fields ?? {};
+      const newCorrelationId = childOpts.correlationId || (childFields.correlationId as string) || correlationId;
+      return createLogger({
         service,
-        correlationId,
-        baseFields: { ...(baseFields ?? {}), ...fields },
-      }),
+        correlationId: newCorrelationId,
+        baseFields: { ...(baseFields ?? {}), ...childFields },
+      });
+    },
   };
 
   return logger;

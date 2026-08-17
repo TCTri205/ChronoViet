@@ -186,12 +186,19 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
 
 let warnedLlmOffline = false;
 
+export interface ExtractionOptions {
+  strict?: boolean;
+  allowFallback?: boolean;
+  regexOnly?: boolean;
+  timeoutMs?: number;
+}
+
 /**
  * Extracts Knowledge Graph triples using Primary Local Model (llama-server) or Cloud Fallback
  */
 export async function extractTriplesWithLLM(
   text: string,
-  options?: { strict?: boolean }
+  options?: ExtractionOptions
 ): Promise<ExtractedTriple[]> {
   if (!text || text.trim().length < 20) {
     return [];
@@ -225,19 +232,45 @@ ${text.slice(0, 3500)}
       {
         temperature: 0.1,
         response_format: { type: 'json_object' },
-        timeoutMs: 8000,
+        timeoutMs: options?.timeoutMs ?? envConfig.REMOTE_FALLBACK_TIMEOUT_MS,
       }
     );
 
-    const parsed = JSON.parse(res.content);
-    if (!parsed || !Array.isArray(parsed.triples)) return [];
+    let jsonStr = res.content.trim();
+    if (jsonStr.includes('```json')) {
+      jsonStr = jsonStr.replace(/^[\s\S]*?```json\s*/i, '').replace(/\s*```[\s\S]*$/, '');
+    } else if (jsonStr.includes('```')) {
+      jsonStr = jsonStr.replace(/^[\s\S]*?```\s*/, '').replace(/\s*```[\s\S]*$/, '');
+    }
+
+    let rawTriples: any[] = [];
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (parsed && Array.isArray(parsed.triples)) {
+        rawTriples = parsed.triples;
+      }
+    } catch {
+      // Fallback: extract individual triple objects if response was truncated
+      const objectRegex = /\{\s*"sourceEntity"\s*:\s*"([^"]+)"\s*,\s*"relationType"\s*:\s*"([^"]+)"\s*,\s*"targetEntity"\s*:\s*"([^"]+)"(?:\s*,\s*"confidence"\s*:\s*([0-9.]+))?\s*\}/g;
+      let match;
+      while ((match = objectRegex.exec(jsonStr)) !== null) {
+        rawTriples.push({
+          sourceEntity: match[1],
+          relationType: match[2],
+          targetEntity: match[3],
+          confidence: match[4] ? parseFloat(match[4]) : 0.9,
+        });
+      }
+    }
+
+    if (rawTriples.length === 0) return [];
 
     const validRelations = new Set<ExtractedTriple['relationType']>([
       'PART_OF', 'LED_BY', 'HAPPENED_IN', 'HAPPENED_AT', 'SAME_AS_LOCATION', 'ALIAS_OF', 'ROYAL_LINEAGE', 'MENTIONED_IN'
     ]);
 
     const triples: ExtractedTriple[] = [];
-    for (const item of parsed.triples) {
+    for (const item of rawTriples) {
       if (
         item.sourceEntity &&
         item.targetEntity &&
@@ -267,23 +300,27 @@ ${text.slice(0, 3500)}
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
 
-    log.warn('triple_extract.llm_failed', 'LLM triple extraction failed; falling back to rule-based matcher', {
-      error: err,
-    });
-
-    if (options?.strict || envConfig.EVAL_STRICT) {
-      throw new Error(`[EVAL_STRICT] LLM Triple Extraction failed: ${errMsg}`);
+    // Default mode requires full LLM extraction. Do not silently fallback unless allowFallback is explicitly set.
+    if (options?.strict || envConfig.EVAL_STRICT || !options?.allowFallback) {
+      throw new Error(`LLM Triple Extraction failed: ${errMsg}. If you intend to run in offline fallback mode, pass --allow-fallback or --regex-only.`);
     }
 
     if (!warnedLlmOffline) {
+      log.warn('triple_extract.llm_offline', 'LLM gateway offline; falling back to rule-based dictionary matcher', {
+        reason: errMsg,
+      });
       logFallbackAlert({
         subsystem: 'LLM_GATEWAY',
         primaryTarget: `Local LLM Gateway (${envConfig.LLM_BASE_URL}) [${envConfig.LOCAL_LLM_PRIMARY_MODEL}]`,
         fallbackTarget: 'Rule-Based Regex Pattern Matcher & Canonical Ground-Truth Dictionaries',
         reason: errMsg,
-        actionRequired: 'Start llama-server (e.g. llama-server -m models/... --port 8091) or set AGNES_API_KEY in .env',
+        actionRequired: 'Start llama-server (e.g. llama-server -m models/... --port 8080) or set AGNES_API_KEY in .env',
       });
       warnedLlmOffline = true;
+    } else {
+      log.debug('triple_extract.llm_skipped', 'LLM unavailable; using rule-based extraction', {
+        reason: errMsg,
+      });
     }
     return [];
   }
@@ -294,9 +331,15 @@ ${text.slice(0, 3500)}
  */
 export async function extractTriplesFromTextAsync(
   text: string,
-  options?: { strict?: boolean }
+  options?: ExtractionOptions
 ): Promise<ExtractedTriple[]> {
+  const startTime = Date.now();
   const regexTriples = extractTriplesFromText(text);
+
+  if (options?.regexOnly) {
+    return regexTriples;
+  }
+
   const llmTriples = await extractTriplesWithLLM(text, options);
 
   const mergedMap = new Map<string, ExtractedTriple>();
@@ -309,7 +352,18 @@ export async function extractTriplesFromTextAsync(
     }
   }
 
-  return Array.from(mergedMap.values());
+  const result = Array.from(mergedMap.values());
+  const durationMs = Date.now() - startTime;
+
+  log.debug('triple_extract.completed', 'Triple extraction completed', {
+    regexCount: regexTriples.length,
+    llmCount: llmTriples.length,
+    mergedCount: result.length,
+    strategy: llmTriples.length > 0 ? 'ensemble_ai' : 'rule_based_fallback',
+    durationMs,
+  });
+
+  return result;
 }
 
 /**

@@ -2,7 +2,16 @@ import http from 'http';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { VieNeuTTSRequestSchema, envConfig, createLogger } from '@chronoviet/shared-spec';
+import {
+  VieNeuTTSRequestSchema,
+  envConfig,
+  createLogger,
+  truncateSnippet,
+  getMetricsSnapshot,
+  getMetricsContentType,
+  ttsRequestsTotal,
+  ttsSynthesisDurationSeconds,
+} from '@chronoviet/shared-spec';
 import { VieNeuEngine } from './engine.js';
 
 const PORT = envConfig.TTS_SERVICE_PORT;
@@ -36,7 +45,7 @@ export function createTtsServer() {
     // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-request-id');
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
@@ -46,11 +55,27 @@ export function createTtsServer() {
     }
 
     // GET /health
-    if (req.method === 'GET' && url.pathname === '/health') {
+    if (req.method === 'GET' && (url.pathname === '/health' || url.pathname === '/healthz')) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ status: 'OK', service: 'vieneu-tts-service', timestamp: new Date().toISOString() }));
       logRequestEnd(200);
       return;
+    }
+
+    // GET /metrics
+    if (req.method === 'GET' && url.pathname === '/metrics') {
+      try {
+        const metrics = await getMetricsSnapshot();
+        res.writeHead(200, { 'Content-Type': getMetricsContentType() });
+        res.end(metrics);
+        logRequestEnd(200);
+        return;
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end(`Metrics error: ${err.message}`);
+        logRequestEnd(500);
+        return;
+      }
     }
 
     // Static Audio File Server: GET /static/audio/*
@@ -85,6 +110,7 @@ export function createTtsServer() {
           const parseResult = VieNeuTTSRequestSchema.safeParse(jsonBody);
 
           if (!parseResult.success) {
+            ttsRequestsTotal.inc({ engine: 'vieneu', status: 'invalid_request' });
             log.warn('tts.request_invalid', 'Invalid TTS request body', {
               details: parseResult.error.format(),
             });
@@ -95,22 +121,28 @@ export function createTtsServer() {
           }
 
           log.info('tts.synthesize_started', 'TTS synthesis request received', {
-            text: parseResult.data.text,
+            textSnippet: truncateSnippet(parseResult.data.text),
             sampleRate: parseResult.data.sampleRate,
             fps: parseResult.data.fps,
           });
 
+          const synthStart = Date.now();
           const response = await engine.synthesize(parseResult.data);
+          const synthDurationSec = (Date.now() - synthStart) / 1000;
+          ttsSynthesisDurationSeconds.observe({ engine: response.engineType || 'vieneu' }, synthDurationSec);
+
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(response));
 
           if (response.status === 'SUCCESS') {
+            ttsRequestsTotal.inc({ engine: response.engineType || 'vieneu', status: 'success' });
             log.info('tts.synthesize_succeeded', 'TTS synthesis succeeded', {
               engineType: response.engineType,
               audioDurationMs: response.audioDurationMs,
               wordCount: response.wordTimestamps.length,
             });
           } else {
+            ttsRequestsTotal.inc({ engine: response.engineType || 'vieneu', status: 'error' });
             log.warn('tts.synthesize_error', 'TTS synthesis returned error', {
               engineType: response.engineType,
               errorMsg: response.errorMsg,
@@ -118,6 +150,7 @@ export function createTtsServer() {
           }
           logRequestEnd(200);
         } catch (err: any) {
+          ttsRequestsTotal.inc({ engine: 'vieneu', status: 'fatal_error' });
           log.error('tts.synthesize_failed', 'TTS synthesis failed with internal error', {
             error: err,
           });
@@ -137,7 +170,10 @@ export function createTtsServer() {
 }
 
 // Start Server if executed directly
-if (envConfig.NODE_ENV !== 'test' && require.main === module) {
+if (
+  envConfig.NODE_ENV !== 'test' &&
+  (process.argv[1]?.endsWith('server.js') || process.argv[1]?.endsWith('server.ts'))
+) {
   const server = createTtsServer();
   server.listen(PORT, () => {
     const log = createLogger({ service: 'vieneu-tts' });

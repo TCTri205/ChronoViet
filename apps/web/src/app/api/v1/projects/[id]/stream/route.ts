@@ -4,6 +4,8 @@ import {
   initProjectWorkspace,
   createLogger,
   SseEvent,
+  httpRequestsTotal,
+  httpRequestDurationSeconds,
 } from '@chronoviet/shared-spec';
 import {
   streamOrchestratorPipeline,
@@ -14,11 +16,15 @@ import {
 const log = createLogger({ service: 'web-api-sse' });
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const startTime = Date.now();
+  const projectId = params.id;
+  const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const reqLog = log.child({ correlationId, fields: { projectId } });
+
   try {
-    const projectId = params.id;
     const paths = initProjectWorkspace(projectId);
 
     let metadata: any = {};
@@ -28,7 +34,7 @@ export async function GET(
       } catch {}
     }
 
-    log.info('api.sse_connected', `SSE Client connected to stream for project ${projectId}`, { projectId });
+    reqLog.info('api.sse_connected', `SSE Client connected to stream for project ${projectId}`, { projectId });
 
     const existingCheckpoint = await defaultCheckpointer.loadLatestProjectState(projectId);
 
@@ -47,6 +53,10 @@ export async function GET(
       async start(controller) {
         try {
           for await (const { nodeName, update } of streamOrchestratorPipeline(initialState as ChronoGraphState, { threadId: projectId })) {
+            if (req.signal.aborted) {
+              reqLog.info('api.sse_client_disconnected', `Client disconnected from SSE stream for ${projectId}`);
+              break;
+            }
             const currentStatus = update.status || 'RUNNING';
             const sseStatus =
               currentStatus === 'COMPLETED'

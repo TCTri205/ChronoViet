@@ -66,6 +66,7 @@ export async function runOrchestratorRemotionChain(
 
     const initialState: ChronoGraphState = {
       projectId: tc.id,
+      correlationId: tc.id,
       userPrompt: tc.topic,
       targetDurationMinutes: tc.durationMinutes,
       videoType: tc.videoType,

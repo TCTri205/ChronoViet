@@ -2,8 +2,22 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm and Remotion runtime dependencies (Chromium, FFmpeg, fonts for Vietnamese typography)
+RUN corepack enable && corepack prepare pnpm@10.6.2 --activate \
+    && apk add --no-cache \
+       chromium \
+       ffmpeg \
+       nss \
+       freetype \
+       harfbuzz \
+       ttf-freefont \
+       font-noto \
+       font-noto-extra \
+       font-liberation \
+       mesa-gl
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 # Copy monorepo config files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
@@ -17,4 +31,9 @@ RUN pnpm --recursive --workspace-concurrency=4 run build
 
 ENV NODE_ENV=production
 
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3001/healthz || exit 1
+
 CMD ["node", "apps/render-worker/dist/index.js"]
+
+

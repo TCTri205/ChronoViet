@@ -25,6 +25,8 @@ interface IngestCliOptions {
   force: boolean;
   strict: boolean;
   localLlm: boolean;
+  regexOnly: boolean;
+  allowFallback: boolean;
 }
 
 function parseArgs(): IngestCliOptions {
@@ -33,6 +35,8 @@ function parseArgs(): IngestCliOptions {
   let force = false;
   let strict = false;
   let localLlm = false;
+  let regexOnly = false;
+  let allowFallback = false;
 
   for (const arg of args) {
     if (arg.startsWith('--input=')) {
@@ -44,13 +48,17 @@ function parseArgs(): IngestCliOptions {
       strict = true;
     } else if (arg === '--local-llm') {
       localLlm = true;
+    } else if (arg === '--regex-only' || arg === '--regex') {
+      regexOnly = true;
+    } else if (arg === '--allow-fallback' || arg === '--fallback') {
+      allowFallback = true;
     }
   }
 
-  return { inputPath, force, strict, localLlm };
+  return { inputPath, force, strict, localLlm, regexOnly, allowFallback };
 }
 
-async function performPreflightHealthCheck(strict: boolean): Promise<void> {
+async function performPreflightHealthCheck(options: IngestCliOptions): Promise<void> {
   log.info('ingest.preflight_started', 'Running pre-flight system & AI services health check');
 
   // 1. Database Check
@@ -73,19 +81,32 @@ async function performPreflightHealthCheck(strict: boolean): Promise<void> {
     });
   }
 
-  // 3. LLM Gateway Check
+  // 3. Mode Handling & LLM Gateway Check
+  if (options.regexOnly) {
+    log.info('ingest.preflight_regex_only', 'Running in REGEX-ONLY Mode (Rule-based dictionary matcher). LLM extraction bypassed.');
+    return;
+  }
+
   const llmStatus = await isLLMServiceHealthy();
   if (llmStatus.healthy) {
     log.info('ingest.preflight_llm_online', 'LLM knowledge gateway online', {
       provider: llmStatus.provider,
     });
   } else {
-    log.warn('ingest.preflight_llm_offline', 'LLM gateway offline; rule-based dictionary fallback', {
-      details: llmStatus.details,
-    });
+    if (options.allowFallback) {
+      log.warn('ingest.preflight_llm_offline', 'LLM gateway offline; falling back to rule-based dictionaries as permitted by --allow-fallback', {
+        details: llmStatus.details,
+      });
+    } else {
+      log.error('ingest.preflight_llm_missing', 'LLM Gateway is offline or unreachable in default mode.', {
+        details: llmStatus.details,
+        actionRequired: 'Start llama-server on port 8080 (or your configured LLM_BASE_URL), configure cloud keys, or run with --regex-only / --allow-fallback.',
+      });
+      process.exit(1);
+    }
   }
 
-  if (strict) {
+  if (options.strict) {
     const errors: string[] = [];
     if (!pgConnected) {
       errors.push('PostgreSQL is not reachable on 127.0.0.1:5432. Please start the Docker container (docker compose up -d).');
@@ -94,7 +115,7 @@ async function performPreflightHealthCheck(strict: boolean): Promise<void> {
       errors.push(`Embedding Service is offline: ${embStatus.details}. Please start the embedding server (e.g. on port 8090) or configure .env.`);
     }
     if (!llmStatus.healthy) {
-      errors.push(`LLM Gateway is offline: ${llmStatus.details}. Please start llama-server (e.g. on port 8091) or configure API keys in .env.`);
+      errors.push(`LLM Gateway is offline: ${llmStatus.details}. Please start llama-server (e.g. on port 8080) or configure API keys in .env.`);
     }
 
     if (errors.length > 0) {
@@ -105,37 +126,39 @@ async function performPreflightHealthCheck(strict: boolean): Promise<void> {
     }
     log.info('ingest.preflight_strict_ok', 'All required services are ONLINE and verified for STRICT quality ingestion');
   } else {
-    log.info('ingest.preflight_hybrid_mode', 'Running in Hybrid Mode (Ensemble Dictionary + AI with resilient fallback)');
+    log.info('ingest.preflight_ai_ready', 'Full AI Pipeline Mode (Ensemble AI LLM Knowledge Extraction is ACTIVE)');
   }
 }
 
 async function main() {
-  const { inputPath, force, strict, localLlm } = parseArgs();
+  const cliOptions = parseArgs();
 
   log.info('ingest.started', 'ChronoViet Historical Knowledge Ingestion Pipeline', {
-    inputPath,
-    force,
-    strict,
-    localLlm,
+    inputPath: cliOptions.inputPath,
+    force: cliOptions.force,
+    strict: cliOptions.strict,
+    localLlm: cliOptions.localLlm,
+    regexOnly: cliOptions.regexOnly,
+    allowFallback: cliOptions.allowFallback,
   });
 
   try {
-    const exists = await fs.stat(inputPath).then(() => true).catch(() => false);
+    const exists = await fs.stat(cliOptions.inputPath).then(() => true).catch(() => false);
     if (!exists) {
       log.warn('ingest.input_missing', `Input directory or file does not exist; creating empty raw_corpus directory`, {
-        inputPath,
+        inputPath: cliOptions.inputPath,
       });
-      await fs.mkdir(inputPath, { recursive: true });
+      await fs.mkdir(cliOptions.inputPath, { recursive: true });
     }
 
     // 1. Perform Pre-flight Health Check
-    await performPreflightHealthCheck(strict);
+    await performPreflightHealthCheck(cliOptions);
 
     // 2. Ensure Schema is Initialized
     await initSchema();
 
     // 3. If force/clean specified, reset tables to ensure fresh ingestion
-    if (force) {
+    if (cliOptions.force) {
       log.info('ingest.cleaning', 'Clearing existing database tables for fresh deterministic ingestion');
       const pgConnected = await isPgAvailable();
       if (pgConnected) {
@@ -149,7 +172,11 @@ async function main() {
 
     // 4. Execute Dual-Branch Seeding
     const seeder = new DualBranchSeeder();
-    const result = await seeder.run(inputPath, { strict });
+    const result = await seeder.run(cliOptions.inputPath, {
+      strict: cliOptions.strict,
+      regexOnly: cliOptions.regexOnly,
+      allowFallback: cliOptions.allowFallback,
+    });
 
     log.info('ingest.completed', 'Knowledge Ingestion completed successfully', {
       documentsProcessed: result.documentsProcessed,

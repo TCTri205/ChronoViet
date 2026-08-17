@@ -278,7 +278,17 @@ pnpm --filter @chronoviet/data-ingestion db:init
 pnpm crawl:all # hoặc pnpm --filter @chronoviet/data-ingestion crawl:corpus --epoch=EPOCH_05
 
 # 3. Chạy pipeline nạp & làm sạch dữ liệu tri thức văn bản (Text ETL)
-pnpm --filter @chronoviet/data-ingestion ingest:knowledge --input=data/raw_corpus/ [--force] [--local-llm]
+# Mặc định: Bắt buộc LLM Gateway hoạt động (Local llama-server / Cloud)
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge --input=data/raw_corpus/ [--force]
+
+# Chạy chế độ Regex Tường minh (bỏ qua LLM, dùng cho máy không có GPU)
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge --regex-only
+
+# Chạy chế độ Dự phòng linh hoạt (ưu tiên LLM, fallback regex nếu LLM lỗi)
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge --allow-fallback
+
+# Chạy chế độ Strict Quality Gate (bắt buộc cả LLM + Postgres + Embedding server)
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge --strict --force
 
 # 4. Hợp giải mâu thuẫn thực thể & ghi vết nhật ký audit log
 pnpm --filter @chronoviet/data-ingestion rag:re-resolve

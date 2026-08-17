@@ -15,6 +15,7 @@ import {
   loadProjectSchema,
   RedisPubSubManager,
   saveProjectSchema,
+  renderDurationSeconds,
 } from '@chronoviet/shared-spec';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 import { parseRemotionStdoutLine } from '../lib/remotion-progress-parser.js';
@@ -24,6 +25,7 @@ const pubsub = new RedisPubSubManager();
 
 export interface RenderJobData {
   projectId: string;
+  correlationId?: string;
   outputFormat?: 'mp4';
   priority?: number;
 }
@@ -38,10 +40,14 @@ export interface RenderJobResult {
 }
 
 export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJobResult> {
-  const { projectId } = job.data;
+  const { projectId, correlationId = projectId } = job.data;
   const startTime = Date.now();
+  const workerLog = log.child({
+    correlationId,
+    fields: { projectId, jobId: job.id },
+  });
 
-  log.info('worker.render_started', `Starting Remotion render for project ${projectId}`, {
+  workerLog.info('worker.render_started', `Starting Remotion render for project ${projectId}`, {
     projectId,
     jobId: job.id,
   });
@@ -198,10 +204,12 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
         }
       });
     });
-    log.info('worker.remotion_rendered_mp4', `Successfully rendered MP4 with Remotion Engine for ${projectId}`);
+    workerLog.info('worker.remotion_rendered_mp4', `Successfully rendered MP4 with Remotion Engine for ${projectId}`);
   } catch (renderErr: any) {
+    const durationSec = (Date.now() - startTime) / 1000;
+    renderDurationSeconds.observe({ status: 'failed' }, durationSec);
     const errorOutput = renderErr.message || String(renderErr);
-    log.error('worker.remotion_cli_failed', `Remotion CLI execution failed for ${projectId}: ${errorOutput}`);
+    workerLog.error('worker.remotion_cli_failed', `Remotion CLI execution failed for ${projectId}: ${errorOutput}`);
     await pubsub.publishRenderEvent({
       projectId,
       type: 'RENDER_FAILED',
@@ -213,6 +221,8 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
   }
 
   if (!fs.existsSync(outputPath)) {
+    const durationSec = (Date.now() - startTime) / 1000;
+    renderDurationSeconds.observe({ status: 'failed' }, durationSec);
     const errorMsg = `Remotion video render failed to produce output MP4 file at "${outputPath}" for project "${projectId}".`;
     await pubsub.publishRenderEvent({
       projectId,
@@ -225,6 +235,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
   }
 
   const durationMs = Date.now() - startTime;
+  renderDurationSeconds.observe({ status: 'completed' }, durationMs / 1000);
   const fileSizeBytes = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 1024;
   const peakMemoryMb = Math.round(process.memoryUsage().heapUsed / (1024 * 1024));
 
@@ -244,7 +255,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     timestamp: new Date().toISOString(),
   }).catch(() => {});
 
-  log.info('worker.render_completed', `Render completed for ${projectId} in ${durationMs}ms`, {
+  workerLog.info('worker.render_completed', `Render completed for ${projectId} in ${durationMs}ms`, {
     projectId,
     durationMs,
     peakMemoryMb,

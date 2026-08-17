@@ -122,7 +122,9 @@ pnpm db:init
 
 # 3. Nạp kho tri thức lịch sử vào CSDL (nếu chưa nạp)
 pnpm crawl:all
-pnpm ingest:knowledge
+pnpm ingest:knowledge                # Bắt buộc LLM Gateway hoạt động
+# hoặc pnpm ingest:knowledge --regex-only     # Chạy bằng bộ từ điển Regex (không cần GPU)
+# hoặc pnpm ingest:knowledge --allow-fallback # Cho phép tự động fallback về Regex nếu LLM offline
 
 # 4. Khởi chạy toàn bộ Ứng dụng (Next.js App Server + BullMQ Render Worker)
 pnpm dev

@@ -4,6 +4,8 @@ import {
   initProjectWorkspace,
   createLogger,
   RedisPubSubManager,
+  httpRequestsTotal,
+  httpRequestDurationSeconds,
 } from '@chronoviet/shared-spec';
 import { cancelRenderJob } from '../../../../../../lib/queues';
 
@@ -11,14 +13,18 @@ const log = createLogger({ service: 'web-api-abort' });
 const pubsub = new RedisPubSubManager();
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const startTime = Date.now();
+  const projectId = params.id;
+  const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const reqLog = log.child({ correlationId, fields: { projectId } });
+
   try {
-    const projectId = params.id;
     const paths = initProjectWorkspace(projectId);
 
-    log.info('api.project_abort_requested', `Abort requested for project ${projectId}`, { projectId });
+    reqLog.info('api.project_abort_requested', `Abort requested for project ${projectId}`, { projectId });
 
     // 1. Update project metadata status to ABORTED
     let metadata: Record<string, any> = { projectId, status: 'ABORTED', updatedAt: new Date().toISOString() };
@@ -44,15 +50,32 @@ export async function POST(
     // 3. Attempt to cancel any active render job matching the projectId
     await cancelRenderJob(`render-${projectId}`).catch(() => {});
 
-    log.info('api.project_aborted', `Project ${projectId} generation successfully aborted`, { projectId });
+    reqLog.info('api.project_aborted', `Project ${projectId} generation successfully aborted`, { projectId });
 
-    return NextResponse.json({
-      projectId,
-      status: 'ABORTED',
-      message: 'Video generation process aborted successfully',
-    });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/projects/:id/abort', status_class: '2xx' });
+    httpRequestDurationSeconds.observe({ method: 'POST', route: '/api/v1/projects/:id/abort', status_class: '2xx' }, durationSec);
+
+    return NextResponse.json(
+      {
+        projectId,
+        status: 'ABORTED',
+        message: 'Video generation process aborted successfully',
+      },
+      {
+        headers: {
+          'x-request-id': correlationId,
+        },
+      }
+    );
   } catch (err: any) {
-    log.error('api.project_abort_failed', `Failed to abort project: ${err.message}`, { error: err });
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/projects/:id/abort', status_class: '5xx' });
+    httpRequestDurationSeconds.observe({ method: 'POST', route: '/api/v1/projects/:id/abort', status_class: '5xx' }, durationSec);
+    reqLog.error('api.project_abort_failed', `Failed to abort project: ${err.message}`, { error: err });
+    return NextResponse.json(
+      { error: err.message || 'Internal Server Error' },
+      { status: 500, headers: { 'x-request-id': correlationId } }
+    );
   }
 }

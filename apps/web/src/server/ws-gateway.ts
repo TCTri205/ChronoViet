@@ -1,6 +1,11 @@
 import { Server as HttpServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { RedisPubSubManager, createLogger, RenderEvent } from '@chronoviet/shared-spec';
+import {
+  RedisPubSubManager,
+  createLogger,
+  RenderEvent,
+  websocketActiveConnectionsGauge,
+} from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'web-ws' });
 
@@ -27,9 +32,14 @@ export class WebSocketGateway {
       }
     });
 
-    this.wss.on('connection', async (ws: WebSocket, _request: unknown, projectId: string) => {
-      log.info('ws.client_connected', `WebSocket client connected for project ${projectId}`, { projectId });
+    this.wss.on('connection', async (ws: WebSocket, request: any, projectId: string) => {
+      const correlationId = (request?.headers?.['x-request-id'] as string) || (request?.headers?.['sec-websocket-key'] as string) || projectId;
+      const wsLog = log.child({ correlationId, fields: { projectId } });
+
       this.activeSockets.add(ws);
+      websocketActiveConnectionsGauge.set(this.activeSockets.size);
+
+      wsLog.info('ws.client_connected', `WebSocket client connected for project ${projectId}`, { projectId });
 
       let isAlive = true;
       ws.on('pong', () => {
@@ -56,15 +66,17 @@ export class WebSocketGateway {
       ws.on('close', async () => {
         clearInterval(interval);
         this.activeSockets.delete(ws);
+        websocketActiveConnectionsGauge.set(this.activeSockets.size);
         await unsubscribe().catch(() => {});
-        log.info('ws.client_disconnected', `WebSocket client disconnected for project ${projectId}`, { projectId });
+        wsLog.info('ws.client_disconnected', `WebSocket client disconnected for project ${projectId}`, { projectId });
       });
 
       ws.on('error', async (err) => {
         clearInterval(interval);
         this.activeSockets.delete(ws);
+        websocketActiveConnectionsGauge.set(this.activeSockets.size);
         await unsubscribe().catch(() => {});
-        log.error('ws.client_error', `WebSocket error for project ${projectId}: ${err.message}`, { error: err });
+        wsLog.error('ws.client_error', `WebSocket client error for project ${projectId}: ${err.message}`, { error: err });
       });
     });
   }

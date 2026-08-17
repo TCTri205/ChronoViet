@@ -18,6 +18,7 @@ export interface VLMScoreResult {
 }
 
 let redisClient: Redis | null = null;
+const MAX_MEMORY_CACHE_ENTRIES = 1000;
 const memoryCache = new Map<string, { result: VLMScoreResult; expiresAt: number }>();
 const CACHE_TTL_SECONDS = 7 * 24 * 3600; // 7 days
 
@@ -34,10 +35,10 @@ export function getRedisClient(): Redis | null {
     });
 
     redisClient.on('error', (err) => {
-      log.debug('vlm.redis_error', `Redis connection error: ${formatErrorMessage(err)}`);
+      log.warn('vlm.redis_error', `Redis connection error: ${formatErrorMessage(err)}`);
     });
   } catch (err: any) {
-    log.debug('vlm.redis_init_failed', `Redis init skipped: ${formatErrorMessage(err)}`);
+    log.warn('vlm.redis_init_failed', `Redis init skipped: ${formatErrorMessage(err)}`);
     redisClient = null;
   }
 
@@ -128,9 +129,13 @@ export async function setCachedVLMScore(
   if (sha) keys.push(`vlm:sha256:${sha}${ctxSuffix}`);
   if (phash) keys.push(`vlm:phash:${phash}${ctxSuffix}`);
 
-  // 1. Store in memory cache
+  // 1. Store in memory cache with bounded capacity eviction
   const expiresAt = Date.now() + CACHE_TTL_SECONDS * 1000;
   for (const key of keys) {
+    if (memoryCache.size >= MAX_MEMORY_CACHE_ENTRIES) {
+      const oldestKey = memoryCache.keys().next().value;
+      if (oldestKey) memoryCache.delete(oldestKey);
+    }
     memoryCache.set(key, { result, expiresAt });
   }
 

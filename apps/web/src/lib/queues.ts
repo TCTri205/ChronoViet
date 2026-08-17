@@ -33,13 +33,15 @@ export function getRenderQueue(): Queue<RenderJobPayload> {
 
 export async function enqueueRenderJob(
   projectId: string,
-  options: { outputFormat?: 'mp4'; priority?: number } = {}
+  options: { outputFormat?: 'mp4'; priority?: number; correlationId?: string } = {}
 ): Promise<{ jobId: string }> {
   const queue = getRenderQueue();
+  const correlationId = options.correlationId || projectId;
   const job = await queue.add(
     'render-video',
     {
       projectId,
+      correlationId,
       outputFormat: options.outputFormat || 'mp4',
       priority: options.priority,
     },
@@ -52,6 +54,7 @@ export async function enqueueRenderJob(
   log.info('web.render_enqueued', `Enqueued render job for project ${projectId}`, {
     jobId: job.id,
     projectId,
+    correlationId,
   });
 
   return { jobId: job.id! };

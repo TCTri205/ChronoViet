@@ -11,13 +11,19 @@ const log = createLogger({ service: 'render-worker' });
 
 export interface VLMJobData {
   projectId: string;
+  correlationId?: string;
   scene: SceneGeneration;
   candidatePool: VisualCandidate[];
 }
 
 export async function processVLMJob(job: Job<VLMJobData>): Promise<InspectSceneResult> {
-  const { projectId, scene, candidatePool } = job.data;
-  log.info('worker.vlm_processing', `Processing VLM job ${job.id} for scene ${scene.sceneId}`, {
+  const { projectId, correlationId = projectId, scene, candidatePool } = job.data;
+  const workerLog = log.child({
+    correlationId,
+    fields: { projectId, sceneId: scene.sceneId, jobId: job.id },
+  });
+
+  workerLog.info('worker.vlm_processing', `Processing VLM job ${job.id} for scene ${scene.sceneId}`, {
     projectId,
     sceneId: scene.sceneId,
   });

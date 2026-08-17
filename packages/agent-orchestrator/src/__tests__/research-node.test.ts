@@ -55,6 +55,7 @@ function makeScene(overrides: Partial<ChronoGraphState['scenes'][number]> = {}) 
 function makeState(overrides: Partial<ChronoGraphState> = {}): ChronoGraphState {
   return {
     projectId: 'test_research',
+    correlationId: 'test_research',
     userPrompt: 'Trận Bạch Đằng năm 938',
     targetDurationMinutes: 1,
     videoType: 'BATTLE',

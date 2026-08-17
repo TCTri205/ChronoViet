@@ -6,17 +6,26 @@ import {
   getDefaultProjectsBaseDir,
   ProjectSummary,
   createLogger,
+  truncateSnippet,
+  httpRequestsTotal,
+  httpRequestDurationSeconds,
+  getStatusClass,
 } from '@chronoviet/shared-spec';
 import { runOrchestratorPipeline, ChronoGraphState } from '@chronoviet/agent-orchestrator';
 
 const log = createLogger({ service: 'web-api-projects' });
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const reqLog = log.child({ correlationId });
+
   try {
     const body = await req.json();
     const topic = body.topic || body.prompt;
 
     if (!topic || typeof topic !== 'string') {
+      httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/projects', status_class: '4xx' });
       return NextResponse.json({ error: 'Topic or prompt is required' }, { status: 400 });
     }
 
@@ -43,14 +52,16 @@ export async function POST(req: NextRequest) {
 
     fs.writeFileSync(paths.metadataFile, JSON.stringify(metadata, null, 2), 'utf-8');
 
-    log.info('api.project_created', `Initialized project ${projectId} for topic "${topic}"`, {
+    const projectLog = reqLog.child({ fields: { projectId } });
+    projectLog.info('api.project_created', `Initialized project ${projectId} for topic "${truncateSnippet(topic)}"`, {
       projectId,
-      topic,
+      topicSnippet: truncateSnippet(topic),
     });
 
-    // Launch orchestrator pipeline asynchronously in background
+    // Launch orchestrator pipeline asynchronously in background with correlationId
     const initialState: Partial<ChronoGraphState> = {
       projectId,
+      correlationId,
       userPrompt: topic,
       targetDurationMinutes,
       videoType,
@@ -61,11 +72,15 @@ export async function POST(req: NextRequest) {
 
     // Run in background without blocking API response
     runOrchestratorPipeline(initialState as ChronoGraphState).catch((err) => {
-      log.error('api.orchestrator_background_failed', `Background pipeline failed for ${projectId}: ${err.message}`, {
+      projectLog.error('api.orchestrator_background_failed', `Background pipeline failed for ${projectId}: ${err.message}`, {
         projectId,
         error: err,
       });
     });
+
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/projects', status_class: '2xx' });
+    httpRequestDurationSeconds.observe({ method: 'POST', route: '/api/v1/projects', status_class: '2xx' }, durationSec);
 
     return NextResponse.json(
       {
@@ -74,15 +89,26 @@ export async function POST(req: NextRequest) {
         message: 'Project created and pipeline initiated',
         metadata,
       },
-      { status: 201 }
+      {
+        status: 201,
+        headers: {
+          'x-request-id': correlationId,
+        },
+      }
     );
   } catch (err: any) {
-    log.error('api.project_create_failed', `Failed to create project: ${err.message}`, { error: err });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/projects', status_class: '5xx' });
+    httpRequestDurationSeconds.observe({ method: 'POST', route: '/api/v1/projects', status_class: '5xx' }, durationSec);
+    reqLog.error('api.project_create_failed', `Failed to create project: ${err.message}`, { error: err });
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const startTime = Date.now();
+  const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const reqLog = log.child({ correlationId });
   try {
     const baseDir = getDefaultProjectsBaseDir();
     const summaries: ProjectSummary[] = [];
@@ -141,13 +167,27 @@ export async function GET() {
     // Sort by createdAt descending
     summaries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return NextResponse.json({
-      items: summaries,
-      total: summaries.length,
-      projects: summaries,
-    });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects', status_class: '2xx' });
+    httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects', status_class: '2xx' }, durationSec);
+
+    return NextResponse.json(
+      {
+        items: summaries,
+        total: summaries.length,
+        projects: summaries,
+      },
+      {
+        headers: {
+          'x-request-id': correlationId,
+        },
+      }
+    );
   } catch (err: any) {
-    log.error('api.projects_list_failed', `Failed to list projects: ${err.message}`, { error: err });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects', status_class: '5xx' });
+    httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects', status_class: '5xx' }, durationSec);
+    reqLog.error('api.projects_list_failed', `Failed to list projects: ${err.message}`, { error: err });
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -14,6 +14,7 @@ const ttsEngine = new VieNeuEngine();
 
 export interface TTSJobData {
   projectId: string;
+  correlationId?: string;
   sceneId: string;
   voiceoverText: string;
   speedMultiplier?: number;
@@ -27,8 +28,13 @@ export interface TTSJobResult {
 }
 
 export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult> {
-  const { projectId, sceneId, voiceoverText } = job.data;
-  log.info('worker.tts_processing', `Processing TTS job ${job.id} for scene ${sceneId}`, {
+  const { projectId, correlationId = projectId, sceneId, voiceoverText } = job.data;
+  const workerLog = log.child({
+    correlationId,
+    fields: { projectId, sceneId, jobId: job.id },
+  });
+
+  workerLog.info('worker.tts_processing', `Processing TTS job ${job.id} for scene ${sceneId}`, {
     projectId,
     sceneId,
   });

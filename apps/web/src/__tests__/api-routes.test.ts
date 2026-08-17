@@ -138,7 +138,8 @@ describe('Web RESTful API Routes', () => {
     });
 
     it('lists project summaries on GET', async () => {
-      const res = await getProjects();
+      const req = new NextRequest('http://localhost:3000/api/v1/projects');
+      const res = await getProjects(req);
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(Array.isArray(data.items)).toBe(true);

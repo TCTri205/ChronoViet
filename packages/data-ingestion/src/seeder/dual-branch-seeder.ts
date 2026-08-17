@@ -10,7 +10,7 @@ import { isPgAvailable, query, withTransaction, inMemoryStore, DbEntity, DbDocum
 import { normalizeText } from '../text/text-normalizer.js';
 import { chunkDocumentHierarchical, ProcessedHierarchicalChunk } from '../chunking/hierarchical-chunker.js';
 import { resolveCanonicalEntity, resolveLocationMapping } from '../text/historical-entity-mapper.js';
-import { extractTriplesFromTextAsync, ExtractedTriple } from '../triple-extractor.js';
+import { extractTriplesFromTextAsync, ExtractedTriple, ExtractionOptions } from '../triple-extractor.js';
 import { generateEmbedding } from '../embedding-service.js';
 import { PdfExtractor } from '../pdf/pdf-extractor.js';
 
@@ -75,7 +75,7 @@ function parseFrontmatter(rawText: string): { body: string; metadata: Record<str
 export async function seedDualBranch(
   content: string,
   metadata: IngestionDocMetadata,
-  options?: { strict?: boolean }
+  options?: ExtractionOptions
 ): Promise<DualBranchSeedResult> {
   const startTime = Date.now();
   const cleanedText = normalizeText(content);
@@ -357,6 +357,16 @@ export async function seedDualBranch(
 
   const durationMs = Date.now() - startTime;
 
+  log.info('ingest.doc_seeding_completed', 'Completed dual-branch seeding for document', {
+    title: metadata.title,
+    parentChunks: parentChunks.length,
+    childChunks: childChunks.length,
+    entities: entityMap.size,
+    triples: allTriples.length,
+    durationMs,
+    mode: pgConnected ? 'postgres_pgvector' : 'in_memory',
+  });
+
   return {
     title: metadata.title,
     parentChunksCount: parentChunks.length,
@@ -375,7 +385,7 @@ export async function seedDualBranch(
 export class DualBranchSeeder implements IIngestionPipeline {
   private pdfExtractor = new PdfExtractor();
 
-  public async run(inputPath: string, options?: IngestionOptions & { strict?: boolean }): Promise<IngestionResult> {
+  public async run(inputPath: string, options?: IngestionOptions & ExtractionOptions): Promise<IngestionResult> {
     const startTime = Date.now();
     let documentsProcessed = 0;
     let chunksCreated = 0;

@@ -3,11 +3,19 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -16,7 +24,6 @@ env:
   # Empty values are intentional — schemas default gracefully (see packages/shared-spec/src/config.ts)
   DATABASE_URL: ''
   NODE_ENV: test
-  EVAL_STRICT: 'false'
 
 jobs:
   lint:
@@ -24,16 +31,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - name: Build monorepo
-        run: pnpm build
+      - name: Build shared-spec
+        run: pnpm --filter @chronoviet/shared-spec build
       - name: Lint (recursive)
         run: pnpm lint
 
@@ -42,37 +49,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - name: Build monorepo
-        run: pnpm build
+      - name: Build shared-spec
+        run: pnpm --filter @chronoviet/shared-spec build
       - name: Typecheck (recursive)
         run: pnpm typecheck
       - name: Typecheck extras (eval & scripts)
         run: pnpm typecheck:extras
 
   unit-tests:
-    name: Unit Tests
+    name: Unit Tests (src/)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - name: Build monorepo
-        run: pnpm build
-      - name: Run unit tests (recursive)
+      - name: Build shared-spec
+        run: pnpm --filter @chronoviet/shared-spec build
+      - name: Run unit tests (recursive src/)
         run: pnpm test
 
   build:
@@ -80,32 +87,58 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - name: Build monorepo (recursive)
         run: pnpm build
+
+  docker-build:
+    name: Docker Build Verification
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Verify App Docker Build (with GHA cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.app
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Verify Worker Docker Build (with GHA cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.worker
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - name: pnpm audit (high+)
-        run: pnpm audit --audit-level=high || true
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
 
   integration:
     name: Integration (PostgreSQL + Redis)
@@ -117,7 +150,7 @@ jobs:
         env:
           POSTGRES_DB: chronoviet_db
           POSTGRES_USER: chronoviet
-          POSTGRES_PASSWORD: chronoviet_secret
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD || 'chronoviet_secret' }}
         ports:
           - 5432:5432
         options: >-
@@ -135,18 +168,18 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgres://chronoviet:chronoviet_secret@localhost:5432/chronoviet_db
+      DATABASE_URL: postgres://chronoviet:${{ secrets.CI_DB_PASSWORD || 'chronoviet_secret' }}@localhost:5432/chronoviet_db
       REDIS_URL: redis://localhost:6379
       NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - name: Build shared-spec first (required by tsconfig paths)
         run: pnpm --filter @chronoviet/shared-spec build

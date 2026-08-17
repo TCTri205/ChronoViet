@@ -15,7 +15,7 @@ export function getRedisClient(): Redis {
       lazyConnect: true,
     });
     redisClient.on('error', (err) => {
-      log.debug('web.redis_error', `Web Redis connection error: ${formatErrorMessage(err)}`);
+      log.warn('web.redis_error', `Web Redis connection error: ${formatErrorMessage(err)}`);
     });
   }
   return redisClient;

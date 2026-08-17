@@ -11,3 +11,4 @@ export * from './logger.js';
 export * from './workspace.js';
 export * from './image-search.js';
 export * from './realtime.js';
+export * from './telemetry/metrics.js';

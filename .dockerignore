@@ -1,0 +1,38 @@
+# Dependencies and local caches
+node_modules
+.pnpm-store
+.npm-cache
+.venv
+.xdg
+
+# Git and OS metadata
+.git
+.gitignore
+.dockerignore
+.DS_Store
+
+# IDE and Agent metadata
+.agents
+.commandcode
+.codegraph
+.vscode
+.idea
+
+# Build outputs and artifacts
+dist
+.next
+*.tsbuildinfo
+coverage
+eval/artifacts
+
+# Media and logs
+media/*
+!media/.gitkeep
+*.log
+
+# Documentation and environment files
+docs
+README.md
+.env
+.env.local
+.env.*.local

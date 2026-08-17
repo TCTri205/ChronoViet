@@ -5,7 +5,7 @@
  */
 
 import { StateGraph, START, END } from '@langchain/langgraph';
-import { createLogger, envConfig, initProjectWorkspace } from '@chronoviet/shared-spec';
+import { createLogger, envConfig, initProjectWorkspace, truncateSnippet } from '@chronoviet/shared-spec';
 import { ChronoGraphAnnotation, ChronoGraphState, ChronoGraphUpdate } from './state.js';
 import { defaultCheckpointer } from './checkpointer.js';
 import { chapteringNode } from './nodes/chaptering-node.js';
@@ -26,13 +26,17 @@ export function buildOrchestratorGraph() {
     // Node 1: RAG Context & Workspace Init
     .addNode('rag_init', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
       initProjectWorkspace(state.projectId);
+      const nodeLog = log.child({
+        correlationId: state.correlationId || state.projectId,
+        fields: { projectId: state.projectId },
+      });
       let ragContext = state.ragContext;
 
       if (!ragContext) {
         try {
           const { ChronoRagEngine } = await import('@chronoviet/rag-engine');
           const ragEngine = new ChronoRagEngine();
-          log.info('orchestrator.rag_searching', `Querying Chrono-RAG engine for topic: "${state.userPrompt}"`, {
+          nodeLog.info('orchestrator.rag_searching', `Querying Chrono-RAG engine for topic: "${truncateSnippet(state.userPrompt)}"`, {
             projectId: state.projectId,
           });
           const searchResult = await ragEngine.search({
@@ -191,15 +195,18 @@ export async function runOrchestratorPipeline(
   options?: OrchestratorRunOptions
 ): Promise<ChronoGraphState> {
   const projectId = initialState.projectId;
+  const correlationId = initialState.correlationId || projectId;
   const threadId = options?.threadId || projectId;
-  log.info('orchestrator.pipeline_started', `Starting LangGraph Multi-Agent Orchestrator pipeline for ${projectId}`);
+  const pipelineLog = log.child({ correlationId, fields: { projectId } });
+
+  pipelineLog.info('orchestrator.pipeline_started', `Starting LangGraph Multi-Agent Orchestrator pipeline for ${projectId}`);
 
   let stateToRun: ChronoGraphState = initialState;
 
   if (options?.resumeFromCheckpoint !== false) {
     const existing = await defaultCheckpointer.loadLatestProjectState(projectId);
     if (existing) {
-      log.info('orchestrator.resumed_from_checkpoint', `Resumed state from existing checkpoint for ${projectId}`, {
+      pipelineLog.info('orchestrator.resumed_from_checkpoint', `Resumed state from existing checkpoint for ${projectId}`, {
         status: existing.status,
         currentStep: existing.currentStep,
       });
@@ -215,7 +222,7 @@ export async function runOrchestratorPipeline(
     configurable: { thread_id: threadId, projectId },
   })) as ChronoGraphState;
 
-  log.info('orchestrator.pipeline_completed', `Orchestrator pipeline finished with status ${finalState.status}`, {
+  pipelineLog.info('orchestrator.pipeline_completed', `Orchestrator pipeline finished with status ${finalState.status}`, {
     projectId,
     status: finalState.status,
     totalScenes: finalState.scenes?.length || 0,
@@ -233,8 +240,11 @@ export async function* streamOrchestratorPipeline(
   options?: OrchestratorRunOptions
 ): AsyncGenerator<{ nodeName: string; update: Partial<ChronoGraphState> }> {
   const projectId = initialState.projectId;
+  const correlationId = initialState.correlationId || projectId;
   const threadId = options?.threadId || projectId;
-  log.info('orchestrator.stream_started', `Starting streaming LangGraph pipeline for ${projectId}`);
+  const pipelineLog = log.child({ correlationId, fields: { projectId } });
+
+  pipelineLog.info('orchestrator.stream_started', `Starting streaming LangGraph pipeline for ${projectId}`);
 
   const eventStream = await orchestratorGraphApp.stream(initialState, {
     configurable: { thread_id: threadId, projectId },

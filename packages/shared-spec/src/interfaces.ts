@@ -128,6 +128,7 @@ export interface IMultiAgentOrchestrator {
 
 export interface RenderJobPayload {
   projectId: string;
+  correlationId?: string;
   schema?: ChronoVideoProps;
   outputFormat?: 'mp4';
   priority?: number;

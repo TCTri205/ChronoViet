@@ -4,23 +4,33 @@ import {
   generateLLMCompletionStream,
   ChatStreamResponse,
   createLogger,
+  truncateSnippet,
+  httpRequestsTotal,
+  httpRequestDurationSeconds,
 } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'web-api-chat' });
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const reqLog = log.child({ correlationId });
+
   try {
     const body = await req.json();
     const query = body.query;
 
     if (!query || typeof query !== 'string') {
+      httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/chat', status_class: '4xx' });
       return new Response(JSON.stringify({ error: 'Query string is required' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-request-id': correlationId },
       });
     }
 
-    log.info('api.chat_started', `Handling chat query: "${query.slice(0, 80)}"`);
+    reqLog.info('api.chat_started', `Handling chat query: "${truncateSnippet(query)}"`, {
+      querySnippet: truncateSnippet(query),
+    });
 
     let citations: string[] = [];
     let contextText = '';
@@ -90,18 +100,26 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/chat', status_class: '2xx' });
+    httpRequestDurationSeconds.observe({ method: 'POST', route: '/api/v1/chat', status_class: '2xx' }, durationSec);
+
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
         Connection: 'keep-alive',
+        'x-request-id': correlationId,
       },
     });
   } catch (err: any) {
-    log.error('api.chat_failed', `Chat API failed: ${err.message}`, { error: err });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/chat', status_class: '5xx' });
+    httpRequestDurationSeconds.observe({ method: 'POST', route: '/api/v1/chat', status_class: '5xx' }, durationSec);
+    reqLog.error('api.chat_failed', `Chat API failed: ${err.message}`, { error: err });
     return new Response(JSON.stringify({ error: err.message || 'Internal error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-request-id': correlationId },
     });
   }
 }

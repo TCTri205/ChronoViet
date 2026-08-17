@@ -6,22 +6,32 @@ import {
   getProjectRootDir,
   loadProjectSchema,
   createLogger,
+  httpRequestsTotal,
+  httpRequestDurationSeconds,
 } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'web-api-project-detail' });
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const startTime = Date.now();
+  const projectId = params.id;
+  const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const reqLog = log.child({ correlationId, fields: { projectId } });
+
   try {
-    const projectId = params.id;
     const rootDir = getProjectRootDir(projectId);
     const metaFile = path.join(rootDir, 'metadata.json');
     const schemaFile = path.join(rootDir, 'project_schema.json');
 
     if (!fs.existsSync(rootDir) || (!fs.existsSync(metaFile) && !fs.existsSync(schemaFile))) {
-      return NextResponse.json({ error: `Project not found: ${projectId}` }, { status: 404 });
+      httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id', status_class: '4xx' });
+      return NextResponse.json(
+        { error: `Project not found: ${projectId}` },
+        { status: 404, headers: { 'x-request-id': correlationId } }
+      );
     }
 
     const paths = initProjectWorkspace(projectId);
@@ -38,7 +48,7 @@ export async function GET(
       try {
         schema = loadProjectSchema(projectId);
       } catch (err: any) {
-        log.warn('api.schema_load_warning', `Schema found but failed validation: ${err.message}`);
+        reqLog.warn('api.schema_load_warning', `Schema found but failed validation: ${err.message}`);
       }
     }
 
@@ -49,18 +59,35 @@ export async function GET(
     const createdAt = metadata.createdAt || new Date(fs.statSync(paths.rootDir).birthtimeMs).toISOString();
     const updatedAt = metadata.updatedAt || new Date(fs.statSync(paths.rootDir).mtimeMs).toISOString();
 
-    return NextResponse.json({
-      projectId,
-      status,
-      currentStep,
-      createdAt,
-      updatedAt,
-      videoUrl: hasVideo ? `/api/v1/projects/${projectId}/video` : undefined,
-      metadata,
-      schema,
-    });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id', status_class: '2xx' });
+    httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id', status_class: '2xx' }, durationSec);
+
+    return NextResponse.json(
+      {
+        projectId,
+        status,
+        currentStep,
+        createdAt,
+        updatedAt,
+        videoUrl: hasVideo ? `/api/v1/projects/${projectId}/video` : undefined,
+        metadata,
+        schema,
+      },
+      {
+        headers: {
+          'x-request-id': correlationId,
+        },
+      }
+    );
   } catch (err: any) {
-    log.error('api.project_detail_failed', `Failed to get project: ${err.message}`, { error: err });
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id', status_class: '5xx' });
+    httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id', status_class: '5xx' }, durationSec);
+    reqLog.error('api.project_detail_failed', `Failed to get project: ${err.message}`, { error: err });
+    return NextResponse.json(
+      { error: err.message || 'Internal Server Error' },
+      { status: 500, headers: { 'x-request-id': correlationId } }
+    );
   }
 }
