@@ -49,8 +49,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
-      - name: Build shared-spec
-        run: pnpm --filter @chronoviet/shared-spec build
+      - name: Build internal packages
+        run: pnpm --filter './packages/*' --filter './services/*' build
       - name: Lint (recursive)
         run: pnpm lint
 
@@ -77,8 +77,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
-      - name: Build shared-spec
-        run: pnpm --filter @chronoviet/shared-spec build
+      - name: Build internal packages
+        run: pnpm --filter './packages/*' --filter './services/*' build
       - name: Typecheck (recursive)
         run: pnpm typecheck
       - name: Typecheck extras (eval & scripts)
@@ -107,8 +107,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
-      - name: Build shared-spec
-        run: pnpm --filter @chronoviet/shared-spec build
+      - name: Build internal packages
+        run: pnpm --filter './packages/*' --filter './services/*' build
       - name: Run unit tests (recursive src/)
         run: pnpm test
 
@@ -241,8 +241,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       - run: pnpm install --frozen-lockfile
-      - name: Build shared-spec first (required by tsconfig paths)
-        run: pnpm --filter @chronoviet/shared-spec build
+      - name: Build internal packages
+        run: pnpm --filter './packages/*' --filter './services/*' build
       - name: Initialize database schema
         run: pnpm db:init
       - name: Verify database health & integrity
