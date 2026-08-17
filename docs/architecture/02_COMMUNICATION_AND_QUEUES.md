@@ -71,15 +71,15 @@ Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài n
 Người dùng cần biết video của mình đang ở công đoạn nào. Render Worker gửi event tiến độ liên tục:
 
 ```json
-// Progress Payload phát qua WebSocket channel: `project_status:{project_id}`
+// Progress Payload phát qua Redis PubSub & WebSocket channel: `project_events:${projectId}`
 {
   "projectId": "proj_1285_bach_dang",
+  "type": "RENDER_PROGRESS",
   "status": "RENDERING",
-  "step": "REMOTION_BUILD",
   "progressPercent": 68,
   "currentFrame": 450,
   "totalFrames": 1200,
-  "estimatedTimeRemainingSeconds": 14,
+  "estimatedRemainingSec": 14,
   "timestamp": "2026-08-09T23:22:00Z"
 }
 ```

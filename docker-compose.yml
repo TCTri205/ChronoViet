@@ -26,6 +26,12 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chronoviet -d chronoviet_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -35,6 +41,12 @@ services:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
   vieneu-tts-service:
     build:
@@ -62,10 +74,12 @@ services:
       - LOG_FORMAT=json
       - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AGNES_API_KEY=${AGNES_API_KEY}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./media:/app/media
 
@@ -83,11 +97,14 @@ services:
       - NODE_ENV=production
       - LOG_FORMAT=json
       - CONCURRENCY=1
+      - RENDER_CONCURRENCY=1
       - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./media:/app/media
 

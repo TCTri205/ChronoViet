@@ -171,3 +171,96 @@ export function loadProjectSchema(projectId: string, customBaseDir?: string): Ch
   const raw = fs.readFileSync(paths.schemaFile, 'utf-8');
   return VideoProjectSchema.parse(JSON.parse(raw));
 }
+
+/**
+ * Pre-downloads remote HTTP/HTTPS assets (audio, images) into the project workspace directory
+ * before rendering, preventing network timeouts and flaky render runs.
+ */
+export async function ensureProjectAssetsReady(
+  projectId: string,
+  schema: ChronoVideoProps,
+  options: {
+    timeoutMs?: number;
+    maxFileSizeBytes?: number;
+    customBaseDir?: string;
+  } = {}
+): Promise<ChronoVideoProps> {
+  const paths = initProjectWorkspace(projectId, options.customBaseDir);
+  const timeoutMs = options.timeoutMs ?? 30000;
+  const maxBytes = options.maxFileSizeBytes ?? 50 * 1024 * 1024; // 50MB max per asset
+
+  let modified = false;
+
+  const downloadAsset = async (remoteUrl: string, destDir: string, prefix: string, defaultExt: string): Promise<string | null> => {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(remoteUrl, { signal: controller.signal });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const arrayBuf = await res.arrayBuffer();
+        if (arrayBuf.byteLength > maxBytes) {
+          throw new Error(`Remote asset exceeds size limit (${arrayBuf.byteLength} > ${maxBytes})`);
+        }
+        const cleanUrl = remoteUrl.split('?')[0].split('#')[0].toLowerCase();
+        const ext = path.extname(cleanUrl).slice(1) || defaultExt;
+
+        const localPath = path.join(destDir, `${prefix}_${Date.now()}.${ext}`);
+        fs.writeFileSync(localPath, Buffer.from(arrayBuf));
+        return localPath;
+      }
+    } catch (err: any) {
+      console.warn(`[workspace] Failed to pre-download remote asset "${remoteUrl}": ${err.message}`);
+    }
+    return null;
+  };
+
+  // 1. Top-Level Composite Audio Pre-download
+  if (schema.audioUrl && /^https?:\/\//i.test(schema.audioUrl)) {
+    const localPath = await downloadAsset(schema.audioUrl, paths.audioDir, 'composite_audio', 'wav');
+    if (localPath) {
+      schema.audioUrl = localPath;
+      modified = true;
+    }
+  }
+
+  // 2. Top-Level BGM Pre-download
+  if (schema.bgmUrl && /^https?:\/\//i.test(schema.bgmUrl)) {
+    const localPath = await downloadAsset(schema.bgmUrl, paths.audioDir, 'bgm', 'mp3');
+    if (localPath) {
+      schema.bgmUrl = localPath;
+      modified = true;
+    }
+  }
+
+  // 3. Scene Timeline Assets (Scene Audio and Visuals)
+  for (let i = 0; i < schema.timeline.length; i++) {
+    const scene = schema.timeline[i];
+
+    // Remote Audio Pre-download
+    if (scene.sceneAudioUrl && /^https?:\/\//i.test(scene.sceneAudioUrl)) {
+      const localAudio = await downloadAsset(scene.sceneAudioUrl, paths.audioDir, `scene_${i}_audio`, 'wav');
+      if (localAudio) {
+        scene.sceneAudioUrl = localAudio;
+        modified = true;
+      }
+    }
+
+    // Remote Asset/Image Pre-download
+    if (scene.assetUrl && /^https?:\/\//i.test(scene.assetUrl)) {
+      const localAsset = await downloadAsset(scene.assetUrl, paths.assetsDir, `asset_${i}`, 'jpg');
+      if (localAsset) {
+        scene.assetUrl = localAsset;
+        modified = true;
+      }
+    }
+  }
+
+  if (modified) {
+    saveProjectSchema(projectId, schema, options.customBaseDir);
+  }
+
+  return schema;
+}
+

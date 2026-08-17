@@ -1,6 +1,6 @@
 # CHRONOVIET DOCUMENTATION PORTAL (TRUNG TÂM TÀI LIỆU DỰ ÁN)
 
-Chào mừng bạn đến với Trung tâm Tài liệu Kỹ thuật và Kiến trúc của dự án **ChronoViet** — Nền tảng EdTech tự động hóa video lịch sử và Chatbot RAG tương tác.
+Chào mừng bạn đến với Trung tâm Tài liệu Kỹ thuật và Kiến trúc của dự án **ChronoViet** — Nền tảng EdTech nghiên cứu lịch sử phong cách NotebookLM (Khung Chatbot tra cứu RAG chuyên sâu & Tạo video tài liệu 1-Click hoàn toàn tự động qua Multi-Agent).
 
 ---
 
@@ -13,9 +13,9 @@ docs/
 ├── 🏛️ architecture/                           [KIẾN TRÚC HỆ THỐNG & HẠ TẦNG KỸ THUẬT]
 │   ├── architecture/README.md                 [Tổng quan Kiến trúc Hệ thống & Hạ tầng]
 │   ├── architecture/01_ARCHITECTURAL_STYLE.md [Kiểu Kiến trúc: Event-Driven + Decoupled Pipeline]
-│   ├── architecture/02_COMMUNICATION_AND_QUEUES.md [Giao tiếp IPC, Message Queue (BullMQ/RabbitMQ)]
+│   ├── architecture/02_COMMUNICATION_AND_QUEUES.md [Giao tiếp IPC, BullMQ Task Queues & WebSocket]
 │   ├── architecture/03_DATA_STORAGE_AND_CACHE.md [Cơ sở dữ liệu (Postgres pgvector SSOT) & Cache (Redis)]
-│   ├── architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md [Quản lý State (LangGraph.js), VPS Docker Compose Caddy Deploy]
+│   ├── architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md [Quản lý State (LangGraph.js), Docker Compose & Custom Next.js Deploy]
 │   ├── architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md [Tối ưu Sản xuất & VieNeu TTS Engine]
 │   └── architecture/06_OBSERVABILITY_AND_LOGGING.md [Unified Structured Logging & Hướng dẫn Truy vết]
 │
@@ -23,15 +23,19 @@ docs/
 │   ├── modules/README.md                      [Tổng quan 5 Mô-đun Xử lý Dữ liệu]
 │   ├── modules/00_DATA_PREPROCESSING_AND_INGESTION.md [Mô-đun 0: Data Preprocessing & Ingestion Engine [✅]]
 │   ├── modules/01_CHRONO_RAG_ENGINE.md        [Mô-đun 1: Knowledge Retrieval & Anti-Hallucination [✅]]
-│   ├── modules/02_MULTI_AGENT_ORCHESTRATOR.md [Mô-đun 2: Small LLM & Long-Form Script Pipeline v3.2 [📐]]
-│   ├── modules/03_VLM_INSPECTOR_AGENT.md      [Mô-đun 3: Visual Quality Control & Fallback System [📐]]
+│   ├── modules/02_MULTI_AGENT_ORCHESTRATOR.md [Mô-đun 2: Multi-Agent LangGraph.js & Script Pipeline v4.1 [✅]]
+│   ├── modules/03_VLM_INSPECTOR_AGENT.md      [Mô-đun 3: Visual Quality Control & Dual Scorer [✅]]
 │   └── modules/04_REMOTION_RENDER_ENGINE.md   [Mô-đun 4: 100% Data-Driven Video Pipeline [✅]]
 │
-├── 🔊 services/vieneu-tts                      [Mô-đun VieNeu TTS Engine Standalone Microservice & Eval [✅ Phase 1]]
+├── 🖥️ apps/                                   [LỚP ỨNG DỤNG & CLUSTER WORKER RUNTIME]
+│   ├── apps/web/README.md                     [App Monolith: NotebookLM Workspace UI/UX, REST API, SSE & WebSocket Gateway [✅]]
+│   └── apps/render-worker/README.md           [Render Worker Cluster: BullMQ, Remotion CLI & Redis PubSub [✅]]
+│
+├── 🔊 services/vieneu-tts                      [Mô-đun VieNeu TTS Engine Standalone Microservice & Eval [✅]]
 │
 ├── 💻 MACOS_LOCAL_MODEL_OPTIMIZATION.md       [Hướng dẫn Tối ưu hóa Mô hình Local trên macOS (Apple Silicon)]
-├── 📘 SystemOverview.md                       [Kiến trúc RAG + Multi-Agent + VLM + Remotion [✅ Engine & TTS / 📐 Agent Roadmap]]
-├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai, Phân tích Song song & Khung Đánh giá [✅ Phase 1 DONE / 📐 Phase 2-5]]
+├── 📘 SystemOverview.md                       [Kiến trúc Toàn diện RAG + Multi-Agent + VLM + Remotion + Web App [✅]]
+├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai 4 Sprint & Khung Đánh giá 8 Mô-đun [✅]]
 ├── 📊 RAG_COMPONENT_BENCHMARK_SPEC.md        [★ Benchmark Chi tiết từng Component RAG: C0-C10, Dataset, Metrics & Regression Gate [✅]]
 │
 ├── ⚙️ EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 31 LayoutMode, 19 Transition, Zod Schema, 11 Compositions [✅]]
@@ -41,7 +45,8 @@ docs/
 ├── 🗄️ data_preprocessing_plan.md             [★ Kế hoạch tiền xử lý & nạp dữ liệu chi tiết [✅]]
 │
 ├── 🎨 3. HƯỚNG DẪN THIẾT KẾ & VISUAL DESIGN
-│   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md          [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]
+│   ├── UI_UX_DESIGN_SPECIFICATION.md      [★ Đặc tả Thiết Kế UI/UX NotebookLM Workspace & 1-Click Studio [✅ Spec]]
+│   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md      [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]
 │
 └── 📜 4. KỊCH BẢN MẪU & RESEARCH LOG
     ├── RESEARCH_PROMPTS_LOG.md                [Nhật ký audit ảnh tư liệu Wikimedia (Phase 1: Quang Trung 15 scenes) [🟡 Audit In Progress]]

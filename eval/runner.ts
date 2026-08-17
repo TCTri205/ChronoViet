@@ -105,9 +105,10 @@ async function main() {
           '@chronoviet/agent-orchestrator',
           '@chronoviet/render-worker',
           '@chronoviet/remotion-engine',
+          '@chronoviet/web',
         ];
 
-    console.log('\n--- [PHASE 1] RUNNING 7 ISOLATED MODULE EVALUATIONS ---');
+    console.log('\n--- [PHASE 1] RUNNING 8 ISOLATED MODULE EVALUATIONS ---');
 
     for (const mod of targetModules) {
       console.log(`\n[*] Executing isolated eval for module: ${mod}...`);

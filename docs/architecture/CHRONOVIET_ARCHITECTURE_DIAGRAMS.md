@@ -11,7 +11,7 @@ Sơ đồ thể hiện các tầng kiến trúc của **ChronoViet** triển kha
 ```mermaid
 flowchart TB
     subgraph ClientLayer["1. CLIENT / PRESENTATION LAYER"]
-        WebClient["Web Client (Next.js / React)"]
+        WebClient["Web Client (Next.js NotebookLM-Style UI:\n- RAG Chat Hub with Citations\n- 1-Click Autonomous Video Studio)"]
         MobileClient["Mobile App (React Native)"]
     end
 

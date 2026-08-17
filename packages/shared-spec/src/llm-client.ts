@@ -266,6 +266,100 @@ export async function isLLMServiceHealthy(): Promise<{ healthy: boolean; provide
   };
 }
 
+async function* streamSseChunks(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith(':') || trimmed === 'data: [DONE]') continue;
+      if (trimmed.startsWith('data: ')) {
+        try {
+          const parsed = JSON.parse(trimmed.slice(6));
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) yield content;
+        } catch {}
+      }
+    }
+  }
+}
+
+export async function* generateLLMCompletionStream(
+  messages: ChatMessage[],
+  options: LLMCompletionOptions = {}
+): AsyncGenerator<string> {
+  const localModel = options.model || envConfig.LOCAL_LLM_PRIMARY_MODEL;
+  const temperature = options.temperature ?? 0.2;
+  const maxTokens = options.max_tokens ?? 2048;
+  const timeoutMs = options.timeoutMs ?? 45000;
+
+  // 1. Attempt local streaming via llama-server
+  if (envConfig.USE_LOCAL_LLM) {
+    try {
+      const response = await fetch(`${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: localModel,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+          stream: true,
+          ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
+        }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+
+      if (response.ok && response.body) {
+        yield* streamSseChunks(response.body);
+        return;
+      }
+    } catch (err: any) {
+      log.debug('llm.stream_local_failed', `Local streaming failed: ${err.message}`);
+    }
+  }
+
+  // 2. Cloud Fallback (Agnes / remote)
+  if (envConfig.ENABLE_CLOUD_FALLBACK && envConfig.AGNES_API_KEY) {
+    try {
+      const response = await fetch('https://api.agnes.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${envConfig.AGNES_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: envConfig.REMOTE_FALLBACK_MODEL,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+          stream: true,
+        }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+
+      if (response.ok && response.body) {
+        yield* streamSseChunks(response.body);
+        return;
+      }
+    } catch (err: any) {
+      log.debug('llm.stream_cloud_failed', `Agnes cloud streaming failed: ${err.message}`);
+    }
+  }
+
+  // 3. Fallback to unary completion if streams fail
+  const fallbackRes = await generateLLMCompletion(messages, options);
+  yield fallbackRes.content;
+}
+
 export async function callLlm(params: {
   messages: ChatMessage[];
   temperature?: number;
@@ -277,5 +371,6 @@ export async function callLlm(params: {
     max_tokens: params.maxTokens,
   });
 }
+
 
 

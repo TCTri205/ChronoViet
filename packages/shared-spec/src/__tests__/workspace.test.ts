@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -9,6 +9,7 @@ import {
   sanitizeProjectId,
   saveProjectSchema,
   loadProjectSchema,
+  ensureProjectAssetsReady,
 } from '../workspace.js';
 
 describe('ProjectWorkspaceManager', () => {
@@ -105,4 +106,47 @@ describe('ProjectWorkspaceManager', () => {
     expect(loaded.timeline[0].durationInFrames).toBe(300);
     expect(loaded.timeline.length).toBe(1);
   });
+
+  it('should pre-download remote audio and image assets in ensureProjectAssetsReady', async () => {
+    const mockFetch = vi.fn().mockImplementation(async (url: string) => {
+      return {
+        ok: true,
+        arrayBuffer: async () => new ArrayBuffer(128),
+      };
+    });
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = mockFetch as any;
+
+    try {
+      const mockSchemaWithRemote: any = {
+        title: 'Bạch Đằng Remote Assets',
+        fps: 30,
+        width: 1920,
+        height: 1080,
+        durationInFrames: 300,
+        timeline: [
+          {
+            id: 'scene_remote_1',
+            durationInFrames: 300,
+            layoutMode: 'HISTORICAL_FRAME',
+            voiceover: { text: 'Voiceover' },
+            sceneAudioUrl: 'https://example.com/audio.mp3',
+            assetUrl: 'https://example.com/image.png',
+          },
+        ],
+      };
+
+      const ready = await ensureProjectAssetsReady('test_proj_remote', mockSchemaWithRemote, {
+        customBaseDir: tempBaseDir,
+      });
+
+      expect(ready.timeline[0].sceneAudioUrl).not.toContain('http');
+      expect(ready.timeline[0].sceneAudioUrl).toContain('audio');
+      expect(ready.timeline[0].assetUrl).not.toContain('http');
+      expect(ready.timeline[0].assetUrl).toContain('assets');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
+

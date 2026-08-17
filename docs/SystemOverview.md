@@ -1,20 +1,23 @@
 # Tài liệu Khái niệm & Kiến trúc Tổng quan: Dự án ChronoViet
 
-**ChronoViet** (kết hợp giữa *Chronology* - Niên đại/Lịch sử và *Việt Nam*) là nền tảng EdTech ứng dụng AI thế hệ mới, biến nguồn tri thức lịch sử Việt Nam dạng văn bản thành các **Video tóm tắt trực quan tự động** kết hợp **Hệ thống Chatbot RAG tương tác hai chiều**.
+**ChronoViet** (kết hợp giữa *Chronology* - Niên đại/Lịch sử và *Việt Nam*) là nền tảng EdTech ứng dụng AI thế hệ mới lấy cảm hứng từ phong cách làm việc của **NotebookLM**. Hệ thống cung cấp **Khung Chatbot tra cứu & tương tác tri thức lịch sử chuyên sâu (GraphRAG)** song hành cùng tính năng **Tạo Video Tài Liệu Tổng Quan 1-Click Hoàn Toàn Tự Động (Autonomous Multi-Agent Video Generation)**.
 
 ---
 
 ## 1. Tổng quan Dự án (Executive Overview)
 
 * **Tên dự án:** ChronoViet
-* **Định vị:** Hệ thống tự động hóa nội dung giáo dục lịch sử (Automated Historical EdTech Platform).
-* **Bài toán giải quyết:** Lịch sử Việt Nam có kho tàng dữ liệu đồ sộ nhưng văn bản khô khan, dễ bị sai lệch khi AI sinh nội dung (hallucination), và thiếu các công cụ trực quan hóa dạng video ngắn cho thế hệ trẻ.
-* **Giải pháp:** Sử dụng **Data Preprocessing & Ingestion Engine (Mô-đun 0)** để làm sạch, chuẩn hóa địa danh/nhân vật và nạp dữ liệu offline $\rightarrow$ **Hybrid GraphRAG (Mô-đun 1)** để đảm bảo tính chuẩn xác sử liệu $\rightarrow$ **Multi-Agent Orchestrator (Mô-đun 2)** chia nhỏ kịch bản & chọn layout $\rightarrow$ **VLM Inspector (Mô-đun 3)** kiểm định hình ảnh & bản quyền $\rightarrow$ **Remotion Engine (Mô-đun 4)** render video tự động từ file JSON.
+* **Định vị:** Hệ thống nghiên cứu lịch sử tương tác & tự động hóa sản xuất video giáo dục (NotebookLM-Style Historical Research & Autonomous Video Generation Platform).
+* **Bài toán giải quyết:** Lịch sử Việt Nam có kho tàng dữ liệu đồ sộ nhưng văn bản cổ khô khan, dễ bị sai lệch khi AI sinh nội dung (hallucination), và thiếu các công cụ trực quan hóa dạng video tự động cho người học.
+* **Giải pháp & Trải nghiệm Người dùng:**
+  - **Không gian nghiên cứu NotebookLM:** Người dùng trò chuyện, hỏi đáp chuyên sâu với kho sử liệu, nhận câu trả lời có trích dẫn nguồn gốc xác thực (`citations`).
+  - **Tạo Video 1-Click Tự Động:** Khi người dùng muốn tạo video tổng quan, toàn bộ hệ thống Multi-Agent ngầm tự động vận hành (GraphRAG $\rightarrow$ 5 bước kịch bản $\rightarrow$ Thu âm VieNeu TTS $\rightarrow$ Thẩm định ảnh VLM $\rightarrow$ Render Remotion MP4) mà **người dùng không cần phải can thiệp hay chỉnh sửa thủ công**.
 * **Trạng thái Triển khai Hệ thống:**
   - **[✅ IMPLEMENTED RAG & INGESTION]:** Data Preprocessing & Ingestion Engine (Mô-đun 0) hoàn thiện 100% codebase & eval tại `packages/data-ingestion/src/`; Chrono-RAG Engine (Mô-đun 1) tại `packages/rag-engine/src/`. Cào tự động 100% 15 thời kỳ (`pnpm crawl:all`), Hybrid GraphRAG PostgreSQL pgvector + Relational Graph CTEs k=1,2 + BM25 FTS + RRF + Append-Only Audit Trail (`entity_audit_logs`). Tuân thủ Specification v1.5.
   - **[✅ IMPLEMENTED AGENT ORCHESTRATION & GUARDRAILS]:** Multi-Agent Orchestrator (Mô-đun 2) hoàn thiện với LangGraph.js, Zod Schema v4.1, và 2 Automated Guardrail Gates: Folklore Guardrail Gate (`folklore-validator.ts` Regex Pattern Matching) & NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts` Entailment Score $\ge 0.80$).
-  - **[✅ IMPLEMENTED ENGINES]:** Engine Render Remotion 100% JSON-Driven (`packages/remotion-engine/src/`), 31 `LayoutMode` (tối ưu 16:9), 19 `TransitionType`, Zod Schema runtime validation (`packages/shared-spec/src/schema.ts`), 19 UI Components, 11 Compositions đã đăng ký (`Root.tsx`), 9 file kịch bản JSON dữ liệu mẫu v4.1.
+  - **[✅ IMPLEMENTED ENGINES & VLM]:** Engine Render Remotion 100% JSON-Driven (`packages/remotion-engine/src/`), 31 `LayoutMode`, 19 `TransitionType`, Zod Schema v4.1 runtime validation (`packages/shared-spec/src/schema.ts`). VLM Inspector Dual Scorer (`packages/vlm-inspector/src/`) lọc giấy phép bản quyền CC0, CC-BY, Public Domain và auto-fallback PURE_CODE.
   - **[✅ IMPLEMENTED TTS SERVICE]:** VieNeu TTS Dual-Layer Microservice (`VieNeuEngine` + `SyntheticTTSFallbackEngine`), Python FastAPI ONNX Engine (`app.py`), Zod Schema Validation, `wordTimestamps` → Caption Frame Converter, Eval Suite (`services/vieneu-tts/eval/`).
+  - **[✅ IMPLEMENTED WEB APP & WORKER RUNTIME]:** Lớp ứng dụng `apps/web` (Next.js 14 App Router Monolith, NotebookLM Heritage Workspace UI/UX, REST API `/api/v1/chat`, `/api/v1/projects`, SSE Stream, WebSocket Gateway forward Redis PubSub `project_events:${projectId}`) song hành cùng `apps/render-worker` (BullMQ queues, Asset pre-download `/media`, process isolation `CONCURRENCY=1`).
 
 ---
 

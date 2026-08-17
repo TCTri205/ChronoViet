@@ -20,4 +20,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 
-CMD ["node", "apps/web/dist/index.js"]
+CMD ["node", "apps/web/dist/server.js"]

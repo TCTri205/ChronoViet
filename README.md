@@ -75,14 +75,14 @@ ChronoViet/
 
 | Package / App | Vai Trò | Trạng Thái | Thư Mục Eval |
 | :--- | :--- | :---: | :---: |
-| [`@chronoviet/shared-spec`](packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas & Data Contracts | **✅ Ready** | N/A (Shared Spec) |
+| [`@chronoviet/shared-spec`](packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas, Realtime Events & Data Contracts | **✅ Ready** | N/A (Shared Spec) |
 | [`@chronoviet/rag-engine`](packages/rag-engine) | Data Ingestion ETL (Mô-đun 0) & Chrono-RAG Engine (Mô-đun 1) PostgreSQL pgvector + Graph | **✅ Ready** | `packages/rag-engine/eval/` |
 | [`@chronoviet/agent-orchestrator`](packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh, NLI Judge & Folklore Guardrail Gate | **✅ Ready** | `packages/agent-orchestrator/eval/` |
 | [`@chronoviet/remotion-engine`](packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
 | [`@chronoviet/vieneu-tts`](services/vieneu-tts) | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX) | **✅ Ready** | `services/vieneu-tts/eval/` |
-| [`@chronoviet/vlm-inspector`](packages/vlm-inspector) | Thẩm định hình ảnh tư liệu & lọc bản quyền (PD, CC0, CC-BY) | **📐 Roadmap** | `packages/vlm-inspector/eval/` |
-| [`@chronoviet/render-worker`](apps/render-worker) | Tiến trình xử lý hàng đợi render video bất đồng bộ (BullMQ + Redis) | **📐 Roadmap** | `apps/render-worker/eval/` |
-| [`@chronoviet/web`](apps/web) | Giao diện người dùng Web Dashboard & Chatbot RAG | **📐 Roadmap** | `apps/web/` |
+| [`@chronoviet/vlm-inspector`](packages/vlm-inspector) | Thẩm định hình ảnh tư liệu & lọc bản quyền (PD, CC0, CC-BY) | **✅ Ready** | `packages/vlm-inspector/eval/` |
+| [`@chronoviet/render-worker`](apps/render-worker) | Tiến trình xử lý hàng đợi render video bất đồng bộ (BullMQ + Redis PubSub) | **✅ Ready** | `apps/render-worker/eval/` |
+| [`@chronoviet/web`](apps/web) | Giao diện NotebookLM Heritage Workspace, REST API, SSE & WebSocket Gateway | **✅ Ready** | `apps/web/` |
 
 ---
 
@@ -103,26 +103,33 @@ cd ChronoViet
 pnpm install
 ```
 
-### Bước 2: Khởi Tạo CSDL & Cào Dữ Liệu Tự Động 15 Thời Kỳ (`pnpm crawl:all`)
+### Bước 2: Khởi Động Hạ Tầng & Nạp Kho Dữ Liệu Ban Đầu
 
 ```bash
-# 1. Khởi tạo PostgreSQL pgvector & Relational Graph Schema
-pnpm --filter @chronoviet/data-ingestion db:init
+# 1. Khởi động PostgreSQL (pgvector) & Redis ngầm
+pnpm stack:infra
 
-# 2. Cào tự động toàn bộ 15 Thời kỳ Lịch sử Việt Nam trong 1 lệnh
-pnpm crawl:all
+# 2. Khởi tạo cấu trúc bảng CSDL & Vector Store
+pnpm db:init
 
-# 3. Tiền xử lý & Nạp kho tri thức vào CSDL PostgreSQL
-pnpm --filter @chronoviet/data-ingestion ingest:knowledge
+# 3. Nạp tri thức lịch sử & chuẩn hóa thực thể vào CSDL PostgreSQL
+pnpm ingest:knowledge
 
-# 4. Kiểm định chất lượng nạp dữ liệu (Entity Normalization Accuracy > 98%)
-pnpm eval:ingest
-
-# 5. Trải nghiệm Chatbot RAG tương tác trực tiếp trên Terminal CLI
-pnpm rag:chat
+# (Tùy chọn: Cào tự động toàn bộ 15 Thời kỳ Lịch sử Việt Nam)
+# pnpm crawl:all
 ```
 
-### Bước 3: Xem Preview & Render Video Chi Tiết
+### Bước 3: Khởi Chạy Toàn Bộ Hệ Thống MVP (Web App & Worker)
+
+```bash
+# Khởi chạy song song Web App (Next.js port 3000) và Render Worker
+pnpm dev
+```
+*Mở trình duyệt tại `http://localhost:3000` để trải nghiệm đầy đủ Không gian Tra cứu Sử liệu RAG & Xưởng Phim Tự Động 1-Click.*
+
+---
+
+### Bước 4: Xem Preview Remotion Studio & Đánh Giá Chất Lượng
 
 #### 1. Xem Trực Quan Trên Remotion Studio:
 ```bash
@@ -130,15 +137,12 @@ pnpm remotion:studio
 ```
 *Trình duyệt sẽ tự động mở Remotion Studio tại `http://localhost:9876` để bạn xem trực quan 31 LayoutModes, 19 Transitions và hiệu ứng chuyển cảnh real-time.*
 
-#### 2. Chạy Suite Kiểm Định & Đánh Giá Kịch Bản Mẫu (Eval Runner & Clean Lifecycle):
+#### 2. Chạy Suite Kiểm Định & Đánh Giá Kịch Bản Mẫu (Eval Runner):
 ```bash
 # Dọn dẹp sạch toàn bộ audio rác, báo cáo cũ & port bị chiếm giữ:
 pnpm eval:clean
 
-# Chạy eval runner thẩm định Zod Schema v4.1 & metrics:
-pnpm --filter @chronoviet/remotion-engine eval -- --fresh
-
-# Chạy toàn bộ Master Global Eval Monorepo:
+# Chạy toàn bộ Master Global Eval Monorepo (8 Modules & 3 Chains):
 pnpm eval:all --fresh
 ```
 
