@@ -28,7 +28,7 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
 
 ---
 
-## 2. Quy Trình Kiểm Định 4 Lớp & Chiến Lược 3+3 Crawl Candidates (v3.2)
+## 2. Quy Trình Kiểm Định 4 Lớp & Chiến Lược 3+3 Crawl Candidates (v4.1)
 
 ```
                        ┌───────────────────────────────┐

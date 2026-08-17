@@ -6,7 +6,7 @@
 import { z } from 'zod';
 import Redis from 'ioredis';
 import { envConfig } from './config.js';
-import { createLogger } from './logger.js';
+import { createLogger, formatErrorMessage } from './logger.js';
 
 const log = createLogger({ service: 'shared-spec' });
 
@@ -137,7 +137,7 @@ export class RedisPubSubManager {
       lazyConnect: true,
     });
     client.on('error', (err) => {
-      log.debug('redis_pubsub.error', `Redis connection error: ${err.message}`);
+      log.debug('redis_pubsub.error', `Redis connection error: ${formatErrorMessage(err)}`);
     });
     return client;
   }

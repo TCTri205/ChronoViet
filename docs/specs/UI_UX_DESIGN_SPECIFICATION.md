@@ -17,7 +17,7 @@ ChronoViet là nền tảng sáng tạo nội dung video tài liệu lịch sử
 │ • Nền đen sơn mài trầm tĩnh   │ • Người dùng không phải kéo   │ • Mọi luận điểm lịch sử  │
 │   kèm vi hạt (noise grain)    │   thả timeline hay sửa frame  │   đều có trích dẫn nguồn │
 │ • Ánh kim vàng hoàng triều    │ • 1-Click kích hoạt toàn bộ   │   gốc (Đại Việt Sử Ký…)  │
-│ • Đồng hun & đỏ son điểm xuyết│   chuỗi 12 bước Multi-Agent   │ • Bảng kê khai bản quyền │
+│ • Đồng hun & đỏ son điểm xuyết│   chuỗi 15 trạng thái Multi-  │ • Bảng kê khai bản quyền │
 │ • Typography di sản chuẩn Việt│ • Trực quan hóa tiến độ live  │   tư liệu minh bạch (CC0)│
 │ • Độ tương phản chuẩn WCAG AA │ • Tự động phục hồi & Fallback │ • Cuộn thư tra cứu gốc   │
 └───────────────────────────────┴───────────────────────────────┴──────────────────────────┘
@@ -309,7 +309,7 @@ Nhằm tối ưu hóa trải nghiệm trên mọi kích thước màn hình từ
   - Ô nhập Chủ đề / Prompt (`InputGroup` / `Field`) tự động gợi ý hoặc nhận từ Chat (`autocomplete="off"`).
   - Tùy chọn Thời lượng mục tiêu (`ToggleGroup`): `1 phút (Tóm lược)`, `3 phút (Tiêu chuẩn ★)`, `5 phút (Chuyên sâu)`.
   - Tùy chọn Tỷ lệ khung hình (`ToggleGroup`): `📺 16:9 (YouTube/Màn hình ngang)` hoặc `📱 9:16 (Shorts/Reels/TikTok)`.
-  - Nút bấm chính: **`Tạo Thước Phim Lịch Sử`** (Subtext: *Tự động hóa 12 bước AI*, tự disable và hiện spinner chống double-click khi bấm).
+  - Nút bấm chính: **`Tạo Thước Phim Lịch Sử`** (Subtext: *Tự động hóa 15 trạng thái AI*, tự disable và hiện spinner chống double-click khi bấm).
 - **Bảng Giám Sát Tiến Trình Realtime (Live Agent Stepper - `aria-live="polite"`)**:
   - Kết nối SSE stream `/api/v1/projects/:id/stream` hiển thị 6 giai đoạn cốt lõi:
     1. *Truy xuất sử liệu GraphRAG* (Tìm kiếm văn bản, thực thể, quan hệ lịch sử).
@@ -361,16 +361,16 @@ Nhằm tối ưu hóa trải nghiệm trên mọi kích thước màn hình từ
 
 ---
 
-### 4.7. Bảng Ánh Xạ Trạng Thái Multi-Agent LangGraph (12 States) Sang Live Stepper (6 Phases)
+### 4.7. Bảng Ánh Xạ Trạng Thái Multi-Agent LangGraph (15 States) Sang Live Stepper (6 Phases)
 
-| Bước UI (Stepper Phase) | Tên Hiển Thị | Trạng Thái LangGraph Tương Ứng (12 States) | Kênh Sự Kiện & Dữ Liệu Stream |
+| Bước UI (Stepper Phase) | Tên Hiển Thị | Trạng Thái LangGraph Tương Ứng (15 Canonical States) | Kênh Sự Kiện & Dữ Liệu Stream |
 | :---: | :--- | :--- | :--- |
-| **Phase 1** | 📚 Khảo Cứu Sử Liệu GraphRAG | `RESEARCH_TOPIC` $\rightarrow$ `CHRONO_RAG_RETRIEVE` | SSE `event: "agent_node"`, `data: { node: "research", sources: [...] }` |
-| **Phase 2** | ✍️ Khởi Tạo Kịch Bản 3 Hồi | `CHAPTERING` $\rightarrow$ `SCRIPTWRITING_1A..1E` | SSE `event: "agent_node"`, `data: { node: "scriptwriter", chapters: 3 }` |
-| **Phase 3** | ⚖️ Hội Đồng Thẩm Định Sử Liệu | `FACT_CHECK_HISTORICAL` $\rightarrow$ `DURATION_RECONCILE` | SSE `event: "agent_node"`, `data: { node: "fact_checker", violations: 0 }` |
-| **Phase 4** | 🎙️ Thu Âm Thuyết Minh VieNeu | `VIENEU_TTS_SYNTHESIZE` (Khớp mili-giây) | SSE `event: "agent_node"`, `data: { node: "audio_tts", durationMs: 180000 }` |
-| **Phase 5** | 🔍 Thẩm Định Bản Quyền Tư Liệu | `VLM_INSPECTOR` (Lọc CC0 & Auto-Fallback PURE_CODE) | SSE `event: "agent_node"`, `data: { node: "vlm_inspector", approvedMedia: 8 }` |
-| **Phase 6** | 🎬 Xuất Video Remotion MP4 | `SCHEMA_PACKAGING` $\rightarrow$ `REMOTION_RENDER_JOB` | WS `/ws` `type: "render:progress"`, `data: { frame: 650, total: 1000, pct: 65 }` |
+| **Phase 1** | 📚 Khảo Cứu Sử Liệu GraphRAG | `INIT` $\rightarrow$ `RAG_RETRIEVED` | SSE `event: "agent_node"`, `data: { node: "rag_retriever", sources: [...] }` |
+| **Phase 2** | ✍️ Khởi Tạo Kịch Bản 3 Hồi | `OUTLINE_CHAPTERED` $\rightarrow$ `CHAPTER_SCRIPT_GENERATED` | SSE `event: "agent_node"`, `data: { node: "scriptwriter", chapters: 3 }` |
+| **Phase 3** | ⚖️ Thẩm Định Sử Liệu & Phân Đoạn | `CHAPTER_FACT_CHECKED` $\rightarrow$ `SCENES_SEGMENTED` $\rightarrow$ `RESEARCH_COMPLETED` | SSE `event: "agent_node"`, `data: { node: "fact_checker", violations: 0 }` |
+| **Phase 4** | 🎙️ Thu Âm Thuyết Minh VieNeu | `TTS_SYNTHESIZED` $\rightarrow$ `DURATION_RECONCILED` | SSE `event: "agent_node"`, `data: { node: "vieneu_tts", durationMs: 180000 }` |
+| **Phase 5** | 🔍 Thẩm Định Thị Giác & Bản Quyền | `KEYWORDS_EXTRACTED` $\rightarrow$ `ASSETS_AUDITED` | SSE `event: "agent_node"`, `data: { node: "vlm_inspector", approvedMedia: 8 }` |
+| **Phase 6** | 🎬 Đóng Gói & Xuất Video Remotion | `PACKAGED` $\rightarrow$ `COMPLETED` *(hoặc `NEEDS_HUMAN_REVIEW` / `FAILED`)* | WS `/ws` `type: "render:progress"`, `data: { frame: 650, total: 1000, pct: 65 }` |
 
 ---
 
@@ -441,7 +441,7 @@ apps/web/src/
 | :---: | :--- | :--- |
 | **3.1** | **Design Tokens, shadcn Setup & Responsive Layout Shell**<br>Cài đặt `tailwindcss`, `postcss`, `autoprefixer`, `tailwind-merge`, `clsx`, `cva`, `@radix-ui/*`, `lucide-react`, `sonner`, `react-resizable-panels`. Thiết lập biến màu CSS di sản, Google Fonts chuẩn Việt (`Playfair Display`, `Be Vietnam Pro`), Header với Health Check indicators, Sidebar thu gọn 2 chế độ kèm smoke test. | `apps/web/package.json`<br>`apps/web/src/app/globals.css`<br>`apps/web/src/app/layout.tsx`<br>`apps/web/src/components/layout/Header.tsx`<br>`apps/web/src/components/layout/Sidebar.tsx`<br>`apps/web/src/components/layout/__tests__/Header.test.tsx` |
 | **3.2** | **Interactive Knowledge Hub & Historical Chatbot**<br>Xây dựng khung chat tra cứu RAG streaming tokens, render markdown, trích dẫn sử liệu tương tác, Cuộn thư sử liệu gốc qua `Sheet` và Empty Chat State. | `apps/web/src/components/chat/ChatContainer.tsx`<br>`apps/web/src/components/chat/ChatMessage.tsx`<br>`apps/web/src/components/chat/CitationBadge.tsx`<br>`apps/web/src/components/chat/HistoricalSourceModal.tsx`<br>`apps/web/src/components/chat/EmptyChatState.tsx` |
-| **3.3** | **1-Click Autonomous Video Generator & Live Agent Stepper**<br>Xây dựng panel tạo video 1-click (`ToggleGroup`), Stepper 12 trạng thái LangGraph kết nối SSE, Render progress bar kết nối WebSocket, nút Hủy (Abort) với `AlertDialog` (`AbortDialog.tsx`) và cơ chế hiển thị tự động thử lại khi lỗi (`PhaseErrorState.tsx`). | `apps/web/src/components/video/VideoGeneratorPanel.tsx`<br>`apps/web/src/components/video/LiveAgentStepper.tsx`<br>`apps/web/src/components/video/RenderProgressBar.tsx`<br>`apps/web/src/components/video/PhaseErrorState.tsx`<br>`apps/web/src/components/video/AbortDialog.tsx` |
+| **3.3** | **1-Click Autonomous Video Generator & Live Agent Stepper**<br>Xây dựng panel tạo video 1-click (`ToggleGroup`), Stepper 15 trạng thái LangGraph kết nối SSE, Render progress bar kết nối WebSocket, nút Hủy (Abort) với `AlertDialog` (`AbortDialog.tsx`) và cơ chế hiển thị tự động thử lại khi lỗi (`PhaseErrorState.tsx`). | `apps/web/src/components/video/VideoGeneratorPanel.tsx`<br>`apps/web/src/components/video/LiveAgentStepper.tsx`<br>`apps/web/src/components/video/RenderProgressBar.tsx`<br>`apps/web/src/components/video/PhaseErrorState.tsx`<br>`apps/web/src/components/video/AbortDialog.tsx` |
 | **3.4** | **Floating Video Player, Karaoke Subtitles & Attribution Drawer**<br>HTML5 video player stream MP4 (Range request), overlay phụ đề Karaoke theo mili-giây, drawer tra cứu bản quyền tư liệu CC0 (`Drawer` / `Sheet`). | `apps/web/src/components/player/VideoPlayer.tsx`<br>`apps/web/src/components/player/KaraokeSubtitles.tsx`<br>`apps/web/src/components/player/AttributionDrawer.tsx` |
 | **3.5** | **Master App Workspace Assembly & State Integration**<br>Lắp ráp toàn bộ components vào `apps/web/src/app/page.tsx`, tích hợp `ResizablePanelGroup`, quản lý luồng trạng thái từ Chat $\rightarrow$ Tạo Video $\rightarrow$ Giám sát $\rightarrow$ Phát video cùng cơ chế lưu trữ phiên (`localStorage` + URL query). | `apps/web/src/app/page.tsx` |
 

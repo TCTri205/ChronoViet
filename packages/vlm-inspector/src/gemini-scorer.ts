@@ -1,7 +1,10 @@
 /**
- * Vision Scorer with Dual-Cache & Provider Routing
- * Priority: cache -> Local VLM (llama-server, required in eval strict mode)
- *           -> Gemini cloud (dev, when key present) -> Local CLIP (dev only)
+ * Vision Language Model (VLM) Inspector Scorer with Multi-Provider Routing & Dual-Cache
+ *
+ * Supported Providers:
+ * 1. LOCAL_VLM / OPENAI_VLM: OpenAI-compatible vision completions endpoint (llama-server, Ollama, vLLM, Qwen2.5-VL, etc.)
+ * 2. GEMINI_CLOUD: Google Gemini Vision API (when key configured)
+ * 3. CLIP_LOCAL_FALLBACK: Zero-downtime deterministic Cosine Similarity & Noise Scorer
  */
 
 import * as crypto from 'crypto';
@@ -38,7 +41,7 @@ Trả về DUY NHẤT một JSON object:
 }`;
 }
 
-function parseScoreJson(rawText: string, scorerType: 'LOCAL_VLM' | 'GEMINI_CLOUD'): VLMScoreResult {
+function parseScoreJson(rawText: string, scorerType: 'LOCAL_VLM' | 'OPENAI_VLM' | 'GEMINI_CLOUD'): VLMScoreResult {
   const parsedJson = JSON.parse(rawText);
   const hScore = Math.min(40, Math.max(0, Number(parsedJson.historicalContextScore) || 20));
   const nScore = Math.min(30, Math.max(0, Number(parsedJson.visualNoiseScore) || 20));
@@ -57,8 +60,7 @@ function parseScoreJson(rawText: string, scorerType: 'LOCAL_VLM' | 'GEMINI_CLOUD
 }
 
 /**
- * Score an image with the LOCAL VLM served by llama-server (OpenAI chat-completions format).
- * This is the real VLM path used during eval strict mode — never the CLIP heuristic.
+ * Score an image with an OpenAI-compatible Vision Endpoint (e.g. llama-server, Ollama, vLLM, Qwen2.5-VL, etc.)
  */
 export async function scoreImageWithLocalVLM(
   imageUrl: string,
@@ -66,7 +68,9 @@ export async function scoreImageWithLocalVLM(
   options: ScoreImageOptions = {}
 ): Promise<VLMScoreResult> {
   const prompt = buildScoringPrompt(eventDescription, options);
-  const endpoint = `${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`;
+  const baseUrl = (envConfig.VLM_BASE_URL || envConfig.LLM_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
+  const modelName = envConfig.VLM_MODEL || envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || 'qwen3-vl-8b';
+  const endpoint = `${baseUrl}/v1/chat/completions`;
 
   let imagePart: { type: 'image_url'; image_url: { url: string } };
   const fs = await import('fs');
@@ -86,11 +90,16 @@ export async function scoreImageWithLocalVLM(
     imagePart = { type: 'image_url', image_url: { url: imageUrl } };
   }
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (envConfig.VLM_API_KEY) {
+    headers['Authorization'] = `Bearer ${envConfig.VLM_API_KEY}`;
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
-      model: envConfig.EVAL_VLM_MODEL,
+      model: modelName,
       messages: [
         {
           role: 'user',
@@ -107,26 +116,94 @@ export async function scoreImageWithLocalVLM(
   });
 
   if (!response.ok) {
-    throw new Error(`Local VLM HTTP ${response.status}: ${response.statusText}`);
+    throw new Error(`VLM Vision endpoint HTTP ${response.status}: ${response.statusText}`);
   }
 
   const data = (await response.json()) as any;
   const rawText = data?.choices?.[0]?.message?.content;
   if (!rawText) {
-    throw new Error('Empty response from local VLM');
+    throw new Error('Empty response from VLM Vision endpoint');
   }
 
-  // llama-server may wrap JSON in markdown fences — strip them
   const cleaned = rawText.replace(/```json|```/g, '').trim();
-  return parseScoreJson(cleaned, 'LOCAL_VLM');
+  return parseScoreJson(cleaned, envConfig.VLM_API_KEY ? 'OPENAI_VLM' : 'LOCAL_VLM');
 }
 
 /**
- * Score an image using the configured provider chain.
- * - Eval strict: local VLM only; failure throws (no CLIP heuristic).
- * - Dev: Gemini cloud when key present (CLIP fallback), else CLIP.
+ * Score an image using Gemini Cloud Vision API
  */
-export async function scoreImageWithGemini(
+export async function scoreImageWithGeminiApi(
+  imageUrl: string,
+  eventDescription: string,
+  options: ScoreImageOptions = {}
+): Promise<VLMScoreResult> {
+  const prompt = buildScoringPrompt(eventDescription, options);
+  const parts: any[] = [{ text: prompt }];
+
+  const fs = await import('fs');
+  if (fs.existsSync(imageUrl)) {
+    try {
+      const imageBuffer = fs.readFileSync(imageUrl);
+      const base64Data = imageBuffer.toString('base64');
+      const ext = imageUrl.split('.').pop()?.toLowerCase();
+      let mimeType = 'image/jpeg';
+      if (ext === 'png') mimeType = 'image/png';
+      else if (ext === 'webp') mimeType = 'image/webp';
+
+      parts.push({
+        inline_data: {
+          mime_type: mimeType,
+          data: base64Data,
+        },
+      });
+    } catch {
+      parts.push({ text: `Image Path: ${imageUrl}` });
+    }
+  } else if (imageUrl.startsWith('http')) {
+    parts.push({ text: `Image URL: ${imageUrl}` });
+  }
+
+  const modelName = process.env.GEMINI_VISION_MODEL || 'gemini-2.0-flash';
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${envConfig.GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
+        },
+      }),
+      signal: AbortSignal.timeout(30000),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Gemini API HTTP ${res.status}: ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as any;
+  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!rawText) {
+    throw new Error('Empty response from Gemini API');
+  }
+
+  return parseScoreJson(rawText, 'GEMINI_CLOUD');
+}
+
+/**
+ * Score an image using the unified provider chain:
+ * 1. Redis / In-Memory Dual-Cache
+ * 2. Strict Eval: Local/Configured VLM only (throws on failure)
+ * 3. Provider Routing:
+ *    - 'local' | 'openai' | 'auto': attempts OpenAI-compatible Vision Endpoint (llama-server, Qwen2.5-VL, Ollama, etc.)
+ *    - 'gemini': attempts Gemini Cloud API (if key present)
+ *    - 'clip': falls back immediately to Local CLIP
+ * 4. Resilient Fallback: Local CLIP Cosine Similarity Scorer
+ */
+export async function scoreImageWithVLM(
   imageUrl: string,
   eventDescription: string,
   options: ScoreImageOptions = {}
@@ -141,7 +218,7 @@ export async function scoreImageWithGemini(
     contextHash,
   };
 
-  // 1. Check Redis / In-Memory Dual Cache (scoped to image hash + context hash)
+  // 1. Check Redis / In-Memory Dual Cache
   const cached = await getCachedVLMScore(cacheOpts);
   if (cached) {
     log.debug('vlm.cache_hit', 'Retrieved VLM score from dual-layer cache', {
@@ -153,9 +230,9 @@ export async function scoreImageWithGemini(
     return cached;
   }
 
-  // 2. Eval strict: local VLM is the only valid scorer
+  // 2. Strict Evaluation Mode
   if (envConfig.EVAL_STRICT) {
-    if (!envConfig.USE_LOCAL_LLM) {
+    if (!envConfig.USE_LOCAL_LLM && envConfig.VLM_PROVIDER !== 'openai') {
       throw new Error('[EVAL_STRICT] USE_LOCAL_LLM must be true for local VLM evaluation');
     }
     try {
@@ -168,82 +245,60 @@ export async function scoreImageWithGemini(
     }
   }
 
-  // 3. Dev: Gemini cloud when key present
-  if (envConfig.GEMINI_API_KEY) {
+  const vlmProvider = envConfig.VLM_PROVIDER || 'auto';
+  const vlmModel = envConfig.VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || 'qwen3-vl-8b';
+  const vlmBaseUrl = envConfig.VLM_BASE_URL || envConfig.LLM_BASE_URL || 'http://localhost:8080';
+
+  // 3. Attempt Local / OpenAI Vision Model if enabled or auto
+  if (vlmProvider === 'local' || vlmProvider === 'openai' || vlmProvider === 'auto') {
     try {
-      const prompt = buildScoringPrompt(eventDescription, options);
-
-      const parts: any[] = [{ text: prompt }];
-
-      // If imageUrl is a local file, read and send inline data
-      const fs = await import('fs');
-      if (fs.existsSync(imageUrl)) {
-        try {
-          const imageBuffer = fs.readFileSync(imageUrl);
-          const base64Data = imageBuffer.toString('base64');
-          const ext = imageUrl.split('.').pop()?.toLowerCase();
-          let mimeType = 'image/jpeg';
-          if (ext === 'png') mimeType = 'image/png';
-          else if (ext === 'webp') mimeType = 'image/webp';
-
-          parts.push({
-            inline_data: {
-              mime_type: mimeType,
-              data: base64Data,
-            },
-          });
-        } catch {
-          parts.push({ text: `Image Path: ${imageUrl}` });
-        }
-      } else if (imageUrl.startsWith('http')) {
-        parts.push({ text: `Image URL: ${imageUrl}` });
-      }
-
-      const modelName = process.env.GEMINI_VISION_MODEL || 'gemini-2.0-flash';
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${envConfig.GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts,
-              },
-            ],
-            generationConfig: {
-              responseMimeType: 'application/json',
-              temperature: 0.1,
-            },
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error(`Gemini API HTTP ${res.status}: ${res.statusText}`);
-      }
-
-      const data = (await res.json()) as any;
-      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) {
-        throw new Error('Empty response from Gemini API');
-      }
-
-      const result = parseScoreJson(rawText, 'GEMINI_CLOUD');
+      const result = await scoreImageWithLocalVLM(imageUrl, eventDescription, options);
       await setCachedVLMScore(result, cacheOpts);
       return result;
     } catch (err: any) {
-      log.warn('vlm.gemini_call_failed', `Gemini API call failed: ${err.message}; activating Local CLIP fallback`, {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      log.warn('vlm.endpoint_failed', `VLM endpoint call failed (${vlmBaseUrl} [${vlmModel}]): ${errMsg}`, {
         imageUrl,
-        error: err.message,
+        vlmBaseUrl,
+        vlmModel,
+        error: errMsg,
+      });
+
+      // If explicitly configured for local/openai only and failed, don't silently jump to Gemini unless in auto mode
+      if (vlmProvider !== 'auto' && !envConfig.GEMINI_API_KEY) {
+        logFallbackAlert({
+          subsystem: 'VLM_INSPECTOR',
+          primaryTarget: `VLM Model (${vlmBaseUrl}) [${vlmModel}]`,
+          fallbackTarget: 'Local CLIP Cosine Similarity Scorer',
+          reason: errMsg,
+          actionRequired: `Ensure Vision service is running at ${vlmBaseUrl} with model ${vlmModel}`,
+        });
+
+        const fallbackResult = scoreImageWithLocalCLIP(imageUrl, eventDescription, options.metadata);
+        await setCachedVLMScore(fallbackResult, cacheOpts);
+        return fallbackResult;
+      }
+    }
+  }
+
+  // 4. Attempt Gemini Cloud Vision API if configured
+  if (envConfig.GEMINI_API_KEY && (vlmProvider === 'gemini' || vlmProvider === 'auto')) {
+    try {
+      const result = await scoreImageWithGeminiApi(imageUrl, eventDescription, options);
+      await setCachedVLMScore(result, cacheOpts);
+      return result;
+    } catch (geminiErr: any) {
+      log.warn('vlm.gemini_call_failed', `Gemini API call failed: ${geminiErr.message}; activating Local CLIP fallback`, {
+        imageUrl,
+        error: geminiErr.message,
       });
 
       logFallbackAlert({
         subsystem: 'VLM_INSPECTOR',
         primaryTarget: 'Gemini Cloud Vision API',
         fallbackTarget: 'Local CLIP Cosine Similarity Scorer',
-        reason: `Gemini API call error: ${err.message}`,
-        actionRequired: 'Check network connectivity or quota limits',
+        reason: `Gemini API call error: ${geminiErr.message}`,
+        actionRequired: 'Check network connectivity or Gemini API quota',
       });
 
       const fallbackResult = scoreImageWithLocalCLIP(imageUrl, eventDescription, options.metadata);
@@ -252,16 +307,21 @@ export async function scoreImageWithGemini(
     }
   }
 
-  // 4. Dev: no key -> Local CLIP heuristic
+  // 5. Offline Fallback: Local CLIP Heuristic
   logFallbackAlert({
     subsystem: 'VLM_INSPECTOR',
-    primaryTarget: `VLM Inspector / Gemini Vision API [${envConfig.LOCAL_VLM_INSPECTOR}]`,
+    primaryTarget: `VLM Inspector (${vlmBaseUrl}) [${vlmModel}]`,
     fallbackTarget: 'Local CLIP Cosine Similarity Scorer (Offline ONNX/Rule Engine)',
-    reason: 'GEMINI_API_KEY environment variable is unconfigured',
-    actionRequired: 'Set GEMINI_API_KEY in .env or rely on local CLIP fallback',
+    reason: `VLM endpoint (${vlmBaseUrl}) offline or unconfigured`,
+    actionRequired: `Start VLM model (${vlmModel}) on ${vlmBaseUrl} or set VLM_BASE_URL in .env`,
   });
 
   const fallbackResult = scoreImageWithLocalCLIP(imageUrl, eventDescription, options.metadata);
   await setCachedVLMScore(fallbackResult, cacheOpts);
   return fallbackResult;
 }
+
+/**
+ * Backward compatibility alias for scoreImageWithVLM
+ */
+export const scoreImageWithGemini = scoreImageWithVLM;

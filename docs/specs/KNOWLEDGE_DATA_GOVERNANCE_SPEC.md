@@ -410,7 +410,7 @@ Khi thực hiện ingest văn bản sử ký:
    * Đối với các văn bản hoặc nhân vật kéo dài qua nhiều thời kỳ (vd: Nguyễn Trãi), gán nhãn dạng mảng: `epoch_ids: ["EPOCH_05", "EPOCH_06", "EPOCH_07", "EPOCH_08"]` và `lifetime_range: { start_year: 1380, end_year: 1442 }`.
 
 2. **Khi phát hiện mâu thuẫn sử liệu hoặc alias mới:**
-   * Cập nhật từ điển ánh xạ tại [`packages/data-ingestion/src/text/historical-entity-mapper.ts`](../packages/data-ingestion/src/text/historical-entity-mapper.ts).
+   * Cập nhật từ điển ánh xạ tại [`packages/data-ingestion/src/text/historical-entity-mapper.ts`](../../packages/data-ingestion/src/text/historical-entity-mapper.ts).
    * Chạy `pnpm --filter @chronoviet/data-ingestion rag:re-resolve` để cập nhật lại Đồ thị Tri thức hiện có.
 
 3. **Luồng Media/Hình Ảnh Tiếp Theo:**
@@ -419,7 +419,7 @@ Khi thực hiện ingest văn bản sử ký:
 ---
 
 > 📄 **File liên quan:**  
-> - [`docs/modules/00_DATA_PREPROCESSING_AND_INGESTION.md`](modules/00_DATA_PREPROCESSING_AND_INGESTION.md)  
-> - [`docs/modules/01_CHRONO_RAG_ENGINE.md`](modules/01_CHRONO_RAG_ENGINE.md)  
-> - [`packages/shared-spec/src/schema.ts`](../packages/shared-spec/src/schema.ts)  
-> - [`packages/data-ingestion/src/text/historical-entity-mapper.ts`](../packages/data-ingestion/src/text/historical-entity-mapper.ts)
+> - [`docs/modules/00_DATA_PREPROCESSING_AND_INGESTION.md`](../modules/00_DATA_PREPROCESSING_AND_INGESTION.md)  
+> - [`docs/modules/01_CHRONO_RAG_ENGINE.md`](../modules/01_CHRONO_RAG_ENGINE.md)  
+> - [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts)  
+> - [`packages/data-ingestion/src/text/historical-entity-mapper.ts`](../../packages/data-ingestion/src/text/historical-entity-mapper.ts)

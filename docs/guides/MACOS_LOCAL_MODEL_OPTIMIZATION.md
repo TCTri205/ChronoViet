@@ -242,7 +242,7 @@ Quốc ngữ Cổ Engine       Hán / Nôm Engine           Ấn triện / VLM
 
 ### 3.6. VieNeu TTS Engine & Heritage Speech Evaluation (`services/vieneu-tts`)
 
-Dịch vụ tổng hợp giọng đọc di sản đã được triển khai hoàn chỉnh tại [`services/vieneu-tts`](../services/vieneu-tts) với kiến trúc 2 lớp phòng thủ **Dual-Layer Architecture (Zero-Downtime Fallback)**:
+Dịch vụ tổng hợp giọng đọc di sản đã được triển khai hoàn chỉnh tại [`services/vieneu-tts`](../../services/vieneu-tts) với kiến trúc 2 lớp phòng thủ **Dual-Layer Architecture (Zero-Downtime Fallback)**:
 
 ```mermaid
 flowchart TD
@@ -354,7 +354,7 @@ Bản trả lời của LLM phải phân rã cấu trúc câu trả lời theo m
 # Cấu hình Local Model Gateway & Endpoints
 USE_LOCAL_LLM=true
 LOCAL_LLM_BACKEND=llama_cpp # Lựa chọn: llama_cpp | ollama | mlx
-LLM_BASE_URL=http://localhost:8080
+LLM_BASE_URL=http://localhost:8091
 
 # Supported Gateway Endpoints:
 # - POST /v1/chat/completions  (OpenAI Format)
@@ -381,8 +381,9 @@ LOCAL_VISION_FILTER=siglip-2-multilingual-onnx
 LOCAL_VLM_INSPECTOR=qwen3-vl-8b
 HISTORICAL_OCR_ENGINE=paddleocr_v5_hannom
 
-# TTS Provider
+# TTS Provider (VieNeu TTS FastAPI Microservice / Port 8080)
 TTS_BACKEND_PROVIDER=auto
+VIENEU_PYTHON_URL=http://localhost:8080
 ```
 
 ---
@@ -390,13 +391,13 @@ TTS_BACKEND_PROVIDER=auto
 ### Bước 2: Khởi chạy Llama-Server Backend trên macOS
 
 ```bash
-# 1. Khởi chạy llama-server Metal Engine cho Primary LLM (Qwen3.5-27B)
+# 1. Khởi chạy llama-server Metal Engine cho Primary LLM (Qwen3.5-27B trên Port 8091)
 llama-server \
   --model ./models/qwen3.5-27b-instruct-q4_k_m.gguf \
   --alias qwen3.5-27b \
   --ctx-size 16384 \
   --n-gpu-layers 99 \
-  --port 8080
+  --port 8091
 
 # 2. Khởi chạy Embedding & Rerank Server phụ (Nếu chạy riêng instance)
 llama-server \

@@ -53,7 +53,7 @@
 
 Tệp này nằm tại `packages/remotion-engine/src/data/mysteryTimeline.json` và đã được đăng ký tại `Root.tsx` với Composition ID `MysteryVideo`.
 
-> **Chuẩn:** Schema v3.0 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts).
+> **Chuẩn:** Schema v4.1 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts).
 
 ```json
 {

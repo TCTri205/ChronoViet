@@ -137,8 +137,9 @@ npx tsx services/vieneu-tts/eval/scripts/extract_remotion_dataset.ts
 
 ```
 services/vieneu-tts/
-├── app.py                      # Python FastAPI ONNX Microservice (24kHz NeuCodec Engine)
-├── Dockerfile                  # Container build config (Node 20 Alpine)
+├── app.py                      # Python FastAPI ONNX Microservice (Dual-Mode: 24kHz NeuCodec / PCM-16 Synthesizer)
+├── Dockerfile                  # Container build config (Python 3.11-slim + libsndfile + uvicorn)
+├── requirements.txt            # Python dependencies (fastapi, uvicorn, numpy, soundfile, pydantic)
 ├── package.json                # Cấu hình npm package, scripts & dependencies
 ├── tsconfig.json               # Cấu hình TypeScript compiler
 ├── src/

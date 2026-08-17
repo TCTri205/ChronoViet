@@ -24,7 +24,7 @@ Dự án ứng dụng mô hình **Decoupled Event-Driven Architecture** với 5 
 0. **Data Preprocessing & Ingestion Engine [✅]**: Nạp tri thức lịch sử offline, cào tự động toàn bộ 15 thời kỳ lịch sử (`pnpm crawl:all`), làm sạch lỗi OCR, chuẩn hóa địa danh qua các thời kỳ (`SAME_AS_LOCATION`), khử nhập nhằng nhân vật (`ALIAS_OF`), Dynamic Hierarchical Chunking, nạp PostgreSQL pgvector (1024d BGE-M3 + FTS BM25), Relational Graph & Append-Only Audit Trail (`entity_audit_logs`).
 1. **Hybrid GraphRAG Engine [✅]**: Động cơ tìm kiếm kết hợp Knowledge Graph + Dense Vector BGE-M3 + Sparse BM25 + Recursive CTE Subgraph Search + BGE Reranker v2. Đảm bảo tri thức lịch sử chính xác 100%, loại bỏ hoàn toàn suy đoán sai (Hallucination Rate 0%).
 2. **Multi-Agent Orchestrator (LangGraph.js) [✅]**: Lập kịch bản video chi tiết, phân chia phân cảnh & chọn bố cục trực quan phù hợp, tích hợp NLI Entailment Hallucination Judge & Folklore Guardrail Gate.
-3. **VLM Inspector Agent (Gemini 2.5 Flash / CLIP) [📐]**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
+3. **VLM Inspector Agent (Gemini 2.5 Flash / Agnes / CLIP) [✅]**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
 4. **Remotion Render Engine [✅]**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v4.1.
 
 ---
@@ -53,10 +53,11 @@ ChronoViet/
 │
 ├── packages/
 │   ├── agent-orchestrator/      # [✅ READY] LangGraph.js Multi-Agent Pipeline & Guardrails (+ eval/)
-│   ├── rag-engine/              # [✅ READY] Data Ingestion ETL (Mô-đun 0) & Chrono-RAG Engine (Mô-đun 1) (+ eval/)
+│   ├── data-ingestion/          # [✅ READY] Data Preprocessing & Ingestion Engine (Mô-đun 0) (+ eval/)
+│   ├── rag-engine/              # [✅ READY] Chrono-RAG Retrieval Engine (Mô-đun 1) (+ eval/)
 │   ├── remotion-engine/         # [✅ READY] Remotion Render Engine & Studio (+ eval/ test suite)
 │   ├── shared-spec/             # [✅ READY] Zod Schemas & Data Contracts (SSOT)
-│   └── vlm-inspector/           # [📐 ROADMAP] Gemini 2.5 VLM & CLIP Inspector (+ eval/)
+│   └── vlm-inspector/           # [✅ READY] Gemini 2.5 / Agnes / CLIP VLM Inspector (+ eval/)
 │
 ├── services/
 │   └── vieneu-tts/              # [✅ READY] VieNeu ONNX Neural TTS Service (+ eval/)
@@ -65,7 +66,9 @@ ChronoViet/
 ├── docs/                        # Trung tâm Tài liệu Kỹ thuật & Kiến trúc (Documentation Portal)
 │   ├── architecture/            # Tài liệu Kiến trúc Hệ thống, Data Storage & Caching
 │   ├── modules/                 # Tài liệu Chi tiết 5 Mô-đun Xử lý
-│   └── KNOWLEDGE_DATA_GOVERNANCE_SPEC.md # Master Source of Truth về Quản trị Dữ liệu RAG v1.5
+│   ├── specs/                   # Quy chuẩn Kỹ thuật, Format Nội dung & Quản trị Dữ liệu (SSOT)
+│   ├── guides/                  # Hướng dẫn Tối ưu & Audit Nhật ký
+│   └── script_examples/         # Kịch bản Mẫu 5 Domain & Legacy
 ├── media/                       # Local Mount Volume cho media assets (/raw-assets, /rendered-videos, /license-snapshots)
 ├── docker-compose.yml           # Cấu hình Hạ tầng Docker (Postgres pgvector, Redis, Caddy Proxy)
 └── Caddyfile                    # Cấu hình Reverse Proxy & Serving Static Media Assets
@@ -76,7 +79,8 @@ ChronoViet/
 | Package / App | Vai Trò | Trạng Thái | Thư Mục Eval |
 | :--- | :--- | :---: | :---: |
 | [`@chronoviet/shared-spec`](packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas, Realtime Events & Data Contracts | **✅ Ready** | N/A (Shared Spec) |
-| [`@chronoviet/rag-engine`](packages/rag-engine) | Data Ingestion ETL (Mô-đun 0) & Chrono-RAG Engine (Mô-đun 1) PostgreSQL pgvector + Graph | **✅ Ready** | `packages/rag-engine/eval/` |
+| [`@chronoviet/data-ingestion`](packages/data-ingestion) | Data Preprocessing & Ingestion Engine (Mô-đun 0) Crawler, Normalizer, Chunking & Seeder | **✅ Ready** | `packages/data-ingestion/eval/` |
+| [`@chronoviet/rag-engine`](packages/rag-engine) | Chrono-RAG Retrieval Engine (Mô-đun 1) PostgreSQL pgvector + Graph CTEs + BM25 | **✅ Ready** | `packages/rag-engine/eval/` |
 | [`@chronoviet/agent-orchestrator`](packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh, NLI Judge & Folklore Guardrail Gate | **✅ Ready** | `packages/agent-orchestrator/eval/` |
 | [`@chronoviet/remotion-engine`](packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
 | [`@chronoviet/vieneu-tts`](services/vieneu-tts) | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX) | **✅ Ready** | `services/vieneu-tts/eval/` |
@@ -200,14 +204,14 @@ docker compose up -d --build
 
 Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật nằm tại thư mục [`docs/`](docs/):
 
-* 📜 [**Master Data Governance Spec (`docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`)**](docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md): Quy chuẩn Master Source of Truth cho 15 Epochs, 7 Entity Taxonomies, RRF Min-Max, FPC Cochran formula & Audit Logs.
+* 📜 [**Master Data Governance Spec (`docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`)**](docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md): Quy chuẩn Master Source of Truth cho 15 Epochs, 7 Entity Taxonomies, RRF Min-Max, FPC Cochran formula & Audit Logs.
 * 📑 [**Documentation Portal (`docs/README.md`)**](docs/README.md): Bản đồ tra cứu tài liệu tổng quan.
 * 🏛️ [**System Overview (`docs/SystemOverview.md`)**](docs/SystemOverview.md): Kiến trúc RAG + Multi-Agent + VLM + Remotion.
-* ⚙️ [**Remotion Technical Spec (`docs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](docs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 31 LayoutModes, 19 Transitions, Zod Schema & Compositions.
-* 📜 [**Content Formats Spec (`docs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](docs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử & Schema Production v4.1.
-* 📊 [**RAG Component Benchmark Spec (`docs/RAG_COMPONENT_BENCHMARK_SPEC.md`)**](docs/RAG_COMPONENT_BENCHMARK_SPEC.md): Benchmark từng component RAG (C0-C10), datasets, metrics & regression gate.
+* ⚙️ [**Remotion Technical Spec (`docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 31 LayoutModes, 19 Transitions, Zod Schema & Compositions.
+* 📜 [**Content Formats Spec (`docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử & Schema Production v4.1.
+* 📊 [**RAG Component Benchmark Spec (`docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md`)**](docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md): Benchmark từng component RAG (C0-C10), datasets, metrics & regression gate.
 * 🩺 [**Observability & Logging (`docs/architecture/06_OBSERVABILITY_AND_LOGGING.md`)**](docs/architecture/06_OBSERVABILITY_AND_LOGGING.md): Unified structured logger (`@chronoviet/shared-spec`), correlation ID, event names & hướng dẫn truy vết log bằng `jq`.
-* 💻 [**macOS Local Model Optimization (`docs/MACOS_LOCAL_MODEL_OPTIMIZATION.md`)**](docs/MACOS_LOCAL_MODEL_OPTIMIZATION.md): Tối ưu mô hình local trên Apple Silicon.
+* 💻 [**macOS Local Model Optimization (`docs/guides/MACOS_LOCAL_MODEL_OPTIMIZATION.md`)**](docs/guides/MACOS_LOCAL_MODEL_OPTIMIZATION.md): Tối ưu mô hình local trên Apple Silicon.
 
 ---
 

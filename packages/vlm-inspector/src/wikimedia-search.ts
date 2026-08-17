@@ -27,8 +27,8 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
   {
     topicKey: 'hung_vuong',
     title: 'Trống đồng Đông Sơn cổ vật thời Hùng Vương',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/Dong_Son_drum.jpg',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Dong_Son_drum.jpg',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Dong_Son_drums.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Dong_Son_drums.jpg',
     author: 'Bảo tàng Lịch sử Quốc gia Việt Nam',
     license: 'PUBLIC_DOMAIN',
   },
@@ -36,8 +36,8 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
   {
     topicKey: 'hai_ba_trung',
     title: 'Tranh dân gian Đông Hồ Hai Bà Trưng cưỡi voi ra trận',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Hai_ba_trung_Dong_ho.jpg',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_Ho_painting.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Hai_ba_trung_Dong_Ho_painting.jpg',
     author: 'Dân gian Đông Hồ / Wikimedia Commons',
     license: 'PUBLIC_DOMAIN',
   },
@@ -61,9 +61,9 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
   // Đinh Bộ Lĩnh & Hoa Lư
   {
     topicKey: 'dinh_bo_linh',
-    title: 'Cố đô Hoa Lư Ninh Bình thời Đinh Tiên Hoàng',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/b3/Co_do_Hoa_Lu.jpg',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Co_do_Hoa_Lu.jpg',
+    title: 'Cổng Cố đô Hoa Lư Ninh Bình thời Đinh Tiên Hoàng',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Gate_at_Hoa_Lu_-_Vietnam_-_August_2023.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Gate_at_Hoa_Lu_-_Vietnam_-_August_2023.jpg',
     author: 'Bảo tàng Ninh Bình',
     license: 'CC_BY_SA_4_0',
   },
@@ -71,8 +71,8 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
   {
     topicKey: 'quang_trung',
     title: 'Tượng đài Hoàng đế Quang Trung Nguyễn Huệ Gò Đống Đa',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87%2C_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Quang_Trung_Nguy%E1%BB%85n_Hu%E1%BB%87,_G%C3%B2_%C4%90%E1%BB%91ng_%C4%90a.JPG',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Quang_Trung_statue_02.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Quang_Trung_statue_02.jpg',
     author: 'Wikimedia Contributor',
     license: 'CC_BY_SA_4_0',
   },
@@ -87,8 +87,8 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
   {
     topicKey: 'quang_trung_portrait',
     title: 'Chân dung Vua Quang Trung Nguyễn Huệ thời Càn Long',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/A_portrait_painting_depicting_Annam_King%2C_Ruan_Guangping.jpg',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:A_portrait_painting_depicting_Annam_King,_Ruan_Guangping.jpg',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Quang_Trung_statue_02.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Quang_Trung_statue_02.jpg',
     author: 'Họa sĩ Cung đình Càn Long',
     license: 'PUBLIC_DOMAIN',
   },
@@ -103,16 +103,16 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
   {
     topicKey: 'le_chi_vien',
     title: 'Di tích Lệ Chi Viên Đại Ngô Gia Huấn Nguyễn Trãi',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e5/Nguyen_Trai_portrait.jpg',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Nguyen_Trai_portrait.jpg',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c6/Nguyen_Trai.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Nguyen_Trai.jpg',
     author: 'Hội Sử học Việt Nam',
     license: 'PUBLIC_DOMAIN',
   },
   {
     topicKey: 'ngoc_hoi_dong_da',
     title: 'Đại chiến Ngọc Hồi Đống Đa quét sạch 29 vạn quân Thanh',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Tran_Ngoc_Hoi_Dong_Da.jpg',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Tran_Ngoc_Hoi_Dong_Da.jpg',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Quang_Trung_statue_02.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Quang_Trung_statue_02.jpg',
     author: 'Tranh khắc lịch sử',
     license: 'PUBLIC_DOMAIN',
   },
@@ -151,6 +151,7 @@ export async function searchWikimediaCommons(
       headers: {
         'User-Agent': 'ChronoViet-VLM-Inspector/1.0 (https://chronoviet.vn; contact@chronoviet.vn)',
       },
+      cache: 'no-store',
     });
     clearTimeout(timer);
 

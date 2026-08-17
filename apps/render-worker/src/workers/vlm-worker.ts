@@ -3,7 +3,7 @@
  */
 
 import { Worker, Job } from 'bullmq';
-import { createLogger, SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
+import { createLogger, formatErrorMessage, SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
 import { inspectSceneVisuals, InspectSceneResult } from '@chronoviet/vlm-inspector';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 
@@ -43,7 +43,11 @@ export function startVLMWorker(): Worker<VLMJobData, InspectSceneResult> {
   });
 
   worker.on('failed', (job, err) => {
-    log.error('worker.vlm_failed', `VLM job ${job?.id} failed: ${err.message}`, { error: err });
+    log.error('worker.vlm_failed', `VLM job ${job?.id} failed: ${formatErrorMessage(err)}`, { error: err });
+  });
+
+  worker.on('error', (err) => {
+    log.warn('worker.vlm_redis_error', `VLM worker Redis connection error: ${formatErrorMessage(err)}`, { error: err });
   });
 
   return worker;

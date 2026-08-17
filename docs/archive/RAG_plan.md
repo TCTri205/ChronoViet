@@ -1,5 +1,13 @@
 # Kế Hoạch Triển Khai Chi Tiết & Chuẩn Hoá: Mô-đun 1 — Chrono-RAG Engine
 
+> 🗄️ **TÀI LIỆU LƯU TRỮ (ARCHIVED / SUPERSEDED):**  
+> Bản kế hoạch khởi tạo này đã hoàn thành và được chuẩn hóa chính thức tại:
+> - **Tài liệu Mô-đun Production:** [`docs/modules/01_CHRONO_RAG_ENGINE.md`](../modules/01_CHRONO_RAG_ENGINE.md)
+> - **Đặc tả Quản trị Dữ liệu:** [`docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`](../specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md)
+> - **Mã nguồn Production:** [`packages/rag-engine/`](../../packages/rag-engine)
+
+---
+
 ## Tổng Quan (Executive Overview)
 
 Mô-đun **Chrono-RAG Engine** (`packages/rag-engine`) là "Bộ não Tri thức" (Knowledge & Fact Retrieval Layer) của hệ thống **ChronoViet**. Nhiệm vụ tối thượng của mô-đun là triệt tiêu hoàn toàn hiện tượng **Hallucination** (bị đặt dữ kiện, nhầm lẫn mốc thời gian, tên nhân vật, địa danh cổ) khi mô hình AI tự động tạo kịch bản video lịch sử.
@@ -16,7 +24,7 @@ Kế hoạch này phân rã toàn bộ quá trình phát triển Chrono-RAG Engi
 ## Đối Chiếu & Bổ Sung Kiến Trúc (Architecture & Data Contracts Audit)
 
 ### 1. Chuẩn Hóa Data Contract (SSOT tại `packages/shared-spec`)
-Mọi giao diện TypeScript và Zod Schemas giữa RAG Engine và các mô-đun khác (đặc biệt là Multi-Agent Orchestrator) được khai báo tập trung tại [`packages/shared-spec`](../packages/shared-spec):
+Mọi giao diện TypeScript và Zod Schemas giữa RAG Engine và các mô-đun khác (đặc biệt là Multi-Agent Orchestrator) được khai báo tập trung tại [`packages/shared-spec`](../../packages/shared-spec):
 - `IRagEngine`: Interface chuẩn cho service RAG (`search()` và `ingestDocument()`).
 - `RagSearchRequestSchema`: Zod validation cho dữ liệu đầu vào `search()`, bao gồm `query`, `entityFilter`, `maxTokens`, `rerankTopK`.
 - `RagSearchResponseSchema`: Zod validation cho kết quả đầu ra, bao gồm `verifiedContext`, `aliasTable`, `citations`, và `retrievalLatencyMs`.
@@ -262,7 +270,7 @@ graph TD
 - **Mục tiêu:** Đưa `rag-engine` vào script đánh giá toàn cục monorepo (`pnpm eval:all`) và đồng bộ hóa tài liệu kỹ thuật trong `docs/`.
 - **Mô tả chi tiết:**
   - Cập nhật script root `package.json` đảm bảo `pnpm eval:all` kích hoạt mượt mà runner `eval/` của `rag-engine`.
-  - Cập nhật tài liệu kỹ thuật [`docs/modules/01_CHRONO_RAG_ENGINE.md`](modules/01_CHRONO_RAG_ENGINE.md) và [`docs/IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) chuyển trạng thái Mô-đun 1 sang `[✅ IMPLEMENTED]`.
+  - Cập nhật tài liệu kỹ thuật [`docs/modules/01_CHRONO_RAG_ENGINE.md`](../modules/01_CHRONO_RAG_ENGINE.md) và [`docs/IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md) chuyển trạng thái Mô-đun 1 sang `[✅ IMPLEMENTED]`.
 - **Tiêu chí nghiệm thu (Acceptance Criteria):**
   - [ ] Lệnh `pnpm eval:all` chạy thành công monorepo-wide.
   - [ ] Tài liệu trong `docs/` được cập nhật đồng bộ với codebase thực tế.

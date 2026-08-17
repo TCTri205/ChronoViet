@@ -1,7 +1,7 @@
 # CHI TIẾT MÔ-ĐUN 2: MULTI-AGENT ORCHESTRATOR
-## (Content Synthesis, Cross-Chapter Continuity, Robust Fact-Checking & Small LLM Pipeline v3.2)
+## (Content Synthesis, Cross-Chapter Continuity, Robust Fact-Checking & Small LLM Pipeline v4.1)
 
-> **Trạng thái:** `[✅ IMPLEMENTED — LangGraph.js Multi-Agent Orchestrator Pipeline v3.2 (LangGraph.js Annotation.Root, Native Checkpointing & Parallel Workers)]`
+> **Trạng thái:** `[✅ IMPLEMENTED — LangGraph.js Multi-Agent Orchestrator Pipeline v4.1 (LangGraph.js Annotation.Root, Native Checkpointing & Parallel Workers)]`
 > **Cập nhật:** Chuẩn hóa StateGraph với `Annotation.Root()`, tích hợp Native Checkpointer kế thừa `MemorySaver` lưu trữ PostgreSQL + Local Disk, phân luồng song song (Fan-out / Fan-in) cho TTS & VLM, Folklore Guardrail Gate (`folklore-validator.ts`), NLI Entailment Judge (`nli-hallucination-judge.ts`) và Human-In-The-Loop Streaming support.
 
 ---
@@ -21,15 +21,15 @@ Mô-đun chịu trách nhiệm:
    - Đối soát & Cân bằng thời lượng Scene với Target Chapter Duration (Micro-Step 1B-Reconcile).
    - Trích xuất từ khóa crawl ảnh (Micro-Step 1C).
 3. **Thực thi song song theo từng Cảnh (Scene-Level Parallelism & Fine-Grained Idempotency)** giữa công cụ sinh giọng nói TTS (VieNeu ONNX Engine) và thu thập tư liệu hình ảnh.
-4. **Chiến lược Crawl ảnh 3+3 Candidates & Hybrid VLM Inspection (Local VLM `qwen3-vl-8b` cho eval strict / Cloud Gemini + Offline Local CLIP cho dev)**: Lọc ảnh theo giấy phép whitelisted (`Public Domain`, `CC0`, `CC-BY`), chấm điểm VLM có fallback local khi ngắt kết nối/rate limit.
+4. **Chiến lược Crawl ảnh 3+3 Candidates & Multi-Provider VLM Inspection (Local OpenAI-compatible VLM `qwen3-vl-8b` / `qwen2.5-vl` / Cloud Gemini + Offline Local CLIP cho dev)**: Lọc ảnh theo giấy phép whitelisted (`Public Domain`, `CC0`, `CC-BY`), chấm điểm VLM linh hoạt với cơ chế auto failover khi ngắt kết nối/rate limit.
 5. **Code Rules Engine & PURE_CODE Layout Rotation**: Tự động ép chuyển cảnh sang `PURE_CODE` khi cả 6 ảnh không đạt chuẩn và xoay vòng layout động (Animated Maps, Timelines, Quotes) để không gây chán mắt.
 6. **Thang Xử Lý Lỗi 4 Tầng (4-Tier Escalation Path)**: Từ Self-Correction ➔ Code Override ➔ Cloud Model Escalation ➔ Human-in-the-Loop Review.
 7. **Quản lý Checkpoint State vào PostgreSQL** qua LangGraph.js Postgres Checkpointer với Content Hash Keys cho phép resume chính xác từng scene/worker.
-8. **Đóng gói JSON Schema v3.2 chuẩn xác (Zod Validated kèm License & Attribution)** và kích hoạt **Remotion Render Tool** (Mô-đun 4) để xuất video.
+8. **Đóng gói JSON Schema v4.1 chuẩn xác (Zod Validated kèm License & Attribution)** và kích hoạt **Remotion Render Tool** (Mô-đun 4) để xuất video.
 
 ---
 
-## 2. Sơ Đồ Kiến Trúc Đội Ngũ Agent & Tooling Ecosystem (v3.2 Tối Ưu Cho Small LLM & Video Dài)
+## 2. Sơ Đồ Kiến Trúc Đội Ngũ Agent & Tooling Ecosystem (v4.1 Tối Ưu Cho Small LLM & Video Dài)
 
 ```
                                    ┌───────────────────────────────┐
@@ -77,7 +77,7 @@ Mô-đun chịu trách nhiệm:
               │   PARALLEL WORKER A: TTS    │                                                                                 │ PARALLEL WORKER B: RESEARCH │
               │ - Hash Key Idempotency Check│                                                                                 │ AGENT (1C) -> VLM INSPECTOR  │
               │ - VieNeu ONNX TTS Engine    │                                                                                 │ - Provider Chain Online      │
-              │ - Xuất WAV + Word Timestamps│                                                                                 │ - Domain Whitelist License   │
+              │ - Xuất WAV + Word Timestamps│                                                                                 │ - Multi-Provider VLM         │
               └──────────────┬──────────────┘                                                                                 │ - Strategy 3+3 Candidates    │
                              │                                                                                                │ - Dual VLM (Gemini / CLIP)   │
                              │                                                                                                └──────────────┬──────────────┘
@@ -94,9 +94,9 @@ Mô-đun chịu trách nhiệm:
                                                                              ▼
                                                              ┌───────────────────────────────┐
                                                              │     JSON PACKAGER AGENT       │
-                                                             │  (Zod v3.2 Schema Validation) │
+                                                             │  (Zod v4.1 Schema Validation) │
                                                              └───────────────┬───────────────┘
-                                                                             │ (JSON Schema v3.2 Validated)
+                                                                             │ (JSON Schema v4.1 Validated)
                                                                              ▼
                                                              ┌───────────────────────────────┐
                                                              │    REMOTION RENDER TOOL       │
@@ -106,7 +106,7 @@ Mô-đun chịu trách nhiệm:
 
 ---
 
-## 3. Phân Công Trách Nhiệm Chi Tiết Của Các Agent & Micro-Sub-Agents (v3.2)
+## 3. Phân Công Trách Nhiệm Chi Tiết Của Các Agent & Micro-Sub-Agents (v4.1)
 
 ### 3.1. Master Orchestrator (LangGraph.js Supervisor & Postgres Checkpointer)
 * **Nhiệm vụ:** Quản lý vòng đời workflow, duy trì state liên chương (`runningNarrativeState`), lưu trữ Checkpoint State vào PostgreSQL qua LangGraph.js Postgres Checkpointer, điều phối các Micro-Agents và các Task thực thi song song, quản lý Thang Escalation Retry và khôi phục idempotent khi container rớt.
@@ -217,17 +217,17 @@ Mô-đun chịu trách nhiệm:
 ---
 
 ### 3.7. Remotion Render Engine Tool (Mô-đun 4)
-* **Nhiệm vụ:** Nhận JSON Schema v3.2 đã qua Zod validation hoàn chỉnh (bao gồm cả dữ liệu `license` & `attribution`), thực hiện pre-download asset và render video MP4.
+* **Nhiệm vụ:** Nhận JSON Schema v4.1 đã qua Zod validation hoàn chỉnh (bao gồm cả dữ liệu `license` & `attribution`), thực hiện pre-download asset và render video MP4.
 
 ---
 
-## 4. Cơ Chế Kiểm Tra Lỗi, Retry & Thang Escalation Fallback (v3.2)
+## 4. Cơ Chế Kiểm Tra Lỗi, Retry & Thang Escalation Fallback (v4.1)
 
 Hệ thống thiết lập **Cơ chế Kiểm tra Lỗi 4 Tầng & Escalation Matrix** bảo đảm không bao giờ bị "treo" ở trạng thái `FAILED`:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                               MASTER ORCHESTRATOR ESCALATION MATRIX (v3.2)                            │
+│                               MASTER ORCHESTRATOR ESCALATION MATRIX (v4.1)                            │
 ├────────────────────────┼───────────────────────────┼───────────────────────────────────────────────────┤
 │ Điểm Phát Sinh Lỗi     │ Loại Lỗi Runtime          │ Chiến Lược Kiểm Tra, Retry & Thang Escalation     │
 ├────────────────────────┼───────────────────────────┼───────────────────────────────────────────────────┤
@@ -261,7 +261,7 @@ Hệ thống thiết lập **Cơ chế Kiểm tra Lỗi 4 Tầng & Escalation Ma
 └────────────────────────┴───────────────────────────┴───────────────────────────────────────────────────┘
 ```
 
-### 4.1. Sơ Đồ Luồng Xử Lý State Machine (v3.2 State Machine Flow Diagram)
+### 4.1. Sơ Đồ Luồng Xử Lý State Machine (v4.1 State Machine Flow Diagram)
 
 ```mermaid
 graph TD
@@ -302,7 +302,7 @@ graph TD
     H_Reconcile -- Lệch > 15% --> H_Adjust[Điều chỉnh Pacing / Ghép Scene / Trim Script] --> H_Reconcile
     H_Reconcile -- Đạt chuẩn <= 15% --> H_Final[Code Rules Engine: Frame Math & Subtitles]
 
-    H_Final --> I{Zod v3.2 Final Runtime Validation}
+    H_Final --> I{Zod v4.1 Final Runtime Validation}
     I -- Valid Schema --> J[Invoke Remotion Render Engine Tool]
     I -- Invalid Schema --> I1[Auto-Sanitize Defaults] --> J
 
@@ -312,9 +312,9 @@ graph TD
 
 ---
 
-## 5. Giao Tiếp Với Remotion Tool & JSON Schema v3.2 (TypeScript Zod Specs)
+## 5. Giao Tiếp Với Remotion Tool & JSON Schema v4.1 (TypeScript Zod Specs)
 
-Master Orchestrator truyền dữ liệu chuẩn hóa cho Remotion Tool qua Zod Schema v3.2:
+Master Orchestrator truyền dữ liệu chuẩn hóa cho Remotion Tool qua Zod Schema v4.1:
 
 ```typescript
 import { z } from "zod";
@@ -403,7 +403,7 @@ export type Attribution = z.infer<typeof AttributionSchema>;
 
 ---
 
-## 6. Tiêu Chí Nghiệm Thu Mô-đun Multi-Agent (v3.2)
+## 6. Tiêu Chí Nghiệm Thu Mô-đun Multi-Agent (v4.1)
 
 1. **Độ Tin Cậy & Tính Liền Mạch (Cross-Chapter Continuity):** Giọng văn, từ ngữ giải thích và bối cảnh được duy trì mượt mà xuyên suốt video 10-15+ phút nhờ `runningNarrativeState` truyền qua các Chapter.
 2. **Đảm Bảo Chất Lượng Lịch Sử Mềm Dẻo (Alias-Aware Fact-Checking):** Tránh false-positive nhờ **Historical Entity Alias Table**, diacritics normalization và kiểm tra logic đa mô hình / heuristic rules.

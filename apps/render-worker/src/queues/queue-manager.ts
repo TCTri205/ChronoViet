@@ -5,7 +5,7 @@
 
 import { Queue, Worker, QueueEvents } from 'bullmq';
 import Redis from 'ioredis';
-import { createLogger, envConfig } from '@chronoviet/shared-spec';
+import { createLogger, envConfig, formatErrorMessage } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'render-worker' });
 
@@ -20,12 +20,11 @@ export function createBullMqRedis(): Redis {
   const conn = new Redis(redisUrl, {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
-    retryStrategy: (times) => Math.min(times * 100, 3000),
-    lazyConnect: true,
+    retryStrategy: (times) => Math.min(times * 200, 5000),
   });
 
   conn.on('error', (err) => {
-    log.debug('bullmq.redis_error', `BullMQ Redis connection error: ${err.message}`);
+    log.debug('bullmq.redis_error', `BullMQ Redis connection error: ${formatErrorMessage(err)}`);
   });
 
   return conn;
@@ -37,7 +36,7 @@ export function getBullMqRedis(): Redis {
 
 export function createQueue<T = any>(queueName: string): Queue<T> {
   const connection = createBullMqRedis();
-  return new Queue<T>(queueName, {
+  const queue = new Queue<T>(queueName, {
     connection,
     defaultJobOptions: {
       attempts: 3,
@@ -49,4 +48,10 @@ export function createQueue<T = any>(queueName: string): Queue<T> {
       removeOnFail: 50,
     },
   });
+
+  queue.on('error', (err) => {
+    log.debug('bullmq.queue_error', `BullMQ queue error on ${queueName}: ${formatErrorMessage(err)}`);
+  });
+
+  return queue;
 }

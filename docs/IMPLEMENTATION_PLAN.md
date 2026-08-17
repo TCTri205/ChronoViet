@@ -13,13 +13,13 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 
 | Thành phần / Mô-đun | Trạng thái Thực tế | Mức độ Phức tạp | Đánh giá Công nghệ & Sẵn sàng | Thư mục Đánh giá (`eval/`) |
 | :--- | :---: | :---: | :--- | :--- |
-| **Mô-đun 0: Data Preprocessing & Ingestion Engine** | **[✅ IMPLEMENTED]** | Trung bình - Phức tạp | Offline ETL Pipeline: Text Cleaning, OCR, Historical Entity Normalization (`SAME_AS_LOCATION`, `ALIAS_OF`), Hierarchical Dynamic Chunking, Dual-Branch Vector/Graph Seeder, Visual & Audio Media ETL, Copyright License Audit, LUFS Normalization, CLI Seeders (`pnpm ingest:knowledge`, `pnpm setup-assets`, `pnpm eval:seed`, `pnpm eval:ingest`). | `packages/rag-engine/eval/` & `eval/test-cases/` |
+| **Mô-đun 0: Data Preprocessing & Ingestion Engine** | **[✅ IMPLEMENTED]** | Trung bình - Phức tạp | Offline ETL Pipeline: Text Cleaning, OCR, Historical Entity Normalization (`SAME_AS_LOCATION`, `ALIAS_OF`), Hierarchical Dynamic Chunking, Dual-Branch Vector/Graph Seeder, Visual & Audio Media ETL, Copyright License Audit, LUFS Normalization, CLI Seeders (`pnpm ingest:knowledge`, `pnpm setup-assets`, `pnpm eval:seed`, `pnpm eval:ingest`). | `packages/data-ingestion/eval/` & `eval/test-cases/` |
 | **Mô-đun 4: Remotion Render Engine** | **[✅ IMPLEMENTED]** | Trung bình | **100% Hoàn thiện codebase** (`packages/remotion-engine/src/`). Đã có 31 `LayoutMode`, 19 `TransitionType`, Zod Schema runtime validation (`schema.ts`), 19 UI Components, 11 Compositions. | `packages/remotion-engine/eval/` |
 | **Dịch vụ VieNeu TTS (ONNX Engine)** | **[✅ IMPLEMENTED]** (Phase 1) | Thấp - Trung bình | Đã hoàn thiện microservice Node.js Dual-Layer (`VieNeuEngine` + `SyntheticTTSFallbackEngine`), Python FastAPI ONNX Engine (`app.py`), Zod Schema Validation, `wordTimestamps` -> Caption Frames Converter, và bộ Eval Suite `services/vieneu-tts/eval/` với 3 KPI: RTF, Alignment Error, Frame Error. | `services/vieneu-tts/eval/` |
 | **Mô-đun 1: Chrono-RAG Engine** | **[✅ IMPLEMENTED]** | Phức tạp | **100% Hoàn thiện codebase & Eval suite** (`packages/rag-engine/src/`, `eval/`). Hybrid GraphRAG dùng PostgreSQL 15+ (`pgvector` Dense Embedding 1024d + Relational Graph Schema CTEs $k=1,2$ + BM25 FTS + RRF + Integrated BGE Reranker v2). Đã vượt ma trận KPI: Fact Precision 100%, Hallucination Rate 0%, Citation Traceability 100%. | `packages/rag-engine/eval/` |
-| **Mô-đun 2: Multi-Agent Orchestrator** | **[✅ IMPLEMENTED]** | Rất Phức tạp | LangGraph.js State Machine trên Node.js/TS, Postgres Checkpointer SSOT, quy trình 12 trạng thái, Chaptering Agent + 5 Script Micro-Steps, Duration Reconciler, Alias Table Fact-Checker, Keyword Extractor + Research Agent (Micro-Step 1C) tìm ảnh online qua SerpAPI/Tavily/Brave/Wikimedia/Catalog. | `packages/agent-orchestrator/eval/` |
-| **Mô-đun 3: VLM Inspector Sub-Agent** | **[✅ IMPLEMENTED]** | Trung bình | Gemini 2.5 Flash Cloud Primary + Local CLIP ONNX Fallback + Whitelisted License Filter (CC0/PD/CC-BY) + Unified Redis Cache (SHA-256/pHash) + Chiến lược 3+3 Candidates (nhận candidate từ Research Agent + domain whitelist). | `packages/vlm-inspector/eval/` |
-| **Hạ tầng Worker & Render Queue** | **[📐 ROADMAP Spec]** | Trung bình | Docker Compose (Caddy Reverse Proxy, PostgreSQL `pgvector`, Redis 7 BullMQ, App Monolith Fastify/Next.js, Worker). | `apps/render-worker/eval/` |
+| **Mô-đun 2: Multi-Agent Orchestrator** | **[✅ IMPLEMENTED]** | Rất Phức tạp | LangGraph.js State Machine trên Node.js/TS, Postgres Checkpointer SSOT, quy trình Chaptering Agent + 5 Script Micro-Steps, Duration Reconciler, Automated Guardrails (Folklore + NLI Entailment Judge), Keyword Extractor + Research Agent (Micro-Step 1C) tìm ảnh online qua SerpAPI/Tavily/Brave/Wikimedia/Catalog. | `packages/agent-orchestrator/eval/` |
+| **Mô-đun 3: VLM Inspector Sub-Agent** | **[✅ IMPLEMENTED]** | Trung bình | Gemini Cloud VLM Primary (`VLM_PROVIDER=gemini|auto`) + Local OpenAI-compatible VLM (`qwen3-vl-8b`) + Local CLIP ONNX Fallback + Whitelisted License Filter (CC0/PD/CC-BY) + Unified Redis Cache (SHA-256/pHash) + Chiến lược 3+3 Candidates (nhận candidate từ Research Agent + domain whitelist). | `packages/vlm-inspector/eval/` |
+| **Hạ tầng Worker, Realtime & Web App** | **[✅ IMPLEMENTED]** | Trung bình - Phức tạp | `apps/render-worker` (BullMQ queues, Process Isolation `CONCURRENCY=1`, Asset Pre-download về `/media`, Redis PubSub `project_events:${projectId}`) + `apps/web` (Next.js 14 App Router Monolith, NotebookLM Workspace UI/UX, REST API `/api/v1/chat`, `/api/v1/projects`, SSE Stream, WebSocket Gateway, 1-Click Video Studio). | `apps/render-worker/src/__tests__/` & `apps/web/eval/` |
 
 ### 1.2. Nguyên Tắc Bắt Buộc: Module-Level Evaluation (`eval/` per Module)
 
@@ -71,7 +71,7 @@ Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 ```
 
 ### 1.3. Nhận Xét Lõi Cho Kế Hoạch Triển Khai
-- **Điểm tựa vững chắc:** Remotion Render Engine đã hoàn thành 100% và hoạt động 100% **Data-Driven thông qua file JSON Schema v3.0/v3.2**.
+- **Điểm tựa vững chắc:** Remotion Render Engine đã hoàn thành 100% và hoạt động 100% **Data-Driven thông qua file JSON Schema v4.1**.
 - **Tầng dữ liệu gốc (Mô-đun 0):** Đóng vai trò là Offline Pipeline thu thập, làm sạch, phân cấp tri thức (Text ETL) và nạp tư liệu (Media/SFX ETL) vào PostgreSQL và Host Mount Volume `/media`, đảm bảo triết lý Monorepo Stateless & 100% Data-Driven.
 - **Nhiệm vụ trọng tâm:** Xây dựng tầng "đầu vào AI" (Data Ingestion $\rightarrow$ RAG $\rightarrow$ Multi-Agent Scriptwriter $\rightarrow$ VLM Inspector & TTS $\rightarrow$ JSON Schema Packager) để nối tự động với Remotion Engine, song song với việc xây dựng bộ đánh giá `eval/` độc lập cho từng thành phần.
 
@@ -88,7 +88,7 @@ Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 │                        REMOTION RENDER ENGINE (Đã hoàn thiện ✅)                       │
 │                        Bộ đánh giá: packages/remotion-engine/eval/                     │
 └────────────────────────────────────────▲───────────────────────────────────────────────┘
-                                         │ (Nhận JSON Schema v3.2)
+                                         │ (Nhận JSON Schema v4.1)
 ┌────────────────────────────────────────┴───────────────────────────────────────────────┐
 │                     WORKSTREAM D: MULTI-AGENT ORCHESTRATOR                             │
 │                  (LangGraph.js State Machine + Postgres Checkpoint)                    │
@@ -120,7 +120,7 @@ Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 | **Workstream A: Chrono-RAG Engine** | **CÓ (100%)** | Nguồn tri thức từ Workstream 0 (Bảng Postgres vector/graph). | Trả về `Verified Historical Context` + `Alias Table`. | `packages/rag-engine/eval/` |
 | **Workstream B: VieNeu TTS Engine** | **CÓ (100%)** | Script text mẫu (String). | Trả về file `.wav` + `wordTimestamps` + `calculatedFrames`. | `services/vieneu-tts/eval/` |
 | **Workstream C: VLM Inspector Sub-Agent** | **CÓ (100%)** | URL ảnh crawl + Từ khóa bối cảnh. | Trả về `VLM Score` + `License Metadata` + Verdict (`PASS`/`REJECT`). | `packages/vlm-inspector/eval/` |
-| **Workstream D: Multi-Agent Orchestrator** | **TUẦN TỰ (Cần A,B,C)** | Output từ Workstream A, B, C để lắp ráp pipeline đầy đủ. | Đóng gói JSON Schema v3.2 truyền sang Remotion Render Tool. | `packages/agent-orchestrator/eval/` |
+| **Workstream D: Multi-Agent Orchestrator** | **TUẦN TỰ (Cần A,B,C)** | Output từ Workstream A, B, C để lắp ráp pipeline đầy đủ. | Đóng gói JSON Schema v4.1 truyền sang Remotion Render Tool. | `packages/agent-orchestrator/eval/` |
 
 > 💡 **Kết Luận Kiến Trúc:** 
 > Dự án triển khai song song 4 Workstream 0, A, B, C ở giai đoạn đầu, trong đó Workstream 0 nạp dữ liệu tri thức & tư liệu cho toàn hệ thống, mỗi Workstream **tự phát triển và tự chạy suite `eval/` của chính mình** trước khi hợp nhất vào Workstream D.
@@ -167,8 +167,10 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
 
 ---
 
-### 🏛️ Phase 2: Tiền Xử Lý Dữ Liệu, Chrono-RAG Engine & VLM Inspector Sub-Agent (Tuần 3 – Tuần 4)
+### 🏛️ Phase 2: Tiền Xử Lý Dữ Liệu, Chrono-RAG Engine & VLM Inspector Sub-Agent (Tuần 3 – Tuần 4) ✅ **HOÀN THÀNH**
 **Mục tiêu:** Tự động hóa đường ống nạp & làm sạch dữ liệu tri thức/tư liệu (Workstream 0), xây dựng tầng tri thức lịch sử (Workstream A) và tầng kiểm định hình ảnh/bản quyền (Workstream C), đi kèm các suite đánh giá `packages/rag-engine/eval/`, `eval/test-cases/` và `packages/vlm-inspector/eval/`.
+
+**Trạng thái:** Đã hoàn thành 100% — Master Crawler nạp 15 thời kỳ, Hybrid GraphRAG PostgreSQL pgvector + CTEs + BGE Reranker v2 (`packages/rag-engine/`), VLM Inspector Dual-Scorer (`packages/vlm-inspector/`), và các bộ eval tương ứng.
 
 #### 📋 Công việc Workstream 0 (Data Preprocessing & Ingestion Engine):
 1. **Làm Sạch & Chuẩn Hóa Sử Liệu (Historical Text Normalization & Disambiguation):**
@@ -212,7 +214,7 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
    - Viết cache Redis 2 lớp: Check exact URL SHA-256 hash và pHash distance ($<5$).
 2. **Lớp 2 & Lớp 3 (Technical & Hybrid VLM Scoring):**
    - Filter kỹ thuật: Resolution $\ge 600\times 600$, tỉ lệ khung hình hợp lệ.
-   - Primary Scorer: Gọi Gemini 2.5 Flash API chấm điểm 3 tiêu chí (`historical_context_score`, `visual_noise_score`, `artistic_fit_score`).
+   - Primary Scorer: Gọi Gemini Cloud VLM API chấm điểm 3 tiêu chí (`historical_context_score`, `visual_noise_score`, `artistic_fit_score`).
    - Local Fallback: Circuit breaker switch sang Local CLIP ONNX Scorer khi rate limit.
    - Chiến lược 3+3 Candidates: Crawl đợt 1 (3 ảnh thô) $\rightarrow$ nếu $<60$đ $\rightarrow$ crawl đợt 2 $\rightarrow$ nếu vẫn $<60$đ $\rightarrow$ flag `PURE_CODE`.
 3. **Triển khai `packages/vlm-inspector/eval/`:**
@@ -225,8 +227,10 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
 
 ---
 
-### ⚙️ Phase 3: LangGraph.js Orchestrator & Task Queues (Tuần 5 – Tuần 6)
-**Mục tiêu:** Xây dựng "Bộ não điều phối" Multi-Agent (Workstream D) quản lý máy trạng thái 12 bước, lưu vết Postgres Checkpointer, điều hành BullMQ, kèm hai suite đánh giá `packages/agent-orchestrator/eval/` và `apps/render-worker/eval/`.
+### ⚙️ Phase 3: LangGraph.js Orchestrator & Task Queues (Tuần 5 – Tuần 6) ✅ **HOÀN THÀNH**
+**Mục tiêu:** Xây dựng "Bộ não điều phối" Multi-Agent (Workstream D) quản lý máy trạng thái LangGraph (15 canonical states), lưu vết Postgres Checkpointer, điều hành BullMQ, kèm hai suite đánh giá `packages/agent-orchestrator/eval/` và `apps/render-worker/src/__tests__/`.
+
+**Trạng thái:** Đã hoàn thành 100% — LangGraph.js 15 trạng thái, 5 Script Micro-Steps, Duration Reconciler, Research Agent (Micro-Step 1C), Fact-Checker, NLI Hallucination Judge, và BullMQ Queues (`apps/render-worker`).
 
 #### 📋 Công việc Workstream D (Multi-Agent Orchestrator & `agent-orchestrator/eval/`):
 1. **LangGraph.js State Machine & Postgres Checkpointer:**
@@ -242,51 +246,52 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
 3. **Triển khai `packages/agent-orchestrator/eval/`:**
    - Xây dựng 20 kịch bản lịch sử phức tạp (video 3 phút đến 15 phút).
    - Viết runner đánh giá:
-     - **State Machine Reliability**: Tỉ lệ hoàn thành 12 bước trạng thái không bị kẹt loop (Target 100%).
+     - **State Machine Reliability**: Tỉ lệ hoàn thành toàn bộ 15 trạng thái không bị kẹt loop (Target 100%).
      - **Pacing Reconciliation Error**: Sai lệch thời lượng tổng so với target (Target $< 5\%$).
      - **Fact-Checker Escalation Audit**: Khả năng phát hiện và chặn các câu sai lịch sử.
      - **Narrative Consistency Score**: Đánh giá độ mượt và văn phong nối giữa các Chapter bằng LLM-as-a-Judge.
 
-#### 📋 Công việc Hạ tầng Worker & `apps/render-worker/eval/`:
+#### 📋 Công việc Hạ tầng Worker & `apps/render-worker/`:
 1. **BullMQ Task Queues:**
    - Queue 1: `tts-gen-queue`. Queue 2: `vlm-inspect-queue`. Queue 3: `remotion-render-queue`.
-2. **Triển khai `apps/render-worker/eval/`:**
-   - Viết script stress test hàng đợi tác vụ với 50 jobs render đồng thời.
-   - Đo lường khả năng cô lập tiến trình Puppeteer (Process Isolation) và khả năng khôi phục khi worker bị crash (Job Failover Recovery Rate 100%).
+2. **Triển khai `apps/render-worker/` Worker Cluster:**
+   - Thiết lập `CONCURRENCY=1` bảo đảm Chromium Process Isolation.
+   - Tích hợp Redis PubSub channel `project_events:${projectId}` bắn tiến độ render.
+   - Hàm `ensureProjectAssetsReady` tải remote assets về `/media/projects/:id/`.
 
 ---
 
-### 🔗 Phase 4: Tích Hợp End-to-End & Nối Remotion Engine (Tuần 7)
-**Mục tiêu:** Kết nối hoàn chỉnh toàn bộ pipeline từ prompt người dùng $\rightarrow$ RAG $\rightarrow$ Agent $\rightarrow$ Worker $\rightarrow$ Remotion Render MP4, kiểm tra toàn diện bằng `packages/remotion-engine/eval/`.
+### 🔗 Phase 4: Tích Hợp Lớp Ứng Dụng End-to-End & Nối Remotion Engine (Tuần 7) ✅ **HOÀN THÀNH**
+**Mục tiêu:** Kết nối hoàn chỉnh toàn bộ pipeline từ giao diện người dùng $\rightarrow$ RAG $\rightarrow$ Agent $\rightarrow$ Worker $\rightarrow$ Remotion Render MP4, xây dựng App Monolith `apps/web` và kiểm tra toàn diện.
+
+**Trạng thái:** Đã hoàn thành 100% — `apps/web` với giao diện NotebookLM Heritage Workspace UI/UX, REST API `/api/v1/chat`, `/api/v1/projects`, SSE Stream, WebSocket Gateway forward PubSub events, Video Player MP4 kèm phụ đề Karaoke và Drawer nguồn gốc bản quyền.
 
 #### 📋 Các công việc cụ thể:
-1. **JSON Schema v3.2 Packager & Validation:**
-   - Dùng Zod Schema (`schema.ts`) kiểm định 100% dữ liệu JSON trước khi đẩy xuống Render Worker.
+1. **JSON Schema v4.1 Packager & Validation:**
+   - Dùng Zod Schema (`packages/shared-spec/src/schema.ts`) kiểm định 100% dữ liệu JSON trước khi đẩy xuống Render Worker.
 2. **Render Worker Asset Pre-download & Isolation:**
-   - Lắng nghe `remotion-render-queue`, tải trước asset về `/media/raw-assets/`, thực thi Chromium Isolation.
-3. **WebSocket Progress Tracking:**
-   - Push tiến độ real-time qua WebSocket channel `project_status:{projectId}` về Next.js Dashboard.
-4. **Triển khai `packages/remotion-engine/eval/`:**
-   - Đánh giá khả năng render 18 `LayoutMode` và 15 `TransitionType` với dữ liệu JSON thực tế từ Orchestrator.
-   - Đo lường:
-     - **Audio-Visual Sync Delay**: Mốc xuất hiện Karaoke Subtitle delay $< 1$ frame ($33\text{ ms}$).
-     - **Render Speed Index**: Tỉ lệ thời gian render MP4 (Target $< 45\text{s}$ cho 60s video 1080p).
-     - **Visual Regression Test**: Chụp snapshot từng frame chính để đảm bảo không bị tràn văn bản hay vỡ layout.
+   - Lắng nghe `remotion-render-queue`, tải trước asset về `/media/projects/:id/`, thực thi Chromium Isolation (`CONCURRENCY=1`).
+3. **WebSocket Progress Tracking & Realtime Bridge:**
+   - Push tiến độ real-time qua Redis PubSub `project_events:${projectId}` về WebSocket Gateway `/ws/projects/:id` hiển thị trên Live Agent Stepper.
+4. **Triển khai `apps/web` Workspace UI & Tests:**
+   - Khung Chatbot Tra cứu Sử liệu GraphRAG tương tác với trích dẫn trực tiếp.
+   - Panel Tạo Video 1-Click tự động hóa 100% không yêu cầu can thiệp thủ công.
+   - 19/19 Unit & Integration Tests pass (`apps/web/src/__tests__/`).
 
 ---
 
-### 🧪 Phase 5: Tổng Hợp Đánh Giá (Aggregated Evaluation), Benchmarking & Hardening (Tuần 8)
+### 🧪 Phase 5: Tổng Hợp Đánh Giá (Aggregated Evaluation), Benchmarking & Hardening (Tuần 8) 🔄 **HIỆN TẠI**
 **Mục tiêu:** Chạy đồng loạt toàn bộ các bộ eval (`packages/*/eval/` và `services/*/eval/`), kiểm thử tải hạ tầng VPS và tối ưu hóa hệ thống trước khi vận hành.
 
 #### 📋 Các công việc cụ thể:
 1. **Chạy Master Evaluation Runner:**
-   - Viết script `pnpm eval:all` tại root Monorepo để kích hoạt tuần tự và tổng hợp báo cáo từ 5 bộ eval thành phần:
+   - Script `pnpm eval:all --fresh` tại root Monorepo để kích hoạt tuần tự và tổng hợp báo cáo từ các bộ eval thành phần:
      - `pnpm --filter @chronoviet/rag-engine eval`
-     - `pnpm --filter @chronoviet/vieneu-tts eval`
      - `pnpm --filter @chronoviet/vlm-inspector eval`
      - `pnpm --filter @chronoviet/agent-orchestrator eval`
      - `pnpm --filter @chronoviet/remotion-engine eval`
-     - `pnpm --filter @chronoviet/render-worker eval`
+     - `pnpm --filter @chronoviet/data-ingestion eval` (KPI Mô-đun 0)
+     - `pnpm --filter @chronoviet/vieneu-tts eval` (KPI TTS, khi service đã chạy)
 2. **Load Test & Resource Audit Trên Single VPS:**
    - Giới hạn tài nguyên Docker Compose: Worker CPU max 2.0, RAM max 4GB.
    - Kiểm tra rò rỉ bộ nhớ (Memory Leak Audit): Chạy 100 jobs render liên tục, đảm bảo peak RAM $< 3.8\text{ GB}$ và dọn sạch temp file.
@@ -326,8 +331,9 @@ Ma trận dưới đây ánh xạ trực tiếp từng trục đánh giá kỹ t
 
 Kế hoạch triển khai dự án ChronoViet được xây dựng dựa trên nguyên tắc **tối ưu hóa tài nguyên**, **triển khai mô-đun hóa nghiêm ngặt**, và **bắt buộc có thư mục đánh giá `eval/` cho từng mô-đun**.
 
-### 🎯 Các bước cần thực hiện ngay (Next Immediate Steps):
-1. ✅ ~~Khởi tạo thư mục `eval/` và file `README.md` hướng dẫn đánh giá~~ — **ĐÃ HOÀN THÀNH** (Phase 1)
-2. ✅ ~~Cấu hình script tổng hợp `pnpm eval:all`~~ — **ĐÃ HOÀN THÀNH** tại `package.json` gốc
-3. ✅ ~~Tiến hành Workstream B (VieNeu TTS ONNX Service)~~ — **ĐÃ HOÀN THÀNH** (Phase 1, `services/vieneu-tts/`)
-4. **Cập nhật Trung tâm Tài liệu (`docs/README.md`)** để dẫn link tới tài liệu Kế hoạch Triển khai v1.1 này.
+### 🎯 Các bước cần thực hiện tiếp theo (Next Action Items for Phase 5):
+1. ✅ ~~Khởi tạo và hoàn thiện Monorepo, VieNeu TTS Engine (`services/vieneu-tts/`)~~ — **ĐÃ HOÀN THÀNH** (Phase 1)
+2. ✅ ~~Hoàn thiện Ingestion ETL (`packages/data-ingestion/`), Chrono-RAG (`packages/rag-engine/`), VLM Inspector (`packages/vlm-inspector/`)~~ — **ĐÃ HOÀN THÀNH** (Phase 2)
+3. ✅ ~~Hoàn thiện Multi-Agent Orchestrator (`packages/agent-orchestrator/`), Task Queues & Worker (`apps/render-worker/`)~~ — **ĐÃ HOÀN THÀNH** (Phase 3)
+4. ✅ ~~Hoàn thiện App Monolith E2E (`apps/web` NotebookLM Workspace UI, APIs, WebSocket & Video Player)~~ — **ĐÃ HOÀN THÀNH** (Phase 4)
+5. 🔄 **Thực thi Full Benchmarking Suite & Hardening**: Chạy `pnpm eval:all --fresh` trên môi trường thực tế (PostgreSQL pgvector, Redis, Local AI / Agnes Cloud Fallback, VieNeu TTS) để lập báo cáo hiệu năng và kiểm thử tải hệ thống.

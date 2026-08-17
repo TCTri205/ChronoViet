@@ -5,7 +5,7 @@
 > **Phiên bản:** `v2.0 — Comprehensive Evaluation Framework`
 > **Cập nhật:** 2026-08-14
 > **Phạm vi:** Đánh giá độc lập 11 tầng xử lý (C0–C10) cùng tầng System/Ablation & E2E của `packages/rag-engine`, `packages/data-ingestion`, và tầng tích hợp Multi-Agent Context.
-> **Phụ thuộc:** [`docs/modules/01_CHRONO_RAG_ENGINE.md`](./modules/01_CHRONO_RAG_ENGINE.md), [`docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`](./KNOWLEDGE_DATA_GOVERNANCE_SPEC.md), [`packages/shared-spec`](../packages/shared-spec)
+> **Phụ thuộc:** [`docs/modules/01_CHRONO_RAG_ENGINE.md`](../modules/01_CHRONO_RAG_ENGINE.md), [`docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`](./KNOWLEDGE_DATA_GOVERNANCE_SPEC.md), [`packages/shared-spec`](../../packages/shared-spec)
 
 ---
 
@@ -535,6 +535,6 @@ packages/rag-engine/eval/
 ---
 
 > **Tài liệu liên quan:**
-> - [`docs/modules/01_CHRONO_RAG_ENGINE.md`](./modules/01_CHRONO_RAG_ENGINE.md) — Kiến trúc tổng quan và 5-step pipeline của Chrono-RAG Engine
-> - [`docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`](./KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) — Chuẩn quản trị dữ liệu sử liệu, phân cấp nguồn Level 1/2/3 và W_source
-> - [`packages/rag-engine/eval/README.md`](../packages/rag-engine/eval/README.md) — Hướng dẫn vận hành hệ thống đánh giá ChronoEval
+> - [`docs/modules/01_CHRONO_RAG_ENGINE.md`](../modules/01_CHRONO_RAG_ENGINE.md) — Kiến trúc tổng quan và 5-step pipeline của Chrono-RAG Engine
+> - [`docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`](./KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) — Chuẩn quản trị dữ liệu sử liệu, phân cấp nguồn Level 1/2/3 và W_source
+> - [`packages/rag-engine/eval/README.md`](../../packages/rag-engine/eval/README.md) — Hướng dẫn vận hành hệ thống đánh giá ChronoEval

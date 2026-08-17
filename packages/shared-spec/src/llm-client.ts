@@ -84,6 +84,7 @@ export async function generateLLMCompletion(
           ...(options.response_format ? { response_format: options.response_format } : {}),
         }),
         signal: controller.signal,
+        cache: 'no-store',
       });
 
       clearTimeout(timer);
@@ -176,6 +177,7 @@ export async function generateLLMCompletion(
           max_tokens: maxTokens,
         }),
         signal: controller.signal,
+        cache: 'no-store',
       });
 
       clearTimeout(timer);
@@ -231,7 +233,7 @@ export async function isLLMServiceHealthy(): Promise<{ healthy: boolean; provide
   if (envConfig.USE_LOCAL_LLM) {
     try {
       const endpoint = `${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/models`;
-      const res = await fetch(endpoint, { signal: AbortSignal.timeout(3000) });
+      const res = await fetch(endpoint, { signal: AbortSignal.timeout(3000), cache: 'no-store' });
       if (res.ok) {
         return {
           healthy: true,
@@ -316,6 +318,7 @@ export async function* generateLLMCompletionStream(
           ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
         }),
         signal: AbortSignal.timeout(timeoutMs),
+        cache: 'no-store',
       });
 
       if (response.ok && response.body) {
@@ -344,6 +347,7 @@ export async function* generateLLMCompletionStream(
           stream: true,
         }),
         signal: AbortSignal.timeout(timeoutMs),
+        cache: 'no-store',
       });
 
       if (response.ok && response.body) {

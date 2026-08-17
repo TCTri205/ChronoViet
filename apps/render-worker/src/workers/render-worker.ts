@@ -10,6 +10,7 @@ import {
   cleanProjectWorkspace,
   createLogger,
   ensureProjectAssetsReady,
+  formatErrorMessage,
   initProjectWorkspace,
   loadProjectSchema,
   RedisPubSubManager,
@@ -279,7 +280,11 @@ export function startRenderWorker(): Worker<RenderJobData, RenderJobResult> {
   });
 
   worker.on('failed', (job, err) => {
-    log.error('worker.render_job_failed', `Render job ${job?.id} failed: ${err.message}`, { error: err });
+    log.error('worker.render_job_failed', `Render job ${job?.id} failed: ${formatErrorMessage(err)}`, { error: err });
+  });
+
+  worker.on('error', (err) => {
+    log.warn('worker.render_redis_error', `Render worker Redis connection error: ${formatErrorMessage(err)}`, { error: err });
   });
 
   return worker;

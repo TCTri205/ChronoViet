@@ -99,18 +99,52 @@ export function sanitizePayload(value: unknown, depth = 0): unknown {
 }
 
 /**
- * Flatten an Error into a queryable object, preserving name/message/stack/cause.
+ * Human-readable single-line representation of any error (including AggregateError,
+ * network errors with codes like ECONNREFUSED where message is empty, etc.).
+ */
+export function formatErrorMessage(err: unknown): string {
+  if (!err) return 'Unknown error';
+  if (typeof err === 'string') return err;
+  if (err instanceof Error) {
+    const code = (err as any).code ? ` [${(err as any).code}]` : '';
+    if (err.message && err.message.trim().length > 0) {
+      return `${err.message}${code}`;
+    }
+    if (Array.isArray((err as any).errors) && (err as any).errors.length > 0) {
+      const inner = (err as any).errors.map(formatErrorMessage).filter(Boolean).join(', ');
+      return `${err.name}${code}: ${inner}`;
+    }
+    if ((err as any).code) {
+      return `${err.name} [${(err as any).code}]`;
+    }
+    return err.name || 'Error';
+  }
+  return String(err);
+}
+
+/**
+ * Flatten an Error into a queryable object, preserving name/message/stack/cause/code/errors.
  * Returns the raw value unchanged if it is not an Error.
  */
 export function serializeError(err: unknown): unknown {
   if (err instanceof Error) {
+    const code = (err as any).code;
+    let message = err.message;
+    if (!message || message.trim().length === 0) {
+      message = formatErrorMessage(err);
+    }
+
     const out: Record<string, unknown> = {
       name: err.name,
-      message: err.message,
+      message,
     };
+    if (code) out.code = code;
     if (err.stack) out.stack = err.stack;
     if (err.cause !== undefined && err.cause !== null) {
       out.cause = serializeError(err.cause);
+    }
+    if (Array.isArray((err as any).errors)) {
+      out.errors = (err as any).errors.map(serializeError);
     }
     // Copy extra own enumerable props (e.g. statusCode, code).
     for (const key of Object.keys(err)) {

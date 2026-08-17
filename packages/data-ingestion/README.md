@@ -1,7 +1,7 @@
 # `@chronoviet/data-ingestion`
 
 > **ChronoViet Data Preprocessing & Ingestion Engine (Mô-đun 0)**  
-> Gói mã nguồn chịu trách nhiệm cào tự động 15 thời kỳ lịch sử, làm sạch văn bản & khử nhập nhằng thực thể, phân đoạn văn bản đa cấp (Hierarchical Temporal Chunking), nạp dữ liệu tri thức song song (Dual-Branch Vector/Graph Seeder) và xử lý tài nguyên đa phương tiện (Media/Audio ETL). Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](../../docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v1.5.
+> Gói mã nguồn chịu trách nhiệm cào tự động 15 thời kỳ lịch sử, làm sạch văn bản & khử nhập nhằng thực thể, phân đoạn văn bản đa cấp (Hierarchical Temporal Chunking), nạp dữ liệu tri thức song song (Dual-Branch Vector/Graph Seeder) và xử lý tài nguyên đa phương tiện (Media/Audio ETL). Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](../../docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v1.5.
 
 ---
 

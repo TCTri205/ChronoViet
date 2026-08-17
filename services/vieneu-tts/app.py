@@ -2,19 +2,46 @@ import os
 import time
 import math
 import wave
+import json
 import logging
+import hashlib
 import numpy as np
 import soundfile as sf
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from vieneu import Vieneu
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s [vieneu-tts-python] %(message)s")
-log = logging.getLogger("vieneu-tts-python")
+# Initialize Structured Logger
+LOG_FORMAT = os.getenv("LOG_FORMAT", "pretty")
+SERVICE_NAME = "vieneu-tts-python"
+START_TIME = time.time()
 
-app = FastAPI(title="VieNeu TTS Real Engine Service")
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        log_record = {
+            "time": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(record.created)),
+            "level": record.levelname.lower(),
+            "service": SERVICE_NAME,
+            "event": getattr(record, "event", "tts.log"),
+            "msg": record.getMessage(),
+        }
+        if hasattr(record, "extra_fields"):
+            log_record.update(record.extra_fields)
+        return json.dumps(log_record)
+
+handler = logging.StreamHandler()
+if LOG_FORMAT == "json" or os.getenv("NODE_ENV") == "production":
+    handler.setFormatter(JsonFormatter())
+else:
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-5s [vieneu-tts-python] %(message)s"))
+
+log = logging.getLogger(SERVICE_NAME)
+log.setLevel(logging.INFO)
+log.addHandler(handler)
+log.propagate = False
+
+app = FastAPI(title="VieNeu TTS Microservice & Neural Engine")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,14 +52,30 @@ app.add_middleware(
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(BASE_DIR, "media", "audio-cache")
+# Check standard media volume or local media dir
+MEDIA_ROOT = os.getenv("MEDIA_DIR", os.path.join(BASE_DIR, "media"))
+CACHE_DIR = os.getenv("AUDIO_CACHE_DIR", os.path.join(MEDIA_ROOT, "audio-cache"))
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 app.mount("/static/audio", StaticFiles(directory=CACHE_DIR), name="static_audio")
 
-log.info("Loading VieNeu ONNX Neural Engine...")
-tts_engine = Vieneu()
-log.info("VieNeu ONNX Engine ready!")
+# Initialize Neural Engine or Graceful Fallback
+tts_engine = None
+engine_type = "SYNTHETIC_FALLBACK_PYTHON"
+
+try:
+    from vieneu import Vieneu
+    log.info("Loading VieNeu ONNX Neural Engine...")
+    tts_engine = Vieneu()
+    engine_type = "REAL_NEURAL_ONNX"
+    log.info("VieNeu ONNX Neural Engine loaded successfully!")
+except Exception as init_err:
+    log.warning(
+        f"VieNeu ONNX library or model weights not initialized ({init_err}). "
+        "Operating in resilient Python PCM-16 Synthesizer mode."
+    )
+    tts_engine = None
+    engine_type = "SYNTHETIC_FALLBACK_PYTHON"
 
 class VieNeuRequest(BaseModel):
     text: str
@@ -42,78 +85,126 @@ class VieNeuRequest(BaseModel):
     paddingMs: int = 300
     fps: int = 30
 
+def generate_python_pcm16_audio(text: str, duration_ms: number, word_timestamps: list, sample_rate: int = 24000) -> np.ndarray:
+    """Generate harmonic audible PCM audio matching word timestamps for local testing."""
+    num_samples = int((duration_ms / 1000.0) * sample_rate)
+    audio = np.zeros(num_samples, dtype=np.int16)
+    base_freq = 440.0
+
+    for i in range(num_samples):
+        curr_ms = (i / float(sample_rate)) * 1000.0
+        sample_val = 0.0
+        for idx, wt in enumerate(word_timestamps):
+            if wt["startMs"] <= curr_ms <= wt["endMs"]:
+                freq = base_freq + (idx % 6) * 35.0
+                t = i / float(sample_rate)
+                # Apply envelope to avoid clicking
+                time_in_word = curr_ms - wt["startMs"]
+                word_dur = max(1.0, wt["endMs"] - wt["startMs"])
+                envelope = math.sin(math.pi * (time_in_word / word_dur))
+                sample_val = math.sin(2.0 * math.pi * freq * t) * 14000.0 * max(0.0, envelope)
+                break
+        audio[i] = int(sample_val)
+
+    return audio
+
 @app.get("/health")
 def health():
-    return {"status": "OK", "service": "vieneu-tts-python-onnx", "engine": "VieNeu v3 Turbo"}
+    uptime = int(time.time() - START_TIME)
+    cached_count = len(os.listdir(CACHE_DIR)) if os.path.exists(CACHE_DIR) else 0
+    return {
+        "status": "OK",
+        "service": "vieneu-tts-python",
+        "engineType": engine_type,
+        "uptimeSec": uptime,
+        "audioCacheDir": CACHE_DIR,
+        "cachedFilesCount": cached_count,
+        "neuralModelLoaded": tts_engine is not None,
+    }
 
 @app.post("/api/v1/synthesize")
 def synthesize(req: VieNeuRequest, request: Request):
-    request_id = request.headers.get("x-request-id", "")
+    request_id = request.headers.get("x-request-id") or request.headers.get("x-correlation-id") or f"req_{int(time.time()*1000)}"
     text = req.text.strip()
     if not text:
-        log.warning("Empty text in synthesize request, request_id=%s", request_id)
+        log.warning("Empty text received in synthesize request", extra={"event": "tts.empty_text", "requestId": request_id})
         raise HTTPException(status_code=400, detail="Text cannot be empty")
 
     start_time = time.time()
-    log.info("Synthesis started, request_id=%s text_len=%d", request_id, len(text))
+    words = text.split()
+    sample_rate = req.sampleRate or 24000
 
-    import hashlib
-    file_hash = hashlib.sha256(f"{text}_{req.speakerId}_{req.speedRatio}_{req.sampleRate}".encode('utf-8')).hexdigest()[:16]
-    file_name = f"vieneu_real_{file_hash}.wav"
+    # Calculate word cadence and timestamps
+    word_timestamps = []
+    curr_ms = 0.0
+    for w in words:
+        base_dur = max(180.0, len(w) * 40.0)
+        pause = 40.0
+        if w.endswith((".", "!", "?")):
+            pause = 300.0
+        elif w.endswith((",", ";", ":")):
+            pause = 180.0
+        start_w = int(curr_ms)
+        end_w = int(curr_ms + base_dur)
+        word_timestamps.append({"word": w, "startMs": start_w, "endMs": end_w})
+        curr_ms = end_w + pause
+
+    calculated_duration_ms = int(curr_ms)
+
+    # Hash deterministically for file caching
+    file_hash = hashlib.sha256(f"{text}_{req.speakerId}_{req.speedRatio}_{sample_rate}".encode("utf-8")).hexdigest()[:16]
+    file_name = f"vieneu_{file_hash}.wav"
     file_path = os.path.join(CACHE_DIR, file_name)
 
-    if not os.path.exists(file_path):
-        # Synthesize human voice audio using VieNeu v3 Turbo Neural Engine
-        audio_data = tts_engine.infer(text)
-        sample_rate = getattr(tts_engine, 'sample_rate', req.sampleRate)
+    current_engine = engine_type
 
-        # Try native tts.save if available, otherwise write via soundfile with correct 24kHz PCM_16
-        if hasattr(tts_engine, 'save') and callable(getattr(tts_engine, 'save')):
+    if not os.path.exists(file_path):
+        if tts_engine is not None:
             try:
-                tts_engine.save(audio_data, file_path)
-            except Exception as exc:
-                log.warning("tts.save failed, falling back to soundfile, request_id=%s error=%s", request_id, exc)
-                audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
-                sf.write(file_path, audio_int16, sample_rate, subtype='PCM_16')
+                audio_data = tts_engine.infer(text)
+                sr = getattr(tts_engine, "sample_rate", sample_rate)
+                if hasattr(tts_engine, "save") and callable(getattr(tts_engine, "save")):
+                    try:
+                        tts_engine.save(audio_data, file_path)
+                    except Exception:
+                        audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
+                        sf.write(file_path, audio_int16, sr, subtype="PCM_16")
+                else:
+                    audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
+                    sf.write(file_path, audio_int16, sr, subtype="PCM_16")
+            except Exception as infer_err:
+                log.warning(f"Neural inference failed ({infer_err}), falling back to Python PCM synthesizer")
+                current_engine = "SYNTHETIC_FALLBACK_PYTHON"
+                synth_audio = generate_python_pcm16_audio(text, calculated_duration_ms, word_timestamps, sample_rate)
+                sf.write(file_path, synth_audio, sample_rate, subtype="PCM_16")
         else:
-            audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
-            sf.write(file_path, audio_int16, sample_rate, subtype='PCM_16')
+            synth_audio = generate_python_pcm16_audio(text, calculated_duration_ms, word_timestamps, sample_rate)
+            sf.write(file_path, synth_audio, sample_rate, subtype="PCM_16")
 
     if not os.path.exists(file_path):
-        log.error("Failed to write audio file, request_id=%s file=%s", request_id, file_path)
-        raise HTTPException(status_code=500, detail="Failed to write audio file")
+        log.error(f"Failed to create audio file at {file_path}", extra={"event": "tts.file_error", "requestId": request_id})
+        raise HTTPException(status_code=500, detail="Failed to synthesize and write audio file")
 
-    with wave.open(file_path, 'rb') as wf:
+    # Read actual audio duration from WAV header
+    with wave.open(file_path, "rb") as wf:
         frames = wf.getnframes()
         rate = wf.getframerate()
         duration_ms = int((frames / float(rate)) * 1000)
 
     calculated_frames = math.ceil(((duration_ms + req.paddingMs) / 1000.0) * req.fps)
+    elapsed_ms = round((time.time() - start_time) * 1000, 1)
 
-    # Proportional word timestamp calculation based on character length & punctuation pauses
-    words = text.split()
-    word_timestamps = []
-    if len(words) > 0:
-        weights = []
-        for w in words:
-            base_weight = max(180, len(w) * 40)
-            if w.endswith(('.', '!', '?')):
-                base_weight += 300
-            elif w.endswith((',', ';', ':')):
-                base_weight += 180
-            weights.append(base_weight)
-
-        total_weight = sum(weights)
-        curr_ms = 0.0
-        for i, w in enumerate(words):
-            scaled_dur = (weights[i] / total_weight) * duration_ms if total_weight > 0 else (duration_ms / len(words))
-            start_ms = int(curr_ms)
-            end_ms = int(curr_ms + scaled_dur)
-            word_timestamps.append({"word": w, "startMs": start_ms, "endMs": end_ms})
-            curr_ms += scaled_dur
-
-    log.info("Synthesis completed, request_id=%s duration_ms=%d words=%d elapsed_ms=%.1f",
-             request_id, duration_ms, len(words), (time.time() - start_time) * 1000)
+    log.info(
+        f"Synthesized {len(words)} words in {elapsed_ms}ms ({duration_ms}ms audio, {calculated_frames} frames)",
+        extra={
+            "event": "tts.synthesized",
+            "requestId": request_id,
+            "durationMs": duration_ms,
+            "calculatedFrames": calculated_frames,
+            "engineType": current_engine,
+            "latencyMs": elapsed_ms,
+        }
+    )
 
     return {
         "status": "SUCCESS",
@@ -121,7 +212,7 @@ def synthesize(req: VieNeuRequest, request: Request):
         "audioDurationMs": duration_ms,
         "calculatedFramesAt30fps": calculated_frames,
         "wordTimestamps": word_timestamps,
-        "engineType": "REAL_NEURAL_ONNX"
+        "engineType": current_engine,
     }
 
 if __name__ == "__main__":

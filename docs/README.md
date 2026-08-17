@@ -6,59 +6,57 @@ Chào mừng bạn đến với Trung tâm Tài liệu Kỹ thuật và Kiến t
 
 ## 🗂️ 1. Cấu Trúc & Phân Nhóm Tài Liệu (Documentation Directory)
 
-Tài liệu dự án được tổ chức thành 4 nhóm chính theo tầng kiến trúc, được đánh dấu rõ rệt giữa **[✅ ĐÃ IMPLEMENTED]** (Code Engine đã hoàn thiện) và **[📐 THIẾT KẾ KẾ HOẠCH / ROADMAP]**:
+Tài liệu dự án được tổ chức khoa học thành các nhóm chuyên biệt, phân định rõ ràng giữa **Kiến trúc (Architecture)**, **Mô-đun Core (Modules)**, **Quy chuẩn kỹ thuật (Specs - SSOT)**, **Hướng dẫn (Guides)**, **Kịch bản (Script Examples)** và **Lưu trữ lịch sử (Archive)**:
 
 ```
 docs/
+├── 📘 SystemOverview.md                       [Kiến trúc Toàn diện RAG + Multi-Agent + VLM + Remotion + Web App [✅]]
+├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai 5 Phase & Khung Đánh giá 8 Mô-đun [✅ Phase 1-4 Done, Phase 5 Current]]
+│
 ├── 🏛️ architecture/                           [KIẾN TRÚC HỆ THỐNG & HẠ TẦNG KỸ THUẬT]
-│   ├── architecture/README.md                 [Tổng quan Kiến trúc Hệ thống & Hạ tầng]
-│   ├── architecture/01_ARCHITECTURAL_STYLE.md [Kiểu Kiến trúc: Event-Driven + Decoupled Pipeline]
-│   ├── architecture/02_COMMUNICATION_AND_QUEUES.md [Giao tiếp IPC, BullMQ Task Queues & WebSocket]
-│   ├── architecture/03_DATA_STORAGE_AND_CACHE.md [Cơ sở dữ liệu (Postgres pgvector SSOT) & Cache (Redis)]
-│   ├── architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md [Quản lý State (LangGraph.js), Docker Compose & Custom Next.js Deploy]
-│   ├── architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md [Tối ưu Sản xuất & VieNeu TTS Engine]
-│   └── architecture/06_OBSERVABILITY_AND_LOGGING.md [Unified Structured Logging & Hướng dẫn Truy vết]
+│   ├── README.md                              [Tổng quan Kiến trúc Hệ thống & Hạ tầng]
+│   ├── 01_ARCHITECTURAL_STYLE.md              [Kiểu Kiến trúc: Event-Driven + Decoupled Pipeline]
+│   ├── 02_COMMUNICATION_AND_QUEUES.md         [Giao tiếp IPC, BullMQ Task Queues & WebSocket]
+│   ├── 03_DATA_STORAGE_AND_CACHE.md           [Cơ sở dữ liệu (Postgres pgvector SSOT) & Cache (Redis)]
+│   ├── 04_STATE_MANAGEMENT_AND_DEPLOY.md      [Quản lý State (LangGraph.js), Docker Compose & App Deploy]
+│   ├── 05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md [Tối ưu Sản xuất & VieNeu TTS Engine]
+│   ├── 06_OBSERVABILITY_AND_LOGGING.md        [Unified Structured Logging & Hướng dẫn Truy vết]
+│   └── CHRONOVIET_ARCHITECTURE_DIAGRAMS.md    [Bộ Sơ đồ Kiến trúc Toàn diện]
 │
 ├── ⚙️ modules/                                [CHI TIẾT 5 MÔ-ĐUN XỬ LÝ PIPELINE]
-│   ├── modules/README.md                      [Tổng quan 5 Mô-đun Xử lý Dữ liệu]
-│   ├── modules/00_DATA_PREPROCESSING_AND_INGESTION.md [Mô-đun 0: Data Preprocessing & Ingestion Engine [✅]]
-│   ├── modules/01_CHRONO_RAG_ENGINE.md        [Mô-đun 1: Knowledge Retrieval & Anti-Hallucination [✅]]
-│   ├── modules/02_MULTI_AGENT_ORCHESTRATOR.md [Mô-đun 2: Multi-Agent LangGraph.js & Script Pipeline v4.1 [✅]]
-│   ├── modules/03_VLM_INSPECTOR_AGENT.md      [Mô-đun 3: Visual Quality Control & Dual Scorer [✅]]
-│   └── modules/04_REMOTION_RENDER_ENGINE.md   [Mô-đun 4: 100% Data-Driven Video Pipeline [✅]]
+│   ├── README.md                              [Tổng quan 5 Mô-đun Xử lý Dữ liệu]
+│   ├── 00_DATA_PREPROCESSING_AND_INGESTION.md [Mô-đun 0: Data Preprocessing & Ingestion Engine [✅]]
+│   ├── 01_CHRONO_RAG_ENGINE.md                [Mô-đun 1: Knowledge Retrieval & Anti-Hallucination [✅]]
+│   ├── 02_MULTI_AGENT_ORCHESTRATOR.md         [Mô-đun 2: Multi-Agent LangGraph.js & Script Pipeline v4.1 [✅]]
+│   ├── 03_VLM_INSPECTOR_AGENT.md              [Mô-đun 3: Visual Quality Control & Dual Scorer [✅]]
+│   └── 04_REMOTION_RENDER_ENGINE.md           [Mô-đun 4: 100% Data-Driven Video Pipeline [✅]]
 │
-├── 🖥️ apps/                                   [LỚP ỨNG DỤNG & CLUSTER WORKER RUNTIME]
-│   ├── apps/web/README.md                     [App Monolith: NotebookLM Workspace UI/UX, REST API, SSE & WebSocket Gateway [✅]]
-│   └── apps/render-worker/README.md           [Render Worker Cluster: BullMQ, Remotion CLI & Redis PubSub [✅]]
+├── 📐 specs/                                  [QUY CHUẨN KỸ THUẬT & THIẾT KẾ (SSOT)]
+│   ├── EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 31 LayoutMode, 19 Transition, Zod Schema, 11 Compositions [✅]]
+│   ├── REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v4.1, Lego Components [✅]]
+│   ├── KNOWLEDGE_DATA_GOVERNANCE_SPEC.md      [★ Source of Truth: Quản trị Số lượng, Chất lượng & Giải quyết Xung đột Sử liệu [✅]]
+│   ├── RAG_COMPONENT_BENCHMARK_SPEC.md        [★ Benchmark Chi tiết từng Component RAG: C0-C10, Dataset, Metrics & Regression Gate [✅]]
+│   ├── UI_UX_DESIGN_SPECIFICATION.md          [★ Đặc tả Thiết Kế UI/UX NotebookLM Workspace & 1-Click Studio [✅ Spec]]
+│   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md          [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]
 │
-├── 🔊 services/vieneu-tts                      [Mô-đun VieNeu TTS Engine Standalone Microservice & Eval [✅]]
+├── 📖 guides/                                 [HƯỚNG DẪN KỸ THUẬT & AUDIT LOGS]
+│   ├── MACOS_LOCAL_MODEL_OPTIMIZATION.md      [Hướng dẫn Tối ưu hóa Mô hình Local trên macOS (Apple Silicon)]
+│   └── RESEARCH_PROMPTS_LOG.md                [Nhật ký audit ảnh tư liệu Wikimedia (Phase 1: Quang Trung 15 scenes) [🟡 Audit In Progress]]
 │
-├── 💻 MACOS_LOCAL_MODEL_OPTIMIZATION.md       [Hướng dẫn Tối ưu hóa Mô hình Local trên macOS (Apple Silicon)]
-├── 📘 SystemOverview.md                       [Kiến trúc Toàn diện RAG + Multi-Agent + VLM + Remotion + Web App [✅]]
-├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai 4 Sprint & Khung Đánh giá 8 Mô-đun [✅]]
-├── 📊 RAG_COMPONENT_BENCHMARK_SPEC.md        [★ Benchmark Chi tiết từng Component RAG: C0-C10, Dataset, Metrics & Regression Gate [✅]]
+├── 📜 script_examples/                        [KỊCH BẢN MẪU CHUẨN SCHEMA v4.1]
+│   ├── KICH_BAN_BIOGRAPHY_TRAN_HUNG_DAO.md    [Domain BIOGRAPHY: Trần Hưng Đạo (21 JSON scenes, 405s)]
+│   ├── KICH_BAN_BATTLE_BACH_DANG_938.md       [Domain BATTLE: Trận Bạch Đằng 938 (21 JSON scenes, 405s)]
+│   ├── KICH_BAN_DYNASTY_TRIEU_LY.md           [Domain DYNASTY: Triều Đại Nhà Lý (21 JSON scenes, 405s)]
+│   ├── KICH_BAN_MYSTERY_LE_CHI_VIEN.md        [Domain MYSTERY: Vụ Án Lệ Chi Viên (19 scenes, 375s)]
+│   ├── KICH_BAN_ARTIFACT_TRONG_DONG_NGOC_LU.md [Domain ARTIFACT: Trống Đồng Ngọc Lũ (19 JSON scenes, 375s)]
+│   ├── KICH_BAN_QUANG_TRUNG.md                [Kịch bản Legacy: Hoàng đế Quang Trung (18 scenes JSON, 245s)]
+│   ├── KICH_BAN_HAI_BA_TRUNG.md               [Kịch bản Legacy: Khởi nghĩa Hai Bà Trưng (27 scenes JSON, 450s)]
+│   └── KICH_BAN_MONG_CO_DAI_VIET_LAN_2.md     [Kịch bản Legacy: Chống Nguyên Mông Lần 2 (25 scenes JSON, 1140s)]
 │
-├── ⚙️ EVAL_REMOTION_TECHNICAL_SPEC.md        [★ Source of Truth: 31 LayoutMode, 19 Transition, Zod Schema, 11 Compositions [✅]]
-├── 📜 REMOTION_CONTENT_FORMATS_SPEC.md       [Quy chuẩn 5 Domain, Schema Production v4.1, Lego Components [✅]]
-├── 🧠 KNOWLEDGE_DATA_GOVERNANCE_SPEC.md      [★ Source of Truth: Quản trị Số lượng, Chất lượng & Giải quyết Xung đột Sử liệu [✅]]
-├── 📋 RAG_plan.md                            [★ Kế hoạch triển khai RAG Engine chi tiết (Phase 1-4) [✅]]
-├── 🗄️ data_preprocessing_plan.md             [★ Kế hoạch tiền xử lý & nạp dữ liệu chi tiết [✅]]
-│
-├── 🎨 3. HƯỚNG DẪN THIẾT KẾ & VISUAL DESIGN
-│   ├── UI_UX_DESIGN_SPECIFICATION.md      [★ Đặc tả Thiết Kế UI/UX NotebookLM Workspace & 1-Click Studio [✅ Spec]]
-│   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md      [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]
-│
-└── 📜 4. KỊCH BẢN MẪU & RESEARCH LOG
-    ├── RESEARCH_PROMPTS_LOG.md                [Nhật ký audit ảnh tư liệu Wikimedia (Phase 1: Quang Trung 15 scenes) [🟡 Audit In Progress]]
-    └── script_examples/                      [Tất cả kịch bản chuẩn Schema v4.1 [✅]]
-        ├── KICH_BAN_BIOGRAPHY_TRAN_HUNG_DAO.md [Kịch bản Domain BIOGRAPHY: Trần Hưng Đạo (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
-        ├── KICH_BAN_BATTLE_BACH_DANG_938.md     [Kịch bản Domain BATTLE: Trận Bạch Đằng 938 (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
-        ├── KICH_BAN_DYNASTY_TRIEU_LY.md          [Kịch bản Domain DYNASTY: Triều Đại Nhà Lý (20 nội dung + 1 brand intro = 21 JSON scenes, 405s)]
-        ├── KICH_BAN_MYSTERY_LE_CHI_VIEN.md      [Kịch bản Domain MYSTERY: Vụ Án Lệ Chi Viên (19 scenes, 375s)]
-        ├── KICH_BAN_ARTIFACT_TRONG_DONG_NGOC_LU.md [Kịch bản Domain ARTIFACT: Trống Đồng Ngọc Lũ (18 nội dung + 1 brand intro = 19 JSON scenes, 375s)]
-        ├── KICH_BAN_QUANG_TRUNG.md              [Kịch bản Legacy: Hoàng đế Quang Trung (24 scenes)]
-        ├── KICH_BAN_HAI_BA_TRUNG.md              [Kịch bản Legacy: Khởi nghĩa Hai Bà Trưng (28 scenes)]
-        └── KICH_BAN_MONG_CO_DAI_VIET_LAN_2.md   [Kịch bản Legacy: Chống Nguyên Mông Lần 2 (25 scenes, 18 phút)]
+└── 🗄️ archive/                                [LƯU TRỮ CÁC BẢN KẾ HOẠCH TẠM THỜI ĐÃ HOÀN THÀNH]
+    ├── RAG_plan.md                            [Kế hoạch RAG Engine khởi tạo (Phase 1-4 draft)]
+    ├── data_preprocessing_plan.md             [Kế hoạch Ingestion Engine khởi tạo draft]
+    └── E2E_WEB_APP_AND_RUNTIME_INTEGRATION_PLAN.md [Kế hoạch Tích hợp E2E Web App & Scripts draft]
 ```
 
 ---
@@ -68,15 +66,17 @@ docs/
 ### 2.1. [SystemOverview.md](SystemOverview.md) — Kiến Trúc Hệ Thống Tổng Quan
 - **Mục đích:** Cung cấp cái nhìn toàn cảnh về dự án ChronoViet.
 - **Trạng thái:** 
-  - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation, 19 Components, 31 LayoutModes, 11 Compositions trong `Root.tsx`.
+  - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation v4.1, 19 Components, 31 LayoutModes, 11 Compositions trong `Root.tsx`.
   - **[✅ IMPLEMENTED]:** VieNeu TTS Dual-Layer Microservice + Eval Suite (`services/vieneu-tts/`).
-  - **[📐 ROADMAP]:** RAG Engine, Multi-Agent Orchestrator, VLM Inspector Agent (mô hình thiết kế kiến trúc chuẩn bị kết nối với Remotion Engine).
+  - **[✅ IMPLEMENTED]:** Data Preprocessing & Ingestion Engine (`packages/data-ingestion/`) & Chrono-RAG Engine (`packages/rag-engine/`).
+  - **[✅ IMPLEMENTED]:** Multi-Agent Orchestrator LangGraph.js (`packages/agent-orchestrator/`) & VLM Inspector (`packages/vlm-inspector/`).
+  - **[✅ IMPLEMENTED]:** App Monolith Web UI/UX NotebookLM Workspace, REST API, WebSocket & Render Worker (`apps/web` & `apps/render-worker`).
 
-### 2.2. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Kế Hoạch Triển Khai v1.1, Phân Tích Song Song & Khung Đánh Giá `eval/`
-- **Mục đích:** Kế hoạch thực thi dự án chi tiết, lộ trình 5 giai đoạn, phân tích khả năng phát triển song song của 4 mô-đun, quy tắc bắt buộc có thư mục `eval/` riêng cho từng mô-đun và bộ hợp đồng giao tiếp Type-Safe giữa các mô-đun (`packages/shared-spec`).
-- **Trạng thái:** **[📐 ROADMAP SPECIFICATION v1.1]** Đã xác định rõ Workstream A (RAG), B (VieNeu TTS), C (VLM Inspector) triển khai và tự đánh giá song song bằng bộ `eval/` riêng trước khi hợp nhất ở Workstream D (Orchestrator).
+### 2.2. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Kế Hoạch Triển Khai v1.1 & Khung Đánh Giá `eval/`
+- **Mục đích:** Kế hoạch thực thi dự án chi tiết, lộ trình 5 giai đoạn, phân tích khả năng phát triển song song của các mô-đun, quy tắc bắt buộc có thư mục `eval/` riêng cho từng mô-đun và bộ hợp đồng giao tiếp Type-Safe giữa các mô-đun (`packages/shared-spec`).
+- **Trạng thái:** **[✅ PHASE 1–4 COMPLETED, PHASE 5 IN PROGRESS]** Toàn bộ Workstream 0, A, B, C, D và App Layer đã hoàn thành 100% codebase và unit tests.
 
-### 2.3. [EVAL_REMOTION_TECHNICAL_SPEC.md](EVAL_REMOTION_TECHNICAL_SPEC.md) — ★ Quy Chuẩn Kỹ Thuật (Source of Truth)
+### 2.3. [specs/EVAL_REMOTION_TECHNICAL_SPEC.md](specs/EVAL_REMOTION_TECHNICAL_SPEC.md) — ★ Quy Chuẩn Kỹ Thuật (Source of Truth)
 - **Mục đích:** Tài liệu tham chiếu kỹ thuật chi tiết và chính xác nhất cho `packages/remotion-engine/src/`.
 - **Trọng tâm:**
   - Mô hình 3 Lớp Rendering (`HistoryBackground` + `HistoryForeground` + `Persistent Overlays`) & cơ chế `TransitionSeries` trong `ChronoVideo.tsx`
@@ -85,44 +85,53 @@ docs/
   - Zod Schema (`ChronoVideoSchema`, `TimelineSceneSchema`, `OverlayDataSchema`)
   - **11 Composition** đã đăng ký trong `Root.tsx` (BIOGRAPHY 21 scenes, BATTLE 21 scenes, DYNASTY 21 scenes, MYSTERY 19 scenes, ARTIFACT 19 scenes, Quick Shorts, Modern News + 3 Legacy)
 
-### 2.4. [REMOTION_CONTENT_FORMATS_SPEC.md](REMOTION_CONTENT_FORMATS_SPEC.md) — Quy Chuẩn Định Dạng Nội Dung v4.1
+### 2.4. [specs/REMOTION_CONTENT_FORMATS_SPEC.md](specs/REMOTION_CONTENT_FORMATS_SPEC.md) — Quy Chuẩn Định Dạng Nội Dung v4.1
 - **Mục đích:** Quy định ranh giới cho AI Agent khi lập kịch bản video.
 - **Trọng tâm:** Triết lý "1 Scene = 1 Trạng thái", Bảng mapping 5 Domain lịch sử với Component flow bắt buộc, Schema JSON Production mẫu cho cả 5 domain.
 - **Lưu ý Âm thanh & Tải tài nguyên:** Trường `sfxUrl`, `soundEffects[]` & `sceneAudioUrl` được hỗ trợ 100% trong Zod Schema và `ChronoVideo.tsx` render pipeline. Tài nguyên âm thanh SFX & hình ảnh tư liệu được cấu hình nạp trực tiếp qua `media/` hoặc `packages/remotion-engine/public/`.
 
-### 2.5. [TEMPLATE_GUIDE_VIDEO_ESSAY.md](TEMPLATE_GUIDE_VIDEO_ESSAY.md) — Hướng Dẫn Thiết Kế Format Video Essay
+### 2.5. [specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) — Quy Chuẩn Quản Trị Tri Thức
+- **Mục đích:** Đặc tả quản trị số lượng, chất lượng, phân cấp độ tin cậy của tài liệu nguồn (Level 1-3) và giải quyết xung đột sử liệu.
+
+### 2.6. [specs/UI_UX_DESIGN_SPECIFICATION.md](specs/UI_UX_DESIGN_SPECIFICATION.md) — Đặc Tả Thiết Kế Giao Diện UI/UX
+- **Mục đích:** Bản đặc tả chi tiết toàn diện giao diện NotebookLM Heritage Workspace: Hệ thống màu sắc HSL di sản, Typography font Playfair Display & Plus Jakarta Sans, Khung Chatbot RAG, Panel Tạo Video 1-Click, Live Agent Stepper và MP4 Video Player.
+- **Trạng thái:** **[✅ IMPLEMENTED]** Đã triển khai đầy đủ trong `apps/web/src/components/`.
+
+### 2.7. [specs/TEMPLATE_GUIDE_VIDEO_ESSAY.md](specs/TEMPLATE_GUIDE_VIDEO_ESSAY.md) — Hướng Dẫn Thiết Kế Format Video Essay
 - **Mục đích:** Hướng dẫn quy chuẩn đồ họa cho format Video Essay phân tích dài (Spiderum style).
-- **Trạng thái:** **[📐 DESIGN SPECIFICATION]** Định hướng thiết kế cho các component mở rộng tương lai (`VideoEssayTitleCard`, `HistoricalQuoteCard`), tuân thủ quy tắc không override code lõi.
 
-### 2.6. [RESEARCH_PROMPTS_LOG.md](RESEARCH_PROMPTS_LOG.md) — Nhật Ký Audit Ảnh Tư Liệu
-- **Trạng thái:** **[🟡 PHASE 1 VERIFIED AUDIT]** Chứa bảng kiểm định 15 ảnh tư liệu cốt lõi cho kịch bản Quang Trung. Phụ lục chứa template audit cho các phân cảnh và kịch bản còn lại trong lộ trình Phase 2.
+### 2.8. [guides/RESEARCH_PROMPTS_LOG.md](guides/RESEARCH_PROMPTS_LOG.md) — Nhật Ký Audit Ảnh Tư Liệu
+- **Trạng thái:** **[🟡 PHASE 1 VERIFIED AUDIT]** Chứa bảng kiểm định 15 ảnh tư liệu cốt lõi cho kịch bản Quang Trung.
 
-### 2.7. [script_examples/](script_examples) — Kịch Bản Mẫu
-- 5 kịch bản chuẩn domain (BIOGRAPHY, BATTLE, DYNASTY, MYSTERY, ARTIFACT) + 3 kịch bản legacy (Quang Trung, Hai Bà Trưng, Mông Cổ lần 2) — **tất cả file đều có JSON template chuẩn Schema v4.1**.
-
-### 2.8. [06_OBSERVABILITY_AND_LOGGING.md](architecture/06_OBSERVABILITY_AND_LOGGING.md) — Unified Structured Logging
+### 2.9. [architecture/06_OBSERVABILITY_AND_LOGGING.md](architecture/06_OBSERVABILITY_AND_LOGGING.md) — Unified Structured Logging
 - **Mục đích:** Mô tả logger dùng chung đặt tại `@chronoviet/shared-spec/src/logger.ts` (JSON Lines, level filter, correlation ID, redaction secrets) và cách truy vết log toàn monorepo bằng `jq`.
-- **Trạng thái:** **[✅ IMPLEMENTED]** Toàn bộ `packages/*`, `apps/*`, `services/*`, `scripts/*`, `eval/` đã migrate sang structured logger; kèm danh sách pre-existing bugs đã phát hiện & sửa nhờ audit (§7).
-- **Quy ước:** Event name `subsystem.hành_động.kết_quả` (vd `rag.search_completed`, `tts.synthesize_failed`, `ops.db_health_completed`); level `debug|info|warn|error`; correlation ID qua `x-request-id` (TTS), `projectId` (orchestrator), run id (CLI).
 
 ---
 
-## ⚡ 3. Quickstart: Lệnh Render Video Remotion Nhanh (Chạy tại Root Monorepo)
+## ⚡ 3. Quickstart: Vận Hành Hệ Thống ChronoViet
 
+### Khởi động Môi trường Ứng dụng Toàn diện (Web App & Worker):
 ```bash
-# 1. Khởi tạo CSDL PostgreSQL pgvector & Relational Graph Schema
-pnpm --filter @chronoviet/data-ingestion db:init
+# 1. Khởi chạy Hạ tầng Cơ sở Dữ liệu & Cache (PostgreSQL pgvector & Redis)
+pnpm stack:infra
+# Hoặc khởi chạy đầy đủ cả VieNeu TTS service qua Docker Compose:
+# docker compose up -d
 
-# 2. Cào TỰ ĐỘNG toàn bộ 15 Thời kỳ Lịch sử Việt Nam
+# 2. Khởi tạo CSDL & Schema Đồ thị Quan hệ
+pnpm db:init
+
+# 3. Nạp kho tri thức lịch sử vào CSDL (nếu chưa nạp)
 pnpm crawl:all
+pnpm ingest:knowledge
 
-# 3. Tiền xử lý & Nạp kho tri thức vào CSDL
-pnpm --filter @chronoviet/data-ingestion ingest:knowledge
+# 4. Khởi chạy toàn bộ Ứng dụng (Next.js App Server + BullMQ Render Worker)
+pnpm dev
 
-# 4. Trải nghiệm Chatbot RAG tương tác trực tiếp trên Terminal CLI
-pnpm rag:chat
+# Mở trình duyệt truy cập: http://localhost:3000
+```
 
-# 5. Render các kịch bản domain chuẩn ra MP4 từ root monorepo
+### Render Video Trực Tiếp Qua CLI:
+```bash
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/rendered-videos/biography.mp4
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/rendered-videos/battle.mp4
 pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
@@ -134,16 +143,17 @@ pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_
 
 | Tôi muốn biết... | Đọc tại |
 | :--- | :--- |
-| `LayoutMode` nào cần dùng cho scene này? | [EVAL_REMOTION_TECHNICAL_SPEC.md §4.1](EVAL_REMOTION_TECHNICAL_SPEC.md) |
-| Cách 3 Layer Rendering phối hợp trong `ChronoVideo.tsx`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §2](EVAL_REMOTION_TECHNICAL_SPEC.md) |
-| Trường nào trong `overlayData` cho `STAT_CARD`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §5.3](EVAL_REMOTION_TECHNICAL_SPEC.md) |
-| Domain `BATTLE` cần flow component nào? | [REMOTION_CONTENT_FORMATS_SPEC.md §III](REMOTION_CONTENT_FORMATS_SPEC.md) |
-| JSON mẫu đầy đủ cho video BIOGRAPHY? | [REMOTION_CONTENT_FORMATS_SPEC.md §IV.1](REMOTION_CONTENT_FORMATS_SPEC.md) |
-| Cách dùng `startTime`/`endTime` vs `durationInFrames`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §5.4](EVAL_REMOTION_TECHNICAL_SPEC.md) |
-| Composition IDs thực tế trong `Root.tsx`? | [EVAL_REMOTION_TECHNICAL_SPEC.md §7](EVAL_REMOTION_TECHNICAL_SPEC.md) |
-| Color palette & font cho Video Essay style? | [TEMPLATE_GUIDE_VIDEO_ESSAY.md](TEMPLATE_GUIDE_VIDEO_ESSAY.md) |
-| Quy trình tiền xử lý, nạp dữ liệu offline & chuẩn hóa địa danh/nhân vật? | [00_DATA_PREPROCESSING_AND_INGESTION.md](modules/00_DATA_PREPROCESSING_AND_INGESTION.md) |
+| `LayoutMode` nào cần dùng cho scene này? | [specs/EVAL_REMOTION_TECHNICAL_SPEC.md §4.1](specs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Cách 3 Layer Rendering phối hợp trong `ChronoVideo.tsx`? | [specs/EVAL_REMOTION_TECHNICAL_SPEC.md §2](specs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Trường nào trong `overlayData` cho `STAT_CARD`? | [specs/EVAL_REMOTION_TECHNICAL_SPEC.md §5.3](specs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Domain `BATTLE` cần flow component nào? | [specs/REMOTION_CONTENT_FORMATS_SPEC.md §III](specs/REMOTION_CONTENT_FORMATS_SPEC.md) |
+| JSON mẫu đầy đủ cho video BIOGRAPHY? | [specs/REMOTION_CONTENT_FORMATS_SPEC.md §IV.1](specs/REMOTION_CONTENT_FORMATS_SPEC.md) |
+| Cách dùng `startTime`/`endTime` vs `durationInFrames`? | [specs/EVAL_REMOTION_TECHNICAL_SPEC.md §5.4](specs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Composition IDs thực tế trong `Root.tsx`? | [specs/EVAL_REMOTION_TECHNICAL_SPEC.md §7](specs/EVAL_REMOTION_TECHNICAL_SPEC.md) |
+| Color palette & font cho Video Essay style? | [specs/TEMPLATE_GUIDE_VIDEO_ESSAY.md](specs/TEMPLATE_GUIDE_VIDEO_ESSAY.md) |
+| Quy trình tiền xử lý, nạp dữ liệu offline & chuẩn hóa địa danh/nhân vật? | [modules/00_DATA_PREPROCESSING_AND_INGESTION.md](modules/00_DATA_PREPROCESSING_AND_INGESTION.md) |
 | Trạng thái hiện tại: Đã implement vs Thiết kế tương lai? | [SystemOverview.md §1 & §2](SystemOverview.md) |
 | Lộ trình triển khai 5 giai đoạn & phân tích song song? | [IMPLEMENTATION_PLAN.md §2 & §3](IMPLEMENTATION_PLAN.md) |
+| Đặc tả thiết kế UI/UX NotebookLM Workspace & Design System? | [specs/UI_UX_DESIGN_SPECIFICATION.md](specs/UI_UX_DESIGN_SPECIFICATION.md) |
 | Ma trận đánh giá KPI & quản trị rủi ro hệ thống? | [IMPLEMENTATION_PLAN.md §4 & §5](IMPLEMENTATION_PLAN.md) |
-| Cách dùng logger thống nhất, correlation ID, event names, truy vết lỗi? | [06_OBSERVABILITY_AND_LOGGING.md](architecture/06_OBSERVABILITY_AND_LOGGING.md) |
+| Cách dùng logger thống nhất, correlation ID, event names, truy vết lỗi? | [architecture/06_OBSERVABILITY_AND_LOGGING.md](architecture/06_OBSERVABILITY_AND_LOGGING.md) |

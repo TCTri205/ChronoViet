@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import {
   createLogger,
+  envConfig,
   initProjectWorkspace,
   VisualCandidate,
   VisualCandidateSchema,
@@ -63,7 +64,8 @@ export async function downloadCandidateImage(
 ): Promise<DownloadedAssetResult> {
   const paths = initProjectWorkspace(projectId, options.customBaseDir);
   const candidateId = candidate.candidateId;
-  const timeout = options.timeoutMs || 10000;
+  const timeout = options.timeoutMs || envConfig.IMAGE_DOWNLOAD_TIMEOUT_MS || 10000;
+  const userAgent = envConfig.IMAGE_DOWNLOAD_USER_AGENT || 'ChronoViet-VLM-Downloader/1.0 (https://chronoviet.vn; contact@chronoviet.vn)';
 
   // Determine file extension
   let ext = 'jpg';
@@ -82,29 +84,52 @@ export async function downloadCandidateImage(
   const metadataFilePath = path.join(paths.assetsDir, `${candidateId}.metadata.json`);
 
   let imageBuffer: Buffer | null = null;
+  const startTime = Date.now();
 
   // If candidate is already a local file (e.g. during testing or pre-seeded assets)
   if (fs.existsSync(candidate.imageUrl)) {
-    imageBuffer = fs.readFileSync(candidate.imageUrl);
+    try {
+      imageBuffer = fs.readFileSync(candidate.imageUrl);
+    } catch {
+      imageBuffer = null;
+    }
   } else if (candidate.imageUrl.startsWith('http://') || candidate.imageUrl.startsWith('https://')) {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeout);
       const res = await fetch(candidate.imageUrl, {
         signal: controller.signal,
-        headers: { 'User-Agent': 'ChronoViet-VLM-Downloader/1.0' },
+        headers: {
+          'User-Agent': userAgent,
+          Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        },
+        cache: 'no-store',
       });
       clearTimeout(timer);
 
       if (!res.ok) {
-        throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+        log.warn('vlm.download_http_error', `HTTP ${res.status} when downloading image candidate from ${candidate.imageUrl}`, {
+          candidateId,
+          imageUrl: candidate.imageUrl,
+          status: res.status,
+          statusText: res.statusText,
+        });
+        imageBuffer = null;
+      } else {
+        const arrayBuf = await res.arrayBuffer();
+        imageBuffer = Buffer.from(arrayBuf);
+        log.debug('vlm.download_success', `Successfully downloaded image candidate ${candidateId}`, {
+          candidateId,
+          imageUrl: candidate.imageUrl,
+          sizeBytes: imageBuffer.length,
+          latencyMs: Date.now() - startTime,
+        });
       }
-      const arrayBuf = await res.arrayBuffer();
-      imageBuffer = Buffer.from(arrayBuf);
     } catch (err: any) {
       log.warn('vlm.download_failed', `Failed to download image from ${candidate.imageUrl}: ${err.message}`, {
         candidateId,
         imageUrl: candidate.imageUrl,
+        error: err.message,
       });
       imageBuffer = null;
     }

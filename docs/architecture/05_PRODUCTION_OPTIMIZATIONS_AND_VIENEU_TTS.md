@@ -27,18 +27,20 @@ Mỗi process render Remotion sử dụng Puppeteer (Headless Chrome) để ch�
 
 ---
 
-### 🟢 Thách Thức 2: Giảm Độ Trễ & Đảm Bảo Khả Năng Độc Lập Thẩm Định Ảnh (Hybrid VLM & License Filter)
+### 🟢 Thách Thức 2: Giảm Độ Trễ & Đảm Bảo Khả Năng Độc Lập Thẩm Định Ảnh (Multi-Provider VLM & License Filter)
 
 #### *Bài toán:*
-Việc thẩm định 20 bức ảnh trong 1 kịch bản qua mô hình Vision-Language (VLM) cục bộ có thể tốn GPU đắt đỏ và tạo ra độ trễ từ 15s – 30s. Đồng thời, nếu phụ thuộc hoàn toàn vào Cloud VLM API sẽ rủi ro ngắt kết nối/rate-limit (HTTP 429).
+Việc thẩm định các bức ảnh tư liệu trong kịch bản qua mô hình Vision-Language (VLM) cần đảm bảo tính linh hoạt: hỗ trợ cả mô hình Vision cục bộ (Qwen2.5-VL, Ollama, llama-server) lẫn Cloud API (Gemini Vision) và fallback offline không phụ thuộc mạng.
 
 #### *Giải pháp hoàn chỉnh:*
 1. **Lớp 0 - Whitelisted License Filter & Snapshotting (`Public Domain`, `CC0`, `CC-BY`):**
    * Lọc bỏ ngay từ đầu các ảnh không thuộc nhãn giấy phép minh bạch.
    * Lưu snapshot file ảnh + raw header + metadata bản quyền vào `/media/license-snapshots/` để minh bạch thông tin và bảo vệ pháp lý.
-2. **Hybrid Cloud/Offline VLM Dual-Tier & Circuit Breaker:**
-   * *Primary:* Offload sang **Gemini 2.5 Flash API** với độ trễ sub-second (< 500ms/ảnh), loại bỏ chi phí GPU local.
-   * *Circuit Breaker Protection:* Tích hợp Circuit Breaker ở Orchestrator. Nếu gặp 3 lỗi HTTP 429 trong 5 phút ➔ Chuyển trạng thái `OPEN` (5 phút Cooldown) ➔ Auto failover sang **Local CLIP/SigLIP Cosine Similarity Scorer** (ONNX model local) để chấm điểm mà không làm gián đoạn pipeline.
+2. **Multi-Provider VLM Routing & Zero-Downtime Fallback:**
+   * *Primary Vision Router (`VLM_PROVIDER`):* Hỗ trợ `local` / `openai` / `gemini` / `auto`.
+   * *Local OpenAI-compatible Endpoint (`VLM_BASE_URL`):* Kết nối trực tiếp tới local/self-hosted vision models (như `qwen3-vl-8b`, `qwen2.5-vl`, vLLM, Ollama) với độ trễ tối ưu và bảo mật dữ liệu.
+   * *Cloud Vision Fallback (Gemini API):* Tự động dự phòng qua Gemini API khi có `GEMINI_API_KEY`.
+   * *Deterministic Offline Fallback:* Tự động kích hoạt **Local CLIP/SigLIP Cosine Similarity Scorer** khi offline/không có GPU, bảo đảm quy trình render không bao giờ bị dừng.
 3. **Bộ Đệm Chấm Điểm 2 Lớp (Dual-Layer VLM Score Cache trong Unified Redis):**
    * **Lớp 1 (Exact URL Hash):** Hash SHA-256 của URL ảnh được lưu trong Unified Redis (TTL 30 ngày). Nếu ảnh đã được audit ở dự án khác, lấy ngay kết quả VLM Score trong 1ms.
    * **Lớp 2 (Perceptual Image Hash - pHash):** Sử dụng pHash để phát hiện ảnh cùng nội dung nhưng khác URL. Nếu `pHash_distance < 5`, tái sử dụng kết quả audit cũ.
@@ -67,8 +69,8 @@ $$\text{durationInFrames} = \left\lceil \frac{7400 + 300}{1000} \times 30 \right
 ### 🟢 Thách Thức 4: Tích Hợp Mô Hình VieNeu TTS (ONNX Engine) & Phụ Đề Karaoke Real-time
 
 #### *Giải pháp hoàn chỉnh:*
-ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS chuyên biệt cho tiếng Việt đóng gói dưới dạng ONNX Runtime Container kết hợp kiến trúc phòng thủ 2 lớp (Dual-Layer Architecture):
-1. **Lớp Primary Neural Engine**: Python FastAPI microservice (`app.py`) chạy mô hình VieNeu ONNX & NeuCodec sinh file âm thanh chất lượng cao 24kHz (PCM 16-bit) kèm phân bổ mốc từ ngữ `wordTimestamps` thông minh.
+ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS chuyên biệt cho tiếng Việt đóng gói dưới dạng Docker Container (Python 3.11 FastAPI) kết hợp kiến trúc phòng thủ 2 lớp (Dual-Layer Architecture):
+1. **Lớp Primary Neural Engine**: Python FastAPI microservice (`app.py`) chạy mô hình VieNeu ONNX & NeuCodec sinh file âm thanh chất lượng cao 24kHz (PCM 16-bit) kèm phân bổ mốc từ ngữ `wordTimestamps` thông minh. Khi chạy chế độ không weights, service tự động vận hành ở chế độ Python PCM-16 Synthesizer dự phòng mà không bao giờ sập container.
 2. **Lớp Dual-Layer Fallback Engine**: Node.js `SyntheticTTSFallbackEngine` (`src/engine.ts`) tự động kích hoạt khi microservice Python chưa khởi chạy hoặc timeout, sinh xung âm thanh định thanh 480Hz để tiến trình render video Remotion không bao giờ ngắt quãng.
 
 ---
@@ -86,12 +88,20 @@ Service VieNeu được đóng gói container trong monorepo và tích hợp tr�
     restart: always
     environment:
       - NODE_ENV=production
-      - PORT=8080
-      - MODEL_PATH=/app/models/vieneu-historical-onnx
+      - LOG_FORMAT=json
+      - TTS_SERVICE_PORT=8080
+      - MEDIA_DIR=/app/media
+      - AUDIO_CACHE_DIR=/app/media/audio-cache
     ports:
       - "8080:8080"
     volumes:
       - ./media:/app/media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 ```
 
 ### API Endpoint Spec (`POST /api/v1/synthesize`) & Response Payload:

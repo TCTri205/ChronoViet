@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { envConfig, createLogger } from '@chronoviet/shared-spec';
+import { envConfig, createLogger, formatErrorMessage } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'web' });
 
@@ -15,7 +15,7 @@ export function getRedisClient(): Redis {
       lazyConnect: true,
     });
     redisClient.on('error', (err) => {
-      log.debug('web.redis_error', `Web Redis connection error: ${err.message}`);
+      log.debug('web.redis_error', `Web Redis connection error: ${formatErrorMessage(err)}`);
     });
   }
   return redisClient;

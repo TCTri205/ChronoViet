@@ -2,8 +2,8 @@
 
 Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và Engine Render Remotion (v4.1 - Data-Driven, Audio-Driven Timing, Discriminated Overlay Unions & Word-Level Karaoke Sync)** của dự án **ChronoViet**. Engine này đảm bảo khả năng linh hoạt 100%, trong đó toàn bộ nội dung, kịch bản, phương thức hiển thị (layout), chuyển cảnh (transitions), hình ảnh/âm thanh, **tọa độ hiển thị từng từ (Scene-Scoped Word Captions Karaoke)**, cũng như **phong cách thiết kế (Theme: Màu sắc, Phông chữ, Glow, Gradient)** đều được điều khiển **hoàn toàn bằng JSON Input** mà không bao giờ cần phải chỉnh sửa hay biên dịch lại mã nguồn React.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](../packages/shared-spec/src/schema.ts) và [`packages/remotion-engine/src/types/index.ts`](../packages/remotion-engine/src/types/index.ts) (re-export từ `@chronoviet/shared-spec`)
-> 🔗 **Quy chuẩn Tích hợp TTS & Tối ưu Sản xuất:** [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md) (Quy đổi VieNeu Word Timestamps sang Remotion Captions Karaoke).
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts) và [`packages/remotion-engine/src/types/index.ts`](../../packages/remotion-engine/src/types/index.ts) (re-export từ `@chronoviet/shared-spec`)
+> 🔗 **Quy chuẩn Tích hợp TTS & Tối ưu Sản xuất:** [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](../architecture/05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md) (Quy đổi VieNeu Word Timestamps sang Remotion Captions Karaoke).
 
 ---
 
@@ -49,7 +49,7 @@ Tài liệu này mô tả chi tiết toàn bộ **Kiến trúc kịch bản và 
 
 ## 2. Mô Hình 3 Lớp Rendering & TransitionSeries (`ChronoVideo.tsx`)
 
-Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp riêng biệt được xử lý đồng bộ qua `TransitionSeries` (`@remotion/transitions`). Cấu trúc React Component thực tế tại [`ChronoVideo.tsx`](../packages/remotion-engine/src/compositions/ChronoVideo.tsx):
+Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp riêng biệt được xử lý đồng bộ qua `TransitionSeries` (`@remotion/transitions`). Cấu trúc React Component thực tế tại [`ChronoVideo.tsx`](../../packages/remotion-engine/src/compositions/ChronoVideo.tsx):
 
 ```tsx
 <TransitionSeries>
@@ -105,11 +105,11 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 {
   "templateId": "HISTORICAL_DOCUMENTARY",
   "theme": {
-    "primaryColor": "#D4AF37",
-    "secondaryColor": "#8B0000",
-    "backgroundColor": "#090d14",
-    "fontFamily": "Merriweather, serif",
-    "accentGlow": "rgba(212, 175, 55, 0.35)"
+    "primaryColor": "#C89D35",
+    "secondaryColor": "#9B1B1B",
+    "backgroundColor": "#0E0C0A",
+    "fontFamily": "Merriweather, Be Vietnam Pro, serif",
+    "accentGlow": "rgba(200, 157, 53, 0.35)"
   }
 }
 ```
@@ -118,19 +118,19 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 
 | Thuộc tính | Mục đích sử dụng | Giá trị mặc định (Fallback) |
 | :--- | :--- | :--- |
-| `primaryColor` | Viền chính, tiêu đề nổi bật, icon, số thứ tự, điểm nhấn | `#D4AF37` (Vàng Kim Cổ) |
-| `secondaryColor` | Viền thẻ phụ, badge phụ, màu đếm ngược, phân cách | `#2563eb` (Chrono Blue) |
-| `backgroundColor` | Màu nền tối của Card / Ambient Spotlight | `#090d14` (Đen Xanh Sâu) |
+| `primaryColor` | Viền chính, tiêu đề nổi bật, icon, số thứ tự, điểm nhấn | `#C89D35` (Vàng Hoàng Thành) |
+| `secondaryColor` | Viền thẻ phụ, badge phụ, màu đếm ngược, phân cách | `#9B1B1B` (Đỏ Son Triện) |
+| `backgroundColor` | Màu nền tối của Card / Ambient Spotlight | `#0E0C0A` (Đen Sơn Mài) |
 | `fontFamily` | Phông chữ áp dụng cho tiêu đề và văn bản | `"Merriweather", "Be Vietnam Pro", serif` |
-| `accentGlow` | Hiệu ứng phát sáng Shadow Glow viền thẻ | `rgba(212, 175, 55, 0.35)` |
+| `accentGlow` | Hiệu ứng phát sáng Shadow Glow viền thẻ | `rgba(200, 157, 53, 0.35)` |
 
 ### 3.3. Các Mẫu Template Mặc Định (`TEMPLATE_THEMES` tại `src/constants/config.ts`)
 
-| `templateId` | Mô tả | `primaryColor` | `secondaryColor` | `fontFamily` |
-| :--- | :--- | :--- | :--- | :--- |
-| `HISTORICAL_DOCUMENTARY` | Tài liệu lịch sử trang trọng | `#D4AF37` (Vàng Kim) | `#8B0000` (Đỏ Sẫm) | `Merriweather, Be Vietnam Pro, serif` |
-| `QUICK_SHORTS` | Video ngắn TikTok/Shorts 9:16 | `#FFCC00` (Vàng Rực) | `#FF2A5F` (Hồng Neon) | `Be Vietnam Pro, sans-serif` |
-| `MODERN_NEWS` | Tin tức / Đồ họa số hiện đại | `#00E5FF` (Xanh Cyan) | `#2563EB` (Xanh Blue) | `Be Vietnam Pro, sans-serif` |
+| `templateId` | Mô tả | `primaryColor` | `secondaryColor` | `backgroundColor` | `fontFamily` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `HISTORICAL_DOCUMENTARY` | Tài liệu lịch sử trang trọng | `#C89D35` (Vàng Hoàng Thành) | `#9B1B1B` (Đỏ Son) | `#0E0C0A` | `"Merriweather", "Be Vietnam Pro", serif` |
+| `QUICK_SHORTS` | Video ngắn TikTok/Shorts 9:16 | `#C89D35` (Vàng Hoàng Thành) | `#9B1B1B` (Đỏ Son) | `#16120E` | `"Be Vietnam Pro", sans-serif` |
+| `MODERN_NEWS` | Tin tức / Đồ họa số hiện đại | `#C89D35` (Vàng Hoàng Thành) | `#1E3A5F` (Xanh Chàm Chu Đậu) | `#0E0C0A` | `"Be Vietnam Pro", sans-serif` |
 
 ---
 
@@ -207,7 +207,7 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 | `LINEAR_BLUR` | Blur tuyến tính — tốc độ, chuyển cảnh hành động nhanh |
 | `NONE` | Không có hiệu ứng chuyển cảnh — cắt thẳng |
 
-### 4.4. `KenBurnsEffect` — 6 Kiểu Chuyển Động Camera
+### 4.4. `KenBurnsEffect` — 7 Giá Trị Chuyển Động Camera
 
 | Giá trị | Chuyển động |
 | :--- | :--- |
@@ -217,6 +217,7 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 | `KEN_BURNS_PAN_RIGHT` | Pan sang phải |
 | `KEN_BURNS_PAN_UP` | Pan lên trên |
 | `KEN_BURNS_PAN_DOWN` | Pan xuống dưới |
+| `NONE` | Không áp dụng chuyển động camera (ảnh tĩnh) |
 
 ---
 
@@ -420,11 +421,11 @@ packages/remotion-engine/src/
 │   ├── mysteryTimeline.json            # Thảm án Lệ Chi Viên (19 scenes, ~375s)
 │   ├── artifactTimeline.json           # Trống Đồng Ngọc Lũ (19 scenes, ~375s)
 │   ├── quang-trung/
-│   │   └── quangTrungTimeline.json     # 24 scenes, 245s
+│   │   └── quangTrungTimeline.json     # 18 scenes, 245s
 │   ├── mongol-viet-2/
 │   │   └── mongolViet2Timeline.json    # 25 scenes, 1140s
 │   └── hai-ba-trung/
-│       └── haiBaTrungTimeline.json     # 28 scenes, 450s
+│       └── haiBaTrungTimeline.json     # 27 scenes, 450s
 ```
 
 ---
@@ -441,9 +442,9 @@ packages/remotion-engine/src/
 | `ArtifactVideo` | `ChronoVideo` | `artifactTimeline.json` | 19 scenes (375s / 11250 frames) | Domain ARTIFACT |
 | `QuickShortsVideo` | `ChronoVideo` | `templateGeneralTimeline.json` (Override `templateId: QUICK_SHORTS`, `aspectRatio: 9:16`) | 145s / 4350 frames | Quick Shorts Vertical (9:16) |
 | `ModernNewsVideo` | `ChronoVideo` | `templateGeneralTimeline.json` (Override `templateId: MODERN_NEWS`, `aspectRatio: 16:9`) | 145s / 4350 frames | Modern News Horizontal (16:9) |
-| `QuangTrungVideo` | `ChronoVideo` | `quangTrungTimeline.json` | 24 scenes (245s / 7350 frames) | Legacy |
+| `QuangTrungVideo` | `ChronoVideo` | `quangTrungTimeline.json` | 18 scenes (245s / 7350 frames) | Legacy |
 | `MongolViet2Video` | `ChronoVideo` | `mongolViet2Timeline.json` | 25 scenes (1140s / 34200 frames) | Legacy |
-| `HaiBaTrungVideo` | `ChronoVideo` | `haiBaTrungTimeline.json` | 28 scenes (450s / 13500 frames) | Legacy |
+| `HaiBaTrungVideo` | `ChronoVideo` | `haiBaTrungTimeline.json` | 27 scenes (450s / 13500 frames) | Legacy |
 
 > **Lưu ý:** `calculateMetadata` tự tính lại `durationInFrames` chính xác từ dữ liệu JSON lúc runtime. `QuickShortsVideo` và `ModernNewsVideo` dùng chung dữ liệu `templateGeneralTimeline.json` nhưng ghi đè các cấu hình `templateId` và `aspectRatio` trực tiếp tại `Root.tsx`. Tất cả 11 compositions sử dụng chung component `ChronoVideo`.
 

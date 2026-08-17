@@ -1,5 +1,5 @@
 import { Queue, Job } from 'bullmq';
-import { RenderJobPayload, createLogger } from '@chronoviet/shared-spec';
+import { RenderJobPayload, createLogger, formatErrorMessage } from '@chronoviet/shared-spec';
 import { getRedisClient } from './redis';
 
 
@@ -23,6 +23,9 @@ export function getRenderQueue(): Queue<RenderJobPayload> {
         removeOnComplete: 100,
         removeOnFail: 50,
       },
+    });
+    renderQueue.on('error', (err) => {
+      log.warn('web.render_queue_redis_error', `Render queue Redis connection error: ${formatErrorMessage(err)}`);
     });
   }
   return renderQueue;

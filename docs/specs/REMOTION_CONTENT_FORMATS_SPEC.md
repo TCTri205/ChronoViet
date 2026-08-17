@@ -2,8 +2,8 @@
 
 Tài liệu này đóng gói toàn bộ **Kiến trúc Tổng thể**, **Bộ Ranh giới An toàn cho AI**, **Ma trận Mapping 5 Dạng Nội dung Lịch sử**, và **Schema JSON Production v4.1 (Tối ưu Context Window, Discriminated Unions per Layout Mode, Field Consolidation, Relative Timing Standard durationInFrames/durationInSeconds, Extensible layoutProps, Asset Metadata Preloading & External Captions URL)** dành cho hệ thống tự động hóa video lịch sử **ChronoViet**.
 
-> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](../packages/shared-spec/src/schema.ts) + [`packages/remotion-engine/src/types/index.ts`](../packages/remotion-engine/src/types/index.ts) (re-export từ `@chronoviet/shared-spec`)  
-> 📄 **Template JSON chuẩn & Evaluation Test Cases:** [`packages/remotion-engine/eval/test-cases/`](../packages/remotion-engine/eval/test-cases/)
+> 🔗 **Nguồn sự thật duy nhất (Source of Truth):** [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts) + [`packages/remotion-engine/src/types/index.ts`](../../packages/remotion-engine/src/types/index.ts) (re-export từ `@chronoviet/shared-spec`)  
+> 📄 **Template JSON chuẩn & Evaluation Test Cases:** [`packages/remotion-engine/eval/test-cases/`](../../packages/remotion-engine/eval/test-cases/)
 
 ---
 
@@ -20,7 +20,7 @@ Nếu AI Agent không tìm thấy ảnh phù hợp hoặc link ảnh bị chết
 
 ## II. THƯ VIỆN COMPONENT & LAYOUT MODES (LEGO BLOCKS CHO AI AGENT)
 
-AI Agent chỉ được phép xây dựng kịch bản dựa trên các "khối Lego" đã được lập trình sẵn trong Remotion Engine. Tất cả các giá trị `layoutMode` (18 Core Modes + 13 Extended Modes) đều được định nghĩa trong `LayoutModeSchema` tại [`packages/shared-spec/src/schema.ts`](../packages/shared-spec/src/schema.ts).
+AI Agent chỉ được phép xây dựng kịch bản dựa trên các "khối Lego" đã được lập trình sẵn trong Remotion Engine. Tất cả các giá trị `layoutMode` (18 Core Modes + 13 Extended Modes) đều được định nghĩa trong `LayoutModeSchema` tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts).
 
 ### 1. Nhóm Pure Image (11 Layout Modes)
 
@@ -478,13 +478,13 @@ AI Agent tự động xếp loại prompt của người dùng theo các tín hi
 Thư mục `packages/remotion-engine/src/` và `packages/shared-spec/src/` đã được hoàn thiện 100% linh hoạt theo cơ chế Data-Driven:
 
 1. **Types & Validation (`packages/shared-spec/src/` & `packages/remotion-engine/src/types/`):**
-   - [`index.ts`](../packages/remotion-engine/src/types/index.ts): Re-export từ `@chronoviet/shared-spec` (Khai báo đầy đủ 31 `LayoutMode`, 19 `TransitionType`, 4 `FilterStyle`, `ThemeConfig`, `OverlayData` và toàn bộ sub-types).
-   - [`schema.ts`](../packages/shared-spec/src/schema.ts): Zod Schema (`ChronoVideoSchema`, `TimelineSceneSchema`, `OverlayDataSchema`) validate JSON runtime.
+   - [`index.ts`](../../packages/remotion-engine/src/types/index.ts): Re-export từ `@chronoviet/shared-spec` (Khai báo đầy đủ 31 `LayoutMode`, 19 `TransitionType`, 4 `FilterStyle`, `ThemeConfig`, `OverlayData` và toàn bộ sub-types).
+   - [`schema.ts`](../../packages/shared-spec/src/schema.ts): Zod Schema (`ChronoVideoSchema`, `TimelineSceneSchema`, `OverlayDataSchema`) validate JSON runtime.
 
 2. **Hệ Thống Theme Động (`src/utils/themeUtils.ts`):**
    - `resolveTheme(theme)` — giải quyết màu sắc với fallback từ `COLOR_PALETTE`.
    - `getMergedTheme(templateId, customTheme)` — merge template default với custom theme JSON.
-   - `TEMPLATE_THEMES` tại [`src/constants/config.ts`](../packages/remotion-engine/src/constants/config.ts).
+   - `TEMPLATE_THEMES` tại [`src/constants/config.ts`](../../packages/remotion-engine/src/constants/config.ts).
 
 3. **Thư viện 19 Component (`src/components/`):**
    - `StatCard`, `VersusCard`, `BulletHighlight`, `MuseumTag`, `SplitTheory`, `ChapterTitle` (dùng cho cả `TITLE_CARD` và `CHAPTER_CARD`), `QuoteSlide`, `OutroSlide`, `SponsorSlide`, `ChronoIntro`, `DocumentaryHeader`, `DocumentarySubtitle`, `SlideImage`, `TimelineChrono`, `RoyalDecree`, `MapTactical`, `CharacterProfile`, `ArtifactInspect`, `PoemReciting`.

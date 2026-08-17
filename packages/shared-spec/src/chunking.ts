@@ -4,7 +4,7 @@
  * data-ingestion chunker and the evaluation metrics.
  *
  * Spec: Parent Chunk 2000-3000 words, Child Chunk 300-500 words
- * (docs/RAG_plan.md, docs/IMPLEMENTATION_PLAN.md, docs/modules/00_*.md)
+ * (docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md, docs/IMPLEMENTATION_PLAN.md, docs/modules/00_*.md)
  */
 
 export const CHUNK_PARENT_MIN_WORDS = 2000;

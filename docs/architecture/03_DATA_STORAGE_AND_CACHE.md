@@ -19,7 +19,7 @@ Hệ thống **ChronoViet** áp dụng chiến lược lưu trữ tối giản h
 │ └──────────────────────────────────────┘  └──────────────────────────────────────────┘ │
 │ ┌────────────────────────────────────────────────────────────────────────────────────┐ │
 │ │ 3. Local Host Media Volume Storage (/media)                                        │ │
-│ │ - s3:// /media/raw-assets/ (Ảnh thô & VieNeu Audio WAV)                            │ │
+│ │ - /media/raw-assets/ (Ảnh thô & VieNeu Audio WAV)                                  │ │
 │ │ - /media/license-snapshots/ (Bằng chứng bản quyền Whitelisted & Response Headers) │ │
 │ │ - /media/rendered-videos/ (Video MP4 đầu ra cho client tải xuống)                  │ │
 │ └────────────────────────────────────────────────────────────────────────────────────┘ │
@@ -31,18 +31,19 @@ Hệ thống **ChronoViet** áp dụng chiến lược lưu trữ tối giản h
 ## 2. Chi Tiết Các Cơ Sở Dữ Liệu
 
 ### 2.1. PostgreSQL + pgvector (SSOT Duy Nhất Cho Data, State Checkpoint & Vector Search)
-* **Nhiệm vụ:** Đóng vai trò cơ sở dữ liệu quan hệ trung tâm (SSOT) cho toàn bộ hệ thống, lưu vết trạng thái 12 bước LangGraph, đồng thời thực hiện tìm kiếm vector tri thức RAG thông qua plugin `pgvector`.
+* **Nhiệm vụ:** Đóng vai trò cơ sở dữ liệu quan hệ trung tâm (SSOT) cho toàn bộ hệ thống, lưu vết 15 trạng thái LangGraph (`INIT` → `COMPLETED`/`FAILED`), đồng thời thực hiện tìm kiếm vector tri thức RAG thông qua plugin `pgvector`.
 * **Cấu hình Vector Search (`pgvector`):**
   * Extension: `CREATE EXTENSION IF NOT EXISTS vector;`
   * Model Embedding: `BAAI/bge-m3` (1024d) hoặc `vietnamese-bi-encoder`.
   * Indexing: `HNSW` index với `m=16`, `ef_construction=64` trên vector column `embedding vector(1024)` giúp truy vấn similarity k-NN dưới 5ms ngay trong Postgres.
 * **Các Bảng Chính (Main Tables):**
   * `users` (`id`, `email`, `password_hash`, `role`, `created_at`)
-  * `video_projects` (`id`, `user_id`, `title`, `video_type`, `template_id`, `status`, `json_spec_v3`, `created_at`)
+  * `video_projects` (`id`, `user_id`, `title`, `video_type`, `template_id`, `status`, `json_spec_v4`, `created_at`)
   * `document_chunks` (`id`, `title`, `text_content`, `dynasty`, `key_figures`, `embedding vector(1024)`)
   * `checkpoints` & `checkpoint_blobs` (LangGraph State Checkpointer - Lưu vết 100% biến trạng thái từng bước agent)
   * `render_jobs` (`id`, `project_id`, `status`, `duration_seconds`, `output_url`, `error_log`, `started_at`, `finished_at`)
   * `audit_assets` (`id`, `scene_id`, `asset_url`, `vlm_score`, `license_type`, `reasons`)
+  * `entity_audit_logs` (`id`, `entity_id`, `action`, `changes_payload`, `performed_by`, `created_at`)
 
 ### 2.2. Unified Redis Database (Broker Queue & Multi-Layer Cache)
 * **Nhiệm vụ:** Đảm nhận đồng thời việc lưu vết hàng đợi BullMQ Jobs (với `appendonly yes`), lưu trữ bộ đệm (Prompt Cache, Asset VLM Scores), và truyền thông điệp real-time qua PubSub.
@@ -109,7 +110,7 @@ Trong môi trường phát triển (Development) và kiểm thử tự động (
 │  │ - rag-engine/eval/data/      : Ground-truth chunks & test query vectors          │  │
 │  │ - vlm-inspector/eval/        : Test images & ground-truth licenses               │  │
 │  │ - vieneu-tts/eval/           : Test prompts & reference WAV audio                │  │
-│  │ - remotion-engine/eval/      : Test JSON specs (v3.0/v3.2) & sample assets      │  │
+│  │ - remotion-engine/eval/      : Test JSON specs (v4.1) & sample assets            │  │
 │  └───────────────────────────────────────────────────────────────────────────────────┘  │
 │                                           │                                             │
 │                                           ▼                                             │

@@ -3,7 +3,7 @@
  */
 
 import Redis from 'ioredis';
-import { createLogger, envConfig } from '@chronoviet/shared-spec';
+import { createLogger, envConfig, formatErrorMessage } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'vlm-inspector' });
 
@@ -14,7 +14,7 @@ export interface VLMScoreResult {
   totalScore: number;
   passed: boolean;
   reasons: string[];
-  scorerType?: 'GEMINI_CLOUD' | 'LOCAL_VLM' | 'CLIP_LOCAL_FALLBACK' | 'REDIS_CACHE';
+  scorerType?: 'GEMINI_CLOUD' | 'LOCAL_VLM' | 'OPENAI_VLM' | 'CLIP_LOCAL_FALLBACK' | 'REDIS_CACHE';
 }
 
 let redisClient: Redis | null = null;
@@ -34,10 +34,10 @@ export function getRedisClient(): Redis | null {
     });
 
     redisClient.on('error', (err) => {
-      log.debug('vlm.redis_error', `Redis connection error: ${err.message}`);
+      log.debug('vlm.redis_error', `Redis connection error: ${formatErrorMessage(err)}`);
     });
   } catch (err: any) {
-    log.debug('vlm.redis_init_failed', `Redis init skipped: ${err.message}`);
+    log.debug('vlm.redis_init_failed', `Redis init skipped: ${formatErrorMessage(err)}`);
     redisClient = null;
   }
 

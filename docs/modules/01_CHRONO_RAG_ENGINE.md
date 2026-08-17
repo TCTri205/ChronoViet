@@ -257,7 +257,7 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 
 | Công đoạn | Model / Thuật toán Đề xuất | Công cụ / Library hỗ trợ |
 | :--- | :--- | :--- |
-| **NER & Relation Extraction** | Qwen3.8-27B / Gemini 2.5 Flash / Llama 3.3 70B + Few-shot JSON Prompt | LlamaIndex (`PropertyGraphIndex`), Instructor, FastCoref |
+| **NER & Relation Extraction** | Qwen3.5-27B / Gemini 2.5 Flash / Llama 3.3 70B + Few-shot JSON Prompt | LlamaIndex (`PropertyGraphIndex`), Instructor, FastCoref |
 | **Graph DB & Traversal** | Relational Graph Schema / Cypher Query + k-Hop Expansion | PostgreSQL (MVP) / Neo4j (Scale-Out) |
 | **Text Embedding** | `BAAI/bge-m3` | Sentence-Transformers, HuggingFace |
 | **Hybrid Vector Search** | pgvector HNSW Index + BM25 + Reciprocal Rank Fusion (RRF) | PostgreSQL `pgvector` (MVP) / Qdrant (Scale-Out) |

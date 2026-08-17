@@ -21,14 +21,14 @@ flowchart TB
     end
 
     subgraph ServiceLayer["3. CORE APP MONOLITH & AGENTIC LAYER"]
-        AppMonolith["ChronoViet App Monolith Server (Next.js / Fastify / TS)\n- Users Auth & Projects CRUD\n- RAG Engine (PostgreSQL pgvector)\n- Agentic Orchestrator (LangGraph.js 12 States & Postgres SSOT)\n- Hybrid Fact-Checker & Gemini Cloud VLM Inspector"]
+        AppMonolith["ChronoViet App Monolith Server (Next.js / Fastify / TS)\n- Users Auth & Projects CRUD\n- RAG Engine (PostgreSQL pgvector)\n- Agentic Orchestrator (LangGraph.js 15 States & Postgres SSOT)\n- Hybrid Fact-Checker & Gemini Cloud VLM Inspector"]
     end
 
     subgraph BrokerLayer["4. ASYNCHRONOUS BROKER & CACHE LAYER"]
         UnifiedRedis["Unified Redis Container (redis:7-alpine)\n- BullMQ Task Queues (AOF Persistence)\n- Multi-Layer Cache (Prompt Cache & VLM Scores)\n- Real-time WebSocket PubSub Channel"]
         
-        TTSQueue["Queue: tts-gen-queue\n(Priority: High | Concurrency: 10)"]
-        VLMQueue["Queue: vlm-inspect-queue\n(Priority: Medium | Gemini Cloud Dispatch)"]
+        TTSQueue["Queue: tts-gen-queue\n(Priority: High | Concurrency: 4)"]
+        VLMQueue["Queue: vlm-inspect-queue\n(Priority: Medium | Concurrency: 2 | Gemini Cloud VLM Dispatch)"]
         RenderQueue["Queue: remotion-render-queue\n(Priority: Normal | Concurrency: 1 MAX on Single VPS)"]
     end
 
@@ -119,8 +119,7 @@ sequenceDiagram
 
     Orch->>Orch: Step 1B-Reconcile: Duration Reconciliation Engine (Đo sai số thời lượng Audio vs Scene Script)
     
-    alt Sai số thời lượng > 15% (DURATION_MISMATCH)
-        Orch->>PG: Update Checkpoint (State: DURATION_MISMATCH)
+    alt Sai số thời lượng > 15% (Pacing Mismatch Trigger)
         Orch->>Orch: Trigger Script Agent Re-write / Scene Pacing Adjustment (Retry <= 2 lần)
         Orch->>TTS: Re-synthesize Audio với kịch bản điều chỉnh
     else Sai số thời lượng 5% - 15%
@@ -128,8 +127,9 @@ sequenceDiagram
     else Sai số thời lượng < 5%
         Orch->>Orch: Chấp nhận giữ nguyên 100% Timing
     end
+    Orch->>PG: Checkpoint (State: DURATION_RECONCILED)
 
-    Orch->>PG: Lock JSON v3.2 Spec & Save Checkpoint (State: ASSETS_AUDITED - SSOT)
+    Orch->>PG: Lock JSON v4.1 Spec & Save Checkpoint (State: ASSETS_AUDITED - SSOT)
     Orch->>Worker: Đẩy Task vào `remotion-render-queue` (Unified Redis - Idempotency Key: md5)
     
     activate Worker
@@ -186,38 +186,46 @@ flowchart TD
 
 ## 4. ⚙️ Quản Lý Trạng Thái Máy (State Machine & Retry Engine v3.4)
 
-Trạng thái dự án trải qua các bước quản lý nghiêm ngặt thông qua LangGraph Engine với **Postgres Checkpointer làm Single Source of Truth**, bổ sung nhánh **`DURATION_MISMATCH`** và **Gemini Circuit Breaker Handling**:
+Trạng thái dự án trải qua các bước quản lý nghiêm ngặt thông qua LangGraph Engine với **Postgres Checkpointer làm Single Source of Truth**, gồm nhánh xử lý **Pacing Mismatch** (trong `DURATION_RECONCILED`) và **Gemini Circuit Breaker Handling**:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT: User submit Prompt (Tạo UUIDv4 + Trace ID)
-    DRAFT --> RAG_RETRIEVED: Chrono-RAG Query (Postgres pgvector + Relational Graph CTEs)
-    RAG_RETRIEVED --> SCRIPT_GENERATED: Script Agent xuất Timeline & Scenes JSON
+    [*] --> INIT: User submit Prompt (Tạo UUIDv4 + Trace ID)
+    INIT --> RAG_RETRIEVED: Chrono-RAG Query (Postgres pgvector + Relational Graph CTEs)
+    RAG_RETRIEVED --> OUTLINE_CHAPTERED: Chia video thành N Chapters & Narrative Context
+    OUTLINE_CHAPTERED --> CHAPTER_SCRIPT_GENERATED: Sinh lời thoại chi tiết cho từng Chapter
     
-    SCRIPT_GENERATED --> SCRIPT_GENERATED: Zod Validation Error (Retry Script Agent <= 2 lần)
+    CHAPTER_SCRIPT_GENERATED --> CHAPTER_FACT_CHECKED: Dual Guardrails (Folklore Regex + NLI Judge)
+    CHAPTER_FACT_CHECKED --> CHAPTER_SCRIPT_GENERATED: Fact Check Escalation Tier 1 (Auto-Fix/Retry <= 2)
+    CHAPTER_FACT_CHECKED --> NEEDS_HUMAN_REVIEW: Fact Check Escalation Tier 3 (Escalate to Human)
     
-    SCRIPT_GENERATED --> ASSETS_AUDITED: VieNeu TTS ONNX + VLM Audit Done (Snapshot Saved)
+    CHAPTER_FACT_CHECKED --> SCENES_SEGMENTED: Phân đoạn Scene theo pacing & visual cues
+    SCENES_SEGMENTED --> RESEARCH_COMPLETED: Research Agent thu thập Provenance & License Candidates
     
-    ASSETS_AUDITED --> DURATION_MISMATCH: Audio/Scene Duration Mismatch > 15%
-    DURATION_MISMATCH --> SCRIPT_GENERATED: Trigger Script Agent Re-write (Max 2 Retries)
-    DURATION_MISMATCH --> FAILED: Re-write Retry Count Exceeded (> 2)
-
-    ASSETS_AUDITED --> RENDERING: Lock JSON v3.2 Spec & Save Postgres Checkpoint (Idempotency md5 Key)
+    RESEARCH_COMPLETED --> TTS_SYNTHESIZED: VieNeu TTS sinh Audio WAV & Word Timestamps
+    TTS_SYNTHESIZED --> DURATION_RECONCILED: Pacing Reconcile (Time-Stretch ±10%)
+    DURATION_RECONCILED --> KEYWORDS_EXTRACTED: Trích xuất Typography Overlay & Highlight Keywords
+    
+    KEYWORDS_EXTRACTED --> ASSETS_AUDITED: VLM Inspector chấm điểm ảnh & Fallback Pure Code nếu < 60đ
+    ASSETS_AUDITED --> PACKAGED: Đóng gói hoàn thiện ChronoVideoScriptSchema v4.1 (100% Zod Validated)
+    
+    PACKAGED --> RENDERING: Lock JSON v4.1 Spec & Push to remotion-render-queue
     
     state RENDERING {
         [*] --> VerifySSOT: Query Postgres Checkpoint (Xác thực State thực tế)
-        VerifySSOT --> PreDownloadAssets: State == ASSETS_AUDITED -> Download Media to Local Disk
-        VerifySSOT --> AbortRender: State != ASSETS_AUDITED -> Abort Job
-        PreDownloadAssets --> FrameRendering: Render Frames (Single Chromium Process - Max 2.0 CPUs / 4GB RAM)
-        FrameRendering --> FrameRendering: Progress Broadcast via WS
+        VerifySSOT --> PreDownloadAssets: Valid State -> Pre-fetch Media to Host Volume /media
+        VerifySSOT --> AbortRender: Invalid State -> Abort Job
+        PreDownloadAssets --> FrameRendering: Remotion CLI Render (Single Chromium Process - CONCURRENCY=1)
+        FrameRendering --> FrameRendering: Progress Broadcast via WebSocket
         FrameRendering --> MP4Stitching: Stitch Frames into MP4 & Clean Temp Files
     }
 
-    RENDERING --> COMPLETED: MP4 Uploaded to S3 & Postgres SSOT Updated
+    RENDERING --> COMPLETED: MP4 Exported to /media/rendered-videos/ & Postgres SSOT Updated
     RENDERING --> RENDERING: Worker Crash, Resume from Postgres Checkpoint SSOT
     
     RENDERING --> FAILED: DLQ Exceeded Max Retries (3 times)
-    SCRIPT_GENERATED --> FAILED: Parse Schema Unrecoverable Error
+    NEEDS_HUMAN_REVIEW --> FAILED: Rejected by Human Reviewer
+    NEEDS_HUMAN_REVIEW --> SCENES_SEGMENTED: Approved / Corrected by Human
 
     COMPLETED --> [*]
     FAILED --> [*]: Rollback & Refund Credits
@@ -244,7 +252,7 @@ flowchart LR
         DurationCheck{"Kiem tra Sai so Thoi luong\nabs(audioDurationMs - sceneTargetMs) / sceneTargetMs"}
         TimeStretch["Audio Time-Stretch Engine (±10%)\nAPPLIED WHEN 5% <= SAI SỐ <= 15%"]
         DurationMath["Công thức tính Frames (Khi Sai số < 15%):\ndurationInFrames = ceil((adjustedAudioMs + 300) / 1000 * 30)\nVí dụ: (7400ms + 300ms) / 1000 * 30 = 231 Frames"]
-        MismatchTrigger["Trigger DURATION_MISMATCH State\nAPPLIED WHEN SAI SỐ > 15%\n-> Re-generate Script Pacing"]
+        MismatchTrigger["Pacing Mismatch Trigger\nAPPLIED WHEN SAI SỐ > 15%\n-> Re-generate Script Pacing (Retry <= 2)"]
     end
 
     subgraph RemotionOutput["4. Remotion Video Engine"]
@@ -415,5 +423,5 @@ volumes:
 | **5** | **Rủi Ro Pháp Lý License Từ Metadata Crawl Nhàn** | **✅ ĐÃ KHẮC PHỤC** | Bổ sung thư mục `/media/license-snapshots/` lưu vết hình ảnh + raw header response + snapshot metadata. Ưu tiên domain whitelist từ Verified APIs (Wikimedia Commons API). |
 | **6** | **Rủi Ro Trượt Budget / Spikes API Khi Gemini 429** | **✅ ĐÃ KHẮC PHỤC** | Tích hợp **Circuit Breaker** tại Orchestrator. Gặp 3 lỗi HTTP 429 trong 5 phút ➔ Chuyển trạng thái `OPEN` trong 5 phút cooldown ➔ Auto failover sang Local CLIP Scorer. |
 | **7** | **Thiếu Tầng Observability & Tracing** | **✅ ĐÃ KHẮC PHỤC** | Thêm Healthchecks cho 100% container trong Compose. Đưa Correlation ID (`Trace ID = md5`) vào Header HTTP, Queue Payload và Centralized JSON Logs. |
-| **8** | **Bất Đồng Bộ Thời Lượng (Duration Mismatch > 15%)** | **✅ ĐÃ KHẮC PHỤC** | Bổ sung nhánh trạng thái **`DURATION_MISMATCH`** trong State Machine. Sai số 5-15% ➔ Audio Time-Stretch ±10%. Sai số > 15% ➔ Trigger Script Agent viết lại pacing (retry <= 2). |
+| **8** | **Bất Đồng Bộ Thời Lượng (Duration Mismatch > 15%)** | **✅ ĐÃ KHẮC PHỤC** | Bổ sung nhánh xử lý **Pacing Mismatch** trong State Machine (`DURATION_RECONCILED`). Sai số 5-15% ➔ Audio Time-Stretch ±10%. Sai số > 15% ➔ Trigger Script Agent viết lại pacing (retry <= 2). |
 

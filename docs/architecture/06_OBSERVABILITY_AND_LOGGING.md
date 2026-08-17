@@ -76,7 +76,8 @@ Mỗi log record **bắt buộc** có `event` — chuỗi phân cấp `subsystem
 | `crawl` | `crawl.item_succeeded`, `crawl.item_skipped`, `crawl.item_failed` |
 | `seeder` | `seeder.document_ingested`, `seeder.batch_completed` |
 | `rag` | `rag.search_started`, `rag.search_completed`, `rag.graph_search_done`, `rag.hybrid_search_done` |
-| `tts` | `tts.server_started`, `tts.synthesize_started`, `tts.synthesize_failed`, `tts.python_engine_failed` |
+| `vlm` | `vlm.inspecting_scene`, `vlm.endpoint_failed`, `vlm.gemini_call_failed`, `vlm.cache_hit`, `vlm.download_http_error`, `vlm.download_failed`, `vlm.pure_code_fallback` |
+| `tts` | `tts.server_started`, `tts.synthesize_started`, `tts.synthesize_failed`, `tts.python_engine_failed`, `tts.python_engine_success` |
 | `render` | `render.video_started`, `render.video_failed`, `render.schema_invalid` |
 | `orchestrator` | `orchestrator.started`, `orchestrator.completed` |
 | `ops` | `ops.db_health_started`, `ops.db_health_completed`, `ops.db_cleanup_started`, `ops.self_loops_removed`, `ops.duplicates_removed` |

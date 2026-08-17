@@ -1,16 +1,22 @@
 # KẾ HOẠCH TRIỂN KHAI HOÀN THIỆN LỚP ỨNG DỤNG (APPS/WEB), CẦU NỐI REALTIME VÀ HẠ TẦNG RUNTIME E2E
 ## (ChronoViet End-to-End Application, Realtime Gateway & Runtime Infrastructure Implementation Plan — Final Calibrated Version)
 
+> 🗄️ **TÀI LIỆU LƯU TRỮ (ARCHIVED / SUPERSEDED):**  
+> Bản kế hoạch tích hợp E2E này đã hoàn thành (Phase 4) và được chuẩn hóa chính thức tại:
+> - **Tài liệu Kiến trúc:** [`docs/architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md`](../architecture/04_STATE_MANAGEMENT_AND_DEPLOY.md), [`docs/architecture/02_COMMUNICATION_AND_QUEUES.md`](../architecture/02_COMMUNICATION_AND_QUEUES.md)
+> - **Tài liệu UI/UX:** [`docs/specs/UI_UX_DESIGN_SPECIFICATION.md`](../specs/UI_UX_DESIGN_SPECIFICATION.md)
+> - **Codebase Production:** [`apps/web`](../../apps/web), [`apps/render-worker`](../../apps/render-worker)
+
 ---
 
 ## 1. Tổng Quan & Phân Tích Hiện Trạng (Baseline & Gap Analysis)
 
 ### 1.1. Đánh giá Hiện trạng Hệ thống (Current State)
 Qua rà soát toàn diện codebase và đối chiếu hệ thống tài liệu kiến trúc, ChronoViet đã hoàn thiện các gói nghiệp vụ lõi (Core Backend Modules & Processing Services):
-- **`packages/shared-spec`**: Single Source of Truth (SSOT) Types, Zod Schemas (`ChronoVideoProps` / Video Script Schema v4.1, `TimelineScene`, `CaptionWord`, `WordTimestamp`), PostgreSQL Client (`pgvector`), Workspace Asset Manager (`initProjectWorkspace`, `cleanProjectWorkspace`), LLM Client (Qwen3.5 Local + Cloud Agnes 2.0 Flash Fallback), Unified Logger.
+- **`packages/shared-spec`**: Single Source of Truth (SSOT) Types, Zod Schemas (`ChronoVideoProps` / Video Script Schema v4.1, `TimelineScene`, `CaptionWord`, `WordTimestamp`), PostgreSQL Client (`pgvector`), Workspace Asset Manager (`initProjectWorkspace`, `cleanProjectWorkspace`), LLM Client (Qwen3.5 Local + Cloud Gemini/Agnes 2.0 Flash Fallback), Unified Logger.
 - **`packages/rag-engine`**: Hybrid GraphRAG (PostgreSQL `pgvector` Dense 1024d + Graph CTEs + BM25 FTS + RRF + BGE Reranker v2), đạt chuẩn KPI benchmark (`rag-engine/eval/`).
-- **`packages/agent-orchestrator`**: LangGraph.js State Machine chuẩn 12 trạng thái, PostgreSQL Checkpointer, 5 Script Micro-Steps, Duration Reconciler, Research Agent (Crawl ảnh trực tuyến đa nguồn kèm Whitelist bản quyền) và JSON Schema Packager.
-- **`packages/vlm-inspector`**: Dual VLM Scorer (Local Qwen3-VL-8B / Cloud Agnes 2.0 Flash / Local CLIP Fallback), Whitelisted License Filter (CC0, CC-BY, Public Domain), SHA-256 / pHash Redis Cache.
+- **`packages/agent-orchestrator`**: LangGraph.js State Machine chuẩn 15 trạng thái, PostgreSQL Checkpointer, 5 Script Micro-Steps, Duration Reconciler, Research Agent (Crawl ảnh trực tuyến đa nguồn kèm Whitelist bản quyền) và JSON Schema Packager.
+- **`packages/vlm-inspector`**: Dual VLM Scorer (Local Qwen3-VL-8B / Cloud Gemini VLM / Local CLIP Fallback), Whitelisted License Filter (CC0, CC-BY, Public Domain), SHA-256 / pHash Redis Cache.
 - **`packages/remotion-engine`**: Render Engine 31 LayoutModes, 19 TransitionTypes, Composition components, CLI Renderer.
 - **`services/vieneu-tts`**: Node.js HTTP Service + Python FastAPI ONNX Engine (cổng 8080), tính toán `wordTimestamps` chính xác.
 - **`apps/render-worker`**: Khung BullMQ Queues (`tts-gen-queue`, `vlm-inspect-queue`, `remotion-render-queue`), 3 Workers xử lý background jobs, cơ chế cô lập tiến trình render (`CONCURRENCY=1`).

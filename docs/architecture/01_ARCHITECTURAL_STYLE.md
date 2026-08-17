@@ -54,7 +54,7 @@ Hệ thống được thiết kế dưới dạng TypeScript Monorepo tinh gọn
 | Dịch vụ | Công nghệ chính | Trách nhiệm chính | Môi trường triển khai |
 | :--- | :--- | :--- | :--- |
 | **Caddy Gateway** | Caddy v2 Alpine | Route request, Auto-HTTPS/SSL Cert, Serve static `/media`, WebSocket forwarding, HTTP/2 & HTTP/3. | Docker Container (~30MB RAM) |
-| **App Monolith** | TypeScript / Node.js (Next.js / Fastify) | Quản lý NotebookLM Workspace (RAG Chatbot + 1-Click Video Generator), Projects CRUD, RAG Engine (Postgres `pgvector`), LangGraph Orchestrator (12 trạng thái, Postgres Checkpointer SSOT), Gemini/Agnes VLM Inspection. | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
+| **App Monolith** | TypeScript / Node.js (Next.js / Fastify) | Quản lý NotebookLM Workspace (RAG Chatbot + 1-Click Video Generator), Projects CRUD, RAG Engine (Postgres `pgvector`), LangGraph Orchestrator (15 trạng thái, Postgres Checkpointer SSOT), Gemini Cloud VLM Inspection (LLM fallback: Agnes). | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
 | **Database Engine** | PostgreSQL 15+ (`pgvector`) | SSOT lưu trữ dữ liệu dự án, LangGraph state checkpoints, và Vector Embeddings (thay thế Qdrant/Neo4j để tiết kiệm tài nguyên). | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
 | **Redis Engine** | Redis 7 Alpine | Đảm nhận cả BullMQ Job Queues (AOF persistence) lẫn LRU Caching & WebSocket PubSub trong 1 container duy nhất. | Docker Container (Max 0.5 CPU / 1.0GB RAM) |
 | **AI & Render Worker** | TypeScript / Node.js (Remotion CLI, Headless Chrome, VieNeu TTS ONNX) | Lắng nghe job từ Redis Queue: Sinh giọng nói VieNeu TTS ONNX, pre-fetch media từ Host Volume `/media`, render MP4 video và dọn dẹp Chromium process (`CONCURRENCY=1`). | Docker Container (Max 2.0 CPUs / 4.0GB RAM) |

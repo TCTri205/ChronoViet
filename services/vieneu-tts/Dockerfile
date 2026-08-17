@@ -1,26 +1,31 @@
-FROM node:20-alpine AS runner
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install system dependencies required by soundfile, audio processing, and container health checks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsndfile1 \
+    ffmpeg \
+    curl \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copy monorepo config files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
-COPY packages/shared-spec ./packages/shared-spec
-COPY services/vieneu-tts ./services/vieneu-tts
+# Copy python dependencies and install
+COPY services/vieneu-tts/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dependencies and build shared-spec & vieneu-tts
-RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @chronoviet/shared-spec build
-RUN pnpm --filter @chronoviet/vieneu-tts build
+# Copy FastAPI microservice
+COPY services/vieneu-tts/app.py ./
 
-# Create media directory for audio caching
-RUN mkdir -p media/audio-cache
+# Create persistent audio cache volume directory
+RUN mkdir -p /app/media/audio-cache
 
 EXPOSE 8080
 
 ENV NODE_ENV=production
 ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
 
-CMD ["node", "services/vieneu-tts/dist/server.js"]
+HEALTHCHECK --interval=5s --timeout=3s --retries=3 --start-period=5s \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]

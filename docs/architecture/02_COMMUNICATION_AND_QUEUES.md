@@ -37,12 +37,12 @@ Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài n
                                           │
        ┌──────────────────────────────────┼──────────────────────────────────┐
        ▼                                  ▼                                  ▼
-┌─────────────────────────┐    ┌─────────────────────────┐    ┌─────────────────────────┐
-│   1. tts-gen-queue      │    │  2. vlm-inspect-queue   │    │  3. remotion-render-q  │
-│ - Tác vụ: VieNeu ONNX   │    │ - Gemini 2.5 Flash API  │    │ - Remotion Local Render │
-│ - Concurrency: 10 jobs  │    │ - Strategy 3+3 Candidates│    │ - Concurrency: 1 MAX    │
-│ - Priority: High        │    │ - Priority: Medium      │    │ - Priority: Normal      │
-└────────────┬────────────┘    └────────────┬────────────┘    └────────────┬────────────┘
+┌─────────────────────────┐    ┌─────────────────────────┐    ┌───────────────────────────┐
+│   1. tts-gen-queue      │    │  2. vlm-inspect-queue   │    │ 3. remotion-render-queue  │
+│ - Tác vụ: VieNeu ONNX   │    │ - Gemini Cloud VLM API   │    │ - Remotion Local Render   │
+│ - Concurrency: 4 jobs   │    │ - Concurrency: 2 jobs   │    │ - Concurrency: 1 MAX      │
+│ - Priority: High        │    │ - Priority: Medium      │    │ - Priority: Normal        │
+└────────────┬────────────┘    └────────────┬────────────┘    └─────────────┬─────────────┘
              │                              │                              │
              ▼                              ▼                              ▼
   [TTS Worker Cluster]           [VLM Cloud Dispatcher]         [Render Worker Container]
@@ -56,12 +56,12 @@ Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài n
    * *Quy chuẩn Kỹ thuật:* Xem chi tiết tại [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md).
 
 2. **`vlm-inspect-queue` (Thẩm Định Thị Giác, License Snapshot & Circuit Breaker):**
-   * *Nhiệm vụ:* Đưa các đợt ảnh crawl qua Whitelisted License Filter (`Public Domain`, `CC0`, `CC-BY`), snapshot file ảnh + license metadata vào Host Volume `/media/license-snapshots/` và thực hiện chấm điểm qua **Gemini 2.5 Flash Cloud API** (kèm **Circuit Breaker** trip khi 3x HTTP 429 trong 5m ➔ auto failover sang **Local CLIP ONNX Scorer**).
+   * *Nhiệm vụ:* Đưa các đợt ảnh crawl qua Whitelisted License Filter (`Public Domain`, `CC0`, `CC-BY`), snapshot file ảnh + license metadata vào Host Volume `/media/license-snapshots/` và thực hiện chấm điểm qua **Gemini Cloud VLM API** (`VLM_PROVIDER=gemini|auto`, kèm **Circuit Breaker** trip khi 3x HTTP 429 trong 5m ➔ auto failover sang **Local CLIP ONNX Scorer**).
    * *Caching:* Kiểm tra SHA-256 / pHash trong Unified Redis Cache (TTL 30 ngày). Nếu trùng ảnh cũ, trả về kết quả VLM Score trong 1ms mà không gọi API.
    * *Strategy 3+3 & Fallback Handling:* Thực hiện thẩm định theo chiến lược 3+3 Candidates. Nếu cả 6 ảnh < 60 điểm, tự động chuyển sang PURE_CODE Layout Rotation Engine.
 
 3. **`remotion-render-queue` (Render Video MP4, Isolation & SSOT Verification):**
-   * *Nhiệm vụ:* Nhận task từ Redis Queue mang `idempotency_key = md5(json_spec_v3)`, **query lại Postgres Checkpoint SSOT** để đảm bảo project chưa bị hủy, pre-download toàn bộ Audio (.wav) & Images về Host Volume `/media/raw-assets/`, chạy lệnh CLI `npx remotion render` với `CONCURRENCY=1` để xuất file `.mp4`.
+   * *Nhiệm vụ:* Nhận task từ Redis Queue mang `idempotency_key = md5(json_spec_v4)`, **query lại Postgres Checkpoint SSOT** để đảm bảo project chưa bị hủy, pre-download toàn bộ Audio (.wav) & Images về Host Volume `/media/raw-assets/`, chạy lệnh CLI `npx remotion render` với `CONCURRENCY=1` để xuất file `.mp4`.
    * *Process Isolation & Resource Limits:* Chromium process được giới hạn max 2.0 CPUs / 4GB RAM, giải phóng tuyệt đối process (`browser.close()`) và temp directory ngay sau từng render job.
 
 ---

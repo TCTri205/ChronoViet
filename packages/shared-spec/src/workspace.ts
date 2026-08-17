@@ -195,7 +195,7 @@ export async function ensureProjectAssetsReady(
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
-      const res = await fetch(remoteUrl, { signal: controller.signal });
+      const res = await fetch(remoteUrl, { signal: controller.signal, cache: 'no-store' });
       clearTimeout(timer);
 
       if (res.ok) {

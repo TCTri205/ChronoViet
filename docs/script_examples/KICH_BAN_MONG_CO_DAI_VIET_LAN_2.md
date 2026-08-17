@@ -55,7 +55,7 @@
 
 Tệp này nằm tại `packages/remotion-engine/src/data/mongol-viet-2/mongolViet2Timeline.json` và đã được đăng ký tại `Root.tsx` với Composition ID `MongolViet2Video`.
 
-> **Chuẩn:** Schema v3.0 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts).  
+> **Chuẩn:** Schema v4.1 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts).  
 > **LÆ°u Ă½ thá»ƒ loáº¡i:** ÄĂ¢y lĂ  Video Essay phĂ¢n tĂ­ch dĂ i (~18 phĂºt), khĂ¡c vá»›i format Documentary 5â€“7 phĂºt chuáº©n. `videoType` Ä‘Æ°á»£c xáº¿p vĂ o `BATTLE`.
 
 ```json

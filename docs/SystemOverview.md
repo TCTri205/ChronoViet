@@ -187,9 +187,9 @@ Remotion Engine của ChronoViet tuân thủ kiến trúc **100% Data-Driven**. 
 }
 ```
 
-> **Lưu ý thời lượng scene:** Dùng `"startTime"` + `"endTime"` (giây) **hoặc** `"durationInFrames"` (số frames). Engine tự xử lý cả hai. `durationInFrames` có độ ưu tiên cao hơn khi có cả hai.
+> **Lưu ý thời lượng scene:** Thứ tự ưu tiên tính thời lượng tại runtime: `durationInFrames` > `durationInSeconds * fps` > `captions endFrame` > `(endTime - startTime) * fps`.
 
-👉 *Xem chi tiết quy chuẩn kỹ thuật đầy đủ tại:* [EVAL_REMOTION_TECHNICAL_SPEC.md](EVAL_REMOTION_TECHNICAL_SPEC.md)
+👉 *Xem chi tiết quy chuẩn kỹ thuật đầy đủ tại:* [specs/EVAL_REMOTION_TECHNICAL_SPEC.md](specs/EVAL_REMOTION_TECHNICAL_SPEC.md)
 
 ---
 

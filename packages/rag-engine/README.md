@@ -1,7 +1,7 @@
 # `@chronoviet/rag-engine`
 
 > **ChronoViet Hybrid GraphRAG Retrieval Engine (Mô-đun 1)**  
-> Gói mã nguồn chịu trách nhiệm cung cấp động cơ truy xuất tri thức thời gian thực Hybrid GraphRAG chuẩn xác (Mô-đun 1) cho hệ thống ChronoViet. Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](../../docs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v1.5.
+> Gói mã nguồn chịu trách nhiệm cung cấp động cơ truy xuất tri thức thời gian thực Hybrid GraphRAG chuẩn xác (Mô-đun 1) cho hệ thống ChronoViet. Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](../../docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v1.5.
 
 ---
 

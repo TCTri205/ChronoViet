@@ -1,6 +1,6 @@
 # ChronoEval v2.0: Comprehensive Historical Hybrid Graph RAG Evaluation Framework
 
-This package contains the automated component-level and end-to-end benchmark suite for **Chrono-RAG Engine** (`@chronoviet/rag-engine`), implementing the specification defined in [`docs/RAG_COMPONENT_BENCHMARK_SPEC.md`](../../../docs/RAG_COMPONENT_BENCHMARK_SPEC.md).
+This package contains the automated component-level and end-to-end benchmark suite for **Chrono-RAG Engine** (`@chronoviet/rag-engine`), implementing the specification defined in [`docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md`](../../../docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md).
 
 ---
 

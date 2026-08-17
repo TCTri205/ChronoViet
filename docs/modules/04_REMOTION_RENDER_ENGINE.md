@@ -34,7 +34,7 @@ Dưới đây là bảng tra cứu đầy đủ 100% không bỏ sót bất kỳ
 | `theme` | `object` | Tùy chọn | Theme mặc định | Cấu hình màu sắc & font chữ hệ thống (`ThemeConfig`). |
 | `audioUrl` | `string` | Tùy chọn | `undefined` | Đường dẫn file âm thanh voiceover tổng hợp toàn bộ video (`.wav`/`.mp3`). |
 | `bgmUrl` | `string` | Tùy chọn | `undefined` | Đường dẫn file nhạc nền BGM (.wav/.mp3). |
-| `bgmVolume` | `number` | Tùy chọn | `0.3` | Âm lượng nhạc nền (từ `0.0` đến `1.0`). |
+| `bgmVolume` | `number` | Tùy chọn | Không có default (`undefined`) | Âm lượng nhạc nền (từ `0.0` đến `1.0`, khuyến nghị 0.2–0.3). |
 | `defaultLayoutMode` | `enum` | Tùy chọn | `'BLUR_BG'` | LayoutMode dự phòng nếu scene không khai báo `layoutMode`. |
 | `defaultFilterStyle` | `enum` | Tùy chọn | `'HISTORICAL'` | Bộ lọc màu mặc định (`'HISTORICAL'`, `'SEPIA'`, `'VINTAGE'`, `'NONE'`). |
 | `defaultTransition` | `enum` | Tùy chọn | `'GLITCH'` | Chuyển cảnh mặc định giữa các scene (`'DISSOLVE'`, `'FADE_TO_BLACK'`, `'GLITCH'`...). |
@@ -210,7 +210,7 @@ export type LayoutMode =
 
 ---
 
-### 2.5. Danh Mục Đầy Đủ 6 Hiệu Ứng Ken Burns (`KenBurnsEffect`)
+### 2.5. Danh Mục Đầy Đủ 7 Giá Trị Hiệu Ứng Ken Burns (`KenBurnsEffect`)
 
 1. `'KEN_BURNS_ZOOM_IN'`: Thu phóng ống kính tiến vào trung tâm ảnh.
 2. `'KEN_BURNS_ZOOM_OUT'`: Thu phóng ống kính lùi ra xa toàn cảnh.
@@ -218,6 +218,7 @@ export type LayoutMode =
 4. `'KEN_BURNS_PAN_RIGHT'`: Quét camera từ trái sang phải.
 5. `'KEN_BURNS_PAN_UP'`: Quét camera từ dưới lên trên.
 6. `'KEN_BURNS_PAN_DOWN'`: Quét camera từ trên xuống dưới.
+7. `'NONE'`: Không áp dụng chuyển động (ảnh tĩnh).
 
 ---
 
@@ -245,7 +246,7 @@ export type LayoutMode =
 
 ---
 
-## 3. Mã Nguồn Mẫu File JSON Production v3.0 Đầy Đủ (Complete Realistic Payload)
+## 3. Mã Nguồn Mẫu File JSON Production v4.1 Đầy Đủ (Complete Realistic Payload)
 
 Dưới đây là một file JSON kịch bản hoàn chỉnh chuẩn 100% được sinh ra từ Mô-đun 2 và truyền vào Remotion Render Tool để render video:
 

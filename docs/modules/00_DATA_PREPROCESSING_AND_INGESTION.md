@@ -258,8 +258,8 @@ Mỗi ảnh nạp vào thư mục `/media/raw-assets/` bắt buộc đăng ký v
 
 ### 5.2. Audio & Visual Asset Runtime Responsibilities
 Theo kiến trúc chuẩn phân tách trách nhiệm (Separation of Concerns):
-- **Tài nguyên thị giác (Visual Assets):** Kiểm định chất lượng (Quality Gate độ phân giải >= 720p, tỷ lệ khung hình, pHash) và kiểm toán bản quyền (License Audit) được xử lý trực tiếp trong quy trình Online Runtime tại [`packages/vlm-inspector`](../packages/vlm-inspector) (`VisualQualityGate`).
-- **Tài nguyên âm thanh (Audio Assets):** Chuẩn hóa âm lượng (-14 LUFS cho BGM, -6 LUFS Peak cho SFX) được xử lý trong quy trình Online Audio tại [`services/vieneu-tts`](../services/vieneu-tts) (`AudioNormalizer`).
+- **Tài nguyên thị giác (Visual Assets):** Kiểm định chất lượng (Quality Gate độ phân giải >= 720p, tỷ lệ khung hình, pHash) và kiểm toán bản quyền (License Audit) được xử lý trực tiếp trong quy trình Online Runtime tại [`packages/vlm-inspector`](../../packages/vlm-inspector) (`VisualQualityGate`).
+- **Tài nguyên âm thanh (Audio Assets):** Chuẩn hóa âm lượng (-14 LUFS cho BGM, -6 LUFS Peak cho SFX) được xử lý trong quy trình Online Audio tại [`services/vieneu-tts`](../../services/vieneu-tts) (`AudioNormalizer`).
 - **Mô-đun 0 (`packages/data-ingestion`):** Tập trung 100% vào tiền xử lý kho tri thức ngoại tuyến (Offline Knowledge Ingestion, Hierarchical Chunking, Knowledge Graph Triples, Vector Seeding).
 
 ---

@@ -81,6 +81,16 @@ const EnvSchema = z.object({
   LOCAL_VLM_INSPECTOR: z.string().default('qwen3-vl-8b'),
   HISTORICAL_OCR_ENGINE: z.string().default('paddleocr_v5_hannom'),
 
+  // Vision Language Model (VLM) Inspector Configuration
+  VLM_PROVIDER: z.enum(['auto', 'local', 'openai', 'gemini', 'clip']).default('auto'),
+  VLM_BASE_URL: z.string().optional(),
+  VLM_MODEL: z.string().optional(),
+  VLM_API_KEY: z.string().optional(),
+  IMAGE_DOWNLOAD_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
+  IMAGE_DOWNLOAD_USER_AGENT: z
+    .string()
+    .default('ChronoViet-VLM-Downloader/1.0 (https://chronoviet.vn; contact@chronoviet.vn)'),
+
   // ==========================================
   // TTS Service
   // ==========================================

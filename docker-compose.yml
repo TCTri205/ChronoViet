@@ -58,11 +58,18 @@ services:
       - NODE_ENV=production
       - LOG_FORMAT=json
       - TTS_SERVICE_PORT=8080
-      - MODEL_PATH=/app/models/vieneu-historical-onnx
+      - MEDIA_DIR=/app/media
+      - AUDIO_CACHE_DIR=/app/media/audio-cache
     ports:
       - "8080:8080"
     volumes:
       - ./media:/app/media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
   app:
     build:
@@ -74,11 +81,16 @@ services:
       - LOG_FORMAT=json
       - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
+      - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - AGNES_API_KEY=${AGNES_API_KEY}
+      - VLM_PROVIDER=${VLM_PROVIDER:-auto}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      vieneu-tts-service:
         condition: service_healthy
     volumes:
       - ./media:/app/media
@@ -100,10 +112,16 @@ services:
       - RENDER_CONCURRENCY=1
       - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
+      - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AGNES_API_KEY=${AGNES_API_KEY}
+      - VLM_PROVIDER=${VLM_PROVIDER:-auto}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      vieneu-tts-service:
         condition: service_healthy
     volumes:
       - ./media:/app/media

@@ -5,7 +5,7 @@
 import { Worker, Job } from 'bullmq';
 import * as fs from 'fs';
 import * as path from 'path';
-import { createLogger, envConfig, initProjectWorkspace, WordTimestamp } from '@chronoviet/shared-spec';
+import { createLogger, envConfig, formatErrorMessage, initProjectWorkspace, WordTimestamp } from '@chronoviet/shared-spec';
 import { VieNeuEngine } from '@chronoviet/vieneu-tts';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 
@@ -121,7 +121,11 @@ export function startTTSWorker(): Worker<TTSJobData, TTSJobResult> {
   });
 
   worker.on('failed', (job, err) => {
-    log.error('worker.tts_failed', `TTS job ${job?.id} failed: ${err.message}`, { error: err });
+    log.error('worker.tts_failed', `TTS job ${job?.id} failed: ${formatErrorMessage(err)}`, { error: err });
+  });
+
+  worker.on('error', (err) => {
+    log.warn('worker.tts_redis_error', `TTS worker Redis connection error: ${formatErrorMessage(err)}`, { error: err });
   });
 
   return worker;

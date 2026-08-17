@@ -158,6 +158,7 @@ export class VieNeuEngine implements IVieNeuEngine {
   }
 
   async synthesize(request: VieNeuTTSRequest): Promise<VieNeuTTSResponse> {
+    const startTime = Date.now();
     try {
       const payload = JSON.stringify(request);
       const url = new URL('/api/v1/synthesize', this.pythonUrl);
@@ -197,6 +198,13 @@ export class VieNeuEngine implements IVieNeuEngine {
         });
         req.write(payload);
         req.end();
+      });
+
+      const elapsedMs = Date.now() - startTime;
+      log.debug('tts.python_engine_success', 'Synthesized audio via VieNeu Python engine', {
+        latencyMs: elapsedMs,
+        audioDurationMs: response.audioDurationMs,
+        engineType: response.engineType,
       });
 
       return response;
