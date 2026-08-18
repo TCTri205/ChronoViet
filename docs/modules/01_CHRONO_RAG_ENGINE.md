@@ -205,10 +205,8 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 ### 5.2. Công đoạn Biểu diễn Ngữ nghĩa (Embedding & Vector Search)
 *Chuyển đổi các đoạn văn bản (Chunks) và câu hỏi của người dùng thành Vector.*
 
-* **Embedding Models phù hợp cho Tiếng Việt:**
-  * **`BAAI/bge-m3` (Khuyên dùng số 1):** Mô hình Multi-Lingual mạnh nhất hiện nay. Hỗ trợ **Dense Retrieval**, **Sparse Retrieval (Lexical BM25)**, và **Multi-Vector Retrieval** cùng lúc. Giúp tìm chính xác cả tên riêng lịch sử (từ khóa) lẫn ngữ nghĩa đoạn văn.
-  * **`bkai-foundation-models/vietnamese-bi-encoder`:** Mô hình do BKAI huấn luyện chuyên biệt cho tiếng Việt, hoạt động mượt với văn bản thuần Việt.
-  * **`text-embedding-3-large` (OpenAI):** Chất lượng biểu diễn ngữ nghĩa cao (trả phí API).
+* **Embedding Model Chuẩn Hóa SSOT (1024-dim Vector Space):**
+  * **`BAAI/bge-m3` (SSOT Cố Định Toàn Hệ Thống):** Mô hình Multi-Lingual mạnh mẽ nhất. Hỗ trợ **Dense Retrieval** (1024 chiều) kết hợp **Sparse Retrieval (Lexical BM25)**. Được cố định duy nhất cho toàn bộ quy trình Ingestion, pgvector Indexing và RAG Dense Retrieval để đảm bảo không phân mảnh hoặc lệch không gian vector.
 * **Thuật toán Tìm kiếm Vector & Hybrid Search:**
   * **HNSW (Hierarchical Navigable Small World):** Thuật toán indexing mặc định trên PostgreSQL `pgvector` và các Vector DB cho tốc độ tìm kiếm lân cận cực nhanh.
   * **RRF (Reciprocal Rank Fusion):** Thuật toán kết hợp kết quả xếp hạng giữa **Sparse Search (BM25)** (tìm từ khóa chính xác tên tướng/địa danh) và **Dense Search (Vector Embedding)** (tìm ngữ nghĩa câu hỏi).
@@ -257,7 +255,7 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 
 | Công đoạn | Model / Thuật toán Đề xuất | Công cụ / Library hỗ trợ |
 | :--- | :--- | :--- |
-| **NER & Relation Extraction** | Qwen3.8-27B / Gemini 2.5 Flash / Llama 3.3 70B + Few-shot JSON Prompt | LlamaIndex (`PropertyGraphIndex`), Instructor, FastCoref |
+| **NER & Relation Extraction** | Qwen3.8-27B / Gemini 3.6 Flash / Llama 3.3 70B + Few-shot JSON Prompt | LlamaIndex (`PropertyGraphIndex`), Instructor, FastCoref |
 | **Graph DB & Traversal** | Relational Graph Schema / Cypher Query + k-Hop Expansion | PostgreSQL (MVP) / Neo4j (Scale-Out) |
 | **Text Embedding** | `BAAI/bge-m3` | Sentence-Transformers, HuggingFace |
 | **Hybrid Vector Search** | pgvector HNSW Index + BM25 + Reciprocal Rank Fusion (RRF) | PostgreSQL `pgvector` (MVP) / Qdrant (Scale-Out) |

@@ -4,7 +4,6 @@
 
 import { envConfig } from './config.js';
 import { logFallbackAlert, createLogger } from './logger.js';
-import { getNextApiKey, reportKeySuccess, reportKeyFailure, hasAvailableApiKeys, executeWithKeyRotation } from './api-key-rotator.js';
 
 const log = createLogger({ service: 'shared-spec' });
 
@@ -91,59 +90,10 @@ function adaptDimension(vector: number[], targetDim: number): number[] {
 }
 
 /**
- * Fallback to Google Gemini Cloud text-embedding-004 API (768-dim adapted to 1024-dim)
- */
-async function generateGeminiCloudEmbedding(text: string): Promise<number[] | null> {
-  if (!hasAvailableApiKeys('gemini') && !envConfig.GEMINI_API_KEY) {
-    return null;
-  }
-
-  try {
-    const rawVector = await executeWithKeyRotation('gemini', async (key) => {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'models/text-embedding-004',
-            content: {
-              parts: [{ text }],
-            },
-          }),
-          signal: AbortSignal.timeout(10000),
-        }
-      );
-
-      if (!res.ok) {
-        const err = new Error(`Gemini Embedding API HTTP ${res.status}: ${res.statusText}`);
-        (err as any).status = res.status;
-        throw err;
-      }
-
-      const data = (await res.json()) as any;
-      const values = data?.embedding?.values;
-      if (!Array.isArray(values) || values.length === 0) {
-        throw new Error('Gemini Embedding API returned empty values array');
-      }
-      return values;
-    });
-
-    const adapted = adaptDimension(rawVector, EMBEDDING_DIMENSION);
-    return normalizeVector(adapted);
-  } catch (err: any) {
-    log.warn('embedding.gemini_cloud_failed', `Gemini cloud embedding fallback failed: ${err.message}`);
-    return null;
-  }
-}
-
-/**
- * Generates a normalized 1024-dimensional dense vector
- * Connects to real BGE-M3 / TEI / Ollama / OpenAI embedding server if EMBEDDING_API_URL is set.
- * Fallback Chain:
- * 1. Primary Local Server (BGE-M3 / TEI / Ollama)
- * 2. Gemini Cloud Embedding (text-embedding-004 adapted to 1024-dim)
- * 3. Pseudo-random hash generator (Deterministic offline fallback)
+ * Generate a dense vector embedding for a given text.
+ * Strict Single Source of Truth (SSOT): BGE-M3 (1024 dimensions)
+ * 1. Primary: Local / OpenAI-compatible Embedding Server (EMBEDDING_API_URL, model: LOCAL_EMBEDDING_MODEL)
+ * 2. Fallback: Deterministic Pseudo-Random Vector Generator (Offline / Testing only)
  */
 let serverUnreachableUntil = 0;
 
@@ -159,21 +109,13 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
   const apiUrl = envConfig.EMBEDDING_API_URL;
   const isCircuitOpen = serverUnreachableUntil > Date.now();
+  const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
 
   if (!apiUrl || isCircuitOpen) {
     if (envConfig.EVAL_STRICT) {
       throw new Error('[EVAL_STRICT] Embedding server unavailable during evaluation; fallback disabled');
     }
 
-    // 1. Attempt Gemini Cloud Embedding Fallback
-    const cloudVec = await generateGeminiCloudEmbedding(trimmed);
-    if (cloudVec) {
-      if (embeddingCache.size >= MAX_CACHE_SIZE) embeddingCache.clear();
-      embeddingCache.set(trimmed, cloudVec);
-      return cloudVec;
-    }
-
-    const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
     if (!warnedMissingApiUrl && envConfig.NODE_ENV !== 'test' && !isCircuitOpen) {
       log.warn('embedding.api_unconfigured', 'Embedding API URL is not configured; using pseudo-random fallback', {
         fallback: 'Deterministic Pseudo-Random Vector Generator',
@@ -195,7 +137,6 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 
   try {
-    const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -250,20 +191,12 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     if (envConfig.EVAL_STRICT) {
       throw new Error(`[EVAL_STRICT] Embedding server unavailable during evaluation; pseudo-random fallback disabled: ${errMsg}`);
     }
-    log.error('embedding.api_failed', 'Embedding API request failed; attempting Gemini Cloud / pseudo-random fallback', {
+    log.error('embedding.api_failed', 'Embedding API request failed; falling back to deterministic pseudo-random generator', {
       error: err,
       apiUrl,
+      model: resolvedEmbeddingModel,
     });
 
-    // 2. Attempt Gemini Cloud Embedding Fallback on API failure
-    const cloudVec = await generateGeminiCloudEmbedding(trimmed);
-    if (cloudVec) {
-      if (embeddingCache.size >= MAX_CACHE_SIZE) embeddingCache.clear();
-      embeddingCache.set(trimmed, cloudVec);
-      return cloudVec;
-    }
-
-    const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
     if (!warnedFailedApiUrl) {
       logFallbackAlert({
         subsystem: 'EMBEDDING',

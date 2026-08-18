@@ -30,7 +30,7 @@
 | **Tạo Giọng Đọc (TTS)** | Self-Hosted VieNeu Neural TTS (`vieneu.io`), FastAPI Python ONNX Engine + Node.js Dual-Layer Fallback, Word Timestamps | **[✅ IMPLEMENTED]** (Phase 1 Microservice & Eval Suite) | Giọng thuyết minh lịch sử truyền cảm, ngắt nghỉ chuẩn, sinh Word Timestamps cho chữ Karaoke, kèm bộ kiểm thử `services/vieneu-tts/eval/`. |
 | **Dữ liệu & Tri thức (RAG)** | PostgreSQL-Powered GraphRAG (`pgvector` Dense BGE-M3 1024d + Relational Graph CTEs), SGK & Sử liệu cổ. | **[✅ IMPLEMENTED]** (100% Codebase & Eval) | Mô-đun 1: Hybrid GraphRAG (pgvector + Relational Graph CTEs k=1,2 + BM25 FTS + RRF). Đã vượt KPI: Fact Precision 100%, Hallucination Rate 0%, Citation Traceability 100%. |
 | **Đội ngũ Agent (Multi-Agent)** | LangGraph.js Agentic Orchestrator (Node.js/TS) + PostgreSQL State Checkpointer + Automated Guardrails + Research Agent (online image search). | **[✅ IMPLEMENTED]** (100% Codebase & Eval) | Mô-đun 2: Quy trình chia phân cảnh & 5 Micro-Steps kịch bản (kèm Narrative Context & Duration Reconcile), Research Agent (Micro-Step 1C) dùng provider chain SerpAPI/Tavily/Brave/Wikimedia/Catalog để tìm ảnh, NLI Entailment Hallucination Judge & Folklore Guardrail Gate. |
-| **Thẩm định Hình ảnh (VLM)** | Hybrid VLM (Google Gemini 2.5 Flash Cloud + Local CLIP ONNX Fallback) + Dual-Layer Cache + Research Agent candidate pool. | **[✅ IMPLEMENTED]** | Mô-đun 3: Thẩm định bối cảnh lịch sử theo Chiến lược 3+3 Candidates (nhận candidate từ Research Agent), lọc giấy phép Whitelisted (`Public Domain`, `CC0`, `CC-BY`), tự động chọn Fallback Pure Code Layout Rotation. |
+| **Thẩm định Hình ảnh (VLM)** | Hybrid VLM (Google Gemini 3.6 Flash Cloud + Local CLIP ONNX Fallback) + Dual-Layer Cache + Research Agent candidate pool. | **[✅ IMPLEMENTED]** | Mô-đun 3: Thẩm định bối cảnh lịch sử theo Chiến lược 3+3 Candidates (nhận candidate từ Research Agent), lọc giấy phép Whitelisted (`Public Domain`, `CC0`, `CC-BY`), tự động chọn Fallback Pure Code Layout Rotation. |
 
 > 🔗 **Tài liệu Chi tiết:** Tra cứu [architecture/](architecture) cho Kiến trúc Hệ thống & Hạ tầng và [modules/](modules) cho 5 Mô-đun Pipeline.
 
@@ -111,7 +111,7 @@
 2. **Lớp 1: Filter kỹ thuật sơ cấp (Metadata Filter)**
    - Kiểm tra độ phân giải, tỉ lệ khung hình (> 600×600), định dạng hợp lệ.
 
-3. **Lớp 2: Phân tích Thị giác bằng VLM (Gemini 2.5 Flash Cloud API) & Chiến lược 3+3 Candidates**
+3. **Lớp 2: Phân tích Thị giác bằng VLM (Gemini 3.6 Flash Cloud API) & Chiến lược 3+3 Candidates**
    - *Đầu vào:* Hình ảnh crawl được + Từ khóa sự kiện + Mô tả bối cảnh từ RAG.
    - *Tiêu chí chấm điểm (Score 0–100):*
      - **Historical Context Score:** Trang phục, kiến trúc có đúng bối cảnh Việt Nam không? (Loại bỏ ảnh có cờ, trang phục triều đại phong kiến Trung Quốc/Triều Tiên).

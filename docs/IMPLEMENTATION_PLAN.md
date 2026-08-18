@@ -304,7 +304,7 @@ Ma trận dưới đây ánh xạ trực tiếp từng trục đánh giá kỹ t
 
 | Trục Đánh Giá | Chỉ Số Đo Lường (KPI / Metrics) | Mục Tiêu Đạt Chuẩn | Mô-đun & Đường Dẫn Thư Mục `eval/` |
 | :--- | :--- | :---: | :--- |
-| **0. Tiền Xử Lý & Nạp Dữ Liệu (Data Ingestion ETL)** | - Entity Normalization & Disambiguation Accuracy<br>- Copyright License Compliance Audit Rate<br>- Ingestion Seeder Throughput & Golden Dataset Integrity | **> 98.0%**<br>**100%**<br>**100%** | **Data Preprocessing & Ingestion Engine**<br>`docs/modules/00_DATA_PREPROCESSING_AND_INGESTION.md`<br>(Đánh giá tại `packages/data-ingestion/eval/` & `eval/test-cases/`) |
+| **0. Tiền Xử Lý & Nạp Dữ Liệu (Data Ingestion ETL)** | - Entity Normalization & Disambiguation Accuracy<br>- Triple Extraction Accuracy<br>- Golden Dataset Integrity & Throughput<br>- Hierarchical Chunk Structural Quality<br>- 2 Production Pillars (Diagnostics & Hybrid RAG) | **> 98.0%**<br>**>= 90.0%**<br>**100%**<br>**100%**<br>**100%** | **Data Preprocessing & Ingestion Engine**<br>`docs/modules/00_DATA_PREPROCESSING_AND_INGESTION.md`<br>(Đánh giá tại `packages/data-ingestion/eval/` & `eval/test-cases/`) |
 | **1. Tính Chuẩn Xác Sử Liệu (RAG Accuracy)** | - Fact Precision Score<br>- Hallucination Rate<br>- Citation Traceability | **> 99.2%**<br>**< 0.8%**<br>**100%** | **Chrono-RAG Engine**<br>`packages/rag-engine/eval/` |
 | **2. Chất Lượng Thị Giác & Bản Quyền (VLM Inspection)** | - Visual Noise Free Rate<br>- Historical Context Match<br>- Whitelisted License Compliance | **> 95%**<br>**> 90%**<br>**100%** | **VLM Inspector Sub-Agent**<br>`packages/vlm-inspector/eval/` |
 | **3. Chất Lượng Giọng Đọc & Đồng Bộ Audio** | - RTF Inference Speed<br>- Word Timestamp Alignment Error<br>- Duration Frame Calculation Error | **< 0.3x RTF**<br>**< 50ms**<br>**< 1 frame** | **VieNeu TTS Service**<br>`services/vieneu-tts/eval/` |
@@ -318,7 +318,7 @@ Ma trận dưới đây ánh xạ trực tiếp từng trục đánh giá kỹ t
 
 | Rủi Ro Phát Sinh | Mức Độ | Nguyên Nhân | Phương Án Khắc Phục & Kiểm Đỉnh Trong `eval/` |
 | :--- | :---: | :--- | :--- |
-| **1. Rate-Limit / Cloud VLM API Down** | Cao | Cloud API Gemini 2.5 Flash bị sập hoặc trả lỗi 429 quá 3 lần. | **Circuit Breaker Fallback sang Local CLIP ONNX Scorer.** Đã có test case giả lập 429 trong `packages/vlm-inspector/eval/`. |
+| **1. Rate-Limit / Cloud VLM API Down** | Cao | Cloud API Gemini 3.6 Flash bị sập hoặc trả lỗi 429 quá 3 lần. | **Circuit Breaker Fallback sang Local CLIP ONNX Scorer.** Đã có test case giả lập 429 trong `packages/vlm-inspector/eval/`. |
 | **2. Khởi tạo Kịch bản bị Lỗi Thời Lượng (>15%)** | Trung bình | VieNeu TTS đọc câu văn quá dài/ngắn so với dự tính của Script Agent. | **Duration Reconciler Step 1B:** Áp dụng Time-Stretch $\pm 10\%$. Nếu vẫn quá 15%, rewrite pacing. Test tự động trong `packages/agent-orchestrator/eval/`. |
 | **3. Tự động Crawl Không Tìm Thấy Ảnh Phù Hợp** | Trung bình | Từ khóa hiếm, cả 6 ảnh (3+3 candidates) đều $< 60$ điểm VLM. | **PURE_CODE Layout Rotation:** Tự động switch scene sang các component thuần code (`STAT_CARD`, `QUOTE_SLIDE`, `TIMELINE_CHRONO`...). Kiểm thử trong `packages/remotion-engine/eval/`. |
 | **4. Render Remotion Bị Out Of Memory (OOM)** | Cao | Chromium Puppeteer instance giữ lại RAM cũ sau nhiều job render. | **Chromium Process Isolation:** Cấu hình `--concurrency=1`, gọi `browser.close()` and dọn temp. Đã đưa vào benchmark `apps/render-worker/eval/`. |

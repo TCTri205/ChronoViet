@@ -33,7 +33,7 @@ packages/vlm-inspector/
 │   ├── wikimedia-search.ts            # Wikimedia Commons API Scraper
 │   ├── license-filter.ts              # Whitelisted License Verifier
 │   ├── visual-quality-gate.ts         # Visual Noise & Context Match Gate
-│   ├── gemini-scorer.ts               # Gemini 2.5 Flash / Local VLM Scorer
+│   ├── gemini-scorer.ts               # Gemini 3.6 Flash / Local VLM Scorer
 │   ├── clip-scorer.ts                 # Local CLIP ONNX Semantic Scorer
 │   ├── asset-downloader.ts            # Download & Dimension Validator (>= 600x600px)
 │   ├── redis-cache.ts                 # Redis Cache Manager cho VLM scores

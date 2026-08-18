@@ -34,7 +34,7 @@ Hệ thống **ChronoViet** áp dụng chiến lược lưu trữ tối giản h
 * **Nhiệm vụ:** Đóng vai trò cơ sở dữ liệu quan hệ trung tâm (SSOT) cho toàn bộ hệ thống, lưu vết 15 trạng thái LangGraph (`INIT` → `COMPLETED`/`FAILED`), đồng thời thực hiện tìm kiếm vector tri thức RAG thông qua plugin `pgvector`.
 * **Cấu hình Vector Search (`pgvector`):**
   * Extension: `CREATE EXTENSION IF NOT EXISTS vector;`
-  * Model Embedding: `BAAI/bge-m3` (1024d) hoặc `vietnamese-bi-encoder`.
+  * Model Embedding: `BAAI/bge-m3` (SSOT 1024-dim Dense Vector Space).
   * Indexing: `HNSW` index với `m=16`, `ef_construction=64` trên vector column `embedding vector(1024)` giúp truy vấn similarity k-NN dưới 5ms ngay trong Postgres.
 * **Các Bảng Chính (Main Tables):**
   * `users` (`id`, `email`, `password_hash`, `role`, `created_at`)
@@ -91,9 +91,12 @@ Dịch vụ Redis được sử dụng làm bộ nhớ đệm đa tầng để t
 1. **LLM Response & Prompt Caching (TTL: 24 giờ):**
    * Hash của câu hỏi RAG phổ biến (ví dụ: *"Trận Bạch Đằng năm 938 diễn ra như thế nào?"*) được lưu cache. Nếu user khác hỏi câu tương tự, trả về kết quả ngay lập tức mà không cần gọi lại LLM.
 2. **Asset VLM Score Caching (TTL: 30 ngày):**
-   * Nếu bức ảnh `ngoc-hoi-map.jpg` đã được Gemini 2.5 Flash VLM chấm 85 điểm trước đó, kết quả này (kèm pHash) được cache lại. Các dự án video sau có cùng ảnh sẽ không tốn chi phí gọi VLM lại.
+   * Nếu bức ảnh `ngoc-hoi-map.jpg` đã được Gemini 3.6 Flash VLM chấm 85 điểm trước đó, kết quả này (kèm pHash) được cache lại. Các dự án video sau có cùng ảnh sẽ không tốn chi phí gọi VLM lại.
 3. **Session & Rate-limiting Store (TTL: 1 giờ):**
    * Lưu Token JWT, số lượt tạo video còn lại của User (Free vs Premium tier).
+4. **Persistent ETL Chunk Extraction Checkpoint & Cache (`.cache/extraction_triples/`):**
+   * Lưu kết quả trích xuất bộ ba tri thức theo mã băm SHA-256 của từng đoạn văn bản (`chunk`).
+   * Hỗ trợ pipeline `pnpm ingest:knowledge` tự động tiếp tục (Resume) từ vị trí dừng mà không cần trích xuất lại các chunk đã hoàn thành, tiết kiệm thời gian và tài nguyên suy luận LLM. Xóa sạch khi dùng cờ `--force`.
 
 ---
 

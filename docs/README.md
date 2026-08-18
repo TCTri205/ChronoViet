@@ -118,7 +118,8 @@ docs/
 pnpm stack:infra                                # Khởi chạy Postgres, Redis & VieNeu TTS
 pnpm db:init                                    # Khởi tạo CSDL & Schema Vector/Graph
 pnpm crawl:all                                  # Cào 15 thời kỳ lịch sử
-pnpm ingest:knowledge --strict                  # Nạp tri thức vào CSDL (kiểm tra sức khoẻ dịch vụ)
+pnpm ingest:knowledge --strict                  # Nạp tri thức vào CSDL (hỗ trợ Resume, kiểm tra dịch vụ)
+# (Hoặc pnpm ingest:knowledge --force để nạp lại mới từ đầu)
 pnpm rag:re-resolve                             # Hợp giải thực thể mâu thuẫn & ghi audit logs
 
 # ===============================================================

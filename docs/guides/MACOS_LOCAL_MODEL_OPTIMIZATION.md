@@ -56,9 +56,9 @@ llama-server Agnes 2.5 llama-server MLX llama-server MLX SigLIP 2 Qwen3-VL  VieN
 ```
 
 * **`llama-server` (`Qwen3.8-27B-Q4` Local Metal Engine) — PRIMARY PRODUCTION ENGINE:**
-  Backend chính cho LLM Generation, Text Embedding, Reranking và VLM Inspection chạy cục bộ trên macOS.
-* **`Agnes 2.5 Flash` (Remote API Fallback Engine) — ZERO-DOWNTIME CLOUD FALLBACK:**
-  Chế độ dự phòng linh hoạt qua API Key (`AGNES_API_KEY`). Tự động kích hoạt khi local Metal OOM, server local bận hoặc khi truy vấn đòi hỏi tốc độ xử lý tức thì (Flash speed).
+  Backend chính cho LLM Generation, Text Embedding, Reranking và VLM Inspection chạy cục bộ trên macOS. Tích hợp adaptive timeout 45s và tự động cách ly 30s khi gặp sự cố/quá tải.
+* **`Agnes 2.5 Flash` & Multi-Cloud Gateway (`gemini`, `openai`, `openrouter`) — HIERARCHICAL 2-LEVEL ROTATION:**
+  Chế độ dự phòng và luân chuyển linh hoạt qua hệ thống Key Rotator phân cấp 2 tầng (`HybridInferenceDispatcher`). Tự động luân chuyển Provider Round-Robin, cách ly 24h cho lỗi Quota/429, cách ly 30s cho lỗi tạm thời/503/timeout, áp dụng adaptive timeout mặc định 35s (`REMOTE_FALLBACK_TIMEOUT_MS=35000`) và kích hoạt fast failover retry tức thì.
 * **Ollama — DEVELOPMENT WRAPPER:**
   Công cụ đóng gói/quản lý model weights cho Developer trong quá trình phát triển (Dev UI / Quick Pull).
 * **Apple MLX (`mlx-lm`) — RESEARCH & BENCHMARK CANDIDATE:**
@@ -329,11 +329,10 @@ LOCAL_LLM_PRIMARY_MODEL=qwen3.8-27b-instruct-q4_k_m
 ENABLE_CLOUD_FALLBACK=true
 REMOTE_FALLBACK_MODEL=agnes-2.5-flash
 AGNES_API_KEY=your_agnes_api_key_here
-REMOTE_FALLBACK_TIMEOUT_MS=120000
+REMOTE_FALLBACK_TIMEOUT_MS=35000
 
 # Embedding & Rerank Strategy (SSOT 1024-dim Vector Space)
 LOCAL_EMBEDDING_MODEL=bge-m3
-LOCAL_EMBEDDING_DEFAULT=bge-m3
 EMBEDDING_DIMENSION=1024
 LOCAL_RERANK_MODEL=qwen3-reranker-0.6b
 

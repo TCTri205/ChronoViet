@@ -33,8 +33,10 @@ Gói `@chronoviet/shared-spec` đóng vai trò là **Hợp đồng Dữ liệu D
    * `createLogger({ service, correlationId?, baseFields? })` — JSON Lines ở production, pretty ở dev, level filter qua `LOG_LEVEL`, redaction secrets tự động.
    * `log.child({ fields })` — logger có context bổ sung (projectId, runId, entityId...).
    * `serializeError(err)` / `sanitizePayload(value)` — serialize Error đầy đủ `name/message/stack/cause`, chặn secret key trước khi vào log stream.
-   * `logFallbackAlert(payload)` — event `system.fallback_activated` (level warn) cho các fallback hệ thống.
-   * Chi tiết: [docs/architecture/06_OBSERVABILITY_AND_LOGGING.md](../../docs/architecture/06_OBSERVABILITY_AND_LOGGING.md).
+4. **Hierarchical 2-Level Key Rotator & Hybrid Dispatcher (`api-key-rotator.ts`, `llm-client.ts`):**
+   * `HybridInferenceDispatcher`: Quản lý luân chuyển phân cấp 2 tầng (Level 1: Provider Round-Robin $\to$ Level 2: API Key per Provider) giữa Local LLM (llama-server) và các Cloud Providers (Agnes, Gemini, OpenAI, OpenRouter).
+   * `ApiKeyRotator`: Quản lý pool API keys độc lập cho từng Cloud Provider, tự động cách ly 24h khi gặp mã lỗi 429/Quota, cách ly 30s khi gặp 503/timeout, và hỗ trợ Fast Failover Retry tức thì.
+   * `generateLLMCompletion`: Client suy luận tích hợp adaptive timeout (Local: 45s, Cloud default: 35s), ghi nhận telemetry và observability metadata (`targetId`, `targetProvider`).
 
 ---
 
@@ -49,6 +51,8 @@ import {
   ChunkMetadataSchema,
   ChronoVideoScript,
   getCanonicalEntityIdPrefix,
+  generateLLMCompletion,
+  hybridInferenceDispatcher,
 } from '@chronoviet/shared-spec';
 
 // Sử dụng Enum hoặc Helper
@@ -56,4 +60,10 @@ const prefix = getCanonicalEntityIdPrefix('HISTORICAL_PERSON'); // 'person_'
 
 // Validate runtime data
 const metadata = ChunkMetadataSchema.parse(rawData);
+
+// Gọi suy luận với Hierarchical 2-Level Rotation
+const response = await generateLLMCompletion([
+  { role: 'user', content: 'Tóm tắt trận Ngọc Hồi 1789' }
+]);
+console.log(`Executed via ${response.targetId} (Provider: ${response.targetProvider})`);
 ```

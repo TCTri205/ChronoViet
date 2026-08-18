@@ -23,7 +23,7 @@ Khi thu thập hình ảnh tư liệu lịch sử Việt Nam tự động từ I
 
 VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiên thay đổi theo chế độ:
 - **Eval strict (`EVAL_STRICT=true`, mặc định):** **Local Unified VLM (`qwen3.8-27b-instruct-q4_k_m`) qua llama-server** (`LLM_BASE_URL`) là scorer bắt buộc. Local VLM fail → eval FAIL ngay, **không** rơi vào Gemini/CLIP.
-- **Dev (`EVAL_STRICT=false`):** Gemini 2.5 Flash Cloud API (Primary, hỗ trợ xoay vòng luân phiên `GEMINI_API_KEYS` Round-Robin và tự động failover/quarantine khi chạm rate limit HTTP 429) → Local CLIP/SigLIP Cosine Similarity Scorer (Offline Fallback khi mất kết nối hoặc toàn bộ key hết quota).
+- **Dev (`EVAL_STRICT=false`):** Gemini 3.6 Flash Cloud API (Primary, hỗ trợ xoay vòng luân phiên `GEMINI_API_KEYS` Round-Robin và tự động failover/quarantine khi chạm rate limit HTTP 429) → Local CLIP/SigLIP Cosine Similarity Scorer (Offline Fallback khi mất kết nối hoặc toàn bộ key hết quota).
 - Dual-Cache Redis 2 lớp (SHA-256 + pHash) luôn được kiểm tra trước mọi scorer.
 
 ---
@@ -61,7 +61,7 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
   ┌────────────────────────────────────────────────────────────────────────────┐
   │ LỚP 3: HYBRID VLM VISUAL & CONTEXT SCORING                                 │
   │ ├─ Eval strict: Local Unified VLM (qwen3.8-27b qua llama-server) — bắt buộc│
-  │ ├─ Dev primary: Cloud Gemini 2.5 Flash API (khi có GEMINI_API_KEY)         │
+  │ ├─ Dev primary: Cloud Gemini 3.6 Flash API (khi có GEMINI_API_KEY)         │
   │ └─ Dev fallback (429/500/Timeout): Local CLIP/SigLIP Cosine Scorer        │
   │ - Historical Context Score (0-40): Đúng trang phục, cờ, kiến trúc VN?     │
   │ - Visual Noise Score (0-30): Có watermark, logo, chữ đè không?            │
@@ -91,7 +91,7 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
 
 ## 3. Chi Tiết Thuật Toán Chấm Điểm Hybrid VLM (Scoring Algorithm)
 
-### 3.1. Primary Scorer: System Prompt Template Cho Gemini 2.5 Flash
+### 3.1. Primary Scorer: System Prompt Template Cho Gemini 3.6 Flash
 ```text
 Bạn là chuyên gia thẩm định mỹ thuật và lịch sử Việt Nam thuộc hệ thống ChronoViet.
 Hãy phân tích bức ảnh crawl này dựa trên ngữ cảnh sự kiện lịch sử: "{event_description}".

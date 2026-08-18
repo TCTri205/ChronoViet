@@ -50,6 +50,9 @@ function parseArgs(): DiagnosticCliOptions {
       regexOnly = true;
     } else if (arg === '--allow-fallback' || arg === '--fallback') {
       allowFallback = true;
+    } else if (arg === '--offline') {
+      regexOnly = true;
+      allowFallback = true;
     } else if (arg === '--strict') {
       strict = true;
     }

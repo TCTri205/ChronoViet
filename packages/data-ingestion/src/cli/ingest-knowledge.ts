@@ -1,6 +1,6 @@
 /**
- * CLI Command: Ingest Historical Knowledge Corpus (Two-Tier Dual-Branch Seeding)
- * Usage: pnpm --filter @chronoviet/data-ingestion ingest:knowledge [--input=path] [--force] [--strict] [--local-llm]
+ * CLI Command: Ingest Historical Knowledge Corpus (Two-Tier Dual-Branch Seeding with Resume & Checkpoint)
+ * Usage: pnpm --filter @chronoviet/data-ingestion ingest:knowledge [--input=path] [--force] [--strict] [--regex-only] [--allow-fallback]
  */
 
 import path from 'path';
@@ -15,8 +15,10 @@ import {
   inMemoryStore,
   isEmbeddingServiceHealthy,
   isLLMServiceHealthy,
+  flushAllQuarantines,
 } from '@chronoviet/shared-spec';
 import { runReResolve } from './re-resolve-cli.js';
+import { extractionCache } from '../cache/extraction-cache.js';
 
 const log = createLogger({ service: 'data-ingestion' });
 
@@ -31,7 +33,7 @@ interface IngestCliOptions {
 function parseArgs(): IngestCliOptions {
   const args = process.argv.slice(2);
   let inputPath = path.resolve(findMonorepoRoot(), 'data', 'raw_corpus');
-  let force = false;
+  let force = false; // Default to resume mode (reuse cache, no db truncate)
   let strict = false;
   let regexOnly = false;
   let allowFallback = false;
@@ -40,13 +42,18 @@ function parseArgs(): IngestCliOptions {
     if (arg.startsWith('--input=')) {
       const val = arg.split('=')[1] || '';
       inputPath = path.isAbsolute(val) ? val : path.resolve(findMonorepoRoot(), val);
-    } else if (arg === '--force' || arg === '--clean') {
+    } else if (arg === '--force' || arg === '--clean' || arg === '--fresh' || arg === '--reindex') {
       force = true;
+    } else if (arg === '--unforce' || arg === '--no-clean' || arg === '--append' || arg === '--resume') {
+      force = false;
     } else if (arg === '--strict') {
       strict = true;
     } else if (arg === '--regex-only' || arg === '--regex') {
       regexOnly = true;
     } else if (arg === '--allow-fallback' || arg === '--fallback') {
+      allowFallback = true;
+    } else if (arg === '--offline' || arg === '--fast') {
+      regexOnly = true;
       allowFallback = true;
     }
   }
@@ -152,17 +159,27 @@ async function main() {
     // 2. Ensure Schema is Initialized
     await initSchema();
 
-    // 3. If force/clean specified, reset tables to ensure fresh ingestion
+    // 3. If force/clean specified, reset tables & clear cache to ensure fresh ingestion
     if (cliOptions.force) {
-      log.info('ingest.cleaning', 'Clearing existing database tables for fresh deterministic ingestion');
+      log.info('ingest.force_reset', 'Force mode enabled: clearing extraction cache and truncating database tables');
+      await extractionCache.clear();
       const pgConnected = await isPgAvailable();
       if (pgConnected) {
-        await query('TRUNCATE document_chunks, entity_chunks, relationships, entities, entity_audit_logs CASCADE;');
+        await query(
+          'TRUNCATE document_chunks, entity_chunks, relationships, entities, entity_audit_logs, quarantine_triples, unmapped_entities CASCADE;'
+        );
         log.info('ingest.tables_truncated', 'PostgreSQL tables truncated');
       } else {
         inMemoryStore.clear();
         log.info('ingest.memory_cleared', 'In-memory store cleared');
       }
+      await flushAllQuarantines();
+    } else {
+      const cacheStats = await extractionCache.getStats();
+      log.info('ingest.resume_mode', 'Resume mode active (cached chunk extractions will be reused to bypass LLM extraction latency)', {
+        cachedChunksCount: cacheStats.count,
+        cacheDir: cacheStats.dir,
+      });
     }
 
     // 4. Execute Dual-Branch Seeding

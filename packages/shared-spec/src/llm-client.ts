@@ -20,6 +20,8 @@ import {
   getApiKeyRotator,
   hybridInferenceDispatcher,
   InferenceTarget,
+  sanitizeHttpErrorResponse,
+  formatConciseError,
 } from './api-key-rotator.js';
 
 const log = createLogger({ service: 'shared-spec' });
@@ -42,7 +44,15 @@ export interface LLMCompletionResponse {
   content: string;
   reasoningContent?: string;
   model: string;
-  provider: 'LOCAL_LLM' | 'AGNES_FLASH_FALLBACK';
+  provider:
+    | 'LOCAL_LLM'
+    | 'AGNES_FLASH_FALLBACK'
+    | 'OPENROUTER_CLOUD'
+    | 'OPENAI_CLOUD'
+    | 'GEMINI_CLOUD_API'
+    | (string & {});
+  targetId?: string;
+  targetProvider?: string;
   finishReason: string;
   usage?: {
     promptTokens: number;
@@ -159,19 +169,23 @@ export function getActiveRemoteLLMConfig(): ActiveRemoteLLMConfig {
   let apiKey = '';
   let providerName = 'REMOTE_CLOUD_LLM';
   let baseUrl = (envConfig.REMOTE_LLM_BASE_URL || '').trim();
+  let model = envConfig.REMOTE_FALLBACK_MODEL || 'agnes-2.5-flash';
 
   if (hasAvailableApiKeys('agnes')) {
     apiKey = getNextApiKey('agnes') || '';
     baseUrl = baseUrl || 'https://apihub.agnes-ai.com/v1';
     providerName = 'AGNES_FLASH_GATEWAY';
+    model = envConfig.REMOTE_FALLBACK_MODEL || 'agnes-2.5-flash';
   } else if (hasAvailableApiKeys('openrouter') || (envConfig.OPENROUTER_API_KEY && envConfig.OPENROUTER_API_KEY.startsWith('sk-or-'))) {
     apiKey = getNextApiKey('openrouter') || envConfig.OPENROUTER_API_KEY || '';
-    baseUrl = baseUrl || 'https://openrouter.ai/api/v1';
+    baseUrl = (envConfig.OPENROUTER_BASE_URL || baseUrl || 'https://openrouter.ai/api/v1').trim();
     providerName = 'OPENROUTER_CLOUD';
+    model = envConfig.OPENROUTER_MODEL || 'deepseek/deepseek-chat';
   } else if (hasAvailableApiKeys('openai')) {
     apiKey = getNextApiKey('openai') || envConfig.OPENAI_API_KEY || '';
     baseUrl = baseUrl || 'https://api.openai.com/v1';
     providerName = 'OPENAI_CLOUD';
+    model = envConfig.OPENAI_MODEL || (envConfig.REMOTE_FALLBACK_MODEL !== 'agnes-2.5-flash' ? envConfig.REMOTE_FALLBACK_MODEL : 'gpt-4o-mini');
   } else {
     apiKey = (
       envConfig.AGNES_API_KEY ||
@@ -186,8 +200,6 @@ export function getActiveRemoteLLMConfig(): ActiveRemoteLLMConfig {
       providerName = 'AGNES_FLASH_GATEWAY';
     }
   }
-
-  const model = envConfig.REMOTE_FALLBACK_MODEL || 'agnes-2.5-flash';
 
   return {
     apiKey,
@@ -207,7 +219,7 @@ async function executeTargetCompletion(
   startTime: number
 ): Promise<LLMCompletionResponse> {
   const temperature = options.temperature ?? 0.2;
-  const maxTokens = options.max_tokens ?? (target.type === 'local' ? 2048 : 8192);
+  const maxTokens = options.max_tokens ?? (target.type === 'local' || target.provider === 'openrouter' ? 2048 : 4096);
   const timeoutMs = options.timeoutMs ?? (target.type === 'local' ? 45000 : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
 
   const controller = new AbortController();
@@ -235,7 +247,9 @@ async function executeTargetCompletion(
       clearTimeout(timer);
 
       if (!response.ok) {
-        throw new Error(`Local llama-server HTTP ${response.status}: ${response.statusText}`);
+        const errText = await response.text().catch(() => '');
+        const cleanErr = sanitizeHttpErrorResponse(response.status, response.statusText, errText, 'local');
+        throw new Error(`Local llama-server ${cleanErr}`);
       }
 
       const data = (await response.json()) as any;
@@ -252,6 +266,8 @@ async function executeTargetCompletion(
         reasoningContent: choice.message?.reasoning_content || undefined,
         model: data.model || target.model,
         provider: 'LOCAL_LLM',
+        targetId: target.id,
+        targetProvider: target.provider,
         finishReason: choice.finish_reason || 'stop',
         usage: data.usage
           ? {
@@ -271,6 +287,10 @@ async function executeTargetCompletion(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${target.apiKey}`,
       };
+      if (target.provider === 'openrouter') {
+        headers['HTTP-Referer'] = 'https://chronoviet.vn';
+        headers['X-Title'] = 'ChronoViet';
+      }
 
       const response = await fetch(remoteEndpoint, {
         method: 'POST',
@@ -289,7 +309,8 @@ async function executeTargetCompletion(
 
       if (!response.ok) {
         const errText = await response.text().catch(() => '');
-        const err = new Error(`Remote Cloud LLM HTTP ${response.status} (${target.provider}): ${errText}`);
+        const cleanErr = sanitizeHttpErrorResponse(response.status, response.statusText, errText, target.provider);
+        const err = new Error(`Remote Cloud LLM ${cleanErr}`);
         (err as any).status = response.status;
         throw err;
       }
@@ -300,14 +321,26 @@ async function executeTargetCompletion(
 
       recordCloudCircuitSuccess();
       const durationSec = (Date.now() - startTime) / 1000;
-      llmRequestsTotal.inc({ provider: 'remote_fallback', model: target.model, status: 'success' });
-      llmRequestDurationSeconds.observe({ provider: 'remote_fallback', model: target.model }, durationSec);
+      const telemetryProvider = target.provider || 'remote_fallback';
+      llmRequestsTotal.inc({ provider: telemetryProvider, model: target.model, status: 'success' });
+      llmRequestDurationSeconds.observe({ provider: telemetryProvider, model: target.model }, durationSec);
+
+      const displayProvider =
+        target.provider === 'openrouter'
+          ? 'OPENROUTER_CLOUD'
+          : target.provider === 'openai'
+            ? 'OPENAI_CLOUD'
+            : target.provider === 'gemini'
+              ? 'GEMINI_CLOUD_API'
+              : 'AGNES_FLASH_FALLBACK';
 
       return {
         content: choice.message?.content || '',
         reasoningContent: choice.message?.reasoning_content || undefined,
         model: data.model || target.model,
-        provider: 'AGNES_FLASH_FALLBACK',
+        provider: displayProvider,
+        targetId: target.id,
+        targetProvider: target.provider,
         finishReason: choice.finish_reason || 'stop',
         usage: data.usage
           ? {
@@ -318,8 +351,15 @@ async function executeTargetCompletion(
           : undefined,
       };
     }
-  } catch (err) {
+  } catch (err: any) {
     clearTimeout(timer);
+    if (err?.name === 'AbortError') {
+      const timeoutErr: any = new Error(`LLM inference timeout after ${timeoutMs}ms (${target.id})`);
+      timeoutErr.status = 504;
+      timeoutErr.name = 'TimeoutError';
+      timeoutErr.code = 'ETIMEDOUT';
+      throw timeoutErr;
+    }
     throw err;
   }
 }
@@ -334,8 +374,8 @@ export async function generateLLMCompletion(
   const startTime = Date.now();
   const localModel = options.model || envConfig.LOCAL_LLM_PRIMARY_MODEL;
   const temperature = options.temperature ?? 0.2;
-  const maxTokens = options.max_tokens ?? (envConfig.USE_LOCAL_LLM ? 2048 : 8192);
-  const timeoutMs = options.timeoutMs ?? (envConfig.USE_LOCAL_LLM ? 45000 : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
+  const maxTokens = options.max_tokens ?? (envConfig.USE_LOCAL_LLM ? 2048 : 4096);
+  const timeoutMs = options.timeoutMs ?? (envConfig.USE_LOCAL_LLM ? envConfig.LOCAL_LLM_TIMEOUT_MS : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
 
   log.debug('llm.request_started', 'LLM completion request started', {
     model: localModel,
@@ -404,7 +444,9 @@ export async function generateLLMCompletion(
         clearTimeout(timer);
 
         if (!response.ok) {
-          throw new Error(`Local llama-server HTTP ${response.status}: ${response.statusText}`);
+          const errBody = await response.text().catch(() => '');
+          const cleanErr = sanitizeHttpErrorResponse(response.status, response.statusText, errBody, 'local');
+          throw new Error(`Local llama-server ${cleanErr}`);
         }
 
         const data = (await response.json()) as any;
@@ -496,7 +538,7 @@ export async function generateLLMCompletion(
         throw new Error(`Local LLM is offline (${localFailureReason}) and Cloud Fallback circuit is OPEN.`);
       }
 
-      const effectiveTimeout = options.timeoutMs ?? envConfig.REMOTE_FALLBACK_TIMEOUT_MS ?? 120000;
+      const effectiveTimeout = options.timeoutMs ?? envConfig.REMOTE_FALLBACK_TIMEOUT_MS ?? 35000;
       let lastErr: unknown = null;
       const maxAttempts = Math.max(2, keyPoolSize);
 
@@ -511,6 +553,10 @@ export async function generateLLMCompletion(
             'Content-Type': 'application/json',
             Authorization: `Bearer ${activeKey}`,
           };
+          if (providerKey === 'openrouter') {
+            headers['HTTP-Referer'] = 'https://chronoviet.vn';
+            headers['X-Title'] = 'ChronoViet';
+          }
 
           const response = await fetch(remoteEndpoint, {
             method: 'POST',
@@ -530,7 +576,8 @@ export async function generateLLMCompletion(
 
           if (!response.ok) {
             const errBody = await response.text().catch(() => '');
-            const error = new Error(`Cloud LLM (${remoteCfg.baseUrl}) HTTP ${response.status}: ${response.statusText} ${errBody}`.trim());
+            const cleanErr = sanitizeHttpErrorResponse(response.status, response.statusText, errBody, remoteCfg.baseUrl);
+            const error = new Error(`Cloud LLM ${cleanErr}`);
             (error as any).status = response.status;
             throw error;
           }
@@ -555,11 +602,18 @@ export async function generateLLMCompletion(
             durationMs: Date.now() - startTime,
           });
 
+          const fallbackDisplayProvider =
+            providerKey === 'openrouter'
+              ? 'OPENROUTER_CLOUD'
+              : providerKey === 'openai'
+                ? 'OPENAI_CLOUD'
+                : 'AGNES_FLASH_FALLBACK';
+
           return {
             content,
             reasoningContent: choice?.message?.reasoning_content,
             model: remoteCfg.model,
-            provider: 'AGNES_FLASH_FALLBACK',
+            provider: fallbackDisplayProvider,
             finishReason: choice?.finish_reason || 'stop',
             usage: data.usage
               ? {
@@ -574,8 +628,9 @@ export async function generateLLMCompletion(
           rotator.reportFailure(activeKey, attemptErr);
 
           if (attempt < maxAttempts) {
+            const conciseErr = formatConciseError(attemptErr);
             log.warn('llm.cloud_retry', `Remote cloud request attempt ${attempt}/${maxAttempts} failed with key [${maskApiKey(activeKey)}]; rotating to next key...`, {
-              error: attemptErr instanceof Error ? attemptErr.message : String(attemptErr),
+              error: conciseErr,
               statusCode: attemptErr?.status,
             });
             await new Promise((r) => setTimeout(r, 1000));
@@ -586,7 +641,7 @@ export async function generateLLMCompletion(
       const fallbackErr = lastErr;
       recordCloudCircuitFailure(fallbackErr);
       llmRequestsTotal.inc({ provider: 'cloud_fallback', model: remoteCfg.model, status: 'error' });
-      const fallbackMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+      const fallbackMsg = formatConciseError(fallbackErr);
       log.warn('llm.cloud_fallback_failed', 'Cloud fallback request failed across all key attempts', {
         error: fallbackMsg,
         endpoint: remoteCfg.baseUrl,
@@ -751,7 +806,7 @@ async function* streamTargetCompletion(
   options: LLMCompletionOptions
 ): AsyncGenerator<string> {
   const temperature = options.temperature ?? 0.2;
-  const maxTokens = options.max_tokens ?? (target.type === 'local' ? 2048 : 8192);
+  const maxTokens = options.max_tokens ?? (target.type === 'local' || target.provider === 'openrouter' ? 2048 : 4096);
   const timeoutMs = options.timeoutMs ?? (target.type === 'local' ? 45000 : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
 
   if (target.type === 'local') {
@@ -804,7 +859,8 @@ async function* streamTargetCompletion(
 
     if (!response.ok || !response.body) {
       const errText = typeof response.text === 'function' ? await response.text().catch(() => '') : '';
-      const err = new Error(`Remote Cloud LLM HTTP ${response.status} (${target.provider}): ${errText}`);
+      const cleanErr = sanitizeHttpErrorResponse(response.status, response.statusText, errText, target.provider);
+      const err = new Error(`Remote Cloud LLM ${cleanErr}`);
       (err as any).status = response.status;
       throw err;
     }
@@ -835,7 +891,7 @@ export async function* generateLLMCompletionStream(
   ) {
     const targets = hybridInferenceDispatcher.getInferenceTargets('llm');
     if (targets.length > 0) {
-      const maxAttempts = Math.max(1, targets.length);
+      const maxAttempts = Math.min(4, Math.max(1, targets.length));
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const target = hybridInferenceDispatcher.getNextTarget('llm');
         if (!target) break;
@@ -846,7 +902,8 @@ export async function* generateLLMCompletionStream(
           return;
         } catch (err: any) {
           hybridInferenceDispatcher.reportTargetFailure(target, err);
-          log.warn('llm.stream_hybrid_attempt_failed', `Hybrid stream target [${target.id}] failed on attempt ${attempt}/${maxAttempts}: ${err.message}`);
+          const conciseErr = formatConciseError(err);
+          log.warn('llm.stream_hybrid_attempt_failed', `Hybrid stream target [${target.id}] failed on attempt ${attempt}/${maxAttempts}: ${conciseErr}`);
         }
       }
     }
@@ -877,13 +934,16 @@ export async function* generateLLMCompletionStream(
           yield* streamSseChunks(response.body);
           return;
         } else {
-          throw new Error(`Local llama-server HTTP ${response.status}: ${response.statusText}`);
+          const errBody = typeof response.text === 'function' ? await response.text().catch(() => '') : '';
+          const cleanErr = sanitizeHttpErrorResponse(response.status, response.statusText, errBody, 'local');
+          throw new Error(`Local llama-server ${cleanErr}`);
         }
       } catch (err: any) {
         recordCircuitFailure(err);
-        log.warn('llm.stream_local_failed', `Local streaming failed: ${err.message}`);
+        const conciseErr = formatConciseError(err);
+        log.warn('llm.stream_local_failed', `Local streaming failed: ${conciseErr}`);
         if (envConfig.EVAL_STRICT && !envConfig.EVAL_ALLOW_CLOUD_FALLBACK) {
-          throw new Error(`[EVAL_STRICT] Local LLM stream failed during evaluation: ${err.message}`);
+          throw new Error(`[EVAL_STRICT] Local LLM stream failed during evaluation: ${conciseErr}`);
         }
       }
     }
@@ -905,19 +965,25 @@ export async function* generateLLMCompletionStream(
     if (isValidApiKey(remoteCfg.apiKey) || keyPoolSize > 0) {
       const cloudAction = checkCloudCircuitState();
       if (cloudAction !== 'FAST_FAIL') {
-        const effectiveTimeout = options.timeoutMs ?? envConfig.REMOTE_FALLBACK_TIMEOUT_MS ?? 120000;
-        const maxAttempts = Math.max(2, keyPoolSize);
+        const effectiveTimeout = options.timeoutMs ?? envConfig.REMOTE_FALLBACK_TIMEOUT_MS ?? 35000;
+        const maxAttempts = Math.min(4, Math.max(2, keyPoolSize));
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           const activeKey = rotator.getNextKey() || remoteCfg.apiKey;
           try {
             const remoteEndpoint = `${remoteCfg.baseUrl}/chat/completions`;
+            const headers: Record<string, string> = {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${activeKey}`,
+            };
+            if (providerKey === 'openrouter') {
+              headers['HTTP-Referer'] = 'https://chronoviet.vn';
+              headers['X-Title'] = 'ChronoViet';
+            }
+
             const response = await fetch(remoteEndpoint, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${activeKey}`,
-              },
+              headers,
               body: JSON.stringify({
                 model: remoteCfg.model,
                 messages,
@@ -931,7 +997,8 @@ export async function* generateLLMCompletionStream(
 
             if (!response.ok || !response.body) {
               const errBody = typeof response.text === 'function' ? await response.text().catch(() => '') : '';
-              const error = new Error(`Cloud LLM (${remoteCfg.baseUrl}) HTTP ${response.status}: ${response.statusText} ${errBody}`.trim());
+              const cleanErr = sanitizeHttpErrorResponse(response.status, response.statusText, errBody, remoteCfg.baseUrl);
+              const error = new Error(`Cloud LLM ${cleanErr}`);
               (error as any).status = response.status;
               throw error;
             }
@@ -942,7 +1009,8 @@ export async function* generateLLMCompletionStream(
             return;
           } catch (attemptErr: any) {
             rotator.reportFailure(activeKey, attemptErr);
-            log.warn('llm.stream_cloud_retry', `Cloud stream attempt ${attempt}/${maxAttempts} failed with key [${maskApiKey(activeKey)}]: ${attemptErr.message}`);
+            const conciseErr = formatConciseError(attemptErr);
+            log.warn('llm.stream_cloud_retry', `Cloud stream attempt ${attempt}/${maxAttempts} failed with key [${maskApiKey(activeKey)}]: ${conciseErr}`);
             if (attempt === maxAttempts) {
               recordCloudCircuitFailure(attemptErr);
             }

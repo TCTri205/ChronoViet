@@ -46,12 +46,31 @@ export async function initializeDatabaseSchema(maxRetries = 5, retryIntervalMs =
       const tableCheck = await query<{ tablename: string }>(
         `SELECT tablename FROM pg_tables WHERE schemaname = 'public';`
       );
-      const tableNames = tableCheck.map((t) => t.tablename);
+      const tableNames = new Set(tableCheck.map((t) => t.tablename));
+      const requiredTables = [
+        'entities',
+        'relationships',
+        'document_chunks',
+        'entity_chunks',
+        'entity_audit_logs',
+        'quarantine_triples',
+        'unmapped_entities',
+      ];
+
+      const missingTables = requiredTables.filter((t) => !tableNames.has(t));
+      if (missingTables.length > 0) {
+        log.error('db.init.missing_tables', `Missing required tables: ${missingTables.join(', ')}`);
+        return {
+          success: false,
+          pgAvailable: true,
+          message: `Database initialized but missing required tables: ${missingTables.join(', ')}`,
+        };
+      }
 
       return {
         success: true,
         pgAvailable: true,
-        message: `Database schema initialized successfully. Tables present: ${tableNames.join(', ')}`,
+        message: `Database schema initialized successfully. Verified 7 Module 0 tables: ${requiredTables.join(', ')}`,
       };
     } else {
       return {

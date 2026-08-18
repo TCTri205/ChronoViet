@@ -199,8 +199,45 @@ Sử dụng LLM (qua `generateLLMCompletion`: local llama-server `qwen3.8-27b` p
   ```
 * **Lưu trữ SQL**: Nạp vào bảng `entities` và `relationships` tương thích với Schema tại [packages/shared-spec/src/db/schema.ts](../../packages/shared-spec/src/db/schema.ts).
 
-### 4.3. Liên Kết Chéo Graph & Vector (`entity_chunks`)
-Mỗi thực thể xuất hiện trong đoạn văn bản nào sẽ được ghi lại trong bảng liên kết `entity_chunks(entity_id, chunk_id)`. Đây là chiếc cầu nối quyết định cho phép thuật toán **Graph-Guided Chunk Retrieval** ở Mô-đun 1 mở rộng $k$-hop subgraph để lấy chính xác các đoạn văn bản gốc liên quan.
+### 4.4. Cơ Chế Xoay Vòng Phân Cấp 2 Tầng & Xử Lý Song Song (Hierarchical 2-Level Interleaved Rotation & Concurrency Pool)
+
+Để tăng tốc tiến trình trích xuất đồ thị tri thức trên tập dữ liệu lớn mà không bị nghẽn (hang/stall) do quá tải phần cứng hay giới hạn tốc độ (rate limit), Mô-đun 0 ứng dụng cơ chế phối hợp 2 cấp độ:
+
+```
+                       [Inference Request / Chunk Extraction]
+                                        │
+                         Level 1: Provider Round-Robin Pointer
+                   (local -> agnes -> gemini -> openai -> openrouter)
+                                        │
+                ┌───────────────┬───────┴───────┬───────────────┐
+                ▼               ▼               ▼               ▼
+            [ LOCAL ]       [ AGNES ]       [ GEMINI ]      [ OPENAI ]
+            (Singleton)   (Key Rotator)   (Key Rotator)   (Key Rotator)
+                │           ├── Key 1       ├── Key 1       ├── Key 1
+                │           └── Key 2...    ├── Key 2       └── Key 2...
+                │                           └── Key 3...
+                ▼               ▼               ▼               ▼
+             Local LLM      Agnes API       Gemini API      OpenAI API
+```
+
+1. **Hierarchical 2-Level Interleaved Rotation:**
+   * **Level 1 (Provider Round-Robin):** Điều phối luân chuyển đều đặn qua các nhà cung cấp đang kích hoạt (`local -> agnes -> gemini -> openai -> openrouter -> local...`).
+   * **Level 2 (Key Rotator per Provider):** Mỗi cloud provider sở hữu một pool API keys độc lập, tự động xoay vòng qua các key khả dụng và tự cách ly (Quarantine) độc lập từng key khi gặp sự cố.
+   * **Chuỗi luân chuyển xen kẽ (Interleaved Sequence):** Đảm bảo không tập trung tải liên tục vào một provider duy nhất (ví dụ: `local -> agnes(k1) -> gemini(k1) -> local -> agnes(k2) -> gemini(k2)...`).
+
+2. **Cơ Chế Phân Loại Lỗi & Cách Ly (Quarantine Policy):**
+   * **Lỗi Hạn Mức / Quota (HTTP 429, 401, 403):** Cách ly đúng khóa API bị lỗi trong **24 Giờ (86,400,000 ms)**. Các khóa khác cùng provider và các provider khác vẫn hoạt động bình thường.
+   * **Lỗi Quá Tải Tạm Thời / Timeout / Mạng (HTTP 502, 503, 504, AbortError):** Cách ly tạm thời trong **30 Giây (30,000 ms)** và tự động kích hoạt **Fast Failover Retry** sang target tiếp theo trong chu kỳ mà không làm gián đoạn pipeline.
+
+3. **Adaptive Timeouts & Controlled Concurrency Pool:**
+   * **Local LLM Timeout:** Ngưỡng tối đa **45 giây** cho các yêu cầu trích xuất cục bộ trên `llama-server`.
+   * **Cloud Target Timeout:** Ngưỡng mặc định **35 giây** (`REMOTE_FALLBACK_TIMEOUT_MS=35000`) nhằm phát hiện sớm và chuyển vùng ngay lập tức khi mạng chậm.
+   * **Controlled Concurrency Worker Pool:** Trong `DualBranchSeeder`, các đoạn văn bản (chunks) được xử lý đồng thời thông qua worker pool với số lượng luồng linh hoạt $N = \min(8, \max(2, \text{số active targets}))$. Kết quả trích xuất được gom về và tổng hợp tất định (deterministic) trong Single Thread của Node.js event loop trước khi thực hiện batch transaction vào PostgreSQL.
+
+4. **Cơ Chế Checkpoint & Resume Cấp Độ Đoạn Văn Bản (Chunk-Level Extraction Cache):**
+   * **Tự Động Lưu Tiến Độ (Persistent Disk Checkpoint):** Mỗi đoạn văn bản (chunk) sau khi trích xuất bộ ba tri thức thành công được băm SHA-256 (`sha256(chunk.textContent)`) và ghi ngay xuống đĩa tại `.cache/extraction_triples/<hash>.json` bằng cơ chế ghi an toàn nguyên tử (atomic write qua tmp file).
+   * **Khôi Phục Tức Thì (Instant Resume):** Khi tiến trình nạp bị ngắt giữa chừng (`Ctrl + C`, mất điện, lỗi mạng) và chạy lại (`pnpm ingest:knowledge`), các đoạn văn bản đã trích xuất trước đó sẽ được tái sử dụng ngay lập tức ($0.0\text{s}$) mà không cần gọi lại LLM.
+   * **Cờ Nạp Mới Toàn Diện (`--force`):** Khi cần nạp lại từ đầu với prompt hoặc mô hình mới, cờ `--force` sẽ tự động dọn sạch thư mục cache `.cache/extraction_triples/` và `TRUNCATE CASCADE` cơ sở dữ liệu để thực hiện trích xuất sạch 100%.
 
 ---
 
@@ -264,49 +301,64 @@ Theo kiến trúc chuẩn phân tách trách nhiệm (Separation of Concerns):
 
 ---
 
-## 6. Quy Chuẩn CLI Seeders & Nạp Golden Datasets Cho `eval/`
+## 6. Quy Chuẩn 7 Bảng CSDL, CLI Commands & Nạp Golden Datasets Cho `eval/`
 
-Để tự động hóa hoàn toàn công đoạn nạp dữ liệu cho cả môi trường Dev, Staging và Production, Mô-đun 0 cung cấp bộ công cụ **CLI Seeders** chạy từ root monorepo:
+Để tự động hóa hoàn toàn công đoạn nạp dữ liệu cho cả môi trường Dev, Staging và Production, Mô-đun 0 quản lý 7 bảng lưu trữ trên PostgreSQL và cung cấp bộ công cụ **CLI Commands** chạy từ root monorepo:
 
-### 6.1. Bộ Lệnh CLI Seeders & Kiểm Định Dữ Liệu Thật
+### 6.1. Cấu Trúc 7 Bảng CSDL Chuẩn Hóa Trên PostgreSQL
+
+| Bảng CSDL | Loại Dữ Liệu | Mục Đích Lưu Trữ |
+| :--- | :--- | :--- |
+| `document_chunks` | Chunks & Dense Vector (1024d) | Lưu trữ các đoạn văn bản phân cấp (Parent 2000-3000 từ, Child 300-500 từ), embedding HNSW, và FTS tsvector |
+| `entities` | Knowledge Graph Nodes | Lưu trữ thực thể lịch sử đã chuẩn hóa, danh xưng canonical, và danh sách bí danh (aliases) |
+| `relationships` | Knowledge Graph Edges | Lưu trữ quan hệ thực thể $(S \rightarrow P \rightarrow O)$ có độ tin cậy $\ge 0.85$ |
+| `entity_chunks` | Junction Table | Bảng liên kết chéo $N - N$ giữa thực thể và các văn bản chunk chứa thực thể |
+| `entity_audit_logs` | Audit Trail | Ghi nhật ký thay đổi append-only khi hợp giải, sáp nhập hoặc cập nhật thực thể |
+| `quarantine_triples` | Quarantine Buffer | Lưu trữ tạm các bộ ba quan hệ nghi vấn (confidence < 0.85, dangling context) chờ rà soát |
+| `unmapped_entities` | Triage Buffer | Lưu trữ các thực thể mới xuất hiện trong văn bản chưa có trong Master Ontology |
+
+### 6.2. Bộ Lệnh CLI Seeders & Kiểm Định Dữ Liệu Thật
 
 ```bash
-# 1. Khởi tạo SQL Schema chuẩn cho PostgreSQL pgvector & Relational Graph
+# 1. Khởi tạo SQL Schema chuẩn và xác nhận đủ 7 bảng trên PostgreSQL
 pnpm --filter @chronoviet/data-ingestion db:init
 
 # 2. Cào TỰ ĐỘNG 100% tài liệu 15 Thời kỳ Lịch sử Việt Nam (Master Corpus Crawl)
 pnpm crawl:all # hoặc pnpm --filter @chronoviet/data-ingestion crawl:corpus --epoch=EPOCH_05
 
 # 3. Chạy pipeline nạp & làm sạch dữ liệu tri thức văn bản (Text ETL)
-# Mặc định: Bắt buộc LLM Gateway hoạt động (Local llama-server / Cloud)
-pnpm --filter @chronoviet/data-ingestion ingest:knowledge --input=data/raw_corpus/ [--force]
+# Mặc định: Hỗ trợ RESUME / CHECKPOINT (tái sử dụng các chunk đã trích xuất trong .cache/, không truncate DB)
+pnpm ingest:knowledge # hoặc pnpm --filter @chronoviet/data-ingestion ingest:knowledge --input=data/raw_corpus/
 
-# Chạy chế độ Regex Tường minh (bỏ qua LLM, dùng cho máy không có GPU)
-pnpm --filter @chronoviet/data-ingestion ingest:knowledge --regex-only
+# Chạy chế độ Force Fresh Ingestion (xóa sạch cache checkpoint & truncate database để nạp lại từ đầu)
+pnpm ingest:knowledge --force
 
-# Chạy chế độ Dự phòng linh hoạt (ưu tiên LLM, fallback regex nếu LLM lỗi)
+# Chạy chế độ Offline / Regex Tường minh (bỏ qua LLM, chạy nhanh bằng từ điển quy tắc)
+pnpm --filter @chronoviet/data-ingestion ingest:knowledge --offline # hoặc --regex-only
+
+# Chạy chế độ Dự phòng linh hoạt (ưu tiên LLM, fallback regex nếu LLM offline)
 pnpm --filter @chronoviet/data-ingestion ingest:knowledge --allow-fallback
 
 # Chạy chế độ Strict Quality Gate (bắt buộc cả LLM + Postgres + Embedding server)
-pnpm ingest:knowledge --strict --force
+pnpm ingest:knowledge --strict
 
 # 4. Hợp giải mâu thuẫn thực thể & ghi vết nhật ký audit log
 pnpm --filter @chronoviet/data-ingestion rag:re-resolve
 
-# 5. Chẩn đoán & kiểm tra chất lượng dữ liệu nạp thật (Quarantine Triples & Unmapped Entities)
+# 5. Chẩn đoán & kiểm tra chất lượng dữ liệu nạp thật (Trụ Cột 1 - Quarantine Triples & Unmapped Entities)
 pnpm eval:ingest:diagnostic
 
 # 6. Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
 pnpm eval:seed # hoặc pnpm --filter @chronoviet/data-ingestion eval:seed
 
-# 7. Chạy bộ kiểm thử Benchmark đo lường KPI cô lập Mô-đun 0 (In-memory Fast Check)
+# 7. Chạy bộ kiểm thử Benchmark đo lường 4 KPI cô lập Mô-đun 0 (In-memory Fast Check)
 pnpm eval:ingest # hoặc pnpm --filter @chronoviet/data-ingestion eval
 
-# 8. Đánh giá chất lượng tri thức toàn diện trên CSDL thật (PostgreSQL + RAG Search Chain)
+# 8. Đánh giá chất lượng tri thức toàn diện trên CSDL thật (Trụ Cột 2 - PostgreSQL + RAG Search Chain)
 pnpm eval --chain ingest-rag
 ```
 
-### 6.2. Nạp Golden Datasets Cho Kiến Trúc Đánh Giá `eval/`
+### 6.3. Nạp Golden Datasets Cho Kiến Trúc Đánh Giá `eval/`
 Mô-đun 0 chịu trách nhiệm nạp các tập **Golden Test Cases** vào thư mục `eval/test-cases/` để phục vụ E2E Pipeline Benchmark:
 
 ```
@@ -322,13 +374,16 @@ Bộ dữ liệu mẫu này giúp kiểm tra chất lượng kết quả đầu 
 
 ---
 
-## 7. Khung Đánh Giá Đa Tầng (Multi-Tier Ingestion Evaluation Architecture)
+## 7. Hai Trụ Cột Đánh Giá Thực Chiến & Chỉ Số KPI (Production Evaluation Pillars)
 
-ChronoViet phân định rõ 3 tầng kiểm định dữ liệu nạp:
+ChronoViet phân định rõ 2 Trụ Cột Đánh Giá Chất Lượng Thực Chiến song hành cùng Bộ Benchmark Cục Bộ:
 
-1. **Tầng 1 (Isolated Format & Disambiguation Benchmark):** Chạy `pnpm eval:ingest` kiểm tra nhanh trên RAM về chuẩn hóa thực thể, quy chuẩn kích thước chunk, và tính toàn vẹn schema của Golden Datasets.
-2. **Tầng 2 (Corpus Ingestion Diagnostics):** Chạy `pnpm eval:ingest:diagnostic` quét trực tiếp trên kho dữ liệu thô `data/raw_corpus/` để phát hiện các đoạn văn vượt giới hạn từ ngữ, thực thể chưa có trong từ điển (`UNMAPPED_ENTITY`), và các quan hệ tri thức bị cách ly (`LOW_CONFIDENCE_TRIPLE`, `DANGLING_RELATION`).
-3. **Tầng 3 (Real-Database End-to-End Evaluation):** Chạy `pnpm eval --chain ingest-rag` sau khi nạp CSDL bằng `pnpm ingest:knowledge --strict` để kiểm tra độ chính xác sự kiện (Fact Precision $\ge 85\%$), độ phủ đồ thị tri thức và khả năng từ chối câu hỏi sai lệch (Adversarial Rejection $= 100\%$) trên cơ sở dữ liệu PostgreSQL thật.
+### 7.1. Hai Trụ Cột Đánh Giá Thực Chiến (2 Production Pillars)
+
+1. **Trụ Cột 1 (Pre-Ingestion Corpus Diagnostics):** Chạy `pnpm eval:ingest:diagnostic` quét trực tiếp trên toàn bộ kho văn bản thật `data/raw_corpus/` để phân tách Parent-Child Chunks, phát hiện và thống kê 5 nhóm lỗi (`GENERIC_OR_HALLUCINATED_ENTITY`, `UNMAPPED_ENTITY`, `LOW_CONFIDENCE_RELATION`, `TEMPORAL_SPATIAL_MISSING`, `DANGLING_RELATIONSHIP`), tự động cách ly vào Quarantine Buffer (`quarantine_triples`, `unmapped_entities`), đồng thời xuất báo cáo đa định dạng (`.json`, `.md`).
+2. **Trụ Cột 2 (Real-Database Hybrid Ingestion & E2E RAG Evaluation):** Chạy `pnpm eval --chain ingest-rag` sau khi nạp CSDL bằng `pnpm ingest:knowledge --strict` để kiểm tra độ chính xác sự kiện (Fact Precision $\ge 85\%$), độ phủ đồ thị tri thức, minh bạch trích dẫn (Citation Traceability $= 100\%$) và khả năng từ chối câu hỏi sai lệch (Adversarial Rejection $= 100\%$) trên cơ sở dữ liệu PostgreSQL thật.
+
+### 7.2. Bảng Chỉ Số KPI Đánh Giá Cục Bộ (Module 0 Isolated KPIs)
 
 | Chỉ số KPI | Mô Tả & Phương Pháp Đánh Giá | Chỉ Số Mục Tiêu | Kết Quả Thực Tế | Trạng Thái |
 | :--- | :--- | :---: | :---: | :---: |

@@ -8,3 +8,4 @@ export * from './triple-extractor.js';
 export * from './ingest-pipeline.js';
 export * from './utils/path-utils.js';
 export * from './utils/text-utils.js';
+export * from './cache/extraction-cache.js';

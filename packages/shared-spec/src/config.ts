@@ -65,7 +65,8 @@ const EnvSchema = z.object({
   // ==========================================
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_API_KEYS: z.string().optional(),
-  GEMINI_VISION_MODEL: z.string().default('gemini-2.0-flash'),
+  GEMINI_MODEL: z.string().default('gemini-3.6-flash'),
+  GEMINI_VISION_MODEL: z.string().default('gemini-3.6-flash'),
   EMBEDDING_API_URL: z.string().optional(),
   EMBEDDING_DIMENSION: z.coerce.number().int().positive().default(1024),
 
@@ -74,6 +75,8 @@ const EnvSchema = z.object({
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(true),
   LOCAL_LLM_BACKEND: z.enum(['llama_cpp', 'ollama', 'mlx']).default('llama_cpp'),
+  LOCAL_LLM_MAX_CONCURRENCY: z.coerce.number().int().positive().default(1),
+  LOCAL_LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
   LLM_BASE_URL: z.string().default('http://localhost:8092'),
   LLM_PORT: z.coerce.number().int().positive().default(8092),
   LLM_CTX_SIZE: z.coerce.number().int().positive().default(16384),
@@ -101,18 +104,21 @@ const EnvSchema = z.object({
   DAILY_KEY_QUARANTINE_MS: z.coerce.number().int().positive().default(86400000),
   REMOTE_FALLBACK_MODEL: z.string().default('agnes-2.5-flash'),
   REMOTE_LLM_BASE_URL: z.string().default('https://apihub.agnes-ai.com/v1'),
+  AGNES_BASE_URL: z.string().default('https://apihub.agnes-ai.com/v1'),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_API_KEYS: z.string().optional(),
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_API_KEYS: z.string().optional(),
+  OPENROUTER_BASE_URL: z.string().default('https://openrouter.ai/api/v1'),
+  OPENROUTER_MODEL: z.string().default('deepseek/deepseek-chat'),
   AGNES_API_KEY: z.string().optional(),
   AGNES_API_KEYS: z.string().optional(),
-  REMOTE_FALLBACK_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
+  REMOTE_FALLBACK_TIMEOUT_MS: z.coerce.number().int().positive().default(35000),
 
-  // Embedding, Rerank & Vision Stack
+  // Embedding, Rerank & Vision Stack (SSOT 1024-dim Vector Space)
   LOCAL_EMBEDDING_MODEL: z.string().default('bge-m3'),
-  LOCAL_EMBEDDING_DEFAULT: z.string().default('bge-m3'),
-  LOCAL_EMBEDDING_HIGH_QUALITY: z.string().default('bge-m3'),
+  LOCAL_EMBEDDING_DEFAULT: z.string().optional(),
   LOCAL_RERANK_MODEL: z.string().default('qwen3-reranker-0.6b'),
   LOCAL_VISION_FILTER: z.string().default('siglip-2-multilingual-onnx'),
   LOCAL_VLM_INSPECTOR: z.string().default('qwen3.8-27b-instruct-q4_k_m'),
@@ -191,13 +197,17 @@ const rawProcessEnv: Record<string, string | undefined> = typeof process !== 'un
 const processEnv: Record<string, string | undefined> = {
   ...rawProcessEnv,
   REMOTE_LLM_BASE_URL: rawProcessEnv.REMOTE_LLM_BASE_URL || rawProcessEnv.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
+  AGNES_BASE_URL: rawProcessEnv.AGNES_BASE_URL || rawProcessEnv.REMOTE_LLM_BASE_URL || 'https://apihub.agnes-ai.com/v1',
   AGNES_API_KEY: rawProcessEnv.AGNES_API_KEY || (rawProcessEnv.AGNES_API_KEYS ? rawProcessEnv.AGNES_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
   GEMINI_API_KEY: rawProcessEnv.GEMINI_API_KEY || (rawProcessEnv.GEMINI_API_KEYS ? rawProcessEnv.GEMINI_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
   TAVILY_API_KEY: rawProcessEnv.TAVILY_API_KEY || (rawProcessEnv.TAVILY_API_KEYS ? rawProcessEnv.TAVILY_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
   SERPAPI_API_KEY: rawProcessEnv.SERPAPI_API_KEY || (rawProcessEnv.SERPAPI_API_KEYS ? rawProcessEnv.SERPAPI_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
   BRAVE_API_KEY: rawProcessEnv.BRAVE_API_KEY || (rawProcessEnv.BRAVE_API_KEYS ? rawProcessEnv.BRAVE_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
   OPENAI_API_KEY: rawProcessEnv.OPENAI_API_KEY || (rawProcessEnv.OPENAI_API_KEYS ? rawProcessEnv.OPENAI_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
+  OPENAI_MODEL: rawProcessEnv.OPENAI_MODEL || 'gpt-4o-mini',
   OPENROUTER_API_KEY: rawProcessEnv.OPENROUTER_API_KEY || (rawProcessEnv.OPENROUTER_API_KEYS ? rawProcessEnv.OPENROUTER_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
+  OPENROUTER_BASE_URL: rawProcessEnv.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+  OPENROUTER_MODEL: rawProcessEnv.OPENROUTER_MODEL || 'deepseek/deepseek-chat',
 };
 
 const parsed = EnvSchema.safeParse(processEnv);

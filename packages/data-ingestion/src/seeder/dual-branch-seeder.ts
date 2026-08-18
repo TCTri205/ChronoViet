@@ -20,12 +20,21 @@ import {
   resolveLocationMapping,
   isKnownMasterEntity,
   generateEmbedding,
+  hybridInferenceDispatcher,
+  formatConciseError,
 } from '@chronoviet/shared-spec';
 import { normalizeText } from '../text/text-normalizer.js';
 import { chunkDocumentHierarchical, ProcessedHierarchicalChunk } from '../chunking/hierarchical-chunker.js';
-import { extractTriplesFromTextAsync, ExtractedTriple, ExtractionOptions } from '../triple-extractor.js';
+import {
+  extractTriplesFromText,
+  extractTriplesFromTextAsync,
+  extractTriplesFromTextDetailedAsync,
+  ExtractedTriple,
+  ExtractionOptions,
+} from '../triple-extractor.js';
 import { PdfExtractor } from '../pdf/pdf-extractor.js';
 import { parseFrontmatter } from '../utils/text-utils.js';
+import { extractionCache } from '../cache/extraction-cache.js';
 
 const log = createLogger({ service: 'data-ingestion' });
 
@@ -85,13 +94,109 @@ export async function seedDualBranch(
   const quarantineTriplesList: DbQuarantineTriple[] = [];
   const unmappedEntitiesMap = new Map<string, DbUnmappedEntity>();
 
-  // 2. Extract Triples & Resolve Canonical Entities with Confidence Tiering
+  // 2. Parallel Chunk Triple Extraction with Controlled Concurrency Pool
   const chunkEntityMap = new Map<string, Set<string>>(); // chunkId -> Set of entityIds
 
-  for (const chunk of allChunks) {
-    const chunkEntityIds = new Set<string>();
-    const triples = await extractTriplesFromTextAsync(chunk.textContent, options);
+  const activeTargetsCount = hybridInferenceDispatcher.getActiveTargets('llm').length;
+  const isLocalOnlyMode =
+    envConfig.INFERENCE_ROUTING_MODE === 'local_only' ||
+    (!envConfig.ENABLE_CLOUD_FALLBACK && envConfig.USE_LOCAL_LLM) ||
+    activeTargetsCount <= 1;
+
+  const concurrency = isLocalOnlyMode
+    ? Math.max(1, envConfig.LOCAL_LLM_MAX_CONCURRENCY || 1)
+    : Math.min(6, Math.max(1, activeTargetsCount));
+
+  log.info('dual_branch_seeder.extract_triples_parallel', `Extracting triples for ${allChunks.length} chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`);
+
+  interface ChunkExtractionResult {
+    chunk: ProcessedHierarchicalChunk;
+    triples: ExtractedTriple[];
+  }
+
+  const chunkResults: ChunkExtractionResult[] = new Array(allChunks.length);
+  let nextChunkIndex = 0;
+  let completedChunks = 0;
+  const failedExtractionChunkIds: string[] = [];
+  const extractionStartTime = Date.now();
+
+  async function extractionWorker() {
+    while (nextChunkIndex < allChunks.length) {
+      const idx = nextChunkIndex++;
+      const chunk = allChunks[idx];
+      const chunkStartTime = Date.now();
+
+      // 1. Check persistent extraction cache (unless regex-only)
+      let cachedTriples: ExtractedTriple[] | null = null;
+      if (!options?.regexOnly) {
+        cachedTriples = await extractionCache.get(chunk.textContent);
+      }
+
+      if (cachedTriples) {
+        chunkResults[idx] = { chunk, triples: cachedTriples };
+        completedChunks++;
+        const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+        const meta = (cachedTriples as any)?._meta;
+        const providerName = meta?.provider || 'CACHED';
+        const modelName = meta?.model ? ` (${meta.model})` : '';
+
+        log.info(
+          'dual_branch_seeder.chunk_cached',
+          `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> ${cachedTriples.length} triples via [${providerName}${modelName}] (CACHED / RESUMED)`
+        );
+        continue;
+      }
+
+      try {
+        const triples = await extractTriplesFromTextAsync(chunk.textContent, options);
+        chunkResults[idx] = { chunk, triples };
+        completedChunks++;
+
+        // Save successful extraction to persistent cache
+        if (!options?.regexOnly && triples) {
+          const meta = (triples as any)?._meta;
+          await extractionCache.set(chunk.textContent, chunk.id, triples, {
+            provider: meta?.provider,
+            model: meta?.model,
+          });
+        }
+
+        const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+        const meta = (triples as any)?._meta;
+        const providerName = meta?.provider || 'LOCAL_LLM';
+        const modelName = meta?.model ? ` (${meta.model})` : '';
+        const chunkSec = (((meta?.durationMs) ?? (Date.now() - chunkStartTime)) / 1000).toFixed(1);
+
+        log.info(
+          'dual_branch_seeder.chunk_success',
+          `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`
+        );
+      } catch (err: any) {
+        completedChunks++;
+        const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+        const conciseErrMsg = formatConciseError(err);
+        const fallbackTriples = extractTriplesFromText(chunk.textContent);
+        failedExtractionChunkIds.push(chunk.id);
+        log.warn(
+          'dual_branch_seeder.chunk_failed',
+          `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples.`
+        );
+        chunkResults[idx] = { chunk, triples: fallbackTriples };
+      }
+    }
+  }
+
+  const workerCount = Math.min(concurrency, allChunks.length);
+  const workers = Array.from({ length: workerCount }, () => extractionWorker());
+  await Promise.all(workers);
+
+  // 3. Single-Thread Deterministic Aggregation
+  for (const item of chunkResults) {
+    if (!item) continue;
+    const { chunk, triples } = item;
     allTriples.push(...triples);
+
+    const chunkEntityIds = new Set<string>();
 
     for (const t of triples) {
       const srcEntity = resolveCanonicalEntity(t.sourceEntityName);
@@ -283,6 +388,15 @@ export async function seedDualBranch(
       }
 
       // 3c. Batch Ingest Quarantine Triples (200 per batch)
+      if (quarantineTriplesList.length > 0) {
+        const chunkIds = Array.from(new Set(quarantineTriplesList.map((qt) => qt.chunk_id).filter((id): id is string => Boolean(id))));
+        if (chunkIds.length > 0) {
+          await execQuery(
+            `DELETE FROM quarantine_triples WHERE chunk_id = ANY($1::text[]);`,
+            [chunkIds]
+          );
+        }
+      }
       for (let i = 0; i < quarantineTriplesList.length; i += 200) {
         const batch = quarantineTriplesList.slice(i, i + 200);
         const values: unknown[] = [];
@@ -490,6 +604,7 @@ export async function seedDualBranch(
     highConfidenceTriples: productionTriplesMap.size,
     quarantinedTriples: quarantineTriplesList.length,
     unmappedEntities: unmappedEntitiesMap.size,
+    failedExtractionChunks: failedExtractionChunkIds.length,
     durationMs,
     mode: pgConnected ? 'postgres_pgvector' : 'in_memory',
   });

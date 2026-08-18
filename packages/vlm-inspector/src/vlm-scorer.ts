@@ -174,7 +174,7 @@ export async function scoreImageWithGeminiApi(
     parts.push({ text: `Image URL: ${imageUrl}` });
   }
 
-  const modelName = options.model || envConfig.GEMINI_VISION_MODEL || 'gemini-2.0-flash';
+  const modelName = options.model || envConfig.GEMINI_VISION_MODEL || 'gemini-3.6-flash';
 
   const runWithKey = async (geminiKey: string) => {
     const res = await fetch(

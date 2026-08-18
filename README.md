@@ -21,10 +21,10 @@
 **ChronoViet** (*Chronology + Việt Nam*) giải quyết bài toán sấy khô kiến thức lịch sử bằng cách biến nguồn tri thức lịch sử Việt Nam dạng văn bản thành các **Video tóm tắt trực quan tự động** kết hợp **Hệ thống Chatbot RAG tương tác hai chiều**.
 
 Dự án ứng dụng mô hình **Decoupled Event-Driven Architecture** với 5 mô-đun xử lý chuyên biệt:
-0. **Data Preprocessing & Ingestion Engine [✅]**: Nạp tri thức lịch sử offline, cào tự động toàn bộ 15 thời kỳ lịch sử (`pnpm crawl:all`), làm sạch lỗi OCR, chuẩn hóa địa danh qua các thời kỳ (`SAME_AS_LOCATION`), khử nhập nhằng nhân vật (`ALIAS_OF`), Dynamic Hierarchical Chunking, nạp PostgreSQL pgvector (1024d BGE-M3 + FTS BM25), Relational Graph & Append-Only Audit Trail (`entity_audit_logs`).
+0. **Data Preprocessing & Ingestion Engine [✅]**: Nạp tri thức lịch sử offline, cào tự động toàn bộ 15 thời kỳ lịch sử (`pnpm crawl:all`), làm sạch lỗi OCR, chuẩn hóa địa danh qua các thời kỳ (`SAME_AS_LOCATION`), khử nhập nhằng nhân vật (`ALIAS_OF`), Dynamic Hierarchical Chunking, xử lý song song có kiểm soát (Concurrency Worker Pool), điều phối Hierarchical 2-Level Interleaved Rotation, nạp PostgreSQL pgvector (1024d BGE-M3 + FTS BM25), Relational Graph & Append-Only Audit Trail (`entity_audit_logs`).
 1. **Hybrid GraphRAG Engine [✅]**: Động cơ tìm kiếm kết hợp Knowledge Graph + Dense Vector BGE-M3 + Sparse BM25 + Recursive CTE Subgraph Search + BGE Reranker v2. Đảm bảo tri thức lịch sử chính xác 100%, loại bỏ hoàn toàn suy đoán sai (Hallucination Rate 0%).
 2. **Multi-Agent Orchestrator (LangGraph.js) [✅]**: Lập kịch bản video chi tiết, phân chia phân cảnh & chọn bố cục trực quan phù hợp, tích hợp NLI Entailment Hallucination Judge & Folklore Guardrail Gate.
-3. **VLM Inspector Agent (Gemini 2.5 Flash / Agnes / CLIP) [✅]**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
+3. **VLM Inspector Agent (Gemini 3.6 Flash / Agnes / CLIP) [✅]**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
 4. **Remotion Render Engine [✅]**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v4.1.
 
 ---
@@ -57,7 +57,7 @@ ChronoViet/
 │   ├── rag-engine/              # [✅ READY] Chrono-RAG Retrieval Engine (Mô-đun 1) (+ eval/)
 │   ├── remotion-engine/         # [✅ READY] Remotion Render Engine & Studio (+ eval/ test suite)
 │   ├── shared-spec/             # [✅ READY] Zod Schemas & Data Contracts (SSOT)
-│   └── vlm-inspector/           # [✅ READY] Gemini 2.5 / Agnes / CLIP VLM Inspector (+ eval/)
+│   └── vlm-inspector/           # [✅ READY] Gemini 3.6 / Agnes / CLIP VLM Inspector (+ eval/)
 │
 ├── services/
 │   └── vieneu-tts/              # [✅ READY] VieNeu ONNX Neural TTS Service (+ eval/)
@@ -173,7 +173,8 @@ pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_
 pnpm stack:infra                                # Khởi chạy Postgres, Redis & VieNeu TTS
 pnpm db:init                                    # Khởi tạo CSDL & Schema Vector/Graph
 pnpm crawl:all                                  # Cào 15 thời kỳ lịch sử
-pnpm ingest:knowledge --strict                  # Nạp tri thức vào CSDL (kiểm tra sức khoẻ dịch vụ)
+pnpm ingest:knowledge --strict                  # Nạp tri thức vào CSDL (hỗ trợ Resume, kiểm tra dịch vụ)
+# (Hoặc pnpm ingest:knowledge --force để nạp lại mới từ đầu)
 pnpm rag:re-resolve                             # Hợp giải thực thể mâu thuẫn & ghi audit logs
 
 # ===============================================================

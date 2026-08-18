@@ -21,6 +21,7 @@ out/
 coverage/
 *.tsbuildinfo
 *.cache
+.cache/
 
 # Environment & Local Configuration
 .env

@@ -5,7 +5,7 @@
 
 ## 1. Tổng Quan
 
-Tài liệu này giải quyết triệt để **4 Thách Thức Kỹ Thuật Thực Tế** trong quá trình vận hành dự án **ChronoViet**, đồng thời quy định chi tiết chuẩn tích hợp mô hình **VieNeu TTS** (https://www.vieneu.io/) dạng tự host (ONNX Engine) kết hợp **Google Gemini 2.5 Flash Cloud API** cho VLM Inspection.
+Tài liệu này giải quyết triệt để **4 Thách Thức Kỹ Thuật Thực Tế** trong quá trình vận hành dự án **ChronoViet**, đồng thời quy định chi tiết chuẩn tích hợp mô hình **VieNeu TTS** (https://www.vieneu.io/) dạng tự host (ONNX Engine) kết hợp **Google Gemini 3.6 Flash Cloud API** cho VLM Inspection.
 
 ---
 
@@ -162,7 +162,7 @@ Toàn bộ quy trình tổng hợp và chuyển đổi mốc từ đều đượ
 | Vấn đề Kỹ thuật | Giải Pháp Hoàn Chỉnh Được Áp Dụng | Kết Quả Đạt Được |
 | :--- | :--- | :--- |
 | **1. Quản lý RAM/CPU khi Render** | Pre-download Local Assets + Chromium Process Cleanup sau mỗi Job | Giảm 70% RAM tiêu thụ, tránh đơ/OOM server. |
-| **2. Độ trễ VLM Inspection** | Offload sang Gemini 2.5 Flash Cloud API + Dual-Layer Cache (Redis + pHash) | Giảm thời gian audit từ 30s xuống < 1s, tiết kiệm GPU. |
+| **2. Độ trễ VLM Inspection** | Offload sang Gemini 3.6 Flash Cloud API + Dual-Layer Cache (Redis + pHash) | Giảm thời gian audit từ 30s xuống < 1s, tiết kiệm GPU. |
 | **3. Đồng bộ Audio - Visual** | Công thức $\lceil \frac{\text{DurationMs} + 300}{1000} \times 30 \rceil$ dựa trên file `.wav` thực tế | Tránh 100% rủi ro audio bị chèn hoặc hẫng nhịp. |
 | **4. Giọng đọc & Subtitle Karaoke** | Self-Hosted VieNeu TTS Dual-Layer Microservice + Alignment Timestamps Converter + Eval Suite (`eval/`) | Giọng đọc lịch sử truyền cảm, phụ đề Karaoke chạy chuẩn xác theo từ, có bộ đánh giá độc lập. |
 

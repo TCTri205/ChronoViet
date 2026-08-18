@@ -9,6 +9,7 @@ import {
   generateLLMCompletion,
   logFallbackAlert,
   createLogger,
+  formatConciseError,
 } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'data-ingestion' });
@@ -183,12 +184,25 @@ export interface ExtractionOptions {
 /**
  * Extracts Knowledge Graph triples using Primary Local Model (llama-server) or Cloud Fallback
  */
-export async function extractTriplesWithLLM(
+export interface DetailedExtractionResult {
+  triples: ExtractedTriple[];
+  provider?: string;
+  targetProvider?: string;
+  targetId?: string;
+  model?: string;
+  durationMs: number;
+  strategy: 'ensemble_ai' | 'regex_only' | 'rule_based_fallback';
+}
+
+/**
+ * Extract triples using LLM with detailed completion metadata
+ */
+export async function extractTriplesWithLLMDetailed(
   text: string,
   options?: ExtractionOptions
-): Promise<ExtractedTriple[]> {
+): Promise<{ triples: ExtractedTriple[]; res?: any }> {
   if (!text || text.trim().length < 20) {
-    return [];
+    return { triples: [] };
   }
 
   try {
@@ -208,7 +222,7 @@ Yêu cầu output: Trả về duy nhất 1 JSON object có định dạng:
 
 Văn bản:
 """
-${text.slice(0, 3500)}
+${text.slice(0, 1800)}
 """`;
 
     const res = await generateLLMCompletion(
@@ -218,10 +232,21 @@ ${text.slice(0, 3500)}
       ],
       {
         temperature: 0.1,
+        max_tokens: 450,
         response_format: { type: 'json_object' },
-        timeoutMs: options?.timeoutMs ?? envConfig.REMOTE_FALLBACK_TIMEOUT_MS,
+        timeoutMs:
+          options?.timeoutMs ??
+          (envConfig.USE_LOCAL_LLM
+            ? (envConfig.LOCAL_LLM_TIMEOUT_MS || 120000)
+            : envConfig.REMOTE_FALLBACK_TIMEOUT_MS),
       }
     );
+
+    log.debug('triple_extract.llm_response', `Received LLM response via target [${res.targetId || res.provider}] (model: ${res.model})`, {
+      targetId: res.targetId,
+      targetProvider: res.targetProvider,
+      model: res.model,
+    });
 
     let jsonStr = res.content.trim();
     if (jsonStr.includes('```json')) {
@@ -250,7 +275,7 @@ ${text.slice(0, 3500)}
       }
     }
 
-    if (rawTriples.length === 0) return [];
+    if (rawTriples.length === 0) return { triples: [], res };
 
     const validRelations = new Set<ExtractedTriple['relationType']>([
       'PART_OF', 'LED_BY', 'HAPPENED_IN', 'HAPPENED_AT', 'SAME_AS_LOCATION', 'ALIAS_OF', 'ROYAL_LINEAGE', 'MENTIONED_IN'
@@ -283,9 +308,9 @@ ${text.slice(0, 3500)}
         });
       }
     }
-    return triples;
+    return { triples, res };
   } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
+    const errMsg = formatConciseError(err);
 
     // Default mode requires full LLM extraction. Do not silently fallback unless allowFallback is explicitly set.
     if (options?.strict || envConfig.EVAL_STRICT || !options?.allowFallback) {
@@ -309,25 +334,40 @@ ${text.slice(0, 3500)}
         reason: errMsg,
       });
     }
-    return [];
+    return { triples: [] };
   }
 }
 
 /**
- * Asynchronous two-tier ensemble extraction combining Fast-Path Master Dictionaries & LLM Gateway
+ * Extract triples using LLM (Direct array wrapper)
  */
-export async function extractTriplesFromTextAsync(
+export async function extractTriplesWithLLM(
   text: string,
   options?: ExtractionOptions
 ): Promise<ExtractedTriple[]> {
+  const result = await extractTriplesWithLLMDetailed(text, options);
+  return result.triples;
+}
+
+/**
+ * Asynchronous two-tier ensemble extraction with detailed execution telemetry
+ */
+export async function extractTriplesFromTextDetailedAsync(
+  text: string,
+  options?: ExtractionOptions
+): Promise<DetailedExtractionResult> {
   const startTime = Date.now();
   const regexTriples = extractTriplesFromText(text);
 
   if (options?.regexOnly) {
-    return regexTriples;
+    return {
+      triples: regexTriples,
+      strategy: 'regex_only',
+      durationMs: Date.now() - startTime,
+    };
   }
 
-  const llmTriples = await extractTriplesWithLLM(text, options);
+  const { triples: llmTriples, res } = await extractTriplesWithLLMDetailed(text, options);
 
   const mergedMap = new Map<string, ExtractedTriple>();
 
@@ -347,10 +387,40 @@ export async function extractTriplesFromTextAsync(
     llmCount: llmTriples.length,
     mergedCount: result.length,
     strategy: llmTriples.length > 0 ? 'ensemble_ai' : 'rule_based_fallback',
+    provider: res?.provider,
+    model: res?.model,
     durationMs,
   });
 
-  return result;
+  return {
+    triples: result,
+    provider: res?.provider,
+    targetProvider: res?.targetProvider,
+    targetId: res?.targetId,
+    model: res?.model,
+    strategy: llmTriples.length > 0 ? 'ensemble_ai' : 'rule_based_fallback',
+    durationMs,
+  };
+}
+
+/**
+ * Asynchronous two-tier ensemble extraction combining Fast-Path Master Dictionaries & LLM Gateway
+ */
+export async function extractTriplesFromTextAsync(
+  text: string,
+  options?: ExtractionOptions
+): Promise<ExtractedTriple[]> {
+  const detailed = await extractTriplesFromTextDetailedAsync(text, options);
+  const triples = detailed.triples;
+  (triples as any)._meta = {
+    provider: detailed.provider,
+    targetProvider: detailed.targetProvider,
+    targetId: detailed.targetId,
+    model: detailed.model,
+    durationMs: detailed.durationMs,
+    strategy: detailed.strategy,
+  };
+  return triples;
 }
 
 /**

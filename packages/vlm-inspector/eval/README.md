@@ -1,7 +1,7 @@
 # VLM Inspector Sub-Agent Evaluation Suite (`packages/vlm-inspector/eval/`)
 
 ## 📌 Overview
-Bộ công cụ đánh giá dành riêng cho **VLM Inspector Sub-Agent** (Whitelisted License Filter + Dual-Layer Redis Cache + Local Unified Multimodal VLM `qwen3.8-27b-instruct-q4_k_m` / Gemini 2.5 Flash / Local CLIP ONNX Scorer). Nhận candidate pool từ **Research Agent** (`packages/vlm-inspector/src/search/` — SerpAPI/Tavily/Brave/Wikimedia/Catalog provider chain, domain whitelist).
+Bộ công cụ đánh giá dành riêng cho **VLM Inspector Sub-Agent** (Whitelisted License Filter + Dual-Layer Redis Cache + Local Unified Multimodal VLM `qwen3.8-27b-instruct-q4_k_m` / Gemini 3.6 Flash / Local CLIP ONNX Scorer). Nhận candidate pool từ **Research Agent** (`packages/vlm-inspector/src/search/` — SerpAPI/Tavily/Brave/Wikimedia/Catalog provider chain, domain whitelist).
 
 ## 📊 Core Metrics & Targets (KPI)
 - **Visual Noise Free Rate**: $> 95\%$ (Tỉ lệ loại bỏ watermark, logo, chữ đè).
