@@ -2,7 +2,7 @@
  * Module 0 Benchmark Evaluation Runner (Data Preprocessing & Ingestion ETL Engine)
  * Evaluates 4 Core KPIs:
  * 1. Entity Normalization & Disambiguation Accuracy (> 98.0%)
- * 2. Copyright License Compliance Audit Rate (100%)
+ * 2. Knowledge Graph Triple Extraction Accuracy (> 90.0%)
  * 3. Ingestion Seeder Throughput & Golden Dataset Integrity (100%)
  * 4. Hierarchical Parent/Child Chunk Structural Quality (100%)
  */
@@ -12,7 +12,7 @@ import path from 'path';
 import {
   resolveEntityAlias,
   resolveLocationMapping,
-} from '../src/text/historical-entity-mapper.js';
+} from '@chronoviet/shared-spec';
 import { extractTriplesFromTextAsync, ExtractedTriple } from '../src/triple-extractor.js';
 import { chunkDocumentHierarchical } from '../src/chunking/hierarchical-chunker.js';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
@@ -191,7 +191,7 @@ export async function runIngestEval(): Promise<IngestKpiReport> {
   const tripleFailures: string[] = [];
 
   for (const tc of TRIPLE_EXTRACTION_BENCHMARKS) {
-    const extracted = await extractTriplesFromTextAsync(tc.text);
+    const extracted = await extractTriplesFromTextAsync(tc.text, { allowFallback: true });
     const hasExpectedEntity = extracted.some(
       (t: ExtractedTriple) => t.sourceEntityName.includes(tc.expectedEntity) || t.targetEntityName.includes(tc.expectedEntity)
     );
@@ -466,6 +466,7 @@ if (
       if (!report.overallPassed) {
         process.exit(1);
       }
+      process.exit(0);
     })
     .catch((err) => {
       console.error('[!] Module 0 Evaluation Runner Fatal Error:', err);

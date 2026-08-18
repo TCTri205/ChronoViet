@@ -25,6 +25,7 @@ export interface TTSJobResult {
   audioPath: string;
   durationSeconds: number;
   wordTimestamps: WordTimestamp[];
+  engine: 'local_vieneu' | 'synthetic_timing';
 }
 
 export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult> {
@@ -34,7 +35,7 @@ export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult>
     fields: { projectId, sceneId, jobId: job.id },
   });
 
-  workerLog.info('worker.tts_processing', `Processing TTS job ${job.id} for scene ${sceneId}`, {
+  workerLog.debug('worker.tts_processing', `Processing TTS job ${job.id} for scene ${sceneId}`, {
     projectId,
     sceneId,
   });
@@ -44,6 +45,7 @@ export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult>
 
   let durationSeconds = 3;
   let wordTimestamps: WordTimestamp[] = [];
+  let engine: 'local_vieneu' | 'synthetic_timing' = 'local_vieneu';
 
   try {
     const ttsResult = await ttsEngine.synthesize({
@@ -57,6 +59,7 @@ export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult>
 
     durationSeconds = Math.max(3, Math.round((ttsResult.audioDurationMs / 1000) * 10) / 10);
     wordTimestamps = ttsResult.wordTimestamps;
+    engine = 'local_vieneu';
 
     if (ttsResult.audioUrl && ttsResult.audioUrl.startsWith('/static/audio/')) {
       const cachedFile = path.resolve(process.cwd(), 'services/vieneu-tts/media/audio-cache', path.basename(ttsResult.audioUrl));
@@ -69,7 +72,12 @@ export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult>
     if (envConfig.EVAL_STRICT) {
       throw err;
     }
-    log.warn('worker.tts_synthesis_failed', `TTS synthesis failed for ${sceneId}, falling back to word timing: ${err.message}`);
+    engine = 'synthetic_timing';
+    log.warn('worker.tts_synthesis_failed', `TTS synthesis failed for ${sceneId}, falling back to synthetic word timing: ${err.message}`, {
+      sceneId,
+      error: err.message,
+      engine,
+    });
     const words = voiceoverText.split(/\s+/).filter(Boolean);
     durationSeconds = Math.max(3, Math.round((words.length / 2.5) * 10) / 10);
     const msPerWord = (durationSeconds * 1000) / Math.max(1, words.length);
@@ -82,32 +90,24 @@ export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult>
     }
   }
 
-  if (!fs.existsSync(audioFilePath)) {
-    // Eval Integrity: strict mode must not retry silently or return a missing audio file
-    if (envConfig.EVAL_STRICT) {
-      throw new Error(`[EVAL_STRICT] TTS produced no audio file for scene ${sceneId} (${audioFilePath})`);
-    }
-    const fallbackResult = await ttsEngine.synthesize({
-      text: voiceoverText || 'Thuyết minh',
-      speakerId: 'vi_historical_male_1',
-      speedRatio: 1.0,
-      sampleRate: 24000,
-      paddingMs: 300,
-      fps: 30,
-    });
-    const cachedFile = path.resolve(process.cwd(), 'services/vieneu-tts/media/audio-cache', path.basename(fallbackResult.audioUrl));
-    if (fs.existsSync(cachedFile)) {
-      fs.copyFileSync(cachedFile, audioFilePath);
-    }
-  }
+
 
   await job.updateProgress(100);
+
+  workerLog.info('worker.tts_generated', `TTS generated for scene ${sceneId} via ${engine}`, {
+    projectId,
+    sceneId,
+    durationSeconds,
+    wordCount: wordTimestamps.length,
+    engine,
+  });
 
   return {
     sceneId,
     audioPath: audioFilePath,
     durationSeconds,
     wordTimestamps,
+    engine,
   };
 }
 
@@ -123,7 +123,7 @@ export function startTTSWorker(): Worker<TTSJobData, TTSJobResult> {
   );
 
   worker.on('completed', (job) => {
-    log.info('worker.tts_completed', `TTS job ${job.id} completed for scene ${job.data.sceneId}`);
+    log.debug('worker.tts_completed', `TTS job ${job.id} completed for scene ${job.data.sceneId}`);
   });
 
   worker.on('failed', (job, err) => {

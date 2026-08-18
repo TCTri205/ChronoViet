@@ -18,7 +18,7 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 | **Dịch vụ VieNeu TTS (ONNX Engine)** | **[✅ IMPLEMENTED]** (Phase 1) | Thấp - Trung bình | Đã hoàn thiện microservice Node.js Dual-Layer (`VieNeuEngine` + `SyntheticTTSFallbackEngine`), Python FastAPI ONNX Engine (`app.py`), Zod Schema Validation, `wordTimestamps` -> Caption Frames Converter, và bộ Eval Suite `services/vieneu-tts/eval/` với 3 KPI: RTF, Alignment Error, Frame Error. | `services/vieneu-tts/eval/` |
 | **Mô-đun 1: Chrono-RAG Engine** | **[✅ IMPLEMENTED]** | Phức tạp | **100% Hoàn thiện codebase & Eval suite** (`packages/rag-engine/src/`, `eval/`). Hybrid GraphRAG dùng PostgreSQL 15+ (`pgvector` Dense Embedding 1024d + Relational Graph Schema CTEs $k=1,2$ + BM25 FTS + RRF + Integrated BGE Reranker v2). Đã vượt ma trận KPI: Fact Precision 100%, Hallucination Rate 0%, Citation Traceability 100%. | `packages/rag-engine/eval/` |
 | **Mô-đun 2: Multi-Agent Orchestrator** | **[✅ IMPLEMENTED]** | Rất Phức tạp | LangGraph.js State Machine trên Node.js/TS, Postgres Checkpointer SSOT, quy trình Chaptering Agent + 5 Script Micro-Steps, Duration Reconciler, Automated Guardrails (Folklore + NLI Entailment Judge), Keyword Extractor + Research Agent (Micro-Step 1C) tìm ảnh online qua SerpAPI/Tavily/Brave/Wikimedia/Catalog. | `packages/agent-orchestrator/eval/` |
-| **Mô-đun 3: VLM Inspector Sub-Agent** | **[✅ IMPLEMENTED]** | Trung bình | Gemini Cloud VLM Primary (`VLM_PROVIDER=gemini|auto`) + Local Unified Multimodal VLM (`qwen3.8-27b-instruct-q4_k_m`) + Local CLIP ONNX Fallback + Whitelisted License Filter (CC0/PD/CC-BY) + Unified Redis Cache (SHA-256/pHash) + Chiến lược 3+3 Candidates (nhận candidate từ Research Agent + domain whitelist). | `packages/vlm-inspector/eval/` |
+| **Mô-đun 3: VLM Inspector Sub-Agent** | **[✅ IMPLEMENTED]** | Trung bình | Local Unified Multimodal VLM (Local Primary trong `EVAL_STRICT`) + Multi-Key Cloud Gemini VLM (`VLM_PROVIDER=gemini|auto`) + Local CLIP ONNX Fallback + Whitelisted License Filter (CC0/PD/CC-BY) + Unified Redis Cache (SHA-256/pHash) + Chiến lược 3+3 Candidates (nhận candidate từ Research Agent + domain whitelist). | `packages/vlm-inspector/eval/` |
 | **Hạ tầng Worker, Realtime & Web App** | **[✅ IMPLEMENTED]** | Trung bình - Phức tạp | `apps/render-worker` (BullMQ queues, Process Isolation `CONCURRENCY=1`, Asset Pre-download về `/media`, Redis PubSub `project_events:${projectId}`) + `apps/web` (Next.js 14 App Router Monolith, NotebookLM Workspace UI/UX, REST API `/api/v1/chat`, `/api/v1/projects`, SSE Stream, WebSocket Gateway, 1-Click Video Studio). | `apps/render-worker/src/__tests__/` & `apps/web/eval/` |
 
 ### 1.2. Nguyên Tắc Bắt Buộc: Module-Level Evaluation (`eval/` per Module)
@@ -108,7 +108,7 @@ Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 ┌────────────────────────────────────────┴───────────────────────────────────────────────┐
 │              WORKSTREAM 0: DATA PREPROCESSING & INGESTION ENGINE                       │
 │          (Text Normalization + Hierarchical Chunking + Media ETL + Seeders)            │
-│          Bộ đánh giá: packages/rag-engine/eval/ & eval/test-cases/                      │
+│          Bộ đánh giá: packages/data-ingestion/eval/ & eval/test-cases/                  │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -116,7 +116,7 @@ Cấu trúc chuẩn cho thư mục `eval/` ở từng mô-đun:
 
 | Workstream | Có thể chạy song song? | Phụ thuộc đầu vào (Inputs) | Tệp giao tiếp (Data Contract) | Thư mục Eval Độc Lập |
 | :--- | :---: | :--- | :--- | :--- |
-| **Workstream 0: Data Ingestion ETL** | **CÓ (100%)** | Raw Corpus (PDF, SGK, Sử liệu cổ), Raw Media Assets (Images, SFX). | Nạp Postgres (`document_chunks`, `entities`, `relationships`), Host mount `/media/raw-assets/`, `/media/license-snapshots/registry.json`, Golden Datasets (`eval/test-cases/`). | `packages/rag-engine/eval/` & `eval/test-cases/` |
+| **Workstream 0: Data Ingestion ETL** | **CÓ (100%)** | Raw Corpus (PDF, SGK, Sử liệu cổ), Raw Media Assets (Images, SFX). | Nạp Postgres (`document_chunks`, `entities`, `relationships`), Host mount `/media/raw-assets/`, `/media/license-snapshots/registry.json`, Golden Datasets (`eval/test-cases/`). | `packages/data-ingestion/eval/` & `eval/test-cases/` |
 | **Workstream A: Chrono-RAG Engine** | **CÓ (100%)** | Nguồn tri thức từ Workstream 0 (Bảng Postgres vector/graph). | Trả về `Verified Historical Context` + `Alias Table`. | `packages/rag-engine/eval/` |
 | **Workstream B: VieNeu TTS Engine** | **CÓ (100%)** | Script text mẫu (String). | Trả về file `.wav` + `wordTimestamps` + `calculatedFrames`. | `services/vieneu-tts/eval/` |
 | **Workstream C: VLM Inspector Sub-Agent** | **CÓ (100%)** | URL ảnh crawl + Từ khóa bối cảnh. | Trả về `VLM Score` + `License Metadata` + Verdict (`PASS`/`REJECT`). | `packages/vlm-inspector/eval/` |

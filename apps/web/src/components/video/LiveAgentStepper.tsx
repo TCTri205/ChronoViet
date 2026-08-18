@@ -46,7 +46,7 @@ export function LiveAgentStepper({
 }: LiveAgentStepperProps) {
   // Map current step name to phase index (1 to 6)
   const getPhaseStatuses = (step: string): StepperPhase["status"][] => {
-    const s = step.toLowerCase();
+    const s = (step || "").toLowerCase();
     let activeIdx = 1;
 
     if (s.includes("rag_init") || s === "rag" || s.includes("research_topic")) activeIdx = 1;

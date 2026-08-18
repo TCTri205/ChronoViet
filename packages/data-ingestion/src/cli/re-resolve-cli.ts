@@ -10,8 +10,8 @@ import {
   inMemoryStore,
   isPgAvailable,
   logEntityAuditAction,
+  resolveCanonicalEntity,
 } from '@chronoviet/shared-spec';
-import { resolveCanonicalEntity } from '../text/historical-entity-mapper.js';
 
 const log = createLogger({ service: 'data-ingestion' });
 

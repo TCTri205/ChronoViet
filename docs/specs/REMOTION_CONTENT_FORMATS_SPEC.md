@@ -20,7 +20,7 @@ Nếu AI Agent không tìm thấy ảnh phù hợp hoặc link ảnh bị chết
 
 ## II. THƯ VIỆN COMPONENT & LAYOUT MODES (LEGO BLOCKS CHO AI AGENT)
 
-AI Agent chỉ được phép xây dựng kịch bản dựa trên các "khối Lego" đã được lập trình sẵn trong Remotion Engine. Tất cả các giá trị `layoutMode` (18 Core Modes + 13 Extended Modes) đều được định nghĩa trong `LayoutModeSchema` tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts).
+AI Agent chỉ được phép xây dựng kịch bản dựa trên các "khối Lego" đã được lập trình sẵn trong Remotion Engine. Tất cả các giá trị `layoutMode` (11 Pure Image Modes + 20 Pure Code Modes) đều được định nghĩa trong `LayoutModeSchema` tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts).
 
 ### 1. Nhóm Pure Image (11 Layout Modes)
 

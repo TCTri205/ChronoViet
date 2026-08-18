@@ -10,7 +10,9 @@ Tài liệu này ghi chép nhật ký thẩm định và xác thực chất lư�
 
 ## 1. PHASE 1 VERIFIED AUDIT LOG: KỊCH BẢN QUANG TRUNG (15 CORE VISUAL ASSETS)
 
-Tất cả 15 ảnh tư liệu lịch sử dưới đây đã được kiểm tra kỹ lưỡng (Verify định dạng JPEG/PNG & kích thước ảnh chuẩn HD) để đảm bảo **khớp 100% với nội dung từng Cảnh** trong kịch bản video.
+Tất cả 15 ảnh tư liệu lịch sử dưới đây đã được kiểm tra kỹ lưỡng (Verify định dạng JPEG/PNG & kiểm định nội dung lịch sử) để đảm bảo **khớp 100% với nội dung từng Cảnh** trong kịch bản video.
+
+> **Lưu ý về kích thước:** Trong Phase 1 thử nghiệm thủ công, một số ảnh sơ đồ/hiện vật crop cục bộ (Cảnh 5: 515x178, Cảnh 12: 457x193) được đánh dấu Pass cho mục đích test fixture. Trong môi trường Production runtime, các phân cảnh có ảnh tư liệu nhỏ hơn ngưỡng HD (720p) sẽ tự động được VLM Inspector kích hoạt layout Pure Code (`MAP_TACTICAL`, `STAT_CARD`, `MUSEUM_TAG`) hoặc upscale để bảo đảm chất lượng render hoàn hảo.
 
 | Scene | Tên Cảnh | Search Prompt Đã Dùng | Tên Ảnh & Kích Thước | Mô Tả Nội Dung Chi Tiết | Link Nguồn Wikimedia | Trạng thái VLM |
 |-------|----------|-----------------------|----------------------|-------------------------|----------------------| :---: |

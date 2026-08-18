@@ -1,62 +1,62 @@
-# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
+# KỊCH BẢN CHI TIẾT & BẢNG PHÂN CẢNH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
 
-> **TĂ¡c pháº©m:** HAI BĂ€ TRÆ¯NG â€“ Báº¢N ANH HĂ™NG CA Äáº¦U TIĂN Cá»¦A DĂ‚N Tá»˜C  
-> **Dá»± Ă¡n:** ChronoViet (Video Essay / Historical Motion Graphics)  
-> **Thá»i lÆ°á»£ng:** 7 phĂºt 30 giĂ¢y (450 giĂ¢y / 13.500 frames @ 30fps)  
-> **Phong cĂ¡ch:** Äá»“ há»a Cá»• phong Viá»‡t Nam (Trá»‘ng Ä‘á»“ng ÄĂ´ng SÆ¡n, chim Láº¡c, giĂ¡p vĂ ng, mĂ u nÆ°á»›c thá»§y máº·c & hiá»‡u á»©ng Ken Burns hĂ o hĂ¹ng)  
-> **ÄĂ£ tháº©m Ä‘á»‹nh & Tá»‘i Æ°u:** ÄĂ£ bá»• sung chi tiáº¿t Ä‘á»‹a danh lá»‹ch sá»­ thá»±c táº¿ (LĂª ChĂ¢n - Háº£i PhĂ²ng, ThĂ¡nh ThiĂªn - Báº¯c Ninh), pháº¡m vi Ä‘á»‹a lĂ½ 65 thĂ nh cai, mÆ°u lÆ°á»£c Ä‘áº§m láº§y LĂ£ng Báº¡c & chĂº thĂ­ch sá»­ liá»‡u.
+> **Tác phẩm:** HAI BÀ TRƯNG – BẢN ANH HÙNG CA ĐẦU TIÊN CỦA DÂN TỘC  
+> **Dự án:** ChronoViet (Video Essay / Historical Motion Graphics)  
+> **Thời lượng:** 7 phút 30 giây (450 giây / 13.500 frames @ 30fps)  
+> **Phong cách:** Đồ họa Cổ phong Việt Nam (Trống đồng Đông Sơn, chim Lạc, giáp vàng, màu nước thủy mặc & hiệu ứng Ken Burns hào hùng)  
+> **Đã thẩm định & Tối ưu:** Đã bổ sung chi tiết địa danh lịch sử thực tế (Lê Chân - Hải Phòng, Thánh Thiên - Bắc Ninh), phạm vi địa lý 65 thành cai, mưu lược đầm lầy Lãng Bạc & chú thích sử liệu.
 
 ---
 
-## đŸ¨ 1. Bá»˜ THIáº¾T Káº¾ NHáº¬N DIá»†N THá» GIĂC (VISUAL DESIGN SYSTEM)
+## 🎨 1. BỘ THIẾT KẾ NHẬN DIỆN THỊ GIÁC (VISUAL DESIGN SYSTEM)
 
-* **Palette mĂ u chĂ­nh:**
-  * **Imperial Gold (VĂ ng GiĂ¡p VÆ°Æ¡ng / HoĂ ng Kim):** `#F59E0B` & `#FBBF24` (Chiáº¿n phong, cá» nghÄ©a, chá»¯ tiĂªu Ä‘á»)
-  * **Crimson Red (Äá» Son / MĂ¡u Ná»£ NÆ°á»›c):** `#DC2626` & `#991B1B` (Cá» há»›n há»Ÿ, ngá»n lá»­a cÄƒm há»n, chiáº¿n trÆ°á»ng)
-  * **Dong Son Bronze (NĂ¢u Äá»“ng Cá»• ÄĂ´ng SÆ¡n):** `#B45309` & `#78350F` (Hoa vÄƒn trá»‘ng Ä‘á»“ng, vÅ© khĂ­ ÄĂ´ng SÆ¡n)
-  * **Deep Slate (Xanh ÄĂªm SĂ´ng HĂ¡t):** `#0F172A` & `#1E293B` (Ná»n chĂ­nh, bá»‘i cáº£nh u uáº¥t thá»i Báº¯c thuá»™c)
+* **Palette màu chính:**
+  * **Imperial Gold (Vàng Giáp Vương / Hoàng Kim):** `#F59E0B` & `#FBBF24` (Chiến phong, cờ nghĩa, chữ tiêu đề)
+  * **Crimson Red (Đỏ Son / Máu Nợ Nước):** `#DC2626` & `#991B1B` (Cờ hớn hở, ngọn lửa căm hờn, chiến trường)
+  * **Dong Son Bronze (Nâu Đồng Cổ Đông Sơn):** `#B45309` & `#78350F` (Hoa văn trống đồng, vũ khí Đông Sơn)
+  * **Deep Slate (Xanh Đêm Sông Hát):** `#0F172A` & `#1E293B` (Nền chính, bối cảnh u uất thời Bắc thuộc)
 
 * **Typography:**
-  * **Title Main:** `Montserrat` Bold / `UTM Classique Saigon` (Letter spacing 0.08em, hiá»‡u á»©ng Ä‘á»• bĂ³ng máº¡ vĂ ng)
-  * **Quote Text:** `Playfair Display` Italic / `Merriweather` (MĂ u vĂ ng rá»±c `#F59E0B` trĂªn ná»n má» glassmorphism)
-  * **Voice Subtitle:** `Be Vietnam Pro` (Font size 30px, viá»n chá»¯ mĂ u Ä‘en 2px, ná»n dáº£i lá»¥a má»)
+  * **Title Main:** `Montserrat` Bold / `UTM Classique Saigon` (Letter spacing 0.08em, hiệu ứng đổ bóng mạ vàng)
+  * **Quote Text:** `Playfair Display` Italic / `Merriweather` (Màu vàng rực `#F59E0B` trên nền mờ glassmorphism)
+  * **Voice Subtitle:** `Be Vietnam Pro` (Font size 30px, viền chữ màu đen 2px, nền dải lụa mờ)
 
 ---
 
-## đŸ¬ 2. Báº¢NG PHĂ‚N Cáº¢NH CHI TIáº¾T 28 SCENES (SHOT-BY-SHOT BREAKDOWN)
+## 🎬 2. BẢNG PHÂN CẢNH CHI TIẾT 28 SCENES (SHOT-BY-SHOT BREAKDOWN)
 
-| Scene ID | Thá»i gian | Lá»i thuyáº¿t minh (Voiceover Script) | MĂ´ táº£ HĂ¬nh áº£nh & Chuyá»ƒn Ä‘á»™ng Camera | Ă‚m thanh & Hiá»‡u á»©ng (SFX / BGM) | Prompt AI Sinh áº£nh (Midjourney / Flux) / Asset Specs |
+| Scene ID | Thời gian | Lời thuyết minh (Voiceover Script) | Mô tả Hình ảnh & Chuyển động Camera | Âm thanh & Hiệu ứng (SFX / BGM) | Prompt AI Sinh ảnh (Midjourney / Flux) / Asset Specs |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Scene 01** | `00:00 - 00:15` | *"Trong suá»‘t hĂ ng nghĂ¬n nÄƒm dá»±ng nÆ°á»›c vĂ  giá»¯ nÆ°á»›c, lá»‹ch sá»­ Viá»‡t Nam Ä‘Ă£ chá»©ng kiáº¿n bao trang sá»­ hĂ o hĂ¹ng."* | DĂ²ng sĂ´ng HĂ¡t bĂ¬nh minh má» sÆ°Æ¡ng, máº·t nÆ°á»›c pháº³ng láº·ng lÄƒn tÄƒn sĂ³ng. Camera Zoom Out cháº­m. | **SFX:** Tiáº¿ng sĂ³ng nÆ°á»›c rĂ¬ ráº§m, tiáº¿ng chim hĂ³t xa xÄƒm. **BGM:** Nháº¡c sĂ¡o trĂºc má»Ÿ Ä‘áº§u Ăªm Ä‘á»m. | `Cinematic wide shot of Hat River Vietnam in early morning mist, sunrise glowing gold, Dong Son culture landscape, hyper-detailed traditional digital painting --ar 16:9` |
-| **Scene 02** | `00:15 - 00:30` | *"NhÆ°ng cĂ³ má»™t cá»™t má»‘c Ä‘áº·c biá»‡t â€“ nÆ¡i ngá»n lá»­a chá»‘ng giáº·c ngoáº¡i xĂ¢m Ä‘áº§u tiĂªn bĂ¹ng chĂ¡y máº¡nh máº½..."* | Chuyá»ƒn cáº£nh nhanh: Tranh nĂ©t váº½ minh há»a ná»¯ tÆ°á»›ng khoĂ¡c chiáº¿n phong vĂ ng cáº§m gÆ°Æ¡m sĂ¡ng quáº¯c. | **SFX:** Tiáº¿ng giĂ³ rĂ­t gáº§m, tiáº¿ng trá»‘ng tráº­n Ä‘Ă¡nh nháº¹ dá»“n dáº­p. | `Epic ancient Vietnamese female warrior general in golden armor holding bronze sword, wind blowing banner, cinematic lighting, ancient Vietnamese style --ar 16:9` |
-| **Scene 03** | `00:30 - 00:45` | *"...Ä‘Æ°á»£c tháº¯p lĂªn khĂ´ng pháº£i bá»Ÿi nhá»¯ng nam nhi Ä‘áº¡i hĂ¡n, mĂ  bá»Ÿi hai ngÆ°á»i phá»¥ ná»¯ phi thÆ°á»ng."* | Ná»n hoa vÄƒn Trá»‘ng Ä‘á»“ng ÄĂ´ng SÆ¡n xoay nháº¹, dĂ²ng chá»¯ tiĂªu Ä‘á» máº¡ vĂ ng ná»•i báº­t: **"HAI BĂ€ TRÆ¯NG â€“ TIáº¾NG Cá»’NG Tá»° DO Äáº¦U TIĂN"**. | **SFX:** Tiáº¿ng trá»‘ng Ä‘á»“ng vang vá»ng (Deep impact boom). | `Dong Son bronze drum surface pattern centered with glowing golden particle effects, Vietnamese historical aesthetic, epic resolution --ar 16:9` |
-| **Scene 04** | `00:45 - 01:00` | *"ÄĂ³ lĂ  mĂ¹a xuĂ¢n nÄƒm 40 Sau CĂ´ng NguyĂªn, cuá»™c khá»Ÿi nghÄ©a cá»§a Hai BĂ  TrÆ°ng Ä‘Ă£ lĂ m rung chuyá»ƒn bá»™ mĂ¡y Ä‘Ă´ há»™ cá»§a nhĂ  HĂ¡n, má»Ÿ ra trang sá»­ Ä‘á»™c láº­p Ä‘áº§u tiĂªn cho dĂ¢n tá»™c."* | HĂ¬nh áº£nh minh há»a Hai BĂ  TrÆ°ng cÆ°á»¡i voi chiáº¿n uy nghi, cá» nghÄ©a pháº¥t phá»›i trong giĂ³ xuĂ¢n. | **SFX:** Tiáº¿ng tĂ¹ vĂ  rá»n vang, tiáº¿ng reo hĂ² ráº¥n ráº­p. **BGM:** Nháº¡c ná»•i dá»“n dáº­p hĂ o hĂ¹ng. | `Two Vietnamese heroines Trung Sisters riding giant war elephants, golden armor, red banners flying, leading army, spring sky background, masterwork artwork --ar 16:9` |
-| **Scene 05** | `01:00 - 01:15` | *"Tháº¿ ká»· thá»© nháº¥t, Ä‘áº¥t nÆ°á»›c ta chĂ¬m trong Ä‘Ăªm trÆ°á»ng Ä‘Ă´ há»™ cá»§a nhĂ  ÄĂ´ng HĂ¡n."* | Äá»“ há»a báº£n Ä‘á»“ Giao Chá»‰ tháº¿ ká»· I má» tá»‘i, cĂ¡c Ä‘Æ°á»ng biĂªn giá»›i vĂ  Ä‘á»“n bá»‘t quĂ¢n HĂ¡n Ä‘á» tháº«m Ä‘Ă¨ lĂªn. | **SFX:** Tiáº¿ng chuĂ´ng u uáº¥t, tiáº¿ng giĂ³ gáº§m u tá»‘i. **BGM:** Nháº¡c ná»n chuyá»ƒn tone tráº§m buá»“n, cÄƒng tháº³ng. | `Historical vintage map of Ancient Vietnam Giao Chi 1st century AD under Han Dynasty occupation, dark atmospheric tones, aged parchment texture --ar 16:9` |
-| **Scene 06** | `01:15 - 01:30` | *"ThĂ¡i thĂº TĂ´ Äá»‹nh â€“ má»™t káº» tĂ n báº¡o vĂ  tham lam tá»™t cĂ¹ng â€“ Ä‘Ă£ gieo ráº¯c bao tai thÆ°Æ¡ng lĂªn Ä‘á»i sá»‘ng ngÆ°á»i dĂ¢n Giao Chá»‰."* | Cáº£nh minh há»a nhĂ¢n dĂ¢n láº§m than: NgÆ°á»i dĂ¢n láº·n biá»ƒn mĂ² ngá»c trai gáº·p cĂ¡ sáº¥u, ngÆ°á»i vĂ o rá»«ng sĂ¢u tĂ¬m ngĂ  voi tĂª giĂ¡c. | **SFX:** Tiáº¿ng xĂ­ch sáº¯t lÄƒng lÄƒng, tiáº¿ng than khĂ³c ngháº¹n ngĂ o. | `Ancient Vietnamese villagers suffering under Han rule, diving into dangerous deep ocean for pearls and hunting elephants in dark jungle, sorrowful tone --ar 16:9` |
-| **Scene 07** | `01:30 - 01:45` | *"Thuáº¿ náº·ng, lao dá»‹ch váº¥t váº£, vÄƒn hĂ³a báº£n Ä‘á»‹a Láº¡c Viá»‡t bá»‹ chĂ¨n Ă©p tĂ n nháº«n."* | ChĂ¢n dung gian hĂ¹ng TĂ´ Äá»‹nh Ă¡nh máº¯t tham lam, xung quanh lĂ  vĂ ng báº¡c ngá»c ngĂ  cÆ°á»¡ng Ä‘oáº¡t cá»§a nhĂ¢n dĂ¢n. *(Hiá»ƒn thá»‹ Bio Card)* | **SFX:** Tiáº¿ng tiá»n Ä‘á»“ng rÆ¡i, tiáº¿ng roi quáº­t. | `Portrait of greedy cruel Han governor To Dinh surrounded by stolen gold, pearls and ivory, dark sinister lighting, accurate historical Han costume --ar 16:9` |
-| **Scene 08** | `01:45 - 02:00` | *"Báº¥t bĂ¬nh trÆ°á»›c sá»± hung tĂ n Ä‘Ă³, Thi SĂ¡ch â€“ Láº¡c tÆ°á»›ng huyá»‡n Chu DiĂªn â€“ Ä‘Ă£ cĂ¹ng vá»£ lĂ  TrÆ°ng Tráº¯c kĂ­n Ä‘Ă¡o liĂªn káº¿t cĂ¡c bá»™ tá»™c chiĂªu má»™ nghÄ©a quĂ¢n."* | Thi SĂ¡ch vĂ  TrÆ°ng Tráº¯c bĂ n tháº£o mÆ°u lÆ°á»£c bĂªn ngá»n Ä‘Ă¨n dáº§u Ä‘Ăªm, truyá»n há»‹ch chiĂªu má»™ nghÄ©a sÄ© cĂ¡c vĂ¹ng. *(Hiá»ƒn thá»‹ Bio Card)* | **SFX:** Tiáº¿ng láº­t giáº¥y trĂ­ch thÆ°, tiáº¿ng náº¿n chĂ¡y lĂ¡ch tĂ¡ch. | `Vietnamese Lac general Thi Sach and his wife Trung Trac in secret meeting at night planning rebellion by candlelight, brave expressions --ar 16:9` |
-| **Scene 09** | `02:00 - 02:15` | *"Nháº±m dáº­p táº¯t máº§m má»‘ng ná»•i dáº­y, TĂ´ Äá»‹nh Ä‘Ă£ láº­p mÆ°u tĂ n báº¡o sĂ¡t háº¡i Thi SĂ¡ch."* | Cáº£nh u tá»‘i: LĂ­nh HĂ¡n phá»¥c kĂ­ch sĂ¡t háº¡i Thi SĂ¡ch trong Ä‘Ăªm bĂ£o tĂ¡p. MÆ°a rÆ¡i mĂ¹ má»‹t. | **SFX:** Tiáº¿ng sĂ©t Ä‘Ă¡nh, tiáº¿ng sáº¥m ná»• rá»n, tiáº¿ng mÆ°a rÆ¡i náº·ng háº¡t. | `Tragic night ambush scene, Han soldiers surrounding Thi Sach under violent storm and lightning, dramatic emotional lighting --ar 16:9` |
-| **Scene 10** | `02:15 - 02:30` | *"Tháº¿ nhÆ°ng, káº» thĂ¹ Ä‘Ă£ láº§m. MĂ¡u cá»§a Thi SĂ¡ch cháº£y xuá»‘ng khĂ´ng lĂ m thui mai chĂ­ khĂ­, mĂ  cĂ ng tháº¯p bĂ¹ng lĂªn ngá»n lá»­a cÄƒm há»n: Ná»£ nÆ°á»›c pháº£i tráº£, thĂ¹ nhĂ  pháº£i Ä‘á»n!"* | TrÆ°ng Tráº¯c Ä‘á»©ng trÆ°á»›c bĂ n thá» Thi SĂ¡ch, tay náº¯m cháº·t chuĂ´i gÆ°Æ¡m, Ă¡nh máº¯t kiĂªn cÆ°á»ng bĂ¹ng chĂ¡y ngá»n lá»­a cÄƒm há»n. | **SFX:** Tiáº¿ng ngá»n lá»­a bĂ¹ng chĂ¡y (Fire whoosh), trá»‘ng dá»“n. | `Trung Trac mourning her husband in front of altar, eyes filled with determination and vengeance, fiery background glow, high emotional tension --ar 16:9` |
-| **Scene 11** | `02:30 - 02:45` | *"MĂ¹a xuĂ¢n nÄƒm 40, táº¡i cá»­a sĂ´ng HĂ¡t, TrÆ°ng Tráº¯c cĂ¹ng em gĂ¡i TrÆ°ng Nhá»‹ chĂ­nh thá»©c pháº¥t cá» khá»Ÿi nghÄ©a."* | Láº­p bĂ n thá» táº¿ trá»i Ä‘áº¥t bĂªn sĂ´ng HĂ¡t. Hai BĂ  TrÆ°ng khoĂ¡c chiáº¿n phong giĂ¡p vĂ ng tuá»‘t gÆ°Æ¡m thá» trÆ°á»›c hĂ ng váº¡n tÆ°á»›ng sÄ©. | **SFX:** Tiáº¿ng tĂ¹ vĂ  chiáº¿n rá»n vang, tiáº¿ng reo hĂ² lĂ m rung chuyá»ƒn sĂ´ng nĂºi. | `Grand oath ceremony on the bank of Hat River, Trung Trac and Trung Nhi in golden armor drawing swords before massive Vietnamese army, sun rising --ar 16:9` |
-| **Scene 12** | `02:45 - 03:00` | *"Lá»i thá» HĂ¡t MĂ´n vang vá»ng nĂºi sĂ´ng: 'Má»™t xin rá»­a sáº¡ch nÆ°á»›c thĂ¹ / Hai xin Ä‘em láº¡i nghiá»‡p xÆ°a há» HĂ¹ng / Ba káº»o oan á»©c lĂ²ng chá»“ng / Bá»‘n xin váº¹n váº¹n sá»Ÿ cĂ´ng lĂªnh nĂ y.'"* | Tháº» trĂ­ch dáº«n nghá»‡ thuáº­t (Quote Card) hiá»ƒn thá»‹ 4 cĂ¢u thÆ¡ HĂ¡t MĂ´n báº±ng chá»¯ calligraphy cá»• phong máº¡ vĂ ng (TrĂ­ch *ThiĂªn Nam ngá»¯ lá»¥c*). | **SFX:** Tiáº¿ng ngĂ¢n vang linh thiĂªng (Mystic gong vibration). | `Calligraphy text card with gold embossed Vietnamese oath poem, dark slate glassmorphism card background, glowing sparkles --ar 16:9` |
-| **Scene 13** | `03:00 - 03:15` | *"NhÆ° má»™t dĂ²ng thĂ¡c lÅ©, Ä‘Ă¡p lá»i kĂªu gá»i cá»§a Hai BĂ , nhĂ¢n dĂ¢n kháº¯p 65 thĂ nh cai â€“ tráº£i rá»™ng tá»« Giao Chá»‰, Cá»­u ChĂ¢n Ä‘áº¿n táº­n Nam Háº£i â€“ Ä‘á»u Ä‘á»“ng lĂ²ng Ä‘á»©ng lĂªn."* | Äá»“ há»a báº£n Ä‘á»“ cĂ¡c Ä‘Æ°á»ng mÅ©i tĂªn mĂ u Ä‘á» rá»±c tiáº¿n cĂ´ng tháº§n tá»‘c tá»« HĂ¡t MĂ´n $\rightarrow$ MĂª Linh $\rightarrow$ Cá»• Loa $\rightarrow$ Luy LĂ¢u vĂ  lan rá»™ng kháº¯p LÄ©nh Nam. | **SFX:** Tiáº¿ng ngá»±a sáº£i bÆ°á»›c dá»“n dáº­p, tiáº¿ng xĂ¡o Ä‘á»™ng chiáº¿n trÆ°á»ng. | `Animated battle map showing twin arrows sweeping across ancient Red River Delta from Hat Mon to Me Linh and Luy Lau citadel --ar 16:9` |
-| **Scene 14** | `03:15 - 03:30` | *"Äáº·c biá»‡t, má»™t dĂ n ná»¯ tÆ°á»›ng kiá»‡t xuáº¥t Ä‘Ă£ tá»¥ há»™i: Ná»¯ tÆ°á»›ng LĂª ChĂ¢n tráº¥n giá»¯ vĂ¹ng biá»ƒn An BiĂªn (Háº£i PhĂ²ng ngĂ y nay), ThĂ¡nh ThiĂªn tráº¥n giá»¯ ngĂ£ ba sĂ´ng Ngá»c Há»“i (Báº¯c Ninh), cĂ¹ng BĂ¡t NĂ n, NĂ ng TĂ­a..."* | Tháº» thĂ´ng tin dĂ n ná»¯ tÆ°á»›ng huyá»n thoáº¡i vá»›i chĂ¢n dung LĂª ChĂ¢n, ThĂ¡nh ThiĂªn dÅ©ng mĂ£nh xĂ´ng tráº­n. *(Hiá»ƒn thá»‹ Event Badge)* | **SFX:** Tiáº¿ng gÆ°Æ¡m giĂ¡o va cháº¡m (Sword clash), tiáº¿ng khiĂªn Ä‘ao ráº§m ráº­p. | `Heroic collage of ancient female generals of Trung Sisters (Le Chan, Thanh Thien, Bat Nan) charging with spears and swords --ar 16:9` |
-| **Scene 15** | `03:30 - 03:45` | *"Chá»‰ trong thá»i gian ngáº¯n, nghÄ©a quĂ¢n quĂ©t sáº¡ch chĂ­nh quyá»n Ä‘Ă´ há»™, chiáº¿m háº¡ MĂª Linh, Cá»• Loa rá»“i Ä‘Ă¡nh tháº³ng vĂ o thá»§ phá»§ Luy LĂ¢u."* | QuĂ¢n khá»Ÿi nghÄ©a trĂ n vĂ o háº¡ thĂ nh Luy LĂ¢u, Ä‘áº­p tan cá» nhĂ  HĂ¡n, cá» nghÄ©a Hai BĂ  TrÆ°ng cáº¯m trĂªn Ä‘á»‰nh thĂ nh. | **SFX:** Tiáº¿ng Ä‘á»• vá»¡ cá»§a cá»•ng thĂ nh, tiáº¿ng quĂ¢n sÄ© reo hĂ² chiáº¿n tháº¯ng. | `Vietnamese uprising army storming Luy Lau fortress, tearing down Han banners and raising red-gold rebellion flag, triumphant sunlight --ar 16:9` |
-| **Scene 16** | `03:45 - 04:00` | *"TĂ´ Äá»‹nh hoáº£ng sá»£ pháº£i cáº¯t tĂ³c cáº¡o rĂ¢u, cáº£i trang lĂ©n lĂºt trá»‘n cháº¡y vá» phÆ°Æ¡ng Báº¯c. Äáº¥t nÆ°á»›c sáº¡ch bĂ³ng quĂ¢n thĂ¹! TrÆ°ng Tráº¯c lĂªn ngĂ´i xÆ°ng TrÆ°ng Ná»¯ VÆ°Æ¡ng, Ä‘Ă³ng Ä‘Ă´ táº¡i MĂª Linh, xĂ¡ thuáº¿ 2 nÄƒm cho nhĂ¢n dĂ¢n."* | Cáº£nh TĂ´ Äá»‹nh hoáº£ng loáº¡n hoáº£ng há»‘t cáº¡o rĂ¢u cáº¯t tĂ³c bá» cháº¡y; tiáº¿p ná»‘i lĂ  cáº£nh TrÆ°ng Tráº¯c Ä‘Äƒng quang TrÆ°ng Ná»¯ VÆ°Æ¡ng táº¡i Me Linh. *(Hiá»ƒn thá»‹ Bio Card)* | **SFX:** Tiáº¿ng trá»‘ng má»«ng Ä‘Äƒng quang, Ă¢m nháº¡c huy hoĂ ng rá»±c rá»¡. | `To Dinh fleeing in disgrace, contrasted with Queen Trung Trac coronation ceremony at Me Linh capital, golden throne, historic majesty --ar 16:9` |
-| **Scene 17** | `04:00 - 04:15` | *"Chiáº¿n tháº¯ng khiáº¿n nhĂ  HĂ¡n bĂ ng hoĂ ng. NÄƒm 42, vua HĂ¡n sai Phá»¥c Ba tÆ°á»›ng quĂ¢n MĂ£ Viá»‡n â€“ má»™t viĂªn tÆ°á»›ng lĂ£o luyá»‡n vĂ  tĂ n Ä‘á»™c â€“ dáº«n 2 váº¡n quĂ¢n tinh nhuá»‡ sang xĂ¢m lÆ°á»£c."* | TÆ°á»›ng giĂ  MĂ£ Viá»‡n máº¯t diá»u hĂ¢u dáº«n hĂ ng váº¡n quĂ¢n HĂ¡n trang bá»‹ giĂ¡p sáº¯t náº·ng ná», thuyá»n chiáº¿n trĂ n sang biĂªn giá»›i. *(Hiá»ƒn thá»‹ Bio Card)* | **SFX:** Tiáº¿ng bÆ°á»›c chĂ¢n hĂ nh quĂ¢n ráº§m ráº­p, tiáº¿ng trá»‘ng tráº­n nhĂ  HĂ¡n Ä‘e dá»a. | `Cruel veteran general Ma Vien leading massive Han invasion armada and armored infantry crossing northern border mountains, ominous clouds --ar 16:9` |
-| **Scene 18** | `04:15 - 04:30` | *"Táº¡i LĂ£ng Báº¡c vĂ  Cáº¥m KhĂª, nhá»¯ng tráº­n chiáº¿n tĂ n khá»‘c Ä‘Ă£ diá»…n ra. NghÄ©a quĂ¢n dá»±a vĂ o tháº¿ nĂºi sĂ´ng Ä‘áº§m láº§y kiĂªn cÆ°á»ng chá»‘ng tráº£ sá»©c tiáº¿n cĂ´ng hung hĂ£n cá»§a giáº·c."* | Chiáº¿n trÆ°á»ng LĂ£ng Báº¡c mĂ¹ má»‹t khĂ³i lá»­a, hai bĂªn giĂ¡p lĂ¡ ngá» Ă¡c liá»‡t giá»¯a Ä‘áº§m láº§y vĂ  thung lÅ©ng. | **SFX:** Tiáº¿ng tĂªn bay vĂ¨ vĂ¨, tiáº¿ng phĂ¡o trá»‘ng tráº­n cuá»“ng nhiá»‡t, tiáº¿ng thĂ©t xung phong. | `Fierce ancient battle at Lang Bac swamp, arrows raining down, intense clash between Vietnamese warriors and Han heavy armor --ar 16:9` |
-| **Scene 19** | `04:30 - 04:45` | *"DĂ¹ chiáº¿n Ä‘áº¥u vĂ´ cĂ¹ng anh dÅ©ng, nhÆ°ng trÆ°á»›c tháº¿ lá»±c giáº·c quĂ¡ máº¡nh vĂ  tinh nhuá»‡ cĂ¹ng viá»‡n binh liĂªn tá»¥c kĂ©o sang, lá»±c lÆ°á»£ng nghÄ©a quĂ¢n dáº§n tiĂªu hao suy giáº£m."* | NghÄ©a quĂ¢n kiĂªn cÆ°á»ng chiáº¿n Ä‘áº¥u trong tháº¿ bá»‹ bao vĂ¢y, mĂ¡u Ä‘á»ng trĂªn gÆ°Æ¡m giĂ¡o, báº§u trá»i Ä‘á» quáº¡ch mĂ u mĂ¡u. | **SFX:** Nháº¡c bi thÆ°Æ¡ng trĂ´i cháº­m, tiáº¿ng giĂ³ hĂº u buá»“n. | `Dramatic struggle of outnumbered Vietnamese fighters standing ground against overwhelming enemy forces, sunset crimson sky --ar 16:9` |
-| **Scene 20** | `04:45 - 05:00` | *"ThĂ¡ng 3 nÄƒm 43, khĂ´ng Ä‘á»ƒ rÆ¡i vĂ o tay giáº·c, Hai BĂ  TrÆ°ng Ä‘Ă£ gieo mĂ¬nh xuá»‘ng dĂ²ng sĂ´ng HĂ¡t giá»¯ trá»n khĂ­ tiáº¿t thiĂªng liĂªng."* | Hai BĂ  TrÆ°ng nhĂ¬n láº¡i nĂºi sĂ´ng quĂª hÆ°Æ¡ng láº§n cuá»‘i, dÅ©ng cáº£m gieo mĂ¬nh xuá»‘ng dĂ²ng sĂ´ng HĂ¡t trong Ă¡nh hoĂ ng hĂ´n rá»±c Ä‘á». | **SFX:** Tiáº¿ng nÆ°á»›c ráº½ sĂ³ng trĂ´i xa, tiáº¿ng sĂ¡o nhá»‹ bi hĂ¹ng láº¯ng Ä‘á»ng. | `Tragic emotional scene of Trung Sisters standing on river cliff at sunset, choosing dignity over surrender, golden particles ascending to heaven --ar 16:9` |
-| **Scene 21** | `05:00 - 05:15` | *"Cuá»™c khĂ¡ng chiáº¿n khĂ©p láº¡i, nhÆ°ng tinh tháº§n báº¥t khuáº¥t 'ThĂ  cháº¿t vinh cĂ²n hÆ¡n sá»‘ng nhá»¥c' cá»§a Hai BĂ  Ä‘Ă£ trá»Ÿ thĂ nh tÆ°á»£ng Ä‘Ă i báº¥t tá»­."* | DĂ²ng sĂ´ng HĂ¡t lung linh hĂ o quang, hĂ¬nh áº£nh tÆ°á»£ng Ä‘Ă i Hai BĂ  TrÆ°ng áº©n hiá»‡n giá»¯a mĂ¢y trá»i vÄ©nh cá»­u. | **SFX:** Tiáº¿ng chuĂ´ng ngĂ¢n dĂ i linh thiĂªng, Ă¢m nháº¡c chuyá»ƒn sang tráº§m hĂ¹ng hoĂ i niá»‡m. | `Ethereal glowing spirits of Trung Sisters transcending into eternal monument above misty Hat River, sacred light rays from sky --ar 16:9` |
-| **Scene 22** | `05:15 - 05:30` | *"DĂ¹ triá»u Ä‘áº¡i chá»‰ kĂ©o dĂ i 3 nÄƒm, nhÆ°ng Cuá»™c khá»Ÿi nghÄ©a Hai BĂ  TrÆ°ng Ä‘Ă£ kháº³ng Ä‘á»‹nh má»™t sá»± tháº­t lá»‹ch sá»­ báº¥t biáº¿n: NgÆ°á»i Viá»‡t quyáº¿t khĂ´ng chá»‹u lĂ m nĂ´ lá»‡."* | Tháº» ghi nháº­n giĂ¡ trá»‹ lá»‹ch sá»­: Báº£n tuyĂªn ngĂ´n Ä‘á»™c láº­p Ä‘áº§u tiĂªn, Ä‘áº­p tan Ă¡ch thá»‘ng trá»‹ hĂ ng tháº¿ ká»·. *(Hiá»ƒn thá»‹ Historical Note)* | **SFX:** Tiáº¿ng trá»‘ng Ä‘á»“ng vang vang Ä‘á»u Ä‘áº·n. | `Historical gold inscription badge over ancient Vietnamese map, symbolizing original declaration of independence --ar 16:9` |
-| **Scene 23** | `05:30 - 05:45` | *"Hai BĂ  TrÆ°ng khĂ´ng chá»‰ lĂ  biá»ƒu tÆ°á»£ng báº¥t khuáº¥t cho lĂ²ng yĂªu nÆ°á»›c, mĂ  cĂ²n lĂ  niá»m tá»± hĂ o vÄ© Ä‘áº¡i cá»§a phá»¥ ná»¯ Viá»‡t Nam â€“ chá»©ng minh truyá»n thá»‘ng 'Giáº·c Ä‘áº¿n nhĂ , Ä‘Ă n bĂ  cÅ©ng Ä‘Ă¡nh'."* | HĂ¬nh áº£nh káº¿t ná»‘i qua cĂ¡c thá»i ká»³: Tá»« ná»¯ tÆ°á»›ng Hai BĂ  TrÆ°ng Ä‘áº¿n hĂ¬nh áº£nh ngÆ°á»i phá»¥ ná»¯ Viá»‡t Nam kiĂªn cÆ°á»ng trong lá»‹ch sá»­ dá»±ng nÆ°á»›c & giá»¯ nÆ°á»›c. | **SFX:** Nháº¡c giao hÆ°á»Ÿng tá»± hĂ o, Ă¢m hÆ°á»Ÿng dĂ¢n tá»™c vÆ°Æ¡n cao. | `Artistic montage bridging Trung Sisters heroism with courage of Vietnamese women throughout national history --ar 16:9` |
-| **Scene 24** | `05:45 - 06:00` | *"NgĂ n nÄƒm Ä‘Ă£ trĂ´i qua, dĂ²ng sĂ´ng HĂ¡t váº«n Ăªm Ä‘á»m cháº£y, nháº¯c nhá»Ÿ tháº¿ há»‡ hĂ´m nay vĂ  mai sau vá» lá»i thá» Ä‘á»™c láº­p Ä‘áº§u tiĂªn cá»§a dĂ¢n tá»™c."* | Cáº£nh Äá»n thá» Hai BĂ  TrÆ°ng táº¡i MĂª Linh vĂ  HĂ¡t MĂ´n ngĂ y nay ngá»£p bĂ³ng cĂ¢y xanh, nhang khĂ³i nghi ngĂºt, ngÆ°á»i dĂ¢n trĂ¢n trá»ng dĂ¢ng hÆ°Æ¡ng. | **SFX:** Tiáº¿ng chuĂ´ng Ä‘á»n thanh tá»‹nh, tiáº¿ng chim hĂ³t yĂªn bĂ¬nh. | `Modern Me Linh temple dedicated to Trung Sisters, traditional festival celebration, peaceful green landscape, golden incense smoke --ar 16:9` |
-| **Scene 25** | `06:00 - 06:15` | *"KhĂ­ phĂ¡ch Hai BĂ  TrÆ°ng sáº½ mĂ£i mĂ£i lĂ  ngá»n lá»­a ngá»i sĂ¡ng trong trĂ¡i tim má»—i ngÆ°á»i con Ä‘áº¥t Viá»‡t."* | TÆ°á»£ng Ä‘Ă i Hai BĂ  TrÆ°ng kiĂªu hĂ£nh dÆ°á»›i Ă¡nh náº¯ng bĂ¬nh minh tÆ°Æ¡i sĂ¡ng, há»c sinh tháº¿ há»‡ tráº» cĂºi Ä‘áº§u kĂ­nh cáº©n. | **SFX:** Nháº¡c káº¿t cao trĂ o, trĂ n Ä‘áº§y niá»m tá»± hĂ o vĂ  hy vá»ng. | `Majestic statue of Trung Sisters under bright sunny blue sky, young Vietnamese students visiting with reverence, inspiring visual --ar 16:9` |
-| **Scene 26** | `06:15 - 06:30` | *"TÆ°á»£ng Ä‘Ă i vĂ  khĂ­ phĂ¡ch Hai BĂ  TrÆ°ng mĂ£i mĂ£i lĂ  ngá»n Ä‘uá»‘c soi Ä‘Æ°á»ng cho tinh tháº§n Ä‘á»™c láº­p, tá»± cÆ°á»ng vĂ  báº£n sáº¯c vÄƒn hĂ³a báº¥t tá»­ cá»§a dĂ¢n tá»™c Viá»‡t Nam."* | Tháº» ghi nháº­n di sáº£n lá»‹ch sá»­ (Historical Note): TÆ°á»£ng Ä‘Ă i Hai BĂ  TrÆ°ng kiĂªu hĂ£nh trĂªn ná»n hoĂ ng hĂ´n rá»±c rá»¡, hiá»ƒn thá»‹ thĂ´ng Ä‘iá»‡p "DI Sáº¢N Lá»CH Sá»¬ Báº¤T Tá»¬". | **SFX:** Tiáº¿ng chuĂ´ng Ä‘á»n thanh tá»‹nh ngĂ¢n dĂ i, Ă¢m nháº¡c káº¿t cao trĂ o kiĂªu hĂ£nh. | `Majestic statue of Trung Sisters under glowing sunset sky, national heritage monument visual --ar 16:9` |
+| **Scene 01** | `00:00 - 00:15` | *"Trong suốt hàng nghìn năm dựng nước và giữ nước, lịch sử Việt Nam đã chứng kiến bao trang sử hào hùng."* | Dòng sông Hát bình minh mờ sương, mặt nước phẳng lặng lăn tăn sóng. Camera Zoom Out chậm. | **SFX:** Tiếng sóng nước rì rầm, tiếng chim hót xa xăm. **BGM:** Nhạc sáo trúc mở đầu êm đềm. | `Cinematic wide shot of Hat River Vietnam in early morning mist, sunrise glowing gold, Dong Son culture landscape, hyper-detailed traditional digital painting --ar 16:9` |
+| **Scene 02** | `00:15 - 00:30` | *"Nhưng có một cột mốc đặc biệt – nơi ngọn lửa chống giặc ngoại xâm đầu tiên bùng cháy mạnh mẽ..."* | Chuyển cảnh nhanh: Tranh nét vẽ minh họa nữ tướng khoác chiến phong vàng cầm gươm sáng quắc. | **SFX:** Tiếng gió rít gầm, tiếng trống trận đánh nhẹ dồn dập. | `Epic ancient Vietnamese female warrior general in golden armor holding bronze sword, wind blowing banner, cinematic lighting, ancient Vietnamese style --ar 16:9` |
+| **Scene 03** | `00:30 - 00:45` | *"...được thắp lên không phải bởi những nam nhi đại hán, mà bởi hai người phụ nữ phi thường."* | Nền hoa văn Trống đồng Đông Sơn xoay nhẹ, dòng chữ tiêu đề mạ vàng nổi bật: **"HAI BÀ TRƯNG – TIẾNG CỒNG TỰ DO ĐẦU TIÊN"**. | **SFX:** Tiếng trống đồng vang vọng (Deep impact boom). | `Dong Son bronze drum surface pattern centered with glowing golden particle effects, Vietnamese historical aesthetic, epic resolution --ar 16:9` |
+| **Scene 04** | `00:45 - 01:00` | *"Đó là mùa xuân năm 40 Sau Công Nguyên, cuộc khởi nghĩa của Hai Bà Trưng đã làm rung chuyển bộ máy đô hộ của nhà Hán, mở ra trang sử độc lập đầu tiên cho dân tộc."* | Hình ảnh minh họa Hai Bà Trưng cưỡi voi chiến uy nghi, cờ nghĩa phất phới trong gió xuân. | **SFX:** Tiếng tù và rền vang, tiếng reo hò rấn rập. **BGM:** Nhạc nổi dồn dập hào hùng. | `Two Vietnamese heroines Trung Sisters riding giant war elephants, golden armor, red banners flying, leading army, spring sky background, masterwork artwork --ar 16:9` |
+| **Scene 05** | `01:00 - 01:15` | *"Thế kỷ thứ nhất, đất nước ta chìm trong đêm trường đô hộ của nhà Đông Hán."* | Đồ họa bản đồ Giao Chỉ thế kỷ I mờ tối, các đường biên giới và đồn bốt quân Hán đỏ thẫm đè lên. | **SFX:** Tiếng chuông u uất, tiếng gió gầm u tối. **BGM:** Nhạc nền chuyển tone trầm buồn, căng thẳng. | `Historical vintage map of Ancient Vietnam Giao Chi 1st century AD under Han Dynasty occupation, dark atmospheric tones, aged parchment texture --ar 16:9` |
+| **Scene 06** | `01:15 - 01:30` | *"Thái thú Tô Định – một kẻ tàn bạo và tham lam tột cùng – đã gieo rắc bao tai thương lên đời sống người dân Giao Chỉ."* | Cảnh minh họa nhân dân lầm than: Người dân lặn biển mò ngọc trai gặp cá sấu, người vào rừng sâu tìm ngà voi tê giác. | **SFX:** Tiếng xích sắt lăng lăng, tiếng than khóc nghẹn ngào. | `Ancient Vietnamese villagers suffering under Han rule, diving into dangerous deep ocean for pearls and hunting elephants in dark jungle, sorrowful tone --ar 16:9` |
+| **Scene 07** | `01:30 - 01:45` | *"Thuế nặng, lao dịch vất vả, văn hóa bản địa Lạc Việt bị chèn ép tàn nhẫn."* | Chân dung gian hùng Tô Định ánh mắt tham lam, xung quanh là vàng bạc ngọc ngà cưỡng đoạt của nhân dân. *(Hiển thị Bio Card)* | **SFX:** Tiếng tiền đồng rơi, tiếng roi quật. | `Portrait of greedy cruel Han governor To Dinh surrounded by stolen gold, pearls and ivory, dark sinister lighting, accurate historical Han costume --ar 16:9` |
+| **Scene 08** | `01:45 - 02:00` | *"Bất bình trước sự hung tàn đó, Thi Sách – Lạc tướng huyện Chu Diên – đã cùng vợ là Trưng Trắc kín đáo liên kết các bộ tộc chiêu mộ nghĩa quân."* | Thi Sách và Trưng Trắc bàn thảo mưu lược bên ngọn đèn dầu đêm, truyền hịch chiêu mộ nghĩa sĩ các vùng. *(Hiển thị Bio Card)* | **SFX:** Tiếng lật giấy trích thư, tiếng nến cháy lách tách. | `Vietnamese Lac general Thi Sach and his wife Trung Trac in secret meeting at night planning rebellion by candlelight, brave expressions --ar 16:9` |
+| **Scene 09** | `02:00 - 02:15` | *"Nhằm dập tắt mầm mống nổi dậy, Tô Định đã lập mưu tàn bạo sát hại Thi Sách."* | Cảnh u tối: Lính Hán phục kích sát hại Thi Sách trong đêm bão táp. Mưa rơi mù mịt. | **SFX:** Tiếng sét đánh, tiếng sấm nổ rền, tiếng mưa rơi nặng hạt. | `Tragic night ambush scene, Han soldiers surrounding Thi Sach under violent storm and lightning, dramatic emotional lighting --ar 16:9` |
+| **Scene 10** | `02:15 - 02:30` | *"Thế nhưng, kẻ thù đã lầm. Máu của Thi Sách chảy xuống không làm thui mai chí khí, mà càng thắp bùng lên ngọn lửa căm hờn: Nợ nước phải trả, thù nhà phải đền!"* | Trưng Trắc đứng trước bàn thờ Thi Sách, tay nắm chặt chuôi gươm, ánh mắt kiên cường bùng cháy ngọn lửa căm hờn. | **SFX:** Tiếng ngọn lửa bùng cháy (Fire whoosh), trống dồn. | `Trung Trac mourning her husband in front of altar, eyes filled with determination and vengeance, fiery background glow, high emotional tension --ar 16:9` |
+| **Scene 11** | `02:30 - 02:45` | *"Mùa xuân năm 40, tại cửa sông Hát, Trưng Trắc cùng em gái Trưng Nhị chính thức phất cờ khởi nghĩa."* | Lập bàn thờ tế trời đất bên sông Hát. Hai Bà Trưng khoác chiến phong giáp vàng tuốt gươm thề trước hàng vạn tướng sĩ. | **SFX:** Tiếng tù và chiến rền vang, tiếng reo hò làm rung chuyển sông núi. | `Grand oath ceremony on the bank of Hat River, Trung Trac and Trung Nhi in golden armor drawing swords before massive Vietnamese army, sun rising --ar 16:9` |
+| **Scene 12** | `02:45 - 03:00` | *"Lời thề Hát Môn vang vọng núi sông: 'Một xin rửa sạch nước thù / Hai xin đem lại nghiệp xưa họ Hùng / Ba kẻo oan ức lòng chồng / Bốn xin vẹn vẹn sở công lênh này.'"* | Thẻ trích dẫn nghệ thuật (Quote Card) hiển thị 4 câu thơ Hát Môn bằng chữ calligraphy cổ phong mạ vàng (Trích *Thiên Nam ngữ lục*). | **SFX:** Tiếng ngân vang linh thiêng (Mystic gong vibration). | `Calligraphy text card with gold embossed Vietnamese oath poem, dark slate glassmorphism card background, glowing sparkles --ar 16:9` |
+| **Scene 13** | `03:00 - 03:15` | *"Như một dòng thác lũ, đáp lời kêu gọi của Hai Bà, nhân dân khắp 65 thành cai – trải rộng từ Giao Chỉ, Cửu Chân đến tận Nam Hải – đều đồng lòng đứng lên."* | Đồ họa bản đồ các đường mũi tên màu đỏ rực tiến công thần tốc từ Hát Môn $\rightarrow$ Mê Linh $\rightarrow$ Cổ Loa $\rightarrow$ Luy Lâu và lan rộng khắp Lĩnh Nam. | **SFX:** Tiếng ngựa sải bước dồn dập, tiếng xáo động chiến trường. | `Animated battle map showing twin arrows sweeping across ancient Red River Delta from Hat Mon to Me Linh and Luy Lau citadel --ar 16:9` |
+| **Scene 14** | `03:15 - 03:30` | *"Đặc biệt, một dàn nữ tướng kiệt xuất đã tụ hội: Nữ tướng Lê Chân trấn giữ vùng biển An Biên (Hải Phòng ngày nay), Thánh Thiên trấn giữ ngã ba sông Ngọc Hồi (Bắc Ninh), cùng Bát Nàn, Nàng Tía..."* | Thẻ thông tin dàn nữ tướng huyền thoại với chân dung Lê Chân, Thánh Thiên dũng mãnh xông trận. *(Hiển thị Event Badge)* | **SFX:** Tiếng gươm giáo va chạm (Sword clash), tiếng khiên đao rầm rập. | `Heroic collage of ancient female generals of Trung Sisters (Le Chan, Thanh Thien, Bat Nan) charging with spears and swords --ar 16:9` |
+| **Scene 15** | `03:30 - 03:45` | *"Chỉ trong thời gian ngắn, nghĩa quân quét sạch chính quyền đô hộ, chiếm hạ Mê Linh, Cổ Loa rồi đánh thẳng vào thủ phủ Luy Lâu."* | Quân khởi nghĩa tràn vào hạ thành Luy Lâu, đập tan cờ nhà Hán, cờ nghĩa Hai Bà Trưng cắm trên đỉnh thành. | **SFX:** Tiếng đổ vỡ của cổng thành, tiếng quân sĩ reo hò chiến thắng. | `Vietnamese uprising army storming Luy Lau fortress, tearing down Han banners and raising red-gold rebellion flag, triumphant sunlight --ar 16:9` |
+| **Scene 16** | `03:45 - 04:00` | *"Tô Định hoảng sợ phải cắt tóc cạo râu, cải trang lén lút trốn chạy về phương Bắc. Đất nước sạch bóng quân thù! Trưng Trắc lên ngôi xưng Trưng Nữ Vương, đóng đô tại Mê Linh, xá thuế 2 năm cho nhân dân."* | Cảnh Tô Định hoảng loạn hoảng hốt cạo râu cắt tóc bỏ chạy; tiếp nối là cảnh Trưng Trắc đăng quang Trưng Nữ Vương tại Me Linh. *(Hiển thị Bio Card)* | **SFX:** Tiếng trống mừng đăng quang, âm nhạc huy hoàng rực rỡ. | `To Dinh fleeing in disgrace, contrasted with Queen Trung Trac coronation ceremony at Me Linh capital, golden throne, historic majesty --ar 16:9` |
+| **Scene 17** | `04:00 - 04:15` | *"Chiến thắng khiến nhà Hán bàng hoàng. Năm 42, vua Hán sai Phục Ba tướng quân Mã Viện – một viên tướng lão luyện và tàn độc – dẫn 2 vạn quân tinh nhuệ sang xâm lược."* | Tướng già Mã Viện mắt diều hâu dẫn hàng vạn quân Hán trang bị giáp sắt nặng nề, thuyền chiến tràn sang biên giới. *(Hiển thị Bio Card)* | **SFX:** Tiếng bước chân hành quân rầm rập, tiếng trống trận nhà Hán đe dọa. | `Cruel veteran general Ma Vien leading massive Han invasion armada and armored infantry crossing northern border mountains, ominous clouds --ar 16:9` |
+| **Scene 18** | `04:15 - 04:30` | *"Tại Lãng Bạc và Cấm Khê, những trận chiến tàn khốc đã diễn ra. Nghĩa quân dựa vào thế núi sông đầm lầy kiên cường chống trả sức tiến công hung hãn của giặc."* | Chiến trường Lãng Bạc mù mịt khói lửa, hai bên giáp lá ngỏ ác liệt giữa đầm lầy và thung lũng. | **SFX:** Tiếng tên bay vè vè, tiếng pháo trống trận cuồng nhiệt, tiếng thét xung phong. | `Fierce ancient battle at Lang Bac swamp, arrows raining down, intense clash between Vietnamese warriors and Han heavy armor --ar 16:9` |
+| **Scene 19** | `04:30 - 04:45` | *"Dù chiến đấu vô cùng anh dũng, nhưng trước thế lực giặc quá mạnh và tinh nhuệ cùng viện binh liên tục kéo sang, lực lượng nghĩa quân dần tiêu hao suy giảm."* | Nghĩa quân kiên cường chiến đấu trong thế bị bao vây, máu đọng trên gươm giáo, bầu trời đỏ quạch màu máu. | **SFX:** Nhạc bi thương trôi chậm, tiếng gió hú u buồn. | `Dramatic struggle of outnumbered Vietnamese fighters standing ground against overwhelming enemy forces, sunset crimson sky --ar 16:9` |
+| **Scene 20** | `04:45 - 05:00` | *"Tháng 3 năm 43, không để rơi vào tay giặc, Hai Bà Trưng đã gieo mình xuống dòng sông Hát giữ trọn khí tiết thiêng liêng."* | Hai Bà Trưng nhìn lại núi sông quê hương lần cuối, dũng cảm gieo mình xuống dòng sông Hát trong ánh hoàng hôn rực đỏ. | **SFX:** Tiếng nước rẽ sóng trôi xa, tiếng sáo nhị bi hùng lắng đọng. | `Tragic emotional scene of Trung Sisters standing on river cliff at sunset, choosing dignity over surrender, golden particles ascending to heaven --ar 16:9` |
+| **Scene 21** | `05:00 - 05:15` | *"Cuộc kháng chiến khép lại, nhưng tinh thần bất khuất 'Thà chết vinh còn hơn sống nhục' của Hai Bà đã trở thành tượng đài bất tử."* | Dòng sông Hát lung linh hào quang, hình ảnh tượng đài Hai Bà Trưng ẩn hiện giữa mây trời vĩnh cửu. | **SFX:** Tiếng chuông ngân dài linh thiêng, âm nhạc chuyển sang trầm hùng hoài niệm. | `Ethereal glowing spirits of Trung Sisters transcending into eternal monument above misty Hat River, sacred light rays from sky --ar 16:9` |
+| **Scene 22** | `05:15 - 05:30` | *"Dù triều đại chỉ kéo dài 3 năm, nhưng Cuộc khởi nghĩa Hai Bà Trưng đã khẳng định một sự thật lịch sử bất biến: Người Việt quyết không chịu làm nô lệ."* | Thẻ ghi nhận giá trị lịch sử: Bản tuyên ngôn độc lập đầu tiên, đập tan ách thống trị hàng thế kỷ. *(Hiển thị Historical Note)* | **SFX:** Tiếng trống đồng vang vang đều đặn. | `Historical gold inscription badge over ancient Vietnamese map, symbolizing original declaration of independence --ar 16:9` |
+| **Scene 23** | `05:30 - 05:45` | *"Hai Bà Trưng không chỉ là biểu tượng bất khuất cho lòng yêu nước, mà còn là niềm tự hào vĩ đại của phụ nữ Việt Nam – chứng minh truyền thống 'Giặc đến nhà, đàn bà cũng đánh'."* | Hình ảnh kết nối qua các thời kỳ: Từ nữ tướng Hai Bà Trưng đến hình ảnh người phụ nữ Việt Nam kiên cường trong lịch sử dựng nước & giữ nước. | **SFX:** Nhạc giao hưởng tự hào, âm hưởng dân tộc vươn cao. | `Artistic montage bridging Trung Sisters heroism with courage of Vietnamese women throughout national history --ar 16:9` |
+| **Scene 24** | `05:45 - 06:00` | *"Ngàn năm đã trôi qua, dòng sông Hát vẫn êm đềm chảy, nhắc nhở thế hệ hôm nay và mai sau về lời thề độc lập đầu tiên của dân tộc."* | Cảnh Đền thờ Hai Bà Trưng tại Mê Linh và Hát Môn ngày nay ngợp bóng cây xanh, nhang khói nghi ngút, người dân trân trọng dâng hương. | **SFX:** Tiếng chuông đền thanh tịnh, tiếng chim hót yên bình. | `Modern Me Linh temple dedicated to Trung Sisters, traditional festival celebration, peaceful green landscape, golden incense smoke --ar 16:9` |
+| **Scene 25** | `06:00 - 06:15` | *"Khí phách Hai Bà Trưng sẽ mãi mãi là ngọn lửa ngời sáng trong trái tim mỗi người con đất Việt."* | Tượng đài Hai Bà Trưng kiêu hãnh dưới ánh nắng bình minh tươi sáng, học sinh thế hệ trẻ cúi đầu kính cẩn. | **SFX:** Nhạc kết cao trào, tràn đầy niềm tự hào và hy vọng. | `Majestic statue of Trung Sisters under bright sunny blue sky, young Vietnamese students visiting with reverence, inspiring visual --ar 16:9` |
+| **Scene 26** | `06:15 - 06:30` | *"Tượng đài và khí phách Hai Bà Trưng mãi mãi là ngọn đuốc soi đường cho tinh thần độc lập, tự cường và bản sắc văn hóa bất tử của dân tộc Việt Nam."* | Thẻ ghi nhận di sản lịch sử (Historical Note): Tượng đài Hai Bà Trưng kiêu hãnh trên nền hoàng hôn rực rỡ, hiển thị thông điệp "DI SẢN LỊCH SỬ BẤT TỬ". | **SFX:** Tiếng chuông đền thanh tịnh ngân dài, âm nhạc kết cao trào kiêu hãnh. | `Majestic statue of Trung Sisters under glowing sunset sky, national heritage monument visual --ar 16:9` |
 
 ---
 
-## đŸ› ï¸ 3. TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`haiBaTrungTimeline.json`)
+## 🛠️ 3. TEMPLATE DỮ LIỆU JSON CHO ENGINE REMOTION (`haiBaTrungTimeline.json`)
 
 Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrungTimeline.json`, sẵn sàng nạp thẳng vào **ChronoViet Remotion Engine** và đã được đăng ký tại `Root.tsx` với Composition ID `HaiBaTrungVideo`.
 
@@ -64,8 +64,8 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
 
 ```json
 {
-  "title": "HAI BĂ€ TRÆ¯NG â€“ Báº¢N ANH HĂ™NG CA Äáº¦U TIĂN Cá»¦A DĂ‚N Tá»˜C",
-  "subtitle": "Cuá»™c khá»Ÿi nghÄ©a mĂ¹a xuĂ¢n nÄƒm 40 Sau CĂ´ng NguyĂªn",
+  "title": "HAI BÀ TRƯNG – BẢN ANH HÙNG CA ĐẦU TIÊN CỦA DÂN TỘC",
+  "subtitle": "Cuộc khởi nghĩa mùa xuân năm 40 Sau Công Nguyên",
   "videoType": "BIOGRAPHY",
   "templateId": "HISTORICAL_DOCUMENTARY",
   "aspectRatio": "16:9",
@@ -94,7 +94,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "transition": "FADE_TO_BLACK",
       "hideHeader": true,
       "overlayData": {
-        "title": "HAI BĂ€ TRÆ¯NG â€“ Báº¢N ANH HĂ™NG CA Äáº¦U TIĂN",
+        "title": "HAI BÀ TRƯNG – BẢN ANH HÙNG CA ĐẦU TIÊN",
         "author": "ChronoViet Research Team"
       }
     },
@@ -102,7 +102,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_01",
       "startTime": 0,
       "endTime": 15,
-      "text": "Trong suá»‘t hĂ ng nghĂ¬n nÄƒm dá»±ng nÆ°á»›c vĂ  giá»¯ nÆ°á»›c, lá»‹ch sá»­ Viá»‡t Nam Ä‘Ă£ chá»©ng kiáº¿n bao trang sá»­ hĂ o hĂ¹ng.",
+      "text": "Trong suốt hàng nghìn năm dựng nước và giữ nước, lịch sử Việt Nam đã chứng kiến bao trang sử hào hùng.",
       "assetUrl": "assets/hai-ba-trung/scene_01_song_hat_sunrise.jpg",
       "effect": "KEN_BURNS_ZOOM_IN",
       "layoutMode": "HISTORICAL_FRAME",
@@ -112,7 +112,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_02",
       "startTime": 15,
       "endTime": 30,
-      "text": "NhÆ°ng cĂ³ má»™t cá»™t má»‘c Ä‘áº·c biá»‡t â€“ nÆ¡i ngá»n lá»­a chá»‘ng giáº·c ngoáº¡i xĂ¢m Ä‘áº§u tiĂªn bĂ¹ng chĂ¡y máº¡nh máº½...",
+      "text": "Nhưng có một cột mốc đặc biệt – nơi ngọn lửa chống giặc ngoại xâm đầu tiên bùng cháy mạnh mẽ...",
       "assetUrl": "assets/hai-ba-trung/scene_02_nu_tuong_giap_vang.jpg",
       "effect": "KEN_BURNS_PAN_RIGHT",
       "layoutMode": "HISTORICAL_FRAME"
@@ -121,13 +121,13 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_03",
       "startTime": 30,
       "endTime": 45,
-      "text": "HAI BĂ€ TRÆ¯NG â€“ TIáº¾NG Cá»’NG Tá»° DO Äáº¦U TIĂN",
+      "text": "HAI BÀ TRƯNG – TIẾNG CỒNG TỰ DO ĐẦU TIÊN",
       "assetUrl": "assets/hai-ba-trung/scene_03_trong_dong_dong_son.jpg",
       "overlayType": "CHAPTER_TITLE",
       "overlayData": {
-        "chapterNumber": "PHáº¦N I",
-        "title": "HAI BĂ€ TRÆ¯NG â€“ TIáº¾NG Cá»’NG Tá»° DO Äáº¦U TIĂN",
-        "subtitle": "Báº£n anh hĂ¹ng ca Ä‘áº§u tiĂªn cá»§a dĂ¢n tá»™c Viá»‡t Nam"
+        "chapterNumber": "PHẦN I",
+        "title": "HAI BÀ TRƯNG – TIẾNG CỒNG TỰ DO ĐẦU TIÊN",
+        "subtitle": "Bản anh hùng ca đầu tiên của dân tộc Việt Nam"
       },
       "layoutMode": "CHAPTER_CARD"
     },
@@ -135,7 +135,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_04",
       "startTime": 45,
       "endTime": 60,
-      "text": "ÄĂ³ lĂ  mĂ¹a xuĂ¢n nÄƒm 40 Sau CĂ´ng NguyĂªn, cuá»™c khá»Ÿi nghÄ©a cá»§a Hai BĂ  TrÆ°ng Ä‘Ă£ lĂ m rung chuyá»ƒn bá»™ mĂ¡y Ä‘Ă´ há»™ cá»§a nhĂ  HĂ¡n.",
+      "text": "Đó là mùa xuân năm 40 Sau Công Nguyên, cuộc khởi nghĩa của Hai Bà Trưng đã làm rung chuyển bộ máy đô hộ của nhà Hán.",
       "assetUrl": "assets/hai-ba-trung/scene_04_hai_ba_trung_voi_chien.jpg",
       "effect": "KEN_BURNS_ZOOM_IN",
       "layoutMode": "HISTORICAL_FRAME"
@@ -144,7 +144,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_05",
       "startTime": 60,
       "endTime": 75,
-      "text": "Tháº¿ ká»· thá»© nháº¥t, Ä‘áº¥t nÆ°á»›c ta chĂ¬m trong Ä‘Ăªm trÆ°á»ng Ä‘Ă´ há»™ cá»§a nhĂ  ÄĂ´ng HĂ¡n.",
+      "text": "Thế kỷ thứ nhất, đất nước ta chìm trong đêm trường đô hộ của nhà Đông Hán.",
       "assetUrl": "assets/hai-ba-trung/scene_05_ban_do_giao_chi.jpg",
       "effect": "KEN_BURNS_PAN_LEFT",
       "layoutMode": "HISTORICAL_FRAME"
@@ -153,7 +153,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_06",
       "startTime": 75,
       "endTime": 90,
-      "text": "ThĂ¡i thĂº TĂ´ Äá»‹nh â€“ má»™t káº» tĂ n báº¡o vĂ  tham lam tá»™t cĂ¹ng â€“ Ä‘Ă£ gieo ráº¯c bao tai thÆ°Æ¡ng lĂªn Ä‘á»i sá»‘ng ngÆ°á»i dĂ¢n Giao Chá»‰.",
+      "text": "Thái thú Tô Định – một kẻ tàn bạo và tham lam tột cùng – đã gieo rắc bao tai thương lên đời sống người dân Giao Chỉ.",
       "assetUrl": "assets/hai-ba-trung/scene_06_nhan_dan_lam_than.jpg",
       "effect": "KEN_BURNS_ZOOM_OUT",
       "layoutMode": "HISTORICAL_FRAME"
@@ -162,13 +162,13 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_07",
       "startTime": 90,
       "endTime": 105,
-      "text": "Thuáº¿ náº·ng, lao dá»‹ch váº¥t váº£, vÄƒn hĂ³a báº£n Ä‘á»‹a Láº¡c Viá»‡t bá»‹ chĂ¨n Ă©p tĂ n nháº«n.",
+      "text": "Thuế nặng, lao dịch vất vả, văn hóa bản địa Lạc Việt bị chèn ép tàn nhẫn.",
       "assetUrl": "assets/hai-ba-trung/scene_07_thai_thu_to_dinh.jpg",
       "overlayType": "BIO_CARD",
       "overlayData": {
-        "name": "TĂ´ Äá»‹nh",
-        "role": "ThĂ¡i thĂº Giao Chá»‰ (NhĂ  ÄĂ´ng HĂ¡n)",
-        "details": "Ná»•i tiáº¿ng tĂ n báº¡o, tham lam, tá»‘ng tiá»n bĂ³p náº¹t nhĂ¢n dĂ¢n."
+        "name": "Tô Định",
+        "role": "Thái thú Giao Chỉ (Nhà Đông Hán)",
+        "details": "Nổi tiếng tàn bạo, tham lam, tống tiền bóp nẹt nhân dân."
       },
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -176,13 +176,13 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_08",
       "startTime": 105,
       "endTime": 120,
-      "text": "Báº¥t bĂ¬nh trÆ°á»›c sá»± hung tĂ n Ä‘Ă³, Thi SĂ¡ch â€“ Láº¡c tÆ°á»›ng huyá»‡n Chu DiĂªn â€“ Ä‘Ă£ cĂ¹ng vá»£ lĂ  TrÆ°ng Tráº¯c kĂ­n Ä‘Ă¡o liĂªn káº¿t cĂ¡c bá»™ tá»™c chiĂªu má»™ nghÄ©a quĂ¢n.",
+      "text": "Bất bình trước sự hung tàn đó, Thi Sách – Lạc tướng huyện Chu Diên – đã cùng vợ là Trưng Trắc kín đáo liên kết các bộ tộc chiêu mộ nghĩa quân.",
       "assetUrl": "assets/hai-ba-trung/scene_08_thi_sach_trung_trac.jpg",
       "overlayType": "BIO_CARD",
       "overlayData": {
-        "name": "Thi SĂ¡ch & TrÆ°ng Tráº¯c",
-        "role": "Láº¡c tÆ°á»›ng Chu DiĂªn & MĂª Linh",
-        "details": "KĂ­n Ä‘Ă¡o liĂªn káº¿t lá»±c lÆ°á»£ng cĂ¡c bá»™ tá»™c Láº¡c Viá»‡t khá»Ÿi nghÄ©a."
+        "name": "Thi Sách & Trưng Trắc",
+        "role": "Lạc tướng Chu Diên & Mê Linh",
+        "details": "Kín đáo liên kết lực lượng các bộ tộc Lạc Việt khởi nghĩa."
       },
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -190,7 +190,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_09",
       "startTime": 120,
       "endTime": 135,
-      "text": "Nháº±m dáº­p táº¯t máº§m má»‘ng ná»•i dáº­y, TĂ´ Äá»‹nh Ä‘Ă£ láº­p mÆ°u tĂ n báº¡o sĂ¡t háº¡i Thi SĂ¡ch.",
+      "text": "Nhằm dập tắt mầm mống nổi dậy, Tô Định đã lập mưu tàn bạo sát hại Thi Sách.",
       "assetUrl": "assets/hai-ba-trung/scene_09_thi_sach_bi_sat_hai.jpg",
       "effect": "KEN_BURNS_ZOOM_IN",
       "layoutMode": "HISTORICAL_FRAME"
@@ -199,7 +199,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_10",
       "startTime": 135,
       "endTime": 150,
-      "text": "Tháº¿ nhÆ°ng, káº» thĂ¹ Ä‘Ă£ láº§m. MĂ¡u cá»§a Thi SĂ¡ch cháº£y xuá»‘ng khĂ´ng lĂ m thui mai chĂ­ khĂ­, mĂ  cĂ ng tháº¯p bĂ¹ng lĂªn ngá»n lá»­a cÄƒm há»n!",
+      "text": "Thế nhưng, kẻ thù đã lầm. Máu của Thi Sách chảy xuống không làm thui mai chí khí, mà càng thắp bùng lên ngọn lửa căm hờn!",
       "assetUrl": "assets/hai-ba-trung/scene_10_trung_trac_the_om_nhan.jpg",
       "effect": "KEN_BURNS_PAN_RIGHT",
       "layoutMode": "HISTORICAL_FRAME"
@@ -208,7 +208,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_11",
       "startTime": 150,
       "endTime": 165,
-      "text": "MĂ¹a xuĂ¢n nÄƒm 40, táº¡i cá»­a sĂ´ng HĂ¡t, TrÆ°ng Tráº¯c cĂ¹ng em gĂ¡i TrÆ°ng Nhá»‹ chĂ­nh thá»©c pháº¥t cá» khá»Ÿi nghÄ©a.",
+      "text": "Mùa xuân năm 40, tại cửa sông Hát, Trưng Trắc cùng em gái Trưng Nhị chính thức phất cờ khởi nghĩa.",
       "assetUrl": "assets/hai-ba-trung/scene_11_te_troi_dat_song_hat.jpg",
       "effect": "KEN_BURNS_ZOOM_IN",
       "layoutMode": "HISTORICAL_FRAME"
@@ -217,12 +217,12 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_12",
       "startTime": 165,
       "endTime": 180,
-      "text": "Má»™t xin rá»­a sáº¡ch nÆ°á»›c thĂ¹ / Hai xin Ä‘em láº¡i nghiá»‡p xÆ°a há» HĂ¹ng / Ba káº»o oan á»©c lĂ²ng chá»“ng / Bá»‘n xin váº¹n váº¹n sá»Ÿ cĂ´ng lĂªnh nĂ y.",
+      "text": "Một xin rửa sạch nước thù / Hai xin đem lại nghiệp xưa họ Hùng / Ba kẻo oan ức lòng chồng / Bốn xin vẹn vẹn sở công lênh này.",
       "assetUrl": "assets/hai-ba-trung/scene_12_loi_the_hat_mon.jpg",
       "overlayType": "QUOTE",
       "overlayData": {
-        "quoteText": "Má»™t xin rá»­a sáº¡ch nÆ°á»›c thĂ¹\nHai xin Ä‘em láº¡i nghiá»‡p xÆ°a há» HĂ¹ng\nBa káº»o oan á»©c lĂ²ng chá»“ng\nBá»‘n xin váº¹n váº¹n sá»Ÿ cĂ´ng lĂªnh nĂ y.",
-        "author": "Lá»i thá» HĂ¡t MĂ´n â€“ TrÆ°ng Tráº¯c (TrĂ­ch ThiĂªn Nam ngá»¯ lá»¥c)"
+        "quoteText": "Một xin rửa sạch nước thù\nHai xin đem lại nghiệp xưa họ Hùng\nBa kẻo oan ức lòng chồng\nBốn xin vẹn vẹn sở công lênh này.",
+        "author": "Lời thề Hát Môn – Trưng Trắc (Trích Thiên Nam ngữ lục)"
       },
       "layoutMode": "QUOTE_CANVAS"
     },
@@ -230,7 +230,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_13",
       "startTime": 180,
       "endTime": 195,
-      "text": "NhÆ° má»™t dĂ²ng thĂ¡c lÅ©, Ä‘Ă¡p lá»i kĂªu gá»i cá»§a Hai BĂ , nhĂ¢n dĂ¢n kháº¯p 65 thĂ nh cai â€“ tráº£i rá»™ng tá»« Giao Chá»‰, Cá»­u ChĂ¢n Ä‘áº¿n Nam Háº£i â€“ Ä‘á»u Ä‘á»“ng lĂ²ng Ä‘á»©ng lĂªn.",
+      "text": "Như một dòng thác lũ, đáp lời kêu gọi của Hai Bà, nhân dân khắp 65 thành cai – trải rộng từ Giao Chỉ, Cửu Chân đến Nam Hải – đều đồng lòng đứng lên.",
       "assetUrl": "assets/hai-ba-trung/scene_13_so_do_tien_cong.jpg",
       "effect": "KEN_BURNS_PAN_LEFT",
       "layoutMode": "HISTORICAL_FRAME"
@@ -239,12 +239,12 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_14",
       "startTime": 195,
       "endTime": 210,
-      "text": "Äáº·c biá»‡t, má»™t dĂ n ná»¯ tÆ°á»›ng kiá»‡t xuáº¥t Ä‘Ă£ tá»¥ há»™i: LĂª ChĂ¢n (tráº¥n giá»¯ Háº£i PhĂ²ng), ThĂ¡nh ThiĂªn (tráº¥n giá»¯ Báº¯c Ninh), BĂ¡t NĂ n, NĂ ng TĂ­a...",
+      "text": "Đặc biệt, một dàn nữ tướng kiệt xuất đã tụ hội: Lê Chân (trấn giữ Hải Phòng), Thánh Thiên (trấn giữ Bắc Ninh), Bát Nàn, Nàng Tía...",
       "assetUrl": "assets/hai-ba-trung/scene_14_dan_nu_tuong.jpg",
       "overlayType": "EVENT_BADGE",
       "overlayData": {
-        "title": "DĂ€N Ná»® TÆ¯á»NG HUYá»€N THOáº I",
-        "subtitle": "LĂª ChĂ¢n (Háº£i PhĂ²ng), ThĂ¡nh ThiĂªn (Báº¯c Ninh), BĂ¡t NĂ n..."
+        "title": "DÀN NỮ TƯỚNG HUYỀN THOẠI",
+        "subtitle": "Lê Chân (Hải Phòng), Thánh Thiên (Bắc Ninh), Bát Nàn..."
       },
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -252,7 +252,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_15",
       "startTime": 210,
       "endTime": 225,
-      "text": "Chá»‰ trong thá»i gian ngáº¯n, nghÄ©a quĂ¢n quĂ©t sáº¡ch chĂ­nh quyá»n Ä‘Ă´ há»™, chiáº¿m háº¡ MĂª Linh, Cá»• Loa rá»“i Ä‘Ă¡nh tháº³ng vĂ o thá»§ phá»§ Luy LĂ¢u.",
+      "text": "Chỉ trong thời gian ngắn, nghĩa quân quét sạch chính quyền đô hộ, chiếm hạ Mê Linh, Cổ Loa rồi đánh thẳng vào thủ phủ Luy Lâu.",
       "assetUrl": "assets/hai-ba-trung/scene_15_danh_chiem_luy_lau.jpg",
       "effect": "KEN_BURNS_ZOOM_IN",
       "layoutMode": "HISTORICAL_FRAME"
@@ -261,13 +261,13 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_16",
       "startTime": 225,
       "endTime": 240,
-      "text": "TĂ´ Äá»‹nh hoáº£ng sá»£ pháº£i cáº¯t tĂ³c cáº¡o rĂ¢u trá»‘n cháº¡y. TrÆ°ng Tráº¯c lĂªn ngĂ´i xÆ°ng TrÆ°ng Ná»¯ VÆ°Æ¡ng, Ä‘Ă³ng Ä‘Ă´ táº¡i MĂª Linh, xĂ¡ thuáº¿ 2 nÄƒm.",
+      "text": "Tô Định hoảng sợ phải cắt tóc cạo râu trốn chạy. Trưng Trắc lên ngôi xưng Trưng Nữ Vương, đóng đô tại Mê Linh, xá thuế 2 năm.",
       "assetUrl": "assets/hai-ba-trung/scene_16_trung_nu_vuong_xung_de.jpg",
       "overlayType": "BIO_CARD",
       "overlayData": {
-        "name": "TrÆ°ng Ná»¯ VÆ°Æ¡ng (TrÆ°ng Tráº¯c)",
-        "role": "Vua Ná»¯ Ä‘áº§u tiĂªn cá»§a Viá»‡t Nam",
-        "details": "ÄĂ³ng Ä‘Ă´ táº¡i MĂª Linh, xĂ¡ thuáº¿ 2 nÄƒm cho toĂ n dĂ¢n Giao Chá»‰."
+        "name": "Trưng Nữ Vương (Trưng Trắc)",
+        "role": "Vua Nữ đầu tiên của Việt Nam",
+        "details": "Đóng đô tại Mê Linh, xá thuế 2 năm cho toàn dân Giao Chỉ."
       },
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -275,13 +275,13 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_17",
       "startTime": 240,
       "endTime": 255,
-      "text": "NÄƒm 42, vua HĂ¡n sai Phá»¥c Ba tÆ°á»›ng quĂ¢n MĂ£ Viá»‡n dáº«n 2 váº¡n quĂ¢n tinh nhuá»‡ sang xĂ¢m lÆ°á»£c.",
+      "text": "Năm 42, vua Hán sai Phục Ba tướng quân Mã Viện dẫn 2 vạn quân tinh nhuệ sang xâm lược.",
       "assetUrl": "assets/hai-ba-trung/scene_17_ma_vien_xam_luoc.jpg",
       "overlayType": "BIO_CARD",
       "overlayData": {
-        "name": "MĂ£ Viá»‡n",
-        "role": "Phá»¥c Ba TÆ°á»›ng quĂ¢n (NhĂ  HĂ¡n)",
-        "details": "TÆ°á»›ng giáº£i xáº£o quyá»‡t, giĂ u kinh nghiá»‡m chinh chiáº¿n miá»n nam."
+        "name": "Mã Viện",
+        "role": "Phục Ba Tướng quân (Nhà Hán)",
+        "details": "Tướng giải xảo quyệt, giàu kinh nghiệm chinh chiến miền nam."
       },
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -289,7 +289,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_18",
       "startTime": 255,
       "endTime": 270,
-      "text": "Táº¡i LĂ£ng Báº¡c vĂ  Cáº¥m KhĂª, nhá»¯ng tráº­n chiáº¿n tĂ n khá»‘c Ä‘Ă£ diá»…n ra vĂ´ cĂ¹ng Ă¡c liá»‡t.",
+      "text": "Tại Lãng Bạc và Cấm Khê, những trận chiến tàn khốc đã diễn ra vô cùng ác liệt.",
       "assetUrl": "assets/hai-ba-trung/scene_18_tran_lang_bac.jpg",
       "effect": "KEN_BURNS_PAN_RIGHT",
       "layoutMode": "HISTORICAL_FRAME"
@@ -298,7 +298,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_19",
       "startTime": 270,
       "endTime": 285,
-      "text": "DĂ¹ chiáº¿n Ä‘áº¥u vĂ´ cĂ¹ng anh dÅ©ng, nhÆ°ng trÆ°á»›c tháº¿ lá»±c giáº·c quĂ¡ máº¡nh vĂ  tinh nhuá»‡ cĂ¹ng viá»‡n binh liĂªn tá»¥c kĂ©o sang, lá»±c lÆ°á»£ng nghÄ©a quĂ¢n dáº§n suy giáº£m.",
+      "text": "Dù chiến đấu vô cùng anh dũng, nhưng trước thế lực giặc quá mạnh và tinh nhuệ cùng viện binh liên tục kéo sang, lực lượng nghĩa quân dần suy giảm.",
       "assetUrl": "assets/hai-ba-trung/scene_19_chien_dau_anh_dung.jpg",
       "effect": "KEN_BURNS_ZOOM_OUT",
       "layoutMode": "HISTORICAL_FRAME"
@@ -307,7 +307,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_20",
       "startTime": 285,
       "endTime": 300,
-      "text": "ThĂ¡ng 3 nÄƒm 43, khĂ´ng Ä‘á»ƒ rÆ¡i vĂ o tay giáº·c, Hai BĂ  TrÆ°ng Ä‘Ă£ gieo mĂ¬nh xuá»‘ng dĂ²ng sĂ´ng HĂ¡t giá»¯ trá»n khĂ­ tiáº¿t thiĂªng liĂªng.",
+      "text": "Tháng 3 năm 43, không để rơi vào tay giặc, Hai Bà Trưng đã gieo mình xuống dòng sông Hát giữ trọn khí tiết thiêng liêng.",
       "assetUrl": "assets/hai-ba-trung/scene_20_hai_ba_tu_tiet.jpg",
       "effect": "KEN_BURNS_ZOOM_IN",
       "layoutMode": "HISTORICAL_FRAME"
@@ -316,7 +316,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_21",
       "startTime": 300,
       "endTime": 315,
-      "text": "Cuá»™c khĂ¡ng chiáº¿n khĂ©p láº¡i, nhÆ°ng tinh tháº§n báº¥t khuáº¥t cá»§a Hai BĂ  Ä‘Ă£ trá»Ÿ thĂ nh tÆ°á»£ng Ä‘Ă i báº¥t tá»­.",
+      "text": "Cuộc kháng chiến khép lại, nhưng tinh thần bất khuất của Hai Bà đã trở thành tượng đài bất tử.",
       "assetUrl": "assets/hai-ba-trung/scene_21_hao_quang_song_hat.jpg",
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -324,12 +324,12 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_22",
       "startTime": 315,
       "endTime": 330,
-      "text": "DĂ¹ triá»u Ä‘áº¡i chá»‰ kĂ©o dĂ i 3 nÄƒm, nhÆ°ng Cuá»™c khá»Ÿi nghÄ©a Hai BĂ  TrÆ°ng Ä‘Ă£ kháº³ng Ä‘á»‹nh: NgÆ°á»i Viá»‡t quyáº¿t khĂ´ng chá»‹u lĂ m nĂ´ lá»‡.",
+      "text": "Dù triều đại chỉ kéo dài 3 năm, nhưng Cuộc khởi nghĩa Hai Bà Trưng đã khẳng định: Người Việt quyết không chịu làm nô lệ.",
       "assetUrl": "assets/hai-ba-trung/scene_22_tuyen_ngon_doc_lap.jpg",
       "overlayType": "HISTORICAL_NOTE",
       "overlayData": {
-        "title": "Ă NGHÄ¨A Lá»CH Sá»¬ VÄ¨ Äáº I",
-        "subtitle": "Ngá»n lá»­a Ä‘á»™c láº­p Ä‘áº§u tiĂªn sau hÆ¡n 200 nÄƒm bá»‹ Ä‘Ă´ há»™."
+        "title": "Ý NGHĨA LỊCH SỬ VĨ ĐẠI",
+        "subtitle": "Ngọn lửa độc lập đầu tiên sau hơn 200 năm bị đô hộ."
       },
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -337,7 +337,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_23",
       "startTime": 330,
       "endTime": 345,
-      "text": "Hai BĂ  TrÆ°ng lĂ  biá»ƒu tÆ°á»£ng báº¥t khuáº¥t cho lĂ²ng yĂªu nÆ°á»›c vĂ  niá»m tá»± hĂ o vÄ© Ä‘áº¡i cá»§a phá»¥ ná»¯ Viá»‡t Nam â€“ 'Giáº·c Ä‘áº¿n nhĂ , Ä‘Ă n bĂ  cÅ©ng Ä‘Ă¡nh'.",
+      "text": "Hai Bà Trưng là biểu tượng bất khuất cho lòng yêu nước và niềm tự hào vĩ đại của phụ nữ Việt Nam – 'Giặc đến nhà, đàn bà cũng đánh'.",
       "assetUrl": "assets/hai-ba-trung/scene_23_phu_nu_viet_nam.jpg",
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -345,7 +345,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_24",
       "startTime": 345,
       "endTime": 360,
-      "text": "NgĂ n nÄƒm Ä‘Ă£ trĂ´i qua, dĂ²ng sĂ´ng HĂ¡t váº«n Ăªm Ä‘á»m cháº£y, nháº¯c nhá»Ÿ tháº¿ há»‡ hĂ´m nay vĂ  mai sau vá» lá»i thá» Ä‘á»™c láº­p Ä‘áº§u tiĂªn.",
+      "text": "Ngàn năm đã trôi qua, dòng sông Hát vẫn êm đềm chảy, nhắc nhở thế hệ hôm nay và mai sau về lời thề độc lập đầu tiên.",
       "assetUrl": "assets/hai-ba-trung/scene_24_den_tho_me_linh.jpg",
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -353,7 +353,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_25",
       "startTime": 360,
       "endTime": 375,
-      "text": "KhĂ­ phĂ¡ch Hai BĂ  TrÆ°ng sáº½ mĂ£i mĂ£i lĂ  ngá»n lá»­a ngá»i sĂ¡ng trong trĂ¡i tim má»—i ngÆ°á»i con Ä‘áº¥t Viá»‡t.",
+      "text": "Khí phách Hai Bà Trưng sẽ mãi mãi là ngọn lửa ngời sáng trong trái tim mỗi người con đất Việt.",
       "assetUrl": "assets/hai-ba-trung/scene_25_tuong_dai_hai_ba_trung.jpg",
       "layoutMode": "HISTORICAL_FRAME"
     },
@@ -361,12 +361,12 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_26",
       "startTime": 375,
       "endTime": 390,
-      "text": "TÆ°á»£ng Ä‘Ă i vĂ  khĂ­ phĂ¡ch Hai BĂ  TrÆ°ng mĂ£i mĂ£i lĂ  ngá»n Ä‘uá»‘c soi Ä‘Æ°á»ng cho tinh tháº§n Ä‘á»™c láº­p, tá»± cÆ°á»ng vĂ  báº£n sáº¯c vÄƒn hĂ³a báº¥t tá»­ cá»§a dĂ¢n tá»™c Viá»‡t Nam.",
+      "text": "Tượng đài và khí phách Hai Bà Trưng mãi mãi là ngọn đuốc soi đường cho tinh thần độc lập, tự cường và bản sắc văn hóa bất tử của dân tộc Việt Nam.",
       "assetUrl": "assets/hai-ba-trung/scene_25_tuong_dai_hai_ba_trung.jpg",
       "overlayType": "HISTORICAL_NOTE",
       "overlayData": {
-        "title": "DI Sáº¢N Lá»CH Sá»¬ Báº¤T Tá»¬",
-        "subtitle": "Trang sá»­ vĂ ng má»Ÿ Ä‘áº§u cho ká»· nguyĂªn Ä‘á»™c láº­p tá»± cÆ°á»ng dĂ¢n tá»™c Viá»‡t Nam."
+        "title": "DI SẢN LỊCH SỬ BẤT TỬ",
+        "subtitle": "Trang sử vàng mở đầu cho kỷ nguyên độc lập tự cường dân tộc Việt Nam."
       },
       "layoutMode": "HISTORICAL_FRAME"
     }
@@ -376,7 +376,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
 
 ---
 
-## đŸ’» 4. PHĂ‚N MĂƒ REACT REMOTION COMPOSITION (`HaiBaTrungComposition.tsx`)
+## 💻 4. PHÂN MÃ REACT REMOTION COMPOSITION (`HaiBaTrungComposition.tsx`)
 
 Mã nguồn React Component chuyên dụng cho video Hai Bà Trưng tại `packages/remotion-engine/src/compositions/hai-ba-trung/HaiBaTrungComposition.tsx`:
 
@@ -392,8 +392,8 @@ export const HaiBaTrungComposition: React.FC<Partial<ChronoVideoProps>> = (overr
     ...defaultData,
     ...overrideProps,
     theme: {
-      primaryColor: '#F59E0B',   // VĂ ng GiĂ¡p VÆ°Æ¡ng Hai BĂ 
-      secondaryColor: '#DC2626', // Äá» Cá» NghÄ©a
+      primaryColor: '#F59E0B',   // Vàng Giáp Vương Hai Bà
+      secondaryColor: '#DC2626', // Đỏ Cờ Nghĩa
       backgroundColor: '#0F172A',
       accentGlow: 'rgba(245, 158, 11, 0.4)',
       ...overrideProps.theme,
@@ -406,35 +406,35 @@ export const HaiBaTrungComposition: React.FC<Partial<ChronoVideoProps>> = (overr
 
 ---
 
-## đŸ–¼ï¸ 5. DANH Má»¤C 26 áº¢NH TÆ¯ LIá»†U Lá»CH Sá»¬ THá»°C Táº¾ 100% (REAL HISTORICAL ASSETS)
+## 🖼️ 5. DANH MỤC 26 ẢNH TƯ LIỆU LỊCH SỬ THỰC TẾ 100% (REAL HISTORICAL ASSETS)
 
 Tất cả 26 tệp ảnh tư liệu lịch sử thực tế đã được nghiên cứu, thu thập và lưu trữ trực tiếp tại `packages/remotion-engine/eval/public/assets/hai-ba-trung/` (100% Ảnh thực tế từ Bảo tàng, Khu di tích Quốc gia & Wikimedia Commons, **tuyệt đối không sử dụng ảnh AI**):
 
-1. `assets/hai-ba-trung/scene_01_song_hat_sunrise.jpg`: áº¢nh chá»¥p di tĂ­ch thá»±c táº¿ SĂ´ng HĂ¡t MĂ´n / SĂ´ng ÄĂ¡y (PhĂºc Thá», HĂ  Ná»™i).
-2. `assets/hai-ba-trung/scene_02_nu_tuong_giap_vang.jpg`: Tranh tÆ° liá»‡u / PhĂ¹ Ä‘iĂªu lá»‹ch sá»­ Hai BĂ  TrÆ°ng khoĂ¡c giĂ¡p vĂ ng cÆ°á»¡i voi.
-3. `assets/hai-ba-trung/scene_03_trong_dong_dong_son.jpg`: áº¢nh hiá»‡n váº­t Máº·t Trá»‘ng Ä‘á»“ng Ngá»c LÅ© / ÄĂ´ng SÆ¡n (Báº£o tĂ ng Lá»‹ch sá»­ Quá»‘c gia).
-4. `assets/hai-ba-trung/scene_04_hai_ba_trung_voi_chien.jpg`: Tranh dĂ¢n gian ÄĂ´ng Há»“ / Tranh tÆ° liá»‡u Hai BĂ  TrÆ°ng cÆ°á»¡i voi xuáº¥t tráº­n.
-5. `assets/hai-ba-trung/scene_05_ban_do_giao_chi.jpg`: Báº£n Ä‘á»“ cá»• tÆ° liá»‡u Giao Chá»‰ tháº¿ ká»· I dÆ°á»›i thá»i HĂ¡n Ä‘Ă´ há»™.
-6. `assets/hai-ba-trung/scene_06_nhan_dan_lam_than.jpg`: áº¢nh hiá»‡n váº­t VÄƒn hĂ³a ÄĂ´ng SÆ¡n & Minh há»a cá»• Ä‘á»i sá»‘ng mĂ² ngá»c trai tĂ¬m ngĂ  voi.
-7. `assets/hai-ba-trung/scene_07_thai_thu_to_dinh.jpg`: Tranh/TÆ°á»£ng tÆ° liá»‡u ThĂ¡i thĂº TĂ´ Äá»‹nh & quan láº¡i nhĂ  HĂ¡n cai trá»‹.
-8. `assets/hai-ba-trung/scene_08_thi_sach_trung_trac.jpg`: Tranh tÆ° liá»‡u Láº¡c tÆ°á»›ng Thi SĂ¡ch & TrÆ°ng Tráº¯c kĂ­n Ä‘Ă¡o chiĂªu má»™ nghÄ©a quĂ¢n.
-9. `assets/hai-ba-trung/scene_09_thi_sach_bi_sat_hai.jpg`: Tranh tÆ° liá»‡u bá»‘i cáº£nh Ä‘Ăªm phá»¥c kĂ­ch & Äá»‹a danh Chu DiĂªn.
-10. `assets/hai-ba-trung/scene_10_trung_trac_the_om_nhan.jpg`: PhĂ¹ Ä‘iĂªu TrÆ°ng Tráº¯c trÆ°á»›c táº¿ bĂ n thá» rá»­a thĂ¹ nhĂ  ná»£ nÆ°á»›c.
-11. `assets/hai-ba-trung/scene_11_te_troi_dat_song_hat.jpg`: áº¢nh thá»±c táº¿ Cá»•ng di tĂ­ch Äá»n HĂ¡t MĂ´n â€“ NÆ¡i Hai BĂ  pháº¥t cá» khá»Ÿi nghÄ©a.
-12. `assets/hai-ba-trung/scene_12_loi_the_hat_mon.jpg`: áº¢nh bia Ä‘Ă¡ lá»‹ch sá»­ kháº¯c Lá»i thá» HĂ¡t MĂ´n táº¡i Äá»n HĂ¡t MĂ´n.
-13. `assets/hai-ba-trung/scene_13_so_do_tien_cong.jpg`: Báº£n Ä‘á»“ sÆ¡ Ä‘á»“ chiáº¿n dá»‹ch tiáº¿n cĂ´ng 65 thĂ nh cai tá»« HĂ¡t MĂ´n Ä‘áº¿n Luy LĂ¢u.
-14. `assets/hai-ba-trung/scene_14_dan_nu_tuong.jpg`: áº¢nh tÆ°á»£ng Ä‘Ă i thá»±c táº¿ Ná»¯ tÆ°á»›ng LĂª ChĂ¢n táº¡i Háº£i PhĂ²ng & Ná»¯ tÆ°á»›ng ThĂ¡nh ThiĂªn táº¡i Báº¯c Ninh.
-15. `assets/hai-ba-trung/scene_15_danh_chiem_luy_lau.jpg`: áº¢nh di tĂ­ch thá»±c táº¿ ThĂ nh cá»• Luy LĂ¢u (Thuáº­n ThĂ nh, Báº¯c Ninh) & ThĂ nh Cá»• Loa.
-16. `assets/hai-ba-trung/scene_16_trung_nu_vuong_xung_de.jpg`: áº¢nh chá»¥p di tĂ­ch Quá»‘c gia Ä‘áº·c biá»‡t Äá»n thá» Hai BĂ  TrÆ°ng táº¡i MĂª Linh.
-17. `assets/hai-ba-trung/scene_17_ma_vien_xam_luoc.jpg`: ChĂ¢n dung tÆ° liá»‡u Phá»¥c Ba tÆ°á»›ng quĂ¢n MĂ£ Viá»‡n (NhĂ  HĂ¡n).
-18. `assets/hai-ba-trung/scene_18_tran_lang_bac.jpg`: Tranh/Báº£n Ä‘á»“ Ä‘á»‹a hĂ¬nh Ä‘áº§m láº§y LĂ£ng Báº¡c (Báº¯c Ninh) & Cáº¥m KhĂª (Ba VĂ¬).
-19. `assets/hai-ba-trung/scene_19_chien_dau_anh_dung.jpg`: PhĂ¹ Ä‘iĂªu hiá»‡n váº­t NghÄ©a quĂ¢n Hai BĂ  TrÆ°ng chiáº¿n Ä‘áº¥u anh dÅ©ng.
-20. `assets/hai-ba-trung/scene_20_hai_ba_tu_tiet.jpg`: áº¢nh thá»±c táº¿ DĂ²ng sĂ´ng HĂ¡t MĂ´n lĂºc hoĂ ng hĂ´n â€“ NÆ¡i Hai BĂ  gieo mĂ¬nh tu tiáº¿t.
-21. `assets/hai-ba-trung/scene_21_hao_quang_song_hat.jpg`: Tranh tÆ° liá»‡u HĂ o quang linh thiĂªng Hai BĂ  TrÆ°ng trĂªn sĂ´ng HĂ¡t.
-22. `assets/hai-ba-trung/scene_22_tuyen_ngon_doc_lap.jpg`: áº¢nh hiá»‡n váº­t bia Ä‘Ă¡ & trá»‘ng Ä‘á»“ng kháº³ng Ä‘á»‹nh ná»n Ä‘á»™c láº­p Ä‘áº§u tiĂªn.
-23. `assets/hai-ba-trung/scene_23_phu_nu_viet_nam.jpg`: Tranh tÆ° liá»‡u tÆ°á»£ng Ä‘Ă i biá»ƒu tÆ°á»£ng Phá»¥ ná»¯ Viá»‡t Nam "Giáº·c Ä‘áº¿n nhĂ , Ä‘Ă n bĂ  cÅ©ng Ä‘Ă¡nh".
-24. `assets/hai-ba-trung/scene_24_den_tho_me_linh.jpg`: áº¢nh chá»¥p thá»±c táº¿ ToĂ n cáº£nh Äá»n thá» Hai BĂ  TrÆ°ng táº¡i MĂª Linh (HĂ  Ná»™i).
-25. `assets/hai-ba-trung/scene_25_tuong_dai_hai_ba_trung.jpg`: áº¢nh chá»¥p thá»±c táº¿ TÆ°á»£ng Ä‘Ă i Hai BĂ  TrÆ°ng kiĂªu hĂ£nh táº¡i MĂª Linh.
-26. `assets/hai-ba-trung/scene_26_outro_chronoviet.png`: Branding Outro Card thÆ°Æ¡ng hiá»‡u ChronoViet.
+1. `assets/hai-ba-trung/scene_01_song_hat_sunrise.jpg`: Ảnh chụp di tích thực tế Sông Hát Môn / Sông Đáy (Phúc Thọ, Hà Nội).
+2. `assets/hai-ba-trung/scene_02_nu_tuong_giap_vang.jpg`: Tranh tư liệu / Phù điêu lịch sử Hai Bà Trưng khoác giáp vàng cưỡi voi.
+3. `assets/hai-ba-trung/scene_03_trong_dong_dong_son.jpg`: Ảnh hiện vật Mặt Trống đồng Ngọc Lũ / Đông Sơn (Bảo tàng Lịch sử Quốc gia).
+4. `assets/hai-ba-trung/scene_04_hai_ba_trung_voi_chien.jpg`: Tranh dân gian Đông Hồ / Tranh tư liệu Hai Bà Trưng cưỡi voi xuất trận.
+5. `assets/hai-ba-trung/scene_05_ban_do_giao_chi.jpg`: Bản đồ cổ tư liệu Giao Chỉ thế kỷ I dưới thời Hán đô hộ.
+6. `assets/hai-ba-trung/scene_06_nhan_dan_lam_than.jpg`: Ảnh hiện vật Văn hóa Đông Sơn & Minh họa cổ đời sống mò ngọc trai tìm ngà voi.
+7. `assets/hai-ba-trung/scene_07_thai_thu_to_dinh.jpg`: Tranh/Tượng tư liệu Thái thú Tô Định & quan lại nhà Hán cai trị.
+8. `assets/hai-ba-trung/scene_08_thi_sach_trung_trac.jpg`: Tranh tư liệu Lạc tướng Thi Sách & Trưng Trắc kín đáo chiêu mộ nghĩa quân.
+9. `assets/hai-ba-trung/scene_09_thi_sach_bi_sat_hai.jpg`: Tranh tư liệu bối cảnh đêm phục kích & Địa danh Chu Diên.
+10. `assets/hai-ba-trung/scene_10_trung_trac_the_om_nhan.jpg`: Phù điêu Trưng Trắc trước tế bàn thề rửa thù nhà nợ nước.
+11. `assets/hai-ba-trung/scene_11_te_troi_dat_song_hat.jpg`: Ảnh thực tế Cổng di tích Đền Hát Môn – Nơi Hai Bà phất cờ khởi nghĩa.
+12. `assets/hai-ba-trung/scene_12_loi_the_hat_mon.jpg`: Ảnh bia đá lịch sử khắc Lời thề Hát Môn tại Đền Hát Môn.
+13. `assets/hai-ba-trung/scene_13_so_do_tien_cong.jpg`: Bản đồ sơ đồ chiến dịch tiến công 65 thành cai từ Hát Môn đến Luy Lâu.
+14. `assets/hai-ba-trung/scene_14_dan_nu_tuong.jpg`: Ảnh tượng đài thực tế Nữ tướng Lê Chân tại Hải Phòng & Nữ tướng Thánh Thiên tại Bắc Ninh.
+15. `assets/hai-ba-trung/scene_15_danh_chiem_luy_lau.jpg`: Ảnh di tích thực tế Thành cổ Luy Lâu (Thuận Thành, Bắc Ninh) & Thành Cổ Loa.
+16. `assets/hai-ba-trung/scene_16_trung_nu_vuong_xung_de.jpg`: Ảnh chụp di tích Quốc gia đặc biệt Đền thờ Hai Bà Trưng tại Mê Linh.
+17. `assets/hai-ba-trung/scene_17_ma_vien_xam_luoc.jpg`: Chân dung tư liệu Phục Ba tướng quân Mã Viện (Nhà Hán).
+18. `assets/hai-ba-trung/scene_18_tran_lang_bac.jpg`: Tranh/Bản đồ địa hình đầm lầy Lãng Bạc (Bắc Ninh) & Cấm Khê (Ba Vì).
+19. `assets/hai-ba-trung/scene_19_chien_dau_anh_dung.jpg`: Phù điêu hiện vật Nghĩa quân Hai Bà Trưng chiến đấu anh dũng.
+20. `assets/hai-ba-trung/scene_20_hai_ba_tu_tiet.jpg`: Ảnh thực tế Dòng sông Hát Môn lúc hoàng hôn – Nơi Hai Bà gieo mình tu tiết.
+21. `assets/hai-ba-trung/scene_21_hao_quang_song_hat.jpg`: Tranh tư liệu Hào quang linh thiêng Hai Bà Trưng trên sông Hát.
+22. `assets/hai-ba-trung/scene_22_tuyen_ngon_doc_lap.jpg`: Ảnh hiện vật bia đá & trống đồng khẳng định nền độc lập đầu tiên.
+23. `assets/hai-ba-trung/scene_23_phu_nu_viet_nam.jpg`: Tranh tư liệu tượng đài biểu tượng Phụ nữ Việt Nam "Giặc đến nhà, đàn bà cũng đánh".
+24. `assets/hai-ba-trung/scene_24_den_tho_me_linh.jpg`: Ảnh chụp thực tế Toàn cảnh Đền thờ Hai Bà Trưng tại Mê Linh (Hà Nội).
+25. `assets/hai-ba-trung/scene_25_tuong_dai_hai_ba_trung.jpg`: Ảnh chụp thực tế Tượng đài Hai Bà Trưng kiêu hãnh tại Mê Linh.
+26. `assets/hai-ba-trung/scene_26_outro_chronoviet.png`: Branding Outro Card thương hiệu ChronoViet.
 
 

@@ -1,17 +1,59 @@
-import { describe, it, expect } from 'vitest';
-import { logFallbackAlert, formatErrorMessage, serializeError } from '../logger.js';
+import { describe, it, expect, vi } from 'vitest';
+import {
+  logFallbackAlert,
+  resetFallbackAlertThrottle,
+  formatErrorMessage,
+  serializeError,
+  createLogger,
+  sanitizePayload,
+  truncateSnippet,
+} from '../logger.js';
 
 describe('Fallback Alert Observability Logger Test', () => {
-  it('correctly emits standardized fallback alert banner', () => {
-    expect(() => {
-      logFallbackAlert({
-        subsystem: 'LLM_GATEWAY',
-        primaryTarget: 'Local LLM (http://localhost:8080) [qwen3.8-27b-instruct-q4_k_m]',
-        fallbackTarget: 'Agnes 2.5 Flash Cloud API [agnes-2.5-flash]',
-        reason: 'Connection refused at http://localhost:8080/v1/chat/completions',
-        actionRequired: 'Check if llama-server is running on port 8080',
-      });
-    }).not.toThrow();
+  it('correctly emits standardized fallback alert and throttles duplicates', () => {
+    resetFallbackAlertThrottle();
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    logFallbackAlert({
+      subsystem: 'LLM_GATEWAY',
+      primaryTarget: 'Local LLM (http://localhost:8080) [qwen3.8-27b-instruct-q4_k_m]',
+      fallbackTarget: 'Agnes 2.5 Flash Cloud API [agnes-2.5-flash]',
+      reason: 'Connection refused at http://localhost:8080/v1/chat/completions',
+      actionRequired: 'Check if llama-server is running on port 8080',
+    });
+
+    expect(stderrSpy).toHaveBeenCalledTimes(1);
+
+    // Immediate second call with same subsystem and reason must be throttled
+    logFallbackAlert({
+      subsystem: 'LLM_GATEWAY',
+      primaryTarget: 'Local LLM (http://localhost:8080) [qwen3.8-27b-instruct-q4_k_m]',
+      fallbackTarget: 'Agnes 2.5 Flash Cloud API [agnes-2.5-flash]',
+      reason: 'Connection refused at http://localhost:8080/v1/chat/completions',
+      actionRequired: 'Check if llama-server is running on port 8080',
+    });
+
+    expect(stderrSpy).toHaveBeenCalledTimes(1);
+
+    stderrSpy.mockRestore();
+  });
+
+  it('redacts secret keys and truncates long snippets', () => {
+    const sanitized = sanitizePayload({
+      apiKey: 'sk-1234567890',
+      password: 'supersecretpassword',
+      token: 'jwt-token',
+      normalField: 'hello',
+    }) as any;
+
+    expect(sanitized.apiKey).toBe('[REDACTED]');
+    expect(sanitized.password).toBe('[REDACTED]');
+    expect(sanitized.token).toBe('[REDACTED]');
+    expect(sanitized.normalField).toBe('hello');
+
+    const longStr = 'a'.repeat(100);
+    const snippet = truncateSnippet(longStr, 20);
+    expect(snippet).toContain('...[truncated 80 chars]');
   });
 });
 

@@ -89,12 +89,26 @@ export class VisualQualityGate {
   }
 
   public evaluateQuality(width = 1920, height = 1080, targetAspectRatio: string = '16:9'): VisualQualityGateResult {
-    const minResolutionMet = width >= 1280 && height >= 720;
-    const actualRatio = width / Math.max(1, height);
+    let minWidth = 1280;
+    let minHeight = 720;
     let expectedRatio = 16 / 9;
-    if (targetAspectRatio === '9:16') expectedRatio = 9 / 16;
-    if (targetAspectRatio === '1:1') expectedRatio = 1;
-    if (targetAspectRatio === '4:3') expectedRatio = 4 / 3;
+
+    if (targetAspectRatio === '9:16') {
+      minWidth = 720;
+      minHeight = 1280;
+      expectedRatio = 9 / 16;
+    } else if (targetAspectRatio === '1:1') {
+      minWidth = 720;
+      minHeight = 720;
+      expectedRatio = 1;
+    } else if (targetAspectRatio === '4:3') {
+      minWidth = 960;
+      minHeight = 720;
+      expectedRatio = 4 / 3;
+    }
+
+    const minResolutionMet = width >= minWidth && height >= minHeight;
+    const actualRatio = width / Math.max(1, height);
 
     const ratioDiff = Math.abs(actualRatio - expectedRatio);
     const aspectRatioValid = ratioDiff <= 0.15;
@@ -102,7 +116,7 @@ export class VisualQualityGate {
 
     let rejectionReason: string | undefined;
     if (!minResolutionMet) {
-      rejectionReason = `Resolution ${width}x${height} below minimum threshold (1280x720)`;
+      rejectionReason = `Resolution ${width}x${height} below minimum threshold (${minWidth}x${minHeight})`;
     } else if (!aspectRatioValid) {
       rejectionReason = `Aspect ratio mismatch: actual ${actualRatio.toFixed(2)}, expected ${expectedRatio.toFixed(2)}`;
     }
@@ -177,7 +191,7 @@ export class VisualQualityGate {
     const savedPath = path.join(this.mediaRawDir, targetFileName);
     fs.writeFileSync(savedPath, buffer);
 
-    log.info('vlm.asset_registered', `Registered visual asset ${assetId}`, {
+    log.debug('vlm.asset_registered', `Registered visual asset ${assetId}`, {
       assetId,
       checksum,
       license: licenseAudit.licenseType,

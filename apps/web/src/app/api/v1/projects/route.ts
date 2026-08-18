@@ -157,11 +157,12 @@ export async function GET(req: NextRequest) {
         } catch {}
 
         return {
+          id: projectId,
           projectId,
           status,
           currentStep,
           title,
-          topic: meta.topic,
+          topic: meta.topic || title,
           createdAt: meta.createdAt || birthtimeIso,
           updatedAt: meta.updatedAt || mtimeIso,
           videoUrl: hasVideo ? `/api/v1/projects/${projectId}/video` : undefined,

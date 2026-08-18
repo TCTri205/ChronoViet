@@ -13,37 +13,47 @@ function generateProportionalNarration(
   chapterSummary: string,
   targetDurationSeconds: number,
   establishedTone: string,
-  entities: string[]
+  entities: string[],
+  videoType: string = 'BIOGRAPHY'
 ): string {
-  const targetWords = Math.round(targetDurationSeconds * 2.5);
   const paragraphs: string[] = [];
 
-  // Opening paragraph
-  paragraphs.push(
-    `Vào thời kỳ lịch sử hào hùng của dân tộc Đại Việt, sự kiện ${chapterTitle} đã ghi dấu ấn sâu đậm trong dòng chảy nghìn năm dựng nước và giữ nước. ${chapterSummary}`
-  );
+  // Opening paragraph adapted by video type
+  if (videoType === 'BATTLE') {
+    paragraphs.push(
+      `Trong dòng chảy lịch sử đầy tự hào của dân tộc, sự kiện ${chapterTitle} là một bước ngoặt oanh liệt. ${chapterSummary}`
+    );
+  } else if (videoType === 'ARTIFACT') {
+    paragraphs.push(
+      `Di sản và dấu tích của sự kiện ${chapterTitle} là chứng nhân vô giá cho bề dày văn hiến nước nhà. ${chapterSummary}`
+    );
+  } else {
+    paragraphs.push(
+      `Trong dòng chảy lịch sử Việt Nam, dấu ấn của ${chapterTitle} ghi đậm nét qua bao thăng trầm thời đại. ${chapterSummary}`
+    );
+  }
 
-  // Body paragraphs to fill duration accurately
+  // Body paragraphs
   const entityList = entities.length > 0 ? entities.join(', ') : chapterTitle;
   paragraphs.push(
-    `Khí thế quật cường và tinh thần đoàn kết của quân dân ta dưới sự lãnh đạo tài tình của các bậc tiền nhân như ${entityList} đã tạo nên sức mạnh vô song. Từng tấc đất, từng dòng sông quê hương đều thấm đượm lòng yêu nước và ý chí tự cường bất khuất trước mọi phong ba bão táp của thời đại.`
+    `Dưới sự dẫn dắt của các bậc tiền nhân như ${entityList}, mọi thử thách đều được khắc phục bằng ý chí kiên định và tinh thần đoàn kết sâu sắc của toàn thể nhân dân.`
   );
 
   if (targetDurationSeconds >= 90) {
     paragraphs.push(
-      `Sự mưu trí, dũng cảm trong từng sách lược chỉ huy và ý chí quyết chiến đã dẫn đến những chuyển biến mang tính bước ngoặt. Những chiến công oanh liệt nơi sa trường không chỉ đập tan mưu đồ xâm lăng mà còn khẳng định chủ quyền thiêng liêng, mở ra thời kỳ thái bình thịnh trị cho muôn dân trăm họ.`
+      `Từng diễn biến và quyết sách trong giai đoạn này đều để lại những bài học sâu sắc cho các thế hệ mai sau, mở ra bước tiến quan trọng trong tiến trình dựng nước và giữ nước.`
     );
   }
 
   if (targetDurationSeconds >= 150) {
     paragraphs.push(
-      `Nhìn lại trang sử vàng son ấy, thế hệ con cháu hôm nay càng thêm tự hào về truyền thống bất khuất của cha ông. Những bài học quý giá về tinh thần độc lập, tự chủ và đức hi sinh vì non sông xã tắc mãi là ngọn đuốc sáng soi đường cho các thế hệ tương lai vững bước.`
+      `Nhìn lại trang sử ấy, chúng ta càng thêm trân trọng những giá trị trường tồn và công lao to lớn mà cha ông đã dày công vun đắp cho nền độc lập và thái bình của non sông.`
     );
   }
 
   // Closing
   paragraphs.push(
-    `Khép lại giai đoạn đầy tự hào này, bức tranh lịch sử tiếp tục mở ra những trang mới rạng ngời của non sông gấm vóc Việt Nam.`
+    `Bức tranh lịch sử tiếp tục mở ra những diễn biến đầy ý nghĩa trong chặng đường tiếp theo.`
   );
 
   return paragraphs.join('\n\n');
@@ -57,28 +67,74 @@ export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial
   const chapterScripts: Record<number, string> = {};
   let currentNarrativeState: RunningNarrativeState = { ...state.runningNarrativeState };
 
+  const verifiedEntities = state.ragContext?.verifiedContext || [];
+
   for (let i = 0; i < state.chapters.length; i++) {
     const chapter = state.chapters[i];
     const targetWords = Math.round(chapter.targetDurationSeconds * 2.5);
 
-    const prompt = `Bạn là Nhà biên kịch Lịch sử Sử thi của ChronoViet.
-Hãy viết lời bình dẫn truyện (Voiceover Narration) cho Chương ${i + 1}: "${chapter.title}".
-Tóm tắt chương: ${chapter.summary}
+    // 1. Extract RAG Grounding Facts relevant to this specific chapter
+    const keyEventLower = (chapter.keyEvents || []).map((k) => k.toLowerCase());
+    const chapterTitleLower = chapter.title.toLowerCase();
+
+    const relevantEntities = verifiedEntities.filter((e) => {
+      const nameMatch = e.canonicalName.toLowerCase();
+      const inTitle = chapterTitleLower.includes(nameMatch);
+      const inEvents = keyEventLower.some((ev) => ev.includes(nameMatch) || nameMatch.includes(ev));
+      const inSummary = chapter.summary.toLowerCase().includes(nameMatch);
+      return inTitle || inEvents || inSummary;
+    });
+
+    const selectedEntities = relevantEntities.length > 0 ? relevantEntities.slice(0, 4) : verifiedEntities.slice(0, 3);
+    const ragGroundingText =
+      selectedEntities.length > 0
+        ? selectedEntities.map((e) => `- ${e.canonicalName}: ${e.summary}`).join('\n')
+        : '- Dựa trên tóm tắt sự kiện của chương.';
+
+    const systemMessage = `Bạn là Nhà biên kịch Lịch sử Chuyên nghiệp của nền tảng ChronoViet.
+Nhiệm vụ: Viết lời bình dẫn chuyện (Voiceover Narration) cho từng chương video lịch sử.
+QUY TẮC BẮT BUỘC DÀNH CHO TTS:
+1. TUYỆT ĐỐI KHÔNG chèn thẻ chỉ dẫn đạo diễn, âm thanh, hay sân khấu như: [Nhạc nền], (Giọng truyền cảm), (Cười), [Hình ảnh...].
+2. TUYỆT ĐỐI KHÔNG chèn nhãn người nói như: "MC:", "Người dẫn chuyện:", "Lời bình:".
+3. TUYỆT ĐỐI KHÔNG dùng định dạng tiêu đề Markdown như: #, ##, **, * ở đầu đoạn.
+4. Chỉ xuất văn bản lời đọc thuần túy (Plain Text), liền mạch, giàu cảm xúc, chuẩn xác sử liệu.
+5. Đối với sự kiện dã sử/truyền thuyết, hãy tự nhiên sử dụng các cụm từ 'theo truyền thuyết', 'tương truyền'.`;
+
+    const userMessage = `Hãy viết lời dẫn chuyện cho Chương ${i + 1}: "${chapter.title}".
+Tóm tắt nội dung chương: ${chapter.summary}
 Thời lượng mục tiêu: ${chapter.targetDurationSeconds} giây (~${targetWords} từ tiếng Việt).
 
-QUY TẮC LIỀN MẠCH (NARRATIVE FLOW):
-- Giọng văn đồng nhất: "${currentNarrativeState.establishedTone}".
-- Nối tiếp chuyển cảnh từ chương trước: "${currentNarrativeState.transitionHook}".
-- Các thực thể đã giới thiệu ở chương trước: [${currentNarrativeState.introducedEntities.join(', ')}] (KHÔNG cần giải thích lại từ đầu danh xưng/tiểu sử).
+TƯ LIỆU LỊCH SỬ XÁC THỰC TỪ CHRONO-RAG:
+${ragGroundingText}
 
-Hãy viết lời thoại liền mạch, hùng tráng, chuẩn xác lịch sử:`;
+QUY TẮC LIỀN MẠCH (NARRATIVE FLOW):
+- Giọng văn chủ đạo: "${currentNarrativeState.establishedTone || 'Hùng tráng, trang trọng'}".
+- Chuyển tiếp mượt mà từ câu nối trước: "${currentNarrativeState.transitionHook || 'Tiếp tục diễn biến lịch sử'}".
+- Các thực thể đã giới thiệu ở chương trước: [${currentNarrativeState.introducedEntities.slice(-12).join(', ')}] (KHÔNG cần giải thích lại từ đầu danh xưng/tiểu sử).
+
+NHẮC LẠI: Chỉ xuất văn xuôi lời bình để đọc TTS trực tiếp. Bắt đầu viết:`;
+
+    const estimatedMaxTokens = Math.min(2048, Math.max(512, Math.round(targetWords * 2) + 256));
 
     try {
       const res = await callLlm({
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userMessage },
+        ],
         temperature: 0.3,
+        maxTokens: estimatedMaxTokens,
       });
-      chapterScripts[i] = res.content.trim();
+
+      // Sanitize any remaining stage markers or markdown noise
+      let cleanedScript = res.content
+        .replace(/\[(?:Nhạc|Cảnh|Hình ảnh|Hiệu ứng|Âm thanh|Voiceover).*?\]/gi, '')
+        .replace(/\((?:Giọng|Cười|Hào hùng|Trầm lắng|Thì thầm).*?\)/gi, '')
+        .replace(/^(?:MC|Người dẫn chuyện|Lời bình|Host)\s*:\s*/gim, '')
+        .replace(/^#{1,4}\s+.*$/gm, '')
+        .trim();
+
+      chapterScripts[i] = cleanedScript || res.content.trim();
     } catch (err: any) {
       // Eval Integrity: strict mode must not substitute canned narration
       if (envConfig.EVAL_STRICT) {
@@ -90,15 +146,19 @@ Hãy viết lời thoại liền mạch, hùng tráng, chuẩn xác lịch sử:
         chapter.summary,
         chapter.targetDurationSeconds,
         currentNarrativeState.establishedTone,
-        chapter.introducedEntities
+        chapter.introducedEntities,
+        state.videoType
       );
     }
 
-    // Update narrative state
+    // Update narrative state (bounded to avoid token explosion)
+    const combinedEntities = Array.from(
+      new Set([...currentNarrativeState.introducedEntities, ...(chapter.introducedEntities || [])])
+    );
     currentNarrativeState = {
       previousChapterSummary: chapter.summary,
       establishedTone: chapter.establishedTone || 'Hùng tráng',
-      introducedEntities: Array.from(new Set([...currentNarrativeState.introducedEntities, ...chapter.introducedEntities])),
+      introducedEntities: combinedEntities.slice(-15),
       transitionHook: chapter.transitionHook || `Chuyển tiếp sang diễn biến tiếp theo của ${chapter.title}`,
     };
   }

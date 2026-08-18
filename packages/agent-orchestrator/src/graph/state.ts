@@ -3,27 +3,13 @@ import {
   ChapterPlan,
   ChronoVideoProps,
   HistoricalContextEntity,
+  OrchestratorStatus,
   SceneGeneration,
   VisualCandidate,
   WordTimestamp,
 } from '@chronoviet/shared-spec';
 
-export type OrchestratorStatus =
-  | 'INIT'
-  | 'RAG_RETRIEVED'
-  | 'OUTLINE_CHAPTERED'
-  | 'CHAPTER_SCRIPT_GENERATED'
-  | 'CHAPTER_FACT_CHECKED'
-  | 'SCENES_SEGMENTED'
-  | 'RESEARCH_COMPLETED'
-  | 'TTS_SYNTHESIZED'
-  | 'DURATION_RECONCILED'
-  | 'KEYWORDS_EXTRACTED'
-  | 'ASSETS_AUDITED'
-  | 'PACKAGED'
-  | 'COMPLETED'
-  | 'NEEDS_HUMAN_REVIEW'
-  | 'FAILED';
+export type { OrchestratorStatus };
 
 export interface RunningNarrativeState {
   previousChapterSummary: string;

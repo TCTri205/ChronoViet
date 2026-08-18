@@ -33,6 +33,7 @@ Dưới đây là bảng tra cứu đầy đủ 100% không bỏ sót bất kỳ
 | `aspectRatio` | `enum` | Tùy chọn | `'16:9'` | Tỉ lệ khung hình render: `'16:9'` (YouTube), `'9:16'` (TikTok/Shorts), `'1:1'` (Instagram). |
 | `theme` | `object` | Tùy chọn | Theme mặc định | Cấu hình màu sắc & font chữ hệ thống (`ThemeConfig`). |
 | `audioUrl` | `string` | Tùy chọn | `undefined` | Đường dẫn file âm thanh voiceover tổng hợp toàn bộ video (`.wav`/`.mp3`). |
+| `captionsUrl` | `string` | Tùy chọn | `undefined` | Đường dẫn file phụ đề JSON karaoke words ngoài (`.json`). |
 | `bgmUrl` | `string` | Tùy chọn | `undefined` | Đường dẫn file nhạc nền BGM (.wav/.mp3). |
 | `bgmVolume` | `number` | Tùy chọn | Không có default (`undefined`) | Âm lượng nhạc nền (từ `0.0` đến `1.0`, khuyến nghị 0.2–0.3). |
 | `defaultLayoutMode` | `enum` | Tùy chọn | `'BLUR_BG'` | LayoutMode dự phòng nếu scene không khai báo `layoutMode`. |
@@ -49,7 +50,10 @@ Dưới đây là bảng tra cứu đầy đủ 100% không bỏ sót bất kỳ
   "primaryColor": "#C89D35",        // Màu chủ đạo Hoàng Thành (Headers, Viền nổi bật, Accent)
   "secondaryColor": "#9B1B1B",      // Màu phụ Đỏ Son (Con dấu Triện, Badges, Highlights)
   "backgroundColor": "#0E0C0A",     // Màu nền Canvas Sơn Mài (Dark mode bảo tàng)
+  "gradientBg": "linear-gradient(135deg, #1e1b4b, #0f172a)", // Nền gradient tùy biến (tùy chọn)
   "fontFamily": "Merriweather, serif", // Font chữ tiếng Việt chuẩn
+  "customFontUrl": "/fonts/MyFont.ttf", // URL tải font tùy biến (tùy chọn)
+  "headerTitle": "CHRONOVIET HISTORICAL ARCHIVE", // Tiêu đề watermark header góc trên (tùy chọn)
   "accentGlow": "rgba(200, 157, 53, 0.4)" // Hiệu ứng phát sáng/hào quang kim sắc
 }
 ```

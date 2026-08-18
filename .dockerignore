@@ -17,12 +17,20 @@ node_modules
 .codegraph
 .vscode
 .idea
+.github
 
 # Build outputs and artifacts
 dist
 .next
 *.tsbuildinfo
 coverage
+
+# Testing, Eval suites, and Benchmark data
+eval
+**/eval
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
 eval/artifacts
 
 # Media and logs

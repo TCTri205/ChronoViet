@@ -15,7 +15,7 @@
     "eval:all": "tsx eval/runner.ts --all",
     "eval:chain": "tsx eval/runner.ts --chain vieneu-remotion",
     "eval:clean": "tsx eval/utils/cleaner.ts",
-    "stack:infra": "docker compose up -d postgres redis",
+    "stack:infra": "docker compose up -d postgres redis vieneu-tts-service",
     "stack:down": "docker compose down",
     "db:init": "pnpm --filter @chronoviet/data-ingestion db:init",
     "ingest:knowledge": "pnpm --filter @chronoviet/data-ingestion ingest:knowledge",

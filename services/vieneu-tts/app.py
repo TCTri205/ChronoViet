@@ -85,7 +85,7 @@ class VieNeuRequest(BaseModel):
     paddingMs: int = 300
     fps: int = 30
 
-def generate_python_pcm16_audio(text: str, duration_ms: number, word_timestamps: list, sample_rate: int = 24000) -> np.ndarray:
+def generate_python_pcm16_audio(text: str, duration_ms: float, word_timestamps: list, sample_rate: int = 24000) -> np.ndarray:
     """Generate harmonic audible PCM audio matching word timestamps for local testing."""
     num_samples = int((duration_ms / 1000.0) * sample_rate)
     audio = np.zeros(num_samples, dtype=np.int16)

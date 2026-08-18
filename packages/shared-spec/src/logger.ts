@@ -178,15 +178,16 @@ export interface ChronoLogger {
   child(opts: ChildLoggerOptions): ChronoLogger;
 }
 
-const THRESHOLD = LEVEL_PRIORITY[envConfig.LOG_LEVEL] ?? LEVEL_PRIORITY.info;
-const FORCE_JSON = envConfig.NODE_ENV === 'production' || envConfig.LOG_FORMAT === 'json';
-const OUTPUT: 'stdout' | 'stderr' = envConfig.NODE_ENV === 'test' ? 'stderr' : 'stdout';
+function getLogLevelPriority(level?: string): number {
+  if (!level) return LEVEL_PRIORITY.info;
+  return LEVEL_PRIORITY[level as LogLevel] ?? LEVEL_PRIORITY.info;
+}
 
 /**
  * Render one record: JSON line in production/test, pretty in dev (unless LOG_FORMAT=json).
  */
 function renderRecord(record: LogRecord): string {
-  if (FORCE_JSON) {
+  if (envConfig.NODE_ENV === 'production' || envConfig.LOG_FORMAT === 'json') {
     return JSON.stringify(record);
   }
   const { time, level, service, event, msg, correlationId, ...rest } = record;
@@ -198,7 +199,8 @@ function renderRecord(record: LogRecord): string {
 }
 
 function emit(level: LogLevel, service: string, event: string, msg: string, fields: Record<string, unknown> | undefined, correlationId: string | undefined, baseFields: Record<string, unknown> | undefined): void {
-  if (LEVEL_PRIORITY[level] < THRESHOLD) return;
+  const currentThreshold = getLogLevelPriority(envConfig.LOG_LEVEL || process.env.LOG_LEVEL);
+  if (LEVEL_PRIORITY[level] < currentThreshold) return;
 
   const record: LogRecord = {
     time: new Date().toISOString(),
@@ -245,7 +247,7 @@ export function createLogger(opts: LoggerOptions): ChronoLogger {
 }
 
 // ============================================================
-// Fallback Alert (legacy API preserved as a thin JSON event)
+// Fallback Alert (throttled structured JSON event)
 // ============================================================
 
 export interface FallbackAlertPayload {
@@ -258,14 +260,29 @@ export interface FallbackAlertPayload {
 }
 
 const SYSTEM_LOGGER = createLogger({ service: 'system' });
+const fallbackAlertTimestamps = new Map<string, number>();
+const FALLBACK_ALERT_COOLDOWN_MS = 30_000;
+
+/** Reset throttle cooldown cache (useful in unit tests) */
+export function resetFallbackAlertThrottle(): void {
+  fallbackAlertTimestamps.clear();
+}
 
 /**
  * Log a structured high-visibility Fallback Alert as a JSON `system.fallback_activated`
- * event on the warn channel. Kept as a thin wrapper so existing call sites
- * (llm-client, embeddings, triple-extractor, gemini-scorer, vieneu-tts engine)
- * keep working while emitting machine-parseable output.
+ * event on the warn channel. Automatically throttles identical alerts within a 30s
+ * window to prevent terminal spam when processing parallel batches.
  */
 export function logFallbackAlert(payload: FallbackAlertPayload): void {
+  const key = `${payload.subsystem}:${payload.reason}`;
+  const now = Date.now();
+  const lastAlert = fallbackAlertTimestamps.get(key) ?? 0;
+
+  if (now - lastAlert < FALLBACK_ALERT_COOLDOWN_MS) {
+    return;
+  }
+  fallbackAlertTimestamps.set(key, now);
+
   SYSTEM_LOGGER.warn('system.fallback_activated', `${payload.subsystem} fallback activated`, {
     subsystem: payload.subsystem,
     primaryTarget: payload.primaryTarget,

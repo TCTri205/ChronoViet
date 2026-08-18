@@ -50,7 +50,7 @@ export async function researchNode(state: ChronoGraphState): Promise<Partial<Chr
             provenance,
             resolvedAt: new Date().toISOString(),
           };
-          log.info('orchestrator.research_scene_done', `Researched ${candidates.length} candidates for scene ${scene.sceneId}`, {
+          log.debug('orchestrator.research_scene_done', `Researched ${candidates.length} candidates for scene ${scene.sceneId}`, {
             sceneId: scene.sceneId,
             keywords,
             latencyMs: Date.now() - startedAt,

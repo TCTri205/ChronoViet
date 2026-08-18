@@ -5,13 +5,13 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
-import { createLogger, SourceReliability } from '@chronoviet/shared-spec';
+import { createLogger, SourceReliability, resolveCanonicalEntity, isKnownMasterEntity } from '@chronoviet/shared-spec';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 import { normalizeText } from '../text/text-normalizer.js';
 import { chunkDocumentHierarchical } from '../chunking/hierarchical-chunker.js';
-import { resolveCanonicalEntity, isKnownMasterEntity } from '../text/historical-entity-mapper.js';
 import { extractTriplesFromTextAsync, isValidEntityName, ExtractedTriple } from '../triple-extractor.js';
 import { CONFIDENCE_PRODUCTION_THRESHOLD } from '../seeder/dual-branch-seeder.js';
+import { parseFrontmatter } from '../utils/text-utils.js';
 import {
   IngestDiagnosticIssue,
   IngestDiagnosticReport,
@@ -59,32 +59,6 @@ function parseArgs(): DiagnosticCliOptions {
   return { inputPath, outputPath, limit, regexOnly, allowFallback, strict };
 }
 
-function parseFrontmatter(rawText: string): { body: string; metadata: Record<string, string> } {
-  if (!rawText.startsWith('---')) {
-    return { body: rawText, metadata: {} };
-  }
-  const endIdx = rawText.indexOf('\n---', 3);
-  if (endIdx === -1) {
-    return { body: rawText, metadata: {} };
-  }
-  const frontmatterStr = rawText.substring(3, endIdx).trim();
-  const body = rawText.substring(endIdx + 4).trim();
-  const metadata: Record<string, string> = {};
-
-  for (const line of frontmatterStr.split('\n')) {
-    const colonIdx = line.indexOf(':');
-    if (colonIdx > 0) {
-      const key = line.substring(0, colonIdx).trim().toLowerCase();
-      let val = line.substring(colonIdx + 1).trim();
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.substring(1, val.length - 1);
-      }
-      metadata[key] = val;
-    }
-  }
-  return { body, metadata };
-}
-
 export async function runIngestionDiagnostic(options: DiagnosticCliOptions): Promise<IngestDiagnosticReport> {
   const monorepoRoot = findMonorepoRoot();
   let targetPath = options.inputPath;
@@ -104,7 +78,7 @@ export async function runIngestionDiagnostic(options: DiagnosticCliOptions): Pro
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (entry.name === 'pdf' || entry.name === 'pdf_markdown') continue;
+        if (entry.name === 'pdf' || entry.name === 'node_modules' || entry.name === '.git') continue;
         await collectFiles(fullPath);
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name).toLowerCase();

@@ -1,63 +1,63 @@
-# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
+# KỊCH BẢN CHI TIẾT & BẢNG PHÂN CẢNH PRODUCTION (PRODUCTION SCRIPT & ASSET PROMPTS)
 
-> **TĂ¡c pháº©m:** HÆ¯NG Äáº O Äáº I VÆ¯Æ NG TRáº¦N QUá»C TUáº¤N â€“ HUYá»€N THOáº I BĂCH CHIáº¾N BĂCH THáº®NG  
-> **Dá»± Ă¡n:** ChronoViet (Video Essay / Historical Motion Graphics)  
+> **Tác phẩm:** HƯNG ĐẠO ĐẠI VƯƠNG TRẦN QUỐC TUẤN – HUYỀN THOẠI BÁCH CHIẾN BÁCH THẮNG  
+> **Dự án:** ChronoViet (Video Essay / Historical Motion Graphics)  
 > **MĂ£ Domain:** `BIOGRAPHY`  
-> **Thá»i lÆ°á»£ng:** 6 phĂºt 45 giĂ¢y (405 giĂ¢y / 12.150 frames @ 30fps) | **JSON scenes:** 21 (scene_00 brand intro + 20 ná»™i dung)  
-> **Phong cĂ¡ch Visual:** Äá»“ há»a Cá»• phong HoĂ ng gia nhĂ  Tráº§n, VĂ ng Son HoĂ ng Kim, HĂ o khĂ­ ÄĂ´ng A, Chá»¯ SĂ¡t ThĂ¡t xÄƒm cĂ¡nh tay & Hiá»‡u á»©ng Ken Burns trĂ¡ng lá»‡.
+> **Thời lượng:** 6 phút 45 giây (405 giây / 12.150 frames @ 30fps) | **JSON scenes:** 21 (scene_00 brand intro + 20 nội dung)  
+> **Phong cách Visual:** Đồ họa Cổ phong Hoàng gia nhà Trần, Vàng Son Hoàng Kim, Hào khí Đông A, Chữ Sát Thát xăm cánh tay & Hiệu ứng Ken Burns tráng lệ.
 
 ---
 
-## đŸ¨ 1. Bá»˜ THIáº¾T Káº¾ NHáº¬N DIá»†N THá» GIĂC (VISUAL DESIGN SYSTEM)
+## 🎨 1. BỘ THIẾT KẾ NHẬN DIỆN THỊ GIÁC (VISUAL DESIGN SYSTEM)
 
-* **Palette mĂ u chĂ­nh:**
-  * **Imperial Gold (HoĂ ng Kim ThĂ¡i SÆ°):** `#D4AF37` & `#F59E0B` (TiĂªu Ä‘á», giĂ¡p trá»¥ ThĂ¡i sÆ°, cá» HĂ o khĂ­ ÄĂ´ng A)
-  * **Royal Crimson (Äá» Son Triá»u Tráº§n):** `#8B0000` & `#991B1B` (Há»‹ch TÆ°á»›ng SÄ©, chá»¯ SĂ¡t ThĂ¡t, mĂ¡u chiáº¿n trÆ°á»ng)
-  * **Navy Slate (Xanh SĂ´ng Lá»¥c Äáº§u & ThiĂªn TrÆ°á»ng):** `#1E293B` & `#0F172A` (Bá»‘i cáº£nh Váº¡n Kiáº¿p, thá»§y chiáº¿n sĂ´ng Há»“ng)
-  * **Jade Bronze (Äá»“ng Cá»• & KhuĂª TĂ¡o):** `#78350F` & `#B45309` (Binh ThÆ° Yáº¿u LÆ°á»£c, sáº¯c phong triá»u Ä‘Ă¬nh)
+* **Palette màu chính:**
+  * **Imperial Gold (Hoàng Kim Thái Sư):** `#D4AF37` & `#F59E0B` (Tiêu đề, giáp trụ Thái sư, cờ Hào khí Đông A)
+  * **Royal Crimson (Đỏ Son Triều Trần):** `#8B0000` & `#991B1B` (Hịch Tướng Sĩ, chữ Sát Thát, máu chiến trường)
+  * **Navy Slate (Xanh Sông Lục Đầu & Thiên Trường):** `#1E293B` & `#0F172A` (Bối cảnh Vạn Kiếp, thủy chiến sông Hồng)
+  * **Jade Bronze (Đồng Cổ & Khuê Táo):** `#78350F` & `#B45309` (Binh Thư Yếu Lược, sắc phong triều đình)
 
 * **Typography:**
-  * **Title Main:** `Merriweather` Bold / `UTM Classique Saigon` (Letter spacing 0.08em, hiá»‡u á»©ng Ä‘Ăºc Ä‘á»“ng viá»n vĂ ng)
-  * **Quote Text:** `Playfair Display` Italic / `Georgia` (Ná»•i báº­t trĂªn ná»n má» glassmorphic)
-  * **Voice Subtitle:** `Be Vietnam Pro` (Font size 30px, viá»n chá»¯ Ä‘en 2px, ná»n dáº£i lá»¥a má»)
+  * **Title Main:** `Merriweather` Bold / `UTM Classique Saigon` (Letter spacing 0.08em, hiệu ứng đúc đồng viền vàng)
+  * **Quote Text:** `Playfair Display` Italic / `Georgia` (Nổi bật trên nền mờ glassmorphic)
+  * **Voice Subtitle:** `Be Vietnam Pro` (Font size 30px, viền chữ đen 2px, nền dải lụa mờ)
 
 ---
 
-## đŸ¬ 2. Báº¢NG PHĂ‚N Cáº¢NH CHI TIáº¾T 20 SCENES (SHOT-BY-SHOT BREAKDOWN)
+## 🎬 2. BẢNG PHÂN CẢNH CHI TIẾT 20 SCENES (SHOT-BY-SHOT BREAKDOWN)
 
-| Scene ID | Thá»i gian | Lá»i thuyáº¿t minh chi tiáº¿t (Voiceover Script) | MĂ´ táº£ HĂ¬nh áº£nh & Chuyá»ƒn Ä‘á»™ng Camera | Ă‚m thanh & Hiá»‡u á»©ng (SFX / BGM) | Prompt AI Sinh áº£nh (Midjourney / Flux) / Asset Specs |
+| Scene ID | Thời gian | Lời thuyết minh chi tiết (Voiceover Script) | Mô tả Hình ảnh & Chuyển động Camera | Âm thanh & Hiệu ứng (SFX / BGM) | Prompt AI Sinh ảnh (Midjourney / Flux) / Asset Specs |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Scene 01** | `00:00 - 00:20` | *"Trong chiá»u dĂ i hĂ ng ngĂ n nÄƒm dá»±ng nÆ°á»›c vĂ  giá»¯ nÆ°á»›c, lá»‹ch sá»­ Viá»‡t Nam Ä‘Ă£ sáº£n sinh ra nhiá»u vá»‹ tÆ°á»›ng tĂ i ba. NhÆ°ng vá»‹ tÆ°á»›ng duy nháº¥t Ä‘Æ°á»£c nhĂ¢n dĂ¢n suy tĂ´n thĂ nh 'ThĂ¡nh', Ä‘Æ°á»£c cáº£ tháº¿ giá»›i nghiĂªng mĂ¬nh kĂ­nh trá»ng nhÆ° má»™t thiĂªn tĂ i quĂ¢n sá»± kiá»‡t xuáº¥t â€“ chĂ­nh lĂ  Quá»‘c CĂ´ng Tiáº¿t Cháº¿ HÆ°ng Äáº¡o Äáº¡i VÆ°Æ¡ng Tráº§n Quá»‘c Tuáº¥n."* | TÆ°á»£ng Ä‘Ă i Äá»©c ThĂ¡nh Tráº§n Ä‘á»©ng kiĂªu hĂ£nh trĂªn Ä‘á»‰nh nĂºi Váº¡n Kiáº¿p, Ă¡nh náº¯ng hoĂ ng hĂ´n rá»±c rá»¡ chiáº¿u qua lĂ n mĂ¢y ngÅ© sáº¯c. | **SFX:** Tiáº¿ng chuĂ´ng Ä‘á»n linh thiĂªng ngĂ¢n dĂ i, tiáº¿ng giĂ³ thá»•i rĂ o ráº¡t. **BGM:** Nháº¡c giao hÆ°á»Ÿng cá»• phong hĂ o hĂ¹ng. | `Majestic statue of Tran Hung Dao on Van Kiep mountain peak at sunset, golden rays, sacred Vietnamese historical art --ar 16:9` |
-| **Scene 02** | `00:20 - 00:40` | *"Tráº§n Quá»‘c Tuáº¥n sinh nÄƒm 1228 táº¡i phá»§ ThiĂªn TrÆ°á»ng (Nam Äá»‹nh). Ă”ng lĂ  con trai thá»© cá»§a An Sinh VÆ°Æ¡ng Tráº§n Liá»…u. Ngay tá»« nhá», Ă´ng Ä‘Ă£ tá» ra thĂ´ng minh kiá»‡t xuáº¥t, thĂ´ng tuá»‡ vÄƒn vĂµ, Ä‘á»c rá»™ng sĂ¡ch thi thÆ° vĂ  cĂ³ hoĂ i hoáº¯c kinh bang táº¿ tháº¿."* | HĂ¬nh áº£nh thiáº¿u niĂªn Tráº§n Quá»‘c Tuáº¥n bĂªn trang sĂ¡ch cá»• vĂ  thanh kiáº¿m phong, bá»‘i cáº£nh vĂ¹ng Ä‘áº¥t ThiĂªn TrÆ°á»ng trĂ¹ phĂº. *(Hiá»ƒn thá»‹ Bio Card)* | **SFX:** Tiáº¿ng láº­t sĂ¡ch cá»•, tiáº¿ng tuá»‘t kiáº¿m nháº¹. **BGM:** Nháº¡c tráº§m tÄ©nh trĂ­ tuá»‡. | `Young Tran Quoc Tuan studying ancient military scrolls and practicing sword in Tran dynasty palace, peaceful lighting --ar 16:9` |
-| **Scene 03** | `00:40 - 01:00` | *"Tháº¿ ká»· 13, Ä‘áº¿ cháº¿ MĂ´ng - NguyĂªn trá»—i dáº­y nhÆ° má»™t cÆ¡n cuá»“ng phong Ä‘áº«m mĂ¡u. Tá»« tháº£o nguyĂªn Ă ÄĂ´ng Ä‘áº¿n táº­n TĂ¢y Ă‚u, vĂ³ ngá»±a MĂ´ng Cá»• Ä‘i Ä‘áº¿n Ä‘Ă¢u, cá» khĂ´ng má»c Ä‘Æ°á»£c Ä‘áº¿n Ä‘Ă³. Há» Ä‘áº­p tan hĂ ng trÄƒm vÆ°Æ¡ng quá»‘c vĂ  san pháº³ng kinh thĂ nh hĂ ng loáº¡t quá»‘c gia."* | Báº£n Ä‘á»“ Ä‘á»™ng thá»ƒ hiá»‡n sá»± giĂ£n ná»Ÿ tháº§n tá»‘c cá»§a Äáº¿ quá»‘c MĂ´ng Cá»• tá»« máº£ng lá»¥c Ä‘á»‹a Ă-Ă‚u Ä‘áº¿n sĂ¡t biĂªn giá»›i Äáº¡i Viá»‡t. | **SFX:** Tiáº¿ng vĂ³ ngá»±a giáº­m dá»“n dáº­p rá»n trá»i, tiáº¿ng lá»­a chĂ¡y bĂ¹ng bĂ¹ng. | `Animated map of Mongol Empire conquest sweeping across Eurasia towards Vietnam 13th century, fiery trail --ar 16:9` |
-| **Scene 04** | `01:00 - 01:20` | *"TrÆ°á»›c khi qua Ä‘á»i, thĂ¢n phá»¥ Tráº§n Liá»…u tá»«ng dáº·n Tráº§n Quá»‘c Tuáº¥n pháº£i chiáº¿m láº¥y thiĂªn háº¡ Ä‘á»ƒ tráº£ thĂ¹ nhĂ . NhÆ°ng Ä‘á»©ng trÆ°á»›c nguy cÆ¡ diá»‡t vong cá»§a dĂ¢n tá»™c, Tráº§n Quá»‘c Tuáº¥n Ä‘Ă£ Ä‘áº·t Ä‘áº¡i nghÄ©a quá»‘c gia lĂªn trĂªn háº¿t, chá»§ Ä‘á»™ng hĂ²a giáº£i má»‘i thĂ¹ gia tá»™c vá»›i Tráº§n Quang Kháº£i táº¡i báº¿n BĂ¬nh Than."* | Tráº§n Quá»‘c Tuáº¥n tá»± tay táº¯m rá»­a cho Tráº§n Quang Kháº£i trĂªn thuyá»n á»Ÿ báº¿n BĂ¬nh Than, xĂ³a bá» má»i hiá»m thĂ¹ vĂ¬ sá»± nghiá»‡p cá»©u quá»‘c. | **SFX:** Tiáº¿ng nÆ°á»›c cháº£y rĂ³c rĂ¡ch, tiáº¿ng ly chĂ©n va cháº¡m nháº¹. | `Emotional historical moment of Tran Hung Dao reconciling with Tran Quang Khai on boat at Binh Than wharf, brotherhood unity --ar 16:9` |
-| **Scene 05** | `01:20 - 01:40` | *"NÄƒm 1285, ThoĂ¡t Hoan dáº«n 50 váº¡n quĂ¢n NguyĂªn trĂ n sang xĂ¢m lÆ°á»£c. Vua Tráº§n ThĂ¡nh TĂ´ng lo láº¯ng há»i: 'Tháº¿ giáº·c máº¡nh nhÆ° váº­y, hay lĂ  ta táº¡m hĂ ng?'. Tráº§n Quá»‘c Tuáº¥n dá»©t khoĂ¡t tráº£ lá»i cĂ¢u nĂ³i báº¥t tá»­: 'Bá»‡ háº¡ chĂ©m Ä‘áº§u tĂ´i trÆ°á»›c rá»“i hĂ£y hĂ ng!'"* | Tháº» trĂ­ch dáº«n nghá»‡ thuáº­t (Quote Card) hiá»ƒn thá»‹ cĂ¢u nĂ³i báº¥t há»§ cá»§a Tráº§n Quá»‘c Tuáº¥n vá»›i hiá»‡u á»©ng chá»¯ máº¡ vĂ ng rá»±c chĂ¡y. | **SFX:** Tiáº¿ng gieo quáº» ná»• rá»n, tiáº¿ng tuá»‘t kiáº¿m kiĂªn cÆ°á»ng. **BGM:** Nháº¡c cao trĂ o cÄƒng tháº³ng. | `Epic quote card displaying Tran Hung Dao famous oath to King Tran Thanh Tong, dark crimson glassmorphism --ar 16:9` |
-| **Scene 06** | `01:40 - 02:00` | *"Äá»ƒ xá»‘c láº¡i tinh tháº§n quĂ¢n sÄ©, Ă´ng soáº¡n tĂ¡c pháº©m báº¥t há»§ 'Há»‹ch TÆ°á»›ng SÄ©' â€“ ngá»n lá»­a thiĂªu Ä‘á»‘t tĂ¢m há»“n má»i chiáº¿n binh Äáº¡i Viá»‡t. HĂ ng váº¡n quĂ¢n sÄ© cáº£m Ä‘á»™ng á»©a nÆ°á»›c máº¯t, Ä‘á»“ng lĂ²ng xÄƒm lĂªn cĂ¡nh tay hai chá»¯ 'SĂT THĂT' â€“ thá» thá»‘t giáº¿t giáº·c MĂ´ng Cá»• báº£o vá»‡ quĂª hÆ°Æ¡ng!"* | TÆ°á»›ng sÄ© nhĂ  Tráº§n giÆ¡ cao cĂ¡nh tay xÄƒm chá»¯ "SĂT THĂT" Ä‘á» tháº«m dÆ°á»›i ngá»n Ä‘uá»‘c rá»±c sĂ¡ng Ä‘Ăªm BĂ¬nh Than. | **SFX:** Tiáº¿ng hĂ² reo "SĂ¡t ThĂ¡t! SĂ¡t ThĂ¡t!" lĂ m rung chuyá»ƒn sĂ´ng nĂºi, tiáº¿ng ngá»n lá»­a chĂ¡y. | `Vietnamese soldiers raising arms inscribed with Sat That tattoos around campfire, intense patriotic determination --ar 16:9` |
-| **Scene 07** | `02:00 - 02:20` | *"KhĂ´ng chá»‰ lĂ  ngá»n Ä‘uá»‘c tinh tháº§n, Ă´ng cĂ²n biĂªn soáº¡n bá»™ 'Binh ThÆ° Yáº¿u LÆ°á»£c' â€“ cuá»‘n sĂ¡ch lĂ½ luáº­n quĂ¢n sá»± Ä‘áº§u tiĂªn cá»§a Viá»‡t Nam, dáº¡y tÆ°á»›ng sÄ© nghá»‡ thuáº­t 'Láº¥y Ä‘oáº£n binh tháº¯ng trÆ°á»ng binh', trĂ¡nh tháº¿ máº¡nh ban Ä‘áº§u cá»§a giáº·c Ä‘á»ƒ chá» thá»i cÆ¡ pháº£n cĂ´ng."* | Cuá»‘n Binh ThÆ° Yáº¿u LÆ°á»£c má»Ÿ ra vá»›i nhá»¯ng nĂ©t chá»¯ NĂ´m cá»•, xung quanh lĂ  sÆ¡ Ä‘á»“ dĂ n tráº­n quĂ¢n sá»± Äáº¡i Viá»‡t. | **SFX:** Tiáº¿ng viáº¿t cá» trĂªn giáº¥y giang, tiáº¿ng sĂ¡o trĂºc tráº§m hĂ¹ng. | `Ancient Vietnamese military manual Binh Thu Yeu Luoc manuscript with tactical battlefield diagrams --ar 16:9` |
-| **Scene 08** | `02:20 - 02:40` | *"TrÆ°á»›c sá»©c tiáº¿n cĂ´ng nhÆ° vÅ© bĂ£o cá»§a giáº·c, Tráº§n Quá»‘c Tuáº¥n thá»±c hiá»‡n cuá»™c rĂºt lui chiáº¿n lÆ°á»£c vÄ© Ä‘áº¡i tá»« ThÄƒng Long vá» Váº¡n Kiáº¿p vĂ  ThiĂªn TrÆ°á»ng. Ă”ng kiĂªn quyáº¿t thi hĂ nh chiáº¿n thuáº­t 'VÆ°á»n khĂ´ng nhĂ  trá»‘ng', triá»‡t háº¡ toĂ n bá»™ nguá»“n lÆ°Æ¡ng tháº£o cá»§a quĂ¢n NguyĂªn."* | Cáº£nh kinh thĂ nh ThÄƒng Long di táº£n hoang váº¯ng, quĂ¢n NguyĂªn MĂ´ng vĂ o thĂ nh trá»‘ng rá»—ng khĂ´ng má»™t háº¡t gáº¡o. | **SFX:** Tiáº¿ng quáº¡ kĂªu Ä‘Ăªm hoang váº¯ng, tiáº¿ng giĂ³ rĂ­t qua phá»‘ xĂ¡ khĂ´ng ngÆ°á»i. | `Evacuated empty citadel of Thang Long, abandoned streets under dark gray sky, scorched earth tactic --ar 16:9` |
-| **Scene 09** | `02:40 - 03:00` | *"Má»™t trong nhá»¯ng Ä‘iá»ƒm Ä‘áº·c sáº¯c nháº¥t cá»§a Tráº§n Quá»‘c Tuáº¥n lĂ  tÆ° duy nhĂ¬n ngÆ°á»i vĂ  trá»ng dá»¥ng nhĂ¢n tĂ i. Ă”ng khĂ´ng phĂ¢n biá»‡t nguá»“n gá»‘c xuáº¥t thĂ¢n, cáº¥t nháº¯c hĂ ng loáº¡t danh tÆ°á»›ng kiá»‡t xuáº¥t: Pháº¡m NgÅ© LĂ£o tá»« ngÆ°á»i Ä‘an sá»t, Yáº¿t KiĂªu, DĂ£ TÆ°á»£ng vĂ  thiáº¿u niĂªn anh hĂ¹ng Tráº§n Quá»‘c Toáº£n."* | ChĂ¢n dung táº­p há»£p cĂ¡c danh tÆ°á»›ng nhĂ  Tráº§n: Pháº¡m NgÅ© LĂ£o, Yáº¿t KiĂªu, DĂ£ TÆ°á»£ng vĂ  Tráº§n Quá»‘c Toáº£n tay bĂ³p nĂ¡t quáº£ cam. *(Hiá»ƒn thá»‹ Event Badge)* | **SFX:** Tiáº¿ng trá»‘ng tráº­n giá»¥c giĂ£, tiáº¿ng quáº£ cam bá»‹ bĂ³p vá»¡ chĂ¡t chĂºa. | `Collage of brilliant generals under Tran Hung Dao (Pham Ngu Lao, Yet Kieu, Da Tuong, Tran Quoc Toan) --ar 16:9` |
-| **Scene 10** | `03:00 - 03:20` | *"MĂ¹a hĂ¨ nÄƒm 1285, quĂ¢n giáº·c sa láº§y, Ä‘Ă³i khĂ¡t vĂ  kiá»‡t sá»©c vĂ¬ chÆ°á»›ng khĂ­. ThÆ°á»£ng phá»¥ Tiáº¿t cháº¿ phĂ¡t lá»‡nh tá»•ng pháº£n cĂ´ng tháº§n tá»‘c! CĂ¡c chiáº¿n tháº¯ng dá»“n dáº­p táº¡i TĂ¢y Káº¿t, HĂ m Tá»­, ChÆ°Æ¡ng DÆ°Æ¡ng Ä‘Ă£ Ä‘áº­p tan 50 váº¡n quĂ¢n NguyĂªn, buá»™c ThoĂ¡t Hoan chui á»‘ng Ä‘á»“ng thĂ¡o cháº¡y."* | QuĂ¢n Äáº¡i Viá»‡t tá»•ng pháº£n cĂ´ng trĂªn sĂ´ng Há»“ng, cá» nghÄ©a ná»• rá»±c trá»i, thuyá»n giáº·c NguyĂªn MĂ´ng bá»‘c chĂ¡y cuá»“n cuá»™n. | **SFX:** Tiáº¿ng trá»‘ng tráº­n ráº§m ráº­p, tiáº¿ng phĂ¡o ná»•, tiáº¿ng gÆ°Æ¡m giĂ¡o giao tranh dá»¯ dá»™i. | `Victorious counter-offensive of Dai Viet army at Chuong Duong gate, burning Mongol junks on Red River --ar 16:9` |
-| **Scene 11** | `03:20 - 03:40` | *"Ba nÄƒm sau, nÄƒm 1288, Há»‘t Táº¥t Liá»‡t pháº«n ná»™ phá»¥c thĂ¹, sai Ă” MĂ£ Nhi dáº«n 30 váº¡n quĂ¢n sang láº§n thá»© ba. Tráº§n Quá»‘c Tuáº¥n bĂ¬nh tháº£n tráº£ lá»i Vua Tráº§n NhĂ¢n TĂ´ng: 'NÄƒm nay Ä‘Ă¡nh giáº·c nhĂ n!'"* | Tráº§n Quá»‘c Tuáº¥n Ä‘á»©ng trĂªn thuyá»n chá»‰ phá»¥ng quan sĂ¡t Ä‘á»‹a hĂ¬nh sĂ´ng Báº¡ch Äáº±ng, ná»¥ cÆ°á»i tá»± tin vĂ  quyáº¿t Ä‘oĂ¡n. | **SFX:** Tiáº¿ng sĂ³ng nÆ°á»›c rĂ¬ ráº§m, tiáº¿ng sĂ¡o trĂºc vĂºt cao tá»± tin. | `Tran Hung Dao standing confident on flagship inspecting Bach Dang river battlefield, serene authority --ar 16:9` |
-| **Scene 12** | `03:40 - 04:00` | *"NgĂ y 09 thĂ¡ng 04 nÄƒm 1288, Ä‘áº¡i chiáº¿n Báº¡ch Äáº±ng bĂ¹ng ná»•. Dá»±a vĂ o bĂ£i cá»c nhá»n ngáº§m vĂ  thá»§y triá»u rĂºt, Tráº§n Quá»‘c Tuáº¥n tiĂªu diá»‡t gá»n 400 chiáº¿n thuyá»n giáº·c, báº¯t sá»‘ng ÄĂ´ Ä‘á»‘c Ă” MĂ£ Nhi vĂ  PhĂ n Náº¡p, Ä‘áº­p tan hoĂ n toĂ n dĂ£ tĂ¢m cá»§a Ä‘áº¿ quá»‘c MĂ´ng Cá»•."* | Tráº­n thá»§y chiáº¿n Báº¡ch Äáº±ng 1288 lĂªn cao trĂ o: Thuyá»n Ă” MĂ£ Nhi máº¯c káº¹t bĂ£i cá»c bá»‹ quĂ¢n Äáº¡i Viá»‡t bao vĂ¢y báº¯t sá»‘ng. *(Tranh cao trĂ o)* | **SFX:** Tiáº¿ng Ä‘Ă¢m va dá»¯ dá»™i cá»§a máº¡n thuyá»n, tiáº¿ng Ă” MĂ£ Nhi gĂ o khĂ³c hĂ ng Ä‘áº§u, tiáº¿ng reo hĂ² chiáº¿n tháº¯ng. | `Epic climax of Battle of Bach Dang 1288, Mongol commander O Ma Nhi captured on sinking warship --ar 16:9` |
-| **Scene 13** | `04:00 - 04:20` | *"Ba láº§n Ä‘áº¡i tháº¯ng NguyĂªn MĂ´ng â€“ Ä‘áº¿ cháº¿ hĂ¹ng máº¡nh nháº¥t tháº¿ giá»›i thá»i báº¥y giá» â€“ Ä‘Ă£ báº£o vá»‡ toĂ n váº¹n chá»§ quyá»n Äáº¡i Viá»‡t, Ä‘á»“ng thá»i ngÄƒn cháº·n bÆ°á»›c tiáº¿n cá»§a ká»µ binh MĂ´ng Cá»• xuá»‘ng toĂ n bá»™ khu vá»±c ÄĂ´ng Nam Ă."* | Tháº» thá»‘ng kĂª 3 láº§n chiáº¿n tháº¯ng (1258 ÄĂ´ng Bá»™ Äáº§u, 1285 TĂ¢y Káº¿t - ChÆ°Æ¡ng DÆ°Æ¡ng, 1288 Báº¡ch Äáº±ng) ná»•i báº­t trĂªn báº£n Ä‘á»“ ÄĂ´ng Nam Ă. *(Hiá»ƒn thá»‹ Stat Card)* | **SFX:** Tiáº¿ng trá»‘ng Ä‘á»“ng vang vá»ng linh thiĂªng. | `Statistical infographic badge showing 3 victories against Mongol Empire (1258, 1285, 1288) over map --ar 16:9` |
-| **Scene 14** | `04:20 - 04:40` | *"Khi Ä‘áº¥t nÆ°á»›c thanh bĂ¬nh, Ă´ng tá»« bá» má»i quyá»n lá»±c triá»u chĂ­nh, lui vá» á»Ÿ áº©n táº¡i phá»§ Váº¡n Kiáº¿p. Khi Vua Tráº§n Anh TĂ´ng Ä‘áº¿n thÄƒm vĂ  há»i káº¿ giá»¯ nÆ°á»›c, Ă´ng dáº·n láº¡i lá»i di ngĂ´n kinh Ä‘iá»ƒn: 'Khoan thÆ° sá»©c dĂ¢n Ä‘á»ƒ lĂ m káº¿ sĂ¢u gá»‘c bá»n gá»‘c, Ä‘Ă³ lĂ  thÆ°á»£ng sĂ¡ch giá»¯ nÆ°á»›c!'"* | Tháº» trĂ­ch dáº«n di ngĂ´n "Khoan thÆ° sá»©c dĂ¢n" vá»›i chá»¯ NĂ´m máº¡ vĂ ng trĂªn ná»n cáº£nh Ä‘á»n Váº¡n Kiáº¿p thanh bĂ¬nh. | **SFX:** Tiáº¿ng chim hĂ³t thanh bĂ¬nh, tiáº¿ng chuĂ´ng chĂ¹a thanh tá»‹nh. | `Calligraphy quote card with "Khoan thu suc dan" advice to King Tran Anh Tong, serene Van Kiep temple backdrop --ar 16:9` |
-| **Scene 15** | `04:40 - 05:00` | *"NgĂ y 20 thĂ¡ng 8 nÄƒm Canh TĂ½ (1300), HÆ°ng Äáº¡o Äáº¡i VÆ°Æ¡ng báº±ng an qua Ä‘á»i táº¡i Váº¡n Kiáº¿p, thá» 73 tuá»•i. Vua truy phong Ă´ng lĂ  ThĂ¡i sÆ° ThÆ°á»£ng phá»¥ Quá»‘c CĂ´ng Tiáº¿t Cháº¿ NhĂ¢n VÅ© HÆ°ng Äáº¡o Äáº¡i VÆ°Æ¡ng â€“ danh xÆ°ng cao quĂ½ nháº¥t triá»u Ä‘áº¡i."* | Tranh tÆ° liá»‡u vua tĂ´i vĂ  nhĂ¢n dĂ¢n Äáº¡i Viá»‡t tiáº¿c thÆ°Æ¡ng khĂ³c viáº¿ng Äá»©c ThĂ¡nh Tráº§n táº¡i phá»§ Váº¡n Kiáº¿p. | **SFX:** Tiáº¿ng nháº¡c nhá»‹ bi hĂ¹ng láº¯ng Ä‘á»ng, tiáº¿ng chuĂ´ng tang ngĂ¢n dĂ i. | `Mourning ceremony for Tran Hung Dao in 1300 AD, royal incense, deep respect and sorrow --ar 16:9` |
-| **Scene 16** | `05:00 - 05:20` | *"NgÆ°á»i dĂ¢n Viá»‡t Nam khĂ´ng chá»‰ nhá»› vá» Ă´ng nhÆ° má»™t vá»‹ tÆ°á»›ng tháº¯ng tráº­n, mĂ  cĂ²n tĂ´n thá» Ă´ng thĂ nh 'Äá»©c ThĂ¡nh Tráº§n'. HĂ ng ngĂ n ngĂ´i Ä‘á»n thá» Ă´ng má»c lĂªn kháº¯p má»i miá»n Ä‘áº¥t nÆ°á»›c, nhang khĂ³i nghi ngĂºt quanh nÄƒm."* | Cáº£nh ngÆ°á»i dĂ¢n dĂ¢ng hÆ°Æ¡ng kĂ­nh cáº©n táº¡i Äá»n Kiáº¿p Báº¡c (Háº£i DÆ°Æ¡ng) vĂ  Äá»n Tráº§n (Nam Äá»‹nh). | **SFX:** Tiáº¿ng chuĂ´ng Ä‘á»n ngĂ¢n vang, tiáº¿ng khĂ³i hÆ°Æ¡ng nghi ngĂºt. | `Modern pilgrims burning incense at Kiep Bac temple honoring Saint Tran Hung Dao, glowing lanterns --ar 16:9` |
-| **Scene 17** | `05:20 - 05:40` | *"CĂ¡c nhĂ  nghiĂªn cá»©u quĂ¢n sá»± tháº¿ giá»›i Ä‘Ă£ xáº¿p Tráº§n HÆ°ng Äáº¡o vĂ o danh sĂ¡ch nhá»¯ng vá»‹ tÆ°á»›ng vÄ© Ä‘áº¡i nháº¥t má»i thá»i Ä‘áº¡i â€“ vá»‹ tÆ°á»›ng Ä‘Ă£ 3 láº§n Ä‘Ă¡nh báº¡i Ä‘áº¿ cháº¿ hung hĂ£n nháº¥t lá»‹ch sá»­ nhĂ¢n loáº¡i."* | HĂ¬nh áº£nh tÆ° liá»‡u cĂ¡c cuá»‘n sĂ¡ch quĂ¢n sá»± quá»‘c táº¿ vĂ  bá»©c bá»©c tÆ°á»£ng Tráº§n HÆ°ng Äáº¡o Ä‘Æ°á»£c vinh danh trĂªn tháº¿ giá»›i. | **SFX:** Tiáº¿ng láº­t trang sĂ¡ch tri thá»©c, Ă¢m hÆ°á»Ÿng tá»± hĂ o dĂ¢n tá»™c. | `International military history book illustration featuring General Tran Hung Dao alongside world conquerors --ar 16:9` |
-| **Scene 18** | `05:40 - 06:00` | *"Sinh lĂ m TÆ°á»›ng giá»i, cháº¿t hĂ³a ThĂ¡nh linh! Táº¥m lĂ²ng trung trinh vĂ¬ nÆ°á»›c vĂ  thiĂªn tĂ i quĂ¢n sá»± cá»§a Tráº§n Quá»‘c Tuáº¥n lĂ  biá»ƒu tÆ°á»£ng vÄ©nh cá»­u cho báº£n lÄ©nh vĂ  trĂ­ tuá»‡ Viá»‡t Nam."* | TÆ°á»£ng Ä‘Ă i Tráº§n HÆ°ng Äáº¡o soi bĂ³ng xuá»‘ng dĂ²ng sĂ´ng Lá»¥c Äáº§u dÆ°á»›i Ă¡nh bĂ¬nh minh tÆ°Æ¡i sĂ¡ng. | **SFX:** Nháº¡c káº¿t cao trĂ o kiĂªu hĂ£nh vĂ  hĂ o hĂ¹ng. | `Glorious sunrise shot over Tran Hung Dao monument at Luc Dau river, radiant light --ar 16:9` |
-| **Scene 19** | `06:00 - 06:15` | *"KhĂ­ phĂ¡ch HĂ o khĂ­ ÄĂ´ng A vĂ  di sáº£n 'Khoan thÆ° sá»©c dĂ¢n' cá»§a Äá»©c ThĂ¡nh Tráº§n sáº½ mĂ£i mĂ£i lĂ  ngá»n Ä‘Ă¨n soi Ä‘Æ°á»ng cho muĂ´n Ä‘á»i con chĂ¡u mai sau."* | Tháº» ghi nháº­n di sáº£n lá»‹ch sá»­ (Historical Note): "DI Sáº¢N HĂ€O KHĂ ÄĂ”NG A Báº¤T Tá»¬". | **SFX:** Tiáº¿ng trá»‘ng Ä‘á»“ng ngĂ¢n dĂ i linh thiĂªng. | `Gold inscribed heritage note badge over Tran dynasty lotus pattern background --ar 16:9` |
-| **Scene 20** | `06:15 - 06:30` | *"HÆ°ng Äáº¡o Äáº¡i VÆ°Æ¡ng Tráº§n Quá»‘c Tuáº¥n â€“ ThiĂªn tĂ i quĂ¢n sá»± báº¥t tá»­ cá»§a dĂ¢n tá»™c Viá»‡t Nam."* | MĂ n hĂ¬nh thÆ°Æ¡ng hiá»‡u ChronoViet Outro Card káº¿t há»£p lá»i kĂªu gá»i Ä‘Äƒng kĂ½ vĂ  theo dĂµi cĂ¡c táº­p tiáº¿p theo. | **SFX:** Sound boom káº¿t thĂºc. **BGM:** Outro Track Fade Out. | `ChronoViet branding outro card with subscribe button and recommended videos layout --ar 16:9` |
+| **Scene 01** | `00:00 - 00:20` | *"Trong chiều dài hàng ngàn năm dựng nước và giữ nước, lịch sử Việt Nam đã sản sinh ra nhiều vị tướng tài ba. Nhưng vị tướng duy nhất được nhân dân suy tôn thành 'Thánh', được cả thế giới nghiêng mình kính trọng như một thiên tài quân sự kiệt xuất – chính là Quốc Công Tiết Chế Hưng Đạo Đại Vương Trần Quốc Tuấn."* | Tượng đài Đức Thánh Trần đứng kiêu hãnh trên đỉnh núi Vạn Kiếp, ánh nắng hoàng hôn rực rỡ chiếu qua làn mây ngũ sắc. | **SFX:** Tiếng chuông đền linh thiêng ngân dài, tiếng gió thổi rào rạt. **BGM:** Nhạc giao hưởng cổ phong hào hùng. | `Majestic statue of Tran Hung Dao on Van Kiep mountain peak at sunset, golden rays, sacred Vietnamese historical art --ar 16:9` |
+| **Scene 02** | `00:20 - 00:40` | *"Trần Quốc Tuấn sinh năm 1228 tại phủ Thiên Trường (Nam Định). Ông là con trai thứ của An Sinh Vương Trần Liễu. Ngay từ nhỏ, ông đã tỏ ra thông minh kiệt xuất, thông tuệ văn võ, đọc rộng sách thi thư và có hoài hoắc kinh bang tế thế."* | Hình ảnh thiếu niên Trần Quốc Tuấn bên trang sách cổ và thanh kiếm phong, bối cảnh vùng đất Thiên Trường trù phú. *(Hiển thị Bio Card)* | **SFX:** Tiếng lật sách cổ, tiếng tuốt kiếm nhẹ. **BGM:** Nhạc trầm tĩnh trí tuệ. | `Young Tran Quoc Tuan studying ancient military scrolls and practicing sword in Tran dynasty palace, peaceful lighting --ar 16:9` |
+| **Scene 03** | `00:40 - 01:00` | *"Thế kỷ 13, đế chế Mông - Nguyên trỗi dậy như một cơn cuồng phong đẫm máu. Từ thảo nguyên Á Đông đến tận Tây Âu, vó ngựa Mông Cổ đi đến đâu, cỏ không mọc được đến đó. Họ đập tan hàng trăm vương quốc và san phẳng kinh thành hàng loạt quốc gia."* | Bản đồ động thể hiện sự giãn nở thần tốc của Đế quốc Mông Cổ từ mảng lục địa Á-Âu đến sát biên giới Đại Việt. | **SFX:** Tiếng vó ngựa giậm dồn dập rền trời, tiếng lửa cháy bùng bùng. | `Animated map of Mongol Empire conquest sweeping across Eurasia towards Vietnam 13th century, fiery trail --ar 16:9` |
+| **Scene 04** | `01:00 - 01:20` | *"Trước khi qua đời, thân phụ Trần Liễu từng dặn Trần Quốc Tuấn phải chiếm lấy thiên hạ để trả thù nhà. Nhưng đứng trước nguy cơ diệt vong của dân tộc, Trần Quốc Tuấn đã đặt đại nghĩa quốc gia lên trên hết, chủ động hòa giải mối thù gia tộc với Trần Quang Khải tại bến Bình Than."* | Trần Quốc Tuấn tự tay tắm rửa cho Trần Quang Khải trên thuyền ở bến Bình Than, xóa bỏ mọi hiềm thù vì sự nghiệp cứu quốc. | **SFX:** Tiếng nước chảy róc rách, tiếng ly chén va chạm nhẹ. | `Emotional historical moment of Tran Hung Dao reconciling with Tran Quang Khai on boat at Binh Than wharf, brotherhood unity --ar 16:9` |
+| **Scene 05** | `01:20 - 01:40` | *"Năm 1285, Thoát Hoan dẫn 50 vạn quân Nguyên tràn sang xâm lược. Vua Trần Thánh Tông lo lắng hỏi: 'Thế giặc mạnh như vậy, hay là ta tạm hàng?'. Trần Quốc Tuấn dứt khoát trả lời câu nói bất tử: 'Bệ hạ chém đầu tôi trước rồi hãy hàng!'"* | Thẻ trích dẫn nghệ thuật (Quote Card) hiển thị câu nói bất hủ của Trần Quốc Tuấn với hiệu ứng chữ mạ vàng rực cháy. | **SFX:** Tiếng gieo quẻ nổ rền, tiếng tuốt kiếm kiên cường. **BGM:** Nhạc cao trào căng thẳng. | `Epic quote card displaying Tran Hung Dao famous oath to King Tran Thanh Tong, dark crimson glassmorphism --ar 16:9` |
+| **Scene 06** | `01:40 - 02:00` | *"Để xốc lại tinh thần quân sĩ, ông soạn tác phẩm bất hủ 'Hịch Tướng Sĩ' – ngọn lửa thiêu đốt tâm hồn mọi chiến binh Đại Việt. Hàng vạn quân sĩ cảm động ứa nước mắt, đồng lòng xăm lên cánh tay hai chữ 'SÁT THÁT' – thề thốt giết giặc Mông Cổ bảo vệ quê hương!"* | Tướng sĩ nhà Trần giơ cao cánh tay xăm chữ "SÁT THÁT" đỏ thẫm dưới ngọn đuốc rực sáng đêm Bình Than. | **SFX:** Tiếng hò reo "Sát Thát! Sát Thát!" làm rung chuyển sông núi, tiếng ngọn lửa cháy. | `Vietnamese soldiers raising arms inscribed with Sat That tattoos around campfire, intense patriotic determination --ar 16:9` |
+| **Scene 07** | `02:00 - 02:20` | *"Không chỉ là ngọn đuốc tinh thần, ông còn biên soạn bộ 'Binh Thư Yếu Lược' – cuốn sách lý luận quân sự đầu tiên của Việt Nam, dạy tướng sĩ nghệ thuật 'Lấy đoản binh thắng trường binh', tránh thế mạnh ban đầu của giặc để chờ thời cơ phản công."* | Cuốn Binh Thư Yếu Lược mở ra với những nét chữ Nôm cổ, xung quanh là sơ đồ dàn trận quân sự Đại Việt. | **SFX:** Tiếng viết cọ trên giấy giang, tiếng sáo trúc trầm hùng. | `Ancient Vietnamese military manual Binh Thu Yeu Luoc manuscript with tactical battlefield diagrams --ar 16:9` |
+| **Scene 08** | `02:20 - 02:40` | *"Trước sức tiến công như vũ bão của giặc, Trần Quốc Tuấn thực hiện cuộc rút lui chiến lược vĩ đại từ Thăng Long về Vạn Kiếp và Thiên Trường. Ông kiên quyết thi hành chiến thuật 'Vườn không nhà trống', triệt hạ toàn bộ nguồn lương thảo của quân Nguyên."* | Cảnh kinh thành Thăng Long di tản hoang vắng, quân Nguyên Mông vào thành trống rỗng không một hạt gạo. | **SFX:** Tiếng quạ kêu đêm hoang vắng, tiếng gió rít qua phố xá không người. | `Evacuated empty citadel of Thang Long, abandoned streets under dark gray sky, scorched earth tactic --ar 16:9` |
+| **Scene 09** | `02:40 - 03:00` | *"Một trong những điểm đặc sắc nhất của Trần Quốc Tuấn là tư duy nhìn người và trọng dụng nhân tài. Ông không phân biệt nguồn gốc xuất thân, cất nhắc hàng loạt danh tướng kiệt xuất: Phạm Ngũ Lão từ người đan sọt, Yết Kiêu, Dã Tượng và thiếu niên anh hùng Trần Quốc Toản."* | Chân dung tập hợp các danh tướng nhà Trần: Phạm Ngũ Lão, Yết Kiêu, Dã Tượng và Trần Quốc Toản tay bóp nát quả cam. *(Hiển thị Event Badge)* | **SFX:** Tiếng trống trận giục giã, tiếng quả cam bị bóp vỡ chát chúa. | `Collage of brilliant generals under Tran Hung Dao (Pham Ngu Lao, Yet Kieu, Da Tuong, Tran Quoc Toan) --ar 16:9` |
+| **Scene 10** | `03:00 - 03:20` | *"Mùa hè năm 1285, quân giặc sa lầy, đói khát và kiệt sức vì chướng khí. Thượng phụ Tiết chế phát lệnh tổng phản công thần tốc! Các chiến thắng dồn dập tại Tây Kết, Hàm Tử, Chương Dương đã đập tan 50 vạn quân Nguyên, buộc Thoát Hoan chui ống đồng tháo chạy."* | Quân Đại Việt tổng phản công trên sông Hồng, cờ nghĩa nổ rực trời, thuyền giặc Nguyên Mông bốc cháy cuồn cuộn. | **SFX:** Tiếng trống trận rầm rập, tiếng pháo nổ, tiếng gươm giáo giao tranh dữ dội. | `Victorious counter-offensive of Dai Viet army at Chuong Duong gate, burning Mongol junks on Red River --ar 16:9` |
+| **Scene 11** | `03:20 - 03:40` | *"Ba năm sau, năm 1288, Hốt Tất Liệt phẫn nộ phục thù, sai Ô Mã Nhi dẫn 30 vạn quân sang lần thứ ba. Trần Quốc Tuấn bình thản trả lời Vua Trần Nhân Tông: 'Năm nay đánh giặc nhàn!'"* | Trần Quốc Tuấn đứng trên thuyền chỉ phụng quan sát địa hình sông Bạch Đằng, nụ cười tự tin và quyết đoán. | **SFX:** Tiếng sóng nước rì rầm, tiếng sáo trúc vút cao tự tin. | `Tran Hung Dao standing confident on flagship inspecting Bach Dang river battlefield, serene authority --ar 16:9` |
+| **Scene 12** | `03:40 - 04:00` | *"Ngày 09 tháng 04 năm 1288, đại chiến Bạch Đằng bùng nổ. Dựa vào bãi cọc nhọn ngầm và thủy triều rút, Trần Quốc Tuấn tiêu diệt gọn 400 chiến thuyền giặc, bắt sống Đô đốc Ô Mã Nhi và Phàn Nạp, đập tan hoàn toàn dã tâm của đế quốc Mông Cổ."* | Trận thủy chiến Bạch Đằng 1288 lên cao trào: Thuyền Ô Mã Nhi mắc kẹt bãi cọc bị quân Đại Việt bao vây bắt sống. *(Tranh cao trào)* | **SFX:** Tiếng đâm va dữ dội của mạn thuyền, tiếng Ô Mã Nhi gào khóc hàng đầu, tiếng reo hò chiến thắng. | `Epic climax of Battle of Bach Dang 1288, Mongol commander O Ma Nhi captured on sinking warship --ar 16:9` |
+| **Scene 13** | `04:00 - 04:20` | *"Ba lần đại thắng Nguyên Mông – đế chế hùng mạnh nhất thế giới thời bấy giờ – đã bảo vệ toàn vẹn chủ quyền Đại Việt, đồng thời ngăn chặn bước tiến của kỵ binh Mông Cổ xuống toàn bộ khu vực Đông Nam Á."* | Thẻ thống kê 3 lần chiến thắng (1258 Đông Bộ Đầu, 1285 Tây Kết - Chương Dương, 1288 Bạch Đằng) nổi bật trên bản đồ Đông Nam Á. *(Hiển thị Stat Card)* | **SFX:** Tiếng trống đồng vang vọng linh thiêng. | `Statistical infographic badge showing 3 victories against Mongol Empire (1258, 1285, 1288) over map --ar 16:9` |
+| **Scene 14** | `04:20 - 04:40` | *"Khi đất nước thanh bình, ông từ bỏ mọi quyền lực triều chính, lui về ở ẩn tại phủ Vạn Kiếp. Khi Vua Trần Anh Tông đến thăm và hỏi kế giữ nước, ông dặn lại lời di ngôn kinh điển: 'Khoan thư sức dân để làm kế sâu gốc bền gốc, đó là thượng sách giữ nước!'"* | Thẻ trích dẫn di ngôn "Khoan thư sức dân" với chữ Nôm mạ vàng trên nền cảnh đền Vạn Kiếp thanh bình. | **SFX:** Tiếng chim hót thanh bình, tiếng chuông chùa thanh tịnh. | `Calligraphy quote card with "Khoan thu suc dan" advice to King Tran Anh Tong, serene Van Kiep temple backdrop --ar 16:9` |
+| **Scene 15** | `04:40 - 05:00` | *"Ngày 20 tháng 8 năm Canh Tý (1300), Hưng Đạo Đại Vương bằng an qua đời tại Vạn Kiếp, thọ 73 tuổi. Vua truy phong ông là Thái sư Thượng phụ Quốc Công Tiết Chế Nhân Vũ Hưng Đạo Đại Vương – danh xưng cao quý nhất triều đại."* | Tranh tư liệu vua tôi và nhân dân Đại Việt tiếc thương khóc viếng Đức Thánh Trần tại phủ Vạn Kiếp. | **SFX:** Tiếng nhạc nhị bi hùng lắng đọng, tiếng chuông tang ngân dài. | `Mourning ceremony for Tran Hung Dao in 1300 AD, royal incense, deep respect and sorrow --ar 16:9` |
+| **Scene 16** | `05:00 - 05:20` | *"Người dân Việt Nam không chỉ nhớ về ông như một vị tướng thắng trận, mà còn tôn thờ ông thành 'Đức Thánh Trần'. Hàng ngàn ngôi đền thờ ông mọc lên khắp mọi miền đất nước, nhang khói nghi ngút quanh năm."* | Cảnh người dân dâng hương kính cẩn tại Đền Kiếp Bạc (Hải Dương) và Đền Trần (Nam Định). | **SFX:** Tiếng chuông đền ngân vang, tiếng khói hương nghi ngút. | `Modern pilgrims burning incense at Kiep Bac temple honoring Saint Tran Hung Dao, glowing lanterns --ar 16:9` |
+| **Scene 17** | `05:20 - 05:40` | *"Các nhà nghiên cứu quân sự thế giới đã xếp Trần Hưng Đạo vào danh sách những vị tướng vĩ đại nhất mọi thời đại – vị tướng đã 3 lần đánh bại đế chế hung hãn nhất lịch sử nhân loại."* | Hình ảnh tư liệu các cuốn sách quân sự quốc tế và bức bức tượng Trần Hưng Đạo được vinh danh trên thế giới. | **SFX:** Tiếng lật trang sách tri thức, âm hưởng tự hào dân tộc. | `International military history book illustration featuring General Tran Hung Dao alongside world conquerors --ar 16:9` |
+| **Scene 18** | `05:40 - 06:00` | *"Sinh làm Tướng giỏi, chết hóa Thánh linh! Tấm lòng trung trinh vì nước và thiên tài quân sự của Trần Quốc Tuấn là biểu tượng vĩnh cửu cho bản lĩnh và trí tuệ Việt Nam."* | Tượng đài Trần Hưng Đạo soi bóng xuống dòng sông Lục Đầu dưới ánh bình minh tươi sáng. | **SFX:** Nhạc kết cao trào kiêu hãnh và hào hùng. | `Glorious sunrise shot over Tran Hung Dao monument at Luc Dau river, radiant light --ar 16:9` |
+| **Scene 19** | `06:00 - 06:15` | *"Khí phách Hào khí Đông A và di sản 'Khoan thư sức dân' của Đức Thánh Trần sẽ mãi mãi là ngọn đèn soi đường cho muôn đời con cháu mai sau."* | Thẻ ghi nhận di sản lịch sử (Historical Note): "DI SẢN HÀO KHÍ ĐÔNG A BẤT TỬ". | **SFX:** Tiếng trống đồng ngân dài linh thiêng. | `Gold inscribed heritage note badge over Tran dynasty lotus pattern background --ar 16:9` |
+| **Scene 20** | `06:15 - 06:30` | *"Hưng Đạo Đại Vương Trần Quốc Tuấn – Thiên tài quân sự bất tử của dân tộc Việt Nam."* | Màn hình thương hiệu ChronoViet Outro Card kết hợp lời kêu gọi đăng ký và theo dõi các tập tiếp theo. | **SFX:** Sound boom kết thúc. **BGM:** Outro Track Fade Out. | `ChronoViet branding outro card with subscribe button and recommended videos layout --ar 16:9` |
 
 ---
 
-## đŸ› ï¸ 3. TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`biographyTranHungDaoTimeline.json`)
+## 🛠️ 3. TEMPLATE DỮ LIỆU JSON CHO ENGINE REMOTION (`biographyTranHungDaoTimeline.json`)
 
 > **Chuẩn:** Schema v4.1 — tương thích 100% với `ChronoVideoSchema` tại [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts).
 
 ```json
 {
-  "title": "HÆ¯NG Äáº O Äáº I VÆ¯Æ NG TRáº¦N QUá»C TUáº¤N â€“ HUYá»€N THOáº I BĂCH CHIáº¾N BĂCH THáº®NG",
-  "subtitle": "ChronoViet Deep Research Series â€¢ Phim TĂ i Liá»‡u Kháº£o Cá»©u Tráº§n Quá»‘c Tuáº¥n (1228 - 1300)",
+  "title": "HƯNG ĐẠO ĐẠI VƯƠNG TRẦN QUỐC TUẤN – HUYỀN THOẠI BÁCH CHIẾN BÁCH THẮNG",
+  "subtitle": "ChronoViet Deep Research Series • Phim Tài Liệu Khảo Cứu Trần Quốc Tuấn (1228 - 1300)",
   "videoType": "BIOGRAPHY",
   "templateId": "HISTORICAL_DOCUMENTARY",
   "aspectRatio": "16:9",
@@ -80,13 +80,13 @@
       "id": "scene_00_intro",
       "startTime": 0,
       "endTime": 15,
-      "text": "ChronoViet Documentary Series â€” Phim tĂ i liá»‡u Tráº§n HÆ°ng Äáº¡o.",
+      "text": "ChronoViet Documentary Series — Phim tài liệu Trần Hưng Đạo.",
       "layoutMode": "ARTICLE_UI",
       "overlayType": "ARTICLE_INTRO",
       "transition": "FADE_TO_BLACK",
       "hideHeader": true,
       "overlayData": {
-        "title": "HÆ¯NG Äáº O Äáº I VÆ¯Æ NG TRáº¦N QUá»C TUáº¤N",
+        "title": "HƯNG ĐẠO ĐẠI VƯƠNG TRẦN QUỐC TUẤN",
         "author": "ChronoViet Research Team"
       }
     },
@@ -94,36 +94,36 @@
       "id": "scene_01_title",
       "startTime": 15,
       "endTime": 35,
-      "text": "Vá»‹ tÆ°á»›ng duy nháº¥t Ä‘Æ°á»£c nhĂ¢n dĂ¢n suy tĂ´n thĂ nh 'ThĂ¡nh', Ä‘Æ°á»£c cáº£ tháº¿ giá»›i nghiĂªng mĂ¬nh kĂ­nh trá»ng nhÆ° má»™t thiĂªn tĂ i quĂ¢n sá»± kiá»‡t xuáº¥t â€“ chĂ­nh lĂ  Quá»‘c CĂ´ng Tiáº¿t Cháº¿ HÆ°ng Äáº¡o Äáº¡i VÆ°Æ¡ng Tráº§n Quá»‘c Tuáº¥n.",
+      "text": "Vị tướng duy nhất được nhân dân suy tôn thành 'Thánh', được cả thế giới nghiêng mình kính trọng như một thiên tài quân sự kiệt xuất – chính là Quốc Công Tiết Chế Hưng Đạo Đại Vương Trần Quốc Tuấn.",
       "assetUrl": "assets/biography/tran-hung-dao/scene_01_van_kiep_statue.jpg",
       "layoutMode": "TITLE_CARD",
       "effect": "KEN_BURNS_ZOOM_IN",
       "filterStyle": "HISTORICAL",
       "transition": "FADE_TO_BLACK",
       "overlayData": {
-        "chapterNumber": "PHáº¦N I",
-        "title": "TRáº¦N HÆ¯NG Äáº O",
-        "subtitle": "Quá»‘c CĂ´ng Tiáº¿t Cháº¿ â€¢ Vá»‹ Äáº¡i NguyĂªn SoĂ¡i 3 Láº§n ÄĂ¡nh PhĂ¡ QuĂ¢n NguyĂªn MĂ´ng"
+        "chapterNumber": "PHẦN I",
+        "title": "TRẦN HƯNG ĐẠO",
+        "subtitle": "Quốc Công Tiết Chế • Vị Đại Nguyên Soái 3 Lần Đánh Phá Quân Nguyên Mông"
       }
     },
     {
       "id": "scene_02_stat",
       "startTime": 35,
       "endTime": 55,
-      "text": "Tráº§n Quá»‘c Tuáº¥n sinh nÄƒm 1228 táº¡i phá»§ ThiĂªn TrÆ°á»ng (Nam Äá»‹nh), con trai An Sinh VÆ°Æ¡ng Tráº§n Liá»…u.",
+      "text": "Trần Quốc Tuấn sinh năm 1228 tại phủ Thiên Trường (Nam Định), con trai An Sinh Vương Trần Liễu.",
       "assetUrl": "assets/biography/tran-hung-dao/scene_02_young_portrait.jpg",
       "layoutMode": "STAT_CARD",
       "effect": "KEN_BURNS_ZOOM_IN",
       "filterStyle": "HISTORICAL",
       "transition": "SLIDE_LEFT",
       "overlayData": {
-        "title": "Há»’ SÆ  THĂ‚N THáº¾ & NIĂN Äáº I",
-        "name": "Tráº§n Quá»‘c Tuáº¥n (1228 - 1300)",
-        "role": "Quá»‘c CĂ´ng Tiáº¿t Cháº¿ â€¢ Váº¡n Kiáº¿p ChĂ­ Linh",
+        "title": "HỒ SƠ THÂN THẾ & NIÊN ĐẠI",
+        "name": "Trần Quốc Tuấn (1228 - 1300)",
+        "role": "Quốc Công Tiết Chế • Vạn Kiếp Chí Linh",
         "statItems": [
-          { "label": "ThĂ¢n phá»¥", "value": "An Sinh VÆ°Æ¡ng Tráº§n Liá»…u", "color": "#D4AF37" },
-          { "label": "Chinh chiáº¿n tháº¯ng lá»£i", "value": "3/3 Láº§n tháº¯ng NguyĂªn MĂ´ng", "color": "#2563eb" },
-          { "label": "TĂ¡c pháº©m quĂ¢n sá»±", "value": "Há»‹ch TÆ°á»›ng SÄ© & Binh ThÆ° Yáº¿u LÆ°á»£c", "color": "#8B0000" }
+          { "label": "Thân phụ", "value": "An Sinh Vương Trần Liễu", "color": "#D4AF37" },
+          { "label": "Chinh chiến thắng lợi", "value": "3/3 Lần thắng Nguyên Mông", "color": "#2563eb" },
+          { "label": "Tác phẩm quân sự", "value": "Hịch Tướng Sĩ & Binh Thư Yếu Lược", "color": "#8B0000" }
         ]
       }
     },
@@ -131,29 +131,29 @@
       "id": "scene_05_quote",
       "startTime": 80,
       "endTime": 100,
-      "text": "NÄƒm 1285, ThoĂ¡t Hoan dáº«n 50 váº¡n quĂ¢n NguyĂªn trĂ n sang. Tráº§n Quá»‘c Tuáº¥n tráº£ lá»i cĂ¢u nĂ³i báº¥t tá»­...",
+      "text": "Năm 1285, Thoát Hoan dẫn 50 vạn quân Nguyên tràn sang. Trần Quốc Tuấn trả lời câu nói bất tử...",
       "layoutMode": "QUOTE_CANVAS",
       "overlayType": "QUOTE",
       "transition": "FADE_TO_BLACK",
       "overlayData": {
-        "quoteText": "Bá»‡ háº¡ chĂ©m Ä‘áº§u tĂ´i trÆ°á»›c rá»“i hĂ£y hĂ ng!",
-        "author": "HÆ°ng Äáº¡o Äáº¡i VÆ°Æ¡ng Tráº§n Quá»‘c Tuáº¥n",
-        "subtitle": "Tráº£ lá»i Vua Tráº§n ThĂ¡nh TĂ´ng nÄƒm 1285"
+        "quoteText": "Bệ hạ chém đầu tôi trước rồi hãy hàng!",
+        "author": "Hưng Đạo Đại Vương Trần Quốc Tuấn",
+        "subtitle": "Trả lời Vua Trần Thánh Tông năm 1285"
       }
     },
     {
       "id": "scene_20_outro",
       "startTime": 370,
       "endTime": 390,
-      "text": "HÆ°ng Äáº¡o Äáº¡i VÆ°Æ¡ng Tráº§n Quá»‘c Tuáº¥n â€“ ThiĂªn tĂ i quĂ¢n sá»± báº¥t tá»­ cá»§a dĂ¢n tá»™c Viá»‡t Nam.",
+      "text": "Hưng Đạo Đại Vương Trần Quốc Tuấn – Thiên tài quân sự bất tử của dân tộc Việt Nam.",
       "layoutMode": "OUTRO_CARD",
       "overlayType": "OUTRO_CARD",
       "transition": "FADE_TO_BLACK",
       "overlayData": {
-        "title": "HÆ¯NG Äáº O Äáº I VÆ¯Æ NG TRáº¦N QUá»C TUáº¤N",
-        "quoteText": "Khoan thÆ° sá»©c dĂ¢n Ä‘á»ƒ lĂ m káº¿ sĂ¢u gá»‘c bá»n gá»‘c, Ä‘Ă³ lĂ  thÆ°á»£ng sĂ¡ch giá»¯ nÆ°á»›c.",
-        "ctaText": "CHRONOVIET DOCUMENTARY SERIES â€¢ CHUYĂN Äá»€ Lá»CH Sá»¬ CHUYĂN SĂ‚U",
-        "bulletPoints": ["Váº N KIáº¾P AN NAM", "THIĂN TĂ€I QUĂ‚N Sá»°", "DI Sáº¢N TRáº¦N TRIá»€U"]
+        "title": "HƯNG ĐẠO ĐẠI VƯƠNG TRẦN QUỐC TUẤN",
+        "quoteText": "Khoan thư sức dân để làm kế sâu gốc bền gốc, đó là thượng sách giữ nước.",
+        "ctaText": "CHRONOVIET DOCUMENTARY SERIES • CHUYÊN ĐỀ LỊCH SỬ CHUYÊN SÂU",
+        "bulletPoints": ["VẠN KIẾP AN NAM", "THIÊN TÀI QUÂN SỰ", "DI SẢN TRẦN TRIỀU"]
       }
     }
   ]

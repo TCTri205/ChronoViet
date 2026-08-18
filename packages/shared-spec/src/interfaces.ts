@@ -17,6 +17,7 @@ import {
   AliasType,
   MediaAssetRegistryEntry,
   getCanonicalEntityIdPrefix,
+  OrchestratorStatus,
 } from './schema.js';
 
 export type {
@@ -28,6 +29,16 @@ export type {
   AliasType,
 };
 export { getCanonicalEntityIdPrefix };
+
+// ============================================================================
+// Hierarchical Chunking Bounds (SSOT)
+// ============================================================================
+export const CHUNK_PARENT_MIN_WORDS = 2000;
+export const CHUNK_PARENT_MAX_WORDS = 3000;
+export const CHUNK_CHILD_MIN_WORDS = 300;
+export const CHUNK_CHILD_MAX_WORDS = 500;
+export const CHUNK_CHILD_TARGET_WORDS = 400;
+export const CHUNK_CHILD_OVERLAP_WORDS = 40;
 
 
 // ============================================================================
@@ -109,7 +120,7 @@ export interface AgentChapter {
 export interface OrchestratorState {
   projectId: string;
   currentStep: number;
-  status: 'INIT' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'ESCALATED';
+  status: OrchestratorStatus;
   chapters: AgentChapter[];
   runningNarrativeState: string;
   generatedSchema?: ChronoVideoProps;

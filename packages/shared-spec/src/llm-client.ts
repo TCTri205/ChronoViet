@@ -175,7 +175,6 @@ export function getActiveRemoteLLMConfig(): ActiveRemoteLLMConfig {
   } else {
     apiKey = (
       envConfig.AGNES_API_KEY ||
-      envConfig.REMOTE_LLM_API_KEY ||
       envConfig.OPENROUTER_API_KEY ||
       envConfig.OPENAI_API_KEY ||
       ''
@@ -716,24 +715,102 @@ async function* streamSseChunks(body: ReadableStream<Uint8Array>): AsyncGenerato
   const decoder = new TextDecoder();
   let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith(':') || trimmed === 'data: [DONE]') continue;
-      if (trimmed.startsWith('data: ')) {
-        try {
-          const parsed = JSON.parse(trimmed.slice(6));
-          const content = parsed.choices?.[0]?.delta?.content;
-          if (content) yield content;
-        } catch {}
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith(':') || trimmed === 'data: [DONE]') continue;
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const parsed = JSON.parse(trimmed.slice(6));
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) yield content;
+          } catch {}
+        }
       }
     }
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {}
+  }
+}
+
+/**
+ * Internal helper to stream tokens from an individual inference target.
+ */
+async function* streamTargetCompletion(
+  target: InferenceTarget,
+  messages: ChatMessage[],
+  options: LLMCompletionOptions
+): AsyncGenerator<string> {
+  const temperature = options.temperature ?? 0.2;
+  const maxTokens = options.max_tokens ?? (target.type === 'local' ? 2048 : 8192);
+  const timeoutMs = options.timeoutMs ?? (target.type === 'local' ? 45000 : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
+
+  if (target.type === 'local') {
+    const endpoint = `${target.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: target.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+        stream: true,
+        ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+      cache: 'no-store',
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Local llama-server HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    recordCircuitSuccess();
+    yield* streamSseChunks(response.body);
+  } else {
+    const remoteEndpoint = target.baseUrl.includes('chat/completions')
+      ? target.baseUrl
+      : `${target.baseUrl.replace(/\/$/, '')}/chat/completions`;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${target.apiKey}`,
+    };
+
+    const response = await fetch(remoteEndpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: target.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+        stream: true,
+        ...(options.response_format ? { response_format: options.response_format } : {}),
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+      cache: 'no-store',
+    });
+
+    if (!response.ok || !response.body) {
+      const errText = typeof response.text === 'function' ? await response.text().catch(() => '') : '';
+      const err = new Error(`Remote Cloud LLM HTTP ${response.status} (${target.provider}): ${errText}`);
+      (err as any).status = response.status;
+      throw err;
+    }
+
+    recordCloudCircuitSuccess();
+    yield* streamSseChunks(response.body);
   }
 }
 
@@ -746,64 +823,136 @@ export async function* generateLLMCompletionStream(
   const maxTokens = options.max_tokens ?? 2048;
   const timeoutMs = options.timeoutMs ?? 45000;
 
-  // 1. Attempt local streaming via llama-server
+  // Eval Integrity: strict mode requires the local LLM server (no cloud fallback)
+  if (envConfig.EVAL_STRICT && !envConfig.USE_LOCAL_LLM) {
+    throw new Error('[EVAL_STRICT] USE_LOCAL_LLM must be true during evaluation');
+  }
+
+  // 1. Hybrid Round-Robin Streaming Mode
+  if (
+    envConfig.INFERENCE_ROUTING_MODE === 'hybrid_round_robin' &&
+    !envConfig.EVAL_STRICT
+  ) {
+    const targets = hybridInferenceDispatcher.getInferenceTargets('llm');
+    if (targets.length > 0) {
+      const maxAttempts = Math.max(1, targets.length);
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const target = hybridInferenceDispatcher.getNextTarget('llm');
+        if (!target) break;
+
+        try {
+          yield* streamTargetCompletion(target, messages, options);
+          hybridInferenceDispatcher.reportTargetSuccess(target);
+          return;
+        } catch (err: any) {
+          hybridInferenceDispatcher.reportTargetFailure(target, err);
+          log.warn('llm.stream_hybrid_attempt_failed', `Hybrid stream target [${target.id}] failed on attempt ${attempt}/${maxAttempts}: ${err.message}`);
+        }
+      }
+    }
+  }
+
+  // 2. Primary Local Streaming via llama-server with Circuit Breaker
   if (envConfig.USE_LOCAL_LLM) {
-    try {
-      const response = await fetch(`${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: localModel,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          stream: true,
-          ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
-        }),
-        signal: AbortSignal.timeout(timeoutMs),
-        cache: 'no-store',
-      });
+    const circuitAction = checkCircuitState();
+    if (circuitAction !== 'FAST_FAIL') {
+      try {
+        const response = await fetch(`${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: localModel,
+            messages,
+            temperature,
+            max_tokens: maxTokens,
+            stream: true,
+            ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
+          }),
+          signal: AbortSignal.timeout(timeoutMs),
+          cache: 'no-store',
+        });
 
-      if (response.ok && response.body) {
-        yield* streamSseChunks(response.body);
-        return;
+        if (response.ok && response.body) {
+          recordCircuitSuccess();
+          yield* streamSseChunks(response.body);
+          return;
+        } else {
+          throw new Error(`Local llama-server HTTP ${response.status}: ${response.statusText}`);
+        }
+      } catch (err: any) {
+        recordCircuitFailure(err);
+        log.warn('llm.stream_local_failed', `Local streaming failed: ${err.message}`);
+        if (envConfig.EVAL_STRICT && !envConfig.EVAL_ALLOW_CLOUD_FALLBACK) {
+          throw new Error(`[EVAL_STRICT] Local LLM stream failed during evaluation: ${err.message}`);
+        }
       }
-    } catch (err: any) {
-      log.warn('llm.stream_local_failed', `Local streaming failed: ${err.message}`);
     }
   }
 
-  // 2. Cloud Fallback (Remote OpenAI-compatible / OpenRouter / Agnes)
-  const remoteCfg = getActiveRemoteLLMConfig();
-  if (envConfig.ENABLE_CLOUD_FALLBACK && isValidApiKey(remoteCfg.apiKey)) {
-    try {
-      const response = await fetch(`${remoteCfg.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${remoteCfg.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: remoteCfg.model,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          stream: true,
-        }),
-        signal: AbortSignal.timeout(timeoutMs),
-        cache: 'no-store',
-      });
+  // 3. Cloud Fallback with Key Rotation & Circuit Breaker
+  if (envConfig.ENABLE_CLOUD_FALLBACK && !envConfig.EVAL_STRICT) {
+    const remoteCfg = getActiveRemoteLLMConfig();
+    const providerKey = hasAvailableApiKeys('agnes')
+      ? 'agnes'
+      : hasAvailableApiKeys('openrouter')
+        ? 'openrouter'
+        : hasAvailableApiKeys('openai')
+          ? 'openai'
+          : 'agnes';
+    const rotator = getApiKeyRotator(providerKey);
+    const keyPoolSize = rotator.totalKeysCount;
 
-      if (response.ok && response.body) {
-        yield* streamSseChunks(response.body);
-        return;
+    if (isValidApiKey(remoteCfg.apiKey) || keyPoolSize > 0) {
+      const cloudAction = checkCloudCircuitState();
+      if (cloudAction !== 'FAST_FAIL') {
+        const effectiveTimeout = options.timeoutMs ?? envConfig.REMOTE_FALLBACK_TIMEOUT_MS ?? 120000;
+        const maxAttempts = Math.max(2, keyPoolSize);
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          const activeKey = rotator.getNextKey() || remoteCfg.apiKey;
+          try {
+            const remoteEndpoint = `${remoteCfg.baseUrl}/chat/completions`;
+            const response = await fetch(remoteEndpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${activeKey}`,
+              },
+              body: JSON.stringify({
+                model: remoteCfg.model,
+                messages,
+                temperature,
+                max_tokens: maxTokens,
+                stream: true,
+              }),
+              signal: AbortSignal.timeout(effectiveTimeout),
+              cache: 'no-store',
+            });
+
+            if (!response.ok || !response.body) {
+              const errBody = typeof response.text === 'function' ? await response.text().catch(() => '') : '';
+              const error = new Error(`Cloud LLM (${remoteCfg.baseUrl}) HTTP ${response.status}: ${response.statusText} ${errBody}`.trim());
+              (error as any).status = response.status;
+              throw error;
+            }
+
+            rotator.reportSuccess(activeKey);
+            recordCloudCircuitSuccess();
+            yield* streamSseChunks(response.body);
+            return;
+          } catch (attemptErr: any) {
+            rotator.reportFailure(activeKey, attemptErr);
+            log.warn('llm.stream_cloud_retry', `Cloud stream attempt ${attempt}/${maxAttempts} failed with key [${maskApiKey(activeKey)}]: ${attemptErr.message}`);
+            if (attempt === maxAttempts) {
+              recordCloudCircuitFailure(attemptErr);
+            }
+          }
+        }
       }
-    } catch (err: any) {
-      log.warn('llm.stream_cloud_failed', `Cloud streaming (${remoteCfg.baseUrl}) failed: ${err.message}`);
     }
   }
 
-  // 3. Fallback to unary completion if streams fail
+  // 4. Fallback to unary completion if streams fail
   const fallbackRes = await generateLLMCompletion(messages, options);
   yield fallbackRes.content;
 }
@@ -813,12 +962,44 @@ export async function callLlm(params: {
   temperature?: number;
   maxTokens?: number;
   responseFormat?: string;
+  timeoutMs?: number;
 }): Promise<LLMCompletionResponse> {
   return generateLLMCompletion(params.messages, {
     temperature: params.temperature,
     max_tokens: params.maxTokens,
+    timeoutMs: params.timeoutMs,
+    response_format: params.responseFormat ? { type: params.responseFormat } : undefined,
   });
 }
 
+/**
+ * Safely extracts and cleans JSON content from raw LLM output strings,
+ * handling markdown code fences (```json ... ``` or ``` ... ```) and leading/trailing chatter.
+ */
+export function extractJsonFromText(rawText: string): string {
+  if (!rawText) return '{}';
+  let cleaned = rawText.trim();
 
+  // 1. Unwrap markdown code fence if present
+  const match = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (match?.[1]) {
+    cleaned = match[1].trim();
+  }
 
+  // 2. Slice from first opening { or [ to last closing } or ]
+  const first = Math.min(...[cleaned.indexOf('{'), cleaned.indexOf('[')].filter((i) => i >= 0));
+  const last = Math.max(cleaned.lastIndexOf('}'), cleaned.lastIndexOf(']'));
+  if (first >= 0 && last > first) {
+    cleaned = cleaned.slice(first, last + 1).trim();
+  }
+
+  return cleaned;
+}
+
+/**
+ * Parses raw text from LLM completion into JSON with automatic codeblock stripping and repair.
+ */
+export function parseLlmJson<T = any>(rawText: string): T {
+  const jsonStr = extractJsonFromText(rawText);
+  return JSON.parse(jsonStr) as T;
+}

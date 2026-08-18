@@ -5,9 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
-import { isWhitelistedLicense } from '../src/license-filter.js';
-import { scoreImageWithGemini } from '../src/gemini-scorer.js';
+import { scoreImageWithGemini } from '../src/vlm-scorer.js';
 import { inspectSceneVisuals } from '../src/inspector-pipeline.js';
 import { SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
 import { assertEvalPreflight } from '../../../eval/utils/preflight.js';

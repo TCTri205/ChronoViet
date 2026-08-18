@@ -28,7 +28,7 @@ if [ -z "${LLM_PORT:-}" ] && [ -n "${LLM_BASE_URL:-}" ]; then
     LLM_PORT="${PARSED_LLM_PORT}"
   fi
 fi
-LLM_PORT="${LLM_PORT:-8091}"
+LLM_PORT="${LLM_PORT:-8092}"
 
 if [ -z "${EMBEDDING_PORT:-}" ] && [ -n "${EMBEDDING_API_URL:-}" ]; then
   PARSED_EMB_PORT=$(echo "${EMBEDDING_API_URL}" | sed -E 's|^https?://[^:/]+:([0-9]+).*|\1|')
@@ -44,12 +44,19 @@ echo "Config: LLM_PORT=${LLM_PORT}, EMBEDDING_PORT=${EMBEDDING_PORT}, HYBRID_DEV
 # 1. Check if llama-server CLI is installed
 if command -v llama-server >/dev/null 2>&1; then
   LLM_MODEL_PATH="${MODEL_DIR}/${LOCAL_LLM_PRIMARY_MODEL:-qwen3.8-27b-instruct-q4_k_m}.gguf"
+  if [ ! -f "${LLM_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/Qwen3.8-27B-Q4_K_M.gguf" ]; then
+    LLM_MODEL_PATH="${MODEL_DIR}/Qwen3.8-27B-Q4_K_M.gguf"
+  elif [ ! -f "${LLM_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/qwen3.8-27b-instruct-q4_k_m.gguf" ]; then
+    LLM_MODEL_PATH="${MODEL_DIR}/qwen3.8-27b-instruct-q4_k_m.gguf"
+  fi
   MMPROJ_PATH="${MODEL_DIR}/qwen3.8-27b-mmproj.gguf"
   
   # Resolve embedding model path
   EMB_MODEL_NAME="${LOCAL_EMBEDDING_MODEL:-${LOCAL_EMBEDDING_DEFAULT:-bge-m3}}"
   EMB_MODEL_PATH="${MODEL_DIR}/${EMB_MODEL_NAME}.gguf"
-  if [ ! -f "${EMB_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/bge-m3.gguf" ]; then
+  if [ ! -f "${EMB_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/bge-m3-q8_0.gguf" ]; then
+    EMB_MODEL_PATH="${MODEL_DIR}/bge-m3-q8_0.gguf"
+  elif [ ! -f "${EMB_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/bge-m3.gguf" ]; then
     EMB_MODEL_PATH="${MODEL_DIR}/bge-m3.gguf"
   elif [ ! -f "${EMB_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/qwen3-embedding-0.6b.gguf" ]; then
     EMB_MODEL_PATH="${MODEL_DIR}/qwen3-embedding-0.6b.gguf"

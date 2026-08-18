@@ -55,7 +55,7 @@ Hệ thống hiện tại chưa thể vận hành End-to-End (từ người dùn
 | **Cloud LLM Fallback** | Gemini 2.5 Flash (`GEMINI_API_KEY`) | **Agnes 2.5 Flash (`AGNES_API_KEY`)** | `packages/shared-spec/src/llm-client.ts`, `.env.example` (model: `agnes-2.5-flash`). |
 | **Schema Versioning** | VideoProjectSchema v3.2 | **ChronoVideoScriptSchema v4.1** | `REMOTION_CONTENT_FORMATS_SPEC.md`, `SystemOverview.md`, `packages/shared-spec/src/schema.ts`. |
 | **PubSub & WS Channel** | `project_status:{project_id}` | **`project_events:${projectId}`** | Hỗ trợ tường minh event types (`RENDER_PROGRESS`, `RENDER_COMPLETED`, `RENDER_FAILED`). |
-| **12 Trạng Thái Vòng Đời** | Tên lệch giữa docs cũ (`DURATION_MISMATCH` vs `SCENES_SEGMENTED`) | **Chuẩn SSOT 12 trạng thái** theo `packages/agent-orchestrator/src/graph/state.ts` | Khớp 100% với LangGraph State Machine trong code lõi. |
+| **15 Trạng Thái Vòng Đời** | Tên lệch giữa docs cũ (`DURATION_MISMATCH` vs `SCENES_SEGMENTED`) | **Chuẩn SSOT 15 trạng thái** theo `packages/agent-orchestrator/src/graph/state.ts` | Khớp 100% với LangGraph State Machine trong code lõi. |
 | **Worker Concurrency** | Mô tả `--concurrency=2` | **`CONCURRENCY=1` (Chromium Process Isolation)** | `apps/render-worker/src/workers/render-worker.ts`, `Dockerfile.worker`, `docs/architecture/05_...` |
 | **BullMQ Enqueue** | Chưa có Producer nào gọi `queue.add()` | **Xây dựng BullMQ Producer trong `apps/web`** | `apps/web` đóng vai trò Producer đẩy job vào các hàng đợi BullMQ. |
 | **`pnpm dev` Script** | Đang chỉ chạy `tsc -w` | **Chạy song song Next.js Dev Server + Worker Runtime** | Cập nhật `package.json` và scripts khởi động thực tế. |

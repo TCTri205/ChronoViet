@@ -59,8 +59,17 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
         }
       }
 
-      // 2. Folklore Hypothesis Tone Check
-      const folkloreCheck = validateFolkloreHypothesisTone(script, true);
+      // 2. Folklore Hypothesis Tone Check (Data-driven from RAG citations, confidence and topic)
+      const isFolkloreTopic = /truyền thuyết|thần thoại|dã sử|sự tích|giai thoại/i.test(state.userPrompt);
+      const hasFolkloreCitations = (state.ragContext?.citations || []).some((c) =>
+        /lĩnh nam chích quái|việt điện u linh|dân gian|dã sử|truyền thuyết|thần thoại|giai thoại/i.test(c)
+      );
+      const hasFolkloreEntity = (state.ragContext?.verifiedContext || []).some(
+        (e) => (e.confidenceScore !== undefined && e.confidenceScore < 0.75) || /dã sử|truyền thuyết|thần thoại/i.test(e.summary)
+      );
+      const isLevel3OrFolkloreSource = isFolkloreTopic || hasFolkloreCitations || hasFolkloreEntity;
+
+      const folkloreCheck = validateFolkloreHypothesisTone(script, isLevel3OrFolkloreSource);
       if (!folkloreCheck.isValid) {
         log.warn('orchestrator.folklore_tone_violation', `Folklore tone violation in chapter ${chapterIndex}`, {
           failingSentences: folkloreCheck.failingSentences,
@@ -68,9 +77,20 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
 
         // Tier 0: LLM Self-Correction attempt
         try {
-          const fixPrompt = `Hãy biên tập lại câu sau để tuân thủ quy chuẩn truyền thuyết lịch sử (bổ sung cụm từ 'Theo truyền thuyết' hoặc 'Tương truyền'):\n"${script}"`;
+          const fixSystem = `Bạn là Chuyên gia Biên tập Sử học ChronoViet.
+Nhiệm vụ: Biên tập lại đoạn kịch bản dã sử/truyền thuyết để tuân thủ quy chuẩn học thuật.
+QUY TẮC:
+1. Bổ sung các cụm từ mở đầu như 'Theo truyền thuyết', 'Tương truyền', 'Theo dã sử' vào trước các câu miêu tả sự kiện dã sử.
+2. Giữ nguyên toàn bộ nội dung, độ dài, câu từ chính xác khác của kịch bản, không thêm bớt sự kiện mới.
+3. Chỉ xuất văn bản kịch bản hoàn chỉnh sau khi sửa, không kèm lời giải thích.`;
+
+          const fixUser = `Hãy biên tập lại đoạn văn sau để chuẩn hóa văn phong truyền thuyết:\n"${script}"`;
+
           const fixRes = await callLlm({
-            messages: [{ role: 'user', content: fixPrompt }],
+            messages: [
+              { role: 'system', content: fixSystem },
+              { role: 'user', content: fixUser },
+            ],
             temperature: 0.1,
           });
           script = fixRes.content.trim();

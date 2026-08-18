@@ -68,36 +68,22 @@ Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai bá
 | `calculateSceneDurationInFrames` | [`src/timestamp-converter.ts`](src/timestamp-converter.ts) | Tính toán tổng `durationInFrames` cho cảnh phim: $\lceil \frac{\text{audioDurationMs} + \text{paddingMs}}{1000} \times \text{fps} \rceil$. |
 | `VieNeuEngine` | [`src/engine.ts`](src/engine.ts) | Primary Engine Wrapper gọi Python FastAPI Service, tự động failover sang `SyntheticTTSFallbackEngine`. |
 | `SyntheticTTSFallbackEngine` | [`src/engine.ts`](src/engine.ts) | Fallback engine tạo file `.wav` tone 480Hz giả lập âm thanh và mốc thời gian mượt mà trên CPU dev. |
-| `createTtsServer` | [`src/server.ts`](src/server.ts) | Khởi tạo Node.js HTTP Server lắng nghe REST API `/api/v1/synthesize`, `/health`, và phục vụ static audio. |
+| `normalizeAudioLoudness` | [`src/audio-normalizer.ts`](src/audio-normalizer.ts) | Chuẩn hóa âm lượng EBU R128 (-16 LUFS) và xử lý clip threshold cho audio. |
 
 ---
 
 ## 🚀 Hướng Dẫn Khởi Chạy (Quickstart)
 
-### 1. Khởi chạy bằng Docker Compose (Khuyên dùng cho Production/Dev)
+### Khởi chạy bằng Docker Compose (Khuyên dùng và Chuẩn hóa)
 ```bash
-docker-compose up vieneu-tts-service
+# Khởi chạy riêng TTS service
+docker compose up -d vieneu-tts-service
+
+# Hoặc khởi chạy cùng toàn bộ hạ tầng (Postgres, Redis, TTS)
+pnpm stack:infra
 ```
-> Service được đóng gói container `vieneu_tts_engine`, mở cổng `8080`, tự động gắn volume `./media:/app/media`.
+> Service được đóng gói container `vieneu_tts_engine`, mở cổng `8080`, tự động mount volume `./media:/app/media` và sẵn sàng phục vụ endpoint `/api/v1/synthesize`, `/health`, `/static/audio/`.
 
-### 2. Cài đặt & Khởi chạy Python ONNX Engine (Dành cho Real Voice AI Cục Bộ)
-```bash
-# Cài đặt thư viện Python phụ thuộc
-pip install vieneu numpy soundfile fastapi uvicorn pydantic
-
-# Khởi chạy Python Microservice
-python services/vieneu-tts/app.py
-```
-> FastAPI Server khởi chạy tại `http://localhost:8080`.
-
-### 3. Khởi chạy Node.js API Wrapper Service (Hoạt động Độc Lập / Dual-Layer)
-```bash
-# Build TypeScript
-pnpm --filter @chronoviet/vieneu-tts build
-
-# Start Node HTTP Server
-pnpm --filter @chronoviet/vieneu-tts start
-```
 
 ---
 

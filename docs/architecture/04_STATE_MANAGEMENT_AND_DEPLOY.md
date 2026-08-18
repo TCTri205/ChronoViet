@@ -32,7 +32,7 @@ Vòng đời từ khi người dùng nhập yêu cầu cho đến khi nhận vid
 | `RAG_RETRIEVED` | Lấy xong trích dẫn sử liệu chuẩn từ PostgreSQL (`pgvector` + Graph). | Checkpoint state vào PostgreSQL, cache context vào Redis. |
 | `OUTLINE_CHAPTERED` | Micro-Step 0 chia video thành $N$ Chapters (2-3 min/Chap). | Checkpoint danh sách Chapter Outlines & `runningNarrativeState`. |
 | `CHAPTER_SCRIPT_GENERATED` | Micro-Step 1A sinh lời thoại voiceover truyền `narrativeContext`. | Checkpoint voiceover text của từng Chapter. |
-| `CHAPTER_FACT_CHECKED` | Micro-Step 1B Dual Guardrails (Folklore Regex + NLI Entailment Judge $\ge 0.80$). | Thang Escalation: Auto-Fix ➔ Retry $\le 2$ ➔ Flag `NEEDS_HUMAN_REVIEW`. |
+| `CHAPTER_FACT_CHECKED` | Micro-Step 1B Dual Guardrails (Folklore Regex + NLI Entailment Judge $\ge 0.80$). | Thang Escalation: Safe Auto-Fix ➔ Retry $\le 2$ ➔ Flag `NEEDS_HUMAN_REVIEW` (Resume trực tiếp `segmenter` không lặp node). |
 | `SCENES_SEGMENTED` | Phân đoạn kịch bản thành các scene chi tiết theo timing và visual cue. | Checkpoint danh sách các scene cần tìm tài nguyên. |
 | `RESEARCH_COMPLETED` | Micro-Step 1C Research Agent tìm kiếm tư liệu lịch sử tương ứng. | Thu thập provenance, license candidates cho từng scene. |
 | `TTS_SYNTHESIZED` | VieNeu TTS sinh file audio và word-level timestamps cho từng scene. | Lưu audio vào Host Volume `/media/audio-cache/`, fallback `SyntheticTTSFallbackEngine` (sine 480Hz) khi service Python chưa sẵn sàng (dev). |
@@ -99,8 +99,6 @@ Hệ thống được đóng gói bằng **Docker Containers** và tinh gọn t�
 ### 4.1. `docker-compose.yml`
 
 ```yaml
-version: '3.8'
-
 services:
   caddy:
     image: caddy:2-alpine
@@ -114,7 +112,13 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - app
+      app:
+        condition: service_healthy
+    logging: &default-logging
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
 
   postgres:
     image: pgvector/pgvector:pg15
@@ -122,7 +126,7 @@ services:
     environment:
       POSTGRES_DB: chronoviet_db
       POSTGRES_USER: chronoviet
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-chronoviet_secret}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
@@ -133,11 +137,16 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1500M
+    logging: *default-logging
 
   redis:
     image: redis:7-alpine
     restart: always
-    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy noeviction
+    command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy noeviction
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
@@ -148,6 +157,11 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+    logging: *default-logging
 
   vieneu-tts-service:
     build:
@@ -161,6 +175,7 @@ services:
       - TTS_SERVICE_PORT=8080
       - MEDIA_DIR=/app/media
       - AUDIO_CACHE_DIR=/app/media/audio-cache
+      - WEB_CONCURRENCY=2
     ports:
       - "8080:8080"
     volumes:
@@ -171,6 +186,12 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 2000M
+    logging: *default-logging
 
   app:
     build:
@@ -180,10 +201,11 @@ services:
     environment:
       - NODE_ENV=production
       - LOG_FORMAT=json
-      - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
+      - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
       - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
-      - AGNES_API_KEY=${AGNES_API_KEY}
+      - GEMINI_API_KEYS=${GEMINI_API_KEYS}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -191,14 +213,27 @@ services:
         condition: service_healthy
       vieneu-tts-service:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     volumes:
       - ./media:/app/media
+    deploy:
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 2000M
+    logging: *default-logging
 
   worker:
     build:
       context: .
       dockerfile: Dockerfile.worker
     restart: always
+    shm_size: '2gb'
     deploy:
       resources:
         limits:
@@ -209,7 +244,8 @@ services:
       - LOG_FORMAT=json
       - CONCURRENCY=1
       - RENDER_CONCURRENCY=1
-      - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD:-chronoviet_secret}@postgres:5432/chronoviet_db
+      - WORKER_PROBE_PORT=3001
+      - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
       - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
     depends_on:
@@ -219,8 +255,15 @@ services:
         condition: service_healthy
       vieneu-tts-service:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     volumes:
       - ./media:/app/media
+    logging: *default-logging
 
 volumes:
   postgres_data:

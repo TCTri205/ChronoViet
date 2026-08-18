@@ -48,9 +48,24 @@ pnpm eval:chain
 npx tsx eval/runner.ts --clean               # Chỉ chạy dọn dẹp rồi thoát
 npx tsx eval/runner.ts --all --fresh         # Dọn dẹp sạch trước khi eval toàn dự án
 npx tsx eval/runner.ts --chain vieneu-remotion
+npx tsx eval/runner.ts --chain ingest-rag
 npx tsx eval/runner.ts --module remotion-engine --fresh
 npx tsx eval/runner.ts --module vieneu-tts --fresh
 ```
+
+### 📋 Bảng Tham Số & Cờ Tùy Chọn CLI (`eval/runner.ts`):
+
+| Tham số / Flag | Viết tắt | Mô tả | Mặc định |
+| :--- | :---: | :--- | :--- |
+| `--all` | - | Chạy toàn bộ 7 mô-đun và 3 chuỗi tích hợp E2E | `true` |
+| `--chain <name>` | - | Chạy riêng 1 chuỗi tích hợp: `vieneu-remotion`, `ingest-rag`, `orchestrator-remotion` | - |
+| `--module <name>`| - | Chạy riêng 1 mô-đun: `data-ingestion`, `rag-engine`, `agent-orchestrator`, `vlm-inspector`, `remotion-engine`, `vieneu-tts`, `render-worker`, `web` | - |
+| `--fresh` | - | Tự động dọn dẹp audio rác, port treo và báo cáo cũ trước khi chạy | `false` |
+| `--clean` | - | Chỉ thực thi dọn dẹp rồi thoát (không chạy benchmark) | `false` |
+| `--testCase <file>` | `-t` | Chỉ định test case kịch bản cụ thể | - |
+| `--no-studio` / `--ci` | - | Tắt tự động mở Remotion Studio GUI (dành cho CI/CD headless) | `false` |
+| `--port <port>` | `-p` | Cổng giải phóng / Remotion Studio | `9876` |
+| `--verbose` | `-v` | In log chi tiết quá trình đánh giá | `false` |
 
 ---
 

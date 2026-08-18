@@ -46,7 +46,8 @@ apps/web    apps/render-  services/vieneu-tts   agent-orchestrator  rag-engine
 | Thuộc tính | Giá trị |
 |---|---|
 | **Logging Format** | `JSON Lines` (1 record = 1 dòng JSON) khi `NODE_ENV=production` hoặc `LOG_FORMAT=json`; pretty-print khi dev |
-| **Level filter** | `LOG_LEVEL` trong `.env` (`debug`, `info`, `warn`, `error`) — tôn trọng nghiêm ngặt, cảnh báo fallback/lỗi mạng ở `warn` |
+| **Level filter** | `LOG_LEVEL` trong `.env` (`debug`, `info`, `warn`, `error`) — Milestone cấp Job/Pipeline ghi ở `info`; sub-scene chunking, static audio streaming, health/metrics probes chuyển về `debug` để chống lag terminal |
+| **Fallback Throttling** | `logFallbackAlert()` tự động gom cụm và throttle 30s cooldown theo subsystem để chống bùng nổ log khi chạy song song nhiều scene |
 | **Correlation ID** | Sinh/nhận từ Client HTTP `x-request-id` → Middleware Next.js → LangGraph State → BullMQ Job data → Worker child logger |
 | **Child logger** | `log.child({ correlationId?, fields? })` — gắn context (`projectId`, `jobId`, `sceneId`) mà không làm ô nhiễm log gốc |
 | **Metrics Engine** | `prom-client` chuẩn Prometheus với guard chống cardinality bomb (chỉ dùng bounded labels: route template, status class) |

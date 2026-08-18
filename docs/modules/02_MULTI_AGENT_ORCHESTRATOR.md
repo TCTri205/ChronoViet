@@ -126,8 +126,8 @@ Mô-đun chịu trách nhiệm:
 ### 3.2. Script Generation Pipeline (Tối Ưu Cho Small LLM & Video Dài)
 
 #### 3.2.0. Chaptering & Outline Agent (Micro-Step 0)
-* **Input:** Raw historical context từ Chrono-RAG + Yêu cầu độ dài video.
-* **Nhiệm vụ:** Chia kịch bản tổng thể thành $N$ Chương/Hồi (mỗi Chapter có thời lượng target $T_{\text{target}}$ từ 2-3 phút, tương ứng 5-8 cảnh). Khởi tạo cấu trúc `runningNarrativeState`.
+* **Input:** Raw historical context từ Chrono-RAG + Yêu cầu độ dài video (`targetDurationMinutes`).
+* **Nhiệm vụ:** Chia kịch bản tổng thể thành $N$ Chương/Hồi theo tỷ lệ động (`Math.max(1, Math.round(totalTargetSec / 150))`), mỗi Chapter có thời lượng target $T_{\text{target}}$ từ 2-3 phút (~120-180 giây), không áp đặt chặn cứng nhân tạo để hỗ trợ mượt mà các định dạng tài liệu dài 15-30+ phút. Khởi tạo cấu trúc `runningNarrativeState`.
 * **Output:** Danh sách các Chapter Outline kèm tóm tắt nội dung, target duration, các sự kiện chính và bảng alias nhân vật/mốc lịch sử ban đầu.
 
 #### 3.2.1. Scriptwriter Agent (Micro-Step 1A)
@@ -140,45 +140,48 @@ Mô-đun chịu trách nhiệm:
 
 #### 3.2.2. Hybrid Fact-Checker Agent Mềm Dẻo (Micro-Step 1A-Audit)
 * **Input:** Kịch bản lời thoại từ Micro-Step 1A + RAG Verified Context + Historical Entity Alias Table.
-* **Nhiệm vụ:** Thẩm định độ chính xác lịch sử của kịch bản một cách thông minh, tránh false-positive:
-  1. **Lớp 1 - Code Rule-based Sanitizer với Alias Table & Diacritics Normalization (TypeScript)**:
+* **Nhiệm vụ:** Thẩm định độ chính xác lịch sử của kịch bản một cách thông minh, song song hóa qua các Chapters (`Promise.all`):
+  1. **Lớp 1 - Code Rule-based Sanitizer với Context-Safe Alias Matching & Diacritics Normalization (TypeScript)**:
      - Trích xuất mốc năm, tên nhân vật, địa danh.
-     - Tra cứu qua **Alias Table** (ví dụ: `{"Quang Trung": ["Nguyễn Huệ", "Vua Quang Trung", "Bình Định Vương", "Anh hùng áo vải"]}`).
+     - Tra cứu qua **Alias Table** động từ RAG Context.
+     - Áp dụng Negative Lookbehind/Lookahead regex (`(?<!canonical\s*)\balias\b(?!\s*canonical)`) kèm escape ký tự đặc biệt để **bảo toàn nguyên vẹn danh xưng tôn kính** (ví dụ: *"Tiền Ngô Vương Ngô Quyền"* không bị replace thành *"Ngô Quyền Ngô Quyền"*).
      - Chuẩn hóa dấu tiếng Việt và chữ hoa/thường trước khi so sánh. Hỗ trợ mốc thế kỷ ("thế kỷ 18" ➔ 1701-1800) và mốc thời gian tương đối.
      - Chỉ gắn cờ lỗi nếu mốc năm/nhân vật hoàn toàn không tồn tại trong RAG và Alias Table.
-  2. **Lớp 2 - Cross-Architecture / Heuristic Logic Critic**:
-     - Sử dụng mô hình LLM thuộc họ kiến trúc khác (ví dụ: Scriptwriter dùng Qwen-2.5-7B ➔ Critic dùng Llama-3.1-8B) HOẶC sử dụng **Timeline Heuristic Rules Engine** (Code kiểm tra chuỗi câu có thỏa mãn $t_1 \le t_2 \le t_3$). Tránh điểm mù trùng lặp (correlated blind spots).
+  2. **Lớp 2 - Dual Guardrail Verification**:
+     - **Folklore Tone Guardrail (`folklore-validator.ts`)**: Quét Regex tín hiệu giả thuyết cho nguồn Level 3 Dã sử / Truyền thuyết.
+     - **NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts`)**: Đánh giá độ suy luận Entailment Score giữa câu thoại và ngữ cảnh RAG gốc (ngưỡng $\ge 0.80$). Trả về trạng thái `NEUTRAL` và điểm `0.0` (unverified) khi không có ground truth từ RAG, ngăn chặn silent false-passes.
 * **Cơ chế Thang Escalation Fallback 4 Tầng (4-Tier Escalation Path)**:
-  - *Lần 1 & 2 (Tier 0 - LLM Self-Correction)*: Gửi Self-Correction Prompt kèm lỗi diff chính xác để LLM nhỏ viết lại.
-  - *Lần 3 (Tier 1 - Deterministic Code Auto-Fix Override)*: Nếu lỗi chỉ nằm ở việc dùng sai tên riêng chưa có trong alias, Code Engine tự động thay thế bằng tên chuẩn từ RAG mà không gọi lại LLM.
-  - *Lần 4 (Tier 2 - Cloud Model Escalation)*: Chuyển kịch bản lên mô hình lớn hơn (Qwen-72B / Cloud API) để sửa nhanh 1 pass.
-  - *Lần 5 (Tier 3 - Human-in-the-Loop Flagging)*: Đánh dấu trạng thái Chapter là `NEEDS_HUMAN_REVIEW`, lưu diff lỗi lên UI/Webhook để nhân sự biên tập duyệt/sửa bằng tay, không làm sập cả pipeline.
+  - *Lần 1 & 2 (Tier 0 - LLM Self-Correction)*: Gửi Self-Correction Prompt kèm lỗi diff chính xác để LLM nhỏ viết lại (hỗ trợ chuẩn hóa văn phong truyền thuyết / dã sử).
+  - *Lần 3 (Tier 1 - Context-Safe Code Auto-Fix Override)*: Nếu lỗi chỉ nằm ở việc dùng sai tên riêng đơn lẻ hoặc thiếu prefix giả thuyết, Code Engine tự động thay thế/bổ sung bằng tên chuẩn từ RAG mà không gọi lại LLM.
+  - *Lần 4 (Tier 2 - NLI Hallucination Flag & Audit Logging)*: Đánh dấu cờ phát hiện Hallucination từ NLI Judge (`escalationTier = 2`) và ghi nhận audit log chi tiết phục vụ giám sát chất lượng và chuyển tiếp mô hình lớn khi cần.
+  - *Lần 5 (Tier 3 - Human-in-the-Loop Flagging)*: Đánh dấu trạng thái Chapter là `NEEDS_HUMAN_REVIEW`, chuyển state sang chế độ chờ duyệt. Khi người dùng phê duyệt, pipeline resume trực tiếp từ node `segmenter` mà không nhân bản scenes hay chạy lại các node tiền đề.
 
 #### 3.2.3. Scene Segmenter & Layout Mapper Agent (Micro-Step 1B)
-* **Input:** Kịch bản lời thoại đã được Fact-Check từ Micro-Step 1A-Audit.
-* **Nhiệm vụ:** Chia kịch bản Chapter thành 5–8 Cảnh (Scenes, thời lượng 5s–25s/scene). Mỗi cảnh được gán `layoutMode` và `contentType` (`"IMAGE"` hoặc `"PURE_CODE"`).
+* **Input:** Kịch bản lời thoại đã được Fact-Check từ Micro-Step 1A-Audit + `templateId`.
+* **Nhiệm vụ:** Chia kịch bản Chapter thành các Cảnh (Scenes, thời lượng 5s–25s/scene). Tự động ánh xạ Layout Modes tối ưu riêng theo từng mẫu thiết kế:
+  - `QUICK_SHORTS`: Ưu tiên `FULL_COVER`, `CENTER_SCALE`, `QUOTE_SLIDE`, `STAT_CARD`.
+  - `MODERN_NEWS`: Ưu tiên `STAT_CARD`, `TIMELINE_CHRONO`, `FULL_COVER`, `HISTORICAL_FRAME`.
+  - `HISTORICAL_DOCUMENTARY`: Sử dụng đầy đủ bộ layout điện ảnh truyền thống.
+* **Xử lý tiếng Việt:** Bộ tokenizer làm sạch toàn diện các biến thể dấu ngoặc kép kiểu Việt (`“`, `”`, `‘`, `’`), gạch ngang (`—`), và ba chấm (`…`).
 
 #### 3.2.4. Duration Reconciliation Engine (Micro-Step 1B-Reconcile)
 * **Input:** Danh sách các Cảnh + Target Chapter Duration ($T_{\text{target}}$).
 * **Nhiệm vụ:** Sau khi Worker A sinh file âm thanh TTS cho các Scene, Code Engine tính tổng thời lượng âm thanh thực tế:
   $$T_{\text{total}} = \sum_{i=1}^{M} \text{audioDurationMs}_i$$
 * **Quy tắc Cân Bằng (Reconciliation Rules):**
-  - Tính độ lệch: $\Delta = \frac{|T_{\text{total}} - T_{\text{target}}|}{T_{\text{target}}}$
-  - Nếu $\Delta \le 15\%$: Đạt chuẩn, tiếp tục pipeline.
-  - Nếu $T_{\text{total}} < 0.85 \times T_{\text{target}}$ (Quá ngắn): Tự động bổ sung cảnh giải thích/tóm tắt bằng Code Layout (`TIMELINE_CHRONO` / `QUOTE_SLIDE`) hoặc chèn pause padding hợp lý.
-  - Nếu $T_{\text{total}} > 1.15 \times T_{\text{target}}$ (Quá dài): Tự động thực hiện gộp cảnh ngắn liền kề hoặc yêu cầu Scriptwriter micro-trim 1-2 câu không quan trọng.
+  - Giới hạn time-stretch trong biên độ an toàn $\pm 10\%$ ($[0.90, 1.10]$).
+  - Thuật toán phân bổ trọng số residual deviation và tinh chỉnh phần dư ở cảnh cuối bảo đảm **pacing error $< 3.0\%$**.
 
 #### 3.2.5. Keyword Extractor Agent (Micro-Step 1C)
 * **Input:** Danh sách các scenes trong Chapter có `contentType: "IMAGE"`.
-* **Nhiệm vụ:** Trích xuất từ khóa crawl ảnh kèm Whitelisted License Tags (`Public Domain`, `CC0`, `CC-BY-4.0`).
-* **Triển khai:** Node `keyword` (`src/graph/nodes/keyword-node.ts`) làm giàu `searchKeywords` từ `voiceoverText` + canonical entities/aliases trong RAG context.
+* **Nhiệm vụ:** Trích xuất từ khóa crawl ảnh từ `voiceoverText` + canonical entities/aliases trong RAG context. Tự động chèn thực thể RAG chính làm từ khóa bổ trợ khi câu thoại không nhắc lại trực tiếp tên riêng nhân vật.
 
 #### 3.2.6. Research Agent (Micro-Step 1C — Online Image Search)
 * **Input:** `searchKeywords` của từng Scene (sau Keyword Extractor) + `userPrompt`.
-* **Nhiệm vụ:** Tìm kiếm ảnh tư liệu lịch sử online qua **Provider Chain**: `SerpAPI (Google Images)` → `Tavily` → `Brave Search API` → `Wikimedia Commons` → `Curated Catalog` (offline). Mỗi provider implement interface `ImageSearchProvider`; provider thiếu key / rate-limit / fail sẽ tự fallback sang provider kế.
-* **License safety:** Chỉ chấp nhận ảnh từ **domain whitelist** (`upload.wikimedia.org`, `commons.wikimedia.org`, `flickr.com`/`live.staticflickr.com`, kho bảo tàng). URL ngoài whitelist bị loại ngay — không tốn token VLM cho ảnh rác. License gắn tự động theo host (Wikimedia → `PUBLIC_DOMAIN`, Flickr → `CC_BY_SA_4_0`, kho bảo tàng → `CC0`, khác → `UNKNOWN` để license-filter reject).
-* **Output:** Lưu vào state `researchResults[sceneId]` (candidate pool + provenance: provider, số lượng, latency) để VLM Inspector chấm điểm. Cho phép resume/checkpoint chính xác.
-* **Triển khai:** Node `research` (`src/graph/nodes/research-node.ts`) + module `packages/vlm-inspector/src/search/` (3 adapter SerpAPI/Tavily/Brave + Wikimedia/Catalog provider + chain resolver).
+* **Nhiệm vụ:** Tìm kiếm ảnh tư liệu lịch sử online qua **Provider Chain**: `SerpAPI (Google Images)` → `Tavily` → `Brave Search API` → `Wikimedia Commons` → `Curated Catalog` (offline).
+* **Concurrency Pool:** Xử lý theo batch (concurrency pool = 4) để tránh kích hoạt cơ chế Rate Limit 429 từ các search providers.
+* **License safety:** Chỉ chấp nhận ảnh từ **domain whitelist** (`upload.wikimedia.org`, `commons.wikimedia.org`, `flickr.com`, kho bảo tàng).
+* **Output:** Lưu vào state `researchResults[sceneId]` để VLM Inspector chấm điểm. Cho phép resume/checkpoint chính xác.
 
 ---
 
@@ -322,13 +325,52 @@ import { z } from "zod";
 export const ContentTypeSchema = z.enum(["IMAGE", "PURE_CODE"]);
 
 export const LayoutModeSchema = z.enum([
-  "IMAGE_FULL",
-  "IMAGE_SPLIT",
-  "STAT_CARD",
-  "VERSUS_CARD",
-  "TIMELINE_CHRONO",
-  "QUOTE_SLIDE",
-  "MUSEUM_TAG"
+  'BLUR_BG',
+  'HISTORICAL_FRAME',
+  'QUOTE_CANVAS',
+  'QUOTE_SLIDE',
+  'CHAPTER_CARD',
+  'ARTICLE_UI',
+  'SPONSOR_UI',
+  'OUTRO_CARD',
+  'SPLIT_COMPARE',
+  'FULL_CONTAIN',
+  'FULL_COVER',
+  'TITLE_CARD',
+  'STAT_CARD',
+  'VERSUS_CARD',
+  'BULLET_HIGHLIGHT',
+  'MUSEUM_TAG',
+  'SPLIT_THEORY',
+  'VIGNETTE_DARK',
+  'CENTER_SCALE',
+  'PURE_IMAGE_FULL',
+  'DOCUMENTARY_GRID',
+  'NEWSPAPER_ARCHIVE',
+  'GALLERY_3D',
+  'HERO_SPOTLIGHT',
+  'TIMELINE_CHRONO',
+  'MAP_TACTICAL',
+  'ARMY_STRENGTH',
+  'CHARACTER_PROFILE',
+  'ROYAL_DECREE',
+  'ARTIFACT_INSPECT',
+  'POEM_RECITING',
+]);
+
+// 11 Pure Image Layouts (xử lý qua SlideImage.tsx) & 20 Pure Code Layouts
+export const PURE_IMAGE_LAYOUTS = new Set([
+  'BLUR_BG',
+  'HISTORICAL_FRAME',
+  'FULL_COVER',
+  'FULL_CONTAIN',
+  'CENTER_SCALE',
+  'VIGNETTE_DARK',
+  'SPLIT_COMPARE',
+  'PURE_IMAGE_FULL',
+  'DOCUMENTARY_GRID',
+  'NEWSPAPER_ARCHIVE',
+  'GALLERY_3D',
 ]);
 
 export const LicenseTypeSchema = z.enum([

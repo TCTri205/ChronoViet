@@ -66,7 +66,7 @@ export async function resolveImageCandidates(
     });
   }
 
-  log.info('vlm.research_resolved', `Resolved ${candidates.length} candidates for scene ${sceneId}`, {
+  log.debug('vlm.research_resolved', `Resolved ${candidates.length} candidates for scene ${sceneId}`, {
     sceneId,
     keywords,
     provenance,

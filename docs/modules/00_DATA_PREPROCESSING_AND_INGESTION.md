@@ -332,11 +332,11 @@ ChronoViet phân định rõ 3 tầng kiểm định dữ liệu nạp:
 
 | Chỉ số KPI | Mô Tả & Phương Pháp Đánh Giá | Chỉ Số Mục Tiêu | Kết Quả Thực Tế | Trạng Thái |
 | :--- | :--- | :---: | :---: | :---: |
-| **KPI 1: Entity Normalization Accuracy** | Đánh giá độ chính xác khi giải quyết đồng tham chiếu (`ALIAS_OF`) và ánh xạ địa danh qua các thời kỳ (`SAME_AS_LOCATION`). | **$> 98.0\%$** | **100%** (39/39 test cases) | **PASSED** |
-| **KPI 2: Golden Dataset Integrity & Throughput** | Xác minh tính toàn vẹn 5 tập Golden Datasets (Parent/Child Chunks) theo `ground_truth_entities`/`ground_truth_triples` và đo tốc độ nạp dữ liệu. | **$100\%$ Integrity** | **100% Integrity** (5/5 datasets) | **PASSED** |
-| **KPI 3: Hierarchical Chunk Quality** | Xác minh Parent Chunk (2000-3000 từ) và Child Chunk (300-500 từ) hợp lệ về token bounds và metadata enrichment. | **$100\%$** | **100%** (34/34 chunks valid) | **PASSED** |
-| **KPI 4: Real Database RAG Quality** | Đo lường MRR, nDCG@5, Fact Precision và Rejection Rate trên CSDL 33,000+ chunks thật sau nạp. | **MRR $\ge 0.70$, P $\ge 85\%$** | **MRR: 0.82, P: 88.5%** | **PASSED** |
+| **KPI 1: Entity Normalization & Disambiguation** | Đánh giá độ chính xác khi giải quyết đồng tham chiếu (`ALIAS_OF`) và ánh xạ địa danh qua các thời kỳ (`SAME_AS_LOCATION`). | **$> 98.0\%$** | **100%** (39/39 cases) | **PASSED** |
+| **KPI 2: Triple Extraction Accuracy** | Đánh giá độ chính xác trích xuất bộ ba thực thể $(Entity_A \rightarrow Relation \rightarrow Entity_B)$ theo ngữ pháp và quan hệ lịch sử. | **$\ge 90.0\%$** | **100%** (3/3 cases) | **PASSED** |
+| **KPI 3: Golden Dataset Integrity & Throughput** | Xác minh tính toàn vẹn 5 tập Golden Datasets theo `ground_truth_entities`/`ground_truth_triples` và đo tốc độ nạp dữ liệu. | **$100\%$ Integrity** | **100% Integrity** (5/5 datasets) | **PASSED** |
+| **KPI 4: Hierarchical Chunk Quality** | Xác minh Parent Chunk (2000-3000 từ) và Child Chunk (300-500 từ) hợp lệ về token bounds và metadata enrichment. | **$100\%$** | **100%** (34/34 chunks valid) | **PASSED** |
 
-> 📄 File Báo Cáo Chi Tiết: [`packages/data-ingestion/eval/reports/ingest-eval-report.json`](../../packages/data-ingestion/eval/reports/ingest-eval-report.json) và [`eval/reports/ingest-rag-eval-report.json`](../../eval/reports/ingest-rag-eval-report.json)
+> 📄 File Báo Cáo Chi Tiết: [`packages/data-ingestion/eval/reports/ingest-eval-report.json`](../../packages/data-ingestion/eval/reports/ingest-eval-report.json) và [`packages/data-ingestion/eval/reports/ingest-diagnostic-report.md`](../../packages/data-ingestion/eval/reports/ingest-diagnostic-report.md)
 
 

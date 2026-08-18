@@ -3,7 +3,7 @@
  * Divides topic and RAG context into N Chapters (2-3 minutes each) and initializes runningNarrativeState
  */
 
-import { callLlm, ChapterPlan, createLogger, envConfig } from '@chronoviet/shared-spec';
+import { callLlm, ChapterPlan, createLogger, envConfig, parseLlmJson } from '@chronoviet/shared-spec';
 import { ChronoGraphState } from '../state.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
@@ -19,41 +19,52 @@ export async function chapteringNode(state: ChronoGraphState): Promise<Partial<C
   const numChapters = Math.max(1, Math.round(totalTargetSec / 150));
   const secPerChapter = Math.round(totalTargetSec / numChapters);
 
-  const ragSummary = state.ragContext?.verifiedContext?.map((e) => `${e.canonicalName}: ${e.summary}`).join('\n') || '';
+  const ragSummary = state.ragContext?.verifiedContext?.map((e) => `- ${e.canonicalName}: ${e.summary}`).join('\n') || 'Không có dữ liệu chi tiết.';
 
-  const systemPrompt = `Bạn là Chaptering & Outline Agent chuyên nghiệp của ChronoViet.
-Nhiệm vụ: Phân chia chủ đề lịch sử thành ${numChapters} chương kịch bản hấp dẫn, mạch lạc, giàu tính điện ảnh.
-Chủ đề: "${state.userPrompt}"
+  const systemMessage = `Bạn là Chaptering & Outline Agent chuyên nghiệp của nền tảng video lịch sử ChronoViet.
+Nhiệm vụ: Phân chia chủ đề lịch sử thành cấu trúc ${numChapters} chương kịch bản hấp dẫn, mạch lạc, giàu tính điện ảnh và chuẩn xác sử liệu.
+QUY TẮC BẮT BUỘC:
+1. Xuất duy nhất 1 JSON object hợp lệ theo schema: { "chapters": [ ... ] }.
+2. Không thêm bất kỳ văn bản giải thích nào ngoài JSON.
+3. Mỗi chương cần tóm tắt rõ nét, thời lượng target sát với yêu cầu (~${secPerChapter}s).`;
+
+  const userContent = `Chủ đề: "${state.userPrompt}"
 Thể loại: ${state.videoType}
+Số lượng chương yêu cầu: ${numChapters}
 Thời lượng mỗi chương: ~${secPerChapter} giây.
 
-Dữ liệu lịch sử đã kiểm chứng từ RAG:
+Dữ liệu lịch sử đã kiểm chứng từ Chrono-RAG:
 ${ragSummary}
 
-Hãy xuất danh sách ${numChapters} chương theo cấu trúc JSON mảng:
-[
-  {
-    "chapterIndex": 0,
-    "title": "Tên chương ngắn gọn",
-    "summary": "Tóm tắt sự kiện trong chương",
-    "targetDurationSeconds": ${secPerChapter},
-    "keyEvents": ["Sự kiện 1", "Sự kiện 2"],
-    "introducedEntities": ["Nhân vật/Địa danh"],
-    "transitionHook": "Mối nối chuyển cảnh sang chương sau",
-    "establishedTone": "Hào hùng, trang trọng"
-  }
-]`;
+Hãy trả về JSON Object theo cấu trúc:
+{
+  "chapters": [
+    {
+      "chapterIndex": 0,
+      "title": "Tên chương ngắn gọn, ấn tượng",
+      "summary": "Tóm tắt sự kiện trong chương",
+      "targetDurationSeconds": ${secPerChapter},
+      "keyEvents": ["Sự kiện trọng tâm 1", "Sự kiện trọng tâm 2"],
+      "introducedEntities": ["Nhân vật hoặc Địa danh"],
+      "transitionHook": "Mối nối chuyển cảnh mượt mà sang chương sau",
+      "establishedTone": "Hào hùng, trang trọng"
+    }
+  ]
+}`;
 
   let chapters: ChapterPlan[] = [];
 
   try {
     const res = await callLlm({
-      messages: [{ role: 'user', content: systemPrompt }],
+      messages: [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: userContent },
+      ],
       temperature: 0.2,
       responseFormat: 'json_object',
     });
 
-    const parsed = JSON.parse(res.content);
+    const parsed = parseLlmJson(res.content);
     const chapterArray = Array.isArray(parsed) ? parsed : parsed.chapters || [parsed];
     chapters = chapterArray.map((c: any, idx: number) => ({
       chapterIndex: idx,

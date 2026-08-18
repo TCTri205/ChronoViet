@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { convertVieNeuTimestampsToCaptions, calculateSceneDurationInFrames } from '../timestamp-converter.js';
+import { convertVieNeuTimestampsToCaptions, calculateSceneDurationInFrames } from '../engine.js';
 import { WordTimestamp } from '@chronoviet/shared-spec';
 
 describe('timestamp-converter', () => {

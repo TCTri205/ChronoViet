@@ -138,7 +138,7 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 
 > Tất cả enum dưới đây được định nghĩa chính thức tại `packages/shared-spec/src/schema.ts` và được re-export qua `packages/remotion-engine/src/types/index.ts`.
 
-### 4.1. `LayoutMode` — 31 Chế Độ Hiển Thị (18 Core Modes + 13 Extended Modes)
+### 4.1. `LayoutMode` — 31 Chế Độ Hiển Thị (11 Pure Image Modes + 20 Pure Code Modes)
 
 | `layoutMode` | Loại | Component tương ứng | Mô tả |
 | :--- | :--- | :--- | :--- |
@@ -434,7 +434,7 @@ packages/remotion-engine/src/
 
 | Composition ID | Component | Data File | Thời lượng mặc định | Mô tả |
 | :--- | :--- | :--- | :--- | :--- |
-| `ChronoVideo` | `ChronoVideo` | `templateGeneralTimeline.json` | 15 scenes (150s / 4500 frames) | Default General Template |
+| `ChronoVideo` | `ChronoVideo` | `templateGeneralTimeline.json` | 11 scenes (145s / 4350 frames) | Default General Template |
 | `BiographyVideo` | `ChronoVideo` | `biographyTimeline.json` | 21 scenes (405s / 12150 frames) | Domain BIOGRAPHY |
 | `BattleVideo` | `ChronoVideo` | `battleTimeline.json` | 21 scenes (405s / 12150 frames) | Domain BATTLE |
 | `DynastyVideo` | `ChronoVideo` | `dynastyTimeline.json` | 21 scenes (405s / 12150 frames) | Domain DYNASTY |

@@ -6,13 +6,42 @@
 import {
   createLogger,
   LayoutMode,
+  LicenseTypeSchema,
   SceneGeneration,
   VisualCandidate,
 } from '@chronoviet/shared-spec';
-import { isWhitelistedLicense } from './license-filter.js';
+import { z } from 'zod';
 import { downloadCandidateBatch } from './asset-downloader.js';
-import { scoreImageWithGemini } from './gemini-scorer.js';
+import { scoreImageWithGemini } from './vlm-scorer.js';
 import { VisualQualityGate } from './visual-quality-gate.js';
+
+export type LicenseType = z.infer<typeof LicenseTypeSchema>;
+
+export function isWhitelistedLicense(licenseString: string): boolean {
+  if (!licenseString) return false;
+  const normalized = licenseString.toUpperCase().replace(/[\s-]+/g, '_');
+
+  if (
+    normalized.includes('NC') ||
+    normalized.includes('NON_COMMERCIAL') ||
+    normalized.includes('ND') ||
+    normalized.includes('NO_DERIVS') ||
+    normalized.includes('ALL_RIGHTS_RESERVED') ||
+    normalized.includes('COPYRIGHT_STRICT') ||
+    normalized === 'UNKNOWN'
+  ) {
+    return false;
+  }
+
+  return (
+    normalized.includes('PUBLIC_DOMAIN') ||
+    normalized.includes('CC0') ||
+    normalized.includes('ZERO') ||
+    normalized.includes('PD') ||
+    normalized.includes('CC_BY_SA') ||
+    normalized.includes('CC_BY')
+  );
+}
 
 const log = createLogger({ service: 'vlm-inspector' });
 
@@ -111,7 +140,7 @@ export async function inspectSceneVisuals(
   candidatePool: VisualCandidate[],
   options: { customBaseDir?: string } = {}
 ): Promise<InspectSceneResult> {
-  log.info('vlm.inspecting_scene', `Inspecting visuals for scene ${scene.sceneId} (${scene.layoutMode})`, {
+  log.debug('vlm.inspecting_scene', `Inspecting visuals for scene ${scene.sceneId} (${scene.layoutMode})`, {
     sceneId: scene.sceneId,
     candidateCount: candidatePool.length,
   });
@@ -137,7 +166,7 @@ export async function inspectSceneVisuals(
 
   // 2. If Batch 1 top score < 60 and Batch 2 exists, process Batch 2
   if ((!topCandidate || (topCandidate.score?.overallScore || 0) < 60) && batch2.length > 0) {
-    log.info('vlm.batch_2_triggered', `Batch 1 top score below 60; triggering 3 supplementary candidates (Batch 2)`, {
+    log.debug('vlm.batch_2_triggered', `Batch 1 top score below 60; triggering 3 supplementary candidates (Batch 2)`, {
       sceneId: scene.sceneId,
     });
 

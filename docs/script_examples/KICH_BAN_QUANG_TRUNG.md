@@ -1,60 +1,60 @@
-# Ká»CH Báº¢N CHI TIáº¾T & Báº¢NG PHĂ‚N Cáº¢NH PRODUCTION (PRODUCTION SCRIPT & REAL ASSET PROMPTS)
+# KỊCH BẢN CHI TIẾT & BẢNG PHÂN CẢNH PRODUCTION (PRODUCTION SCRIPT & REAL ASSET PROMPTS)
 
-> **TĂ¡c pháº©m:** HOĂ€NG Äáº¾ QUANG TRUNG â€“ HUYá»€N THOáº I BĂCH CHIáº¾N BĂCH THáº®NG  
-> **Dá»± Ă¡n:** ChronoViet (Video Essay / Historical Motion Graphics)  
-> **Nguá»“n tham kháº£o ká»‹ch báº£n:** YouTube Video `https://www.youtube.com/watch?v=cboEyIb3rHE` (TĂ¡c giáº£ DÅ©ng Phan / Spiderum).  
-> **Nguá»“n tÆ° liá»‡u áº£nh:** 100% áº¢nh tÆ° liá»‡u lá»‹ch sá»­ thá»±c táº¿ tá»« Wikimedia Commons, Báº£o tĂ ng Lá»‹ch sá»­ Quá»‘c gia, Báº£o tĂ ng Quang Trung (BĂ¬nh Äá»‹nh), Khu di tĂ­ch GĂ² Äá»‘ng Äa, ChĂ¢u báº£n triá»u Nguyá»…n & Hiá»‡n váº­t lá»‹ch sá»­ TĂ¢y SÆ¡n. KhĂ´ng sá»­ dá»¥ng áº£nh AI.  
-> **Thá»i lÆ°á»£ng:** 6 phĂºt 30 giĂ¢y (390 giĂ¢y / 11.700 frames @ 30fps)
+> **Tác phẩm:** HOÀNG ĐẾ QUANG TRUNG – HUYỀN THOẠI BÁCH CHIẾN BÁCH THẮNG  
+> **Dự án:** ChronoViet (Video Essay / Historical Motion Graphics)  
+> **Nguồn tham khảo kịch bản:** YouTube Video `https://www.youtube.com/watch?v=cboEyIb3rHE` (Tác giả Dũng Phan / Spiderum).  
+> **Nguồn tư liệu ảnh:** 100% Ảnh tư liệu lịch sử thực tế từ Wikimedia Commons, Bảo tàng Lịch sử Quốc gia, Bảo tàng Quang Trung (Bình Định), Khu di tích Gò Đống Đa, Châu bản triều Nguyễn & Hiện vật lịch sử Tây Sơn. Không sử dụng ảnh AI.  
+> **Thời lượng:** 6 phút 30 giây (390 giây / 11.700 frames @ 30fps)
 
 ---
 
-## đŸ¨ 1. Bá»˜ THIáº¾T Káº¾ NHáº¬N DIá»†N THá» GIĂC (VISUAL DESIGN SYSTEM)
+## 🎨 1. BỘ THIẾT KẾ NHẬN DIỆN THỊ GIÁC (VISUAL DESIGN SYSTEM)
 
-* **Palette mĂ u chĂ­nh:**
-  * **TĂ¢y SÆ¡n Red (Äá» Cá» NghÄ©a TĂ¢y SÆ¡n):** `#DC2626` & `#991B1B` (Cá» Ä‘áº¡i TĂ¢y SÆ¡n, Ă¡o ngá»± hoĂ ng Ä‘áº¿, ngá»n lá»­a xung phong)
-  * **Imperial Gold (VĂ ng HoĂ ng Äáº¿ Quang Trung):** `#D4AF37` & `#F59E0B` (Sáº¯c phong, tÆ°á»£ng Ä‘Ă i GĂ² Äá»‘ng Äa, chá»¯ tiĂªu Ä‘á»)
-  * **Gunpowder Charcoal (Äen Há»a Há»• & PhĂ¡o Cá»‘i):** `#090D14` & `#1E293B` (Bá»‘i cáº£nh há»a cĂ´ng, tráº­n Ngá»c Há»“i - Äá»‘ng Äa)
-  * **Emerald Dragon (Xanh Ngá»c BĂ­ch Ráº¡ch Gáº§m):** `#047857` & `#065F46` (SĂ´ng Tiá»n Ráº¡ch Gáº§m - XoĂ i MĂºt, PhÆ°á»£ng HoĂ ng Trung ÄĂ´)
+* **Palette màu chính:**
+  * **Tây Sơn Red (Đỏ Cờ Nghĩa Tây Sơn):** `#DC2626` & `#991B1B` (Cờ đại Tây Sơn, áo ngự hoàng đế, ngọn lửa xung phong)
+  * **Imperial Gold (Vàng Hoàng Đế Quang Trung):** `#D4AF37` & `#F59E0B` (Sắc phong, tượng đài Gò Đống Đa, chữ tiêu đề)
+  * **Gunpowder Charcoal (Đen Hỏa Hổ & Pháo Cối):** `#090D14` & `#1E293B` (Bối cảnh hỏa công, trận Ngọc Hồi - Đống Đa)
+  * **Emerald Dragon (Xanh Ngọc Bích Rạch Gầm):** `#047857` & `#065F46` (Sông Tiền Rạch Gầm - Xoài Mút, Phượng Hoàng Trung Đô)
 
 * **Typography:**
-  * **Title Main:** `Merriweather` Bold / `UTM Classique Saigon` (Letter spacing 0.08em, hiá»‡u á»©ng Ä‘á»• bĂ³ng máº¡ vĂ ng)
-  * **Quote Text:** `Playfair Display` Italic / `Georgia` (Ná»•i báº­t trĂªn khung kĂ­nh má»)
-  * **Voice Subtitle:** `Be Vietnam Pro` (Font size 30px, viá»n chá»¯ Ä‘en 2px, ná»n dáº£i lá»¥a má»)
+  * **Title Main:** `Merriweather` Bold / `UTM Classique Saigon` (Letter spacing 0.08em, hiệu ứng đổ bóng mạ vàng)
+  * **Quote Text:** `Playfair Display` Italic / `Georgia` (Nổi bật trên khung kính mờ)
+  * **Voice Subtitle:** `Be Vietnam Pro` (Font size 30px, viền chữ đen 2px, nền dải lụa mờ)
 
 ---
 
-## đŸ¬ 2. Báº¢NG PHĂ‚N Cáº¢NH CHI TIáº¾T 24 SCENES VĂ€ áº¢NH TÆ¯ LIá»†U THá»°C Táº¾ (100% REAL HISTORICAL ASSETS)
+## 🎬 2. BẢNG PHÂN CẢNH CHI TIẾT 24 SCENES VÀ ẢNH TƯ LIỆU THỰC TẾ (100% REAL HISTORICAL ASSETS)
 
-| Scene | Thá»i gian | Lá»i thuyáº¿t minh chi tiáº¿t (Voiceover Script) | Tá»‡p áº£nh tÆ° liá»‡u thá»±c táº¿ (Real Asset) | MĂ´ táº£ chi tiáº¿t tÆ° liá»‡u thá»±c táº¿ & Motion Cues | SFX & BGM |
+| Scene | Thời gian | Lời thuyết minh chi tiết (Voiceover Script) | Tệp ảnh tư liệu thực tế (Real Asset) | Mô tả chi tiết tư liệu thực tế & Motion Cues | SFX & BGM |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Scene 01** | `00:00 - 00:15` | *"HoĂ ng Ä‘áº¿ Quang Trung Nguyá»…n Huá»‡ lĂ  tháº§n tĂ i quĂ¢n sá»± kiá»‡t xuáº¥t cá»§a dĂ¢n tá»™c Viá»‡t Nam â€“ má»™t con ngÆ°á»i dÆ°á»ng nhÆ° sinh ra chá»‰ Ä‘á»ƒ chiáº¿n Ä‘áº¥u, ra tráº­n vĂ  chiáº¿n tháº¯ng."* | `assets/quang-trung/real_01_quang_trung_portrait.jpg` | TÆ°á»£ng Ä‘Ă i HoĂ ng Ä‘áº¿ Quang Trung uy nghi táº¡i GĂ² Äá»‘ng Äa (HĂ  Ná»™i). Camera Zoom Out lá»™ toĂ n cáº£nh tÆ°á»£ng Ä‘Ă i dÆ°á»›i bĂ¬nh minh. | **SFX:** Tiáº¿ng trá»‘ng tráº­n TĂ¢y SÆ¡n giá»¥c giĂ£ dá»“n dáº­p. **BGM:** Nháº¡c hĂ o hĂ¹ng kiĂªu hĂ£nh. |
-| **Scene 02** | `00:15 - 00:30` | *"Suá»‘t 18 nÄƒm cáº§m quĂ¢n liĂªn tá»¥c trĂªn lÆ°ng ngá»±a â€“ tá»« khi lĂ  má»™t thiáº¿u niĂªn 18 tuá»•i Ä‘áº¿n khi qua Ä‘á»i á»Ÿ tuá»•i 39 â€“ ngĂ i Ä‘Ă¡nh Ä‘Ă¢u tháº¯ng Ä‘Ă³, chÆ°a tá»«ng náº¿m mĂ¹i tháº¥t báº¡i báº¥t ká»³ tráº­n nĂ o."* | `assets/quang-trung/scene_04_quang_trung_portrait.jpg` | ChĂ¢n dung tÆ° liá»‡u HoĂ ng Ä‘áº¿ Quang Trung vá»›i Ă¡nh máº¯t kiĂªn cÆ°á»ng, sáº¯c sáº£o. Ken Burns Pan ngang cháº­m. | **SFX:** Tiáº¿ng vĂ³ ngá»±a sáº£i bÆ°á»›c dá»“n dáº­p rá»n trá»i. **BGM:** Nháº¡c tiáº¿t táº¥u nhanh dá»“n dáº­p. |
-| **Scene 03** | `00:30 - 00:45` | *"Má»—i láº§n ra tráº­n, ngĂ i khiáº¿n káº» thĂ¹ khiáº¿p vĂ­a: 'ÄĂ¡nh cho Ä‘á»ƒ dĂ i tĂ³c, Ä‘Ă¡nh cho Ä‘á»ƒ Ä‘en rÄƒng, Ä‘Ă¡nh cho nĂ³ bĂ¡nh xe khĂ´ng quay láº¡i, Ä‘Ă¡nh cho nĂ³ giĂ¡p phiáº¿n khĂ´ng trá»Ÿ vá»!'"* | `assets/quang-trung/real_03_sac_than_tay_son.jpg` | Hiá»‡n váº­t "Sáº¯c tháº§n thá»i TĂ¢y SÆ¡n" táº¡i Báº£o tĂ ng Lá»‹ch sá»­ Quá»‘c gia. Tháº» trĂ­ch dáº«n Lá»i thá» Há»‹ch ra Báº¯c hiá»ƒn thá»‹ máº¡ vĂ ng. | **SFX:** Tiáº¿ng rĂºt gÆ°Æ¡m Ä‘anh thĂ©p, tiáº¿ng reo hĂ² xung phong ráº§m ráº­p. |
-| **Scene 04** | `00:45 - 01:00` | *"Quang Trung sá»Ÿ há»¯u sá»± tĂ n báº¡o dÅ©ng mĂ£nh vĂ  khĂ­ phĂ¡ch kiĂªu hĂ¹ng cá»§a má»™t nhĂ  chinh phá»¥c thiĂªn tĂ i trĂªn lÆ°ng ngá»±a â€“ khĂ´ng kĂ©m gĂ¬ ThĂ nh CĂ¡t TÆ° HĂ£n hay Alexander Äáº¡i Äáº¿."* | `assets/quang-trung/real_04_nhac_brothers.jpg` | TÆ°á»£ng thá» Ba anh em TĂ¢y SÆ¡n (Nguyá»…n Nháº¡c, Nguyá»…n Huá»‡, Nguyá»…n Lá»¯) táº¡i Báº£o tĂ ng Quang Trung (BĂ¬nh Äá»‹nh). | **SFX:** Tiáº¿ng nháº¡c giao hÆ°á»Ÿng vĂºt cao hĂ¹ng vÄ©. |
-| **Scene 05** | `01:00 - 01:15` | *"NhÆ°ng Ä‘iá»ƒm khĂ¡c biá»‡t lá»›n nháº¥t giá»¯a Quang Trung vĂ  cĂ¡c vá»‹ tÆ°á»›ng khĂ¡c: NgĂ i lĂ  vá»‹ tÆ°á»›ng duy nháº¥t trong lá»‹ch sá»­ Viá»‡t Nam mang tÆ° duy CHá»¦ Äá»˜NG Táº¤N CĂ”NG tuyá»‡t Ä‘á»‘i."* | `assets/quang-trung/real_05_ngo_thi_nham.jpg` | ChĂ¢n dung Danh sÄ© / QuĂ¢n sÆ° NgĂ´ ThĂ¬ Nháº­m â€“ ngÆ°á»i cĂ¹ng Quang Trung váº¡ch chiáº¿n lÆ°á»£c tháº§n tá»‘c. | **SFX:** Tiáº¿ng láº­t sĂ¡ch tÆ° liá»‡u, tiáº¿ng nháº¡c phĂ¢n tĂ­ch chiáº¿n thuáº­t. |
-| **Scene 06** | `01:15 - 01:30` | *"Lá»‹ch sá»­ dĂ¢n tá»™c pháº§n lá»›n lĂ  phĂ²ng thá»§ giá»¯ nÆ°á»›c, nhÆ°ng Quang Trung luĂ´n Ă¡p Ä‘áº£o, Ä‘Ă¡nh Ä‘Ă²n sáº¥m sĂ©t vĂ  tiĂªu diá»‡t hoĂ n toĂ n sinh lá»±c káº» thĂ¹ ngay tá»« Ä‘áº§u."* | `assets/quang-trung/real_06_thang_long_citadel.jpg` | áº¢nh tÆ° liá»‡u Cá»•ng Báº¯c HoĂ ng ThĂ nh ThÄƒng Long cá»• kĂ­nh dÆ°á»›i báº§u trá»i thu rá»±c Ä‘á». | **SFX:** Tiáº¿ng sáº¥m ná»• rá»n (Lightning boom), tiáº¿ng trá»‘ng thĂºc dá»“n. |
-| **Scene 07** | `01:30 - 01:45` | *"Äáº¥t nÆ°á»›c Äáº¡i Viá»‡t tháº¿ ká»· 18 chĂ¬m trong hÆ¡n 200 nÄƒm chia cáº¯t tĂ n khá»‘c giá»¯a ÄĂ ng Trong cá»§a ChĂºa Nguyá»…n vĂ  ÄĂ ng NgoĂ i cá»§a ChĂºa Trá»‹nh."* | `assets/quang-trung/scene_02_daiviet_map.png` | Báº£n Ä‘á»“ tÆ° liá»‡u Äáº¡i Viá»‡t tháº¿ ká»· 18 chia cáº¯t ÄĂ ng Trong - ÄĂ ng NgoĂ i vá»›i sĂ´ng Gianh lĂ m ranh giá»›i. | **SFX:** Tiáº¿ng giĂ³ hĂº Ä‘au thÆ°Æ¡ng, tiáº¿ng xĂ­ch sáº¯t lÄƒng lÄƒng. |
-| **Scene 08** | `01:45 - 02:00` | *"NgÆ°á»i dĂ¢n láº§m than, quan láº¡i vÆ¡ vĂ©t. NÄƒm 1771, ba anh em TĂ¢y SÆ¡n pháº¥t cá» khá»Ÿi nghÄ©a táº¡i vĂ¹ng thÆ°á»£ng Ä‘áº¡o TĂ¢y SÆ¡n (BĂ¬nh Äá»‹nh)."* | `assets/quang-trung/scene_03_tay_son_heritage.jpg` | TÆ°á»£ng Ä‘Ă i Khá»Ÿi nghÄ©a TĂ¢y SÆ¡n 1771 táº¡i BĂ¬nh Äá»‹nh. Cá» Ä‘á» TĂ¢y SÆ¡n rá»£p trá»i. | **SFX:** Tiáº¿ng trá»‘ng há»™i TĂ¢y SÆ¡n vang dá»™i hĂ¢n hoan. |
-| **Scene 09** | `02:00 - 02:15` | *"Nguyá»…n Huá»‡ nhanh chĂ³ng bá»™c lá»™ thiĂªn tĂ i quĂ¢n sá»± xuáº¥t chĂºng, trá»Ÿ thĂ nh linh há»“n vĂ  tá»•ng chá»‰ huy quĂ¢n sá»± tá»‘i cao cho toĂ n bá»™ phong trĂ o TĂ¢y SÆ¡n."* | `assets/quang-trung/quang_trung.jpg` | Tranh tÆ° liá»‡u HoĂ ng Ä‘áº¿ Quang Trung Nguyá»…n Huá»‡ cÆ°á»¡i chiáº¿n mĂ£ pháº¥t cá» hiá»‡u. | **SFX:** Tiáº¿ng tĂ¹ vĂ  rá»n vang, tiáº¿ng ngá»±a hĂ­ vang trá»i. |
-| **Scene 10** | `02:15 - 02:30` | *"18 nÄƒm cáº§m quĂ¢n, ngĂ i Ä‘Ă¡nh tan ChĂºa Nguyá»…n ÄĂ ng Trong, rá»“i tiĂªu diá»‡t gá»n 5 váº¡n quĂ¢n XiĂªm xĂ¢m lÆ°á»£c táº¡i Tráº­n thá»§y chiáº¿n Ráº¡ch Gáº§m - XoĂ i MĂºt nÄƒm 1785."* | `assets/quang-trung/scene_05_rach_gam_xoai_mut.png` | Tranh tÆ° liá»‡u Äáº¡i tháº¯ng Ráº¡ch Gáº§m - XoĂ i MĂºt 1785: Thuyá»n quĂ¢n XiĂªm bá»‘c chĂ¡y dá»¯ dá»™i trĂªn sĂ´ng Tiá»n. | **SFX:** Tiáº¿ng há»a há»• ná»• sáº§m sáº­p, tiáº¿ng thuyá»n vá»¡ dá»¯ dá»™i, tiáº¿ng nÆ°á»›c reo hĂ². |
-| **Scene 11** | `02:30 - 02:45` | *"QuĂ¢n XiĂªm tá»« Ä‘Ă³ vá» sau 'tuy ngoĂ i miá»‡ng nĂ³i khoĂ¡c, nhÆ°ng trong bá»¥ng sá»£ Nguyá»…n Huá»‡ nhÆ° sá»£ cá»p', khĂ´ng bao giá» dĂ¡m ngĂ³ ngĂ ng sang Ä‘áº¥t Viá»‡t."* | `assets/quang-trung/scene_06_song_tien_ambush.jpg` | áº¢nh Ä‘á»‹a hĂ¬nh thá»±c táº¿ Tráº­n Ä‘á»‹a mai phá»¥c sĂ´ng Tiá»n táº¡i Tiá»n Giang. | **SFX:** Tiáº¿ng sĂ³ng nÆ°á»›c cuá»“n cuá»™n, tiáº¿ng quáº¡ kĂªu xa xÄƒm. |
-| **Scene 12** | `02:45 - 03:00` | *"NÄƒm 1786, ngĂ i kĂ©o quĂ¢n ra Báº¯c Ä‘áº­p tan ChĂºa Trá»‹nh, dáº¹p bá» nhĂ  LĂª báº¡c nhÆ°á»£c, san láº¥p hoĂ n toĂ n ranh giá»›i 200 nÄƒm ná»™i chiáº¿n chia cáº¯t dĂ¢n tá»™c."* | `assets/quang-trung/real_12_tay_do_gate.jpg` | áº¢nh tÆ° liá»‡u Cá»•ng Nam ThĂ nh TĂ¢y ÄĂ´ (Thanh HĂ³a) â€“ nÆ¡i quĂ¢n TĂ¢y SÆ¡n hĂ nh quĂ¢n qua. | **SFX:** Tiáº¿ng ráº§m ráº­p cá»§a ngĂ n quĂ¢n sÄ© ra Báº¯c, tiáº¿ng chuĂ´ng Ä‘á»“ng rá»n. |
-| **Scene 13** | `03:00 - 03:15` | *"Äá»‰nh cao chĂ³i lá»i lĂ  Tráº­n Ä‘áº¡i tháº¯ng Ngá»c Há»“i - Äá»‘ng Äa nÄƒm 1789: QuĂ©t sáº¡ch 29 váº¡n quĂ¢n Thanh xĂ¢m lÆ°á»£c chá»‰ trong 5 ngĂ y Táº¿t Ká»· Dáº­u, thu gom dĂ¢n tá»™c vá» má»™t má»‘i."* | `assets/quang-trung/scene_01_thang_long_dong_da.jpg` | TÆ°á»£ng Ä‘Ă i Quang Trung táº¡i GĂ² Äá»‘ng Äa - ThÄƒng Long dÆ°á»›i Ă¡nh náº¯ng chiáº¿n tháº¯ng rá»±c rá»¡. | **SFX:** Tiáº¿ng phĂ¡o Táº¿t ná»• rá»™n rĂ£, tiáº¿ng trá»‘ng má»«ng chiáº¿n tháº¯ng vang trá»i. |
-| **Scene 14** | `03:15 - 03:30` | *"Sau khi lĂªn ngĂ´i, Vua Quang Trung chá»n Nghá»‡ An láº­p PhÆ°á»£ng HoĂ ng Trung ÄĂ´ â€“ vá»‹ trĂ­ chiáº¿n lÆ°á»£c Ä‘á»ƒ tiá»‡n Ä‘iá»u binh khá»‘ng cháº¿ cáº£ trong Nam láº«n ngoĂ i Báº¯c."* | `assets/quang-trung/scene_13_phu_xuan_hue.jpg` | áº¢nh tÆ° liá»‡u Kinh Ä‘Ă´ PhĂº XuĂ¢n / PhÆ°á»£ng HoĂ ng Trung ÄĂ´ nĂºi DÅ©ng Quyáº¿t (Nghá»‡ An). | **SFX:** Tiáº¿ng chim hĂ³t thanh bĂ¬nh, tiáº¿ng nháº¡c triá»u chĂ­nh trang nghiĂªm. |
-| **Scene 15** | `03:30 - 03:45` | *"QuĂ¢n Ä‘á»™i TĂ¢y SÆ¡n Ä‘Æ°á»£c trang bá»‹ hiá»‡n Ä‘áº¡i báº­c nháº¥t: sĂºng trÆ°á»ng ChĂ¢u Ă‚u, phĂ¡o háº¡ng nháº¹, Ä‘áº¡i phĂ¡o tháº§n cĂ´ng vĂ  Ä‘áº·c sáº£n há»a cĂ´ng 'Há»a há»•' sáº¥m sĂ©t."* | `assets/quang-trung/real_15_tayson_cannon.jpg` | Hiá»‡n váº­t "SĂºng tháº§n cĂ´ng thá»i TĂ¢y SÆ¡n" trÆ°ng bĂ y táº¡i Báº£o tĂ ng Lá»‹ch sá»­ Quá»‘c gia. | **SFX:** Tiáº¿ng phĂ¡o tháº§n cĂ´ng ná»• Ä‘Ă¹ng Ä‘Ă¹ng, tiáº¿ng khĂ³i Ä‘áº¡n nghi ngĂºt. |
-| **Scene 16** | `03:45 - 04:00` | *"NgĂ i Ä‘áº·c biá»‡t chĂº trá»ng phĂ¡t triá»ƒn Thá»§y quĂ¢n hĂ¹ng máº¡nh vá»›i cĂ¡c chiáº¿n thuyá»n khá»•ng lá»“ trang bá»‹ hĂ ng chá»¥c kháº©u tháº§n cĂ´ng, sáºµn sĂ ng má»Ÿ rá»™ng áº£nh hÆ°á»Ÿng."* | `assets/quang-trung/real_16_tayson_ammunition.jpg` | Hiá»‡n váº­t "Äáº¡n dÆ°á»£c phĂ¡o cá»‘i thá»i TĂ¢y SÆ¡n" táº¡i Báº£o tĂ ng Lá»‹ch sá»­ Quá»‘c gia. | **SFX:** Tiáº¿ng Ä‘áº¡n phĂ¡o va cháº¡m kim loáº¡i, tiáº¿ng sĂ³ng biá»ƒn cuá»“n cuá»™n. |
-| **Scene 17** | `04:00 - 04:15` | *"Ngoáº¡i giao khĂ´n khĂ©o nhÆ°ng kiĂªn quyáº¿t: Ă‰p nhĂ  Thanh pháº£i ná»ƒ sá»£, Ä‘Ă²i láº¡i vĂ¹ng Ä‘áº¥t LÆ°á»¡ng Quáº£ng vĂ  ra lá»‡nh tuáº§n tra báº£o vá»‡ tuyá»‡t Ä‘á»‘i chá»§ quyá»n HoĂ ng Sa."* | `assets/quang-trung/real_17_hoang_sa_chau_ban.jpg` | ChĂ¢u báº£n tÆ° liá»‡u kháº³ng Ä‘á»‹nh chá»§ quyá»n HoĂ ng Sa & LĂ£nh thá»• thá»i TĂ¢y SÆ¡n. | **SFX:** Tiáº¿ng áº¥n triá»u Ä‘Ă³ng xuá»‘ng sáº¯c phong, tiáº¿ng nháº¡c kiĂªu hĂ£nh. |
-| **Scene 18** | `04:15 - 04:30` | *"NgĂ i dá»©t khoĂ¡t tuyĂªn bá»‘ vá»›i cĂ¡c quan láº¡i: 'TrÆ°á»›c Ä‘Ă¢y cĂ³ ai dĂ¡m Ä‘Ă¡nh quĂ¢n TĂ u khĂ´ng? ... Váº­y thĂ¬ Ä‘á»ƒ ta sáº½ lĂ m cho mĂ  coi!'"* | `assets/quang-trung/real_18_tay_son_seal.png` | Hiá»‡n váº­t áº¤n triá»u TĂ¢y SÆ¡n ("Triá»u DÆ°Æ¡ng Chá»‰ áº¤n") máº¡ vĂ ng sang trá»ng. | **SFX:** Tiáº¿ng Ä‘áº­p tay xuá»‘ng ngai vĂ ng, tiáº¿ng hĂ o hĂ¹ng vĂºt cao. |
-| **Scene 19** | `04:30 - 04:45` | *"Trong nghá»‡ thuáº­t quĂ¢n sá»±, ngĂ i sĂ¡ng táº¡o mÆ°u 'NgÆ°á»i cá» mÆ°á»£n tĂªn' Ä‘Ă¡nh dáº¹p quĂ¢n Trá»‹nh táº¡i SÆ¡n Nam, khiáº¿n káº» thĂ¹ hoáº£ng loáº¡n Ä‘áº§u hĂ ng."* | `assets/quang-trung/real_19_ngo_van_so.jpg` | ChĂ¢n dung Danh tÆ°á»›ng NgĂ´ VÄƒn Sá»Ÿ â€“ Ä‘áº¡i tháº§n kiá»‡t xuáº¥t triá»u TĂ¢y SÆ¡n. | **SFX:** Tiáº¿ng tĂªn bay vĂ¨ vĂ¨ trong Ä‘Ăªm má» sÆ°Æ¡ng. |
-| **Scene 20** | `04:45 - 05:00` | *"Táº¡i Ráº¡ch Gáº§m - XoĂ i MĂºt, ngĂ i dĂ¹ng tĂ¬nh bĂ¡o tinh vi, nhá»­ háº¡m Ä‘á»™i quĂ¢n XiĂªm vĂ o lĂ²ng cháº£o tá»­ tháº§n rá»“i dĂ¹ng phĂ¡o há»a cĂ´ng tiĂªu diá»‡t gá»n."* | `assets/quang-trung/ngoc_hoi_map.jpg` | Báº£n Ä‘á»“ chiáº¿n thuáº­t diá»…n biáº¿n tráº­n Ä‘Ă¡nh mai phá»¥c Ráº¡ch Gáº§m - XoĂ i MĂºt. | **SFX:** Tiáº¿ng nÆ°á»›c reo hĂ² cuá»“n cuá»™n, tiáº¿ng lá»­a chĂ¡y bĂ¹ng bĂ¹ng. |
-| **Scene 21** | `05:00 - 05:15` | *"Tráº­n Ngá»c Há»“i - Äá»‘ng Äa Ä‘á»™c Ä‘Ă¡o á»Ÿ chá»¯ NHANH: hĂ nh quĂ¢n tháº§n tá»‘c 24/24 tá»« PhĂº XuĂ¢n ra Báº¯c, luĂ¢n phiĂªn 3 ngÆ°á»i 1 vĂµng vá»«a Ä‘i vá»«a nghá»‰."* | `assets/quang-trung/scene_10_war_elephant.jpg` | TÆ°á»£ng Voi chiáº¿n TĂ¢y SÆ¡n mang Ä‘áº¡i phĂ¡o xĂ´ng tráº­n dÅ©ng mĂ£nh. | **SFX:** Tiáº¿ng voi rá»‘ng rá»n trá»i, tiáº¿ng chĂ¢n quĂ¢n sÄ© hĂ nh quĂ¢n ráº§m ráº­p. |
-| **Scene 22** | `05:15 - 05:30` | *"ÄĂ­ch thĂ¢n Vua Quang Trung khoĂ¡c Ă¡o ngá»± sáº«m mĂ u khĂ³i phĂ¡o cÆ°á»¡i voi xĂ´ng tráº­n, Ä‘Ă¡nh Ä‘Ă²n sáº¥m sĂ©t Ä‘Ăªm mĂ¹ng 5 Táº¿t khiáº¿n TĂ´n SÄ© Nghá»‹ bá» cháº¡y thá»¥c máº¡ng."* | `assets/quang-trung/scene_11_ngoc_hoi_dong_da.jpg` | Tranh phĂ¹ Ä‘iĂªu Äáº¡i tháº¯ng Ngá»c Há»“i - Äá»‘ng Äa: QuĂ¢n Thanh hoáº£ng loáº¡n tan vá»¡. | **SFX:** Tiáº¿ng trá»‘ng tráº­n bĂ¹ng ná»• Ä‘á»‰nh Ä‘iá»ƒm, tiáº¿ng giáº·c Thanh gĂ o khĂ³c thĂ¡o cháº¡y. |
-| **Scene 23** | `05:30 - 05:45` | *"NÄƒm 1792, Vua Quang Trung Ä‘á»™t ngá»™t qua Ä‘á»i khi chÆ°a Ä‘áº§y 40 tuá»•i, Ä‘á»ƒ láº¡i bao dá»± Ä‘á»‹nh kinh bang táº¿ tháº¿ dá»Ÿ dang khiáº¿n muĂ´n dĂ¢n tiáº¿c thÆ°Æ¡ng ngĂ n thu."* | `assets/quang-trung/real_23_quang_trung_museum.jpg` | Phong cáº£nh Báº£o tĂ ng Quang Trung táº¡i BĂ¬nh Äá»‹nh chĂ¬m trong Ă¡nh hoĂ ng hĂ´n hoĂ i niá»‡m. | **SFX:** Tiáº¿ng chuĂ´ng tang ngĂ¢n dĂ i tráº§m u uáº¥t, tiáº¿ng sĂ¡o nhá»‹ bi hĂ¹ng. |
-| **Scene 24** | `05:45 - 06:00` | *"HĂ¬nh tÆ°á»£ng Anh hĂ¹ng Ă¡o váº£i Quang Trung Nguyá»…n Huá»‡ mĂ£i mĂ£i lĂ  ngá»n lá»­a báº¥t tá»­ vá» tinh tháº§n BĂ¡ch Chiáº¿n BĂ¡ch Tháº¯ng vĂ  báº£n lÄ©nh Viá»‡t Nam!"* | `assets/quang-trung/scene_14_quang_trung_statue.jpg` | TÆ°á»£ng Ä‘Ă i HoĂ ng Ä‘áº¿ Quang Trung táº¡i GĂ² Äá»‘ng Äa (HĂ  Ná»™i) lung linh dÆ°á»›i bĂ¬nh minh ráº¡ng rá»¡. | **SFX:** Nháº¡c káº¿t cao trĂ o kiĂªu hĂ£nh vĂ  hĂ o hĂ¹ng. |
+| **Scene 01** | `00:00 - 00:15` | *"Hoàng đế Quang Trung Nguyễn Huệ là thần tài quân sự kiệt xuất của dân tộc Việt Nam – một con người dường như sinh ra chỉ để chiến đấu, ra trận và chiến thắng."* | `assets/quang-trung/real_01_quang_trung_portrait.jpg` | Tượng đài Hoàng đế Quang Trung uy nghi tại Gò Đống Đa (Hà Nội). Camera Zoom Out lộ toàn cảnh tượng đài dưới bình minh. | **SFX:** Tiếng trống trận Tây Sơn giục giã dồn dập. **BGM:** Nhạc hào hùng kiêu hãnh. |
+| **Scene 02** | `00:15 - 00:30` | *"Suốt 18 năm cầm quân liên tục trên lưng ngựa – từ khi là một thiếu niên 18 tuổi đến khi qua đời ở tuổi 39 – ngài đánh đâu thắng đó, chưa từng nếm mùi thất bại bất kỳ trận nào."* | `assets/quang-trung/scene_04_quang_trung_portrait.jpg` | Chân dung tư liệu Hoàng đế Quang Trung với ánh mắt kiên cường, sắc sảo. Ken Burns Pan ngang chậm. | **SFX:** Tiếng vó ngựa sải bước dồn dập rền trời. **BGM:** Nhạc tiết tấu nhanh dồn dập. |
+| **Scene 03** | `00:30 - 00:45` | *"Mỗi lần ra trận, ngài khiến kẻ thù khiếp vía: 'Đánh cho để dài tóc, đánh cho để đen răng, đánh cho nó bánh xe không quay lại, đánh cho nó giáp phiến không trở về!'"* | `assets/quang-trung/real_03_sac_than_tay_son.jpg` | Hiện vật "Sắc thần thời Tây Sơn" tại Bảo tàng Lịch sử Quốc gia. Thẻ trích dẫn Lời thề Hịch ra Bắc hiển thị mạ vàng. | **SFX:** Tiếng rút gươm đanh thép, tiếng reo hò xung phong rầm rập. |
+| **Scene 04** | `00:45 - 01:00` | *"Quang Trung sở hữu sự tàn bạo dũng mãnh và khí phách kiêu hùng của một nhà chinh phục thiên tài trên lưng ngựa – không kém gì Thành Cát Tư Hãn hay Alexander Đại Đế."* | `assets/quang-trung/real_04_nhac_brothers.jpg` | Tượng thờ Ba anh em Tây Sơn (Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ) tại Bảo tàng Quang Trung (Bình Định). | **SFX:** Tiếng nhạc giao hưởng vút cao hùng vĩ. |
+| **Scene 05** | `01:00 - 01:15` | *"Nhưng điểm khác biệt lớn nhất giữa Quang Trung và các vị tướng khác: Ngài là vị tướng duy nhất trong lịch sử Việt Nam mang tư duy CHỦ ĐỘNG TẤN CÔNG tuyệt đối."* | `assets/quang-trung/real_05_ngo_thi_nham.jpg` | Chân dung Danh sĩ / Quân sư Ngô Thì Nhậm – người cùng Quang Trung vạch chiến lược thần tốc. | **SFX:** Tiếng lật sách tư liệu, tiếng nhạc phân tích chiến thuật. |
+| **Scene 06** | `01:15 - 01:30` | *"Lịch sử dân tộc phần lớn là phòng thủ giữ nước, nhưng Quang Trung luôn áp đảo, đánh đòn sấm sét và tiêu diệt hoàn toàn sinh lực kẻ thù ngay từ đầu."* | `assets/quang-trung/real_06_thang_long_citadel.jpg` | Ảnh tư liệu Cổng Bắc Hoàng Thành Thăng Long cổ kính dưới bầu trời thu rực đỏ. | **SFX:** Tiếng sấm nổ rền (Lightning boom), tiếng trống thúc dồn. |
+| **Scene 07** | `01:30 - 01:45` | *"Đất nước Đại Việt thế kỷ 18 chìm trong hơn 200 năm chia cắt tàn khốc giữa Đàng Trong của Chúa Nguyễn và Đàng Ngoài của Chúa Trịnh."* | `assets/quang-trung/scene_02_daiviet_map.png` | Bản đồ tư liệu Đại Việt thế kỷ 18 chia cắt Đàng Trong - Đàng Ngoài với sông Gianh làm ranh giới. | **SFX:** Tiếng gió hú đau thương, tiếng xích sắt lăng lăng. |
+| **Scene 08** | `01:45 - 02:00` | *"Người dân lầm than, quan lại vơ vét. Năm 1771, ba anh em Tây Sơn phất cờ khởi nghĩa tại vùng thượng đạo Tây Sơn (Bình Định)."* | `assets/quang-trung/scene_03_tay_son_heritage.jpg` | Tượng đài Khởi nghĩa Tây Sơn 1771 tại Bình Định. Cờ đỏ Tây Sơn rợp trời. | **SFX:** Tiếng trống hội Tây Sơn vang dội hân hoan. |
+| **Scene 09** | `02:00 - 02:15` | *"Nguyễn Huệ nhanh chóng bộc lộ thiên tài quân sự xuất chúng, trở thành linh hồn và tổng chỉ huy quân sự tối cao cho toàn bộ phong trào Tây Sơn."* | `assets/quang-trung/quang_trung.jpg` | Tranh tư liệu Hoàng đế Quang Trung Nguyễn Huệ cưỡi chiến mã phất cờ hiệu. | **SFX:** Tiếng tù và rền vang, tiếng ngựa hí vang trời. |
+| **Scene 10** | `02:15 - 02:30` | *"18 năm cầm quân, ngài đánh tan Chúa Nguyễn Đàng Trong, rồi tiêu diệt gọn 5 vạn quân Xiêm xâm lược tại Trận thủy chiến Rạch Gầm - Xoài Mút năm 1785."* | `assets/quang-trung/scene_05_rach_gam_xoai_mut.png` | Tranh tư liệu Đại thắng Rạch Gầm - Xoài Mút 1785: Thuyền quân Xiêm bốc cháy dữ dội trên sông Tiền. | **SFX:** Tiếng hỏa hổ nổ sầm sập, tiếng thuyền vỡ dữ dội, tiếng nước reo hò. |
+| **Scene 11** | `02:30 - 02:45` | *"Quân Xiêm từ đó về sau 'tuy ngoài miệng nói khoác, nhưng trong bụng sợ Nguyễn Huệ như sợ cọp', không bao giờ dám ngó ngàng sang đất Việt."* | `assets/quang-trung/scene_06_song_tien_ambush.jpg` | Ảnh địa hình thực tế Trận địa mai phục sông Tiền tại Tiền Giang. | **SFX:** Tiếng sóng nước cuồn cuộn, tiếng quạ kêu xa xăm. |
+| **Scene 12** | `02:45 - 03:00` | *"Năm 1786, ngài kéo quân ra Bắc đập tan Chúa Trịnh, dẹp bỏ nhà Lê bạc nhược, san lấp hoàn toàn ranh giới 200 năm nội chiến chia cắt dân tộc."* | `assets/quang-trung/real_12_tay_do_gate.jpg` | Ảnh tư liệu Cổng Nam Thành Tây Đô (Thanh Hóa) – nơi quân Tây Sơn hành quân qua. | **SFX:** Tiếng rầm rập của ngàn quân sĩ ra Bắc, tiếng chuông đồng rền. |
+| **Scene 13** | `03:00 - 03:15` | *"Đỉnh cao chói lọi là Trận đại thắng Ngọc Hồi - Đống Đa năm 1789: Quét sạch 29 vạn quân Thanh xâm lược chỉ trong 5 ngày Tết Kỷ Dậu, thu gom dân tộc về một mối."* | `assets/quang-trung/scene_01_thang_long_dong_da.jpg` | Tượng đài Quang Trung tại Gò Đống Đa - Thăng Long dưới ánh nắng chiến thắng rực rỡ. | **SFX:** Tiếng pháo Tết nổ rộn rã, tiếng trống mừng chiến thắng vang trời. |
+| **Scene 14** | `03:15 - 03:30` | *"Sau khi lên ngôi, Vua Quang Trung chọn Nghệ An lập Phượng Hoàng Trung Đô – vị trí chiến lược để tiện điều binh khống chế cả trong Nam lẫn ngoài Bắc."* | `assets/quang-trung/scene_13_phu_xuan_hue.jpg` | Ảnh tư liệu Kinh đô Phú Xuân / Phượng Hoàng Trung Đô núi Dũng Quyết (Nghệ An). | **SFX:** Tiếng chim hót thanh bình, tiếng nhạc triều chính trang nghiêm. |
+| **Scene 15** | `03:30 - 03:45` | *"Quân đội Tây Sơn được trang bị hiện đại bậc nhất: súng trường Châu Âu, pháo hạng nhẹ, đại pháo thần công và đặc sản hỏa công 'Hỏa hổ' sấm sét."* | `assets/quang-trung/real_15_tayson_cannon.jpg` | Hiện vật "Súng thần công thời Tây Sơn" trưng bày tại Bảo tàng Lịch sử Quốc gia. | **SFX:** Tiếng pháo thần công nổ đùng đùng, tiếng khói đạn nghi ngút. |
+| **Scene 16** | `03:45 - 04:00` | *"Ngài đặc biệt chú trọng phát triển Thủy quân hùng mạnh với các chiến thuyền khổng lồ trang bị hàng chục khẩu thần công, sẵn sàng mở rộng ảnh hưởng."* | `assets/quang-trung/real_16_tayson_ammunition.jpg` | Hiện vật "Đạn dược pháo cối thời Tây Sơn" tại Bảo tàng Lịch sử Quốc gia. | **SFX:** Tiếng đạn pháo va chạm kim loại, tiếng sóng biển cuồn cuộn. |
+| **Scene 17** | `04:00 - 04:15` | *"Ngoại giao khôn khéo nhưng kiên quyết: Ép nhà Thanh phải nể sợ, đòi lại vùng đất Lưỡng Quảng và ra lệnh tuần tra bảo vệ tuyệt đối chủ quyền Hoàng Sa."* | `assets/quang-trung/real_17_hoang_sa_chau_ban.jpg` | Châu bản tư liệu khẳng định chủ quyền Hoàng Sa & Lãnh thổ thời Tây Sơn. | **SFX:** Tiếng ấn triều đóng xuống sắc phong, tiếng nhạc kiêu hãnh. |
+| **Scene 18** | `04:15 - 04:30` | *"Ngài dứt khoát tuyên bố với các quan lại: 'Trước đây có ai dám đánh quân Tàu không? ... Vậy thì để ta sẽ làm cho mà coi!'"* | `assets/quang-trung/real_18_tay_son_seal.png` | Hiện vật Ấn triều Tây Sơn ("Triều Dương Chỉ Ấn") mạ vàng sang trọng. | **SFX:** Tiếng đập tay xuống ngai vàng, tiếng hào hùng vút cao. |
+| **Scene 19** | `04:30 - 04:45` | *"Trong nghệ thuật quân sự, ngài sáng tạo mưu 'Người cỏ mượn tên' đánh dẹp quân Trịnh tại Sơn Nam, khiến kẻ thù hoảng loạn đầu hàng."* | `assets/quang-trung/real_19_ngo_van_so.jpg` | Chân dung Danh tướng Ngô Văn Sở – đại thần kiệt xuất triều Tây Sơn. | **SFX:** Tiếng tên bay vè vè trong đêm mờ sương. |
+| **Scene 20** | `04:45 - 05:00` | *"Tại Rạch Gầm - Xoài Mút, ngài dùng tình báo tinh vi, nhử hạm đội quân Xiêm vào lòng chảo tử thần rồi dùng pháo hỏa công tiêu diệt gọn."* | `assets/quang-trung/ngoc_hoi_map.jpg` | Bản đồ chiến thuật diễn biến trận đánh mai phục Rạch Gầm - Xoài Mút. | **SFX:** Tiếng nước reo hò cuồn cuộn, tiếng lửa cháy bùng bùng. |
+| **Scene 21** | `05:00 - 05:15` | *"Trận Ngọc Hồi - Đống Đa độc đáo ở chữ NHANH: hành quân thần tốc 24/24 từ Phú Xuân ra Bắc, luân phiên 3 người 1 võng vừa đi vừa nghỉ."* | `assets/quang-trung/scene_10_war_elephant.jpg` | Tượng Voi chiến Tây Sơn mang đại pháo xông trận dũng mãnh. | **SFX:** Tiếng voi rống rền trời, tiếng chân quân sĩ hành quân rầm rập. |
+| **Scene 22** | `05:15 - 05:30` | *"Đích thân Vua Quang Trung khoác áo ngự sẫm màu khói pháo cưỡi voi xông trận, đánh đòn sấm sét đêm mùng 5 Tết khiến Tôn Sĩ Nghị bỏ chạy thục mạng."* | `assets/quang-trung/scene_11_ngoc_hoi_dong_da.jpg` | Tranh phù điêu Đại thắng Ngọc Hồi - Đống Đa: Quân Thanh hoảng loạn tan vỡ. | **SFX:** Tiếng trống trận bùng nổ đỉnh điểm, tiếng giặc Thanh gào khóc tháo chạy. |
+| **Scene 23** | `05:30 - 05:45` | *"Năm 1792, Vua Quang Trung đột ngột qua đời khi chưa đầy 40 tuổi, để lại bao dự định kinh bang tế thế dở dang khiến muôn dân tiếc thương ngàn thu."* | `assets/quang-trung/real_23_quang_trung_museum.jpg` | Phong cảnh Bảo tàng Quang Trung tại Bình Định chìm trong ánh hoàng hôn hoài niệm. | **SFX:** Tiếng chuông tang ngân dài trầm u uất, tiếng sáo nhị bi hùng. |
+| **Scene 24** | `05:45 - 06:00` | *"Hình tượng Anh hùng áo vải Quang Trung Nguyễn Huệ mãi mãi là ngọn lửa bất tử về tinh thần Bách Chiến Bách Thắng và bản lĩnh Việt Nam!"* | `assets/quang-trung/scene_14_quang_trung_statue.jpg` | Tượng đài Hoàng đế Quang Trung tại Gò Đống Đa (Hà Nội) lung linh dưới bình minh rạng rỡ. | **SFX:** Nhạc kết cao trào kiêu hãnh và hào hùng. |
 
 ---
 
-## đŸ› ï¸ 3. TEMPLATE Dá»® LIá»†U JSON CHO ENGINE REMOTION (`quangTrungTimeline.json`)
+## 🛠️ 3. TEMPLATE DỮ LIỆU JSON CHO ENGINE REMOTION (`quangTrungTimeline.json`)
 
 Tệp này nằm tại `packages/remotion-engine/src/data/quang-trung/quangTrungTimeline.json` và đã được đăng ký tại `Root.tsx` với Composition ID `QuangTrungVideo`.
 
@@ -62,8 +62,8 @@ Tệp này nằm tại `packages/remotion-engine/src/data/quang-trung/quangTrung
 
 ```json
 {
-  "title": "HOĂ€NG Äáº¾ QUANG TRUNG â€“ HUYá»€N THOáº I BĂCH CHIáº¾N BĂCH THáº®NG",
-  "subtitle": "ThiĂªn tĂ i quĂ¢n sá»± 18 nÄƒm cáº§m quĂ¢n chÆ°a tá»«ng náº¿m mĂ¹i tháº¥t báº¡i",
+  "title": "HOÀNG ĐẾ QUANG TRUNG – HUYỀN THOẠI BÁCH CHIẾN BÁCH THẮNG",
+  "subtitle": "Thiên tài quân sự 18 năm cầm quân chưa từng nếm mùi thất bại",
   "videoType": "BATTLE",
   "templateId": "HISTORICAL_DOCUMENTARY",
   "aspectRatio": "16:9",
@@ -86,13 +86,13 @@ Tệp này nằm tại `packages/remotion-engine/src/data/quang-trung/quangTrung
       "id": "scene_00_intro",
       "startTime": 0,
       "endTime": 15,
-      "text": "ChronoViet Documentary Series â€” HoĂ ng Äáº¿ Quang Trung.",
+      "text": "ChronoViet Documentary Series — Hoàng Đế Quang Trung.",
       "layoutMode": "ARTICLE_UI",
       "overlayType": "ARTICLE_INTRO",
       "transition": "FADE_TO_BLACK",
       "hideHeader": true,
       "overlayData": {
-        "title": "HOĂ€NG Äáº¾ QUANG TRUNG â€“ BĂCH CHIáº¾N BĂCH THáº®NG",
+        "title": "HOÀNG ĐẾ QUANG TRUNG – BÁCH CHIẾN BÁCH THẮNG",
         "author": "ChronoViet Research Team"
       }
     },
@@ -100,45 +100,45 @@ Tệp này nằm tại `packages/remotion-engine/src/data/quang-trung/quangTrung
       "id": "scene_01_title",
       "startTime": 15,
       "endTime": 30,
-      "text": "HoĂ ng Ä‘áº¿ Quang Trung Nguyá»…n Huá»‡ lĂ  tháº§n tĂ i quĂ¢n sá»± kiá»‡t xuáº¥t cá»§a dĂ¢n tá»™c Viá»‡t Nam â€“ má»™t con ngÆ°á»i dÆ°á»ng nhÆ° sinh ra chá»‰ Ä‘á»ƒ chiáº¿n Ä‘áº¥u, ra tráº­n vĂ  chiáº¿n tháº¯ng.",
+      "text": "Hoàng đế Quang Trung Nguyễn Huệ là thần tài quân sự kiệt xuất của dân tộc Việt Nam – một con người dường như sinh ra chỉ để chiến đấu, ra trận và chiến thắng.",
       "assetUrl": "assets/quang-trung/real_01_quang_trung_portrait.jpg",
       "effect": "KEN_BURNS_ZOOM_IN",
       "layoutMode": "TITLE_CARD",
       "filterStyle": "HISTORICAL",
       "transition": "GLITCH",
       "overlayData": {
-        "chapterNumber": "PHáº¦N I",
-        "title": "HOĂ€NG Äáº¾ QUANG TRUNG",
-        "subtitle": "BĂ¡ch Chiáº¿n BĂ¡ch Tháº¯ng â€¢ Äáº¡i Tháº¯ng QuĂ¢n Thanh 1789"
+        "chapterNumber": "PHẦN I",
+        "title": "HOÀNG ĐẾ QUANG TRUNG",
+        "subtitle": "Bách Chiến Bách Thắng • Đại Thắng Quân Thanh 1789"
       }
     },
     {
       "id": "scene_03_quote",
       "startTime": 30,
       "endTime": 45,
-      "text": "ÄĂ¡nh cho Ä‘á»ƒ dĂ i tĂ³c, Ä‘Ă¡nh cho Ä‘á»ƒ Ä‘en rÄƒng, Ä‘Ă¡nh cho nĂ³ bĂ¡nh xe khĂ´ng quay láº¡i, Ä‘Ă¡nh cho nĂ³ giĂ¡p phiáº¿n khĂ´ng trá»Ÿ vá»!",
+      "text": "Đánh cho để dài tóc, đánh cho để đen răng, đánh cho nó bánh xe không quay lại, đánh cho nó giáp phiến không trở về!",
       "assetUrl": "assets/quang-trung/real_03_sac_than_tay_son.jpg",
       "layoutMode": "QUOTE_CANVAS",
       "overlayType": "QUOTE",
       "transition": "FADE_TO_BLACK",
       "overlayData": {
-        "quoteText": "ÄĂ¡nh cho Ä‘á»ƒ dĂ i tĂ³c, Ä‘Ă¡nh cho Ä‘á»ƒ Ä‘en rÄƒng / ÄĂ¡nh cho nĂ³ bĂ¡nh xe khĂ´ng quay láº¡i / ÄĂ¡nh cho nĂ³ giĂ¡p phiáº¿n khĂ´ng trá»Ÿ vá»!",
-        "author": "Lá»i thá» Há»‹ch ra Báº¯c â€“ Vua Quang Trung (1788)"
+        "quoteText": "Đánh cho để dài tóc, đánh cho để đen răng / Đánh cho nó bánh xe không quay lại / Đánh cho nó giáp phiến không trở về!",
+        "author": "Lời thề Hịch ra Bắc – Vua Quang Trung (1788)"
       }
     },
     {
       "id": "scene_24_outro",
       "startTime": 345,
       "endTime": 360,
-      "text": "HĂ¬nh tÆ°á»£ng Anh hĂ¹ng Ă¡o váº£i Quang Trung Nguyá»…n Huá»‡ mĂ£i mĂ£i lĂ  ngá»n lá»­a báº¥t tá»­ vá» tinh tháº§n BĂ¡ch Chiáº¿n BĂ¡ch Tháº¯ng vĂ  báº£n lÄ©nh Viá»‡t Nam!",
+      "text": "Hình tượng Anh hùng áo vải Quang Trung Nguyễn Huệ mãi mãi là ngọn lửa bất tử về tinh thần Bách Chiến Bách Thắng và bản lĩnh Việt Nam!",
       "layoutMode": "OUTRO_CARD",
       "overlayType": "OUTRO_CARD",
       "transition": "FADE_TO_BLACK",
       "overlayData": {
-        "title": "HOĂ€NG Äáº¾ QUANG TRUNG",
-        "quoteText": "Ngá»n lá»­a báº¥t tá»­ vá» tinh tháº§n BĂ¡ch Chiáº¿n BĂ¡ch Tháº¯ng.",
-        "ctaText": "CHRONOVIET DOCUMENTARY SERIES â€¢ CHUYĂN Äá»€ Lá»CH Sá»¬ CHUYĂN SĂ‚U",
-        "bulletPoints": ["Äáº I THáº®NG Ráº CH Gáº¦M XĂ€I MĂT", "Äáº I THáº®NG NGá»ŒC Há»’I Äá»NG ÄA", "Báº¢N LÄ¨NH VIá»†T NAM"]
+        "title": "HOÀNG ĐẾ QUANG TRUNG",
+        "quoteText": "Ngọn lửa bất tử về tinh thần Bách Chiến Bách Thắng.",
+        "ctaText": "CHRONOVIET DOCUMENTARY SERIES • CHUYÊN ĐỀ LỊCH SỬ CHUYÊN SÂU",
+        "bulletPoints": ["ĐẠI THẮNG RẠCH GẦM XÀI MÚT", "ĐẠI THẮNG NGỌC HỒI ĐỐNG ĐA", "BẢN LĨNH VIỆT NAM"]
       }
     }
   ]

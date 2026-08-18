@@ -23,7 +23,7 @@ export async function processVLMJob(job: Job<VLMJobData>): Promise<InspectSceneR
     fields: { projectId, sceneId: scene.sceneId, jobId: job.id },
   });
 
-  workerLog.info('worker.vlm_processing', `Processing VLM job ${job.id} for scene ${scene.sceneId}`, {
+  workerLog.debug('worker.vlm_processing', `Processing VLM job ${job.id} for scene ${scene.sceneId}`, {
     projectId,
     sceneId: scene.sceneId,
   });
@@ -45,7 +45,7 @@ export function startVLMWorker(): Worker<VLMJobData, InspectSceneResult> {
   );
 
   worker.on('completed', (job) => {
-    log.info('worker.vlm_completed', `VLM inspection job ${job.id} completed for scene ${job.data.scene.sceneId}`);
+    log.debug('worker.vlm_completed', `VLM inspection job ${job.id} completed for scene ${job.data.scene.sceneId}`);
   });
 
   worker.on('failed', (job, err) => {

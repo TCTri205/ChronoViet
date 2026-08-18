@@ -54,7 +54,7 @@ export async function searchWithProviderChain(
       });
       collected += candidates.length;
       if (candidates.length > 0) {
-        log.info('vlm.search_provider_hit', `Provider ${provider.name} returned ${candidates.length} candidates`, {
+        log.debug('vlm.search_provider_hit', `Provider ${provider.name} returned ${candidates.length} candidates`, {
           keywords,
         });
       }

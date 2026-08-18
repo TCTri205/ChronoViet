@@ -15,6 +15,9 @@
     "test:eval": "vitest run --dir eval/ --passWithNoTests",
     "cli": "tsx src/cli.ts",
     "render": "tsx src/cli.ts render",
+    "render:quangtrung": "tsx src/cli.ts render QuangTrungVideo src/data/quang-trung/quangTrungTimeline.json out/quang_trung.mp4",
+    "render:haibatrung": "tsx src/cli.ts render HaiBaTrungVideo src/data/hai-ba-trung/haiBaTrungTimeline.json out/hai_ba_trung.mp4",
+    "render:mongolviet2": "tsx src/cli.ts render MongolViet2Video src/data/mongol-viet-2/mongolViet2Timeline.json out/mongol_viet_2.mp4",
     "still": "tsx src/cli.ts still",
     "eval": "tsx eval/runner.ts --ci",
     "setup-assets": "node eval/scripts/setup_assets.js"

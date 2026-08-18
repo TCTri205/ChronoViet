@@ -24,7 +24,6 @@ interface IngestCliOptions {
   inputPath: string;
   force: boolean;
   strict: boolean;
-  localLlm: boolean;
   regexOnly: boolean;
   allowFallback: boolean;
 }
@@ -34,7 +33,6 @@ function parseArgs(): IngestCliOptions {
   let inputPath = path.resolve(findMonorepoRoot(), 'data', 'raw_corpus');
   let force = false;
   let strict = false;
-  let localLlm = false;
   let regexOnly = false;
   let allowFallback = false;
 
@@ -46,8 +44,6 @@ function parseArgs(): IngestCliOptions {
       force = true;
     } else if (arg === '--strict') {
       strict = true;
-    } else if (arg === '--local-llm') {
-      localLlm = true;
     } else if (arg === '--regex-only' || arg === '--regex') {
       regexOnly = true;
     } else if (arg === '--allow-fallback' || arg === '--fallback') {
@@ -55,7 +51,7 @@ function parseArgs(): IngestCliOptions {
     }
   }
 
-  return { inputPath, force, strict, localLlm, regexOnly, allowFallback };
+  return { inputPath, force, strict, regexOnly, allowFallback };
 }
 
 async function performPreflightHealthCheck(options: IngestCliOptions): Promise<void> {
@@ -137,7 +133,6 @@ async function main() {
     inputPath: cliOptions.inputPath,
     force: cliOptions.force,
     strict: cliOptions.strict,
-    localLlm: cliOptions.localLlm,
     regexOnly: cliOptions.regexOnly,
     allowFallback: cliOptions.allowFallback,
   });

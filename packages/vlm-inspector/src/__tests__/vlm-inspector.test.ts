@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isWhitelistedLicense } from '../license-filter.js';
+import { isWhitelistedLicense } from '../inspector-pipeline.js';
 import { scoreImageWithLocalCLIP, cosineSimilarity, extractTextVector } from '../clip-scorer.js';
 import { computePHash, computeSha256 } from '../asset-downloader.js';
 

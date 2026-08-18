@@ -22,7 +22,7 @@ interface CompositionDef {
 }
 
 const COMPOSITION_DEFS: CompositionDef[] = [
-  { id: 'ChronoVideo', defaultProps: templateGeneralTimeline as unknown as ChronoVideoProps, durationInFrames: 4500 },
+  { id: 'ChronoVideo', defaultProps: templateGeneralTimeline as unknown as ChronoVideoProps, durationInFrames: 4350 },
   { id: 'BiographyVideo', defaultProps: biographyTimeline as unknown as ChronoVideoProps, durationInFrames: 12150 },
   { id: 'BattleVideo', defaultProps: battleTimeline as unknown as ChronoVideoProps, durationInFrames: 12150 },
   { id: 'DynastyVideo', defaultProps: dynastyTimeline as unknown as ChronoVideoProps, durationInFrames: 12150 },

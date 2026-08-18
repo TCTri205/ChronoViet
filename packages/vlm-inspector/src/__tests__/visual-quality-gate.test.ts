@@ -21,6 +21,12 @@ describe('VisualQualityGate Unit Tests', () => {
     const valid1080p = gate.evaluateQuality(1920, 1080, '16:9');
     expect(valid1080p.passed).toBe(true);
 
+    const validShorts916 = gate.evaluateQuality(1080, 1920, '9:16');
+    expect(validShorts916.passed).toBe(true);
+
+    const validSquare11 = gate.evaluateQuality(1080, 1080, '1:1');
+    expect(validSquare11.passed).toBe(true);
+
     const lowRes = gate.evaluateQuality(640, 480, '16:9');
     expect(lowRes.passed).toBe(false);
     expect(lowRes.minResolutionMet).toBe(false);

@@ -780,11 +780,30 @@ export const MediaAssetRegistrySchema = z.object({
   updatedAt: z.string().default(() => new Date().toISOString()),
 });
 
+export const OrchestratorStatusSchema = z.enum([
+  'INIT',
+  'RAG_RETRIEVED',
+  'OUTLINE_CHAPTERED',
+  'CHAPTER_SCRIPT_GENERATED',
+  'CHAPTER_FACT_CHECKED',
+  'SCENES_SEGMENTED',
+  'RESEARCH_COMPLETED',
+  'TTS_SYNTHESIZED',
+  'DURATION_RECONCILED',
+  'KEYWORDS_EXTRACTED',
+  'ASSETS_AUDITED',
+  'PACKAGED',
+  'COMPLETED',
+  'NEEDS_HUMAN_REVIEW',
+  'FAILED',
+]);
+
 export type ProjectWorkspaceConfig = z.infer<typeof ProjectWorkspaceConfigSchema>;
 export type ChapterPlan = z.infer<typeof ChapterPlanSchema>;
 export type VisualCandidate = z.infer<typeof VisualCandidateSchema>;
 export type SceneGeneration = z.infer<typeof SceneGenerationSchema>;
 export type MediaAssetRegistry = z.infer<typeof MediaAssetRegistrySchema>;
+export type OrchestratorStatus = z.infer<typeof OrchestratorStatusSchema>;
 
 
 

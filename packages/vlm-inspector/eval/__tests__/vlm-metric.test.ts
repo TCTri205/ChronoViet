@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isWhitelistedLicense } from '../../src/license-filter.js';
+import { isWhitelistedLicense } from '../../src/inspector-pipeline.js';
 import {
   cosineSimilarity,
   extractTextVector,

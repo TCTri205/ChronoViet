@@ -4,6 +4,7 @@
 > Bản kế hoạch khởi tạo này đã hoàn thành và được chuẩn hóa chính thức tại:
 > - **Tài liệu Mô-đun Production:** [`docs/modules/01_CHRONO_RAG_ENGINE.md`](../modules/01_CHRONO_RAG_ENGINE.md)
 > - **Đặc tả Quản trị Dữ liệu:** [`docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`](../specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md)
+> - **Đặc tả Benchmark Chi tiết:** [`docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md`](../specs/RAG_COMPONENT_BENCHMARK_SPEC.md) (Chuẩn hóa PostgreSQL `ts_rank_cd` cover density & RRF)
 > - **Mã nguồn Production:** [`packages/rag-engine/`](../../packages/rag-engine)
 
 ---

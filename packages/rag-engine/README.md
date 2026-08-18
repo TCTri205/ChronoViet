@@ -32,10 +32,12 @@ packages/rag-engine/
 │   ├── rag-engine.ts                  # Class điều phối chính ChronoRAGEngine
 │   └── index.ts                       # Entrypoint export public APIs
 │
-├── eval/                              # Tầng Đánh Giá & Benchmark Module 1
-│   ├── datasets/                      # Tập dữ liệu mẫu chuẩn (Golden Datasets)
-│   ├── runner.ts                      # Benchmark Runner cho Mô-đun 1 (Fact Precision & Latency)
-│   └── metrics.ts                     # Đo lường Fact Precision, Hallucination Rate & Citation
+├── eval/                              # Tầng Đánh Giá & Benchmark Module 1 (C0-C10)
+│   ├── benchmarks/                    # 11 Component Benchmark Tiers & System Ablation
+│   │   └── index.ts                   # Benchmark CLI Router & Entrypoint
+│   ├── datasets/                      # 300 Canonical, 500 Perturbations, 200 Adversarial Datasets
+│   ├── metrics/                       # Đo lường NDCG, MRR, Fact Precision, Hallucination Rate
+│   └── reports/                       # Báo cáo kết quả benchmark JSON
 │
 ├── package.json
 └── tsconfig.json
@@ -51,10 +53,20 @@ pnpm --filter @chronoviet/rag-engine chat
 # hoặc từ root monorepo:
 pnpm rag:chat
 
-# 2. Chạy bộ kiểm thử Benchmark đo lường KPI Mô-đun 1 (Chrono-RAG Search Engine)
+# 2. Chạy toàn bộ 11 Component Benchmarks + System Ablation Mô-đun 1
 pnpm --filter @chronoviet/rag-engine eval
 
-# 3. Build gói mã nguồn
+# 3. Chạy từng Component Benchmark riêng biệt:
+pnpm --filter @chronoviet/rag-engine eval -- --c0    # Knowledge Graph Construction
+pnpm --filter @chronoviet/rag-engine eval -- --c4    # Hybrid Dense+FTS Retrieval
+pnpm --filter @chronoviet/rag-engine eval -- --c6    # Reranker & nDCG@5
+pnpm --filter @chronoviet/rag-engine eval -- --c9    # Claim-level Grounding & Citation
+pnpm --filter @chronoviet/rag-engine eval -- --sys   # System Ablation Matrix
+
+# 4. Chạy Unit Tests toán học metrics xếp hạng & grounding
+pnpm --filter @chronoviet/rag-engine test
+
+# 5. Build gói mã nguồn
 pnpm --filter @chronoviet/rag-engine build
 ```
 

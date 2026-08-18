@@ -246,6 +246,18 @@ export function parseAndSanitizeApiKeys(raw?: string | string[] | null): string[
 }
 
 /**
+ * Helper to classify whether an error is due to quota/rate limit/auth exhaustion (24h)
+ * versus a transient network / 5xx error (short cooldown).
+ */
+export function isQuotaOrAuthExhaustion(errorOrStatus?: unknown): boolean {
+  if (errorOrStatus === 429 || errorOrStatus === 401 || errorOrStatus === 403) return true;
+  const errMsg = typeof errorOrStatus === 'string'
+    ? errorOrStatus
+    : (errorOrStatus as any)?.message || String(errorOrStatus ?? '');
+  return /429|401|403|rate\s*limit|quota|unauthorized|resource_exhausted|too many requests|credit_exhausted|insufficient_quota/i.test(errMsg);
+}
+
+/**
  * Core ApiKeyRotator class managing round-robin pointer and cooldown health states.
  */
 export class ApiKeyRotator {
@@ -396,40 +408,15 @@ export class ApiKeyRotator {
 
     // Determine Cooldown Duration:
     // HTTP 429 / Quota Exceeded / Auth Error (401/403) -> 1 DAY (24 Hours = 86,400,000 ms)
-    // Other errors (Network / Temporary 5xx) -> 15s
+    // Other errors (Network / Temporary 5xx) -> 15s - 60s
     const dailyCooldownMs = (envConfig && envConfig.DAILY_KEY_QUARANTINE_MS) || 86400000;
     let cooldownMs = 15000;
-    const lowerMsg = errMsg.toLowerCase();
 
-    if (
-      statusCode === 429 ||
-      lowerMsg.includes('429') ||
-      lowerMsg.includes('rate limit') ||
-      lowerMsg.includes('resource_exhausted') ||
-      lowerMsg.includes('too many requests') ||
-      lowerMsg.includes('quota') ||
-      lowerMsg.includes('daily')
-    ) {
+    if (isQuotaOrAuthExhaustion(errorOrStatus)) {
       cooldownMs = dailyCooldownMs; // 1 DAY (24 Hours)
-      log.warn('rotator.key_rate_limited_1day', `API key for [${this.provider}] marked INACTIVE for 24 HOURS (1 day) due to 429 / quota limit`, {
+      log.warn('rotator.key_quota_auth_1day', `API key for [${this.provider}] marked INACTIVE for 24 HOURS (1 day) due to quota/rate limit/auth error`, {
         provider: this.provider,
         maskedKey: maskApiKey(key),
-        cooldownMs,
-        quarantinedUntil: new Date(Date.now() + cooldownMs).toISOString(),
-      });
-    } else if (
-      statusCode === 401 ||
-      statusCode === 403 ||
-      lowerMsg.includes('401') ||
-      lowerMsg.includes('403') ||
-      lowerMsg.includes('unauthorized') ||
-      lowerMsg.includes('invalid_api_key')
-    ) {
-      cooldownMs = dailyCooldownMs; // 1 DAY (24 Hours)
-      log.warn('rotator.key_auth_error_1day', `API key for [${this.provider}] marked INACTIVE for 24 HOURS (1 day) due to auth/quota error`, {
-        provider: this.provider,
-        maskedKey: maskApiKey(key),
-        statusCode,
         cooldownMs,
         quarantinedUntil: new Date(Date.now() + cooldownMs).toISOString(),
       });
@@ -809,22 +796,35 @@ export class HybridInferenceDispatcher {
         cooldownMs,
       });
     } else {
-      // Cloud Key failure: 1 Day (24 Hours = 86,400,000 ms) for quota/429/401/403 errors
+      // Cloud Key failure: 24 Hours for quota/429/401/403, 30s for transient network/5xx errors
+      const isQuotaOrAuth = isQuotaOrAuthExhaustion(errorOrStatus);
       const dailyCooldownMs = (envConfig && envConfig.DAILY_KEY_QUARANTINE_MS) || 86400000;
-      this.targetCooldowns.set(target.id, Date.now() + dailyCooldownMs);
-      persistQuarantineToRedis('target', target.id, dailyCooldownMs, {
+      const cooldownMs = isQuotaOrAuth ? dailyCooldownMs : 30000;
+
+      this.targetCooldowns.set(target.id, Date.now() + cooldownMs);
+      persistQuarantineToRedis('target', target.id, cooldownMs, {
         provider: target.provider,
         reason: String(errorOrStatus),
       }).catch(() => {});
+
       if (target.apiKey) {
         reportKeyFailure(target.provider as ApiKeyProvider, target.apiKey, errorOrStatus);
       }
-      log.warn('dispatcher.cloud_key_1day_cooldown', `Cloud Key [${target.maskedKey || target.id}] marked INACTIVE for 24 HOURS (1 day) due to quota/rate limit error`, {
-        targetId: target.id,
-        provider: target.provider,
-        quarantineExpiresAt: new Date(Date.now() + dailyCooldownMs).toISOString(),
-        cooldownMs: dailyCooldownMs,
-      });
+
+      if (isQuotaOrAuth) {
+        log.warn('dispatcher.cloud_key_1day_cooldown', `Cloud Key [${target.maskedKey || target.id}] marked INACTIVE for 24 HOURS (1 day) due to quota/auth error`, {
+          targetId: target.id,
+          provider: target.provider,
+          quarantineExpiresAt: new Date(Date.now() + cooldownMs).toISOString(),
+          cooldownMs,
+        });
+      } else {
+        log.warn('dispatcher.cloud_target_transient_cooldown', `Cloud target [${target.maskedKey || target.id}] experienced transient error (${String(errorOrStatus)}); quarantined for 30s before re-probing`, {
+          targetId: target.id,
+          provider: target.provider,
+          cooldownMs,
+        });
+      }
     }
   }
 

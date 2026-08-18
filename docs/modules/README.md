@@ -40,7 +40,7 @@ Từ khi kích hoạt `EVAL_STRICT=true` (mặc định), mọi eval runner sẽ
 | Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `bge-m3` (1024 dimensions) |
 | VieNeu Python TTS | `VIENEU_PYTHON_URL` (vd `http://localhost:8080`) | `python app.py` trong `services/vieneu-tts/` |
 | VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.8-27b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8091) |
-| PostgreSQL pgvector | `DATABASE_URL` | `docker compose up -d db` |
+| PostgreSQL pgvector | `DATABASE_URL` | `docker compose up -d postgres` |
 
 **Tắt strict (dev-only, KHÔNG hợp lệ làm benchmark):** đặt `EVAL_STRICT=false` trong `.env` — khi đó các fallback cũ được phép dùng lại.
 

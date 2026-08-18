@@ -2,7 +2,7 @@
  * Chrono-RAG Module 0 (Data Preprocessing & Ingestion Engine) Evaluation Metrics
  * Evaluates ETL quality across:
  * 1. Entity Normalization & Disambiguation Accuracy (> 98.0%)
- * 2. Copyright License Compliance Audit Rate (100%)
+ * 2. Knowledge Graph Triple Extraction Accuracy (> 90.0%)
  * 3. Golden Dataset Integrity & Schema Compliance (100%)
  * 4. Hierarchical Parent/Child Chunk Structural Quality (100%)
  */

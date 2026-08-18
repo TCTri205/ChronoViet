@@ -8,7 +8,7 @@ import { extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
 
 // Mock callLlm for deterministic unit testing
 vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
-  const original = await importOriginal<any>();
+  const original = await importOriginal<typeof import('@chronoviet/shared-spec')>();
   return {
     ...original,
     callLlm: vi.fn().mockImplementation(async ({ messages, responseFormat }) => {

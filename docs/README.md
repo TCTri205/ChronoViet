@@ -112,24 +112,49 @@ docs/
 
 ### Khởi động Môi trường Ứng dụng Toàn diện (Web App & Worker):
 ```bash
-# 1. Khởi chạy Hạ tầng Cơ sở Dữ liệu & Cache (PostgreSQL pgvector & Redis)
-pnpm stack:infra
-# Hoặc khởi chạy đầy đủ cả VieNeu TTS service qua Docker Compose:
-# docker compose up -d
+# ===============================================================
+# 1. HẠ TẦNG & DỮ LIỆU BAN ĐẦU
+# ===============================================================
+pnpm stack:infra                                # Khởi chạy Postgres, Redis & VieNeu TTS
+pnpm db:init                                    # Khởi tạo CSDL & Schema Vector/Graph
+pnpm crawl:all                                  # Cào 15 thời kỳ lịch sử
+pnpm ingest:knowledge --strict                  # Nạp tri thức vào CSDL (kiểm tra sức khoẻ dịch vụ)
+pnpm rag:re-resolve                             # Hợp giải thực thể mâu thuẫn & ghi audit logs
 
-# 2. Khởi tạo CSDL & Schema Đồ thị Quan hệ
-pnpm db:init
+# ===============================================================
+# 2. KHỞI CHẠY ỨNG DỤNG & STUDIO
+# ===============================================================
+pnpm dev                                        # Chạy song song Web App (port 3000) và Render Worker
+pnpm remotion:studio                            # Mở Remotion Studio UI xem kịch bản (port 9876)
+pnpm rag:chat                                   # Chatbot tra cứu RAG trên Terminal
 
-# 3. Nạp kho tri thức lịch sử vào CSDL (nếu chưa nạp)
-pnpm crawl:all
-pnpm ingest:knowledge                # Bắt buộc LLM Gateway hoạt động
-# hoặc pnpm ingest:knowledge --regex-only     # Chạy bằng bộ từ điển Regex (không cần GPU)
-# hoặc pnpm ingest:knowledge --allow-fallback # Cho phép tự động fallback về Regex nếu LLM offline
+# ===============================================================
+# 3. ĐÁNH GIÁ TỔNG THỂ & CHUỖI TÍCH HỢP (EVAL)
+# ===============================================================
+pnpm eval:clean                                 # Dọn dẹp artifact rác, file tạm & port treo
+pnpm eval:all --fresh                           # Đánh giá toàn diện Monorepo với lifecycle sạch
+pnpm eval --chain vieneu-remotion               # Đánh giá chuỗi TTS -> Remotion
+pnpm eval --chain ingest-rag                    # Đánh giá chuỗi Ingestion -> RAG Search
 
-# 4. Khởi chạy toàn bộ Ứng dụng (Next.js App Server + BullMQ Render Worker)
-pnpm dev
+# ===============================================================
+# 4. ĐÁNH GIÁ TỪNG MÔ-ĐUN ĐƠN LẬP
+# ===============================================================
+pnpm --filter @chronoviet/data-ingestion eval   # Module 0: Ingestion ETL & Chunk Quality
+pnpm --filter @chronoviet/rag-engine eval       # Module 1: Chrono-RAG C0-C10 & Ablation
+pnpm --filter @chronoviet/agent-orchestrator eval # Module 2: State Machine & Guardrails
+pnpm --filter @chronoviet/vlm-inspector eval    # Module 3: VLM Image Quality & License
+pnpm --filter @chronoviet/remotion-engine eval  # Module 4: 31 LayoutModes & 19 Transitions
+pnpm --filter @chronoviet/vieneu-tts eval       # Module TTS: RTF & Alignment Error
+pnpm --filter @chronoviet/render-worker eval    # App Worker: Memory Peak & Failover
+pnpm --filter @chronoviet/web eval              # App Web: Latency & WS Throughput
 
-# Mở trình duyệt truy cập: http://localhost:3000
+# ===============================================================
+# 5. VERIFICATION & CI/CD GATES
+# ===============================================================
+pnpm typecheck                                  # Kiểm tra TypeScript toàn dự án (0 lỗi)
+pnpm lint                                       # Kiểm tra Formatting & Lints
+pnpm test                                       # Unit Tests trên src/ (CI Gate)
+pnpm build                                      # Build toàn bộ packages & apps
 ```
 
 ### Render Video Trực Tiếp Qua CLI:

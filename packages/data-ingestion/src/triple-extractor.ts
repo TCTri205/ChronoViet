@@ -5,10 +5,6 @@
 
 import {
   resolveCanonicalEntity,
-  HISTORICAL_PERSON_DICTIONARY,
-  HISTORICAL_LOCATION_DICTIONARY,
-} from './entity-disambiguator.js';
-import {
   envConfig,
   generateLLMCompletion,
   logFallbackAlert,
@@ -34,6 +30,9 @@ const GENERIC_EXCLUSION_TERMS = new Set([
   'tất cả', 'phần lớn', 'nhiều', 'rất', 'quá', 'rồi', 'đang', 'như', 'vì'
 ]);
 
+const VI_CAP_WORD = '(?:\\p{Lu}\\p{Ll}*)';
+const PROPER_NOUN_PATTERN = `((?:(?:[Nn]hà|[Tt]riều|[Qq]uân|[Nn]ước|[Đđ]ại)\\s+)?${VI_CAP_WORD}(?:\\s+${VI_CAP_WORD}){0,4})`;
+
 /**
  * Strict validation filter to prevent LLM hallucination and generic tokens
  */
@@ -46,15 +45,14 @@ export function isValidEntityName(name: string): boolean {
   const words = clean.split(/\s+/);
   if (words.length > 5) return false; // Sentences or long clauses
   if (GENERIC_EXCLUSION_TERMS.has(clean.toLowerCase())) return false;
-  if (!/[a-zA-Zà-ỹÀ-Ỹ]/.test(clean)) return false;
-  // First word must start with an uppercase letter
-  if (!/^[A-ZÀ-Ỹ]/.test(words[0])) return false;
-  // Last word must start with an uppercase letter
-  if (!/^[A-ZÀ-Ỹ0-9]/.test(words[words.length - 1])) return false;
+  
+  const firstWordLower = words[0].toLowerCase();
+  const isPrefix = ['nhà', 'triều', 'quân', 'nước', 'đại'].includes(firstWordLower) && words.length > 1;
+  if (!isPrefix && !/^\p{Lu}/u.test(words[0])) return false;
+  // Last word must start with an uppercase letter or digit
+  if (!/^\p{Lu}/u.test(words[words.length - 1]) && !/^[0-9]/.test(words[words.length - 1])) return false;
   return true;
 }
-
-const PROPER_NOUN_PATTERN = '([A-ZÀ-Ỹ][a-zà-ỹ0-9_\\-]*(?:\\s+[A-ZÀ-Ỹ0-9_\\-][a-zà-ỹ0-9_\\-]*){0,4})';
 
 const HISTORICAL_PATTERNS: Array<{
   regex: RegExp;
@@ -65,34 +63,56 @@ const HISTORICAL_PATTERNS: Array<{
 }> = [
   // LED_BY: e.g. "Trận Ngọc Hồi do Quang Trung chỉ huy", "Quang Trung lãnh đạo quân Tây Sơn"
   {
-    regex: new RegExp(`\\b(?:trận|chiến dịch|cuộc khởi nghĩa)\\s+${PROPER_NOUN_PATTERN}\\s+(?:do|dưới sự chỉ huy của|lãnh đạo bởi)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
+    regex: new RegExp(`(?:[Tt]rận|[Cc]hiến dịch|[Cc]uộc khởi nghĩa)\\s+${PROPER_NOUN_PATTERN}\\s+(?:do|dưới sự chỉ huy của|lãnh đạo bởi)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
     relation: 'LED_BY',
     sourceGroup: 1,
     targetGroup: 2,
     confidence: 0.95,
   },
   {
-    regex: new RegExp(`\\b${PROPER_NOUN_PATTERN}\\s+(?:chỉ huy|lãnh đạo|tổng tư lệnh)\\s+(?:trận|cuộc khởi nghĩa|chiến dịch)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
+    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:chỉ huy|lãnh đạo|tổng tư lệnh|Chỉ huy|Lãnh đạo|Tổng tư lệnh)\\s+(?:[Tt]rận|[Cc]uộc khởi nghĩa|[Cc]hiến dịch)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
     relation: 'LED_BY',
     sourceGroup: 2,
     targetGroup: 1,
     confidence: 0.95,
   },
+  {
+    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:lãnh đạo|thống lĩnh|chỉ huy|Lãnh đạo|Thống lĩnh|Chỉ huy)\\s+(?:quân đội|quân dân|đại quân|quân)?\\s*${PROPER_NOUN_PATTERN}`, 'gu'),
+    relation: 'LED_BY',
+    sourceGroup: 1,
+    targetGroup: 2,
+    confidence: 0.9,
+  },
   // HAPPENED_AT / HAPPENED_IN: e.g. "Trận Tốt Động diễn ra tại Chúc Động"
   {
-    regex: new RegExp(`\\b(?:trận|chiến dịch|sự kiện)\\s+${PROPER_NOUN_PATTERN}\\s+(?:diễn ra tại|xảy ra ở|tại)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
+    regex: new RegExp(`(?:[Tt]rận|[Cc]hiến dịch|[Ss]ự kiện)\\s+${PROPER_NOUN_PATTERN}\\s+(?:diễn ra tại|xảy ra ở|tại)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
     relation: 'HAPPENED_AT',
     sourceGroup: 1,
     targetGroup: 2,
     confidence: 0.9,
   },
+  {
+    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:đánh tan|đại phá|tiêu diệt|chiến thắng|Đánh tan|Đại phá|Tiêu diệt|Chiến thắng)\\s+(?:quân|giặc|đại quân)?\\s*${PROPER_NOUN_PATTERN}`, 'gu'),
+    relation: 'LED_BY',
+    sourceGroup: 1,
+    targetGroup: 2,
+    confidence: 0.88,
+  },
   // ALIAS_OF: e.g. "Quang Trung tức là Nguyễn Huệ", "Nguyễn Huệ tên thật là Hồ Thơm"
   {
-    regex: new RegExp(`\\b${PROPER_NOUN_PATTERN}\\s+(?:tức là|còn gọi là|tên thật là|tên hiệu là|tên gọi khác là)\\s+${PROPER_NOUN_PATTERN}(?=[.,;!?\\n]|$)`, 'gi'),
+    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:tức là|còn gọi là|tên thật là|tên hiệu là|tên gọi khác là|Tức là|Còn gọi là|Tên thật là)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
     relation: 'ALIAS_OF',
     sourceGroup: 1,
     targetGroup: 2,
     confidence: 1.0,
+  },
+  // PART_OF / ROYAL_LINEAGE
+  {
+    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:thuộc triều đại|thời kỳ|dưới thời|thời|Thuộc triều đại|Thời kỳ|Dưới thời|Thời)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
+    relation: 'PART_OF',
+    sourceGroup: 1,
+    targetGroup: 2,
+    confidence: 0.85,
   },
 ];
 
@@ -104,7 +124,7 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
   const sentences = text.split(/(?<=[.!?\n])\s+/);
 
   for (const sentence of sentences) {
-    const cleanSentence = sentence.trim();
+    const cleanSentence = sentence.trim().replace(/\s+/g, ' ');
     if (!cleanSentence) continue;
 
     // 1. Pattern-based Triple Extraction per sentence
@@ -134,39 +154,6 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
             confidence: pattern.confidence,
           });
         }
-      }
-    }
-
-    // 2. Canonical Historical Entity Mentions (from Ground-Truth Master Dictionaries)
-    for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
-      if (
-        cleanSentence.includes(person.canonicalName) ||
-        person.aliases.some((a) => a.length >= 3 && cleanSentence.includes(a))
-      ) {
-        rawTriples.push({
-          sourceEntityId: person.entityId,
-          sourceEntityName: person.canonicalName,
-          relationType: 'MENTIONED_IN',
-          targetEntityId: 'doc:historical_context',
-          targetEntityName: 'Document Context',
-          confidence: 1.0,
-        });
-      }
-    }
-
-    for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
-      if (
-        cleanSentence.includes(loc.canonicalName) ||
-        loc.aliases.some((a) => a.length >= 3 && cleanSentence.includes(a))
-      ) {
-        rawTriples.push({
-          sourceEntityId: loc.entityId,
-          sourceEntityName: loc.canonicalName,
-          relationType: 'HAPPENED_AT',
-          targetEntityId: 'doc:historical_context',
-          targetEntityName: 'Document Context',
-          confidence: 0.95,
-        });
       }
     }
   }

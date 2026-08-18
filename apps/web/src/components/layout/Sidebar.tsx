@@ -75,7 +75,15 @@ export function Sidebar({
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data.items && data.items.length > 0) {
-            setProjects(data.items);
+            const normalized: ProjectItem[] = data.items.map((item: any) => ({
+              id: item.id || item.projectId,
+              topic: item.topic || item.title || item.projectId || "Chủ đề chưa đặt tên",
+              status: item.status || "INIT",
+              aspectRatio: item.aspectRatio || "16:9",
+              durationSeconds: item.durationSeconds || item.targetDurationSeconds,
+              createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : "Gần đây",
+            }));
+            setProjects(normalized);
           }
         }
       } catch {
@@ -86,7 +94,7 @@ export function Sidebar({
   }, []);
 
   const filteredProjects = projects.filter((p) =>
-    p.topic.toLowerCase().includes(searchQuery.toLowerCase())
+    (p?.topic || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   );
 
   const getStatusBadge = (status: ProjectItem["status"]) => {

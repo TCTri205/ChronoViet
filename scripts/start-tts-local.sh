@@ -2,65 +2,21 @@
 set -eo pipefail
 
 # ==============================================================================
-# ChronoViet — VieNeu TTS Local Starter Script
-# Starts VieNeu TTS FastAPI ONNX Engine (port 8080) with automatic Node fallback
+# ChronoViet — VieNeu TTS Docker Starter Script
+# Starts VieNeu TTS FastAPI ONNX Container (port 8080) via Docker Compose
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Load .env if present
-if [ -f "${ROOT_DIR}/.env" ]; then
-  # export variables from .env
-  set -a
-  # shellcheck source=/dev/null
-  source "${ROOT_DIR}/.env"
-  set +a
-fi
+echo "=== [VieNeu TTS] Launching Docker Container vieneu-tts-service (Port 8080) ==="
+cd "${ROOT_DIR}"
+docker compose up -d vieneu-tts-service
 
-# Auto-derive port from URL config if not explicitly set
-if [ -z "${TTS_SERVICE_PORT:-}" ] && [ -n "${VIENEU_PYTHON_URL:-}" ]; then
-  PARSED_TTS_PORT=$(echo "${VIENEU_PYTHON_URL}" | sed -E 's|^https?://[^:/]+:([0-9]+).*|\1|')
-  if [ "${PARSED_TTS_PORT}" != "${VIENEU_PYTHON_URL}" ] && [ -n "${PARSED_TTS_PORT}" ]; then
-    TTS_SERVICE_PORT="${PARSED_TTS_PORT}"
-  fi
-fi
-TTS_PORT="${TTS_SERVICE_PORT:-8080}"
-HYBRID_DEV="${HYBRID_DEV:-false}"
-PYTHON_APP="${ROOT_DIR}/services/vieneu-tts/app.py"
+echo "[VieNeu TTS] Waiting for healthcheck..."
+until docker compose exec -T vieneu-tts-service curl -s -f http://localhost:8080/health >/dev/null 2>&1; do
+  sleep 1
+done
 
-echo "=== [VieNeu TTS] Starting TTS Engine on Port ${TTS_PORT} ==="
-echo "Mode: HYBRID_DEV=${HYBRID_DEV}"
+echo "=== [VieNeu TTS] Container is UP & HEALTHY on http://localhost:8080 ==="
 
-# 1. Try Python FastAPI ONNX Engine if Python 3 is available
-if command -v python3 >/dev/null 2>&1 && [ -f "${PYTHON_APP}" ]; then
-  VENV_DIR="${ROOT_DIR}/services/vieneu-tts/.venv"
-  if [ ! -d "${VENV_DIR}" ]; then
-    echo "[VieNeu TTS] Creating virtual environment at ${VENV_DIR}..."
-    python3 -m venv "${VENV_DIR}" || true
-  fi
-
-  if [ -f "${VENV_DIR}/bin/activate" ]; then
-    # shellcheck source=/dev/null
-    source "${VENV_DIR}/bin/activate"
-  fi
-
-  # Check if uvicorn & fastapi are installed
-  if python3 -c "import fastapi, uvicorn, soundfile" 2>/dev/null; then
-    echo "[VieNeu TTS] Starting Python FastAPI ONNX Service..."
-    exec uvicorn --app-dir "${ROOT_DIR}/services/vieneu-tts" app:app --host 0.0.0.0 --port "${TTS_PORT}" --reload
-  else
-    echo "[VieNeu TTS] FastAPI/soundfile dependencies not found in Python environment."
-  fi
-fi
-
-# 2. Hybrid Dev Fallback: Node.js Synthetic Wrapper
-if [ "${HYBRID_DEV}" = "true" ] || [ "${ENABLE_CLOUD_FALLBACK}" = "true" ]; then
-  echo "[VieNeu TTS] [HYBRID_DEV] Falling back to Node.js VieNeu Service wrapper..."
-  cd "${ROOT_DIR}"
-  exec pnpm --filter @chronoviet/vieneu-tts start
-fi
-
-echo "[VieNeu TTS] ERROR: Python ONNX dependencies missing and HYBRID_DEV is false."
-echo "Please run: pip install fastapi uvicorn soundfile numpy pydantic onnxruntime"
-exit 1
