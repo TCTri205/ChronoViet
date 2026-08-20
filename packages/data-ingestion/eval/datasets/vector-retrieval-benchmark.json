@@ -1,0 +1,677 @@
+[
+  {
+    "id": "VEC_BENCH_001",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_NGO",
+    "query": "Chiến thuật đóng cọc gỗ ngầm trên sông Bạch Đằng năm 938 của Ngô Quyền tiêu diệt quân Nam Hán",
+    "expectedKeywords": ["Ngô Quyền", "Bạch Đằng", "938", "Nam Hán", "Hoằng Thao", "cọc"],
+    "expectedDynasty": "Nhà Ngô",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_002",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_TIEN_LE",
+    "query": "Lê Hoàn chỉ huy trận chiến sông Bạch Đằng năm 981 đánh bại quân Tống của Hầu Nhân Bảo",
+    "expectedKeywords": ["Lê Hoàn", "Lê Đại Hành", "Bạch Đằng", "981", "quân Tống", "Hầu Nhân Bảo"],
+    "expectedDynasty": "Nhà Tiền Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_003",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_TRAN",
+    "query": "Trần Quốc Tuấn lãnh đạo đại thắng Bạch Đằng năm 1288 bắt sống tướng giặc Ô Mã Nhi Phàn Tiếp",
+    "expectedKeywords": ["Trần Quốc Tuấn", "Trần Hưng Đạo", "Bạch Đằng", "1288", "Ô Mã Nhi", "Phàn Tiếp", "Nguyên"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_004",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_TIEN_LE",
+    "query": "Chiến sự ải Chi Lăng năm 981 tiêu diệt tướng Tống Hầu Nhân Bảo",
+    "expectedKeywords": ["Chi Lăng", "981", "Hầu Nhân Bảo", "Lê Hoàn", "quân Tống"],
+    "expectedDynasty": "Nhà Tiền Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_005",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_LE_SO",
+    "query": "Trận Chi Lăng Xương Giang năm 1427 nghĩa quân Lam Sơn phục kích chém đầu Liễu Thăng",
+    "expectedKeywords": ["Chi Lăng", "Xương Giang", "1427", "Liễu Thăng", "Lương Minh", "Lam Sơn"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_006",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_HO",
+    "query": "Kinh đô Tây Đô thành nhà Hồ xây bằng đá kiên cố tại Thanh Hóa năm 1397",
+    "expectedKeywords": ["Tây Đô", "Thành nhà Hồ", "Hồ Quý Ly", "Thanh Hóa", "1397", "An Tôn"],
+    "expectedDynasty": "Nhà Hồ",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_007",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "NAM_TRIEU_BAC_TRIEU",
+    "query": "Vua Lê chúa Trịnh lấy Tây Kinh Thanh Hóa làm căn cứ đối đầu nhà Mạc ở Đông Kinh Thăng Long",
+    "expectedKeywords": ["Tây Kinh", "Thanh Hóa", "nhà Mạc", "Lê Trang Tông", "Nguyễn Kim", "Đông Kinh"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_008",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_TAY_SON",
+    "query": "Quân Tây Sơn đánh chiếm Phú Xuân năm 1786 lật đổ nền thống trị của Chúa Nguyễn",
+    "expectedKeywords": ["Phú Xuân", "1786", "Nguyễn Huệ", "Tây Sơn", "Phạm Ngô Cầu", "Chúa Nguyễn"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_009",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_NGUYEN",
+    "query": "Nguyễn Ánh chiếm lại kinh thành Phú Xuân Huế năm 1801 định đô và lập ra triều Nguyễn",
+    "expectedKeywords": ["Phú Xuân", "Huế", "1801", "Nguyễn Ánh", "Gia Long", "triều Nguyễn"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_010",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_TRAN",
+    "query": "Hải chiến đầm Thị Nại thời Trần vua Trần Duệ Tông thân chinh tử trận trước quân Champa Chế Bồng Nga",
+    "expectedKeywords": ["Thị Nại", "Trần Duệ Tông", "Chế Bồng Nga", "Champa", "Đồ Bàn", "1377"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_011",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_TAY_SON",
+    "query": "Hải chiến Thị Nại năm 1801 trận Đệ nhất vũ công quân Nguyễn Ánh đại phá thủy quân Tây Sơn",
+    "expectedKeywords": ["Thị Nại", "1801", "Nguyễn Ánh", "Võ Tánh", "Nguyễn Văn Trương", "thủy quân Tây Sơn"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_012",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_LY",
+    "query": "Lý Thường Kiệt chủ động đem quân tấn công sang đất Tống vây hãm thành Ung Châu năm 1075",
+    "expectedKeywords": ["Lý Thường Kiệt", "Ung Châu", "1075", "quân Tống", "Khâm Châu", "Liêm Châu", "Tô Giám"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_013",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_TRAN",
+    "query": "Trận Chương Dương Độ và Hàm Tử Quan danh tướng Trần Nhật Duật và Trần Quang Khải đại thắng giặc Nguyên",
+    "expectedKeywords": ["Chương Dương", "Hàm Tử", "Trần Quang Khải", "Trần Nhật Duật", "Toa Đô", "1285"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_014",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_LE_SO",
+    "query": "Trận Tốt Động Chúc Động năm 1426 nghĩa quân Lam Sơn đại phá mười vạn viện binh Vương Thông",
+    "expectedKeywords": ["Tốt Động", "Chúc Động", "1426", "Vương Thông", "Lam Sơn", "Đinh Lễ", "Nguyễn Xí"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_015",
+    "category": "CROSS_ERA_COLLISION",
+    "era": "THOI_TAY_SON",
+    "query": "Chiến thắng Rạch Gầm Xoài Mút năm 1785 Nguyễn Huệ đánh tan năm vạn quân Xiêm La",
+    "expectedKeywords": ["Rạch Gầm", "Xoài Mút", "1785", "Nguyễn Huệ", "quân Xiêm", "Chiêu Tăng", "Chiêu Sương"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_016",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_LY",
+    "query": "Lý Công Uẩn xuất thân chùa Cổ Pháp được Thiền sư Vạn Hạnh nuôi dạy lập nên triều Lý",
+    "expectedKeywords": ["Lý Công Uẩn", "Lý Thái Tổ", "Vạn Hạnh", "Cổ Pháp", "Hoa Lư"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_017",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_TRAN",
+    "query": "Trần Khâm nhường ngôi xuất gia lập nên Thiền phái Trúc Lâm Yên Tử lấy hiệu Trúc Lâm Đại Đầu Đà",
+    "expectedKeywords": ["Trần Khâm", "Trần Nhân Tông", "Trúc Lâm", "Yên Tử", "Đầu Đà", "Thiền phái"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_018",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_TRAN",
+    "query": "Thái sư Trần Thủ Độ nhiếp chính giúp cháu là Trần Cảnh lên ngôi vua đầu tiên của nhà Trần",
+    "expectedKeywords": ["Trần Thủ Độ", "Trần Cảnh", "Trần Thái Tông", "Lý Chiêu Hoàng", "Thái sư"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_019",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_LE_SO",
+    "query": "Vua Lê Tư Thành mở ra thời kỳ thịnh trị Hồng Đức thịnh thế sáng lập Hội Tao Đàn",
+    "expectedKeywords": ["Lê Tư Thành", "Lê Thánh Tông", "Hồng Đức", "Tao Đàn", "Nhị thập bát tú"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_020",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_LE_SO",
+    "query": "Danh nhân văn hóa thế giới Ức Trai Nguyễn Trãi viết Bình Ngô Đại Cáo và Quốc âm thi tập",
+    "expectedKeywords": ["Ức Trai", "Nguyễn Trãi", "Bình Ngô Đại Cáo", "Quốc âm thi tập", "Lam Sơn"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_021",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "NAM_TRIEU_BAC_TRIEU",
+    "query": "Trạng Trình Nguyễn Bỉnh Khiêm hiệu Bạch Vân Cư Sĩ với lời sấm Hoành Sơn nhất đái vạn đại dung thân",
+    "expectedKeywords": ["Nguyễn Bỉnh Khiêm", "Trạng Trình", "Bạch Vân Cư Sĩ", "Hoành Sơn", "Nguyễn Hoàng"],
+    "expectedDynasty": "Nhà Mạc",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_022",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "CHUA_NGUYEN",
+    "query": "Quân sư Đào Duy Từ phò tá Chúa Sãi Nguyễn Phúc Nguyên xây đắp Lũy Thầy Lũy Trường Dục",
+    "expectedKeywords": ["Đào Duy Từ", "Lũy Thầy", "Lũy Trường Dục", "Nguyễn Phúc Nguyên", "Chúa Sãi", "Đàng Trong"],
+    "expectedDynasty": "Chúa Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_023",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_TAY_SON",
+    "query": "Bắc Bình Vương Nguyễn Huệ thống lĩnh quân Tây Sơn dẹp tan Chúa Trịnh ở Đàng Ngoài",
+    "expectedKeywords": ["Bắc Bình Vương", "Nguyễn Huệ", "Tây Sơn", "Chúa Trịnh", "Phù Lê diệt Trịnh", "Thăng Long"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_024",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_TAY_SON",
+    "query": "La Sơn Phu Tử Nguyễn Thiếp hiến kế sách đánh quân Thanh giúp vua Quang Trung đại thắng",
+    "expectedKeywords": ["Nguyễn Thiếp", "La Sơn Phu Tử", "Quang Trung", "quân Thanh", "Viện Sùng chính"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_025",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_NGUYEN",
+    "query": "Nguyễn Phúc Ánh xưng vương bôn ba hải đảo trước khi khôi phục cơ nghiệp tổ tiên lập niên hiệu Gia Long",
+    "expectedKeywords": ["Nguyễn Phúc Ánh", "Gia Long", "Nguyễn Ánh", "Phú Quốc", "triều Nguyễn"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_026",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_TIEN_LE",
+    "query": "Lê Long Đĩnh tức Lê Ngọa Triều vua cuối cùng của triều Tiền Lê mắc bệnh phải nằm coi chầu",
+    "expectedKeywords": ["Lê Long Đĩnh", "Lê Ngọa Triều", "Tiền Lê", "Lê Đại Hành", "coi chầu"],
+    "expectedDynasty": "Nhà Tiền Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_027",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_LE_SO",
+    "query": "Vua Lê Uy Mục và vua Lê Tương Dực bị dân gian gọi là Vua Quỷ và Vua Lợn dẫn đến suy thoái Lê sơ",
+    "expectedKeywords": ["Lê Uy Mục", "Lê Tương Dực", "Vua Quỷ", "Vua Lợn", "suy thoái", "Trần Cảo"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_028",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_TRAN",
+    "query": "Nhân Huệ Vương Trần Khánh Dư bán than sau lập công lớn đánh tan đoàn thuyền lương Trương Văn Hổ",
+    "expectedKeywords": ["Trần Khánh Dư", "Nhân Huệ Vương", "Vân Đồn", "Trương Văn Hổ", "thuyền lương", "1288"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_029",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "THOI_TRAN",
+    "query": "Chiêu Văn Vương Trần Nhật Duật tinh thông ngôn ngữ và phong tục các dân tộc thiểu số",
+    "expectedKeywords": ["Trần Nhật Duật", "Chiêu Văn Vương", "Trịnh Giác Mật", "Đà Giang", "ngôn ngữ"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_030",
+    "category": "NAME_ALIAS_TRAP",
+    "era": "BAC_THUOC",
+    "query": "Triệu Thị Trinh tức Bà Triệu nữ tướng vùng Núi Nưa Cửu Chân phất cờ khởi nghĩa chống quân Đông Ngô",
+    "expectedKeywords": ["Triệu Thị Trinh", "Bà Triệu", "Cửu Chân", "Núi Nưa", "Đông Ngô", "Lục Dận"],
+    "expectedDynasty": "Bắc Thuộc",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_031",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TRAN",
+    "query": "Lời dặn khoan thư sức dân để làm kế sâu rễ bền gốc trước lúc qua đời của vị tướng nào",
+    "expectedKeywords": ["khoan thư sức dân", "sâu rễ bền gốc", "Trần Hưng Đạo", "Trần Quốc Tuấn", "Trần Anh Tông"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_032",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TRAN",
+    "query": "Tướng giặc phương Bắc nào sợ hãi chui vào ống đồng để tàn quân khiêng chạy tháo thân về nước",
+    "expectedKeywords": ["ống đồng", "Thoát Hoan", "Trần Hưng Đạo", "Vạn Kiếp", "quân Nguyên"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_033",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TRAN",
+    "query": "Công chúa nào của nhà Trần chấp nhận sang làm dâu Chiêm Thành đổi lấy hai châu Ô và Châu Lý",
+    "expectedKeywords": ["Huyền Trân", "Huyền Trân công chúa", "Chế Mân", "Châu Ô", "Châu Lý", "Thuận Hóa", "Trần Anh Tông"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_034",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "TIEN_LY",
+    "query": "Vị thủ lĩnh nào khởi nghĩa ở Thái Bình xưng là Nam Việt Đế lập nước Vạn Xuân dựng chùa Khai Quốc",
+    "expectedKeywords": ["Lý Bí", "Lý Nam Đế", "Vạn Xuân", "Khai Quốc", "nhà Lương", "Tiêu Tư"],
+    "expectedDynasty": "Nhà Tiền Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_035",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TRAN",
+    "query": "Hội nghị trưng cầu ý kiến các vị phụ lão bô lão trong cả nước đồng thanh hô đánh giặc",
+    "expectedKeywords": ["Diên Hồng", "bô lão", "phụ lão", "đánh", "Trần Thánh Tông", "Thăng Long"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_036",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TRAN",
+    "query": "Thiếu niên quý tộc nào bóp nát quả cam vì không được dự bàn việc quân ở bến Bình Than",
+    "expectedKeywords": ["Trần Quốc Toản", "quả cam", "Bình Than", "Phá cường địch báo hoàng ân", "Trần Nhân Tông"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_037",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TRAN",
+    "query": "Vị tướng nào khảng khái tuyên bố thà làm ma nước Nam chứ không thèm làm vương đất Bắc",
+    "expectedKeywords": ["Trần Bình Trọng", "ma nước Nam", "vương đất Bắc", "Toa Đô", "Trần Khâm"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_038",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_LY",
+    "query": "Bài thơ thần được đọc trong đêm ở đền Trương Hống Trương Hát để khích lệ tinh thần binh sĩ",
+    "expectedKeywords": ["Nam quốc sơn hà", "Như Nguyệt", "Lý Thường Kiệt", "Trương Hống", "Trương Hát", "sông Cầu"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_039",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_DINH",
+    "query": "Cậu bé chăn trâu lấy cờ lau tập trận sau này đánh dẹp loạn mười hai sứ quân lập đô ở Hoa Lư",
+    "expectedKeywords": ["Đinh Bộ Lĩnh", "Đinh Tiên Hoàng", "cờ lau", "Hoa Lư", "mười hai sứ quân", "Đại Cồ Việt"],
+    "expectedDynasty": "Nhà Đinh",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_040",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TIEN_LE",
+    "query": "Thập đạo tướng quân được Thái hậu Dương Vân Nga khoác long bào tôn lên làm vua đánh giặc Tống",
+    "expectedKeywords": ["Lê Hoàn", "Lê Đại Hành", "Dương Vân Nga", "Thập đạo tướng quân", "long bào", "Đinh Toàn"],
+    "expectedDynasty": "Nhà Tiền Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_041",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "BAC_THUOC",
+    "query": "Tướng Dạ Trạch Vương dùng chiến thuật du kích đầm lầy ban ngày ẩn nấp ban đêm đánh úp giặc Lương",
+    "expectedKeywords": ["Triệu Quang Phục", "Dạ Trạch Vương", "Dạ Trạch", "đầm lầy", "Trần Bá Tiên", "nhà Lương"],
+    "expectedDynasty": "Nhà Tiền Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_042",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "BAC_THUOC",
+    "query": "Ai vác cày dẫn đầu nghĩa quân phất cờ khởi nghĩa trả thù cho chồng là Thi Sách",
+    "expectedKeywords": ["Hai Bà Trưng", "Trưng Trắc", "Trưng Nhị", "Thi Sách", "Tô Định", "Hát Môn", "Mê Linh"],
+    "expectedDynasty": "Hai Bà Trưng",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_043",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_LE_SO",
+    "query": "Thảm án vườn vải Lệ Chi Viên khiến bậc khai quốc công thần bị tru di tam tộc",
+    "expectedKeywords": ["Lệ Chi Viên", "Nguyễn Trãi", "Nguyễn Thị Lộ", "Lê Thái Tông", "tru di tam tộc", "Ức Trai"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_044",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TAY_SON",
+    "query": "Đoàn quân thần tốc hành quân ăn Tết sớm ở Tam Điệp Biện Sơn trước khi công phá đồn Ngọc Hồi Đống Đa",
+    "expectedKeywords": ["Tam Điệp", "Biện Sơn", "Ngô Thì Nhậm", "Quang Trung", "Ngọc Hồi", "Đống Đa", "quân Thanh"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_045",
+    "category": "IMPLICIT_COLLOQUIAL",
+    "era": "THOI_TRAN",
+    "query": "Người thầy dâng Thất trảm sớ xin chém bảy tên gian thần rồi về núi ở ẩn dạy học",
+    "expectedKeywords": ["Chu Văn An", "Thất trảm sớ", "Trần Dụ Tông", "Chí Linh", "Quốc Tử Giám"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_046",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_LY",
+    "query": "Chính sách Ngụ binh ư nông gửi binh ở nhà nông của các triều đại Lý Trần Lê",
+    "expectedKeywords": ["Ngụ binh ư nông", "binh chế", "nhà nông", "quân sự", "sản xuất", "Lý", "Trần"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_047",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_LE_SO",
+    "query": "Chế độ phân chia ruộng đất công làng xã theo Phép Quân Điền ban hành dưới thời Lê sơ",
+    "expectedKeywords": ["Quân Điền", "ruộng đất công", "làng xã", "Lê sơ", "Lê Thánh Tông", "khẩu phần"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_048",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_LE_SO",
+    "query": "Bộ luật Quốc triều hình luật Luật Hồng Đức bảo vệ quyền lợi người phụ nữ và kỷ cương xã hội",
+    "expectedKeywords": ["Quốc triều hình luật", "Luật Hồng Đức", "Lê Thánh Tông", "phụ nữ", "hương hỏa", "Hồng Đức"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_049",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_HO",
+    "query": "Chính sách phát hành tiền giấy Thông bảo hội sao và cải cách Hạn điền Hạn nô của Hồ Quý Ly",
+    "expectedKeywords": ["Thông bảo hội sao", "tiền giấy", "Hạn điền", "Hạn nô", "Hồ Quý Ly", "cải cách"],
+    "expectedDynasty": "Nhà Hồ",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_050",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_HO",
+    "query": "Sáng chế kỹ thuật vũ khí súng Thần cơ sang pháo và chiến thuyền Cổ Lâu của Hồ Nguyên Trừng",
+    "expectedKeywords": ["Hồ Nguyên Trừng", "Thần cơ", "súng", "Cổ Lâu", "vũ khí", "nhà Hồ"],
+    "expectedDynasty": "Nhà Hồ",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_051",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_LE_SO",
+    "query": "Cải cách hành chính chia đất nước thành mười ba đạo thừa tuyên bãi bỏ chức Tể tướng của vua Lê Thánh Tông",
+    "expectedKeywords": ["mười ba đạo thừa tuyên", "Lê Thánh Tông", "hành chính", "Tể tướng", "Lục bộ", "Hiến ty"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_052",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_LY",
+    "query": "Thành lập Văn Miếu Quốc Tử Giám và mở khoa thi khoa bảng đầu tiên tuyển chọn nhân tài thời Lý",
+    "expectedKeywords": ["Văn Miếu", "Quốc Tử Giám", "1070", "1075", "Lê Văn Thịnh", "Lý Thánh Tông", "Lý Nhân Tông"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_053",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_TRAN",
+    "query": "Chế độ Thái thượng hoàng hai vua cùng trị vì đất nước để củng cố quyền lực hoàng tộc nhà Trần",
+    "expectedKeywords": ["Thái thượng hoàng", "nhà Trần", "nhiếp chính", "hoàng tộc", "Trần Thái Tông", "Trần Thánh Tông"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_054",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_NGUYEN",
+    "query": "Chính sách Bế quan tỏa cảng cấm đạo Gia Tô công giáo và cải cách hành chính thời vua Minh Mạng",
+    "expectedKeywords": ["Minh Mạng", "Bế quan tỏa cảng", "cấm đạo", "tỉnh", "Tổng đốc", "Tuần phủ", "triều Nguyễn"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_055",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_NGUYEN",
+    "query": "Hoàng triều luật lệ hay Luật Gia Long quy định hệ thống pháp luật thời kỳ đầu triều Nguyễn",
+    "expectedKeywords": ["Hoàng triều luật lệ", "Luật Gia Long", "Gia Long", "hình phạt", "pháp luật", "triều Nguyễn"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_056",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "THOI_LE_SO",
+    "query": "Bia tiến sĩ Văn Miếu Thăng Long ghi câu Hiền tài là nguyên khí của quốc gia do Thân Nhân Trung soạn",
+    "expectedKeywords": ["Hiền tài là nguyên khí quốc gia", "Thân Nhân Trung", "Bia tiến sĩ", "Văn Miếu", "Lê Thánh Tông", "1484"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_057",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "HONG_BANG_AU_LAC",
+    "query": "Kỹ thuật đúc trống đồng Đông Sơn và hoa văn thuyền chiến người giã gạo chim Lạc thời Văn Lang",
+    "expectedKeywords": ["Trống đồng", "Đông Sơn", "Văn Lang", "Hùng Vương", "chim Lạc", "Lạc Việt"],
+    "expectedDynasty": "Hồng Bàng / Âu Lạc",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_058",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "THOI_TRAN",
+    "query": "Hội nghị Bình Than dẫn đến việc điều động tướng lĩnh chuẩn bị cho cuộc kháng chiến chống Mông Nguyên lần hai",
+    "expectedKeywords": ["Bình Than", "Trần Hưng Đạo", "Trần Nhân Tông", "quân Nguyên", "kháng chiến", "1282"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_059",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "THOI_LE_SO",
+    "query": "Hội thề Đông Quan năm 1427 dẫn đến việc toàn bộ đạo quân Minh của Vương Thông phải rút quân về nước",
+    "expectedKeywords": ["Hội thề Đông Quan", "Vương Thông", "Lê Lợi", "Nguyễn Trãi", "rút quân", "1427"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_060",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "THOI_HO",
+    "query": "Cải cách quá nhanh và mất lòng dân của Hồ Quý Ly khiến nhà Hồ nhanh chóng thất thủ trước quân Minh",
+    "expectedKeywords": ["Hồ Quý Ly", "Hồ Nguyên Trừng", "lòng dân", "nhà Minh", "Trương Phụ", "Đa Bang"],
+    "expectedDynasty": "Nhà Hồ",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_061",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "TRINH_NGUYEN_PHAN_TRANH",
+    "query": "Cái chết của Nguyễn Kim do Dương Chấp Nhất đầu độc dẫn đến mâu thuẫn Trịnh Kiểm và anh em Nguyễn Hoàng",
+    "expectedKeywords": ["Nguyễn Kim", "Dương Chấp Nhất", "Trịnh Kiểm", "Nguyễn Uông", "Nguyễn Hoàng", "Thuận Hóa"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_062",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "THOI_TAY_SON",
+    "query": "Vua Lê Chiêu Thống chạy sang cầu viện nhà Thanh dẫn đến việc Tôn Sĩ Nghị xua hai mươi chín vạn quân xâm lược",
+    "expectedKeywords": ["Lê Chiêu Thống", "cầu viện", "Tôn Sĩ Nghị", "quân Thanh", "Nguyễn Huệ", "Quang Trung"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_063",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "THOI_DINH",
+    "query": "Cái chết của Đinh Tiên Hoàng và Đinh Liễn do Đỗ Thích ám hại khiến nội bộ triều Đinh rối loạn",
+    "expectedKeywords": ["Đinh Tiên Hoàng", "Đinh Liễn", "Đỗ Thích", "ám hại", "Đinh Toàn", "Lê Hoàn"],
+    "expectedDynasty": "Nhà Đinh",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_064",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "THOI_LY",
+    "query": "Loạn tam vương tranh ngôi sau khi Lý Thái Tổ băng hà khiến Lý Thái Tông phải dùng Dực Thánh Vương dẹp loạn",
+    "expectedKeywords": ["Loạn tam vương", "Lý Thái Tổ", "Lý Thái Tông", "Lý Phật Mã", "Dực Thánh Vương", "Đông Chinh Vương"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_065",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "THOI_TRAN",
+    "query": "Vụ phản nghịch của Trần Di Ái nhận sắc phong của Hốt Tất Liệt dẫn đến trận đánh chặn ở ải Nam Quan",
+    "expectedKeywords": ["Trần Di Ái", "Hốt Tất Liệt", "Sài Thung", "Nam Quan", "Trần Quốc Tuấn"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_066",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "BAC_THUOC",
+    "query": "Chính sách đồng hóa tàn bạo và thu thuế nặng của thứ sử Tô Định dẫn đến cuộc khởi nghĩa của Hai Bà Trưng",
+    "expectedKeywords": ["Tô Định", "đồng hóa", "thu thuế", "Thi Sách", "Trưng Trắc", "Hát Môn"],
+    "expectedDynasty": "Hai Bà Trưng",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_067",
+    "category": "MULTI_HOP_CAUSAL",
+    "era": "THOI_NGUYEN",
+    "query": "Cuộc khởi nghĩa Lê Văn Khôi tại thành Bát Quái Gia Định khiến triều đình Minh Mạng đàn áp khốc liệt",
+    "expectedKeywords": ["Lê Văn Khôi", "Lê Văn Duyệt", "thành Bát Quái", "Gia Định", "Minh Mạng", "Phan Bá Đạt"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_068",
+    "category": "DISTRACTOR_FALSE_PREMISE",
+    "era": "THOI_TRAN",
+    "query": "Trần Hưng Đạo có phải là người trực tiếp chém đầu tướng giặc Thoát Hoan trên sông Bạch Đằng không",
+    "expectedKeywords": ["Trần Hưng Đạo", "Thoát Hoan", "Bạch Đằng", "chạy thoát", "ống đồng", "Ô Mã Nhi"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_069",
+    "category": "DISTRACTOR_FALSE_PREMISE",
+    "era": "THOI_TAY_SON",
+    "query": "Chiến dịch Tây Sơn đánh tan quân xâm lược Mông Cổ tại trận Rạch Gầm Xoài Mút",
+    "expectedKeywords": ["Rạch Gầm", "Xoài Mút", "quân Xiêm", "Nguyễn Huệ", "Tây Sơn", "1785"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_070",
+    "category": "DISTRACTOR_FALSE_PREMISE",
+    "era": "THOI_LE_SO",
+    "query": "Nguyễn Trãi lãnh đạo khởi nghĩa Lam Sơn tự xưng là Bình Định Vương",
+    "expectedKeywords": ["Lê Lợi", "Bình Định Vương", "Nguyễn Trãi", "Lam Sơn", "Bình Ngô Đại Cáo"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_071",
+    "category": "DISTRACTOR_FALSE_PREMISE",
+    "era": "THOI_LY",
+    "query": "Lý Thường Kiệt dời đô từ kinh đô Hoa Lư về thành Thăng Long năm 1010",
+    "expectedKeywords": ["Lý Thái Tổ", "Lý Công Uẩn", "Chiếu dời đô", "1010", "Thăng Long", "Hoa Lư"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_072",
+    "category": "DISTRACTOR_FALSE_PREMISE",
+    "era": "THOI_NGO",
+    "query": "Ngô Quyền đánh bại quân Nam Hán trên sông Bạch Đằng vào năm 1288",
+    "expectedKeywords": ["Ngô Quyền", "Nam Hán", "938", "Bạch Đằng", "Hoằng Thao"],
+    "expectedDynasty": "Nhà Ngô",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_073",
+    "category": "DISTRACTOR_FALSE_PREMISE",
+    "era": "THOI_HO",
+    "query": "Hồ Quý Ly phát hành bộ luật Hồng Đức và thành lập hội Tao Đàn",
+    "expectedKeywords": ["Lê Thánh Tông", "Hồng Đức", "Tao Đàn", "Hồ Quý Ly", "tiền giấy"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_074",
+    "category": "DISTRACTOR_FALSE_PREMISE",
+    "era": "THOI_DINH",
+    "query": "Đinh Bộ Lĩnh chỉ huy trận đánh Ngọc Hồi Đống Đa quét sạch quân Thanh",
+    "expectedKeywords": ["Quang Trung", "Nguyễn Huệ", "Ngọc Hồi", "Đống Đa", "quân Thanh", "Đinh Bộ Lĩnh"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_075",
+    "category": "DISTRACTOR_FALSE_PREMISE",
+    "era": "THOI_NGUYEN",
+    "query": "Vua Gia Long Nguyễn Ánh hợp tác cùng nghĩa quân Tây Sơn đánh đuổi thực dân Pháp",
+    "expectedKeywords": ["Gia Long", "Nguyễn Ánh", "Tây Sơn", "Bá Đa Lộc", "triều Nguyễn"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  }
+]

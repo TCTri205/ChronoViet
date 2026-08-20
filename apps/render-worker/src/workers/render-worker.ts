@@ -18,6 +18,7 @@ import {
   RedisPubSubManager,
   saveProjectSchema,
   renderDurationSeconds,
+  ResourceSentinel,
 } from '@chronoviet/shared-spec';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 import { parseRemotionStdoutLine } from '../lib/remotion-progress-parser.js';
@@ -49,10 +50,14 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     fields: { projectId, jobId: job.id },
   });
 
-  workerLog.info('worker.render_started', `Starting Remotion render for project ${projectId}`, {
-    projectId,
-    jobId: job.id,
-  });
+  // 0. Acquire Distributed Render Lock to signal system of active video rendering
+  await ResourceSentinel.acquireRenderLock(envConfig.RENDER_MUTEX_TTL_SECONDS, projectId);
+
+  try {
+    workerLog.info('worker.render_started', `Starting Remotion render for project ${projectId}`, {
+      projectId,
+      jobId: job.id,
+    });
 
   const paths = initProjectWorkspace(projectId);
   const outputPath = path.join(paths.outputDir, 'video.mp4');
@@ -68,6 +73,47 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
 
   // Ensure local audio/image file paths in projectSchema are serialized as Data URIs if file exists on disk
   let schemaMutated = false;
+
+  // 1.1 Top-level audioUrl & bgmUrl serialization
+  if (projectSchema.audioUrl && !projectSchema.audioUrl.startsWith('http') && !projectSchema.audioUrl.startsWith('data:')) {
+    const candidatePaths = [
+      projectSchema.audioUrl,
+      path.resolve(paths.audioDir, path.basename(projectSchema.audioUrl)),
+      path.resolve(paths.rootDir, projectSchema.audioUrl),
+      path.resolve(process.cwd(), projectSchema.audioUrl),
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+        const buf = fs.readFileSync(p);
+        const ext = path.extname(p).toLowerCase();
+        const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
+        projectSchema.audioUrl = `data:${mime};base64,${buf.toString('base64')}`;
+        schemaMutated = true;
+        break;
+      }
+    }
+  }
+
+  if (projectSchema.bgmUrl && !projectSchema.bgmUrl.startsWith('http') && !projectSchema.bgmUrl.startsWith('data:')) {
+    const candidatePaths = [
+      projectSchema.bgmUrl,
+      path.resolve(paths.audioDir, path.basename(projectSchema.bgmUrl)),
+      path.resolve(paths.rootDir, projectSchema.bgmUrl),
+      path.resolve(process.cwd(), projectSchema.bgmUrl),
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+        const buf = fs.readFileSync(p);
+        const ext = path.extname(p).toLowerCase();
+        const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
+        projectSchema.bgmUrl = `data:${mime};base64,${buf.toString('base64')}`;
+        schemaMutated = true;
+        break;
+      }
+    }
+  }
+
+  // 1.2 Timeline scene assets serialization
   for (const scene of projectSchema.timeline) {
     if (scene.sceneAudioUrl && !scene.sceneAudioUrl.startsWith('http') && !scene.sceneAudioUrl.startsWith('data:')) {
       const candidatePaths = [
@@ -78,8 +124,26 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       for (const p of candidatePaths) {
         if (fs.existsSync(p) && fs.statSync(p).isFile()) {
           const buf = fs.readFileSync(p);
-          const mime = p.endsWith('.mp3') ? 'audio/mp3' : 'audio/wav';
+          const ext = path.extname(p).toLowerCase();
+          const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
           scene.sceneAudioUrl = `data:${mime};base64,${buf.toString('base64')}`;
+          schemaMutated = true;
+          break;
+        }
+      }
+    }
+    if (scene.sfxUrl && !scene.sfxUrl.startsWith('http') && !scene.sfxUrl.startsWith('data:')) {
+      const candidatePaths = [
+        scene.sfxUrl,
+        path.resolve(paths.audioDir, path.basename(scene.sfxUrl)),
+        path.resolve(paths.rootDir, scene.sfxUrl),
+      ];
+      for (const p of candidatePaths) {
+        if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+          const buf = fs.readFileSync(p);
+          const ext = path.extname(p).toLowerCase();
+          const mime = ext === '.mp3' ? 'audio/mp3' : 'audio/wav';
+          scene.sfxUrl = `data:${mime};base64,${buf.toString('base64')}`;
           schemaMutated = true;
           break;
         }
@@ -98,7 +162,8 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       for (const p of candidatePaths) {
         if (fs.existsSync(p) && fs.statSync(p).isFile()) {
           const buf = fs.readFileSync(p);
-          const mime = p.endsWith('.png') ? 'image/png' : 'image/jpeg';
+          const ext = path.extname(p).toLowerCase();
+          const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
           scene.assetUrl = `data:${mime};base64,${buf.toString('base64')}`;
           schemaMutated = true;
           break;
@@ -265,14 +330,17 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     fileSizeBytes,
   });
 
-  return {
-    projectId,
-    outputPath,
-    fileSizeBytes,
-    durationMs,
-    peakMemoryMb,
-    totalFrames,
-  };
+    return {
+      projectId,
+      outputPath,
+      fileSizeBytes,
+      durationMs,
+      peakMemoryMb,
+      totalFrames,
+    };
+  } finally {
+    await ResourceSentinel.releaseRenderLock(projectId);
+  }
 }
 
 export function startRenderWorker(): Worker<RenderJobData, RenderJobResult> {

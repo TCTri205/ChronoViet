@@ -10,30 +10,54 @@ import {
   createLogger,
   envConfig,
   isPgAvailable,
+  initSchema,
+  ingestHistoricalDocument,
+  resolveCanonicalEntity,
 } from '@chronoviet/shared-spec';
-
-import { initSchema, generateEmbedding, ingestHistoricalDocument, resolveCanonicalEntity } from '@chronoviet/shared-spec';
 
 import { extractQueryEntities } from './retrieval/question-ner.js';
 import { searchLocalGraphCTE } from './retrieval/graph-cte-search.js';
-import { searchHybridVectorAndBM25, VectorSearchResult } from './retrieval/vector-search.js';
+import {
+  searchHybridVectorAndBM25,
+  VectorSearchResult,
+  getCachedQueryEmbedding,
+} from './retrieval/vector-search.js';
 import { getChunksForEntities } from './retrieval/chunk-retriever.js';
 import { rerankCandidates } from './retrieval/reranker.js';
 
 const log = createLogger({ service: 'rag-engine' });
 
-export class ChronoRagEngine implements IRagEngine {
-  private schemaInitialized = false;
+export const CO_RETRIEVAL_BOOST = 0.35;
 
+let globalSchemaInitPromise: Promise<void> | null = null;
+
+export async function ensureGlobalSchemaInitialized(): Promise<void> {
+  if (!globalSchemaInitPromise) {
+    globalSchemaInitPromise = (async () => {
+      try {
+        await initSchema();
+      } catch (err) {
+        log.warn('rag.schema_init_failed', 'Schema initialization failed; will retry on next request', {
+          error: err,
+        });
+        globalSchemaInitPromise = null;
+      }
+    })();
+  }
+  return globalSchemaInitPromise;
+}
+
+export function resetGlobalSchemaInitForTest(): void {
+  globalSchemaInitPromise = null;
+}
+
+export class ChronoRagEngine implements IRagEngine {
   private async ensureInitialized(): Promise<void> {
-    if (!this.schemaInitialized) {
-      await initSchema();
-      this.schemaInitialized = true;
-    }
+    await ensureGlobalSchemaInitialized();
   }
 
   /**
-   * 5-Step Online Retrieval Engine
+   * 5-Step Online Retrieval Engine with Dual-Branch Parallelism & Co-Retrieval Boost
    */
   async search(request: RagSearchRequest): Promise<RagSearchResponse> {
     const startTime = Date.now();
@@ -57,25 +81,49 @@ export class ChronoRagEngine implements IRagEngine {
       maxTokens: request.maxTokens,
     });
 
-    // Step 1: Question NER & Keyword Extraction
+    // Step 1: Question NER & Keyword Extraction (< 1ms)
     const queryInfo = extractQueryEntities(queryText);
     const filterEntityIds = request.entityFilter || queryInfo.entityIds;
 
-    // Step 2: Local Subgraph CTE Search ($k=1, 2$) & Alias Table building
-    const graphResult = await searchLocalGraphCTE(filterEntityIds, 2);
+    // Steps 2, 3, 4: Dual-Branch Parallel Execution (Graph Branch & Vector Branch)
+    const graphBranchPromise = (async () => {
+      const graphResult = await searchLocalGraphCTE(filterEntityIds, 2);
+      const graphChunks = await getChunksForEntities(graphResult.entityIds, 30);
+      return { graphResult, graphChunks };
+    })();
 
-    // Step 3: Hybrid Vector Search (1024d) + BM25 FTS & RRF Fusion
-    const queryEmbedding = await generateEmbedding(queryText);
-    const hybridCandidates = await searchHybridVectorAndBM25(queryText, queryEmbedding, Math.max(15, rerankTopK * 3));
+    const vectorBranchPromise = (async () => {
+      const queryEmbedding = await getCachedQueryEmbedding(queryText);
+      const hybridCandidates = await searchHybridVectorAndBM25(
+        queryText,
+        queryEmbedding,
+        Math.max(15, rerankTopK * 3)
+      );
+      return hybridCandidates;
+    })();
 
-    // Step 4: Graph-Guided Chunk Retrieval
-    const graphChunks = await getChunksForEntities(graphResult.entityIds);
+    const [{ graphResult, graphChunks }, hybridCandidates] = await Promise.all([
+      graphBranchPromise,
+      vectorBranchPromise,
+    ]);
 
-    // Deduplicate candidate chunks
+    // Step 4b: Deduplicate & Apply Co-Retrieval Fusion Boost
     const candidateMap = new Map<string, VectorSearchResult>();
-    for (const cand of [...hybridCandidates, ...graphChunks]) {
-      candidateMap.set(cand.chunkId, cand);
+
+    for (const cand of hybridCandidates) {
+      candidateMap.set(cand.chunkId, { ...cand });
     }
+
+    for (const gCand of graphChunks) {
+      const existing = candidateMap.get(gCand.chunkId);
+      if (existing) {
+        // Co-retrieval boost: chunk is co-validated by both vector similarity and knowledge graph structure
+        existing.score += CO_RETRIEVAL_BOOST;
+      } else {
+        candidateMap.set(gCand.chunkId, { ...gCand });
+      }
+    }
+
     const allCandidates = Array.from(candidateMap.values());
 
     // Step 5: Integrated Reranker & Response Formatting

@@ -1,7 +1,9 @@
 import { Annotation } from '@langchain/langgraph';
 import {
   ChapterPlan,
+  ChronoLogger,
   ChronoVideoProps,
+  createLogger,
   HistoricalContextEntity,
   OrchestratorStatus,
   SceneGeneration,
@@ -10,6 +12,28 @@ import {
 } from '@chronoviet/shared-spec';
 
 export type { OrchestratorStatus };
+
+const baseLog = createLogger({ service: 'agent-orchestrator' });
+
+/**
+ * Creates a context-bound child logger with guaranteed correlationId and node fields
+ */
+export function getNodeLogger(state: ChronoGraphState, nodeName: string): ChronoLogger {
+  const cid = state.correlationId || state.projectId;
+  return baseLog.child({
+    correlationId: cid,
+    fields: { projectId: state.projectId, node: nodeName },
+  });
+}
+
+export interface TelemetryAuditEntry {
+  timestamp: string;
+  node: string;
+  level: 'INFO' | 'WARN' | 'ERROR';
+  category: 'FALLBACK' | 'RETRY' | 'RECONCILIATION' | 'GUARDRAIL';
+  message: string;
+  metadata?: Record<string, any>;
+}
 
 export interface RunningNarrativeState {
   previousChapterSummary: string;
@@ -93,6 +117,14 @@ function mergeChapterScripts(
 ): Record<number, string> {
   if (!next) return prev;
   return { ...prev, ...next };
+}
+
+function mergeTelemetryAudits(
+  prev: TelemetryAuditEntry[] = [],
+  next?: TelemetryAuditEntry[]
+): TelemetryAuditEntry[] {
+  if (!next || next.length === 0) return prev;
+  return [...prev, ...next];
 }
 
 export const ChronoGraphAnnotation = Annotation.Root({
@@ -188,6 +220,10 @@ export const ChronoGraphAnnotation = Annotation.Root({
   needsHumanReview: Annotation<boolean>({
     reducer: updateValue,
     default: () => false,
+  }),
+  telemetryAudit: Annotation<TelemetryAuditEntry[]>({
+    reducer: mergeTelemetryAudits,
+    default: () => [],
   }),
 });
 

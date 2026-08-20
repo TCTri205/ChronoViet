@@ -47,6 +47,7 @@ Tiến trình xử lý hàng đợi tác vụ nặng (Background Worker Cluster)
 - Tự động chuyển phân cảnh sang chế độ đồ họa thư pháp cổ (`PURE_CODE`) nếu điểm số VLM < 60.
 
 ### 3. `remotion-render-queue` (Remotion Render Worker):
+- **Khóa Điều Phối Phân Tán (Distributed Render Mutex)**: Tự động gọi `ResourceSentinel.acquireRenderLock()` trước khi render để khóa tài nguyên và báo hiệu cho LLM Gateway offload tạm thời sang Cloud API, tự động giải phóng trong `finally`.
 - **Tải trước tài nguyên (Asset Pre-download)**: Hàm `ensureProjectAssetsReady` tải toàn bộ ảnh và âm thanh từ xa về thư mục cục bộ `/media/projects/:id/assets/` trước khi gọi CLI render.
 - **Cô Lập Tiến Trình (Process Isolation)**: Khởi chạy CLI `npx remotion render` với biến môi trường `RENDER_CONCURRENCY || CONCURRENCY || 1`, đảm bảo Chromium process được giải phóng 100% sau mỗi job render.
 - **Phát Tiến Độ Real-time (PubSub Emitter)**: Đọc stdout của Remotion, trích xuất số frame/tiến độ và publish vào kênh Redis **`project_events:${projectId}`** (`RENDER_PROGRESS`, `RENDER_COMPLETED`, `RENDER_FAILED`).

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { isWhitelistedLicense } from '../inspector-pipeline.js';
 import { scoreImageWithLocalCLIP, cosineSimilarity, extractTextVector } from '../clip-scorer.js';
 import { computePHash, computeSha256 } from '../asset-downloader.js';
+import { extractAndParseJson } from '../vlm-scorer.js';
 
 describe('VLM Inspector Unit Tests', () => {
   describe('License Filter', () => {
@@ -16,6 +17,85 @@ describe('VLM Inspector Unit Tests', () => {
       expect(isWhitelistedLicense('ALL_RIGHTS_RESERVED')).toBe(false);
       expect(isWhitelistedLicense('UNKNOWN')).toBe(false);
       expect(isWhitelistedLicense('CC_BY_NC')).toBe(false);
+    });
+  });
+
+  describe('Resilient JSON Extraction & Parsing', () => {
+    it('should parse direct clean JSON format', () => {
+      const input = JSON.stringify({
+        historicalContextScore: 35,
+        visualNoiseScore: 25,
+        artisticFitScore: 25,
+        reasons: ['Ảnh chuẩn bối cảnh'],
+      });
+
+      const res = extractAndParseJson(input, 'LOCAL_VLM');
+      expect(res.historicalContextScore).toBe(35);
+      expect(res.visualNoiseScore).toBe(25);
+      expect(res.artisticFitScore).toBe(25);
+      expect(res.totalScore).toBe(85);
+      expect(res.passed).toBe(true);
+      expect(res.scorerType).toBe('LOCAL_VLM');
+    });
+
+    it('should extract JSON wrapped in markdown fences', () => {
+      const input = `\`\`\`json
+{
+  "historicalContextScore": 38,
+  "visualNoiseScore": 28,
+  "artisticFitScore": 24,
+  "reasons": ["Rất sắc nét"]
+}
+\`\`\``;
+
+      const res = extractAndParseJson(input, 'OPENAI_VLM');
+      expect(res.historicalContextScore).toBe(38);
+      expect(res.totalScore).toBe(90);
+      expect(res.passed).toBe(true);
+      expect(res.scorerType).toBe('OPENAI_VLM');
+    });
+
+    it('should extract JSON surrounded by conversational preamble and postscript', () => {
+      const input = `Dưới đây là kết quả thẩm định thị giác từ mô hình AI:
+\`\`\`json
+{
+  "historical_context_score": 30,
+  "visual_noise_score": 25,
+  "artistic_fit_score": 25,
+  "reason": "Phù hợp bối cảnh lịch sử thời Lý"
+}
+\`\`\`
+Hy vọng kết quả này hữu ích cho pipeline ChronoViet!`;
+
+      const res = extractAndParseJson(input, 'GEMINI_CLOUD');
+      expect(res.historicalContextScore).toBe(30);
+      expect(res.visualNoiseScore).toBe(25);
+      expect(res.artisticFitScore).toBe(25);
+      expect(res.totalScore).toBe(80);
+      expect(res.passed).toBe(true);
+      expect(res.reasons).toEqual(['Phù hợp bối cảnh lịch sử thời Lý']);
+      expect(res.scorerType).toBe('GEMINI_CLOUD');
+    });
+
+    it('should handle un-fenced conversational JSON and heuristic fallback', () => {
+      const input = `Thẩm định hoàn tất: {"historicalContextScore": 15, "visualNoiseScore": 10, "artisticFitScore": 10, "reasons": ["Dính watermark"]} Cần loại bỏ.`;
+      const res = extractAndParseJson(input, 'LOCAL_VLM');
+      expect(res.historicalContextScore).toBe(15);
+      expect(res.totalScore).toBe(35);
+      expect(res.passed).toBe(false);
+    });
+
+    it('should clamp scores exceeding max thresholds', () => {
+      const input = JSON.stringify({
+        historicalContextScore: 999,
+        visualNoiseScore: 999,
+        artisticFitScore: 999,
+      });
+      const res = extractAndParseJson(input, 'LOCAL_VLM');
+      expect(res.historicalContextScore).toBe(40);
+      expect(res.visualNoiseScore).toBe(30);
+      expect(res.artisticFitScore).toBe(30);
+      expect(res.totalScore).toBe(100);
     });
   });
 

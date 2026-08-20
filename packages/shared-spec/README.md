@@ -37,6 +37,10 @@ Gói `@chronoviet/shared-spec` đóng vai trò là **Hợp đồng Dữ liệu D
    * `HybridInferenceDispatcher`: Quản lý luân chuyển phân cấp 2 tầng (Level 1: Provider Round-Robin $\to$ Level 2: API Key per Provider) giữa Local LLM (llama-server) và các Cloud Providers (Agnes, Gemini, OpenAI, OpenRouter).
    * `ApiKeyRotator`: Quản lý pool API keys độc lập cho từng Cloud Provider, tự động cách ly 24h khi gặp mã lỗi 429/Quota, cách ly 30s khi gặp 503/timeout, và hỗ trợ Fast Failover Retry tức thì.
    * `generateLLMCompletion`: Client suy luận tích hợp adaptive timeout (Local: 45s, Cloud default: 35s), ghi nhận telemetry và observability metadata (`targetId`, `targetProvider`).
+5. **Resource Sentinel & Distributed Render Mutex (`resource-sentinel.ts`):**
+   * `ResourceSentinel.getMemoryStatus()`: Giám sát tài nguyên RAM với cơ chế debounce 3s, cảnh báo áp suất RAM cao (`MEMORY_PRESSURE_THRESHOLD_PCT`).
+   * `ResourceSentinel.acquireRenderLock()` & `releaseRenderLock()`: Khóa phân tán Redis Distributed Lock kết hợp In-Memory Fallback điều phối tài nguyên render video.
+   * `ResourceSentinel.shouldOffloadToCloud()`: Tự động phát hiện xung đột tài nguyên để định tuyến request LLM sang Cloud API an toàn không phạt Circuit Breaker.
 
 ---
 

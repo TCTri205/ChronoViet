@@ -4,16 +4,17 @@
  */
 
 import * as fs from 'fs';
+import * as fsPromises from 'fs/promises';
 import * as path from 'path';
-import { createLogger, envConfig, initProjectWorkspace, SceneGeneration, WordTimestamp } from '@chronoviet/shared-spec';
+import { envConfig, initProjectWorkspace, SceneGeneration, WordTimestamp } from '@chronoviet/shared-spec';
 import { VieNeuEngine, createSyntheticWavBuffer } from '@chronoviet/vieneu-tts';
-import { AudioAssetEntry, ChronoGraphState } from '../state.js';
+import { AudioAssetEntry, ChronoGraphState, getNodeLogger, TelemetryAuditEntry } from '../state.js';
 
-const log = createLogger({ service: 'agent-orchestrator' });
 const ttsEngine = new VieNeuEngine();
 
 export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
-  log.info('orchestrator.tts_started', `Synthesizing TTS audio for ${state.scenes.length} scenes`, {
+  const nodeLog = getNodeLogger(state, 'tts_synthesis');
+  nodeLog.info('orchestrator.tts_started', `Synthesizing TTS audio for ${state.scenes.length} scenes`, {
     projectId: state.projectId,
   });
 
@@ -22,6 +23,7 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
     scene: SceneGeneration;
     asset: AudioAssetEntry;
   }[] = [];
+  const telemetryAudit: TelemetryAuditEntry[] = [];
   const batchSize = 4;
 
   for (let i = 0; i < state.scenes.length; i += batchSize) {
@@ -30,6 +32,24 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
       batch.map(async (scene) => {
         const audioFileName = `${scene.sceneId}.wav`;
         const audioFilePath = path.join(paths.audioDir, audioFileName);
+
+        // 0. Idempotency / Resume Support: Check if existing asset is valid and exists on disk
+        const existingAsset = state.audioAssets?.find((a) => a.sceneId === scene.sceneId);
+        if (existingAsset && fs.existsSync(existingAsset.audioPath)) {
+          nodeLog.debug('orchestrator.tts_reuse_existing', `Reusing existing TTS audio for scene ${scene.sceneId}`, {
+            sceneId: scene.sceneId,
+            durationSeconds: existingAsset.durationSeconds,
+          });
+          return {
+            scene: {
+              ...scene,
+              audioPath: existingAsset.audioPath,
+              audioDurationSeconds: existingAsset.durationSeconds,
+              wordTimestamps: existingAsset.wordTimestamps,
+            },
+            asset: existingAsset,
+          };
+        }
 
         let durationSeconds = 3;
         let wordTimestamps: WordTimestamp[] = [];
@@ -51,13 +71,15 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
           if (ttsResult.audioUrl && ttsResult.audioUrl.startsWith('/static/audio/')) {
             const base = path.basename(ttsResult.audioUrl);
             const candidates = [
+              path.resolve(envConfig.AUDIO_CACHE_DIR, base),
+              envConfig.MEDIA_DIR ? path.resolve(envConfig.MEDIA_DIR, 'audio-cache', base) : '',
               path.resolve(process.cwd(), 'media/audio-cache', base),
               path.resolve(process.cwd(), 'services/vieneu-tts/media/audio-cache', base),
-              path.resolve(__dirname, '../../../../../media/audio-cache', base),
-            ];
+              path.resolve('/media/audio-cache', base),
+            ].filter(Boolean);
             for (const cand of candidates) {
               if (fs.existsSync(cand)) {
-                fs.copyFileSync(cand, audioFilePath);
+                await fsPromises.copyFile(cand, audioFilePath);
                 break;
               }
             }
@@ -67,7 +89,18 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
           if (envConfig.EVAL_STRICT) {
             throw err;
           }
-          log.warn('orchestrator.tts_direct_failed', `TTS direct invocation failed, calculating timings: ${err.message}`);
+          nodeLog.warn('orchestrator.tts_direct_failed', `TTS direct invocation failed, calculating timings: ${err.message}`, {
+            sceneId: scene.sceneId,
+            error: err.message,
+          });
+          telemetryAudit.push({
+            timestamp: new Date().toISOString(),
+            node: 'tts_synthesis',
+            level: 'WARN',
+            category: 'FALLBACK',
+            message: `TTS direct invocation failed for scene ${scene.sceneId}: ${err.message}`,
+            metadata: { sceneId: scene.sceneId, error: err.message },
+          });
           const words = scene.voiceoverText.split(/\s+/).filter(Boolean);
           durationSeconds = Math.max(3, Math.round((words.length / 2.5) * 10) / 10);
           const msPerWord = (durationSeconds * 1000) / Math.max(1, words.length);
@@ -87,7 +120,7 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
           }
           // Ensure real valid PCM 16-bit WAV file exists in project audio directory
           const wavBuf = createSyntheticWavBuffer(durationSeconds * 1000, wordTimestamps, 24000);
-          fs.writeFileSync(audioFilePath, wavBuf);
+          await fsPromises.writeFile(audioFilePath, wavBuf);
         }
 
         return {
@@ -117,5 +150,6 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
     currentStep: 7,
     scenes: updatedScenes,
     audioAssets,
+    telemetryAudit,
   };
 }

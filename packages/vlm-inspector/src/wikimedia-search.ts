@@ -139,13 +139,14 @@ export async function searchWikimediaCommons(
   limit: number = 3,
   timeoutMs: number = 4000
 ): Promise<VisualCandidate[]> {
+  const encoded = encodeURIComponent(keywords);
+  const endpoint = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrnamespace=6&gsrlimit=${limit}&prop=imageinfo&iiprop=url|size|extmetadata|mime&format=json&origin=*`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const startTime = Date.now();
+
   try {
-    const encoded = encodeURIComponent(keywords);
-    const endpoint = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrnamespace=6&gsrlimit=${limit}&prop=imageinfo&iiprop=url|size|extmetadata|mime&format=json&origin=*`;
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
     const res = await fetch(endpoint, {
       signal: controller.signal,
       headers: {
@@ -153,10 +154,15 @@ export async function searchWikimediaCommons(
       },
       cache: 'no-store',
     });
-    clearTimeout(timer);
 
+    const latencyMs = Date.now() - startTime;
     if (!res.ok) {
-      log.warn('vlm.wikimedia_search_http_error', `HTTP ${res.status} from Wikimedia API`);
+      log.warn('vlm.wikimedia_search_http_error', `HTTP ${res.status} from Wikimedia API for "${keywords}"`, {
+        keywords,
+        status: res.status,
+        statusText: res.statusText,
+        latencyMs,
+      });
       return [];
     }
 
@@ -194,10 +200,23 @@ export async function searchWikimediaCommons(
       if (candidates.length >= limit) break;
     }
 
+    log.debug('vlm.wikimedia_success', `Wikimedia returned ${candidates.length} candidates`, {
+      keywords,
+      candidateCount: candidates.length,
+      latencyMs,
+    });
+
     return candidates;
   } catch (err: any) {
-    log.warn('vlm.wikimedia_search_failed', `Wikimedia search failed for "${keywords}": ${err.message}`);
+    const latencyMs = Date.now() - startTime;
+    log.warn('vlm.wikimedia_search_failed', `Wikimedia search failed for "${keywords}": ${err.message}`, {
+      keywords,
+      error: err.message,
+      latencyMs,
+    });
     return [];
+  } finally {
+    clearTimeout(timer);
   }
 }
 

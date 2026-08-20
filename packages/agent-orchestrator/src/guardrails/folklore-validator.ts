@@ -15,6 +15,8 @@ export interface FolkloreValidationResult {
 
 /**
  * Validates whether sentences referencing Level 3 / Folklore source material use appropriate hypothesis framing.
+ * Evaluates hypothesis framing at the narrative/introductory level so that descriptive sentences
+ * following a valid hypothesis signal within the narrative do not trigger false-positive rejections.
  */
 export function validateFolkloreHypothesisTone(
   scriptText: string,
@@ -31,18 +33,17 @@ export function validateFolkloreHypothesisTone(
     .filter((s) => s.length > 5);
 
   const matchedSignals: string[] = [];
-  const failingSentences: string[] = [];
 
   for (const sentence of sentences) {
     const match = sentence.match(FOLKLORE_SIGNAL_REGEX);
     if (match) {
       matchedSignals.push(match[0]);
-    } else {
-      failingSentences.push(sentence);
     }
   }
 
-  const isValid = failingSentences.length === 0;
+  // If at least one valid hypothesis signal is present in the narrative section,
+  // the entire section satisfies the hypothesis tone requirement.
+  const isValid = matchedSignals.length > 0;
 
   if (isValid) {
     return { isValid: true, matchedSignals, failingSentences: [] };
@@ -51,13 +52,13 @@ export function validateFolkloreHypothesisTone(
   const feedbackPrompt =
     `[GUARDRAIL REJECT - LEVEL 3 FOLKLORE TONE VIOLATION]\n` +
     `Nội dung kịch bản tham chiếu từ nguồn Dã sử / Truyền thuyết (LEVEL_3) chưa tuân thủ giọng văn giả thuyết tự động.\n` +
-    `CÁC CÂU BỊ TỪ CHỐI: ${failingSentences.slice(0, 3).join(' | ')}\n` +
+    `CÁC CÂU BỊ TỪ CHỐI: ${sentences.slice(0, 3).join(' | ')}\n` +
     `YÊU CẦU BẮT BUỘC: Sử dụng các cụm từ tín hiệu giả thuyết như 'theo truyền thuyết', 'tương truyền', 'dân gian kể', 'theo giai thoại' trước khi trình bày thông tin.`;
 
   return {
     isValid: false,
     matchedSignals: [],
-    failingSentences,
+    failingSentences: sentences,
     feedbackPrompt,
   };
 }

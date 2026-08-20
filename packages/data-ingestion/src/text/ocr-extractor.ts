@@ -1,12 +1,9 @@
-/**
- * OCR Extractor Engine for Historical Scanned Documents & PDFs
- * Supports Primary MinerU CLI Adapter & Secondary Tesseract / Regex Fallback Adapter
- */
-
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { OcrPageStructure } from '../types.js';
+import { createLogger, formatConciseError } from '@chronoviet/shared-spec';
 
+const log = createLogger({ service: 'data-ingestion' });
 const execFileAsync = promisify(execFile);
 
 export interface OcrExtractorOptions {
@@ -22,6 +19,10 @@ async function extractWithMinerU(pdfPath: string): Promise<OcrPageStructure[]> {
     const { stdout } = await execFileAsync('mineru', ['--input', pdfPath, '--output-format', 'json']);
     const parsed = JSON.parse(stdout);
     if (Array.isArray(parsed) && parsed.length > 0) {
+      log.info('ocr.mineru_success', `MinerU extracted ${parsed.length} pages from ${pdfPath}`, {
+        pdfPath,
+        pages: parsed.length,
+      });
       return parsed.map((page: any, index: number) => ({
         pageNumber: page.page_number || index + 1,
         header: page.header || undefined,
@@ -34,6 +35,10 @@ async function extractWithMinerU(pdfPath: string): Promise<OcrPageStructure[]> {
     }
   } catch (error) {
     // MinerU CLI not installed or failed, fallback to secondary adapter
+    log.debug('ocr.mineru_fallback', `MinerU adapter unavailable or failed for ${pdfPath}: ${formatConciseError(error)}`, {
+      pdfPath,
+      error: formatConciseError(error),
+    });
   }
   return [];
 }
@@ -45,10 +50,19 @@ async function extractWithTesseract(pdfPath: string): Promise<OcrPageStructure[]
   try {
     const { stdout } = await execFileAsync('tesseract', [pdfPath, 'stdout', '-l', 'vie+eng', '--oem', '1']);
     if (stdout && stdout.trim().length > 0) {
-      return parseRawTextToPages(stdout);
+      const pages = parseRawTextToPages(stdout);
+      log.info('ocr.tesseract_success', `Tesseract extracted ${pages.length} pages from ${pdfPath}`, {
+        pdfPath,
+        pages: pages.length,
+      });
+      return pages;
     }
   } catch (error) {
     // Tesseract CLI not installed or failed
+    log.debug('ocr.tesseract_fallback', `Tesseract adapter unavailable or failed for ${pdfPath}: ${formatConciseError(error)}`, {
+      pdfPath,
+      error: formatConciseError(error),
+    });
   }
   return [];
 }

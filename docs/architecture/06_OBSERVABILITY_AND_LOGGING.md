@@ -69,20 +69,23 @@ Chuỗi truy vết một yêu cầu sinh video từ lúc người dùng submit:
                                                         ▼ (state.correlationId)
                                              [Agent Orchestrator Pipeline]
                                                         │
+                                                        ├─► [VLM Inspector & Research Providers]
+                                                        │   (passes correlationId, sceneId to
+                                                        │    asset-downloader, .metadata.json, scorers)
+                                                        │
+                                                        ├─► [services/vieneu-tts] (HTTP x-request-id)
+                                                        │
                                                         ▼ (enqueueRenderJob payload)
                                                 [BullMQ Render Queue]
                                                         │
                                                         ▼ (job.data.correlationId)
                                               [apps/render-worker]
-                                                        │
-                                                        ▼ (HTTP x-request-id)
-                                             [services/vieneu-tts]
 ```
 
 ### Debug truy vết xuyên suốt bằng `jq`:
 
 ```bash
-# Lọc toàn bộ hành trình của một request cụ thể qua tất cả services và workers:
+# Lọc toàn bộ hành trình của một request cụ thể qua tất cả services, agents và workers:
 docker compose logs | jq -c 'select(.correlationId == "a1b2c3d4-xxxx-yyyy")'
 ```
 
@@ -103,6 +106,8 @@ docker compose logs | jq -c 'select(.correlationId == "a1b2c3d4-xxxx-yyyy")'
 | `chronoviet_websocket_active_connections` | Gauge | — | Số kết nối WebSocket client đang hoạt động |
 | `chronoviet_render_duration_seconds` | Histogram | `status` | Thời gian render video MP4 qua Remotion Engine |
 | `chronoviet_tts_synthesis_duration_seconds` | Histogram | `engine` | Thời gian tổng hợp âm thanh VieNeu TTS |
+| `chronoviet_orchestrator_node_duration_seconds` | Histogram | `node`, `status` | Thời gian thực thi từng node trong Orchestrator StateGraph |
+| `chronoviet_orchestrator_pacing_error_percent` | Histogram | `template_id` | Phân phối sai số nhịp độ (% lệch Target vs Actual Duration) |
 
 ### 3.2. Endpoints thu thập Metrics (`/metrics`)
 

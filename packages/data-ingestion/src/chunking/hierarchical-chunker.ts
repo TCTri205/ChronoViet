@@ -46,13 +46,46 @@ export function countWords(text: string): number {
 }
 
 /**
- * Splits document text into clean paragraphs
+ * Splits document text into clean paragraphs, safely partitioning oversized single blocks
  */
-function splitParagraphs(text: string): string[] {
-  return text
+function splitParagraphs(text: string, maxParagraphWords: number = 800): string[] {
+  const rawParas = text
     .split(/\n\s*\n/)
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
+
+  const result: string[] = [];
+  for (const para of rawParas) {
+    const wordCount = countWords(para);
+    if (wordCount <= maxParagraphWords) {
+      result.push(para);
+      continue;
+    }
+
+    // Split oversized single paragraph by sentence boundaries or word batches
+    const sentences = para.match(/[^.!?\n]+[.!?]+(\s+|$)|[^.!?\n]+$/g) || [para];
+    let curr: string[] = [];
+    let currWords = 0;
+
+    for (const sent of sentences) {
+      const sTrim = sent.trim();
+      if (!sTrim) continue;
+      const sWords = countWords(sTrim);
+      if (currWords + sWords > maxParagraphWords && currWords > 0) {
+        result.push(curr.join(' '));
+        curr = [];
+        currWords = 0;
+      }
+      curr.push(sTrim);
+      currWords += sWords;
+    }
+
+    if (curr.length > 0) {
+      result.push(curr.join(' '));
+    }
+  }
+
+  return result;
 }
 
 /**

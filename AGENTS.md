@@ -1,111 +1,109 @@
-# ChronoViet — AI Agent & Developer Guidelines
+# ChronoViet — Agent & Developer Instructions
 
-This document outlines the core principles, development workflows, and tool usage guidelines for AI Agents and Developers working on the **ChronoViet** codebase.
+Guidelines, operational constraints, and verification protocols for AI Agents and Developers in the ChronoViet codebase.
 
 ---
 
-## 1. Core Development Principles & Documentation First
+## 1. Architecture & Core Principles
 
-1. **Read Relevant Documentation Before Planning and Coding:**
-   - Agents and Developers **must thoroughly read domain-relevant specification documents** matching the task in the project to understand the architecture and processing workflows before creating implementation plans or writing code:
-     - **System Architecture Docs:** [`docs/architecture/`](docs/architecture/)
-     - **Detailed Module Docs:** [`docs/modules/`](docs/modules/)
-     - **System Overview & Specs:** [`docs/SystemOverview.md`](docs/SystemOverview.md), [`docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md`](docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md), [`docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md`](docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md), [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
-
-2. **Strict Type-Safety & SSOT (Single Source of Truth):**
-   - All cross-module Data Contracts, Zod Schemas, and shared TypeScript Interfaces MUST be declared centrally in [`packages/shared-spec`](packages/shared-spec). Never duplicate schemas/interfaces across child packages. Module-internal private types should remain encapsulated within their respective package.
-
+1. **Documentation-First:**
+   - Read relevant specification documents before planning or modifying code:
+     - Architecture: [`docs/architecture/`](docs/architecture/)
+     - Modules: [`docs/modules/`](docs/modules/)
+     - Specifications: [`docs/SystemOverview.md`](docs/SystemOverview.md), [`docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md`](docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md), [`docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md`](docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md), [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
+2. **Single Source of Truth (SSOT):**
+   - Declare all cross-module data contracts, Zod schemas, and shared TypeScript interfaces centrally in [`packages/shared-spec`](packages/shared-spec). Never duplicate schemas across child packages. Encapsulate module-private types within their respective packages.
 3. **Production-Ready & Anti-Overfitting:**
-   - All solutions, algorithms, prompt framings, and code logic must ensure generality, performance optimization, and compliance with Production standards.
-   - Strictly **DO NOT hardcode logic**, make narrow assumptions, or relax testing just to force test cases/fixtures to pass.
-
-4. **Stateless Codebase & Evaluation:**
-   - The codebase is completely Stateless (Production data is stored in PostgreSQL, Redis, and Volume Mount `/media`).
-   - Any logic changes or refactoring must be evaluated via local benchmarks in `packages/<module>/eval/` (e.g., `packages/remotion-engine/eval/`) or targeted unit tests (`npx vitest`) where available.
-
----
-
-## 2. CodeGraph Usage Guidelines (Mandatory)
-
-* **Index Directory:** `.codegraph/` (Auto-updated, fast retrieval, saves context tokens).
-* **Golden Rule:** **Always use CodeGraph before** `view_file` or `grep_search` to locate codebase structure, search for symbols, trace execution call graphs, and analyze blast radius before modifying code.
-* **Scope of Use:**
-  * **Should be used for:** Searching classes, functions, interfaces, Zod schemas, API routes, Remotion components; tracing data flow between packages (`packages/shared-spec`, `packages/remotion-engine`, Agent/RAG services); preparing code refactoring.
-  * **Do NOT use for:** Reading configuration files (`.env`, `package.json`), Markdown documentation (`docs/*.md`), or standard file system operations.
-* **MCP Tools Priority:** `codegraph_explore` (Priority #1, returns verbatim source + call paths) → `codegraph_node`.
-* **CLI Commands Priority:** `codegraph explore "<query>"` (Priority #1) → `codegraph node <symbol-or-file>` → `codegraph query <search>`.
+   - Ensure generic, robust, and performant implementations.
+   - Do NOT hardcode logic, make narrow assumptions, or loosen test assertions to force fixtures to pass.
+4. **Stateless Runtime:**
+   - Keep application state stateless. Persistent data resides in PostgreSQL (pgvector), Redis, and volume storage (`/media`).
+5. **Language Boundary:**
+   - Write all code, technical comments, TypeScript types, documentation, and commit messages in **English**.
+   - Keep historical domain knowledge, video scripts, audio narration texts, and user-facing historical content in **Vietnamese**.
 
 ---
 
-## 3. Core Agent Behaviors
+## 2. CodeGraph Exploration Protocol
 
-* **Plan Approval Before Execution:** Present a summary of the solution (affected files, approach, risks) for User approval before executing non-trivial code edits or architectural changes.
-* **Clarify When Uncertain:** Stop and ask the User if requirements are ambiguous or designs are unclear; do not make arbitrary assumptions.
-* **Simple Solutions First & Scope Discipline:** Prioritize simple, easily maintainable solutions. Modify only files within the requested scope; do not refactor arbitrarily.
-* **Targeted Testing Only:** Run only test runners or scripts directly related to the module being worked on (e.g., `pnpm --filter @chronoviet/remotion-engine eval` or `npx vitest ...`) to conserve system resources.
-* **Documentation Synchronization:** When modifying public APIs, architecture, data schemas, or core workflows in `packages/` or `services/`, Agents MUST immediately update the corresponding technical documentation in `docs/`.
-
----
-
-## 4. Multi-Tier Verification Protocol & Debugging
-
-* **Multi-Tier Verification Protocol:**
-  1. **Tier 1:** `pnpm typecheck` (mandatory 0 TypeScript errors monorepo-wide).
-  2. **Tier 2:** `pnpm --filter @chronoviet/shared-spec typecheck` (Zod Contract Validation).
-  3. **Tier 3:** `pnpm lint` (Code formatting & lint checks).
-  4. **Tier 4:** `pnpm eval:all` or `pnpm --filter <package> eval` (Module eval & unit tests).
-
-* **Test vs. Eval Distinction:**
-  * **Unit & Integration Tests (`pnpm test`):** Focus on verifying deterministic code correctness, schema validation, data contracts, and edge cases. Results must yield strict binary outcomes (Pass/Fail). Mọi package chạy trực tiếp `vitest run --dir src/ --passWithNoTests` — `pnpm test` chỉ quét code nguồn trong `src/`. **Đây là bộ test duy nhất được chạy trong CI/CD**.
-  * **Eval Framework & Metric Tests (`pnpm test:eval` & `pnpm eval:*`):** Toàn bộ các công cụ, metric tests trong `eval/__tests__/` và evaluation runner trong `eval/` (NDCG, MRR, RAG chunking quality, pacing, render fidelity, failover...) thuộc không gian đo lường chất lượng phi tất định / benchmark. Chúng được chạy thủ công hoặc trên môi trường benchmark chuyên biệt — **TUYỆT ĐỐI KHÔNG đưa vào CI/CD**.
-
-* **Protect Test Suite Integrity:** Strictly do not relax or modify test cases solely to force tests to pass.
-* **Log-First Debugging:** Read detailed logs before editing code to correctly distinguish failure axes:
-  - *Infrastructure/System Axis (Database, Redis, Network, Service Worker, Render Engines):* Fix issues in `services/`, `packages/`, or retry policies.
-  - *AI/Prompt/Reasoning Axis (Zod Schema Validation failure, hallucination):* Optimize Prompt Framing, Constraints, Structured Output / JSON Schema Enforcement.
+- **Index Directory:** `.codegraph/`
+- **Rule:** Use CodeGraph first to map structure and call paths before reading files. If CodeGraph CLI or index is unavailable in the environment, fallback to standard `grep_search` and `find_by_name`.
+- **Scope:** Search classes, functions, interfaces, schemas, routes, components, and trace inter-package data flow. Do NOT use for `.env`, `package.json`, or Markdown documentation.
+- **Commands:**
+  - `codegraph explore "<intent>"`: Architectural queries & multi-hop data flow tracing.
+  - `codegraph node <symbol-or-file>`: Inspect specific symbol definition, callers, and callees.
+  - `codegraph query <text>`: Fast symbol name lookup.
 
 ---
 
-## 5. Quick Reference Commands
+## 3. Operational Agent Directives
 
+- **Approval Before Execution:** Present an implementation summary (affected files, approach, risks) for user confirmation before executing non-trivial edits or structural refactors.
+- **Clarification:** Ask for clarification immediately if requirements are ambiguous. Do NOT make unvalidated assumptions.
+- **Minimal Scope:** Deliver the simplest maintainable solution. Modify only files strictly within the requested task scope.
+- **Targeted Testing:** Execute only test runners relevant to the modified package (e.g., `pnpm --filter @chronoviet/remotion-engine eval` or targeted `vitest`) during active iteration.
+- **Doc Synchronization:** Update corresponding Markdown documentation in `docs/` immediately when modifying public APIs, schemas, or module behaviors.
+
+---
+
+## 4. Multi-Tier Verification & Testing Protocol
+
+- **Verification Tiers:**
+  1. **Tier 1 (Fast Contract Check):** `pnpm --filter @chronoviet/shared-spec typecheck` (validate schema/contract changes).
+  2. **Tier 2 (Monorepo Typecheck):** `pnpm typecheck` (zero TypeScript errors monorepo-wide required).
+  3. **Tier 3 (Linting):** `pnpm lint` (formatting and lint compliance).
+  4. **Tier 4 (Deterministic Tests):** `pnpm test` (deterministic unit & integration tests across `src/`).
+  5. **Tier 5 (Local Benchmarks & Eval):** `pnpm eval:all` or `pnpm --filter <package> eval` (non-deterministic quality evaluation).
+- **Test vs. Eval Separation:**
+  - **Deterministic Tests (`pnpm test`):** Executes `vitest run --dir src/ --passWithNoTests`. Must yield strict binary Pass/Fail results. This is the **ONLY** test suite executed in CI/CD pipelines.
+  - **Evaluation Benchmarks (`pnpm test:eval` & `pnpm eval:*`):** Located in `eval/` (retrieval metrics, chunking quality, pacing, render fidelity). Run manually in local/benchmark environments. **NEVER run in CI/CD**.
+- **Log-First Debugging:** Read execution logs before editing code to distinguish failure domains:
+  - *Infrastructure/Runtime:* PostgreSQL, Redis, Network, Service Worker, Render Engines.
+  - *AI/Prompt/Reasoning:* Zod schema validation failures, prompt constraints, hallucination.
+
+---
+
+## 5. Command Reference
+
+### 1. Development & Runtime
 ```bash
-# ----- CODEGRAPH COMMANDS -----
-# Check CodeGraph index status
-codegraph status
+pnpm dev:hybrid      # Web + Worker with Cloud AI fallback (0% local GPU)
+pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction)
+pnpm dev:stack       # Full Stack: Docker Infra + AI Supervisor + TTS + Web + Worker
 
-# Force sync CodeGraph index (if auto-sync daemon is disabled/stale)
-codegraph sync
-
-# Query symbol or architectural questions
-codegraph explore "RemotionRenderEngine"
-
-# ----- BUILD & VERIFICATION COMMANDS -----
-# Check TypeScript monorepo-wide (Mandatory 0 errors)
-pnpm typecheck
-
-# Check Lint monorepo-wide
-pnpm lint
-
-# Build all packages
-pnpm build
-
-# Launch Remotion Studio UI preview
-pnpm remotion:studio
-
-# ----- EVALUATION COMMANDS -----
-# Purge eval artifacts, stale audio files, reports, and ports monorepo-wide
-pnpm eval:clean
-
-# Run eval suite monorepo-wide (with fresh clean lifecycle)
-pnpm eval:all --fresh
-
-# Run eval runner for Remotion Engine specifically
-pnpm --filter @chronoviet/remotion-engine eval -- --fresh
+pnpm remotion:studio # Remotion Studio UI (Port 9876)
+pnpm ai              # AI Status & interactive quick launcher
+pnpm ai:start        # Start Full Local AI Stack (8090, 8092, 8094)
+pnpm ai:lite         # Start Lightweight Pair (8090 + 8094) (~3.1 GB RAM)
+pnpm ai:tts          # Start VieNeu TTS Voice Engine in Docker (Port 8080)
+pnpm ai:status       # Check AI port status (8090, 8092, 8094, 8080)
+pnpm ai:stop         # Stop all background AI & TTS processes
 ```
 
-## 6. CI/CD (GitHub Actions)
+### 2. Infrastructure & Database
+```bash
+pnpm stack:infra         # Start PostgreSQL (pgvector) & Redis
+pnpm stack:down          # Stop all containers
+pnpm db:init             # Initialize vector & graph schema (8 tables)
+pnpm db:health           # Audit DB health (relationships, embeddings, indexes)
+pnpm db:clean            # Remove duplicate entities and dangling relations
+pnpm db:audit-quarantine # Audit quarantined knowledge edges
+```
 
-* **Quality gates bắt buộc trên mọi PR/push `main`**: `.github/workflows/ci.yml` chạy song song `lint`, `typecheck`, `unit-tests` (`pnpm test` trên `src/`), `build`, `docker-build`, `audit`, và `integration` (Postgres pgvector + Redis services → `pnpm db:init` → `verify-db-health.ts`).
-* **CI chỉ quan tâm deterministic checks** (`lint`/`typecheck`/`test`/`build`/`docker-build`/`audit`/`integration`). **Mọi tác vụ Eval (`pnpm eval:*`, `pnpm test:eval`) KHÔNG nằm trong CI**.
-* **Trước khi push, phải chạy tương đương cục bộ**: `pnpm lint && pnpm typecheck && pnpm test && pnpm build` (hoặc `pnpm typecheck` đơn lẻ để nhanh).
-* Dependabot tự cập nhật dependency `npm` + `github-actions` hàng tuần (`.github/dependabot.yml`).
+### 3. Verification & Quality Gates
+```bash
+pnpm check:all           # Master verification gate: typecheck -> lint -> test -> build
+pnpm typecheck           # Monorepo typecheck
+pnpm lint                # Monorepo linting
+pnpm test                # Deterministic unit/integration test suite
+pnpm eval:all --fresh    # Full evaluation suite (Local benchmark only)
+```
+
+---
+
+## 6. CI/CD Requirements (GitHub Actions)
+
+- **Mandatory Quality Gates:** `.github/workflows/ci.yml` executes `lint`, `typecheck`, `unit-tests` (`pnpm test`), `build`, `docker-build`, `audit`, and `integration` (`pnpm db:init` -> `verify-db-health.ts`).
+- **CI Scope:** CI executes ONLY deterministic checks. All evaluation commands (`pnpm eval:*`, `pnpm test:eval`) are strictly excluded.
+- **Pre-Push Requirement:** Run `pnpm check:all` (or `pnpm typecheck && pnpm lint && pnpm test && pnpm build`) locally and ensure 100% pass rate before pushing to `main` or opening PRs.
+

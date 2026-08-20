@@ -93,6 +93,7 @@ function makeState(overrides: Partial<ChronoGraphState> = {}): ChronoGraphState 
     videoProps: undefined,
     errorLog: undefined,
     needsHumanReview: false,
+    telemetryAudit: [],
     ...overrides,
   };
 }

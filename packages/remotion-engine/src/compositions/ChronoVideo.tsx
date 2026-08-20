@@ -13,20 +13,21 @@ import { DocumentarySubtitle } from '../components/DocumentarySubtitle';
 import { getMergedTheme } from '../utils/themeUtils';
 
 const resolveMediaUrl = (url?: string): string => {
-  if (!url) return '';
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
   if (
-    url.startsWith('http://') ||
-    url.startsWith('https://') ||
-    url.startsWith('data:') ||
-    url.startsWith('blob:')
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:')
   ) {
-    return url;
+    return trimmed;
   }
-  const clean = url.startsWith('/') ? url.slice(1) : url;
+  const clean = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed;
   try {
     return staticFile(clean);
   } catch {
-    return url;
+    return trimmed;
   }
 };
 

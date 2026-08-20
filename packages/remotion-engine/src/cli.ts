@@ -4,7 +4,7 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { ChronoVideoSchema, createLogger } from '@chronoviet/shared-spec';
 
-const log = createLogger({ service: 'remotion-engine' });
+let log = createLogger({ service: 'remotion-engine' });
 
 export interface CLIArgs {
   command: 'render' | 'still' | 'eval' | 'inspect' | 'help';
@@ -15,6 +15,8 @@ export interface CLIArgs {
   frame?: number;
   overwrite?: boolean;
   verbose?: boolean;
+  correlationId?: string;
+  projectId?: string;
 }
 
 export function parseArgs(args: string[]): CLIArgs {
@@ -42,6 +44,10 @@ export function parseArgs(args: string[]): CLIArgs {
       result.composition = args[++i];
     } else if (arg === '-f' || arg === '--frame') {
       result.frame = parseInt(args[++i], 10);
+    } else if (arg === '-k' || arg === '--correlation-id') {
+      result.correlationId = args[++i];
+    } else if (arg === '-p' || arg === '--project-id') {
+      result.projectId = args[++i];
     } else if (arg === '--no-overwrite') {
       result.overwrite = false;
     } else if (arg === '-v' || arg === '--verbose') {
@@ -62,6 +68,14 @@ export function runCLI() {
   const rawArgs = process.argv.slice(2);
   const options = parseArgs(rawArgs);
 
+  if (options.correlationId || options.projectId) {
+    log = createLogger({
+      service: 'remotion-engine',
+      correlationId: options.correlationId,
+      baseFields: options.projectId ? { projectId: options.projectId } : undefined,
+    });
+  }
+
   if (options.command === 'help' || rawArgs.includes('--help')) {
     console.log(`
 ChronoViet Remotion Video Render Engine CLI
@@ -73,14 +87,16 @@ Usage:
   pnpm cli eval [-d <outDir>] [-t <testCasesDir>]
 
 Options:
-  -i, --input <path>         Path to input JSON script file
-  -o, --output <path>        Path to output video/image file
-  -d, --outDir <path>        Directory path for output files (default: ./out)
-  -c, --composition <id>     Remotion composition ID (default: ChronoVideo)
-  -f, --frame <number>       Frame index for still render (default: 45)
-  --no-overwrite             Do not overwrite existing output file
-  -v, --verbose              Print detailed render logs
-  --help                     Show this help message
+  -i, --input <path>           Path to input JSON script file
+  -o, --output <path>          Path to output video/image file
+  -d, --outDir <path>          Directory path for output files (default: ./out)
+  -c, --composition <id>       Remotion composition ID (default: ChronoVideo)
+  -f, --frame <number>         Frame index for still render (default: 45)
+  -k, --correlation-id <id>    Correlation identifier for distributed logging
+  -p, --project-id <id>        Project identifier for tracing context
+  --no-overwrite               Do not overwrite existing output file
+  -v, --verbose                Print detailed render logs
+  --help                       Show this help message
 `);
     return;
   }

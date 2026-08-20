@@ -80,27 +80,39 @@ Bộ benchmark v1.0 đóng vai trò chẩn đoán độc lập các thành phầ
 
 ## 3. Chi Tiết Từng Tầng Đánh Giá (C0 – C10)
 
-### 3.0. Tầng C0: Knowledge Graph Construction Benchmark
+### 3.0. Tầng C0: Knowledge Graph Construction & 2-Stage Extraction Benchmark
 
-Đồ thị tri thức là nền tảng của GraphRAG. Nếu khâu trích xuất bộ ba (Triple Extraction) từ văn bản sử liệu thô bị sai, bước duyệt đồ thị (Traversal) dù hoàn hảo vẫn sẽ dẫn đến kết luận sai lệch.
+Đồ thị tri thức là nền tảng của GraphRAG. Trong ChronoViet, khâu xây dựng đồ thị được vận hành qua **Kiến Trúc 2-Stage Hybrid Knowledge Extraction**:
+* **Stage 1 (Pure TS Vietnamese Historical NER Candidate Extractor):** Phân tích thực thể ứng viên đa tầng siêu tốc (< 1ms, không tốn GPU).
+* **Stage 2 (Lightweight Local LLM Extraction - Port 8094):** Sử dụng `qwen3.5-4b-instruct-q4_k_m` để trích xuất 8 quan hệ chuẩn hóa (`LED_BY`, `PART_OF`, `HAPPENED_IN`, `HAPPENED_AT`, `SAME_AS_LOCATION`, `ALIAS_OF`, `ROYAL_LINEAGE`, `MENTIONED_IN`) và kiểm soát ma trận định hướng quan hệ ($S \to R \to O$).
 
 ```
-[Văn bản sử liệu] ──► [LLM / Rule Triple Extractor] ──► [Entity Resolution & Deduplication] ──► [PostgreSQL Graph DB]
+[Văn bản sử liệu] ──► [Stage 1: Pure TS Historical NER] ──► [Candidate Spans] ──► [Stage 2: Port 8094 LLM] ──► [Directionality Matrix] ──► [PostgreSQL Graph DB]
+```
+
+```bash
+# Lệnh chạy đánh giá độc lập Stage 1 NER
+pnpm eval:ner
+
+# Lệnh chạy đánh giá độc lập Stage 2 Triples Extraction
+pnpm eval:triples
+
+# Lệnh kiểm định toàn diện cơ sở dữ liệu và quarantine
+pnpm db:health
+pnpm db:audit-quarantine
 ```
 
 #### Chỉ Số Đánh Giá Tầng C0
 
 | Metric ID | Tên Chỉ Số | Định Nghĩa Toán Học / Đo Lường | Ngưỡng Pass | Target |
 | :--- | :--- | :--- | :---: | :---: |
-| `C0-M1` | **Entity Extraction Precision** | $\frac{\text{True Extracted Historical Entities}}{\text{Total Extracted Entities}}$ | $\ge 98.0\%$ | $\ge 99.0\%$ |
-| `C0-M2` | **Entity Extraction Recall** | $\frac{\text{True Extracted Historical Entities}}{\text{Gold Annotated Entities in Text}}$ | $\ge 95.0\%$ | $\ge 98.0\%$ |
-| `C0-M3` | **Entity Linking / Canonical Accuracy** | Tỷ lệ thực thể được gán đúng `entityId` chuẩn (7 Taxonomy Types) | $\ge 98.0\%$ | $100\%$ |
-| `C0-M4` | **Relation Extraction Precision** | Tỷ lệ quan hệ (Edge Types: `LED_BY`, `PART_OF`, `RULED`...) gán đúng | $\ge 95.0\%$ | $\ge 98.0\%$ |
-| `C0-M5` | **Relation Extraction Recall** | Tỷ lệ quan hệ vàng giữa các thực thể được trích xuất thành công | $\ge 90.0\%$ | $\ge 95.0\%$ |
-| `C0-M6` | **Relationship Direction Accuracy** | Tỷ lệ quan hệ có hướng đúng chiều (ví dụ: $A \xrightarrow{\text{DEFEATED}} B \ne B \xrightarrow{\text{DEFEATED}} A$) | $\ge 99.0\%$ | $100\%$ |
-| `C0-M7` | **Duplicate / Split Entity Rate** | % thực thể bị tạo trùng lặp hoặc phân rã giả tạo trong DB | $\le 1.0\%$ | $0.0\%$ |
-| `C0-M8` | **Provenance & Citation Coverage** | 100% cạnh và thực thể có liên kết trỏ về `source_id` và `chunk_id` | $100\%$ | $100\%$ |
-| `C0-M9` | **Temporal Validity of Edges** | Tỷ lệ cạnh có thuộc tính thời gian (`timeStart`, `timeEnd`) khớp sử liệu | $\ge 98.0\%$ | $\ge 99.0\%$ |
+| `C0-M1` | **Stage 1 Boundary Span F1** | F1-Score ranh giới ký tự thực thể (`extractHistoricalCandidateSpans`) | $\ge 95.0\%$ | $\ge 97.0\%$ (Đạt: **97.04%**) |
+| `C0-M2` | **Historical OOV Recall** | Tỷ lệ nhận diện thực thể ngoài từ điển (Out-of-Vocabulary) | $\ge 90.0\%$ | $100\%$ (Đạt: **100.0%**) |
+| `C0-M3` | **Stage 1 Per-Sentence Latency** | Thời gian xử lý NER trung bình trên mỗi câu văn bản | $< 10.0\text{ ms}$ | $< 1.0\text{ ms}$ (Đạt: **0.35ms**) |
+| `C0-M4` | **Strict Triple Precision & Recall** | Độ chính xác và độ phủ bộ ba quan hệ khớp tuyệt đối $(S, R, O)$ | $\ge 90.0\%$ | $\ge 95.0\%$ |
+| `C0-M5` | **Relationship Direction Accuracy** | Tỷ lệ quan hệ có hướng đúng chiều ($S \to R \to O$) theo ma trận | $\ge 95.0\%$ | $100\%$ (Đạt: **100.0%**) |
+| `C0-M6` | **Quarantine & Hallucination Rate** | % cạnh quan hệ bị cách ly / chứa thực thể ảo không có trong văn bản | $\le 5.0\%$ | $\le 2.0\%$ |
+| `C0-M7` | **Database Integrity & Self-Loops** | 0 self-loop (`sId == tId`), 100% quan hệ duy nhất (`idx_rel_unique`) | $100\%$ Pass | 0 self-loops (Đạt: **0**) |
 
 ---
 

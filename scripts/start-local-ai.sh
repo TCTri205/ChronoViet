@@ -65,8 +65,8 @@ if command -v llama-server >/dev/null 2>&1; then
   if [ -f "${LLM_MODEL_PATH}" ]; then
     echo "[Local AI] Starting Unified LLM/VLM llama-server on port ${LLM_PORT} (Flash Attention + Q8_0 KV Cache + Continuous Batching)..."
     EXTRA_ARGS=""
-    if [ -f "${MMPROJ_PATH}" ]; then
-      echo "[Local AI] ✅ Multimodal projector found: ${MMPROJ_PATH}"
+    if [ -f "${MMPROJ_PATH}" ] && echo "${LLM_MODEL_PATH}" | grep -Eqi "([-_]vl[-_.]|qwen.*vl)"; then
+      echo "[Local AI] ✅ Multimodal projector found for VL model: ${MMPROJ_PATH}"
       EXTRA_ARGS="--mmproj ${MMPROJ_PATH}"
     fi
     LLM_CTX_SIZE="${LLM_CTX_SIZE:-16384}"
@@ -75,7 +75,7 @@ if command -v llama-server >/dev/null 2>&1; then
       --port "${LLM_PORT}" \
       --ctx-size "${LLM_CTX_SIZE}" \
       --n-gpu-layers 99 \
-      --flash-attn \
+      --flash-attn auto \
       --cache-type-k q8_0 \
       --cache-type-v q8_0 \
       --cont-batching \
@@ -89,20 +89,45 @@ if command -v llama-server >/dev/null 2>&1; then
 
   if [ -f "${EMB_MODEL_PATH}" ]; then
     echo "[Local AI] Starting Embedding llama-server on port ${EMBEDDING_PORT} (model: $(basename "${EMB_MODEL_PATH}"))..."
-    EMBEDDING_CTX_SIZE="${EMBEDDING_CTX_SIZE:-4096}"
+    EMBEDDING_CTX_SIZE="${EMBEDDING_CTX_SIZE:-8192}"
     llama-server \
       -m "${EMB_MODEL_PATH}" \
       --port "${EMBEDDING_PORT}" \
       --embedding \
       --ctx-size "${EMBEDDING_CTX_SIZE}" \
+      --batch-size 8192 \
+      --ubatch-size 8192 \
+      --parallel 4 \
+      --cont-batching \
       --n-gpu-layers 99 \
-      --flash-attn \
+      --flash-attn auto \
       ${EMBEDDING_EXTRA_ARGS:-} &
     EMB_PID=$!
     echo "[Local AI] Embedding server running with PID ${EMB_PID}"
   fi
 
-  trap 'echo "[Local AI] Shutting down..."; kill ${LLM_PID:-} ${EMB_PID:-} 2>/dev/null || true' EXIT
+  # Stage 2 Extraction Server (Port 8094 / Qwen3.5-4B-Instruct)
+  EXTRACTION_PORT="${EXTRACTION_PORT:-8094}"
+  EXT_MODEL_PATH="${MODEL_DIR}/${LOCAL_LLM_EXTRACTION_MODEL:-qwen3.5-4b-instruct-q4_k_m}.gguf"
+  if [ -f "${EXT_MODEL_PATH}" ]; then
+    EXTRACTION_CTX_SIZE="${EXTRACTION_CTX_SIZE:-${LOCAL_LLM_EXTRACTION_CTX_SIZE:-8192}}"
+    EXTRACTION_PARALLEL="${EXTRACTION_PARALLEL:-${LOCAL_LLM_EXTRACTION_PARALLEL:-4}}"
+    EXTRACTION_THREADS="${EXTRACTION_THREADS:-${LOCAL_LLM_EXTRACTION_THREADS:-6}}"
+    llama-server \
+      -m "${EXT_MODEL_PATH}" \
+      --port "${EXTRACTION_PORT}" \
+      --ctx-size "${EXTRACTION_CTX_SIZE}" \
+      --n-gpu-layers 99 \
+      --flash-attn auto \
+      --cont-batching \
+      --parallel "${EXTRACTION_PARALLEL}" \
+      --threads "${EXTRACTION_THREADS}" \
+      ${EXTRACTION_EXTRA_ARGS:-} &
+    EXT_PID=$!
+    echo "[Local AI] Extraction server running with PID ${EXT_PID}"
+  fi
+
+  trap 'echo "[Local AI] Shutting down..."; kill ${LLM_PID:-} ${EMB_PID:-} ${EXT_PID:-} 2>/dev/null || true' EXIT
   wait
 fi
 

@@ -5,7 +5,9 @@
 
 import path from 'path';
 import zlib from 'zlib';
-import { SourceReliability } from '@chronoviet/shared-spec';
+import { SourceReliability, createLogger } from '@chronoviet/shared-spec';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 export interface PdfPageContent {
   pageNumber: number;
@@ -366,10 +368,21 @@ export class PdfExtractor {
 
     // If stream parsing yielded no valid text (e.g. Scanned Bitmap PDF or Encrypted PDF)
     if (isScannedPdf) {
+      log.warn('pdf.scanned_bitmap_detected', `Detected scanned bitmap PDF for "${meta.title}"; fallback to metadata descriptor`, {
+        filePathOrName,
+        title: meta.title,
+      });
       fullText = `> ⚠️ **Thông tin tệp PDF:** Bộ tác phẩm "${meta.title}" là bản PDF Scan hình ảnh (Bitmap Scanned PDF Document).  \n> **Trạng thái trích xuất:** Tệp chứa ${meta.description} (Cấp độ tin cậy: ${meta.sourceReliability}). Văn bản scan đã được đăng ký vào CSDL Tri thức ChronoViet để liên kết truy vấn GraphRAG. Để nâng cao chất lượng nhận dạng ở cấp toàn bộ từng trang văn bản thô, hệ thống khuyến nghị chạy luồng OCR (Tesseract / NomNaOCR).`;
       pages.push({
         pageNumber: 1,
         text: fullText,
+      });
+    } else {
+      log.info('pdf.stream_extracted', `Extracted text from PDF "${meta.title}" (${pages.length} pages, ${fullText.length} chars)`, {
+        filePathOrName,
+        title: meta.title,
+        pages: pages.length,
+        charCount: fullText.length,
       });
     }
 

@@ -299,6 +299,25 @@ Khi hệ thống ingest song song các tệp PDF chính sử chi tiết (`data/r
 3. **Ưu Tiên Bộ Ba Quan Hệ Trong Đồ Thị Tri Thức:**
    - Khi cả PDF và Wikipedia cùng trích xuất bộ ba quan hệ $(E_1, R, E_2)$, hệ thống ưu tiên lưu giữ thuộc tính confidence của PDF Level 1 ($W=1.0$), đồng thời gắn thêm `citation_page` và `source_work` từ tệp PDF.
 
+### 4.7. Quản Trị Trích Xuất 2-Stage & Quản Lý Cạnh Nghi Vấn (2-Stage Extraction & Quarantine Governance)
+
+1. **Kiến Trúc Trích Xuất 2-Stage:**
+   - **Stage 1 (Pure TS NER Candidate Extractor):** Nhận diện thực thể ứng viên theo ranh giới ký tự chính xác tuyệt đối (`extractHistoricalCandidateSpans`), tốc độ $< 1\text{ms}$/câu, F1 đạt 97.04%.
+   - **Stage 2 (Lightweight LLM Extractor - Port 8094):** Sử dụng `qwen3.5-4b-instruct-q4_k_m` để liên kết bộ ba quan hệ theo 8 quan hệ chuẩn hóa (`LED_BY`, `PART_OF`, `HAPPENED_IN`, `HAPPENED_AT`, `SAME_AS_LOCATION`, `ALIAS_OF`, `ROYAL_LINEAGE`, `MENTIONED_IN`).
+2. **Ma Trận Định Hướng Quan Hệ Chuẩn (Canonical Directionality Matrix):**
+   - $S \xrightarrow{R} O$ bắt buộc tuân thủ đúng chiều ngữ nghĩa:
+     - `LED_BY`: $[Event/Movement/Org] \to [Person]$
+     - `HAPPENED_AT`: $[Event] \to [Location]$
+     - `HAPPENED_IN`: $[Event/Rule] \to [Dynasty/Era]$
+     - `SAME_AS_LOCATION`: $[Historical Loc] \to [Modern Loc]$
+     - `MENTIONED_IN`: $[Entity] \to [Document]$
+     - `ALIAS_OF`: $[Variant Name] \to [Master Entity]$
+     - `ROYAL_LINEAGE`: $[Successor] \to [Royal Ancestor]$
+     - `PART_OF`: $[Sub-entity] \to [Parent Entity]$
+3. **Cơ Chế Cách Ly & Kiểm Định Cơ Sở Dữ Liệu (Quarantine Inspector):**
+   - Các cạnh có điểm tin cậy $< 0.85$ hoặc chứa thực thể chưa định danh được lưu trữ tại phân vùng cách ly (Quarantine Store).
+   - Sử dụng công cụ CLI [`quarantine-inspector.ts`](../../packages/data-ingestion/src/cli/quarantine-inspector.ts) (`pnpm db:audit-quarantine`) để người vận hành duyệt, thăng cấp (`--accept-all-high-conf`) hoặc thanh lọc cạnh sai (`--purge-spurious`).
+
 ---
 
 ## ⚔️ 5. Khung Giải Quyết Xung Đột Sử Liệu (Historical Conflict Resolution Framework)
@@ -410,7 +429,7 @@ Khi thực hiện ingest văn bản sử ký:
    * Đối với các văn bản hoặc nhân vật kéo dài qua nhiều thời kỳ (vd: Nguyễn Trãi), gán nhãn dạng mảng: `epoch_ids: ["EPOCH_05", "EPOCH_06", "EPOCH_07", "EPOCH_08"]` và `lifetime_range: { start_year: 1380, end_year: 1442 }`.
 
 2. **Khi phát hiện mâu thuẫn sử liệu hoặc alias mới:**
-   * Cập nhật từ điển ánh xạ tại [`packages/data-ingestion/src/text/historical-entity-mapper.ts`](../../packages/data-ingestion/src/text/historical-entity-mapper.ts).
+   * Cập nhật từ điển ánh xạ tại [`packages/shared-spec/src/historical-entities.ts`](../../packages/shared-spec/src/historical-entities.ts).
    * Chạy `pnpm --filter @chronoviet/data-ingestion rag:re-resolve` để cập nhật lại Đồ thị Tri thức hiện có.
 
 3. **Luồng Media/Hình Ảnh Tiếp Theo:**
@@ -422,4 +441,4 @@ Khi thực hiện ingest văn bản sử ký:
 > - [`docs/modules/00_DATA_PREPROCESSING_AND_INGESTION.md`](../modules/00_DATA_PREPROCESSING_AND_INGESTION.md)  
 > - [`docs/modules/01_CHRONO_RAG_ENGINE.md`](../modules/01_CHRONO_RAG_ENGINE.md)  
 > - [`packages/shared-spec/src/schema.ts`](../../packages/shared-spec/src/schema.ts)  
-> - [`packages/data-ingestion/src/text/historical-entity-mapper.ts`](../../packages/data-ingestion/src/text/historical-entity-mapper.ts)
+> - [`packages/shared-spec/src/historical-entities.ts`](../../packages/shared-spec/src/historical-entities.ts)

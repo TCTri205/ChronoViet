@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateEmbedding, isPgAvailable } from '@chronoviet/shared-spec';
+import { generateEmbedding, generateEmbeddingsBatch, isPgAvailable } from '@chronoviet/shared-spec';
 import { extractTriplesFromTextAsync } from '../triple-extractor.js';
 import { seedDualBranch } from '../seeder/dual-branch-seeder.js';
 import { extractionCache } from '../cache/extraction-cache.js';
@@ -9,6 +9,9 @@ vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
   return {
     ...original,
     generateEmbedding: vi.fn().mockResolvedValue(new Array(1024).fill(0.01)),
+    generateEmbeddingsBatch: vi.fn().mockImplementation(async (texts: string[]) => {
+      return texts.map(() => new Array(1024).fill(0.01));
+    }),
     isPgAvailable: vi.fn().mockResolvedValue(false),
   };
 });
@@ -26,10 +29,13 @@ describe('DualBranchSeeder Unit Tests', () => {
     vi.clearAllMocks();
     await extractionCache.clear();
     vi.mocked(generateEmbedding).mockResolvedValue(new Array(1024).fill(0.01));
+    vi.mocked(generateEmbeddingsBatch).mockImplementation(async (texts: string[]) => {
+      return texts.map(() => new Array(1024).fill(0.01));
+    });
     vi.mocked(isPgAvailable).mockResolvedValue(false);
   });
 
-  it('should seed document with parallel chunk extraction and aggregate triples deterministically', async () => {
+  it('should seed document with parallel chunk extraction and aggregate triples deterministically with telemetry', async () => {
     let callCount = 0;
     vi.mocked(extractTriplesFromTextAsync).mockImplementation(async (text) => {
       callCount++;
@@ -61,13 +67,26 @@ Quang Trung đại phá quân Thanh vào dịp Tết Kỷ Dậu 1789. Trận Ng�
 Quân Tây Sơn thần tốc tiến vào Thăng Long giải phóng kinh thành.
 `.repeat(10); // generate enough content for multiple chunks
 
-    const result = await seedDualBranch(sampleContent, {
-      title: 'Đại Phá Quân Thanh 1789',
-      dynasty: 'Tây Sơn',
-      sourceReliability: 'LEVEL_1',
-    });
+    const result = await seedDualBranch(
+      sampleContent,
+      {
+        title: 'Đại Phá Quân Thanh 1789',
+        dynasty: 'Tây Sơn',
+        sourceReliability: 'LEVEL_1',
+      },
+      {
+        correlationId: 'test-seed-run-123',
+      }
+    );
 
     expect(result).toBeDefined();
+    expect(result.correlationId).toBe('test-seed-run-123');
+    expect(result.telemetry).toBeDefined();
+    expect(result.telemetry?.durations.chunkingMs).toBeGreaterThanOrEqual(0);
+    expect(result.telemetry?.durations.extractionMs).toBeGreaterThanOrEqual(0);
+    expect(result.telemetry?.durations.embeddingMs).toBeGreaterThanOrEqual(0);
+    expect(result.telemetry?.durations.dbInsertMs).toBeGreaterThanOrEqual(0);
+    expect(result.telemetry?.throughput.chunksPerSec).toBeGreaterThan(0);
     expect(result.parentChunksCount).toBeGreaterThan(0);
     expect(result.childChunksCount).toBeGreaterThan(0);
     expect(result.chunksIngested).toBe(result.parentChunksCount + result.childChunksCount);
@@ -105,7 +124,10 @@ Nguyễn Huệ tức Quang Trung. Hoàng đế áo vải cờ đào dấy binh t
     });
 
     expect(result).toBeDefined();
+    expect(result.correlationId).toBeDefined();
     expect(result.chunksIngested).toBeGreaterThan(0);
     expect(result.highConfidenceTriplesCount).toBeGreaterThanOrEqual(1);
+    expect(result.telemetry?.durations.totalDurationMs).toBeGreaterThan(0);
   });
 });
+

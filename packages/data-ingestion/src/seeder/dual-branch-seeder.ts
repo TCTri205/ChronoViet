@@ -5,7 +5,8 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { IIngestionPipeline, IngestionOptions, IngestionResult, SourceReliability, createLogger, envConfig } from '@chronoviet/shared-spec';
+import { IIngestionPipeline, IngestionOptions, IngestionResult, SourceReliability, createLogger, envConfig, IngestionExecutionTelemetry } from '@chronoviet/shared-spec';
+import { IngestionMetricsCollector } from '../diagnostics/index.js';
 import {
   isPgAvailable,
   query,
@@ -20,6 +21,7 @@ import {
   resolveLocationMapping,
   isKnownMasterEntity,
   generateEmbedding,
+  generateEmbeddingsBatch,
   hybridInferenceDispatcher,
   formatConciseError,
 } from '@chronoviet/shared-spec';
@@ -39,6 +41,7 @@ import { extractionCache } from '../cache/extraction-cache.js';
 const log = createLogger({ service: 'data-ingestion' });
 
 export const CONFIDENCE_PRODUCTION_THRESHOLD = 0.85;
+export const EMBEDDING_SUB_BATCH_SIZE = 64;
 
 export interface IngestionDocMetadata {
   title: string;
@@ -62,6 +65,8 @@ export interface DualBranchSeedResult {
   chunksIngested: number;
   durationMs: number;
   isPgMode: boolean;
+  correlationId?: string;
+  telemetry?: IngestionExecutionTelemetry;
 }
 
 /**
@@ -73,10 +78,14 @@ export async function seedDualBranch(
   options?: ExtractionOptions
 ): Promise<DualBranchSeedResult> {
   const startTime = Date.now();
+  const metricsCollector = new IngestionMetricsCollector(options?.correlationId);
+  const correlationId = metricsCollector.correlationId;
+
   try {
     const cleanedText = normalizeText(content);
 
   // 1. Dynamic Hierarchical Temporal Chunking
+  metricsCollector.startStage('chunking');
   const { parentChunks, childChunks } = chunkDocumentHierarchical(cleanedText, {
     title: metadata.title,
     sourceName: metadata.sourceName,
@@ -86,28 +95,25 @@ export async function seedDualBranch(
     location: metadata.location,
     keyFigures: metadata.keyFigures,
   });
+  metricsCollector.endStage('chunking');
 
   const allChunks: ProcessedHierarchicalChunk[] = [...parentChunks, ...childChunks];
+  for (const chunk of allChunks) {
+    const wordCount = chunk.textContent ? chunk.textContent.split(/\s+/).filter(Boolean).length : 0;
+    metricsCollector.recordChunk(wordCount);
+  }
+
   const allTriples: ExtractedTriple[] = [];
   const entityMap = new Map<string, DbEntity>();
   const productionTriplesMap = new Map<string, ExtractedTriple>();
   const quarantineTriplesList: DbQuarantineTriple[] = [];
   const unmappedEntitiesMap = new Map<string, DbUnmappedEntity>();
 
+  const isVectorOnly = options?.stage === 'vector';
+  const isGraphOnly = options?.stage === 'graph';
+
   // 2. Parallel Chunk Triple Extraction with Controlled Concurrency Pool
   const chunkEntityMap = new Map<string, Set<string>>(); // chunkId -> Set of entityIds
-
-  const activeTargetsCount = hybridInferenceDispatcher.getActiveTargets('llm').length;
-  const isLocalOnlyMode =
-    envConfig.INFERENCE_ROUTING_MODE === 'local_only' ||
-    (!envConfig.ENABLE_CLOUD_FALLBACK && envConfig.USE_LOCAL_LLM) ||
-    activeTargetsCount <= 1;
-
-  const concurrency = isLocalOnlyMode
-    ? Math.max(1, envConfig.LOCAL_LLM_MAX_CONCURRENCY || 1)
-    : Math.min(6, Math.max(1, activeTargetsCount));
-
-  log.info('dual_branch_seeder.extract_triples_parallel', `Extracting triples for ${allChunks.length} chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`);
 
   interface ChunkExtractionResult {
     chunk: ProcessedHierarchicalChunk;
@@ -115,80 +121,147 @@ export async function seedDualBranch(
   }
 
   const chunkResults: ChunkExtractionResult[] = new Array(allChunks.length);
-  let nextChunkIndex = 0;
-  let completedChunks = 0;
   const failedExtractionChunkIds: string[] = [];
-  const extractionStartTime = Date.now();
 
-  async function extractionWorker() {
-    while (nextChunkIndex < allChunks.length) {
-      const idx = nextChunkIndex++;
-      const chunk = allChunks[idx];
-      const chunkStartTime = Date.now();
+  metricsCollector.startStage('extraction');
 
-      // 1. Check persistent extraction cache (unless regex-only)
-      let cachedTriples: ExtractedTriple[] | null = null;
-      if (!options?.regexOnly) {
-        cachedTriples = await extractionCache.get(chunk.textContent);
-      }
+  if (isVectorOnly) {
+    // Fast Path: Stage 1 Pure TS NER & Rule-based extraction (Bypass LLM)
+    log.info('dual_branch_seeder.stage_vector_only', `Stage 1 (Vector): Extracting Fast NER candidate entities for ${allChunks.length} chunks (LLM bypassed)`, { correlationId, totalChunks: allChunks.length });
+    for (let i = 0; i < allChunks.length; i++) {
+      const chunk = allChunks[i];
+      const fastTriples = extractTriplesFromText(chunk.textContent);
+      chunkResults[i] = { chunk, triples: fastTriples };
+    }
+  } else {
+    // Stage 2 (or Full): Parallel Chunk Triple Extraction via LLM / Cache
+    const activeTargetsCount = hybridInferenceDispatcher.getActiveTargets('llm').length;
+    const isLocalOnlyMode =
+      envConfig.INFERENCE_ROUTING_MODE === 'local_only' ||
+      (!envConfig.ENABLE_CLOUD_FALLBACK && envConfig.USE_LOCAL_LLM) ||
+      activeTargetsCount <= 1;
 
-      if (cachedTriples) {
-        chunkResults[idx] = { chunk, triples: cachedTriples };
-        completedChunks++;
-        const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
-        const meta = (cachedTriples as any)?._meta;
-        const providerName = meta?.provider || 'CACHED';
-        const modelName = meta?.model ? ` (${meta.model})` : '';
+    const concurrency = isLocalOnlyMode
+      ? Math.max(1, envConfig.LOCAL_LLM_MAX_CONCURRENCY || 1)
+      : Math.min(6, Math.max(1, activeTargetsCount));
 
-        log.info(
-          'dual_branch_seeder.chunk_cached',
-          `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> ${cachedTriples.length} triples via [${providerName}${modelName}] (CACHED / RESUMED)`
-        );
-        continue;
-      }
+    log.info('dual_branch_seeder.extract_triples_parallel', `Extracting triples for ${allChunks.length} chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`, { correlationId, totalChunks: allChunks.length, concurrency, activeTargetsCount });
 
-      try {
-        const triples = await extractTriplesFromTextAsync(chunk.textContent, options);
-        chunkResults[idx] = { chunk, triples };
-        completedChunks++;
+    let nextChunkIndex = 0;
+    let completedChunks = 0;
+    const extractionStartTime = Date.now();
 
-        // Save successful extraction to persistent cache
-        if (!options?.regexOnly && triples) {
-          const meta = (triples as any)?._meta;
-          await extractionCache.set(chunk.textContent, chunk.id, triples, {
-            provider: meta?.provider,
-            model: meta?.model,
-          });
+    async function extractionWorker() {
+      while (nextChunkIndex < allChunks.length) {
+        const idx = nextChunkIndex++;
+        const chunk = allChunks[idx];
+        const chunkStartTime = Date.now();
+
+        // 1. Check persistent extraction cache (unless regex-only)
+        let cachedTriples: ExtractedTriple[] | null = null;
+        if (!options?.regexOnly) {
+          cachedTriples = await extractionCache.get(chunk.textContent);
         }
 
-        const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
-        const meta = (triples as any)?._meta;
-        const providerName = meta?.provider || 'LOCAL_LLM';
-        const modelName = meta?.model ? ` (${meta.model})` : '';
-        const chunkSec = (((meta?.durationMs) ?? (Date.now() - chunkStartTime)) / 1000).toFixed(1);
+        if (cachedTriples) {
+          metricsCollector.recordCache(true);
+          chunkResults[idx] = { chunk, triples: cachedTriples };
+          completedChunks++;
+          const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+          const meta = (cachedTriples as any)?._meta;
+          const providerName = meta?.provider || 'CACHED';
+          const modelName = meta?.model ? ` (${meta.model})` : '';
 
-        log.info(
-          'dual_branch_seeder.chunk_success',
-          `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`
-        );
-      } catch (err: any) {
-        completedChunks++;
-        const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
-        const conciseErrMsg = formatConciseError(err);
-        const fallbackTriples = extractTriplesFromText(chunk.textContent);
-        failedExtractionChunkIds.push(chunk.id);
-        log.warn(
-          'dual_branch_seeder.chunk_failed',
-          `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples.`
-        );
-        chunkResults[idx] = { chunk, triples: fallbackTriples };
+          log.info(
+            'dual_branch_seeder.chunk_cached',
+            `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> ${cachedTriples.length} triples via [${providerName}${modelName}] (CACHED / RESUMED)`,
+            {
+              correlationId,
+              chunkIndex: completedChunks,
+              totalChunks: allChunks.length,
+              chunkId: chunk.id,
+              triplesCount: cachedTriples.length,
+              provider: providerName,
+              model: meta?.model || 'CACHE',
+              cached: true,
+            }
+          );
+          continue;
+        }
+
+        metricsCollector.recordCache(false);
+
+        try {
+          const triples = await extractTriplesFromTextAsync(chunk.textContent, options);
+          chunkResults[idx] = { chunk, triples };
+          completedChunks++;
+
+          // Save successful extraction to persistent cache (NEVER cache if regex-only, LLM errored, or rule-based fallback)
+          const meta = (triples as any)?._meta;
+          const isLegitLlmExtraction =
+            !options?.regexOnly &&
+            triples &&
+            meta?.strategy === 'ensemble_ai' &&
+            !meta?.llmError &&
+            meta?.provider !== undefined;
+
+          if (isLegitLlmExtraction) {
+            await extractionCache.set(chunk.textContent, chunk.id, triples, {
+              provider: meta?.provider,
+              model: meta?.model,
+            });
+          }
+
+          const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+          const providerName = meta?.provider || 'LOCAL_LLM';
+          const modelName = meta?.model ? ` (${meta.model})` : '';
+          const chunkDurationMs = (meta?.durationMs) ?? (Date.now() - chunkStartTime);
+          const chunkSec = (chunkDurationMs / 1000).toFixed(1);
+
+          log.info(
+            'dual_branch_seeder.chunk_success',
+            `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
+            {
+              correlationId,
+              chunkIndex: completedChunks,
+              totalChunks: allChunks.length,
+              chunkId: chunk.id,
+              triplesCount: triples.length,
+              provider: providerName,
+              model: meta?.model || 'UNKNOWN',
+              strategy: meta?.strategy || 'ensemble_ai',
+              durationMs: chunkDurationMs,
+            }
+          );
+        } catch (err: any) {
+          completedChunks++;
+          const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+          const conciseErrMsg = formatConciseError(err);
+          const fallbackTriples = extractTriplesFromText(chunk.textContent);
+          failedExtractionChunkIds.push(chunk.id);
+          log.warn(
+            'dual_branch_seeder.chunk_failed',
+            `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples.`,
+            {
+              correlationId,
+              chunkIndex: completedChunks,
+              totalChunks: allChunks.length,
+              chunkId: chunk.id,
+              error: conciseErrMsg,
+              salvagedCount: fallbackTriples.length,
+            }
+          );
+          chunkResults[idx] = { chunk, triples: fallbackTriples };
+        }
       }
     }
+
+    const workerCount = Math.min(concurrency, allChunks.length);
+    const workers = Array.from({ length: workerCount }, () => extractionWorker());
+    await Promise.all(workers);
   }
 
-  const workerCount = Math.min(concurrency, allChunks.length);
-  const workers = Array.from({ length: workerCount }, () => extractionWorker());
-  await Promise.all(workers);
+  metricsCollector.endStage('extraction');
 
   // 3. Single-Thread Deterministic Aggregation
   for (const item of chunkResults) {
@@ -235,6 +308,7 @@ export async function seedDualBranch(
 
       // Quality Validation Gate: Route to Quarantine or Production Graph
       if (t.confidence < CONFIDENCE_PRODUCTION_THRESHOLD) {
+        metricsCollector.recordQuarantine('LOW_CONFIDENCE');
         quarantineTriplesList.push({
           source_entity_id: srcEntity.entityId,
           target_entity_id: tgtEntity?.entityId || t.targetEntityId,
@@ -248,6 +322,7 @@ export async function seedDualBranch(
           metadata: { threshold: CONFIDENCE_PRODUCTION_THRESHOLD },
         });
       } else if (t.targetEntityId === 'doc:historical_context' || !tgtEntity) {
+        metricsCollector.recordQuarantine('DANGLING_RELATION');
         quarantineTriplesList.push({
           source_entity_id: srcEntity.entityId,
           target_entity_id: t.targetEntityId,
@@ -326,13 +401,44 @@ export async function seedDualBranch(
     chunkEntityMap.set(chunk.id, chunkEntityIds);
   }
 
-  // Pre-generate embeddings in parallel batches for performance
-  const chunkEmbeddings = await Promise.all(
-    allChunks.map(async (chunk) => ({
-      chunk,
-      embedding: await generateEmbedding(chunk.textContent),
-    }))
-  );
+  // Pre-generate embeddings in bounded parallel batches to avoid overloading embedding server (Bypass if graph-only)
+  metricsCollector.startStage('embedding');
+  const chunkEmbeddings: { chunk: ProcessedHierarchicalChunk; embedding: number[] }[] = [];
+  if (!isGraphOnly && allChunks.length > 0) {
+    const chunkTexts = allChunks.map((c) => c.textContent);
+    const totalBatches = Math.max(1, Math.ceil(chunkTexts.length / EMBEDDING_SUB_BATCH_SIZE));
+
+    for (let b = 0; b < chunkTexts.length; b += EMBEDDING_SUB_BATCH_SIZE) {
+      const batchIndex = Math.floor(b / EMBEDDING_SUB_BATCH_SIZE) + 1;
+      const subBatchTexts = chunkTexts.slice(b, b + EMBEDDING_SUB_BATCH_SIZE);
+      const subBatchChunks = allChunks.slice(b, b + EMBEDDING_SUB_BATCH_SIZE);
+      const batchStartTime = Date.now();
+
+      const vectors = await generateEmbeddingsBatch(subBatchTexts);
+      const batchDurationMs = Date.now() - batchStartTime;
+      metricsCollector.recordVectors(subBatchTexts.length, batchDurationMs);
+
+      for (let i = 0; i < subBatchChunks.length; i++) {
+        chunkEmbeddings.push({ chunk: subBatchChunks[i], embedding: vectors[i] });
+      }
+
+      const vectorsPerSec = batchDurationMs > 0 ? Number(((subBatchTexts.length / batchDurationMs) * 1000).toFixed(2)) : 0;
+
+      log.info(
+        'embedding.batch_completed',
+        `Generated embeddings sub-batch [${batchIndex}/${totalBatches}] (${subBatchTexts.length} vectors) in ${batchDurationMs}ms (${vectorsPerSec} vec/s)`,
+        {
+          correlationId,
+          batchIndex,
+          totalBatches,
+          batchSize: subBatchTexts.length,
+          durationMs: batchDurationMs,
+          vectorsPerSec,
+        }
+      );
+    }
+  }
+  metricsCollector.endStage('embedding');
 
   const pgConnected = await isPgAvailable();
 
@@ -341,6 +447,7 @@ export async function seedDualBranch(
     throw new Error('[EVAL_STRICT] PostgreSQL is unavailable — Dual-Branch seeding requires real pgvector DB during evaluation');
   }
 
+  metricsCollector.startStage('dbInsert');
   if (pgConnected) {
     // 3. PostgreSQL Ingestion Mode (Transactional using dedicated pool client)
     await withTransaction(async (execQuery) => {
@@ -365,143 +472,148 @@ export async function seedDualBranch(
         }
       }
 
-      // 3b. Batch Ingest Verified Graph Relationships (Triples) (200 triples per batch)
-      const validTriples = Array.from(productionTriplesMap.values());
+      // 3b, 3c, 3d: Graph Relations, Quarantine, Unmapped Entities (Bypass if vector-only)
+      if (!isVectorOnly) {
+        // 3b. Batch Ingest Verified Graph Relationships (Triples) (200 triples per batch)
+        const validTriples = Array.from(productionTriplesMap.values());
 
-      for (let i = 0; i < validTriples.length; i += 200) {
-        const batch = validTriples.slice(i, i + 200);
-        const values: unknown[] = [];
-        const valueRows: string[] = [];
-        batch.forEach((triple, idx) => {
-          const offset = idx * 4;
-          valueRows.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`);
-          values.push(triple.sourceEntityId, triple.targetEntityId, triple.relationType, triple.confidence);
-        });
-        if (valueRows.length > 0) {
-          await execQuery(
-            `INSERT INTO relationships (source_entity_id, target_entity_id, relation_type, confidence)
-             VALUES ${valueRows.join(', ')}
-             ON CONFLICT (source_entity_id, target_entity_id, relation_type) DO UPDATE SET confidence = EXCLUDED.confidence;`,
-            values
-          );
+        for (let i = 0; i < validTriples.length; i += 200) {
+          const batch = validTriples.slice(i, i + 200);
+          const values: unknown[] = [];
+          const valueRows: string[] = [];
+          batch.forEach((triple, idx) => {
+            const offset = idx * 4;
+            valueRows.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`);
+            values.push(triple.sourceEntityId, triple.targetEntityId, triple.relationType, triple.confidence);
+          });
+          if (valueRows.length > 0) {
+            await execQuery(
+              `INSERT INTO relationships (source_entity_id, target_entity_id, relation_type, confidence)
+               VALUES ${valueRows.join(', ')}
+               ON CONFLICT (source_entity_id, target_entity_id, relation_type) DO UPDATE SET confidence = EXCLUDED.confidence;`,
+              values
+            );
+          }
+        }
+
+        // 3c. Batch Ingest Quarantine Triples (200 per batch)
+        if (quarantineTriplesList.length > 0) {
+          const chunkIds = Array.from(new Set(quarantineTriplesList.map((qt) => qt.chunk_id).filter((id): id is string => Boolean(id))));
+          if (chunkIds.length > 0) {
+            await execQuery(
+              `DELETE FROM quarantine_triples WHERE chunk_id = ANY($1::text[]);`,
+              [chunkIds]
+            );
+          }
+        }
+        for (let i = 0; i < quarantineTriplesList.length; i += 200) {
+          const batch = quarantineTriplesList.slice(i, i + 200);
+          const values: unknown[] = [];
+          const valueRows: string[] = [];
+          batch.forEach((qt, idx) => {
+            const offset = idx * 10;
+            valueRows.push(
+              `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10})`
+            );
+            values.push(
+              qt.source_entity_id || null,
+              qt.target_entity_id || null,
+              qt.source_name || null,
+              qt.target_name || null,
+              qt.relation_type || null,
+              qt.confidence,
+              qt.chunk_id || null,
+              qt.reason,
+              qt.status || 'PENDING_REVIEW',
+              JSON.stringify(qt.metadata || {})
+            );
+          });
+          if (valueRows.length > 0) {
+            await execQuery(
+              `INSERT INTO quarantine_triples (
+                source_entity_id, target_entity_id, source_name, target_name,
+                relation_type, confidence, chunk_id, reason, status, metadata
+               ) VALUES ${valueRows.join(', ')};`,
+              values
+            );
+          }
+        }
+
+        // 3d. Batch Ingest Unmapped Entities (200 per batch)
+        const allUnmapped = Array.from(unmappedEntitiesMap.values());
+        for (let i = 0; i < allUnmapped.length; i += 200) {
+          const batch = allUnmapped.slice(i, i + 200);
+          const values: unknown[] = [];
+          const valueRows: string[] = [];
+          batch.forEach((ue, idx) => {
+            const offset = idx * 7;
+            valueRows.push(
+              `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`
+            );
+            values.push(
+              ue.id,
+              ue.raw_name,
+              ue.inferred_type,
+              ue.occurrence_count || 1,
+              ue.sample_context || null,
+              ue.chunk_id || null,
+              ue.status || 'PENDING_TRIAGE'
+            );
+          });
+          if (valueRows.length > 0) {
+            await execQuery(
+              `INSERT INTO unmapped_entities (id, raw_name, inferred_type, occurrence_count, sample_context, chunk_id, status)
+               VALUES ${valueRows.join(', ')}
+               ON CONFLICT (id) DO UPDATE SET occurrence_count = unmapped_entities.occurrence_count + EXCLUDED.occurrence_count, updated_at = CURRENT_TIMESTAMP;`,
+              values
+            );
+          }
         }
       }
 
-      // 3c. Batch Ingest Quarantine Triples (200 per batch)
-      if (quarantineTriplesList.length > 0) {
-        const chunkIds = Array.from(new Set(quarantineTriplesList.map((qt) => qt.chunk_id).filter((id): id is string => Boolean(id))));
-        if (chunkIds.length > 0) {
-          await execQuery(
-            `DELETE FROM quarantine_triples WHERE chunk_id = ANY($1::text[]);`,
-            [chunkIds]
-          );
-        }
-      }
-      for (let i = 0; i < quarantineTriplesList.length; i += 200) {
-        const batch = quarantineTriplesList.slice(i, i + 200);
-        const values: unknown[] = [];
-        const valueRows: string[] = [];
-        batch.forEach((qt, idx) => {
-          const offset = idx * 10;
-          valueRows.push(
-            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10})`
-          );
-          values.push(
-            qt.source_entity_id || null,
-            qt.target_entity_id || null,
-            qt.source_name || null,
-            qt.target_name || null,
-            qt.relation_type || null,
-            qt.confidence,
-            qt.chunk_id || null,
-            qt.reason,
-            qt.status || 'PENDING_REVIEW',
-            JSON.stringify(qt.metadata || {})
-          );
-        });
-        if (valueRows.length > 0) {
-          await execQuery(
-            `INSERT INTO quarantine_triples (
-              source_entity_id, target_entity_id, source_name, target_name,
-              relation_type, confidence, chunk_id, reason, status, metadata
-             ) VALUES ${valueRows.join(', ')};`,
-            values
-          );
-        }
-      }
+      // 3e. Batch Ingest Document Chunks & Vector Embeddings (100 chunks per batch) (Bypass if graph-only)
+      if (!isGraphOnly) {
+        for (let i = 0; i < chunkEmbeddings.length; i += 100) {
+          const batch = chunkEmbeddings.slice(i, i + 100);
+          const values: unknown[] = [];
+          const valueRows: string[] = [];
+          batch.forEach(({ chunk, embedding }, idx) => {
+            const offset = idx * 13;
+            const epochIds = chunk.metadata.epochIds && chunk.metadata.epochIds.length > 0
+              ? chunk.metadata.epochIds
+              : resolveHistoricalEpochs(chunk.metadata.timeStart, chunk.metadata.timeEnd);
 
-      // 3d. Batch Ingest Unmapped Entities (200 per batch)
-      const allUnmapped = Array.from(unmappedEntitiesMap.values());
-      for (let i = 0; i < allUnmapped.length; i += 200) {
-        const batch = allUnmapped.slice(i, i + 200);
-        const values: unknown[] = [];
-        const valueRows: string[] = [];
-        batch.forEach((ue, idx) => {
-          const offset = idx * 7;
-          valueRows.push(
-            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`
-          );
-          values.push(
-            ue.id,
-            ue.raw_name,
-            ue.inferred_type,
-            ue.occurrence_count || 1,
-            ue.sample_context || null,
-            ue.chunk_id || null,
-            ue.status || 'PENDING_TRIAGE'
-          );
-        });
-        if (valueRows.length > 0) {
-          await execQuery(
-            `INSERT INTO unmapped_entities (id, raw_name, inferred_type, occurrence_count, sample_context, chunk_id, status)
-             VALUES ${valueRows.join(', ')}
-             ON CONFLICT (id) DO UPDATE SET occurrence_count = unmapped_entities.occurrence_count + EXCLUDED.occurrence_count, updated_at = CURRENT_TIMESTAMP;`,
-            values
-          );
-        }
-      }
+            valueRows.push(
+              `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}::vector)`
+            );
+            values.push(
+              chunk.id,
+              chunk.title,
+              chunk.textContent,
+              chunk.metadata.dynasty,
+              epochIds,
+              chunk.metadata.sourceReliability,
+              chunk.metadata.parentChunkId || null,
+              chunk.metadata.timeStart || null,
+              chunk.metadata.timeEnd || null,
+              chunk.metadata.keyFigures || [],
+              chunk.metadata.location || null,
+              chunk.metadata.pageNumber || null,
+              JSON.stringify(embedding)
+            );
+          });
 
-      // 3e. Batch Ingest Document Chunks & Vector Embeddings (100 chunks per batch)
-      for (let i = 0; i < chunkEmbeddings.length; i += 100) {
-        const batch = chunkEmbeddings.slice(i, i + 100);
-        const values: unknown[] = [];
-        const valueRows: string[] = [];
-        batch.forEach(({ chunk, embedding }, idx) => {
-          const offset = idx * 13;
-          const epochIds = chunk.metadata.epochIds && chunk.metadata.epochIds.length > 0
-            ? chunk.metadata.epochIds
-            : resolveHistoricalEpochs(chunk.metadata.timeStart, chunk.metadata.timeEnd);
-
-          valueRows.push(
-            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}::vector)`
-          );
-          values.push(
-            chunk.id,
-            chunk.title,
-            chunk.textContent,
-            chunk.metadata.dynasty,
-            epochIds,
-            chunk.metadata.sourceReliability,
-            chunk.metadata.parentChunkId || null,
-            chunk.metadata.timeStart || null,
-            chunk.metadata.timeEnd || null,
-            chunk.metadata.keyFigures || [],
-            chunk.metadata.location || null,
-            chunk.metadata.pageNumber || null,
-            JSON.stringify(embedding)
-          );
-        });
-
-        if (valueRows.length > 0) {
-          await execQuery(
-            `INSERT INTO document_chunks (
-              id, title, text_content, dynasty, epoch_ids, source_reliability, parent_chunk_id,
-              time_start, time_end, key_figures, location, page_number, embedding
-             )
-             VALUES ${valueRows.join(', ')}
-             ON CONFLICT (id) DO UPDATE SET text_content = EXCLUDED.text_content, embedding = EXCLUDED.embedding, epoch_ids = EXCLUDED.epoch_ids;`,
-            values
-          );
+          if (valueRows.length > 0) {
+            await execQuery(
+              `INSERT INTO document_chunks (
+                id, title, text_content, dynasty, epoch_ids, source_reliability, parent_chunk_id,
+                time_start, time_end, key_figures, location, page_number, embedding
+               )
+               VALUES ${valueRows.join(', ')}
+               ON CONFLICT (id) DO UPDATE SET text_content = EXCLUDED.text_content, embedding = EXCLUDED.embedding, epoch_ids = EXCLUDED.epoch_ids;`,
+              values
+            );
+          }
         }
       }
 
@@ -592,10 +704,13 @@ export async function seedDualBranch(
       }
     }
   }
+  metricsCollector.endStage('dbInsert');
 
   const durationMs = Date.now() - startTime;
+  const telemetry = metricsCollector.getTelemetryReport(durationMs);
 
   log.info('ingest.doc_seeding_completed', 'Completed dual-branch seeding for document', {
+    correlationId,
     title: metadata.title,
     parentChunks: parentChunks.length,
     childChunks: childChunks.length,
@@ -607,6 +722,7 @@ export async function seedDualBranch(
     failedExtractionChunks: failedExtractionChunkIds.length,
     durationMs,
     mode: pgConnected ? 'postgres_pgvector' : 'in_memory',
+    throughput: telemetry.throughput,
   });
 
     return {
@@ -621,6 +737,8 @@ export async function seedDualBranch(
       chunksIngested: allChunks.length,
       durationMs,
       isPgMode: pgConnected,
+      correlationId,
+      telemetry,
     };
   } catch (err) {
     log.error('ingest.doc_seeding_failed', 'Failed dual-branch seeding for document', {
@@ -639,6 +757,7 @@ export class DualBranchSeeder implements IIngestionPipeline {
 
   public async run(inputPath: string, options?: IngestionOptions & ExtractionOptions): Promise<IngestionResult> {
     const startTime = Date.now();
+    const batchCorrelationId = options?.correlationId || `batch-${Date.now()}`;
     let documentsProcessed = 0;
     let chunksCreated = 0;
     let entitiesExtracted = 0;
@@ -646,6 +765,7 @@ export class DualBranchSeeder implements IIngestionPipeline {
     let highConfidenceTriplesTotal = 0;
     let quarantinedTriplesTotal = 0;
     let unmappedEntitiesTotal = 0;
+    let lastDocTelemetry: IngestionExecutionTelemetry | undefined;
 
     const stat = await fs.stat(inputPath);
     const filesToProcess: string[] = [];
@@ -727,7 +847,10 @@ export class DualBranchSeeder implements IIngestionPipeline {
           dynasty,
           sourceReliability,
         },
-        options
+        {
+          ...options,
+          correlationId: options?.correlationId || `${batchCorrelationId}-doc-${documentsProcessed + 1}`,
+        }
       );
 
       documentsProcessed++;
@@ -737,8 +860,10 @@ export class DualBranchSeeder implements IIngestionPipeline {
       highConfidenceTriplesTotal += seedResult.highConfidenceTriplesCount;
       quarantinedTriplesTotal += seedResult.quarantinedTriplesCount;
       unmappedEntitiesTotal += seedResult.unmappedEntitiesCount;
+      lastDocTelemetry = seedResult.telemetry;
 
       log.info('seeder.document_ingested', 'Document ingested into dual-branch store', {
+        correlationId: seedResult.correlationId,
         title,
         baseName,
         index: documentsProcessed,
@@ -755,6 +880,7 @@ export class DualBranchSeeder implements IIngestionPipeline {
     const durationMs = Date.now() - startTime;
 
     log.info('seeder.batch_completed', 'Dual-branch seeding batch completed', {
+      correlationId: batchCorrelationId,
       documentsProcessed,
       chunksCreated,
       entitiesExtracted,
@@ -771,6 +897,8 @@ export class DualBranchSeeder implements IIngestionPipeline {
       entitiesExtracted,
       relationshipsExtracted,
       durationMs,
+      correlationId: batchCorrelationId,
+      telemetry: lastDocTelemetry,
     };
   }
 }

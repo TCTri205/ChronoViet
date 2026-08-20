@@ -11,7 +11,7 @@ Tài liệu dự án được tổ chức khoa học thành các nhóm chuyên b
 ```
 docs/
 ├── 📘 SystemOverview.md                       [Kiến trúc Toàn diện RAG + Multi-Agent + VLM + Remotion + Web App [✅]]
-├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai 5 Phase & Khung Đánh giá 8 Mô-đun [✅ Phase 1-4 Done, Phase 5 Current]]
+├── 🚀 IMPLEMENTATION_PLAN.md                  [★ Kế hoạch Triển khai 5 Phase & Khung Đánh giá 8 Mô-đun [✅ 100% Phase 1-5 Implemented & Verified]]
 │
 ├── 🏛️ architecture/                           [KIẾN TRÚC HỆ THỐNG & HẠ TẦNG KỸ THUẬT]
 │   ├── README.md                              [Tổng quan Kiến trúc Hệ thống & Hạ tầng]
@@ -74,7 +74,7 @@ docs/
 
 ### 2.2. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Kế Hoạch Triển Khai v1.1 & Khung Đánh Giá `eval/`
 - **Mục đích:** Kế hoạch thực thi dự án chi tiết, lộ trình 5 giai đoạn, phân tích khả năng phát triển song song của các mô-đun, quy tắc bắt buộc có thư mục `eval/` riêng cho từng mô-đun và bộ hợp đồng giao tiếp Type-Safe giữa các mô-đun (`packages/shared-spec`).
-- **Trạng thái:** **[✅ PHASE 1–4 COMPLETED, PHASE 5 IN PROGRESS]** Toàn bộ Workstream 0, A, B, C, D và App Layer đã hoàn thành 100% codebase và unit tests.
+- **Trạng thái:** **[✅ PHASE 1–5 COMPLETED & VERIFIED]** Toàn bộ Workstream 0, A, B, C, D, App Layer và Orchestration Scripts đã hoàn thành 100% codebase và unit tests.
 
 ### 2.3. [specs/EVAL_REMOTION_TECHNICAL_SPEC.md](specs/EVAL_REMOTION_TECHNICAL_SPEC.md) — ★ Quy Chuẩn Kỹ Thuật (Source of Truth)
 - **Mục đích:** Tài liệu tham chiếu kỹ thuật chi tiết và chính xác nhất cho `packages/remotion-engine/src/`.
@@ -110,59 +110,136 @@ docs/
 
 ## ⚡ 3. Quickstart: Vận Hành Hệ Thống ChronoViet
 
-### Khởi động Môi trường Ứng dụng Toàn diện (Web App & Worker):
+### Quy Trình Khởi Động 3 Bước:
+
+#### Bước 1: Cài Đặt Dependencies & Cấu Hình Môi Trường
+```bash
+# 1. Cài đặt monorepo dependencies
+pnpm install
+
+# 2. Tạo cấu hình môi trường từ template
+cp .env.example .env
+```
+
+#### Bước 2: Tải Mô Hình AI Cục Bộ & Khởi Tạo Cơ Sở Dữ Liệu
+```bash
+# 1. Tải trọng số mô hình GGUF (BGE-M3 1024d, Qwen3.8-27B, mmproj, Qwen3.5-4B)
+pnpm models:download
+
+# Hoặc tải tùy chọn theo nhu cầu công việc (Granular Downloads):
+pnpm models:download:lite     # Chỉ tải BGE-M3 + Qwen Extraction LLM (~2.4 GB)
+pnpm models:download:emb      # Chỉ tải BGE-M3 (~605 MB)
+pnpm models:download:extract  # Chỉ tải Qwen Extraction LLM (~1.8 GB)
+pnpm models:download:llm      # Chỉ tải Qwen 27B/32B (~18.5 GB)
+
+# 2. Khởi chạy cụm CSDL PostgreSQL pgvector & Redis
+pnpm stack:infra
+
+# 3. Khởi tạo schema CSDL 7 bảng chuẩn hóa
+pnpm db:init
+```
+
+#### Bước 3: Khởi Chạy Toàn Bộ Hệ Thống (1-Lệnh Duy Nhất)
+```bash
+# [Khuyến nghị] Khởi chạy trọn gói: Docker Infra + AI Supervisor + VieNeu TTS + Web UI + Worker
+pnpm dev:stack
+
+# Hoặc khởi chạy theo Profile công việc tối ưu tài nguyên (Daily Dev Profiles):
+pnpm dev:hybrid      # Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
+pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
+```
+
+### Bảng Tra Cứu Bộ Lệnh Toàn Hệ Thống:
 ```bash
 # ===============================================================
-# 1. HẠ TẦNG & DỮ LIỆU BAN ĐẦU
+# 1. PHÁT TRIỂN & ĐIỀU PHỐI HỆ THỐNG
 # ===============================================================
-pnpm stack:infra                                # Khởi chạy Postgres, Redis & VieNeu TTS
-pnpm db:init                                    # Khởi tạo CSDL & Schema Vector/Graph
-pnpm crawl:all                                  # Cào 15 thời kỳ lịch sử
-pnpm ingest:knowledge --strict                  # Nạp tri thức vào CSDL (hỗ trợ Resume, kiểm tra dịch vụ)
-# (Hoặc pnpm ingest:knowledge --force để nạp lại mới từ đầu)
-pnpm rag:re-resolve                             # Hợp giải thực thể mâu thuẫn & ghi audit logs
+pnpm dev:stack                                  # 1-Lệnh khởi động trọn gói: Docker Infra + AI Supervisor + TTS + Web + Worker
+pnpm dev:hybrid                                 # Khởi động Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
+pnpm dev:data                                   # Khởi động Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
+pnpm dev                                        # Chạy song song Web App (port 3000) và Render Worker
+pnpm dev:web                                    # Chạy riêng Web App Next.js (port 3000)
+pnpm dev:worker                                 # Chạy riêng BullMQ Video Render Worker (port 3001)
 
 # ===============================================================
-# 2. KHỞI CHẠY ỨNG DỤNG & STUDIO
+# 2. HẠ TẦNG DOCKER & COMPOSE PROFILES
 # ===============================================================
-pnpm dev                                        # Chạy song song Web App (port 3000) và Render Worker
-pnpm remotion:studio                            # Mở Remotion Studio UI xem kịch bản (port 9876)
+pnpm stack:infra                                # Khởi chạy cụm Postgres (pgvector) & Redis Cache
+pnpm stack:prod                                 # Khởi chạy cụm Production Containers (DB, Redis, TTS, App, Worker, Caddy)
+pnpm stack:prod:all                             # Khởi chạy Full Stack Production bao gồm cả Local CUDA LLM & Embedding (Linux GPU)
+pnpm stack:ai                                   # Khởi chạy containers llama.cpp CUDA (LLM 8092 + Embedding 8090)
+pnpm stack:tts                                  # Khởi chạy microservice VieNeu TTS Container
+pnpm stack:down                                 # Dừng và giải phóng toàn bộ containers Docker
+pnpm stack:ps                                   # Xem trạng thái sống của containers
+pnpm stack:logs                                 # Xem stream logs containers thời gian thực
+
+# ===============================================================
+# 3. QUẢN LÝ MÔ HÌNH AI & SUPERVISOR (GRANULAR AI CONTROL)
+# ===============================================================
+pnpm models:download                            # Tải và xác thực model weights GGUF tiêu chuẩn
+pnpm models:download:lite                       # Chỉ tải BGE-M3 + Qwen Extraction LLM (~2.4 GB)
+pnpm models:download:emb                        # Chỉ tải BGE-M3 (~605 MB)
+pnpm models:download:extract                    # Chỉ tải Qwen Extraction LLM (~1.8 GB)
+pnpm models:download:llm                        # Chỉ tải Qwen 27B/32B (~18.5 GB)
+pnpm ai                                         # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8080) & model đã nạp
+pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 27B 8092)
+pnpm ai:lite                                    # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
+pnpm ai:emb                                     # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
+pnpm ai:extract                                 # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler
+pnpm ai:llm                                     # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 27B)
+pnpm ai:tts                                     # Khởi chạy microservice VieNeu TTS FastAPI trong Docker (Port 8080)
+pnpm ai:stop                                    # Dừng/giải phóng toàn bộ tiến trình AI & TTS (host & Docker), trả lại 100% RAM/VRAM
+pnpm ai:supervisor                              # Daemon giám sát llama-server: auto-evict RAM khi idle, JIT wake-up, giải phóng port
+
+# ===============================================================
+# 4. CƠ SỞ DỮ LIỆU & NẠP TRI THỨC LỊCH SỬ
+# ===============================================================
+pnpm db:init                                    # Khởi tạo CSDL & Schema Vector/Graph (pgvector 1024d)
+pnpm db:health                                  # Audit sức khỏe DB (dangling refs, embeddings, chunks, entities, indexes)
+pnpm db:clean                                   # Dọn dẹp transactional: xóa trùng lặp, self-loops & dangling relations
+pnpm db:audit-quarantine                        # Audit & xem danh sách cạnh cách ly / thực thể chưa ánh xạ (Quarantine Buffer)
+pnpm db:audit-quarantine --dry-run              # Chạy kiểm toán thử nghiệm mô phỏng không ghi CSDL
+pnpm db:audit-quarantine --accept-all-high-conf --threshold=0.85 # Thăng cấp cạnh đạt chuẩn vào Graph & ghi entity_audit_logs
+pnpm db:audit-quarantine --purge-spurious       # Thanh lọc cạnh rác/từ chối & thực thể nhiễu khỏi buffer
+pnpm crawl:corpus                               # Cào dữ liệu sử liệu từ corpus
+pnpm crawl:all                                  # Cào toàn bộ 15 thời kỳ lịch sử
+pnpm crawl:pdf                                  # Nạp dữ liệu từ PDF scan
+pnpm extract:pdf                                # Trích xuất PDF sang Markdown
+pnpm ingest:knowledge                           # Nạp tri thức vào CSDL & trích xuất Triples
+pnpm rag:re-resolve                             # Hợp giải thực thể mâu thuẫn & ghi audit logs
 pnpm rag:chat                                   # Chatbot tra cứu RAG trên Terminal
 
 # ===============================================================
-# 3. ĐÁNH GIÁ TỔNG THỂ & CHUỖI TÍCH HỢP (EVAL)
+# 5. VIDEO ENGINE & REMOTION STUDIO
+# ===============================================================
+pnpm setup-assets                               # Tải và đồng bộ fonts chữ, tư liệu đồ họa di sản
+pnpm remotion:studio                            # Mở Remotion Studio UI xem kịch bản (port 9876)
+pnpm remotion:render                            # Render video MP4 qua Remotion CLI
+pnpm remotion:render:quangtrung                 # Render video mẫu: Đại phá quân Thanh (Quang Trung)
+pnpm remotion:render:haibatrung                 # Render video mẫu: Khởi nghĩa Hai Bà Trưng
+pnpm remotion:render:mongolviet2                # Render video mẫu: Kháng chiến chống Nguyên Mông lần 2
+
+# ===============================================================
+# 6. ĐÁNH GIÁ TỔNG THỂ & CHUỖI TÍCH HỢP (EVAL)
 # ===============================================================
 pnpm eval:clean                                 # Dọn dẹp artifact rác, file tạm & port treo
 pnpm eval:all --fresh                           # Đánh giá toàn diện Monorepo với lifecycle sạch
-pnpm eval --chain vieneu-remotion               # Đánh giá chuỗi TTS -> Remotion
-pnpm eval --chain ingest-rag                    # Đánh giá chuỗi Ingestion -> RAG Search
+pnpm eval:chain                                 # Đánh giá chuỗi TTS -> Remotion Engine
+pnpm eval:seed                                  # Tạo dữ liệu mẫu cho benchmark
+pnpm eval:ingest                                # Đánh giá chất lượng trích xuất RAG chunks
+pnpm eval:orchestrator                          # Đánh giá Agent Orchestrator Pipeline
+pnpm eval:research                              # Đánh giá Agent nghiên cứu hình ảnh
+pnpm eval:tts                                   # Đánh giá VieNeu TTS Engine
+pnpm eval:remotion                              # Đánh giá Remotion Video Engine
 
 # ===============================================================
-# 4. ĐÁNH GIÁ TỪNG MÔ-ĐUN ĐƠN LẬP
+# 7. VERIFICATION & CI/CD QUALITY GATES
 # ===============================================================
-pnpm --filter @chronoviet/data-ingestion eval   # Module 0: Ingestion ETL & Chunk Quality
-pnpm --filter @chronoviet/rag-engine eval       # Module 1: Chrono-RAG C0-C10 & Ablation
-pnpm --filter @chronoviet/agent-orchestrator eval # Module 2: State Machine & Guardrails
-pnpm --filter @chronoviet/vlm-inspector eval    # Module 3: VLM Image Quality & License
-pnpm --filter @chronoviet/remotion-engine eval  # Module 4: 31 LayoutModes & 19 Transitions
-pnpm --filter @chronoviet/vieneu-tts eval       # Module TTS: RTF & Alignment Error
-pnpm --filter @chronoviet/render-worker eval    # App Worker: Memory Peak & Failover
-pnpm --filter @chronoviet/web eval              # App Web: Latency & WS Throughput
-
-# ===============================================================
-# 5. VERIFICATION & CI/CD GATES
-# ===============================================================
+pnpm check:all                                  # [Master Gate] typecheck -> lint -> test -> build
 pnpm typecheck                                  # Kiểm tra TypeScript toàn dự án (0 lỗi)
 pnpm lint                                       # Kiểm tra Formatting & Lints
 pnpm test                                       # Unit Tests trên src/ (CI Gate)
 pnpm build                                      # Build toàn bộ packages & apps
-```
-
-### Render Video Trực Tiếp Qua CLI:
-```bash
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/rendered-videos/biography.mp4
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/rendered-videos/battle.mp4
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
 ```
 
 ---

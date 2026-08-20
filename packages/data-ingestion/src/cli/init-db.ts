@@ -3,7 +3,7 @@
  * Usage: pnpm --filter @chronoviet/data-ingestion db:init
  */
 
-import { createLogger } from '@chronoviet/shared-spec';
+import { createLogger, closePool } from '@chronoviet/shared-spec';
 import { initializeDatabaseSchema } from '../seeder/db-initializer.js';
 
 const log = createLogger({ service: 'data-ingestion' });
@@ -11,6 +11,8 @@ const log = createLogger({ service: 'data-ingestion' });
 async function main() {
   log.info('db.init.started', 'Initializing ChronoViet PostgreSQL + pgvector schema');
   const result = await initializeDatabaseSchema();
+
+  await closePool();
 
   if (result.success) {
     log.info('db.init.succeeded', result.message);
@@ -26,7 +28,8 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
   log.error('db.init.failed', 'Fatal error during database schema initialization', { error: err });
+  await closePool();
   process.exit(1);
 });

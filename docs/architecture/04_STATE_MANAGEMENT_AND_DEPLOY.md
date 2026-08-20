@@ -40,7 +40,7 @@ Vòng đời từ khi người dùng nhập yêu cầu cho đến khi nhận vid
 | `KEYWORDS_EXTRACTED` | Micro-Step 3 Trích xuất từ khóa, thực thể & typography tags. | Checkpoint overlay metadata cho Remotion rendering. |
 | `ASSETS_AUDITED` | VLM Inspector kiểm định bản quyền & chất lượng ảnh (`PD`, `CC0`, `CC-BY`). | Tự động fallback Pure Code Layout nếu ảnh < 60 điểm. |
 | `PACKAGED` | Micro-Step 4 Đóng gói toàn diện thành `ChronoVideoScriptSchema` v4.1. | Validate 100% Zod Schema v4.1 trước khi đưa vào Render Queue. |
-| `COMPLETED` | Video MP4 đã render xuất xưởng thành công vào `/media/rendered-videos/`. | Trả link download MP4 cho client, dọn dẹp temp files & Chrome processes. |
+| `COMPLETED` | Video MP4 đã render xuất xưởng thành công vào `/media/projects/:projectId/output/video.mp4`. | Trả link phát/tải MP4 (`/api/v1/projects/:id/video`), dọn dẹp temp files & Chrome processes. |
 | `NEEDS_HUMAN_REVIEW` | Fact-Check hoặc Asset Audit không thể tự giải quyết sau retry. | Gửi Alert Webhook/UI để biên tập viên duyệt/sửa tay, không sập pipeline. |
 | `FAILED` | Dự án bị lỗi nghiêm trọng không thể khắc phục sau toàn bộ escalation. | Ghi lại traceback log, giải phóng job queue và hoàn token. |
 
@@ -55,13 +55,27 @@ Vòng đời từ khi người dùng nhập yêu cầu cho đến khi nhận vid
 
 ---
 
-## 3. Kiến Trúc Triển Khai (Single-Host VPS Deployment Topology)
+## 3. Kiến Trúc Triển Khai Linh Hoạt (Dual-Target Deployment Topology)
 
-Hệ thống được đóng gói bằng **Docker Containers** và tinh gọn tối đa để vận hành ổn định, tiết kiệm tài nguyên trên **1 VPS duy nhất + Domain cá nhân** (tối thiểu 8GB RAM):
+ChronoViet hỗ trợ đồng thời 2 môi trường phần cứng với cơ chế tối ưu riêng biệt:
+
+### 3.1. Target 1: Local Dev trên macOS (Apple Silicon Metal & UMA)
+- **Host Native AI Engines:** Do Docker Desktop trên macOS không hỗ trợ passthrough Metal GPU, các mô hình `llama-server` (LLM/VLM 8092 & BGE-M3 Embedding 8090) chạy trực tiếp trên Host OS thông qua `scripts/ai-supervisor.ts` nhằm khai thác 100% băng thông Unified Memory Architecture (UMA).
+- **Containerized Auxiliary Services:** PostgreSQL (pgvector), Redis, và VieNeu TTS FastAPI ONNX chạy trong Docker Desktop (`docker compose --profile infra --profile tts up -d`).
+- **Orchestration:** Khởi động toàn bộ stack chỉ với 1 lệnh `pnpm dev:stack`.
+
+### 3.2. Target 2: Production trên Linux Server (NVIDIA CUDA GPU)
+- **100% Containerized:** Khai thác NVIDIA Container Toolkit, đóng gói toàn bộ hệ thống trong Docker Compose:
+  - `local-ai-cuda-llm` (Port 8092): Qwen3.8-27B Instruct + Flash Attention + Continuous Batching + mmproj.
+  - `local-ai-cuda-emb` (Port 8090): BGE-M3 (1024d Dense Vector Space) `--embedding`.
+  - `vieneu-tts-service` (Port 8080): Python FastAPI ONNX Heritage TTS.
+  - `postgres` (Port 5432) & `redis` (Port 6379).
+  - `app` (Next.js Monolith API) & `worker` (Remotion Headless Chrome Render Worker).
+  - `caddy` (Auto Let's Encrypt SSL/TLS & Media File Server).
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│             SINGLE-HOST VPS STREAMLINED TOPOLOGY (OPERATIONAL HARDENED v3.4)           │
+│             DUAL-TARGET TOPOLOGY: LOCAL MACOS DEV vs LINUX NVIDIA PROD                 │
 │                                                                                        │
 │ ┌────────────────────────────────────────────────────────────────────────────────────┐ │
 │ │                         CADDY REVERSE PROXY CONTAINER                              │ │
@@ -78,218 +92,60 @@ Hệ thống được đóng gói bằng **Docker Containers** và tinh gọn t�
 │                                           │                   └──────────┬───────────┘ │
 │                                           └─────────────┬────────────────┘             │
 │                                                         ▼                              │
-│                                ┌─────────────────────────────────────────────────────┐ │
-│                                │             AI & RENDER WORKER CONTAINER            │ │
-│                                │ (VieNeu TTS ONNX Engine & Remotion Headless Chrome) │ │
-│                                └─────────────────────────────────────────────────────┘ │
+│ ┌────────────────────────┐     ┌─────────────────────────────────────────────────────┐ │
+│ │ local-ai-cuda-llm/emb  │     │             AI & RENDER WORKER CONTAINER            │ │
+│ │ (Linux NVIDIA CUDA /   │◄────┤ (VieNeu TTS ONNX Engine & Remotion Headless Chrome) │ │
+│ │  macOS Metal Host)     │     └─────────────────────────────────────────────────────┘ │
+│ └────────────────────────┘                                                             │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Chi Tiết Thành Phần Tinh Gọn (VPS Minimal Stack):
-1. **Caddy Reverse Proxy (`caddy:2-alpine`)**: Tự động cấp & gia hạn SSL Cert Let's Encrypt theo Domain. Forward WebSocket và serve trực tiếp file video/audio từ Host Volume `/media` (RAM footprint ~30MB).
-2. **PostgreSQL + pgvector (`pgvector/pgvector:pg15`)**: Đóng vai trò **SSOT duy nhất** cho toàn bộ dữ liệu quan hệ, LangGraph State Checkpoint, và Vector Embeddings (thay thế việc phải chạy đồng thời Qdrant + Neo4j).
-3. **Unified Redis (`redis:7-alpine`)**: Quản lý đồng thời BullMQ Job Queues (AOF persistence) và LRU Cache trong 1 container duy nhất.
-4. **App Monolith (`app`)**: Tích hợp Web Dashboard UI, User API, RAG Engine, và LangGraph Orchestrator vào 1 quy trình Node.js Next.js 14 duy nhất.
-5. **Render & AI Worker (`worker`)**: Nhận job từ Redis BullMQ Queue để sinh voiceover VieNeu TTS và render video Remotion (khóa `CONCURRENCY=1` để không gây nghẽn CPU/RAM VPS).
-
 ---
 
-## 4. File Cấu Hình Triển Khai Thực Tế (VPS Production Docker Compose)
+## 4. File Cấu Hình Triển Khai Thực Tế (Docker Compose Specs)
 
-### 4.1. `docker-compose.yml`
+Hệ thống cung cấp file cấu hình `docker-compose.yml` phân tách theo profiles (`infra`, `tts`, `ai-cuda`, `prod`, `prod-all`):
 
-```yaml
-services:
-  caddy:
-    image: caddy:2-alpine
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./media:/app/media:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      app:
-        condition: service_healthy
-    logging: &default-logging
-      driver: "json-file"
-      options:
-        max-size: "20m"
-        max-file: "3"
+```bash
+# 1. macOS Dev: Chỉ bật Infra + TTS
+pnpm stack:infra
+pnpm stack:tts
 
-  postgres:
-    image: pgvector/pgvector:pg15
-    restart: always
-    environment:
-      POSTGRES_DB: chronoviet_db
-      POSTGRES_USER: chronoviet
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}
-    ports:
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chronoviet -d chronoviet_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 1500M
-    logging: *default-logging
+# 2. Linux Production: Bật Full Stack (App + Worker + Caddy + DB + Redis + TTS)
+pnpm stack:prod
 
-  redis:
-    image: redis:7-alpine
-    restart: always
-    command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy noeviction
-    ports:
-      - "127.0.0.1:6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-    logging: *default-logging
-
-  vieneu-tts-service:
-    build:
-      context: .
-      dockerfile: services/vieneu-tts/Dockerfile
-    container_name: vieneu_tts_engine
-    restart: always
-    environment:
-      - NODE_ENV=production
-      - LOG_FORMAT=json
-      - TTS_SERVICE_PORT=8080
-      - MEDIA_DIR=/app/media
-      - AUDIO_CACHE_DIR=/app/media/audio-cache
-      - WEB_CONCURRENCY=2
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./media:/app/media
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    deploy:
-      resources:
-        limits:
-          cpus: '2.00'
-          memory: 2000M
-    logging: *default-logging
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile.app
-    restart: always
-    environment:
-      - NODE_ENV=production
-      - LOG_FORMAT=json
-      - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
-      - REDIS_URL=redis://redis:6379
-      - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
-      - GEMINI_API_KEYS=${GEMINI_API_KEYS}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      vieneu-tts-service:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/healthz || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    volumes:
-      - ./media:/app/media
-    deploy:
-      resources:
-        limits:
-          cpus: '2.00'
-          memory: 2000M
-    logging: *default-logging
-
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
-    restart: always
-    shm_size: '2gb'
-    deploy:
-      resources:
-        limits:
-          cpus: '2.00'
-          memory: 4000M
-    environment:
-      - NODE_ENV=production
-      - LOG_FORMAT=json
-      - CONCURRENCY=1
-      - RENDER_CONCURRENCY=1
-      - WORKER_PROBE_PORT=3001
-      - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
-      - REDIS_URL=redis://redis:6379
-      - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      vieneu-tts-service:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/healthz || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    volumes:
-      - ./media:/app/media
-    logging: *default-logging
-
-volumes:
-  postgres_data:
-  redis_data:
-  caddy_data:
-  caddy_config:
+# 3. Linux Production All-in-One (Bao gồm cả Local CUDA LLM & Embedding)
+pnpm stack:prod:all
 ```
 
-### 4.2. `Caddyfile` (Cấu hình Domain & Reverse Proxy)
+### 4.2. `Caddyfile` (Cấu hình Dynamic Domain & Reverse Proxy)
 
 ```caddyfile
-chronoviet.yourdomain.com {
-    # 1. Serve trực tiếp file media (Video MP4, Audio, License Snapshots)
+{$APP_DOMAIN:localhost} {
+    # 1. Block access to internal workspace schema & temp files, serve public media assets
     handle /media/* {
+        @blocked path /media/projects/*/project_schema.json /media/projects/*/temp/*
+        respond @blocked 403
+
+        header Cache-Control "public, max-age=3600"
+        header X-Content-Type-Options "nosniff"
         root * /app
         file_server
     }
 
-    # 2. Forward toàn bộ API & Web Dashboard & WebSockets đến App Monolith
+    # 2. Forward API & Web Dashboard & WebSockets to Next.js App Monolith
     handle {
-        reverse_proxy app:3000
+        reverse_proxy app:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
 
-    # 3. Tự động nén dữ liệu HTTP
+    # 3. HTTP Compression
     encode zstd gzip
 }
 ```
+
 
 

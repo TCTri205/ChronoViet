@@ -25,19 +25,18 @@ Gói `@chronoviet/vlm-inspector` đóng vai trò là Tầng Kiểm Định Chấ
 packages/vlm-inspector/
 ├── src/
 │   ├── search/                        # Multi-Provider Search Chain (SerpAPI, Tavily, Brave...)
-│   │   ├── image-search-provider.ts   # Base Provider Interface & Domain Whitelist
-│   │   ├── serpapi-provider.ts        # SerpAPI Image Search
-│   │   ├── tavily-provider.ts         # Tavily Image Search
-│   │   ├── brave-provider.ts          # Brave Search
-│   │   └── index.ts                   # Provider Chain Coordinator
-│   ├── wikimedia-search.ts            # Wikimedia Commons API Scraper
-│   ├── license-filter.ts              # Whitelisted License Verifier
-│   ├── visual-quality-gate.ts         # Visual Noise & Context Match Gate
-│   ├── gemini-scorer.ts               # Gemini 3.6 Flash / Local VLM Scorer
-│   ├── clip-scorer.ts                 # Local CLIP ONNX Semantic Scorer
-│   ├── asset-downloader.ts            # Download & Dimension Validator (>= 600x600px)
-│   ├── redis-cache.ts                 # Redis Cache Manager cho VLM scores
-│   ├── inspector-pipeline.ts          # End-to-End VLM Inspection Pipeline
+│   │   ├── image-search-provider.ts   # Base Provider Interface, Whitelist & Telemetry
+│   │   ├── serpapi-search.ts          # SerpAPI Google Images Provider
+│   │   ├── tavily-search.ts           # Tavily Image Provider
+│   │   ├── brave-search.ts            # Brave Search Provider
+│   │   └── index.ts                   # Provider Chain Coordinator & Fallback
+│   ├── wikimedia-search.ts            # Wikimedia Commons API Scraper & Attribution
+│   ├── visual-quality-gate.ts         # Binary Header Dimension Reader (PNG/JPEG/WEBP) & Resolution Gate
+│   ├── vlm-scorer.ts                  # Local Unified VLM / Gemini Flash Scorer with Resilient JSON Parser
+│   ├── clip-scorer.ts                 # Local CLIP ONNX Cosine Similarity Scorer
+│   ├── asset-downloader.ts            # Asset Downloader, Metadata (.metadata.json) & Latency Tracking
+│   ├── redis-cache.ts                 # Redis Dual-Layer Cache (SHA-256 + pHash)
+│   ├── inspector-pipeline.ts          # End-to-End VLM Inspection Pipeline & Pure Code Fallback
 │   └── index.ts                       # Entrypoint export public APIs
 │
 ├── eval/                              # Tầng Đánh Giá & Benchmark Module 3

@@ -39,6 +39,7 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 8000);
+      const startTime = Date.now();
 
       try {
         const res = await fetch(`https://api.search.brave.com/res/v1/images/search?${params.toString()}`, {
@@ -48,11 +49,18 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
             'X-Subscription-Token': apiKey,
           },
         });
-        clearTimeout(timer);
 
+        const latencyMs = Date.now() - startTime;
         if (!res.ok) {
           const err = new Error(`Brave HTTP ${res.status}: ${res.statusText}`);
           (err as any).status = res.status;
+          (err as any).latencyMs = latencyMs;
+          log.warn('vlm.brave_http_error', `HTTP ${res.status} from Brave for "${keywords}"`, {
+            keywords,
+            status: res.status,
+            statusText: res.statusText,
+            latencyMs,
+          });
           throw err;
         }
 
@@ -79,30 +87,46 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
           if (candidates.length >= limit) break;
         }
 
+        log.debug('vlm.brave_success', `Brave returned ${candidates.length} candidates`, {
+          keywords,
+          candidateCount: candidates.length,
+          latencyMs,
+        });
+
         return candidates;
       } catch (err: any) {
-        clearTimeout(timer);
+        const latencyMs = Date.now() - startTime;
+        if (!err.latencyMs) {
+          err.latencyMs = latencyMs;
+        }
         throw err;
+      } finally {
+        clearTimeout(timer);
       }
     };
 
-    if (this.explicitApiKey !== undefined) {
-      if (!this.explicitApiKey) {
-        log.warn('vlm.brave_no_key', 'BRAVE_API_KEY is empty; skipping Brave provider');
+    try {
+      if (this.explicitApiKey !== undefined) {
+        if (!this.explicitApiKey) {
+          log.warn('vlm.brave_no_key', 'BRAVE_API_KEY is empty; skipping Brave provider');
+          return [];
+        }
+        return await runSearchWithKey(this.explicitApiKey);
+      }
+
+      if (!hasAvailableApiKeys('brave') && !envConfig.BRAVE_API_KEY) {
+        log.warn('vlm.brave_no_key', 'BRAVE_API_KEY is not configured; skipping Brave provider');
         return [];
       }
-      return await runSearchWithKey(this.explicitApiKey);
-    }
 
-    if (!hasAvailableApiKeys('brave') && !envConfig.BRAVE_API_KEY) {
-      log.warn('vlm.brave_no_key', 'BRAVE_API_KEY is not configured; skipping Brave provider');
-      return [];
-    }
-
-    try {
       return await executeWithKeyRotation('brave', (key: string) => runSearchWithKey(key));
     } catch (err: any) {
-      log.warn('vlm.brave_search_failed', `Brave search failed for "${keywords}": ${err.message}`);
+      log.warn('vlm.brave_search_failed', `Brave search failed for "${keywords}": ${err.message}`, {
+        keywords,
+        error: err.message,
+        status: err.status,
+        latencyMs: err.latencyMs,
+      });
       return [];
     }
   }

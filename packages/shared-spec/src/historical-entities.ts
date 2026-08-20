@@ -187,6 +187,12 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     type: 'HISTORICAL_PERSON',
     aliases: ['Tổng binh Liễu Thăng'],
   },
+  'person_mai_thuc_loan': {
+    entityId: 'person_mai_thuc_loan',
+    canonicalName: 'Mai Thúc Loan',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Mai Hắc Đế', 'Vua Mai Hắc Đế'],
+  },
 };
 
 /**

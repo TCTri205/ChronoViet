@@ -2,7 +2,7 @@
 
 Mô-đun Remotion Render Engine thuần túy (**Pure Render Engine**) thuộc hệ sinh thái **ChronoViet**. Nhiệm vụ chính của mô-đun là tiếp nhận dữ liệu kịch bản chuẩn hóa dạng JSON (từ RAG & Multi-Agent Orchestrator) và render thành các video ngắn/dài (Shorts/Reels 9:16, YouTube 16:9, Post 1:1) chất lượng cao với cấu trúc phân đoạn chuyên nghiệp.
 
-Engine tuân thủ nguyên tắc **100% Data-Driven**, không hardcode kịch bản hay business logic của RAG/Agent trong component code. Mọi thông tin (phân cảnh, hiệu ứng, transition, typography, audio) được nạp trực tiếp qua JSON Schema v3.0 / v3.2.
+Engine tuân thủ nguyên tắc **100% Data-Driven**, không hardcode kịch bản hay business logic của RAG/Agent trong component code. Mọi thông tin (phân cảnh, hiệu ứng, transition, typography, audio) được nạp trực tiếp qua JSON Schema v4.1.
 
 > [!NOTE]
 > **Về tài nguyên tĩnh & Mock Assets:**
@@ -26,7 +26,7 @@ packages/remotion-engine/
 ├── src/                   # Mã nguồn Pure Render Engine
 │   ├── cli.ts             # Bộ CLI chính cho remotion-engine (render, still, inspect, eval)
 │   ├── components/        # Thư viện Component chuyên biệt theo chuẩn ChronoViet
-│   │   ├── SlideImage.tsx     # Ken Burns + Blur Background & Sepia filter
+│   │   ├── SlideImage.tsx     # Ken Burns + Blur Background & 4 chuyên biệt (Archive, Grid, 3D, Pure)
 │   │   ├── QuoteSlide.tsx     # Thẻ trích dẫn câu nói / thơ (Quote Card)
 │   │   ├── ChapterTitle.tsx   # Thẻ phân đoạn chương (Chapter Subdivision Title Card)
 │   │   ├── OutroSlide.tsx     # Đoạn kết trích thơ + End Card Like/Share/Subscribe ChronoViet
@@ -35,7 +35,16 @@ packages/remotion-engine/
 │   │   ├── BulletHighlight.tsx# Thẻ diễn biến điểm nhấn (Bullet Highlight)
 │   │   ├── MuseumTag.tsx      # Thẻ tư liệu bảo tàng (Museum Tag)
 │   │   ├── SplitTheory.tsx    # Thẻ phân tích giả thuyết (Split Theory)
-│   │   └── SponsorSlide.tsx   # Thẻ giới thiệu chuyên mục (Sponsor Slide)
+│   │   ├── SponsorSlide.tsx   # Thẻ giới thiệu chuyên mục (Sponsor Slide)
+│   │   ├── ChronoIntro.tsx    # Giao diện bài viết tư liệu chuyên sâu (Article Intro UI)
+│   │   ├── TimelineChrono.tsx # Trục niên đại sự kiện ngang 16:9 (Horizontal Timeline)
+│   │   ├── RoyalDecree.tsx    # Chiếu Cần Vương / Sắc Phong hoàng gia (Imperial Scroll)
+│   │   ├── MapTactical.tsx    # Sa bàn bản đồ trận đánh & chú giải (Battle Map UI)
+│   │   ├── CharacterProfile.tsx # Hồ sơ danh nhân / tướng lĩnh dạng Dual-Column 16:9
+│   │   ├── ArtifactInspect.tsx  # Giao diện thẩm định bảo vật quốc gia 16:9 kèm 4 Hotspot tags
+│   │   ├── PoemReciting.tsx     # Giao diện ngâm thơ lịch sử / tuyên ngôn độc lập 16:9
+│   │   ├── HeroSpotlight.tsx    # Điểm sáng danh nhân lịch sử (Hero Spotlight)
+│   │   └── ArmyStrength.tsx     # So sánh tương quan quân sự & thanh tỉ lệ (Army Strength)
 │   ├── constants/         # Cấu hình màu sắc thương hiệu ChronoViet & kích thước canvas
 │   ├── types/             # TypeScript interfaces & Zod schemas cho Timeline & Compositions
 │   ├── data/              # Dữ liệu kịch bản JSON mẫu cho Studio Preview
@@ -93,6 +102,8 @@ pnpm --filter @chronoviet/remotion-engine eval [-t <testCasesDir>] [-o <outDir>]
 | `--outDir` | `-d` | Thư mục đầu ra nếu `--output` là tương đối | `./out` |
 | `--composition` | `-c` | Remotion Composition ID | `ChronoVideo` |
 | `--frame` | `-f` | Khung hình để chụp ảnh snapshot `still` | `45` |
+| `--correlation-id` | `-k` | Mã correlation ID cho distributed structured logging | `undefined` |
+| `--project-id` | `-p` | Mã dự án project ID gắn vào log context | `undefined` |
 | `--no-overwrite` | - | Không ghi đè file đầu ra đã tồn tại | `false` |
 | `--verbose` | `-v` | In log chi tiết quá trình render | `false` |
 
@@ -100,7 +111,7 @@ pnpm --filter @chronoviet/remotion-engine eval [-t <testCasesDir>] [-o <outDir>]
 
 ## 📊 Evaluation Suite (`eval/`)
 
-Thư mục [`eval/`](eval) cung cấp bộ công cụ tự động kiểm định 18 LayoutModes và 15 Transitions, đồng thời mở Remotion Studio cho Human trực tiếp đánh giá (Tất cả lệnh chạy tại **Root Monorepo**):
+Thư mục [`eval/`](eval) cung cấp bộ công cụ tự động kiểm định 31 LayoutModes và 19 Transitions, đồng thời mở Remotion Studio cho Human trực tiếp đánh giá (Tất cả lệnh chạy tại **Root Monorepo**):
 
 ```bash
 # Chạy suite đánh giá tự động -> Tự động mở Remotion Studio GUI (giữ eval/out sạch 100%)
@@ -117,6 +128,9 @@ pnpm --filter @chronoviet/remotion-engine eval -- --no-studio
 ```bash
 # Kiểm tra TypeScript trên toàn monorepo (0 lỗi)
 pnpm typecheck
+
+# Chạy bộ unit tests xác định (Tier 4 Verification - 37 tests)
+pnpm --filter @chronoviet/remotion-engine test
 
 # Xem trực quan giao diện (Remotion Studio GUI)
 pnpm remotion:studio

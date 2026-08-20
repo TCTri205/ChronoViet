@@ -81,8 +81,15 @@ const EnvSchema = z.object({
   LLM_PORT: z.coerce.number().int().positive().default(8092),
   LLM_CTX_SIZE: z.coerce.number().int().positive().default(16384),
   LLM_EXTRA_ARGS: z.string().optional(),
+  LOCAL_LLM_EXTRACTION_PORT: z.coerce.number().int().positive().default(8094),
+  LOCAL_LLM_EXTRACTION_BASE_URL: z.string().default('http://localhost:8094'),
+  LOCAL_LLM_EXTRACTION_MODEL: z.string().default('qwen3.5-4b-instruct-q4_k_m'),
+  LOCAL_LLM_EXTRACTION_CTX_SIZE: z.coerce.number().int().positive().default(8192),
+  LOCAL_LLM_EXTRACTION_PARALLEL: z.coerce.number().int().positive().default(4),
+  LOCAL_LLM_EXTRACTION_THREADS: z.coerce.number().int().positive().default(6),
+  LOCAL_LLM_EXTRACTION_EXTRA_ARGS: z.string().optional(),
   EMBEDDING_PORT: z.coerce.number().int().positive().default(8090),
-  EMBEDDING_CTX_SIZE: z.coerce.number().int().positive().default(4096),
+  EMBEDDING_CTX_SIZE: z.coerce.number().int().positive().default(8192),
   EMBEDDING_EXTRA_ARGS: z.string().optional(),
   MODEL_DIR: z.string().default('./models'),
   LOCAL_LLM_PRIMARY_MODEL: z.string().default('qwen3.8-27b-instruct-q4_k_m'),
@@ -90,6 +97,16 @@ const EnvSchema = z.object({
   HYBRID_DEV: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(false),
+
+  // Resource Management, Lifecycle & Distributed Lock
+  AI_AUTO_EVICT_IDLE_MINUTES: z.coerce.number().int().nonnegative().default(10),
+  AI_STANDBY_ON_RENDER: z
+    .union([z.boolean(), z.string().transform((v) => v === 'true')])
+    .default(true),
+  MEMORY_PRESSURE_THRESHOLD_PCT: z.coerce.number().int().positive().default(85),
+  DOCKER_HOST_GATEWAY_URL: z.string().default('http://host.docker.internal'),
+  RENDER_MUTEX_LOCK_KEY: z.string().default('chronoviet:render_lock'),
+  RENDER_MUTEX_TTL_SECONDS: z.coerce.number().int().positive().default(900),
 
   // Cloud API Fallback Configuration (Agnes 2.5 Flash / OpenAI / OpenRouter / Gemini)
   ENABLE_CLOUD_FALLBACK: z
@@ -119,6 +136,9 @@ const EnvSchema = z.object({
   // Embedding, Rerank & Vision Stack (SSOT 1024-dim Vector Space)
   LOCAL_EMBEDDING_MODEL: z.string().default('bge-m3'),
   LOCAL_EMBEDDING_DEFAULT: z.string().optional(),
+  EMBEDDING_TIMEOUT_MS: z.coerce.number().int().positive().default(60000),
+  EMBEDDING_CONCURRENCY: z.coerce.number().int().positive().default(4),
+  EMBEDDING_BATCH_SIZE: z.coerce.number().int().positive().default(16),
   LOCAL_RERANK_MODEL: z.string().default('qwen3-reranker-0.6b'),
   LOCAL_VISION_FILTER: z.string().default('siglip-2-multilingual-onnx'),
   LOCAL_VLM_INSPECTOR: z.string().default('qwen3.8-27b-instruct-q4_k_m'),

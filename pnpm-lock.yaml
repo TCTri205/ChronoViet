@@ -222,6 +222,9 @@ importers:
 
   packages/rag-engine:
     dependencies:
+      '@chronoviet/data-ingestion':
+        specifier: workspace:*
+        version: link:../data-ingestion
       '@chronoviet/shared-spec':
         specifier: workspace:*
         version: link:../shared-spec

@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@chronoviet/shared-spec": "workspace:*",
+    "@chronoviet/data-ingestion": "workspace:*",
     "pg": "^8.11.3"
   },
   "devDependencies": {

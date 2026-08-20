@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { durationReconciliationNode } from '../graph/nodes/reconciler-node.js';
 import { validateFolkloreHypothesisTone } from '../guardrails/folklore-validator.js';
-import { ChronoGraphState } from '../graph/state.js';
+import { evaluateNliEntailmentScore } from '../guardrails/nli-hallucination-judge.js';
+import { ChronoGraphState, getNodeLogger } from '../graph/state.js';
 import { defaultCheckpointer } from '../graph/checkpointer.js';
 import { runOrchestratorPipeline, resumeOrchestratorPipeline, streamOrchestratorPipeline } from '../graph/orchestrator.js';
 import { extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
@@ -198,10 +199,69 @@ describe('Agent Orchestrator Unit Tests', () => {
       expect(res2.isValid).toBe(false);
     });
 
+    it('should validate multi-sentence folklore narratives when introductory hypothesis signal is present', () => {
+      const validMultiSentence =
+        'Theo truyền thuyết dân gian, Sơn Tinh và Thủy Tinh cùng đến cầu hôn công chúa Mỵ Nương.\n' +
+        'Vua Hùng ra điều kiện sính lễ gồm voi chín ngà, gà chín cựa, ngựa chín hồng mao.\n' +
+        'Sơn Tinh mang lễ vật đến trước và rước được Mỵ Nương về núi Tản Viên.';
+      const res = validateFolkloreHypothesisTone(validMultiSentence, true);
+      expect(res.isValid).toBe(true);
+      expect(res.matchedSignals.length).toBeGreaterThan(0);
+      expect(res.failingSentences.length).toBe(0);
+    });
+
+    it('should reject multi-sentence folklore narratives when no hypothesis signal is present anywhere', () => {
+      const invalidMultiSentence =
+        'Sơn Tinh và Thủy Tinh cùng đến cầu hôn công chúa Mỵ Nương.\n' +
+        'Vua Hùng ra điều kiện sính lễ gồm voi chín ngà, gà chín cựa.\n' +
+        'Sơn Tinh rước Mỵ Nương về núi Tản Viên.';
+      const res = validateFolkloreHypothesisTone(invalidMultiSentence, true);
+      expect(res.isValid).toBe(false);
+      expect(res.failingSentences.length).toBe(3);
+    });
+
     it('should skip validation for non-folklore sources', () => {
       const historicalText = 'Ngô Quyền đại phá quân Nam Hán trên sông Bạch Đằng năm 938.';
       const res = validateFolkloreHypothesisTone(historicalText, false);
       expect(res.isValid).toBe(true);
+    });
+  });
+
+  describe('NLI Entailment Hallucination Judge', () => {
+    it('should correctly score high entailment when substantive claims match ground truth despite stopwords', () => {
+      const request = {
+        scriptClaim: 'Năm 938, Ngô Quyền lãnh đạo quân dân đánh tan quân Nam Hán trên sông Bạch Đằng.',
+        groundTruthChunks: [
+          'Ngô Quyền lãnh đạo quân dân Đại Việt đánh tan quân Nam Hán trên sông Bạch Đằng năm 938.',
+        ],
+      };
+      const result = evaluateNliEntailmentScore(request);
+      expect(result.entailmentScore).toBeGreaterThanOrEqual(0.80);
+      expect(result.isHallucinated).toBe(false);
+      expect(result.verdict).toBe('ENTAILMENT');
+    });
+
+    it('should flag hallucination when substantive historical claims do not match ground truth', () => {
+      const request = {
+        scriptClaim: 'Năm 1288, Napoleon Bonaparte đã chỉ huy quân đội xâm lược Đại Việt.',
+        groundTruthChunks: [
+          'Ngô Quyền lãnh đạo quân dân Đại Việt đánh tan quân Nam Hán trên sông Bạch Đằng năm 938.',
+        ],
+      };
+      const result = evaluateNliEntailmentScore(request);
+      expect(result.entailmentScore).toBeLessThan(0.80);
+      expect(result.isHallucinated).toBe(true);
+    });
+  });
+
+  describe('Context-Bound Child Logger & Correlation ID', () => {
+    it('should generate node logger with bound correlationId and projectId', () => {
+      const sampleState: Partial<ChronoGraphState> = {
+        projectId: 'test_proj_cid_001',
+        correlationId: 'req_custom_correlation_id_999',
+      };
+      const logger = getNodeLogger(sampleState as ChronoGraphState, 'chaptering');
+      expect(logger).toBeDefined();
     });
   });
 
@@ -295,8 +355,21 @@ describe('Agent Orchestrator Unit Tests', () => {
         emittedNodes.push(chunk.nodeName);
       }
 
-      expect(emittedNodes.length).toBeGreaterThan(0);
-      expect(emittedNodes).toContain('packager');
+      expect(emittedNodes).toEqual([
+        'rag_init',
+        'chaptering',
+        'scriptwriter',
+        'fact_checker',
+        'segmenter',
+        'keyword',
+        'research',
+        'vlm_inspection',
+        'tts_synthesis',
+        'duration_reconciliation',
+        'packager',
+      ]);
+      expect(emittedNodes.filter((n) => n === 'duration_reconciliation').length).toBe(1);
+      expect(emittedNodes.filter((n) => n === 'packager').length).toBe(1);
     }, 30000);
 
     it('should resume pipeline cleanly without duplicate scenes after human review approval', async () => {

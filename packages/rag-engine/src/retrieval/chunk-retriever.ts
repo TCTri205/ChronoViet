@@ -4,10 +4,15 @@
 
 import { isPgAvailable, query, inMemoryStore } from '@chronoviet/shared-spec';
 
-import { VectorSearchResult } from './vector-search.js';
+import { VectorSearchResult, RRF_K } from './vector-search.js';
 
-export async function getChunksForEntities(entityIds: string[]): Promise<VectorSearchResult[]> {
-  if (!entityIds || entityIds.length === 0) return [];
+export const RRF_GRAPH_K = RRF_K;
+
+export async function getChunksForEntities(
+  entityIds: string[],
+  limit: number = 30
+): Promise<VectorSearchResult[]> {
+  if (!entityIds || entityIds.length === 0 || limit <= 0) return [];
 
   const pgConnected = await isPgAvailable();
 
@@ -22,31 +27,35 @@ export async function getChunksForEntities(entityIds: string[]): Promise<VectorS
       `SELECT DISTINCT c.id, c.title, c.text_content, c.dynasty, c.source_reliability
        FROM document_chunks c
        INNER JOIN entity_chunks ec ON c.id = ec.chunk_id
-       WHERE ec.entity_id = ANY($1);`,
-      [entityIds]
+       WHERE ec.entity_id = ANY($1)
+       LIMIT $2;`,
+      [entityIds, limit]
     );
 
     if (rows && rows.length > 0) {
-      return rows.map((r) => ({
+      return rows.map((r, idx) => ({
         chunkId: r.id,
         title: r.title,
         textContent: r.text_content,
         dynasty: r.dynasty,
         sourceReliability: r.source_reliability,
-        score: 1.0,
+        score: 1.0 / (RRF_GRAPH_K + (idx + 1)),
       }));
     }
   }
 
   // In-Memory Fallback
+  const entitySet = new Set(entityIds);
   const chunkIds = new Set<string>();
   for (const ec of inMemoryStore.entityChunks) {
-    if (entityIds.includes(ec.entity_id)) {
+    if (entitySet.has(ec.entity_id)) {
       chunkIds.add(ec.chunk_id);
+      if (chunkIds.size >= limit) break;
     }
   }
 
   const results: VectorSearchResult[] = [];
+  let idx = 0;
   for (const id of chunkIds) {
     const chunk = inMemoryStore.documentChunks.get(id);
     if (chunk) {
@@ -56,8 +65,10 @@ export async function getChunksForEntities(entityIds: string[]): Promise<VectorS
         textContent: chunk.text_content,
         dynasty: chunk.dynasty,
         sourceReliability: chunk.source_reliability,
-        score: 1.0,
+        score: 1.0 / (RRF_GRAPH_K + (idx + 1)),
       });
+      idx++;
+      if (results.length >= limit) break;
     }
   }
 

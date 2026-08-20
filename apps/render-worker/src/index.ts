@@ -88,6 +88,10 @@ export function initializeAllWorkers() {
     res.end('Not Found');
   });
 
+  probeServer.listen(probePort, () => {
+    log.info('render_worker.ready', `Render worker probe server listening on port ${probePort}`);
+  });
+
   const cleanup = async () => {
     log.info('render_worker.shutting_down', 'Gracefully closing render workers, queues and probe server...');
     clearInterval(metricsInterval);

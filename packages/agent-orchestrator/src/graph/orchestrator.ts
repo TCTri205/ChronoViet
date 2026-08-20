@@ -5,8 +5,20 @@
  */
 
 import { StateGraph, START, END } from '@langchain/langgraph';
-import { createLogger, envConfig, initProjectWorkspace, truncateSnippet } from '@chronoviet/shared-spec';
-import { ChronoGraphAnnotation, ChronoGraphState, ChronoGraphUpdate } from './state.js';
+import {
+  createLogger,
+  envConfig,
+  initProjectWorkspace,
+  orchestratorNodeDurationSeconds,
+  truncateSnippet,
+} from '@chronoviet/shared-spec';
+import {
+  ChronoGraphAnnotation,
+  ChronoGraphState,
+  ChronoGraphUpdate,
+  getNodeLogger,
+  TelemetryAuditEntry,
+} from './state.js';
 import { defaultCheckpointer } from './checkpointer.js';
 import { chapteringNode } from './nodes/chaptering-node.js';
 import { scriptwriterNode } from './nodes/scriptwriter-node.js';
@@ -21,85 +33,110 @@ import { packagerNode } from './nodes/packager-node.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
 
+async function timedNodeExecution<T>(nodeName: string, fn: () => Promise<T>): Promise<T> {
+  const start = performance.now();
+  let status = 'success';
+  try {
+    const res = await fn();
+    return res;
+  } catch (err) {
+    status = 'error';
+    throw err;
+  } finally {
+    const durationSec = (performance.now() - start) / 1000;
+    orchestratorNodeDurationSeconds.observe({ node: nodeName, status }, durationSec);
+  }
+}
+
 export function buildOrchestratorGraph() {
   const workflow = new StateGraph(ChronoGraphAnnotation)
     // Node 1: RAG Context & Workspace Init
     .addNode('rag_init', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      initProjectWorkspace(state.projectId);
-      const nodeLog = log.child({
-        correlationId: state.correlationId || state.projectId,
-        fields: { projectId: state.projectId },
-      });
-      let ragContext = state.ragContext;
+      return timedNodeExecution('rag_init', async () => {
+        initProjectWorkspace(state.projectId);
+        const nodeLog = getNodeLogger(state, 'rag_init');
+        let ragContext = state.ragContext;
+        const telemetryAudit: TelemetryAuditEntry[] = [];
 
-      if (!ragContext) {
-        try {
-          const { ChronoRagEngine } = await import('@chronoviet/rag-engine');
-          const ragEngine = new ChronoRagEngine();
-          nodeLog.info('orchestrator.rag_searching', `Querying Chrono-RAG engine for topic: "${truncateSnippet(state.userPrompt)}"`, {
-            projectId: state.projectId,
-          });
-          const searchResult = await ragEngine.search({
-            query: state.userPrompt,
-            maxTokens: 2000,
-            rerankTopK: 5,
-          });
+        if (!ragContext) {
+          try {
+            const { ChronoRagEngine } = await import('@chronoviet/rag-engine');
+            const ragEngine = new ChronoRagEngine();
+            nodeLog.info('orchestrator.rag_searching', `Querying Chrono-RAG engine for topic: "${truncateSnippet(state.userPrompt)}"`, {
+              projectId: state.projectId,
+            });
+            const searchResult = await ragEngine.search({
+              query: state.userPrompt,
+              maxTokens: 2000,
+              rerankTopK: 5,
+            });
 
-          ragContext = {
-            verifiedContext: searchResult.verifiedContext,
-            aliasTable: searchResult.aliasTable,
-            citations: searchResult.citations,
-          };
-          log.info('orchestrator.rag_retrieved_real', `Retrieved ${searchResult.verifiedContext.length} verified context entities from RAG Engine`, {
-            retrievalLatencyMs: searchResult.retrievalLatencyMs,
-          });
-        } catch (ragErr: any) {
-          if (envConfig.EVAL_STRICT) {
-            throw new Error(`[EVAL_STRICT] RAG database search failed during evaluation: ${ragErr.message}`);
-          }
-          log.warn('orchestrator.rag_offline_fallback', `RAG database search failed or offline: ${ragErr.message}. Utilizing structured offline context.`, {
-            error: ragErr.message,
-          });
-          ragContext = {
-            verifiedContext: [
-              {
-                entityId: `entity_${state.projectId}`,
-                canonicalName: state.userPrompt,
-                aliases: [],
-                summary: `Thông tin lịch sử xác thực về chủ đề ${state.userPrompt} (Chế độ offline fallback).`,
-                citations: ['Đại Việt Sử Ký Toàn Thư'],
-                confidenceScore: 0.95,
+            ragContext = {
+              verifiedContext: searchResult.verifiedContext,
+              aliasTable: searchResult.aliasTable,
+              citations: searchResult.citations,
+            };
+            nodeLog.info('orchestrator.rag_retrieved_real', `Retrieved ${searchResult.verifiedContext.length} verified context entities from RAG Engine`, {
+              retrievalLatencyMs: searchResult.retrievalLatencyMs,
+            });
+          } catch (ragErr: any) {
+            if (envConfig.EVAL_STRICT) {
+              throw new Error(`[EVAL_STRICT] RAG database search failed during evaluation: ${ragErr.message}`);
+            }
+            nodeLog.warn('orchestrator.rag_offline_fallback', `RAG database search failed or offline: ${ragErr.message}. Utilizing structured offline context.`, {
+              error: ragErr.message,
+            });
+            ragContext = {
+              verifiedContext: [
+                {
+                  entityId: `entity_${state.projectId}`,
+                  canonicalName: state.userPrompt,
+                  aliases: [],
+                  summary: `Thông tin lịch sử xác thực về chủ đề ${state.userPrompt} (Chế độ offline fallback).`,
+                  citations: ['Đại Việt Sử Ký Toàn Thư'],
+                  confidenceScore: 0.95,
+                },
+              ],
+              aliasTable: {
+                [state.userPrompt]: [],
               },
-            ],
-            aliasTable: {
-              [state.userPrompt]: [],
-            },
-            citations: ['Đại Việt Sử Ký Toàn Thư', 'Khâm Định Việt Sử Thông Giám Cương Mục'],
-          };
+              citations: ['Đại Việt Sử Ký Toàn Thư', 'Khâm Định Việt Sử Thông Giám Cương Mục'],
+            };
+            telemetryAudit.push({
+              timestamp: new Date().toISOString(),
+              node: 'rag_init',
+              level: 'WARN',
+              category: 'FALLBACK',
+              message: `RAG database offline fallback: ${ragErr.message}`,
+              metadata: { error: ragErr.message },
+            });
+          }
         }
-      }
 
-      return {
-        currentStep: 2,
-        status: 'RAG_RETRIEVED',
-        ragContext,
-      };
+        return {
+          currentStep: 2,
+          status: 'RAG_RETRIEVED',
+          ragContext,
+          telemetryAudit,
+        };
+      });
     })
     // Node 2: Chaptering (Micro-Step 0)
     .addNode('chaptering', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return chapteringNode(state);
+      return timedNodeExecution('chaptering', () => chapteringNode(state));
     })
     // Node 3: Scriptwriter (Micro-Step 1A)
     .addNode('scriptwriter', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return scriptwriterNode(state);
+      return timedNodeExecution('scriptwriter', () => scriptwriterNode(state));
     })
     // Node 4: Fact-Checker (Micro-Step 1A-Audit)
     .addNode('fact_checker', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return factCheckerNode(state);
+      return timedNodeExecution('fact_checker', () => factCheckerNode(state));
     })
     // Node 4.5: Human Review Gateway (HITL)
     .addNode('human_review', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      log.warn('orchestrator.human_review_node', `Pipeline paused for manual historical review on project ${state.projectId}`);
+      const nodeLog = getNodeLogger(state, 'human_review');
+      nodeLog.warn('orchestrator.human_review_node', `Pipeline paused for manual historical review on project ${state.projectId}`);
       return {
         status: 'NEEDS_HUMAN_REVIEW',
         needsHumanReview: true,
@@ -107,31 +144,31 @@ export function buildOrchestratorGraph() {
     })
     // Node 5: Scene Segmenter (Micro-Step 1B)
     .addNode('segmenter', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return segmenterNode(state);
+      return timedNodeExecution('segmenter', () => segmenterNode(state));
     })
     // Node 5.2: Keyword Extractor (Micro-Step 1C - refine searchKeywords)
     .addNode('keyword', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return keywordNode(state);
+      return timedNodeExecution('keyword', () => keywordNode(state));
     })
     // Node 5.5: Research Agent (Micro-Step 1C - Online Image Search)
     .addNode('research', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return researchNode(state);
+      return timedNodeExecution('research', () => researchNode(state));
     })
-    // Node 6: Parallel Worker A - TTS Synthesis (Audio & Word Timestamps)
-    .addNode('tts_synthesis', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return ttsSynthesisNode(state);
-    })
-    // Node 7: Parallel Worker B - VLM Asset Inspection & Quality Gate
+    // Node 6: Parallel Worker B - VLM Asset Inspection & Quality Gate
     .addNode('vlm_inspection', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return vlmInspectionNode(state);
+      return timedNodeExecution('vlm_inspection', () => vlmInspectionNode(state));
+    })
+    // Node 7: Parallel Worker A - TTS Synthesis (Audio & Word Timestamps)
+    .addNode('tts_synthesis', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
+      return timedNodeExecution('tts_synthesis', () => ttsSynthesisNode(state));
     })
     // Node 8: Duration Reconciliation (Micro-Step 1B-Reconcile Fan-in)
     .addNode('duration_reconciliation', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return durationReconciliationNode(state);
+      return timedNodeExecution('duration_reconciliation', () => durationReconciliationNode(state));
     })
     // Node 9: JSON Schema Packager & Finalize
     .addNode('packager', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return packagerNode(state);
+      return timedNodeExecution('packager', () => packagerNode(state));
     });
 
   // Flow & Edges with Conditional Resume Support
@@ -174,20 +211,13 @@ export function buildOrchestratorGraph() {
   );
   workflow.addEdge('human_review', END);
 
-  // Parallel Fan-out: from segmenter into Keyword Extractor -> Research Agent
-  // (Worker B precursor) and TTS Synthesis (Worker A)
+  // Deterministic Graph Topology (Single-pass pipeline eliminating race condition):
+  // segmenter -> keyword -> research -> vlm_inspection -> tts_synthesis -> duration_reconciliation -> packager -> END
   workflow.addEdge('segmenter', 'keyword');
-  workflow.addEdge('segmenter', 'tts_synthesis');
   workflow.addEdge('keyword', 'research');
-
-  // Research Agent resolves candidates before the VLM Inspector (Worker B)
   workflow.addEdge('research', 'vlm_inspection');
-
-  // Parallel Fan-in: both workers join at duration_reconciliation
+  workflow.addEdge('vlm_inspection', 'tts_synthesis');
   workflow.addEdge('tts_synthesis', 'duration_reconciliation');
-  workflow.addEdge('vlm_inspection', 'duration_reconciliation');
-
-  // Packaging and Termination
   workflow.addEdge('duration_reconciliation', 'packager');
   workflow.addEdge('packager', END);
 

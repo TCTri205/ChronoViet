@@ -268,11 +268,10 @@ Hệ thống thiết lập **Cơ chế Kiểm tra Lỗi 4 Tầng & Escalation Ma
 
 ```mermaid
 graph TD
-    A[Bắt đầu State Pipeline] --> B[Step 0: Outline & Chaptering Agent]
-    B --> C{Vòng lặp từng Chapter}
-    
-    C --> D1[Step 1A: Scriptwriter Agent + Narrative Context]
-    D1 --> D2[Step 1A-Audit: Hybrid Fact-Checker + Alias Table]
+    A[Bắt đầu State Pipeline] --> RAG[rag_init: Nạp RAG Context]
+    RAG --> B[Step 0: Chaptering Agent]
+    B --> D1[Step 1A: Scriptwriter Agent + Narrative Context]
+    D1 --> D2[Step 1A-Audit: Hybrid Fact-Checker + Alias Table + Guardrails]
     
     D2 -- Lỗi Lịch Sử / Schema --> D2_Choice{Kiểm tra Retry Tier}
     D2_Choice -- Tier 0: Retry <= 2 --> D1_Retry[LLM Self-Correction Prompt] --> D1
@@ -281,36 +280,17 @@ graph TD
     D2_Choice -- Tier 3: Unresolvable --> D1_Human[Flag NEEDS_HUMAN_REVIEW & Notify Webhook] --> STOP[Dừng chờ Biên Tập Viên]
 
     D2 -- Hợp lệ --> D3[Step 1B: Scene Segmenter]
-    D3 --> E[Parallel Workers Dispatcher]
     
-    subgraph Parallel Execution Per Scene
-        E --> F1[Parallel Worker A: VieNeu TTS + Hash Idempotency]
-        E --> F2[Parallel Worker B: Asset Crawl + Whitelisted License Filter]
+    subgraph Single-Pass Deterministic Pipeline
+        D3 --> K1[Step 1C: Keyword Extractor]
+        K1 --> K2[Step 1C-Search: Research Agent Image Candidates]
+        K2 --> VLM[Step 2: VLM Inspection & Layout Mode Selection]
+        VLM --> TTS[Step 3: VieNeu TTS Audio Synthesis + Word Timestamps]
+        TTS --> REC[Step 4: Duration Reconciliation Engine Pacing Error < 3%]
+        REC --> PKG[Step 5: Packager Agent Zod Validated JSON Schema]
     end
 
-    F1 --> G1[Tính âm thanh audioDurationMs]
-    
-    F2 --> F2_1[Crawl 3 ảnh Đợt 1] --> F2_VLM{Local VLM / Gemini Khả Dụng?}
-    F2_VLM -- "Eval strict: Local Unified VLM (qwen3.8-27b)" --> F2_Score[Local VLM Inspection]
-    F2_VLM -- "Dev + GEMINI_API_KEY" --> F2_Gemini[Cloud Gemini VLM Inspection]
-    F2_VLM -- "Dev + Rate Limit / Timeout" --> F2_Local[Local Offline CLIP Scorer Fallback]
-    
-    F2_Score & F2_Gemini & F2_Local --> F2_Check{Max Score Candidate >= 60?}
-    F2_Check -- Có --> F2_Pass[Chọn ảnh + Lưu License & Attribution] --> G2
-    F2_Check -- Không --> F2_Batch2[Crawl 3 ảnh Đợt 2: Từ khóa mở rộng] --> F2_Check2{Max 6 Candidates >= 60?}
-    F2_Check2 -- Có --> F2_Pass2[Chọn ảnh tốt nhất trong 6 ảnh] --> G2
-    F2_Check2 -- Không --> F2_Fall[Code Rules Engine: Layout Rotation PURE_CODE] --> G2
-
-    G1 & G2 --> H_Reconcile[Step 1B-Reconcile: Duration Reconciliation Engine]
-    H_Reconcile -- Lệch > 15% --> H_Adjust[Điều chỉnh Pacing / Ghép Scene / Trim Script] --> H_Reconcile
-    H_Reconcile -- Đạt chuẩn <= 15% --> H_Final[Code Rules Engine: Frame Math & Subtitles]
-
-    H_Final --> I{Zod v4.1 Final Runtime Validation}
-    I -- Valid Schema --> J[Invoke Remotion Render Engine Tool]
-    I -- Invalid Schema --> I1[Auto-Sanitize Defaults] --> J
-
-    J -- Render Success --> K[Xuất Video MP4 Hoàn Thành & Clean Temp & Update Narrative State]
-    K --> C
+    PKG --> END[Hoàn thành Kịch bản & Lưu project_schema.json]
 ```
 
 ---

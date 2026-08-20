@@ -74,13 +74,18 @@ Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai bá
 
 ## 🚀 Hướng Dẫn Khởi Chạy (Quickstart)
 
-### Khởi chạy bằng Docker Compose (Khuyên dùng và Chuẩn hóa)
+### Khởi chạy bằng Unified CLI hoặc Docker Compose (Khuyên dùng)
 ```bash
-# Khởi chạy riêng TTS service
-docker compose up -d vieneu-tts-service
+# Cách 1: Khởi chạy nhanh qua Unified AI CLI (Tự động quản lý vòng đời)
+pnpm ai:tts
+# hoặc: pnpm ai tts
 
-# Hoặc khởi chạy cùng toàn bộ hạ tầng (Postgres, Redis, TTS)
-pnpm stack:infra
+# Cách 2: Khởi chạy qua Docker Compose profile
+docker compose --profile tts up -d
+
+# Kiểm tra trạng thái sức khỏe
+pnpm ai
+# hoặc: pnpm ai:status
 ```
 > Service được đóng gói container `vieneu_tts_engine`, mở cổng `8080`, tự động mount volume `./media:/app/media` và sẵn sàng phục vụ endpoint `/api/v1/synthesize`, `/health`, `/static/audio/`.
 

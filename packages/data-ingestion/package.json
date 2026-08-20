@@ -3,24 +3,39 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "clean": "rm -rf dist",
     "prebuild": "pnpm clean",
     "build": "tsc",
     "typecheck": "tsc --noEmit && tsc --noEmit -p eval/tsconfig.json",
     "lint": "tsc --noEmit",
-    "eval": "tsx eval/runner.ts",
-    "eval:diagnostic": "tsx src/cli/ingest-diagnostic.ts",
     "test": "vitest run --dir src/ --passWithNoTests",
     "test:eval": "vitest run --dir eval/ --passWithNoTests",
     "db:init": "tsx src/cli/init-db.ts",
+    "ingest:vector": "tsx src/cli/ingest-knowledge.ts --stage=vector",
+    "ingest:graph": "tsx src/cli/ingest-knowledge.ts --stage=graph",
+    "ingest:stage1": "tsx src/cli/ingest-knowledge.ts --stage=1",
+    "ingest:stage2": "tsx src/cli/ingest-knowledge.ts --stage=2",
     "ingest:knowledge": "tsx src/cli/ingest-knowledge.ts",
     "crawl:corpus": "tsx src/cli/crawl-corpus.ts",
     "crawl:all": "tsx src/cli/crawl-corpus.ts --all",
+    "eval": "tsx eval/runner.ts",
+    "eval:vector": "tsx eval/vector-eval-runner.ts",
+    "eval:graph": "tsx eval/graph-eval-runner.ts",
+    "eval:ner": "tsx eval/ner-runner.ts",
+    "eval:triples": "tsx eval/triples-runner.ts",
+    "eval:diagnostic": "tsx src/cli/ingest-diagnostic.ts",
     "eval:seed": "tsx src/cli/seed-eval.ts",
     "extract:pdf": "tsx src/cli/extract-pdf-md.ts",
     "crawl:pdf-extracted": "tsx src/cli/crawl-pdf-extracted.ts",
-    "rag:re-resolve": "tsx src/cli/re-resolve-cli.ts"
+    "rag:re-resolve": "tsx src/cli/re-resolve-cli.ts",
+    "db:audit-quarantine": "tsx src/cli/quarantine-inspector.ts"
   },
   "dependencies": {
     "@chronoviet/shared-spec": "workspace:*",

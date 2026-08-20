@@ -142,19 +142,40 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     };
 
     const isOllamaEmbeddingsEndpoint = apiUrl.includes('11434') || apiUrl.includes('/api/embeddings');
+    // BGE-M3 max context is 8192 tokens (~24,000 chars). Clamp text to prevent physical batch overflow
+    const maxChars = Number(process.env.EMBEDDING_MAX_CHARS) || 24000;
+    const sanitizedText = trimmed.length > maxChars ? trimmed.slice(0, maxChars) : trimmed;
+
     const reqBody = isOllamaEmbeddingsEndpoint
-      ? { model: resolvedEmbeddingModel, prompt: trimmed }
-      : { model: resolvedEmbeddingModel, input: trimmed };
+      ? { model: resolvedEmbeddingModel, prompt: sanitizedText }
+      : { model: resolvedEmbeddingModel, input: sanitizedText };
 
-    const res = await fetch(apiUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(reqBody),
-      signal: AbortSignal.timeout(5000),
-    });
+    const timeoutMs = envConfig.NODE_ENV === 'test' ? 1000 : (envConfig.EMBEDDING_TIMEOUT_MS || 60000);
+    const maxAttempts = envConfig.NODE_ENV === 'test' ? 1 : 2;
 
-    if (!res.ok) {
-      const err = new Error(`Embedding API HTTP ${res.status}: ${res.statusText}`);
+    let res: Response | null = null;
+    let lastFetchError: unknown = null;
+
+    // Execute with retry on transient failure
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        res = await fetch(apiUrl, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(reqBody),
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+        if (res.ok) break;
+      } catch (fErr) {
+        lastFetchError = fErr;
+        if (attempt === 0 && maxAttempts > 1) {
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+    }
+
+    if (!res || !res.ok) {
+      const err = lastFetchError instanceof Error ? lastFetchError : new Error(`Embedding API HTTP ${res?.status || 'ERR'}: ${res?.statusText || 'Fetch failed'}`);
       throw err;
     }
 
@@ -186,24 +207,23 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     embeddingCache.set(trimmed, normalized);
     return normalized;
   } catch (err) {
-    serverUnreachableUntil = Date.now() + 30000; // Retry after 30s cooldown
+    serverUnreachableUntil = Date.now() + 60000; // 60s cooldown for unreachable server
     const errMsg = err instanceof Error ? err.message : String(err);
     if (envConfig.EVAL_STRICT) {
       throw new Error(`[EVAL_STRICT] Embedding server unavailable during evaluation; pseudo-random fallback disabled: ${errMsg}`);
     }
-    log.error('embedding.api_failed', 'Embedding API request failed; falling back to deterministic pseudo-random generator', {
-      error: err,
-      apiUrl,
-      model: resolvedEmbeddingModel,
-    });
-
     if (!warnedFailedApiUrl) {
+      log.warn('embedding.api_failed', 'Embedding API server offline/unreachable; using deterministic pseudo-random fallback', {
+        error: errMsg,
+        apiUrl,
+        model: resolvedEmbeddingModel,
+      });
       logFallbackAlert({
         subsystem: 'EMBEDDING',
-        primaryTarget: `Embedding API Server (${apiUrl}) [${resolvedEmbeddingModel}]`,
+        primaryTarget: `Embedding API Server (${resolvedEmbeddingModel})`,
         fallbackTarget: 'Deterministic Pseudo-Random Vector Generator',
         reason: errMsg,
-        actionRequired: `Verify embedding server is running on ${apiUrl}`,
+        actionRequired: 'Ensure local embedding server is running on port 8090 or check EMBEDDING_API_URL',
       });
       warnedFailedApiUrl = true;
     }
@@ -215,10 +235,127 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 }
 
 /**
- * Batch embedding generation helper
+ * Batch generate embeddings for multiple texts.
+ * Automatically utilizes native OpenAI-compatible batching when available,
+ * and falls back gracefully to individual embedding calls when required.
  */
-export async function generateEmbeddingsBatch(texts: string[]): Promise<number[][]> {
-  return Promise.all(texts.map((t) => generateEmbedding(t)));
+export async function generateEmbeddingsBatch(
+  texts: string[],
+  concurrency = envConfig.EMBEDDING_CONCURRENCY || 4
+): Promise<number[][]> {
+  if (!texts || texts.length === 0) return [];
+
+  const results: number[][] = new Array(texts.length);
+  const uncachedIndices: number[] = [];
+  const uncachedTexts: string[] = [];
+
+  // 1. Check cache first
+  for (let i = 0; i < texts.length; i++) {
+    const trimmed = (texts[i] || '').trim();
+    if (!trimmed) {
+      results[i] = new Array(EMBEDDING_DIMENSION).fill(0);
+    } else if (embeddingCache.has(trimmed)) {
+      results[i] = embeddingCache.get(trimmed)!;
+    } else {
+      uncachedIndices.push(i);
+      uncachedTexts.push(trimmed);
+    }
+  }
+
+  if (uncachedIndices.length === 0) {
+    return results;
+  }
+
+  const apiUrl = envConfig.EMBEDDING_API_URL;
+  const isCircuitOpen = serverUnreachableUntil > Date.now();
+  const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
+  const isOllamaEmbeddingsEndpoint = apiUrl?.includes('11434') || apiUrl?.includes('/api/embeddings');
+
+  // 2. Native Multi-Text Batch Embedding via OpenAI-compatible endpoint (Parallel Multi-Batch Pool)
+  if (apiUrl && !isCircuitOpen && !isOllamaEmbeddingsEndpoint) {
+    const targetApiUrl = apiUrl;
+    const batchSize = envConfig.EMBEDDING_BATCH_SIZE || 16;
+    const timeoutMs = envConfig.NODE_ENV === 'test' ? 1000 : (envConfig.EMBEDDING_TIMEOUT_MS || 60000);
+    const maxChars = Number(process.env.EMBEDDING_MAX_CHARS) || 24000;
+    const concurrencySlots = envConfig.EMBEDDING_CONCURRENCY || 4;
+
+    interface BatchTask {
+      sliceTexts: string[];
+      indices: number[];
+    }
+
+    const tasks: BatchTask[] = [];
+    for (let bStart = 0; bStart < uncachedTexts.length; bStart += batchSize) {
+      tasks.push({
+        sliceTexts: uncachedTexts.slice(bStart, bStart + batchSize),
+        indices: uncachedIndices.slice(bStart, bStart + batchSize),
+      });
+    }
+
+    let nextTaskIdx = 0;
+    let nativeBatchSuccess = true;
+
+    const targetUrl = apiUrl;
+    async function batchWorker() {
+      while (nextTaskIdx < tasks.length && nativeBatchSuccess) {
+        const task = tasks[nextTaskIdx++];
+        const sanitizedSlice = task.sliceTexts.map((t) => (t.length > maxChars ? t.slice(0, maxChars) : t));
+
+        try {
+          const res = await fetch(targetUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: resolvedEmbeddingModel, input: sanitizedSlice }),
+            signal: AbortSignal.timeout(timeoutMs),
+          });
+
+          if (!res.ok) throw new Error(`Batch embedding HTTP ${res.status}: ${res.statusText}`);
+          const data = (await res.json()) as any;
+
+          if (data.data && Array.isArray(data.data) && data.data.length === task.sliceTexts.length) {
+            for (let k = 0; k < task.sliceTexts.length; k++) {
+              const rawVec = data.data[k]?.embedding;
+              if (rawVec && Array.isArray(rawVec)) {
+                const adapted = adaptDimension(rawVec, EMBEDDING_DIMENSION);
+                const normalized = normalizeVector(adapted);
+                const origIdx = task.indices[k];
+                results[origIdx] = normalized;
+                if (embeddingCache.size >= MAX_CACHE_SIZE) embeddingCache.clear();
+                embeddingCache.set(task.sliceTexts[k], normalized);
+              } else {
+                throw new Error('Malformed vector in batch response');
+              }
+            }
+          } else {
+            throw new Error('Batch response length mismatch');
+          }
+        } catch {
+          nativeBatchSuccess = false;
+          break;
+        }
+      }
+    }
+
+    const workerCount = Math.min(concurrencySlots, tasks.length);
+    const workers = Array.from({ length: workerCount }, () => batchWorker());
+    await Promise.all(workers);
+
+    if (nativeBatchSuccess) {
+      return results;
+    }
+  }
+
+  // 3. Fallback: Concurrency-bounded Individual Generation
+  for (let i = 0; i < uncachedIndices.length; i += concurrency) {
+    const batchIndices = uncachedIndices.slice(i, i + concurrency);
+    const batchTexts = uncachedTexts.slice(i, i + concurrency);
+    const batchResults = await Promise.all(batchTexts.map((t) => generateEmbedding(t)));
+    for (let j = 0; j < batchResults.length; j++) {
+      results[batchIndices[j]] = batchResults[j];
+    }
+  }
+
+  return results;
 }
 
 

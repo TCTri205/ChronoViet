@@ -12,3 +12,6 @@ export * from './image-search.js';
 export * from './realtime.js';
 export * from './telemetry/metrics.js';
 export * from './api-key-rotator.js';
+export * from './resource-sentinel.js';
+export * from './circuit-breaker.js';
+

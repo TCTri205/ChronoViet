@@ -1,8 +1,10 @@
-/**
- * Internal Data Types for Ingestion ETL Engine
- */
+import {
+  SourceReliability,
+  StageDurationBreakdown,
+  IngestionExecutionTelemetry,
+} from '@chronoviet/shared-spec';
 
-import { SourceReliability } from '@chronoviet/shared-spec';
+export type { StageDurationBreakdown, IngestionExecutionTelemetry };
 
 export interface RawDocumentInput {
   id: string;

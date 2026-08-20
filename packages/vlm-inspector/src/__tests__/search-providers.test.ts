@@ -58,6 +58,18 @@ describe('SerpApiImageSearchProvider', () => {
     expect(result[0].imageUrl).toContain('upload.wikimedia.org');
     expect(result[0].license).toBe('PUBLIC_DOMAIN');
   });
+
+  it('should handle HTTP error gracefully and return empty array', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+    } as any));
+
+    const provider = new SerpApiImageSearchProvider('test-key');
+    const result = await provider.search('coffee', 3);
+    expect(result).toEqual([]);
+  });
 });
 
 describe('TavilyImageSearchProvider', () => {
@@ -82,6 +94,18 @@ describe('TavilyImageSearchProvider', () => {
     const result = await provider.search('Hai Bà Trưng', 3);
     expect(result.length).toBe(1);
     expect(result[0].imageUrl).toContain('wikimedia.org');
+  });
+
+  it('should handle HTTP error gracefully and return empty array', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 429,
+      statusText: 'Too Many Requests',
+    } as any));
+
+    const provider = new TavilyImageSearchProvider('test-key');
+    const result = await provider.search('Hai Bà Trưng', 3);
+    expect(result).toEqual([]);
   });
 });
 
@@ -117,6 +141,16 @@ describe('BraveImageSearchProvider', () => {
     const result = await provider.search('Trống đồng', 3);
     expect(result.length).toBe(1);
     expect(result[0].imageUrl).toContain('upload.wikimedia.org');
+  });
+
+  it('should handle network exception gracefully and return empty array', async () => {
+    globalThis.fetch = vi.fn(async () => {
+      throw new Error('Network timeout');
+    });
+
+    const provider = new BraveImageSearchProvider('test-key');
+    const result = await provider.search('Trống đồng', 3);
+    expect(result).toEqual([]);
   });
 });
 

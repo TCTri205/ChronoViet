@@ -13,15 +13,18 @@ Gói `@chronoviet/agent-orchestrator` đảm nhận nhiệm vụ biên tập k�
    * Lập kịch bản video 100% Data-Driven tuân thủ `VideoProjectSchema` (SSOT) cho 5 thể loại lịch sử (*BIOGRAPHY*, *BATTLE*, *DYNASTY*, *MYSTERY*, *ARTIFACT*).
    * Phân cấp theo Chương/Hồi (`chapteringNode`) động theo thời lượng video (`Math.max(1, Math.round(totalTargetSec / 150))`).
    * Phân chia phân cảnh (`segmenterNode`), ánh xạ Layout Modes theo mẫu (`templateId`: *QUICK_SHORTS*, *MODERN_NEWS*, *HISTORICAL_DOCUMENTARY*).
-   * Thực thi song song có kiểm soát Concurrency (Batching = 4): Tổng hợp âm thanh VieNeu TTS (`ttsSynthesisNode`) và Crawl ảnh trực quan (`researchNode` -> `vlmInspectionNode`).
+   * **Deterministic Sequential Pipeline:** Khử hoàn toàn Race Condition Fan-in với luồng thực thi: `segmenter` $\rightarrow$ `keyword` $\rightarrow$ `research` $\rightarrow$ `vlm_inspection` $\rightarrow$ `tts_synthesis` $\rightarrow$ `duration_reconciliation` $\rightarrow$ `packager` $\rightarrow$ `END`. Đảm bảo mỗi node chạy đúng 1 lần duy nhất, `project_schema.json` được đóng gói hoàn chỉnh.
    * Cân bằng thời lượng âm thanh và nhịp điệu hình ảnh (`durationReconciliationNode`), cam kết Pacing Error $< 3.0\%$.
-   * Đóng gói JSON Schema Remotion hoàn chỉnh (`packagerNode`).
-2. **Native Checkpointing & Human-In-The-Loop (HITL):**
-   * Lưu trữ trạng thái đa tầng (PostgreSQL + Local Disk).
+2. **Observability & Prometheus RED Metrics:**
+   * **Context-Bound Child Loggers (`getNodeLogger`):** Truyền `correlationId` và metadata `projectId`, `node` vào 100% dòng log.
+   * **Prometheus Metrics:** Đo lường độ trễ từng node (`chronoviet_orchestrator_node_duration_seconds`) và phân phối sai số nhịp độ (`chronoviet_orchestrator_pacing_error_percent`).
+   * **Telemetry Audit (`telemetryAudit`):** Lưu vết các cảnh báo fallback (RAG offline fallback, LLM self-correction, TTS synthetic fallback) trong state.
+3. **Native Checkpointing & Human-In-The-Loop (HITL):**
+   * Lưu trữ trạng thái không đồng bộ (Non-blocking async file I/O + PostgreSQL) với cơ chế ghi log chẩn đoán khi mất kết nối.
    * Hỗ trợ ngắt duyệt khi vi phạm nghiêm trọng (`NEEDS_HUMAN_REVIEW`) và tiếp tục luồng thực thi an toàn (`resumeOrchestratorPipeline`) mà không nhân bản dữ liệu hay chạy lại node tiền đề.
-3. **Automated Guardrail Gates:**
-   * **Folklore Guardrail Gate (`folklore-validator.ts`):** Tự động quét Regex Pattern Matching trên các câu thoại trích xuất từ nguồn Dã sử / Truyền thuyết (Level 3), ép dùng các cụm từ tín hiệu giả thuyết (*"theo truyền thuyết"*, *"tương truyền"*, *"dân gian kể"*...).
-   * **NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts`):** Đánh giá điểm suy luận Entailment Score giữa câu thoại kịch bản và ngữ cảnh RAG gốc (Yêu cầu $\ge 0.80$, trả về `NEUTRAL` khi không có ground truth).
+4. **Automated Guardrail Gates:**
+   * **Folklore Guardrail Gate (`folklore-validator.ts`):** Tự động quét Regex Pattern Matching trên các câu thoại trích xuất từ nguồn Dã sử / Truyền thuyết (Level 3), ép dùng các cụm từ tín hiệu giả thuyết (*"theo truyền thuyết"*, *"tương truyền"*, *"dân gian kể"*...) theo ngữ cảnh đoạn văn mở đầu (Paragraph-Aware).
+   * **NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts`):** Đánh giá điểm suy luận Entailment Score giữa câu thoại kịch bản và ngữ cảnh RAG gốc với bộ lọc Stopword Tiếng Việt để bảo toàn trọng số thực thể lịch sử (Yêu cầu $\ge 0.80$, trả về `NEUTRAL` khi không có ground truth).
 
 ---
 

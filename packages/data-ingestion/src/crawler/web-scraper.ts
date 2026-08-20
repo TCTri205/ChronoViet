@@ -1,19 +1,17 @@
-/**
- * General Web Page Crawler & Scraper
- * Fetches HTML from target URLs, extracts title and main content, sanitizes via QualityGate, and saves to raw_corpus/
- */
-
 import path from 'path';
 import { promises as fs } from 'fs';
 import { QualityGateValidator } from './quality-gate.js';
-import { CorpusCrawlItemResult } from '@chronoviet/shared-spec';
+import { CorpusCrawlItemResult, createLogger } from '@chronoviet/shared-spec';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 import * as cheerio from 'cheerio';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 export interface WebScraperOptions {
   outputPath?: string;
   minWordCount?: number;
   dynasty?: string;
+  correlationId?: string;
 }
 
 export class WebScraper {
@@ -25,6 +23,13 @@ export class WebScraper {
 
   public async fetchUrl(targetUrl: string, options: WebScraperOptions = {}): Promise<CorpusCrawlItemResult> {
     const targetDir = options.outputPath || path.resolve(findMonorepoRoot(), 'data', 'raw_corpus', 'web');
+    const startTime = Date.now();
+    const correlationId = options.correlationId;
+
+    log.info('crawler.web_fetch_started', `Starting web crawl for URL: ${targetUrl}`, {
+      correlationId,
+      url: targetUrl,
+    });
 
     try {
       const response = await fetch(targetUrl, {
@@ -32,6 +37,8 @@ export class WebScraper {
           'User-Agent': 'ChronoVietBot/1.0 (https://chronoviet.internal; historical-rag-engine)',
         },
       });
+
+      const httpDurationMs = Date.now() - startTime;
 
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
@@ -73,6 +80,13 @@ export class WebScraper {
       });
 
       if (!sanitized.isValid) {
+        log.warn('crawler.web_quality_rejected', `Quality gate rejected web content: "${pageTitle}"`, {
+          correlationId,
+          url: targetUrl,
+          title: pageTitle,
+          reason: sanitized.rejectReason,
+          wordCount: sanitized.wordCount,
+        });
         return {
           title: pageTitle,
           sourceUrl: targetUrl,
@@ -89,6 +103,16 @@ export class WebScraper {
 
       await fs.writeFile(filePath, sanitized.markdownContent, 'utf-8');
 
+      const totalDurationMs = Date.now() - startTime;
+      log.info('crawler.web_fetch_success', `Successfully crawled and saved "${pageTitle}"`, {
+        correlationId,
+        url: targetUrl,
+        title: pageTitle,
+        savedPath: filePath,
+        wordCount: sanitized.wordCount,
+        durationMs: totalDurationMs,
+      });
+
       return {
         title: sanitized.title,
         sourceUrl: targetUrl,
@@ -98,6 +122,12 @@ export class WebScraper {
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
+      log.error('crawler.web_fetch_failed', `Failed fetching URL "${targetUrl}"`, {
+        correlationId,
+        url: targetUrl,
+        error: errorMsg,
+        durationMs: Date.now() - startTime,
+      });
       return {
         title: targetUrl,
         sourceUrl: targetUrl,

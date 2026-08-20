@@ -1,6 +1,13 @@
 /**
- * Knowledge Graph Triple Extractor (Subject -> Relation -> Object)
- * Component 2 of Module 0 Data Preprocessing & Ingestion ETL
+ * 2-Stage Knowledge Graph Triple Extractor (Subject -> Relation -> Object)
+ * Component 2 of Module 0 Data Preprocessing & Ingestion ETL Engine
+ *
+ * Characteristics:
+ * - 2-Stage Pipeline:
+ *   Stage 1: Pure TS Vietnamese Historical NER Candidate Extractor (< 1ms)
+ *   Stage 2: Lightweight LLM (Qwen3.5-4B-Instruct Q4_K_M on Port 8094) / Fallback Engine
+ * - Strict Canonical Directionality Validation Matrix
+ * - Constrained Historical Relation Taxonomy (8 Canonical Types)
  */
 
 import {
@@ -10,161 +17,331 @@ import {
   logFallbackAlert,
   createLogger,
   formatConciseError,
+  HistoricalRelationType,
+  CandidateEntitySpan,
+  getCanonicalEntityIdPrefix,
 } from '@chronoviet/shared-spec';
+import { extractHistoricalCandidateSpans, slugify, buildCanonicalId, isValidCandidateSpan } from './text/vietnamese-ner.js';
+
+export function isValidEntityName(name: string): boolean {
+  return isValidCandidateSpan(name);
+}
 
 const log = createLogger({ service: 'data-ingestion' });
 
 export interface ExtractedTriple {
   sourceEntityId: string;
   sourceEntityName: string;
-  relationType: 'PART_OF' | 'LED_BY' | 'HAPPENED_IN' | 'HAPPENED_AT' | 'SAME_AS_LOCATION' | 'ALIAS_OF' | 'ROYAL_LINEAGE' | 'MENTIONED_IN';
+  relationType: HistoricalRelationType;
   targetEntityId: string;
   targetEntityName: string;
   confidence: number;
 }
 
-const GENERIC_EXCLUSION_TERMS = new Set([
-  'năm', 'tháng', 'ngày', 'vào', 'thời', 'người', 'những', 'đại', 'vua', 'quân',
-  'tướng', 'nhà', 'triều', 'nước', 'một', 'các', 'được', 'có', 'tại', 'sau', 'khi',
-  'lại', 'về', 'đã', 'sẽ', 'cũng', 'thì', 'là', 'sự', 'việc', 'đây', 'đó', 'ông',
-  'bà', 'cha', 'mẹ', 'con', 'cháu', 'anh', 'em', 'trận', 'cuộc', 'bởi', 'do',
-  'tất cả', 'phần lớn', 'nhiều', 'rất', 'quá', 'rồi', 'đang', 'như', 'vì'
-]);
-
-const VI_CAP_WORD = '(?:\\p{Lu}\\p{Ll}*)';
-const PROPER_NOUN_PATTERN = `((?:(?:[Nn]hà|[Tt]riều|[Qq]uân|[Nn]ước|[Đđ]ại)\\s+)?${VI_CAP_WORD}(?:\\s+${VI_CAP_WORD}){0,4})`;
-
-/**
- * Strict validation filter to prevent LLM hallucination and generic tokens
- */
-export function isValidEntityName(name: string): boolean {
-  if (!name || typeof name !== 'string') return false;
-  const clean = name.trim();
-  if (clean.length < 3 || clean.length > 50) return false;
-  if (/^\d+/.test(clean)) return false; // Starts with digit/footnote number
-  if (/[\[\]\(\)=\/\\<>|#*]/.test(clean)) return false; // Special characters/markup
-  const words = clean.split(/\s+/);
-  if (words.length > 5) return false; // Sentences or long clauses
-  if (GENERIC_EXCLUSION_TERMS.has(clean.toLowerCase())) return false;
-  
-  const firstWordLower = words[0].toLowerCase();
-  const isPrefix = ['nhà', 'triều', 'quân', 'nước', 'đại'].includes(firstWordLower) && words.length > 1;
-  if (!isPrefix && !/^\p{Lu}/u.test(words[0])) return false;
-  // Last word must start with an uppercase letter or digit
-  if (!/^\p{Lu}/u.test(words[words.length - 1]) && !/^[0-9]/.test(words[words.length - 1])) return false;
-  return true;
+export interface DetailedExtractionResult {
+  triples: ExtractedTriple[];
+  candidateSpans?: CandidateEntitySpan[];
+  provider?: string;
+  targetProvider?: string;
+  targetId?: string;
+  model?: string;
+  strategy: 'ensemble_ai' | 'regex_only' | 'rule_based_fallback';
+  durationMs: number;
+  llmError?: string;
 }
 
-const HISTORICAL_PATTERNS: Array<{
-  regex: RegExp;
-  relation: ExtractedTriple['relationType'];
-  sourceGroup: number;
-  targetGroup: number;
-  confidence: number;
-}> = [
-  // LED_BY: e.g. "Trận Ngọc Hồi do Quang Trung chỉ huy", "Quang Trung lãnh đạo quân Tây Sơn"
-  {
-    regex: new RegExp(`(?:[Tt]rận|[Cc]hiến dịch|[Cc]uộc khởi nghĩa)\\s+${PROPER_NOUN_PATTERN}\\s+(?:do|dưới sự chỉ huy của|lãnh đạo bởi)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
-    relation: 'LED_BY',
-    sourceGroup: 1,
-    targetGroup: 2,
-    confidence: 0.95,
-  },
-  {
-    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:chỉ huy|lãnh đạo|tổng tư lệnh|Chỉ huy|Lãnh đạo|Tổng tư lệnh)\\s+(?:[Tt]rận|[Cc]uộc khởi nghĩa|[Cc]hiến dịch)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
-    relation: 'LED_BY',
-    sourceGroup: 2,
-    targetGroup: 1,
-    confidence: 0.95,
-  },
-  {
-    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:lãnh đạo|thống lĩnh|chỉ huy|Lãnh đạo|Thống lĩnh|Chỉ huy)\\s+(?:quân đội|quân dân|đại quân|quân)?\\s*${PROPER_NOUN_PATTERN}`, 'gu'),
-    relation: 'LED_BY',
-    sourceGroup: 1,
-    targetGroup: 2,
-    confidence: 0.9,
-  },
-  // HAPPENED_AT / HAPPENED_IN: e.g. "Trận Tốt Động diễn ra tại Chúc Động"
-  {
-    regex: new RegExp(`(?:[Tt]rận|[Cc]hiến dịch|[Ss]ự kiện)\\s+${PROPER_NOUN_PATTERN}\\s+(?:diễn ra tại|xảy ra ở|tại)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
-    relation: 'HAPPENED_AT',
-    sourceGroup: 1,
-    targetGroup: 2,
-    confidence: 0.9,
-  },
-  {
-    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:đánh tan|đại phá|tiêu diệt|chiến thắng|Đánh tan|Đại phá|Tiêu diệt|Chiến thắng)\\s+(?:quân|giặc|đại quân)?\\s*${PROPER_NOUN_PATTERN}`, 'gu'),
-    relation: 'LED_BY',
-    sourceGroup: 1,
-    targetGroup: 2,
-    confidence: 0.88,
-  },
-  // ALIAS_OF: e.g. "Quang Trung tức là Nguyễn Huệ", "Nguyễn Huệ tên thật là Hồ Thơm"
-  {
-    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:tức là|còn gọi là|tên thật là|tên hiệu là|tên gọi khác là|Tức là|Còn gọi là|Tên thật là)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
-    relation: 'ALIAS_OF',
-    sourceGroup: 1,
-    targetGroup: 2,
-    confidence: 1.0,
-  },
-  // PART_OF / ROYAL_LINEAGE
-  {
-    regex: new RegExp(`${PROPER_NOUN_PATTERN}\\s+(?:thuộc triều đại|thời kỳ|dưới thời|thời|Thuộc triều đại|Thời kỳ|Dưới thời|Thời)\\s+${PROPER_NOUN_PATTERN}`, 'gu'),
-    relation: 'PART_OF',
-    sourceGroup: 1,
-    targetGroup: 2,
-    confidence: 0.85,
-  },
-];
+export interface ExtractionOptions {
+  strict?: boolean;
+  allowFallback?: boolean;
+  timeoutMs?: number;
+  regexOnly?: boolean;
+  stage?: 'vector' | 'graph' | 'all';
+  correlationId?: string;
+}
+
+let warnedLlmOffline = false;
+
+const VALID_RELATIONS = new Set<HistoricalRelationType>([
+  'PART_OF',
+  'LED_BY',
+  'HAPPENED_IN',
+  'HAPPENED_AT',
+  'SAME_AS_LOCATION',
+  'ALIAS_OF',
+  'ROYAL_LINEAGE',
+  'MENTIONED_IN',
+]);
 
 /**
- * Extracts triples from historical text content using pattern-based extraction & canonical dictionary detection
+ * Validate and enforce Canonical Directionality Matrix ($S \to R \to O$)
+ */
+export function validateAndCanonicalizeTriple(
+  source: { id: string; name: string; type?: string },
+  relation: HistoricalRelationType,
+  target: { id: string; name: string; type?: string },
+  confidence: number = 0.95
+): ExtractedTriple | null {
+  if (!source.id || !target.id || !relation || !VALID_RELATIONS.has(relation)) {
+    return null;
+  }
+
+  let sId = source.id.toLowerCase();
+  let sName = source.name;
+  let tId = target.id.toLowerCase();
+  let tName = target.name;
+  let rel = relation;
+
+  // 1. LED_BY: Event / Movement / Org -> Person
+  if (rel === 'LED_BY') {
+    if (sId.startsWith('person_') && (tId.startsWith('event_') || tId.startsWith('org_'))) {
+      // Invert: Person -[LED_BY]-> Event => Event -[LED_BY]-> Person
+      const tempId = sId;
+      const tempName = sName;
+      sId = tId;
+      sName = tName;
+      tId = tempId;
+      tName = tempName;
+    }
+  }
+
+  // 2. HAPPENED_AT: Event -> Location
+  if (rel === 'HAPPENED_AT') {
+    if (sId.startsWith('loc_') && tId.startsWith('event_')) {
+      // Invert: Loc -[HAPPENED_AT]-> Event => Event -[HAPPENED_AT]-> Loc
+      const tempId = sId;
+      const tempName = sName;
+      sId = tId;
+      sName = tName;
+      tId = tempId;
+      tName = tempName;
+    }
+  }
+
+  // 3. HAPPENED_IN: Event -> Dynasty / Era
+  if (rel === 'HAPPENED_IN') {
+    if (sId.startsWith('dynasty_') && tId.startsWith('event_')) {
+      const tempId = sId;
+      const tempName = sName;
+      sId = tId;
+      sName = tName;
+      tId = tempId;
+      tName = tempName;
+    }
+  }
+
+  // 4. SAME_AS_LOCATION: Historical Location -> Modern Location
+  if (rel === 'SAME_AS_LOCATION') {
+    if (!sId.startsWith('loc_')) sId = `loc_${slugify(sName)}`;
+    if (!tId.startsWith('loc_')) tId = `loc_${slugify(tName)}`;
+  }
+
+  // 5. MENTIONED_IN: Entity -> Document
+  if (rel === 'MENTIONED_IN') {
+    if (sId.startsWith('doc_') && !tId.startsWith('doc_')) {
+      const tempId = sId;
+      const tempName = sName;
+      sId = tId;
+      sName = tName;
+      tId = tempId;
+      tName = tempName;
+    }
+  }
+
+  // Self-loop prevention
+  if (sId === tId) {
+    return null;
+  }
+
+  return {
+    sourceEntityId: sId,
+    sourceEntityName: sName,
+    relationType: rel,
+    targetEntityId: tId,
+    targetEntityName: tName,
+    confidence: Number(confidence.toFixed(2)),
+  };
+}
+
+/**
+ * Stage 1 Fast-Path Rule-Based & Candidate-Guided Triple Extractor
  */
 export function extractTriplesFromText(text: string): ExtractedTriple[] {
-  const rawTriples: ExtractedTriple[] = [];
-  const sentences = text.split(/(?<=[.!?\n])\s+/);
+  if (!text || typeof text !== 'string') return [];
 
-  for (const sentence of sentences) {
-    const cleanSentence = sentence.trim().replace(/\s+/g, ' ');
-    if (!cleanSentence) continue;
+  const candidateSpans = extractHistoricalCandidateSpans(text);
+  const triples: ExtractedTriple[] = [];
+  const textLower = text.toLowerCase();
 
-    // 1. Pattern-based Triple Extraction per sentence
-    for (const pattern of HISTORICAL_PATTERNS) {
-      const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
-      let match: RegExpExecArray | null;
+  // Find candidate by category
+  const persons = candidateSpans.filter((s) => s.type === 'HISTORICAL_PERSON');
+  const events = candidateSpans.filter((s) => s.type === 'EVENT_BATTLE');
+  const locations = candidateSpans.filter((s) => s.type === 'LOCATION');
+  const dynasties = candidateSpans.filter((s) => s.type === 'DYNASTY_ERA');
+  const docs = candidateSpans.filter((s) => s.type === 'DOCUMENT_CULTURE');
+  const orgs = candidateSpans.filter((s) => s.type === 'ORGANIZATION');
+  const artifacts = candidateSpans.filter((s) => s.type === 'ARTIFACT');
 
-      while ((match = regex.exec(cleanSentence)) !== null) {
-        const rawSource = match[pattern.sourceGroup]?.trim();
-        const rawTarget = match[pattern.targetGroup]?.trim();
+  const MAX_ENTITY_PROXIMITY_CHARS = 200;
 
-        if (
-          rawSource &&
-          rawTarget &&
-          isValidEntityName(rawSource) &&
-          isValidEntityName(rawTarget)
-        ) {
-          const sourceEntity = resolveCanonicalEntity(rawSource);
-          const targetEntity = resolveCanonicalEntity(rawTarget);
+  // 1. Link Events -> Leaders (LED_BY)
+  for (const ev of events) {
+    for (const p of persons) {
+      if (Math.abs(ev.startOffset - p.startOffset) > MAX_ENTITY_PROXIMITY_CHARS) continue;
+      const evId = ev.suggestedCanonicalId || `event_${slugify(ev.text)}`;
+      const pId = p.suggestedCanonicalId || `person_${slugify(p.text)}`;
+      const t = validateAndCanonicalizeTriple(
+        { id: evId, name: ev.text, type: 'EVENT_BATTLE' },
+        'LED_BY',
+        { id: pId, name: p.text, type: 'HISTORICAL_PERSON' },
+        0.96
+      );
+      if (t) triples.push(t);
+    }
+  }
 
-          rawTriples.push({
-            sourceEntityId: sourceEntity.entityId,
-            sourceEntityName: sourceEntity.canonicalName,
-            relationType: pattern.relation,
-            targetEntityId: targetEntity.entityId,
-            targetEntityName: targetEntity.canonicalName,
-            confidence: pattern.confidence,
-          });
+  // 2. Link Events -> Locations (HAPPENED_AT)
+  for (const ev of events) {
+    for (const loc of locations) {
+      if (Math.abs(ev.startOffset - loc.startOffset) > MAX_ENTITY_PROXIMITY_CHARS) continue;
+      const evId = ev.suggestedCanonicalId || `event_${slugify(ev.text)}`;
+      const locId = loc.suggestedCanonicalId || `loc_${slugify(loc.text)}`;
+      const t = validateAndCanonicalizeTriple(
+        { id: evId, name: ev.text, type: 'EVENT_BATTLE' },
+        'HAPPENED_AT',
+        { id: locId, name: loc.text, type: 'LOCATION' },
+        0.95
+      );
+      if (t) triples.push(t);
+    }
+  }
+
+  // 3. Link Events -> Dynasties / Eras (HAPPENED_IN)
+  for (const ev of events) {
+    for (const dyn of dynasties) {
+      if (Math.abs(ev.startOffset - dyn.startOffset) > MAX_ENTITY_PROXIMITY_CHARS) continue;
+      const evId = ev.suggestedCanonicalId || `event_${slugify(ev.text)}`;
+      const dynId = dyn.suggestedCanonicalId || `dynasty_${slugify(dyn.text)}`;
+      const t = validateAndCanonicalizeTriple(
+        { id: evId, name: ev.text, type: 'EVENT_BATTLE' },
+        'HAPPENED_IN',
+        { id: dynId, name: dyn.text, type: 'DYNASTY_ERA' },
+        0.94
+      );
+      if (t) triples.push(t);
+    }
+  }
+
+  // 4. Link Documents -> Persons/Authors (MENTIONED_IN)
+  for (const doc of docs) {
+    for (const p of persons) {
+      if (Math.abs(doc.startOffset - p.startOffset) > MAX_ENTITY_PROXIMITY_CHARS) continue;
+      const docId = doc.suggestedCanonicalId || `doc_${slugify(doc.text)}`;
+      const pId = p.suggestedCanonicalId || `person_${slugify(p.text)}`;
+      const t = validateAndCanonicalizeTriple(
+        { id: pId, name: p.text, type: 'HISTORICAL_PERSON' },
+        'MENTIONED_IN',
+        { id: docId, name: doc.text, type: 'DOCUMENT_CULTURE' },
+        0.95
+      );
+      if (t) triples.push(t);
+    }
+  }
+
+  // 5. Link Artifacts -> Eras/Dynasties (PART_OF)
+  for (const art of artifacts) {
+    for (const dyn of dynasties) {
+      if (Math.abs(art.startOffset - dyn.startOffset) > MAX_ENTITY_PROXIMITY_CHARS) continue;
+      const artId = art.suggestedCanonicalId || `artifact_${slugify(art.text)}`;
+      const dynId = dyn.suggestedCanonicalId || `dynasty_${slugify(dyn.text)}`;
+      const t = validateAndCanonicalizeTriple(
+        { id: artId, name: art.text, type: 'ARTIFACT' },
+        'PART_OF',
+        { id: dynId, name: dyn.text, type: 'DYNASTY_ERA' },
+        0.95
+      );
+      if (t) triples.push(t);
+    }
+  }
+
+  // 6. Link Organizations -> Leaders (LED_BY)
+  for (const org of orgs) {
+    for (const p of persons) {
+      if (Math.abs(org.startOffset - p.startOffset) > MAX_ENTITY_PROXIMITY_CHARS) continue;
+      const orgId = org.suggestedCanonicalId || `org_${slugify(org.text)}`;
+      const pId = p.suggestedCanonicalId || `person_${slugify(p.text)}`;
+      const t = validateAndCanonicalizeTriple(
+        { id: orgId, name: org.text, type: 'ORGANIZATION' },
+        'LED_BY',
+        { id: pId, name: p.text, type: 'HISTORICAL_PERSON' },
+        0.95
+      );
+      if (t) triples.push(t);
+    }
+  }
+
+  // 7. ALIAS_OF (e.g. "Quang Trung tức là Nguyễn Huệ", "còn gọi là", "hiệu là")
+  const aliasRegex = /(?:tức\s+là|còn\s+gọi\s+là|tên\s+khác\s+là|hiệu\s+là|tên\s+thật\s+là|niên\s+hiệu\s+là)/i;
+  const MAX_RELATION_WINDOW_CHARS = 100;
+
+  if (aliasRegex.test(text)) {
+    for (let i = 0; i < candidateSpans.length; i++) {
+      const s1 = candidateSpans[i];
+      for (let j = i + 1; j < candidateSpans.length; j++) {
+        const s2 = candidateSpans[j];
+        const charDist = s2.startOffset - s1.endOffset;
+        if (charDist > MAX_RELATION_WINDOW_CHARS) break; // candidateSpans is sorted by startOffset; early exit
+        if (charDist < 0) continue;
+
+        const sub = text.substring(s1.endOffset, s2.startOffset).trim();
+        if (sub.includes('\n') || sub.includes('.')) continue; // Never bridge across sentences
+
+        if (aliasRegex.test(sub) && s1.text.toLowerCase() !== s2.text.toLowerCase()) {
+          const sId = buildCanonicalId(s1.text, s1.type);
+          const tId = buildCanonicalId(s2.text, s2.type);
+          const t = validateAndCanonicalizeTriple(
+            { id: sId, name: s1.text },
+            'ALIAS_OF',
+            { id: tId, name: s2.text },
+            1.0
+          );
+          if (t) triples.push(t);
         }
       }
     }
   }
 
-  // Deduplicate triples preserving highest confidence
+  // 8. PART_OF (e.g. "Nguyễn Huệ thuộc triều đại Tây Sơn", "nằm trong", "thuộc")
+  const partOfRegex = /(?:thuộc\s+(?:triều\s+đại|nước|tập\s+đoàn|đội\s+quân)?|nằm\s+trong|là\s+một\s+phần\s+của)/i;
+  if (partOfRegex.test(text)) {
+    for (let i = 0; i < candidateSpans.length; i++) {
+      const s1 = candidateSpans[i];
+      for (let j = i + 1; j < candidateSpans.length; j++) {
+        const s2 = candidateSpans[j];
+        const charDist = s2.startOffset - s1.endOffset;
+        if (charDist > MAX_RELATION_WINDOW_CHARS) break; // candidateSpans is sorted by startOffset; early exit
+        if (charDist < 0) continue;
+
+        const sub = text.substring(s1.endOffset, s2.startOffset).trim();
+        if (sub.includes('\n') || sub.includes('.')) continue; // Never bridge across sentences
+
+        if (partOfRegex.test(sub)) {
+          const t = validateAndCanonicalizeTriple(
+            { id: s1.suggestedCanonicalId || `ent_${slugify(s1.text)}`, name: s1.text },
+            'PART_OF',
+            { id: s2.suggestedCanonicalId || `dynasty_${slugify(s2.text)}`, name: s2.text },
+            0.95
+          );
+          if (t) triples.push(t);
+        }
+      }
+    }
+  }
+
+  // Deduplicate triples
   const uniqueMap = new Map<string, ExtractedTriple>();
-  for (const t of rawTriples) {
+  for (const t of triples) {
     const key = `${t.sourceEntityId}:${t.relationType}:${t.targetEntityId}`;
-    const existing = uniqueMap.get(key);
-    if (!existing || t.confidence > existing.confidence) {
+    if (!uniqueMap.has(key)) {
       uniqueMap.set(key, t);
     }
   }
@@ -172,81 +349,71 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
   return Array.from(uniqueMap.values());
 }
 
-let warnedLlmOffline = false;
-
-export interface ExtractionOptions {
-  strict?: boolean;
-  allowFallback?: boolean;
-  regexOnly?: boolean;
-  timeoutMs?: number;
-}
-
 /**
- * Extracts Knowledge Graph triples using Primary Local Model (llama-server) or Cloud Fallback
- */
-export interface DetailedExtractionResult {
-  triples: ExtractedTriple[];
-  provider?: string;
-  targetProvider?: string;
-  targetId?: string;
-  model?: string;
-  durationMs: number;
-  strategy: 'ensemble_ai' | 'regex_only' | 'rule_based_fallback';
-}
-
-/**
- * Extract triples using LLM with detailed completion metadata
+ * Stage 2 Lightweight LLM Extraction (Port 8094 / Qwen3.5-4B-Instruct)
  */
 export async function extractTriplesWithLLMDetailed(
   text: string,
   options?: ExtractionOptions
-): Promise<{ triples: ExtractedTriple[]; res?: any }> {
-  if (!text || text.trim().length < 20) {
-    return { triples: [] };
-  }
+): Promise<{ triples: ExtractedTriple[]; candidateSpans: CandidateEntitySpan[]; res?: any; error?: string }> {
+  // Stage 1: Extract Candidate Spans first
+  const candidateSpans = extractHistoricalCandidateSpans(text);
 
   try {
-    const prompt = `Bạn là chuyên gia phân tích tri thức Lịch sử Việt Nam. Hãy trích xuất tất cả các mối quan hệ bộ ba (Subject -> Relation -> Object) từ đoạn văn bản sau.
+    const prompt = `Bạn là chuyên gia trích xuất Đồ thị Tri thức Lịch sử Việt Nam (Vietnamese History Knowledge Graph).
+Dưới đây là đoạn văn bản lịch sử và danh sách thực thể ứng viên đã được nhận diện (Stage 1 Candidate Entities):
 
-Yêu cầu output: Trả về duy nhất 1 JSON object có định dạng:
+THỰC THỂ ỨNG VIÊN (CANDIDATE ENTITIES):
+${candidateSpans.map((c) => `- [${c.type}] "${c.text}" (ID đề xuất: ${c.suggestedCanonicalId})`).join('\n')}
+
+VĂN BẢN (TEXT):
+"""
+${text}
+"""
+
+HÃY TRÍCH XUẤT CÁC BỘ BA QUAN HỆ (KNOWLEDGE TRIPLES) THEO CÁC QUY TẮC SAU:
+1. Chỉ sử dụng 8 loại quan hệ chuẩn (relationType):
+   - LED_BY: [Event/Movement/Org] -> [Person] (Ví dụ: event_ngoc_hoi_dong_da -> LED_BY -> person_quang_trung)
+   - PART_OF: [Sub-entity/Artifact/Org] -> [Parent-entity/Dynasty/Org] (Ví dụ: artifact_trong_dong_dong_son -> PART_OF -> dynasty_van_lang)
+   - HAPPENED_IN: [Event/Rule] -> [Dynasty/Era] (Ví dụ: event_ngoc_hoi_dong_da -> HAPPENED_IN -> dynasty_nha_tay_son)
+   - HAPPENED_AT: [Event] -> [Location] (Ví dụ: event_ngoc_hoi_dong_da -> HAPPENED_AT -> loc_thang_long)
+   - SAME_AS_LOCATION: [Historical Loc] -> [Modern Loc] (Ví dụ: loc_thang_long -> SAME_AS_LOCATION -> loc_ha_noi)
+   - ALIAS_OF: [Alias/Variant] -> [Canonical Entity] (Ví dụ: person_nguyen_hue -> ALIAS_OF -> person_quang_trung)
+   - ROYAL_LINEAGE: [Child/Successor] -> [Royal Parent/Ancestor] (Ví dụ: person_le_thai_tong -> ROYAL_LINEAGE -> person_le_thai_to)
+   - MENTIONED_IN: [Entity] -> [Document/Book] (Ví dụ: person_ly_thai_to -> MENTIONED_IN -> doc_chieu_doi_do)
+
+2. Trả về đúng định dạng JSON:
 {
   "triples": [
     {
-      "sourceEntity": "tên thực thể nguồn",
-      "relationType": "LED_BY" | "HAPPENED_IN" | "HAPPENED_AT" | "ALIAS_OF" | "ROYAL_LINEAGE" | "PART_OF" | "MENTIONED_IN",
-      "targetEntity": "tên thực thể đích",
+      "sourceEntity": "Tên thực thể nguồn",
+      "sourceEntityId": "id_nguon",
+      "relationType": "LED_BY",
+      "targetEntity": "Tên thực thể đích",
+      "targetEntityId": "id_dich",
       "confidence": 0.95
     }
   ]
-}
-
-Văn bản:
-"""
-${text.slice(0, 1800)}
-"""`;
+}`;
 
     const res = await generateLLMCompletion(
       [
-        { role: 'system', content: 'You are a Vietnamese History Knowledge Graph Specialist. Return valid JSON only.' },
+        {
+          role: 'system',
+          content: 'You are a Vietnamese History Knowledge Graph Extractor. Output strictly valid JSON matching the schema.',
+        },
         { role: 'user', content: prompt },
       ],
       {
+        task: 'extraction', // Routes to Port 8094 (Qwen3.5-4B-Instruct)
         temperature: 0.1,
-        max_tokens: 450,
+        max_tokens: 500,
         response_format: { type: 'json_object' },
         timeoutMs:
           options?.timeoutMs ??
-          (envConfig.USE_LOCAL_LLM
-            ? (envConfig.LOCAL_LLM_TIMEOUT_MS || 120000)
-            : envConfig.REMOTE_FALLBACK_TIMEOUT_MS),
+          (envConfig.USE_LOCAL_LLM ? (envConfig.LOCAL_LLM_TIMEOUT_MS || 120000) : envConfig.REMOTE_FALLBACK_TIMEOUT_MS),
       }
     );
-
-    log.debug('triple_extract.llm_response', `Received LLM response via target [${res.targetId || res.provider}] (model: ${res.model})`, {
-      targetId: res.targetId,
-      targetProvider: res.targetProvider,
-      model: res.model,
-    });
 
     let jsonStr = res.content.trim();
     if (jsonStr.includes('```json')) {
@@ -262,91 +429,76 @@ ${text.slice(0, 1800)}
         rawTriples = parsed.triples;
       }
     } catch {
-      // Fallback: extract individual triple objects if response was truncated
-      const objectRegex = /\{\s*"sourceEntity"\s*:\s*"([^"]+)"\s*,\s*"relationType"\s*:\s*"([^"]+)"\s*,\s*"targetEntity"\s*:\s*"([^"]+)"(?:\s*,\s*"confidence"\s*:\s*([0-9.]+))?\s*\}/g;
+      // Regex extraction fallback from JSON string
+      const objectRegex = /\{\s*"sourceEntity"\s*:\s*"([^"]+)"\s*,\s*(?:"sourceEntityId"\s*:\s*"([^"]+)"\s*,\s*)?"relationType"\s*:\s*"([^"]+)"\s*,\s*"targetEntity"\s*:\s*"([^"]+)"\s*(?:,\s*"targetEntityId"\s*:\s*"([^"]+)"\s*)?(?:,\s*"confidence"\s*:\s*([0-9.]+))?\s*\}/g;
       let match;
       while ((match = objectRegex.exec(jsonStr)) !== null) {
         rawTriples.push({
           sourceEntity: match[1],
-          relationType: match[2],
-          targetEntity: match[3],
-          confidence: match[4] ? parseFloat(match[4]) : 0.9,
+          sourceEntityId: match[2],
+          relationType: match[3],
+          targetEntity: match[4],
+          targetEntityId: match[5],
+          confidence: match[6] ? parseFloat(match[6]) : 0.95,
         });
       }
     }
 
-    if (rawTriples.length === 0) return { triples: [], res };
+    const validatedTriples: ExtractedTriple[] = [];
 
-    const validRelations = new Set<ExtractedTriple['relationType']>([
-      'PART_OF', 'LED_BY', 'HAPPENED_IN', 'HAPPENED_AT', 'SAME_AS_LOCATION', 'ALIAS_OF', 'ROYAL_LINEAGE', 'MENTIONED_IN'
-    ]);
+    for (const raw of rawTriples) {
+      if (!raw.sourceEntity || !raw.targetEntity || !raw.relationType) continue;
+      if (!VALID_RELATIONS.has(raw.relationType as HistoricalRelationType)) continue;
 
-    const triples: ExtractedTriple[] = [];
-    for (const item of rawTriples) {
-      if (
-        item.sourceEntity &&
-        item.targetEntity &&
-        item.relationType &&
-        validRelations.has(item.relationType) &&
-        isValidEntityName(item.sourceEntity) &&
-        isValidEntityName(item.targetEntity)
-      ) {
-        const sourceEntity = resolveCanonicalEntity(item.sourceEntity);
-        const targetEntity = resolveCanonicalEntity(item.targetEntity);
+      const sName = String(raw.sourceEntity).trim();
+      const tName = String(raw.targetEntity).trim();
+      const sId = raw.sourceEntityId || buildCanonicalId(sName, 'HISTORICAL_PERSON');
+      const tId = raw.targetEntityId || buildCanonicalId(tName, 'LOCATION');
 
-        if (!isValidEntityName(sourceEntity.canonicalName) || !isValidEntityName(targetEntity.canonicalName)) {
-          continue;
-        }
+      const validated = validateAndCanonicalizeTriple(
+        { id: sId, name: sName },
+        raw.relationType as HistoricalRelationType,
+        { id: tId, name: tName },
+        raw.confidence ?? 0.95
+      );
 
-        triples.push({
-          sourceEntityId: sourceEntity.entityId,
-          sourceEntityName: sourceEntity.canonicalName,
-          relationType: item.relationType,
-          targetEntityId: targetEntity.entityId,
-          targetEntityName: targetEntity.canonicalName,
-          confidence: item.confidence ?? (res.provider === 'LOCAL_LLM' ? 0.95 : 0.9),
-        });
+      if (validated) {
+        validatedTriples.push(validated);
       }
     }
-    return { triples, res };
+
+    return {
+      triples: validatedTriples,
+      candidateSpans,
+      res,
+    };
   } catch (err) {
     const errMsg = formatConciseError(err);
 
-    // Default mode requires full LLM extraction. Do not silently fallback unless allowFallback is explicitly set.
     if (options?.strict || envConfig.EVAL_STRICT || !options?.allowFallback) {
-      throw new Error(`LLM Triple Extraction failed: ${errMsg}. If you intend to run in offline fallback mode, pass --allow-fallback or --regex-only.`);
+      throw new Error(`Stage 2 LLM Triple Extraction failed: ${errMsg}. Pass allowFallback=true for offline fallback.`);
     }
 
     if (!warnedLlmOffline) {
-      log.warn('triple_extract.llm_offline', 'LLM gateway offline; falling back to rule-based dictionary matcher', {
-        reason: errMsg,
-      });
+      log.warn('triple_extract.llm_offline', 'LLM extraction offline; using Stage 1 guided fallback', { reason: errMsg });
       logFallbackAlert({
         subsystem: 'LLM_GATEWAY',
-        primaryTarget: `Local LLM Gateway (${envConfig.LLM_BASE_URL}) [${envConfig.LOCAL_LLM_PRIMARY_MODEL}]`,
-        fallbackTarget: 'Rule-Based Regex Pattern Matcher & Canonical Ground-Truth Dictionaries',
+        primaryTarget: `Local LLM Extraction (Port 8094) [qwen3.5-4b-instruct-q4_k_m]`,
+        fallbackTarget: 'Stage 1 Candidate-Guided Rule Extractor',
         reason: errMsg,
-        actionRequired: 'Start llama-server (e.g. llama-server -m models/... --port 8080) or set AGNES_API_KEY in .env',
+        actionRequired: 'Start extraction server on port 8094 with: pnpm ai:extract or pnpm ai:lite',
       });
       warnedLlmOffline = true;
-    } else {
-      log.debug('triple_extract.llm_skipped', 'LLM unavailable; using rule-based extraction', {
-        reason: errMsg,
-      });
     }
-    return { triples: [] };
-  }
-}
 
-/**
- * Extract triples using LLM (Direct array wrapper)
- */
-export async function extractTriplesWithLLM(
-  text: string,
-  options?: ExtractionOptions
-): Promise<ExtractedTriple[]> {
-  const result = await extractTriplesWithLLMDetailed(text, options);
-  return result.triples;
+    // Use deterministic Stage 1 candidate-guided triples as graceful fallback
+    const fallbackTriples = extractTriplesFromText(text);
+    return {
+      triples: fallbackTriples,
+      candidateSpans,
+      error: errMsg,
+    };
+  }
 }
 
 /**
@@ -357,9 +509,9 @@ export async function extractTriplesFromTextDetailedAsync(
   options?: ExtractionOptions
 ): Promise<DetailedExtractionResult> {
   const startTime = Date.now();
-  const regexTriples = extractTriplesFromText(text);
 
   if (options?.regexOnly) {
+    const regexTriples = extractTriplesFromText(text);
     return {
       triples: regexTriples,
       strategy: 'regex_only',
@@ -367,44 +519,26 @@ export async function extractTriplesFromTextDetailedAsync(
     };
   }
 
-  const { triples: llmTriples, res } = await extractTriplesWithLLMDetailed(text, options);
+  const { triples, candidateSpans, res, error } = await extractTriplesWithLLMDetailed(text, options);
 
-  const mergedMap = new Map<string, ExtractedTriple>();
-
-  for (const t of [...regexTriples, ...llmTriples]) {
-    const key = `${t.sourceEntityId}:${t.relationType}:${t.targetEntityId}`;
-    const existing = mergedMap.get(key);
-    if (!existing || t.confidence > existing.confidence) {
-      mergedMap.set(key, t);
-    }
-  }
-
-  const result = Array.from(mergedMap.values());
   const durationMs = Date.now() - startTime;
-
-  log.debug('triple_extract.completed', 'Triple extraction completed', {
-    regexCount: regexTriples.length,
-    llmCount: llmTriples.length,
-    mergedCount: result.length,
-    strategy: llmTriples.length > 0 ? 'ensemble_ai' : 'rule_based_fallback',
-    provider: res?.provider,
-    model: res?.model,
-    durationMs,
-  });
+  const strategy: DetailedExtractionResult['strategy'] = error ? 'rule_based_fallback' : 'ensemble_ai';
 
   return {
-    triples: result,
+    triples,
+    candidateSpans,
     provider: res?.provider,
     targetProvider: res?.targetProvider,
     targetId: res?.targetId,
     model: res?.model,
-    strategy: llmTriples.length > 0 ? 'ensemble_ai' : 'rule_based_fallback',
+    strategy,
     durationMs,
+    llmError: error,
   };
 }
 
 /**
- * Asynchronous two-tier ensemble extraction combining Fast-Path Master Dictionaries & LLM Gateway
+ * Asynchronous two-tier ensemble extraction combining Stage 1 NER & Stage 2 LLM Engine
  */
 export async function extractTriplesFromTextAsync(
   text: string,
@@ -419,13 +553,24 @@ export async function extractTriplesFromTextAsync(
     model: detailed.model,
     durationMs: detailed.durationMs,
     strategy: detailed.strategy,
+    llmError: detailed.llmError,
   };
   return triples;
 }
 
 /**
- * 3-Step Historical Conflict Resolution Protocol (Spec Section 5.2)
- * Determines whether two conflicting relationship edges should be overridden or kept as parallel Multi-Perspective Edges.
+ * Extract triples using LLM (Direct array wrapper)
+ */
+export async function extractTriplesWithLLM(
+  text: string,
+  options?: ExtractionOptions
+): Promise<ExtractedTriple[]> {
+  const result = await extractTriplesWithLLMDetailed(text, options);
+  return result.triples;
+}
+
+/**
+ * 3-Step Historical Conflict Resolution Protocol
  */
 export function resolveHistoricalConflict(
   edgeA: { confidence: number; sourceReliability?: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3'; sourceName?: string },
@@ -438,7 +583,6 @@ export function resolveHistoricalConflict(
   const scoreB = edgeB.confidence * wB;
   const delta = Math.abs(scoreA - scoreB);
 
-  // Condition 1: Both Level 1 OR confidence delta <= 0.15 => Multi-Perspective
   if ((edgeA.sourceReliability === 'LEVEL_1' && edgeB.sourceReliability === 'LEVEL_1') || delta <= 0.15) {
     return {
       action: 'MULTI_PERSPECTIVE',

@@ -3,13 +3,12 @@
  * Reconciles audio duration with target pacing, calculates exact frame counts and time-stretch (+-10%)
  */
 
-import { createLogger, SceneGeneration } from '@chronoviet/shared-spec';
-import { ChronoGraphState } from '../state.js';
-
-const log = createLogger({ service: 'agent-orchestrator' });
+import { orchestratorPacingErrorPercent, SceneGeneration } from '@chronoviet/shared-spec';
+import { ChronoGraphState, getNodeLogger } from '../state.js';
 
 export async function durationReconciliationNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
-  log.info('orchestrator.reconciler_started', `Reconciling durations for ${state.scenes.length} scenes`, {
+  const nodeLog = getNodeLogger(state, 'duration_reconciliation');
+  nodeLog.info('orchestrator.reconciler_started', `Reconciling durations for ${state.scenes.length} scenes`, {
     projectId: state.projectId,
   });
 
@@ -80,7 +79,15 @@ export async function durationReconciliationNode(state: ChronoGraphState): Promi
   const finalPacingError = Math.abs(reconciledTotalSec - targetTotalSec) / Math.max(1, targetTotalSec);
   const pacingErrorPercentage = Math.round(finalPacingError * 1000) / 10; // e.g. 0.8%
 
-  log.info('orchestrator.reconciliation_completed', `Reconciliation completed: error ${pacingErrorPercentage}%`, {
+  // Record Prometheus metric
+  try {
+    orchestratorPacingErrorPercent.observe(
+      { template_id: state.templateId || 'HISTORICAL_DOCUMENTARY' },
+      pacingErrorPercentage
+    );
+  } catch {}
+
+  nodeLog.info('orchestrator.reconciliation_completed', `Reconciliation completed: error ${pacingErrorPercentage}%`, {
     targetTotalSec,
     totalAudioSec,
     reconciledTotalSec,

@@ -3,13 +3,12 @@
  * Divides topic and RAG context into N Chapters (2-3 minutes each) and initializes runningNarrativeState
  */
 
-import { callLlm, ChapterPlan, createLogger, envConfig, parseLlmJson } from '@chronoviet/shared-spec';
-import { ChronoGraphState } from '../state.js';
-
-const log = createLogger({ service: 'agent-orchestrator' });
+import { callLlm, ChapterPlan, envConfig, parseLlmJson } from '@chronoviet/shared-spec';
+import { ChronoGraphState, getNodeLogger, TelemetryAuditEntry } from '../state.js';
 
 export async function chapteringNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
-  log.info('orchestrator.chaptering_started', `Starting Chaptering Agent for topic: ${state.userPrompt}`, {
+  const nodeLog = getNodeLogger(state, 'chaptering');
+  nodeLog.info('orchestrator.chaptering_started', `Starting Chaptering Agent for topic: ${state.userPrompt}`, {
     projectId: state.projectId,
     durationMin: state.targetDurationMinutes,
   });
@@ -53,6 +52,7 @@ Hãy trả về JSON Object theo cấu trúc:
 }`;
 
   let chapters: ChapterPlan[] = [];
+  const telemetryAudit: TelemetryAuditEntry[] = [];
 
   try {
     const res = await callLlm({
@@ -81,7 +81,15 @@ Hãy trả về JSON Object theo cấu trúc:
     if (envConfig.EVAL_STRICT) {
       throw err;
     }
-    log.warn('orchestrator.chaptering_llm_fallback', `LLM call fallback for chaptering: ${err.message}`);
+    nodeLog.warn('orchestrator.chaptering_llm_fallback', `LLM call fallback for chaptering: ${err.message}`);
+    telemetryAudit.push({
+      timestamp: new Date().toISOString(),
+      node: 'chaptering',
+      level: 'WARN',
+      category: 'FALLBACK',
+      message: `LLM call fallback for chaptering: ${err.message}`,
+      metadata: { error: err.message },
+    });
     // Deterministic fallback chapters
     for (let i = 0; i < numChapters; i++) {
       chapters.push({
@@ -108,5 +116,6 @@ Hãy trả về JSON Object theo cấu trúc:
       introducedEntities: chapters[0]?.introducedEntities || [],
       transitionHook: chapters[0]?.transitionHook || '',
     },
+    telemetryAudit,
   };
 }

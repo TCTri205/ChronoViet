@@ -13,7 +13,7 @@ import {
 import { z } from 'zod';
 import { downloadCandidateBatch } from './asset-downloader.js';
 import { scoreImageWithGemini } from './vlm-scorer.js';
-import { VisualQualityGate } from './visual-quality-gate.js';
+import { readImageDimensions, VisualQualityGate } from './visual-quality-gate.js';
 
 export type LicenseType = z.infer<typeof LicenseTypeSchema>;
 
@@ -54,6 +54,11 @@ const PURE_CODE_LAYOUT_ROTATION: LayoutMode[] = [
   'CHAPTER_CARD',
 ];
 
+export interface InspectSceneOptions {
+  customBaseDir?: string;
+  correlationId?: string;
+}
+
 export interface InspectSceneResult {
   updatedScene: SceneGeneration;
   inspectedCandidates: VisualCandidate[];
@@ -66,7 +71,8 @@ async function evaluateCandidateBatch(
   candidates: VisualCandidate[],
   voiceoverText: string,
   batchNumber: 1 | 2,
-  qualityGate: VisualQualityGate
+  qualityGate: VisualQualityGate,
+  context: { correlationId?: string; sceneId?: string; projectId?: string; targetAspectRatio?: string } = {}
 ): Promise<VisualCandidate[]> {
   const evaluated: VisualCandidate[] = [];
 
@@ -88,7 +94,7 @@ async function evaluateCandidateBatch(
       continue;
     }
 
-    // 2. Download / Local path presence check (Layer 2)
+    // 2. Download / Local path presence check (Layer 1)
     if (!cand.localPath && (cand.imageUrl.startsWith('http://') || cand.imageUrl.startsWith('https://'))) {
       evaluated.push({
         ...cand,
@@ -104,7 +110,40 @@ async function evaluateCandidateBatch(
       continue;
     }
 
-    // 3. VLM Semantic & Noise Scoring (Layer 3)
+    // 3. Technical Visual Quality Gate (Resolution & Aspect Ratio Check) (Layer 2)
+    if (cand.localPath) {
+      const dimensions = readImageDimensions(cand.localPath);
+      if (dimensions) {
+        const qualityResult = qualityGate.evaluateQuality(
+          dimensions.width,
+          dimensions.height,
+          context.targetAspectRatio || '16:9'
+        );
+        if (!qualityResult.passed) {
+          log.debug('vlm.quality_gate_rejected', `Candidate ${cand.candidateId} rejected by quality gate: ${qualityResult.rejectionReason}`, {
+            candidateId: cand.candidateId,
+            dimensions,
+            rejectionReason: qualityResult.rejectionReason,
+            correlationId: context.correlationId,
+            sceneId: context.sceneId,
+          });
+          evaluated.push({
+            ...cand,
+            candidateBatch: batchNumber,
+            verdict: 'REJECT',
+            score: {
+              historicalContextScore: 0,
+              visualNoiseScore: 0,
+              artisticFitScore: 0,
+              overallScore: 0,
+            },
+          });
+          continue;
+        }
+      }
+    }
+
+    // 4. VLM Semantic & Noise Scoring (Layer 3)
     const scoreResult = await scoreImageWithGemini(
       cand.localPath || cand.imageUrl,
       voiceoverText,
@@ -112,6 +151,8 @@ async function evaluateCandidateBatch(
         sha256: cand.sha256,
         pHash: cand.pHash,
         metadata: { title: cand.title, author: cand.author, license: cand.license },
+        correlationId: context.correlationId,
+        sceneId: context.sceneId,
       }
     );
 
@@ -138,24 +179,39 @@ export async function inspectSceneVisuals(
   projectId: string,
   scene: SceneGeneration,
   candidatePool: VisualCandidate[],
-  options: { customBaseDir?: string } = {}
+  options: InspectSceneOptions = {}
 ): Promise<InspectSceneResult> {
   log.debug('vlm.inspecting_scene', `Inspecting visuals for scene ${scene.sceneId} (${scene.layoutMode})`, {
     sceneId: scene.sceneId,
     candidateCount: candidatePool.length,
+    correlationId: options.correlationId,
   });
 
   const qualityGate = new VisualQualityGate();
   const batch1 = candidatePool.slice(0, 3);
   const batch2 = candidatePool.slice(3, 6);
 
+  const downloadOpts = {
+    customBaseDir: options.customBaseDir,
+    correlationId: options.correlationId,
+    sceneId: scene.sceneId,
+  };
+
+  const evalContext = {
+    correlationId: options.correlationId,
+    sceneId: scene.sceneId,
+    projectId,
+    targetAspectRatio: (scene as any).aspectRatio,
+  };
+
   // 1. Process Batch 1 (Parallel Download + Evaluation)
-  const downloadedBatch1 = await downloadCandidateBatch(projectId, batch1, options);
+  const downloadedBatch1 = await downloadCandidateBatch(projectId, batch1, downloadOpts);
   const evaluatedBatch1 = await evaluateCandidateBatch(
     downloadedBatch1,
     scene.voiceoverText,
     1,
-    qualityGate
+    qualityGate,
+    evalContext
   );
 
   // Sort Batch 1 by score descending
@@ -168,14 +224,16 @@ export async function inspectSceneVisuals(
   if ((!topCandidate || (topCandidate.score?.overallScore || 0) < 60) && batch2.length > 0) {
     log.debug('vlm.batch_2_triggered', `Batch 1 top score below 60; triggering 3 supplementary candidates (Batch 2)`, {
       sceneId: scene.sceneId,
+      correlationId: options.correlationId,
     });
 
-    const downloadedBatch2 = await downloadCandidateBatch(projectId, batch2, options);
+    const downloadedBatch2 = await downloadCandidateBatch(projectId, batch2, downloadOpts);
     const evaluatedBatch2 = await evaluateCandidateBatch(
       downloadedBatch2,
       scene.voiceoverText,
       2,
-      qualityGate
+      qualityGate,
+      evalContext
     );
 
     allEvaluated.push(...evaluatedBatch2);
@@ -193,6 +251,7 @@ export async function inspectSceneVisuals(
     log.warn('vlm.pure_code_fallback', `All candidates failed (<60); falling back to PURE_CODE Layout: ${finalLayoutMode}`, {
       sceneId: scene.sceneId,
       finalLayoutMode,
+      correlationId: options.correlationId,
     });
   }
 

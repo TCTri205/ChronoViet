@@ -581,6 +581,58 @@ export const TripleExtractionSchema = z.object({
   relationships: z.array(ExtractedRelationshipSchema),
 });
 
+export const HistoricalRelationTypeEnum = z.enum([
+  'LED_BY',
+  'PART_OF',
+  'HAPPENED_IN',
+  'HAPPENED_AT',
+  'SAME_AS_LOCATION',
+  'ALIAS_OF',
+  'ROYAL_LINEAGE',
+  'MENTIONED_IN',
+]);
+
+export const CandidateEntitySpanSchema = z.object({
+  text: z.string(),
+  type: z.union([EntityTypeEnum, z.string()]),
+  startOffset: z.number().int().nonnegative(),
+  endOffset: z.number().int().nonnegative(),
+  confidence: z.number().min(0).max(1).default(1.0),
+  sourceLayer: z.enum(['GAZETTEER', 'RULE_PREFIX', 'PROPER_NOUN_REGEX', 'HYBRID']).default('GAZETTEER'),
+  suggestedCanonicalId: z.string().optional(),
+});
+
+export const GoldenBenchmarkEntitySchema = z.object({
+  id: z.string(),
+  canonicalId: z.string().optional(),
+  name: z.string(),
+  type: z.union([EntityTypeEnum, z.string()]),
+  aliases: z.array(z.string()).default([]),
+  startOffset: z.number().int().nonnegative().optional(),
+  endOffset: z.number().int().nonnegative().optional(),
+});
+
+export const GoldenBenchmarkTripleSchema = z.object({
+  sourceEntityId: z.string(),
+  relationType: z.union([HistoricalRelationTypeEnum, z.string()]),
+  targetEntityId: z.string(),
+  isDirectional: z.boolean().default(true),
+  confidence: z.number().min(0).max(1).default(1.0),
+});
+
+export const GoldenTripleBenchmarkItemSchema = z.object({
+  id: z.string(),
+  epochId: z.union([HistoricalEpochEnum, z.string()]),
+  epochIds: z.array(z.union([HistoricalEpochEnum, z.string()])).optional(),
+  sourceText: z.string().min(1),
+  groundTruthEntities: z.array(GoldenBenchmarkEntitySchema),
+  groundTruthTriples: z.array(GoldenBenchmarkTripleSchema),
+  groundTruthEpochs: z.array(z.string()).optional(),
+  notes: z.string().optional(),
+});
+
+export const GoldenTripleBenchmarkSchema = z.array(GoldenTripleBenchmarkItemSchema);
+
 export const AssetLicenseRegistrySchema = z.object({
   assetId: z.string(),
   filePath: z.string(),
@@ -695,6 +747,12 @@ export type ChunkMetadata = z.infer<typeof ChunkMetadataSchema>;
 export type ExtractedEntity = z.infer<typeof ExtractedEntitySchema>;
 export type ExtractedRelationship = z.infer<typeof ExtractedRelationshipSchema>;
 export type TripleExtraction = z.infer<typeof TripleExtractionSchema>;
+export type HistoricalRelationType = z.infer<typeof HistoricalRelationTypeEnum>;
+export type CandidateEntitySpan = z.infer<typeof CandidateEntitySpanSchema>;
+export type GoldenBenchmarkEntity = z.infer<typeof GoldenBenchmarkEntitySchema>;
+export type GoldenBenchmarkTriple = z.infer<typeof GoldenBenchmarkTripleSchema>;
+export type GoldenTripleBenchmarkItem = z.infer<typeof GoldenTripleBenchmarkItemSchema>;
+export type GoldenTripleBenchmark = z.infer<typeof GoldenTripleBenchmarkSchema>;
 export type AssetLicenseRegistry = z.infer<typeof AssetLicenseRegistrySchema>;
 export type MediaAssetRegistryEntry = AssetLicenseRegistry;
 

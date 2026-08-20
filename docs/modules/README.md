@@ -8,8 +8,8 @@ Trung tâm Tài liệu Mô-đun Chức năng trong Pipeline sinh video tự đ�
 
 | Mô-đun | File Tài Liệu | Trạng Thái | Mô Tả Tóm Tắt |
 | :--- | :--- | :---: | :--- |
-| **Mô-đun 0: Data Preprocessing** | [00_DATA_PREPROCESSING_AND_INGESTION.md](00_DATA_PREPROCESSING_AND_INGESTION.md) | **[✅ IMPLEMENTED]** | Data Preprocessing & Ingestion Engine (Lớp nạp dữ liệu offline): Cào tự động 15 thời kỳ lịch sử (`pnpm crawl:all`), làm sạch sử liệu, chuẩn hóa địa danh/nhân vật, Hierarchical Chunking, Dual-Branch Indexing (Graph + Vector `bge-m3`), LUFS Normalization, License Audit & Audit Trail (`entity_audit_logs`). |
-| **Mô-đun 1: Knowledge Retrieval** | [01_CHRONO_RAG_ENGINE.md](01_CHRONO_RAG_ENGINE.md) | **[✅ IMPLEMENTED]** | Chrono-RAG Engine (PostgreSQL `pgvector` Dense Embedding BGE-M3 + Hybrid GraphRAG + BM25 FTS + RRF) đảm bảo 100% tính chính xác lịch sử. |
+| **Mô-đun 0: Data Preprocessing** | [00_DATA_PREPROCESSING_AND_INGESTION.md](00_DATA_PREPROCESSING_AND_INGESTION.md) | **[✅ IMPLEMENTED]** | Data Preprocessing & Ingestion Engine (Lớp nạp dữ liệu offline): 2-Stage Knowledge Extraction (Stage 1 Pure TS NER + Stage 2 Port 8094 LLM), Cào tự động 15 thời kỳ lịch sử (`pnpm crawl:all`), làm sạch sử liệu, chuẩn hóa địa danh/nhân vật, Hierarchical Chunking, Dual-Branch Indexing (Graph + Vector `bge-m3`), Quarantine Inspector (`pnpm db:audit-quarantine`), LUFS Normalization, License Audit & Audit Trail (`entity_audit_logs`). |
+| **Mô-đun 1: Knowledge Retrieval** | [01_CHRONO_RAG_ENGINE.md](01_CHRONO_RAG_ENGINE.md) | **[✅ IMPLEMENTED]** | Chrono-RAG Engine v2.2 (PostgreSQL `pgvector` Dense BGE-M3 + Relational Graph Recursive CTE với `visited_path` Cycle Pruning + Lexical FTS Vietnamese Stopword Sanitization + Calibrated RRF Graph Chunks & Co-Retrieval Boost $+0.35$ + In-Memory LRU Embedding Cache) đảm bảo 100% tính chính xác lịch sử. |
 | **Mô-đun 2: Content Orchestration** | [02_MULTI_AGENT_ORCHESTRATOR.md](02_MULTI_AGENT_ORCHESTRATOR.md) | **[✅ IMPLEMENTED]** | LangGraph.js Multi-Agent Pipeline: Phân chia phân cảnh kịch bản v4.1, Keyword Extractor + Research Agent (Micro-Step 1C) tìm ảnh online qua SerpAPI/Tavily/Brave/Wikimedia/Catalog, tích hợp Folklore Guardrail Gate (`folklore-validator.ts` Regex Pattern Matching) và NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts`). |
 | **Mô-đun 3: Visual Quality Control** | [03_VLM_INSPECTOR_AGENT.md](03_VLM_INSPECTOR_AGENT.md) | **[✅ IMPLEMENTED]** | Sub-Agent thẩm định ảnh bằng Gemini 3.6 Flash Cloud API + Local Semantic Vector Scorer Fallback + Whitelisted License Filter + Unified Redis Cache & Chiến lược 3+3 Crawl Candidates (nhận candidate pool từ Research Agent + domain whitelist). |
 | **Mô-đun 4: Video Render Tool** | [04_REMOTION_RENDER_ENGINE.md](04_REMOTION_RENDER_ENGINE.md) | **[✅ IMPLEMENTED]** | Tool render video React + Remotion v4 100% Data-Driven (Pre-download Host Volume assets `/media` & Chromium isolation), nhận JSON v4.1. |
@@ -36,11 +36,12 @@ Từ khi kích hoạt `EVAL_STRICT=true` (mặc định), mọi eval runner sẽ
 
 | Service | Cấu hình | Lệnh khởi động gợi ý |
 | :--- | :--- | :--- |
-| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8091`) | `llama-server -m models/qwen3.8-27b-q4_k_m.gguf --mmproj models/qwen3.8-27b-mmproj.gguf --port 8091` |
-| Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `bge-m3` (1024 dimensions) |
+| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8092`) | `llama-server -m models/qwen3.8-27b-q4_k_m.gguf --mmproj models/qwen3.8-27b-mmproj.gguf --port 8092` |
+| Stage 2 Extraction LLM | `LOCAL_LLM_EXTRACTION_BASE_URL` (vd `http://localhost:8094`) | `pnpm ai:extract` hoặc `llama-server -m models/qwen3.5-4b-instruct-q4_k_m.gguf --port 8094 --ctx-size 8192 --parallel 4 --threads 6 --cont-batching` |
+| Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `bge-m3` (1024 dimensions) trên Port 8090 |
 | VieNeu Python TTS | `VIENEU_PYTHON_URL` (vd `http://localhost:8080`) | `python app.py` trong `services/vieneu-tts/` |
-| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.8-27b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8091) |
-| PostgreSQL pgvector | `DATABASE_URL` | `docker compose up -d postgres` |
+| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.8-27b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8092) |
+| PostgreSQL pgvector | `DATABASE_URL` | `pnpm stack:infra` |
 
 **Tắt strict (dev-only, KHÔNG hợp lệ làm benchmark):** đặt `EVAL_STRICT=false` trong `.env` — khi đó các fallback cũ được phép dùng lại.
 

@@ -3,10 +3,8 @@
  * Breaks chapter scripts into 5s–25s scenes and assigns layout modes
  */
 
-import { createLogger, LayoutMode, SceneGeneration } from '@chronoviet/shared-spec';
-import { ChronoGraphState } from '../state.js';
-
-const log = createLogger({ service: 'agent-orchestrator' });
+import { LayoutMode, SceneGeneration } from '@chronoviet/shared-spec';
+import { ChronoGraphState, getNodeLogger } from '../state.js';
 
 const TEMPLATE_LAYOUTS: Record<string, LayoutMode[]> = {
   QUICK_SHORTS: ['FULL_COVER', 'CENTER_SCALE', 'QUOTE_SLIDE', 'STAT_CARD'],
@@ -22,7 +20,8 @@ const TEMPLATE_LAYOUTS: Record<string, LayoutMode[]> = {
 };
 
 export async function segmenterNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
-  log.info('orchestrator.segmenter_started', `Segmenting chapter scripts into scenes`, {
+  const nodeLog = getNodeLogger(state, 'segmenter');
+  nodeLog.info('orchestrator.segmenter_started', `Segmenting chapter scripts into scenes`, {
     projectId: state.projectId,
     templateId: state.templateId,
   });

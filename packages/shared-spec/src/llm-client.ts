@@ -1,15 +1,8 @@
-/**
- * Local Model Gateway & Remote Fallback LLM Client Service
- * Connects to llama-server (Qwen3.8-27B-Q4_K_M) with automatic Agnes 2.5 Flash Cloud Fallback
- */
-
 import { envConfig } from './config.js';
 import { logFallbackAlert, createLogger } from './logger.js';
 import {
   llmRequestsTotal,
   llmRequestDurationSeconds,
-  circuitBreakerGauge,
-  circuitBreakerFailuresGauge,
 } from './telemetry/metrics.js';
 import {
   getNextApiKey,
@@ -23,6 +16,17 @@ import {
   sanitizeHttpErrorResponse,
   formatConciseError,
 } from './api-key-rotator.js';
+import { ResourceSentinel } from './resource-sentinel.js';
+import {
+  checkCircuitState,
+  recordCircuitSuccess,
+  recordCircuitFailure,
+  checkCloudCircuitState,
+  recordCloudCircuitSuccess,
+  recordCloudCircuitFailure,
+  localLlmCircuit,
+  cloudFallbackCircuit,
+} from './circuit-breaker.js';
 
 const log = createLogger({ service: 'shared-spec' });
 
@@ -38,6 +42,7 @@ export interface LLMCompletionOptions {
   top_p?: number;
   response_format?: { type: string; json_schema?: unknown };
   timeoutMs?: number;
+  task?: 'extraction' | 'general' | string;
 }
 
 export interface LLMCompletionResponse {
@@ -62,101 +67,7 @@ export interface LLMCompletionResponse {
 }
 
 let warnedLocalLlmFailure = false;
-
-interface CircuitBreakerState {
-  status: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
-  failures: number;
-  lastFailureTime: number;
-  nextProbeTime: number;
-}
-
-const localLlmCircuit: CircuitBreakerState = {
-  status: 'CLOSED',
-  failures: 0,
-  lastFailureTime: 0,
-  nextProbeTime: 0,
-};
-
-const cloudFallbackCircuit: CircuitBreakerState = {
-  status: 'CLOSED',
-  failures: 0,
-  lastFailureTime: 0,
-  nextProbeTime: 0,
-};
-
 let warnedCloudFallback = false;
-
-const CIRCUIT_FAILURE_THRESHOLD = 2;
-const CIRCUIT_COOLDOWN_MS = 30000;
-
-function checkCircuitState(): 'ALLOW' | 'PROBE' | 'FAST_FAIL' {
-  if (localLlmCircuit.status === 'CLOSED') return 'ALLOW';
-  const now = Date.now();
-  if (now >= localLlmCircuit.nextProbeTime) {
-    localLlmCircuit.status = 'HALF_OPEN';
-    return 'PROBE';
-  }
-  return 'FAST_FAIL';
-}
-
-function recordCircuitSuccess() {
-  if (localLlmCircuit.status !== 'CLOSED') {
-    log.info('llm.circuit_recovered', 'Local LLM Gateway recovered; circuit closed', {
-      previousFailures: localLlmCircuit.failures,
-    });
-  }
-  localLlmCircuit.status = 'CLOSED';
-  localLlmCircuit.failures = 0;
-  circuitBreakerGauge.set({ subsystem: 'llm_local' }, 0);
-  circuitBreakerFailuresGauge.set({ subsystem: 'llm_local' }, 0);
-}
-
-function recordCircuitFailure(err: unknown) {
-  localLlmCircuit.failures += 1;
-  localLlmCircuit.lastFailureTime = Date.now();
-  circuitBreakerFailuresGauge.set({ subsystem: 'llm_local' }, localLlmCircuit.failures);
-  if (localLlmCircuit.failures >= CIRCUIT_FAILURE_THRESHOLD) {
-    localLlmCircuit.status = 'OPEN';
-    localLlmCircuit.nextProbeTime = Date.now() + CIRCUIT_COOLDOWN_MS;
-    circuitBreakerGauge.set({ subsystem: 'llm_local' }, 1);
-    log.warn('llm.circuit_opened', 'Local LLM Gateway circuit opened (cooldown 30s)', {
-      failures: localLlmCircuit.failures,
-      cooldownMs: CIRCUIT_COOLDOWN_MS,
-    });
-  }
-}
-
-function checkCloudCircuitState(): 'ALLOW' | 'PROBE' | 'FAST_FAIL' {
-  if (cloudFallbackCircuit.status === 'CLOSED') return 'ALLOW';
-  const now = Date.now();
-  if (now >= cloudFallbackCircuit.nextProbeTime) {
-    cloudFallbackCircuit.status = 'HALF_OPEN';
-    return 'PROBE';
-  }
-  return 'FAST_FAIL';
-}
-
-function recordCloudCircuitSuccess() {
-  cloudFallbackCircuit.status = 'CLOSED';
-  cloudFallbackCircuit.failures = 0;
-  circuitBreakerGauge.set({ subsystem: 'llm_cloud' }, 0);
-  circuitBreakerFailuresGauge.set({ subsystem: 'llm_cloud' }, 0);
-}
-
-function recordCloudCircuitFailure(err: unknown) {
-  cloudFallbackCircuit.failures += 1;
-  cloudFallbackCircuit.lastFailureTime = Date.now();
-  circuitBreakerFailuresGauge.set({ subsystem: 'llm_cloud' }, cloudFallbackCircuit.failures);
-  if (cloudFallbackCircuit.failures >= CIRCUIT_FAILURE_THRESHOLD) {
-    cloudFallbackCircuit.status = 'OPEN';
-    cloudFallbackCircuit.nextProbeTime = Date.now() + CIRCUIT_COOLDOWN_MS;
-    circuitBreakerGauge.set({ subsystem: 'llm_cloud' }, 1);
-    log.warn('llm.cloud_circuit_opened', 'Cloud fallback circuit opened (cooldown 30s)', {
-      failures: cloudFallbackCircuit.failures,
-      cooldownMs: CIRCUIT_COOLDOWN_MS,
-    });
-  }
-}
 
 export interface ActiveRemoteLLMConfig {
   apiKey: string;
@@ -372,13 +283,18 @@ export async function generateLLMCompletion(
   options: LLMCompletionOptions = {}
 ): Promise<LLMCompletionResponse> {
   const startTime = Date.now();
-  const localModel = options.model || envConfig.LOCAL_LLM_PRIMARY_MODEL;
+  const isExtraction = options.task === 'extraction';
+  const defaultLocalModel = isExtraction
+    ? envConfig.LOCAL_LLM_EXTRACTION_MODEL
+    : envConfig.LOCAL_LLM_PRIMARY_MODEL;
+  const localModel = options.model || defaultLocalModel;
   const temperature = options.temperature ?? 0.2;
   const maxTokens = options.max_tokens ?? (envConfig.USE_LOCAL_LLM ? 2048 : 4096);
   const timeoutMs = options.timeoutMs ?? (envConfig.USE_LOCAL_LLM ? envConfig.LOCAL_LLM_TIMEOUT_MS : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
 
   log.debug('llm.request_started', 'LLM completion request started', {
     model: localModel,
+    task: options.task || 'general',
     temperature,
     maxTokens,
     timeoutMs,
@@ -412,9 +328,24 @@ export async function generateLLMCompletion(
   }
 
   let localFailureReason: string | null = null;
+  let shortCircuitedToCloud = false;
 
-  // 2. Attempt Primary Local LLM (llama-server) if enabled and circuit allows
-  if (envConfig.USE_LOCAL_LLM) {
+  // Short-circuit check: Standby during Render Mutex or Memory Pressure
+  if (envConfig.USE_LOCAL_LLM && !envConfig.EVAL_STRICT && envConfig.ENABLE_CLOUD_FALLBACK) {
+    try {
+      const offloadDecision = await ResourceSentinel.shouldOffloadToCloud();
+      if (offloadDecision.shouldOffload) {
+        shortCircuitedToCloud = true;
+        localFailureReason = `Short-circuited to cloud: ${offloadDecision.reason}`;
+        log.info('llm.short_circuit_cloud', `Directly routing LLM inference to Cloud Fallback without circuit penalty: ${offloadDecision.reason}`);
+      }
+    } catch (err: any) {
+      log.debug('llm.offload_check_error', `Offload check notice: ${err.message}`);
+    }
+  }
+
+  // 2. Attempt Primary Local LLM (llama-server) if enabled, not short-circuited, and circuit allows
+  if (envConfig.USE_LOCAL_LLM && !shortCircuitedToCloud) {
     const circuitAction = checkCircuitState();
     if (circuitAction === 'FAST_FAIL') {
       localFailureReason = `Local LLM circuit is OPEN (fast fail, next probe in ${Math.max(0, localLlmCircuit.nextProbeTime - Date.now())}ms)`;
@@ -423,23 +354,52 @@ export async function generateLLMCompletion(
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-        const endpoint = `${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`;
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: localModel,
-            messages,
-            temperature,
-            max_tokens: maxTokens,
-            ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
-            ...(options.response_format ? { response_format: options.response_format } : {}),
-          }),
-          signal: controller.signal,
-          cache: 'no-store',
-        });
+        const primaryLocalBaseUrl = isExtraction
+          ? envConfig.LOCAL_LLM_EXTRACTION_BASE_URL || `http://localhost:${envConfig.LOCAL_LLM_EXTRACTION_PORT}`
+          : envConfig.LLM_BASE_URL;
+        let endpoint = `${primaryLocalBaseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+        let response: Response;
+        try {
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: localModel,
+              messages,
+              temperature,
+              max_tokens: maxTokens,
+              ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
+              ...(options.response_format ? { response_format: options.response_format } : {}),
+            }),
+            signal: controller.signal,
+            cache: 'no-store',
+          });
+        } catch (fetchErr: any) {
+          // If extraction server on 8094 is unavailable, retry on default LLM port 8092 before giving up
+          if (isExtraction && primaryLocalBaseUrl !== envConfig.LLM_BASE_URL) {
+            endpoint = `${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`;
+            response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: localModel,
+                messages,
+                temperature,
+                max_tokens: maxTokens,
+                ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
+                ...(options.response_format ? { response_format: options.response_format } : {}),
+              }),
+              signal: controller.signal,
+              cache: 'no-store',
+            });
+          } else {
+            throw fetchErr;
+          }
+        }
 
         clearTimeout(timer);
 
@@ -909,8 +869,21 @@ export async function* generateLLMCompletionStream(
     }
   }
 
+  let shortCircuitedStreamToCloud = false;
+  if (envConfig.USE_LOCAL_LLM && !envConfig.EVAL_STRICT && envConfig.ENABLE_CLOUD_FALLBACK) {
+    try {
+      const offloadDecision = await ResourceSentinel.shouldOffloadToCloud();
+      if (offloadDecision.shouldOffload) {
+        shortCircuitedStreamToCloud = true;
+        log.info('llm.stream_short_circuit_cloud', `Directly routing LLM stream to Cloud Fallback without circuit penalty: ${offloadDecision.reason}`);
+      }
+    } catch (err: any) {
+      log.debug('llm.stream_offload_check_error', `Offload check notice: ${err.message}`);
+    }
+  }
+
   // 2. Primary Local Streaming via llama-server with Circuit Breaker
-  if (envConfig.USE_LOCAL_LLM) {
+  if (envConfig.USE_LOCAL_LLM && !shortCircuitedStreamToCloud) {
     const circuitAction = checkCircuitState();
     if (circuitAction !== 'FAST_FAIL') {
       try {

@@ -1,4 +1,4 @@
-# CHRONOVIET - SYSTEM ARCHITECTURE DIAGRAMS & TECHNICAL SPECIFICATION (OPERATIONAL HARDENED v3.3)
+# CHRONOVIET - SYSTEM ARCHITECTURE DIAGRAMS &amp; TECHNICAL SPECIFICATION (OPERATIONAL HARDENED v3.3)
 
 Document tổng hợp và đối chiếu toàn bộ Sơ đồ Kiến trúc Hệ thống, Quy trình xử lý dữ liệu Multi-Agent (Full GraphRAG từ Day 1), Hạ tầng Polyglot Persistence, Message Queues Tách Lập, State Machine Engine Kèm Nhánh Sửa Lỗi, VieNeu TTS Sync Engine, Topology Triển Khai Docker Compose Kèm Resource Limits Cứng, và Tầng Observability/Tracing cho dự án **ChronoViet**.
 
@@ -38,31 +38,33 @@ flowchart TB
 
     subgraph StorageLayer["6. SINGLE-HOST PERSISTENCE LAYER (VPS STORAGE)"]
         PostgresDB[("PostgreSQL 15+ Database (SINGLE SOURCE OF TRUTH)\n- Users, Billing & Video Projects\n- LangGraph State Checkpoints & License Audit Logs\n- pgvector Embeddings (HNSW Index 1024d)")]
-        MediaStorage[("Local Host Volume Storage (/media)\n- /media/raw-assets/ (Images & VieNeu Audio WAV)\n- /media/license-snapshots/ (Whitelisted License Audits)\n- /media/rendered-videos/ (Final MP4 Exports)")]
+        MediaStorage[("Local Host Volume Storage (/media)\n- /media/projects/:id/ (SSOT Workspaces: assets, audio, output)\n- /media/projects/:id/output/video.mp4 (Final MP4 Exports)\n- /media/raw-assets/ & /media/audio-cache/")]
     end
 
     %% Communications & Interactions
-    WebClient & MobileClient -->|HTTPS / WS / SSE| CaddyGateway
-    CaddyGateway -->|Forward Requests + Trace ID| AppMonolith
-    CaddyGateway -->|Serve Static Video/Audio Files| MediaStorage
-    Telemetry -. Monitor Health & Logs .-> ServiceLayer & WorkerPools & StorageLayer
+    WebClient & MobileClient -->|"HTTPS / WS / SSE"| CaddyGateway
+    CaddyGateway -->|"Forward Requests + Trace ID"| AppMonolith
+    CaddyGateway -->|"Serve Static Video/Audio Files"| MediaStorage
+    Telemetry -.->|"Monitor Health & Logs"| ServiceLayer
+    Telemetry -.->|"Monitor Health & Logs"| WorkerPools
+    Telemetry -.->|"Monitor Health & Logs"| StorageLayer
 
-    AppMonolith -->|Read / Write Auth, Projects & Checkpoints| PostgresDB
-    AppMonolith -->|Dense Vector Search (pgvector)| PostgresDB
-    AppMonolith -->|Push Async Jobs & Cache| UnifiedRedis
+    AppMonolith -->|"Read / Write Auth, Projects & Checkpoints"| PostgresDB
+    AppMonolith -->|"Dense Vector Search (pgvector)"| PostgresDB
+    AppMonolith -->|"Push Async Jobs & Cache"| UnifiedRedis
 
     UnifiedRedis --> TTSQueue & VLMQueue & RenderQueue
 
     TTSQueue & VLMQueue & RenderQueue --> AIWorker
 
-    AIWorker -->|Write WAV Audio & Final MP4| MediaStorage
-    AIWorker -->|Verify SSOT Checkpoint & Update Logs| PostgresDB
-    AIWorker -.->|Progress Updates via WebSocket| WebClient
+    AIWorker -->|"Write WAV Audio & Final MP4"| MediaStorage
+    AIWorker -->|"Verify SSOT Checkpoint & Update Logs"| PostgresDB
+    AIWorker -.->|"Progress Updates via WebSocket"| WebClient
 ```
 
 ---
 
-## 2. 🔄 Quy Trình Multi-Agent & RAG Pipeline (Sequence Flow v3.3 Operational)
+## 2. 🔄 Quy Trình Multi-Agent &amp; RAG Pipeline (Sequence Flow v3.3 Operational)
 
 Sơ đồ quy trình chi tiết từ khi Khởi tạo Prompt, truy vấn **Full GraphRAG**, kiểm duyệt License có Snapshot, Xử lý Circuit Breaker Gemini, đến Reconcile Thời lượng audio/video:
 
@@ -135,10 +137,10 @@ sequenceDiagram
     activate Worker
     Worker->>PG: Query Checkpoint SSOT (Xác nhận trạng thái dự án thực tế trước khi render)
     alt Checkpoint SSOT == ASSETS_AUDITED
-        Worker->>Vol: Read Audio (.wav), Images & Fonts từ `/media/raw-assets/`
+        Worker->>Vol: Read Audio (.wav), Images & Fonts từ `/media/projects/:projectId/`
         Worker->>User: WebSocket Broadcast (% Tiến độ real-time)
         Worker->>Worker: Execute `npx remotion render` (Isolated Chromium Process - Max 2.0 CPUs / 4GB RAM)
-        Worker->>Vol: Save file MP4 hoàn chỉnh vào `/media/rendered-videos/`
+        Worker->>Vol: Save file MP4 hoàn chỉnh vào `/media/projects/:projectId/output/video.mp4`
         Worker->>PG: Update Checkpoint (State: COMPLETED - SSOT)
         Worker->>Orch: Cập nhật status `COMPLETED`
     else Checkpoint SSOT != ASSETS_AUDITED (Canceled / Invalid)
@@ -146,7 +148,7 @@ sequenceDiagram
     end
     deactivate Worker
 
-    Orch-->>User: Trả link Download Video MP4 (State: COMPLETED)
+    Orch-->>User: Trả link phát/tải Video MP4 (State: COMPLETED)
 ```
 
 ---
@@ -169,7 +171,7 @@ flowchart TD
 
     subgraph PolyglotStores["VPS PERSISTENCE STORES (DOCKER COMPOSE)"]
         PostgreSQL[("PostgreSQL 15+ Database (SINGLE SOURCE OF TRUTH)\n- Core Data, Users & Projects\n- LangGraph State Checkpointer Tables\n- pgvector Embeddings (1024d BGE-M3 HNSW)\n- Relational Graph Entities & Relationships")]
-        MediaStorage[("Local Host Volume Storage (/media)\n- /media/raw-assets/\n- /media/license-snapshots/\n- /media/rendered-videos/")]
+        MediaStorage[("Local Host Volume Storage (/media)\n- /media/projects/:id/output/video.mp4\n- /media/audio-cache/\n- /media/raw-assets/ & license-snapshots/")]
     end
 
     Req --> L1Cache
@@ -177,14 +179,14 @@ flowchart TD
     L2Cache -- Miss --> L3Cache
     L3Cache -- Miss --> PolyglotStores
 
-    L2Cache -. Dense Vector & Graph Search .-> PostgreSQL
-    L3Cache -. Fetch State & Audit Trail .-> PostgreSQL
-    PolyglotStores -. Read / Write Media Assets .-> MediaStorage
+    L2Cache -.->|"Dense Vector & Graph Search"| PostgreSQL
+    L3Cache -.->|"Fetch State & Audit Trail"| PostgreSQL
+    PolyglotStores -.->|"Read / Write Media Assets"| MediaStorage
 ```
 
 ---
 
-## 4. ⚙️ Quản Lý Trạng Thái Máy (State Machine & Retry Engine v3.4)
+## 4. ⚙️ Quản Lý Trạng Thái Máy (State Machine &amp; Retry Engine v3.4)
 
 Trạng thái dự án trải qua các bước quản lý nghiêm ngặt thông qua LangGraph Engine với **Postgres Checkpointer làm Single Source of Truth**, gồm nhánh xử lý **Pacing Mismatch** (trong `DURATION_RECONCILED`) và **Gemini Circuit Breaker Handling**:
 
@@ -220,7 +222,7 @@ stateDiagram-v2
         FrameRendering --> MP4Stitching: Stitch Frames into MP4 & Clean Temp Files
     }
 
-    RENDERING --> COMPLETED: MP4 Exported to /media/rendered-videos/ & Postgres SSOT Updated
+    RENDERING --> COMPLETED: MP4 Exported to /media/projects/:id/output/video.mp4 & Postgres SSOT Updated
     RENDERING --> RENDERING: Worker Crash, Resume from Postgres Checkpoint SSOT
     
     RENDERING --> FAILED: DLQ Exceeded Max Retries (3 times)
@@ -233,7 +235,7 @@ stateDiagram-v2
 
 ---
 
-## 5. 🎤 Tích Hợp VieNeu TTS Engine & Audio-Visual Scene Sync (Reconciliation Math)
+## 5. 🎤 Tích Hợp VieNeu TTS Engine &amp; Audio-Visual Scene Sync (Reconciliation Math)
 
 Mô hình tích hợp VieNeu TTS tự host (ONNX Engine) kèm công thức tính toán **Duration Reconciliation**:
 
@@ -262,11 +264,12 @@ flowchart LR
 
     TextContent --> TTSModel
     TTSModel --> WhisperAlign
-    WhisperAlign -->|File .wav + AudioDurationMs| DurationCheck
+    WhisperAlign -->|"File .wav + AudioDurationMs"| DurationCheck
     
-    DurationCheck -- Sai số < 5% --> DurationMath
-    DurationCheck -- Sai số 5% - 15% --> TimeStretch --> DurationMath
-    DurationCheck -- Sai số > 15% --> MismatchTrigger
+    DurationCheck -->|"Sai số < 5%"| DurationMath
+    DurationCheck -->|"Sai số 5% - 15%"| TimeStretch
+    TimeStretch --> DurationMath
+    DurationCheck -->|"Sai số > 15%"| MismatchTrigger
     
     WhisperAlign -->|Word Timestamps JSON| CaptionConverter["Timestamp Converter:\nconvertVieNeuTimestampsToCaptions()"]
 
@@ -277,7 +280,7 @@ flowchart LR
 
 ---
 
-## 6. 🐳 Hạ Tầng Triển Khai Single-Host VPS Topology & Resource Isolation
+## 6. 🐳 Hạ Tầng Triển Khai Single-Host VPS Topology &amp; Resource Isolation
 
 Sơ đồ thể hiện mô hình triển khai Docker Compose Single-Host cho **ChronoViet** trên 1 VPS duy nhất với Caddy Proxy, Postgres+pgvector SSOT, Unified Redis, và Worker Pool:
 
@@ -312,15 +315,14 @@ flowchart TB
     WorkerCont <--> RedisCont & VolumeCont & PGCont
 ```
 
-### 📋 Docker Compose Configuration Snippet (Single-Host VPS v3.4)
+### 📋 Docker Compose Configuration Snippet (Dual-Target VPS &amp; Cloud v4.1)
 
 ```yaml
-version: '3.8'
-
 services:
   caddy:
     image: caddy:2-alpine
-    container_name: chronoviet-caddy
+    profiles:
+      - prod
     restart: always
     ports:
       - "80:80"
@@ -331,75 +333,212 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - app
+      app:
+        condition: service_healthy
 
   postgres:
     image: pgvector/pgvector:pg15
-    container_name: chronoviet-postgres
+    profiles:
+      - infra
+      - prod
+      - default
     restart: always
     environment:
       POSTGRES_DB: chronoviet_db
       POSTGRES_USER: chronoviet
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U chronoviet -d chronoviet_db"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
-    container_name: chronoviet-redis
+    profiles:
+      - infra
+      - prod
+      - default
     restart: always
-    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy noeviction
+    command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy noeviction
+    ports:
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  vieneu-tts-service:
+    build:
+      context: .
+      dockerfile: services/vieneu-tts/Dockerfile
+    container_name: vieneu_tts_engine
+    profiles:
+      - tts
+      - prod
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - LOG_FORMAT=json
+      - TTS_SERVICE_PORT=8080
+      - MEDIA_DIR=/app/media
+      - AUDIO_CACHE_DIR=/app/media/audio-cache
+      - WEB_CONCURRENCY=2
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./media:/app/media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  local-ai-cuda-llm:
+    image: ghcr.io/ggerganov/llama.cpp:server-cuda
+    container_name: local_ai_cuda_llm
+    profiles:
+      - ai
+      - ai-cuda
+      - prod-cuda
+      - prod-all
+    restart: always
+    ports:
+      - "8092:8092"
+    volumes:
+      - ./models:/models:ro
+    command: >
+      -m /models/${LOCAL_LLM_PRIMARY_MODEL:-qwen3.8-27b-instruct-q4_k_m}.gguf
+      --port 8092
+      --ctx-size ${LLM_CTX_SIZE:-16384}
+      --n-gpu-layers 99
+      --flash-attn
+      --cont-batching
+      --parallel 2
+      --host 0.0.0.0
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8092/v1/models || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  local-ai-cuda-emb:
+    image: ghcr.io/ggerganov/llama.cpp:server-cuda
+    container_name: local_ai_cuda_emb
+    profiles:
+      - ai
+      - ai-cuda
+      - prod-cuda
+      - prod-all
+    restart: always
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./models:/models:ro
+    command: >
+      -m /models/${LOCAL_EMBEDDING_MODEL:-bge-m3}.gguf
+      --port 8090
+      --embedding
+      --ctx-size ${EMBEDDING_CTX_SIZE:-4096}
+      --n-gpu-layers 99
+      --flash-attn
+      --host 0.0.0.0
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8090/v1/models || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   app:
     build:
       context: .
-      dockerfile: docker/Dockerfile.app
-    container_name: chronoviet-app
+      dockerfile: Dockerfile.app
+    profiles:
+      - prod
     restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD}@postgres:5432/chronoviet_db
+      - NODE_ENV=production
+      - LOG_FORMAT=json
+      - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://local-ai-cuda-llm:8092}
+      - EMBEDDING_API_URL=${EMBEDDING_API_URL:-http://local-ai-cuda-emb:8090/v1/embeddings}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      vieneu-tts-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     volumes:
       - ./media:/app/media
 
   worker:
     build:
       context: .
-      dockerfile: docker/Dockerfile.worker
-    container_name: chronoviet-worker
+      dockerfile: Dockerfile.worker
+    profiles:
+      - prod
     restart: always
+    shm_size: '2gb'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      - NODE_ENV=production
       - CONCURRENCY=1
-      - DATABASE_URL=postgres://chronoviet:${DB_PASSWORD}@postgres:5432/chronoviet_db
+      - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
-    deploy:
-      resources:
-        limits:
-          cpus: '2.00'
-          memory: 4000M
+      - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://local-ai-cuda-llm:8092}
+      - EMBEDDING_API_URL=${EMBEDDING_API_URL:-http://local-ai-cuda-emb:8090/v1/embeddings}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      vieneu-tts-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     volumes:
       - ./media:/app/media
 
@@ -414,14 +553,16 @@ volumes:
 
 ## 7. 📊 Bảng Xác Nhận Sẵn Sàng Vận Hành Thực Tế (Operational Hardening Verification Matrix v3.4)
 
-| STT | Rủi Ro Vận Hành Thực Tế | Trạng Thái Đã Xử Lý | Giải Pháp & Cơ Chế Khắc Phục Trong Spec v3.4 |
-| :---: | :--- | :---: | :--- |
-| **1** | **Resource Contention (Chromium render kéo sập DB/Redis)** | **✅ ĐÃ KHẮC PHỤC** | Áp dụng `deploy.resources.limits` cứng trong Compose (Worker max 2 CPU/4GB RAM). Khóa `CONCURRENCY=1` cho `remotion-render-queue`. |
-| **2** | **Dual Source of Truth (Postgres Checkpoint vs BullMQ Redis)** | **✅ ĐÃ KHẮC PHỤC** | Quy định Postgres Checkpointer là **Single Source of Truth** duy nhất. Redis bật AOF (`appendonly yes`). Worker query lại Postgres SSOT trước khi render. |
-| **3** | **Quá Nhiều Container Phức Tạp Cho 1 VPS (12 Services)** | **✅ ĐÃ KHẮC PHỤC** | **Tinh gọn xuống 5 containers duy nhất**: `caddy`, `postgres` (pgvector), `redis`, `app` (Monolith), `worker`. Giảm 70% RAM overhead, chạy mượt trên VPS 8GB RAM. |
-| **4** | **Phức tạp vận hành Full GraphRAG & MinIO** | **✅ ĐÃ CHUẨN HÓA** | Hợp nhất DB Vector vào **PostgreSQL (`pgvector`)** và chuyển Object Storage sang **Host Volume Mount (`/media`)** phục vụ trực tiếp qua Caddy Proxy. |
-| **5** | **Rủi Ro Pháp Lý License Từ Metadata Crawl Nhàn** | **✅ ĐÃ KHẮC PHỤC** | Bổ sung thư mục `/media/license-snapshots/` lưu vết hình ảnh + raw header response + snapshot metadata. Ưu tiên domain whitelist từ Verified APIs (Wikimedia Commons API). |
-| **6** | **Rủi Ro Trượt Budget / Spikes API Khi Gemini 429** | **✅ ĐÃ KHẮC PHỤC** | Tích hợp **Circuit Breaker** tại Orchestrator. Gặp 3 lỗi HTTP 429 trong 5 phút ➔ Chuyển trạng thái `OPEN` trong 5 phút cooldown ➔ Auto failover sang Local CLIP Scorer. |
-| **7** | **Thiếu Tầng Observability & Tracing** | **✅ ĐÃ KHẮC PHỤC** | Thêm Healthchecks cho 100% container trong Compose. Đưa Correlation ID (`Trace ID = md5`) vào Header HTTP, Queue Payload và Centralized JSON Logs. |
-| **8** | **Bất Đồng Bộ Thời Lượng (Duration Mismatch > 15%)** | **✅ ĐÃ KHẮC PHỤC** | Bổ sung nhánh xử lý **Pacing Mismatch** trong State Machine (`DURATION_RECONCILED`). Sai số 5-15% ➔ Audio Time-Stretch ±10%. Sai số > 15% ➔ Trigger Script Agent viết lại pacing (retry <= 2). |
+
+| STT   | Rủi Ro Vận Hành Thực Tế                                        | Trạng Thái Đã Xử Lý | Giải Pháp &amp; Cơ Chế Khắc Phục Trong Spec v3.4                                                                                                                                                     |
+| :-----: | :-------------------------------------------------------------- | :-------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **Resource Contention (Chromium render kéo sập DB/Redis)**     | **✅ ĐÃ KHẮC PHỤC**  | Áp dụng `deploy.resources.limits` cứng trong Compose (Worker max 2 CPU/4GB RAM). Khóa `CONCURRENCY=1` cho `remotion-render-queue`.                                                                   |
+| **2** | **Dual Source of Truth (Postgres Checkpoint vs BullMQ Redis)** | **✅ ĐÃ KHẮC PHỤC**  | Quy định Postgres Checkpointer là **Single Source of Truth** duy nhất. Redis bật AOF (`appendonly yes`). Worker query lại Postgres SSOT trước khi render.                                            |
+| **3** | **Quá Nhiều Container Phức Tạp Cho 1 VPS (12 Services)**       | **✅ ĐÃ KHẮC PHỤC**  | **Tinh gọn xuống 5 containers duy nhất**: `caddy`, `postgres` (pgvector), `redis`, `app` (Monolith), `worker`. Giảm 70% RAM overhead, chạy mượt trên VPS 8GB RAM.                                    |
+| **4** | **Phức tạp vận hành Full GraphRAG &amp; MinIO**                | **✅ ĐÃ CHUẨN HÓA**  | Hợp nhất DB Vector vào **PostgreSQL (`pgvector`)** và chuyển Object Storage sang **Host Volume Mount (`/media`)** phục vụ trực tiếp qua Caddy Proxy.                                                 |
+| **5** | **Rủi Ro Pháp Lý License Từ Metadata Crawl Nhàn**              | **✅ ĐÃ KHẮC PHỤC**  | Bổ sung thư mục `/media/license-snapshots/` lưu vết hình ảnh + raw header response + snapshot metadata. Ưu tiên domain whitelist từ Verified APIs (Wikimedia Commons API).                           |
+| **6** | **Rủi Ro Trượt Budget / Spikes API Khi Gemini 429**            | **✅ ĐÃ KHẮC PHỤC**  | Tích hợp **Circuit Breaker** tại Orchestrator. Gặp 3 lỗi HTTP 429 trong 5 phút ➔ Chuyển trạng thái `OPEN` trong 5 phút cooldown ➔ Auto failover sang Local CLIP Scorer.                              |
+| **7** | **Thiếu Tầng Observability &amp; Tracing**                     | **✅ ĐÃ KHẮC PHỤC**  | Thêm Healthchecks cho 100% container trong Compose. Đưa Correlation ID (`Trace ID = md5`) vào Header HTTP, Queue Payload và Centralized JSON Logs.                                                   |
+| **8** | **Bất Đồng Bộ Thời Lượng (Duration Mismatch &gt; 15%)**        | **✅ ĐÃ KHẮC PHỤC**  | Bổ sung nhánh xử lý **Pacing Mismatch** trong State Machine (`DURATION_RECONCILED`). Sai số 5-15% ➔ Audio Time-Stretch ±10%. Sai số &gt; 15% ➔ Trigger Script Agent viết lại pacing (retry &lt;= 2). |
+
 

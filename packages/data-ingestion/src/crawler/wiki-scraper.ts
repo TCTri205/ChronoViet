@@ -1,18 +1,16 @@
-/**
- * Wikipedia & Wikisource Historical Corpus Crawler
- * Fetches articles from vi.wikipedia.org using MediaWiki REST API, cleans content via QualityGate, and saves to raw_corpus/
- */
-
 import path from 'path';
 import { promises as fs } from 'fs';
 import { QualityGateValidator } from './quality-gate.js';
-import { CorpusCrawlItemResult } from '@chronoviet/shared-spec';
+import { CorpusCrawlItemResult, createLogger } from '@chronoviet/shared-spec';
 import { findMonorepoRoot } from '../utils/path-utils.js';
+
+const log = createLogger({ service: 'data-ingestion' });
 
 export interface WikiScraperOptions {
   outputPath?: string;
   minWordCount?: number;
   dynasty?: string;
+  correlationId?: string;
 }
 
 export class WikiScraper {
@@ -24,6 +22,13 @@ export class WikiScraper {
 
   public async fetchTopic(topic: string, options: WikiScraperOptions = {}): Promise<CorpusCrawlItemResult> {
     const targetDir = options.outputPath || path.resolve(findMonorepoRoot(), 'data', 'raw_corpus', 'wiki');
+    const startTime = Date.now();
+    const correlationId = options.correlationId;
+
+    log.info('crawler.wiki_fetch_started', `Starting Wikipedia fetch for topic: ${topic}`, {
+      correlationId,
+      topic,
+    });
 
     try {
       const apiUrl = `https://vi.wikipedia.org/w/api.php?action=query&prop=extracts|info&inprop=url&explaintext=true&titles=${encodeURIComponent(
@@ -35,6 +40,8 @@ export class WikiScraper {
           'User-Agent': 'ChronoVietBot/1.0 (https://chronoviet.internal; historical-rag-engine)',
         },
       });
+
+      const httpDurationMs = Date.now() - startTime;
 
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
@@ -64,6 +71,11 @@ export class WikiScraper {
       const page = pages[pageId];
 
       if (!page || page.missing || !page.extract) {
+        log.warn('crawler.wiki_page_missing', `Wikipedia article not found: "${topic}"`, {
+          correlationId,
+          topic,
+          durationMs: Date.now() - startTime,
+        });
         return {
           title: topic,
           sourceUrl: `https://vi.wikipedia.org/wiki/${encodeURIComponent(topic)}`,
@@ -88,6 +100,12 @@ export class WikiScraper {
       });
 
       if (!sanitized.isValid) {
+        log.warn('crawler.wiki_quality_rejected', `Quality gate rejected article: "${pageTitle}"`, {
+          correlationId,
+          title: pageTitle,
+          reason: sanitized.rejectReason,
+          wordCount: sanitized.wordCount,
+        });
         return {
           title: pageTitle,
           sourceUrl: pageUrl,
@@ -104,6 +122,15 @@ export class WikiScraper {
 
       await fs.writeFile(filePath, sanitized.markdownContent, 'utf-8');
 
+      const totalDurationMs = Date.now() - startTime;
+      log.info('crawler.wiki_fetch_success', `Successfully saved Wikipedia article "${pageTitle}"`, {
+        correlationId,
+        title: pageTitle,
+        savedPath: filePath,
+        wordCount: sanitized.wordCount,
+        durationMs: totalDurationMs,
+      });
+
       return {
         title: sanitized.title,
         sourceUrl: sanitized.sourceUrl,
@@ -113,6 +140,12 @@ export class WikiScraper {
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
+      log.error('crawler.wiki_fetch_failed', `Failed fetching Wikipedia topic "${topic}"`, {
+        correlationId,
+        topic,
+        error: errorMsg,
+        durationMs: Date.now() - startTime,
+      });
       return {
         title: topic,
         sourceUrl: `https://vi.wikipedia.org/wiki/${encodeURIComponent(topic)}`,

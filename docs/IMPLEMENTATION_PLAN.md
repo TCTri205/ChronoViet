@@ -50,11 +50,11 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 
 | Service | Cấu hình | Lệnh khởi động gợi ý |
 | :--- | :--- | :--- |
-| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8091`) | `llama-server -m models/qwen3.8-27b-q4_k_m.gguf --mmproj models/qwen3.8-27b-mmproj.gguf --port 8091` |
-| Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `bge-m3` (1024 dimensions) |
+| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8092`) | `llama-server -m models/qwen3.8-27b-q4_k_m.gguf --mmproj models/qwen3.8-27b-mmproj.gguf --port 8092` |
+| Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `bge-m3` (1024 dimensions) trên Port 8090 |
 | VieNeu Python TTS | `VIENEU_PYTHON_URL` (vd `http://localhost:8080`) | `python app.py` trong `services/vieneu-tts/` |
-| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.8-27b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8091) |
-| PostgreSQL pgvector | `DATABASE_URL` | `docker compose up -d db` |
+| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.8-27b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8092) |
+| PostgreSQL pgvector | `DATABASE_URL` | `pnpm stack:infra` |
 
 **Tắt strict (dev-only, KHÔNG hợp lệ làm benchmark):** đặt `EVAL_STRICT=false` trong `.env` — khi đó các fallback cũ (Agnes cloud, pseudo-random, sine-wave, CLIP) được phép dùng lại cho dev.
 
@@ -193,14 +193,18 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
    - Seed tập Golden Datasets vào `eval/test-cases/` (BIOGRAPHY, BATTLE, DYNASTY, MYSTERY, ARTIFACT) làm ground-truth benchmark.
 
 #### 📋 Công việc Workstream A (Chrono-RAG Engine & `rag-engine/eval/`):
-1. **Khởi tạo Database Schema:**
+1. **Khởi tạo Database Schema & Singleton Init:**
    - Tạo bảng Postgres `document_chunks` với vector column `embedding vector(1024)` (`BAAI/bge-m3`). Cấu hình HNSW index.
    - Xây dựng bảng quan hệ đồ thị Relational Graph: `entities`, `relationships`, `entity_chunks`.
+   - Triển khai Global Singleton Schema Initialization (`ensureGlobalSchemaInitialized()`) loại bỏ table lock và overhead DDL SQL lặp lại trên mỗi request.
 2. **Offline Ingestion Pipeline Coupling:**
    - Tích hợp dữ liệu đã chunking & trích xuất bộ ba `(Entity - Relation - Entity)` từ Workstream 0 vào Postgres.
-3. **Online Local Search & Reranking:**
-   - Viết thuật toán PostgreSQL Recursive CTEs (k-hop neighborhood $k=1,2$).
-   - Kết nối Hybrid Search (RRF BM25 sparse + `bge-m3` dense) + `bge-reranker-v2-m3` chọn Top-3 context.
+3. **Online Local Search, Reranking & In-Memory LRU Cache (v2.2):**
+   - Viết thuật toán PostgreSQL Recursive CTEs với mảng theo dõi `visited_path` để triệt tiêu chu trình lặp $A \to B \to A$.
+   - Tiền xử lý Lexical FTS (`sanitizeFtsQuery`) làm sạch stopword tiếng Việt trước khi tạo tsquery, loại bỏ False Negative.
+   - Chuẩn hóa thang điểm khởi tạo Graph Chunks ($1 / (60 + \text{rank})$) và cộng Co-Retrieval Boost ($+0.35$) cho các tài liệu đồng xác thực.
+   - Tích hợp In-Memory LRU Embedding Cache (`SimpleLRUCache`, 500 mục) đạt tốc độ truy xuất sub-millisecond cho query lặp.
+   - BGE Reranker v2 bảo tồn toàn diện danh xưng lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô*) kết hợp trọng số độ tin cậy nguồn $W_{\text{source}} \le 15\%$.
 4. **Triển khai `packages/rag-engine/eval/`:**
    - Xây dựng bộ test benchmark **ChronoEval-1000** trong `packages/rag-engine/eval/datasets/`.
    - Viết runner đánh giá 3 chỉ số RAG cốt lõi:

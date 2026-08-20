@@ -29,6 +29,12 @@ describe('Triple Extractor Unit Tests', () => {
       expect(isValidEntityName('12345')).toBe(false);
       expect(isValidEntityName('và')).toBe(false);
       expect(isValidEntityName('trong')).toBe(false);
+      expect(isValidEntityName('Trong')).toBe(false);
+      expect(isValidEntityName('Đến')).toBe(false);
+      expect(isValidEntityName('Từ')).toBe(false);
+      expect(isValidEntityName('Cuối')).toBe(false);
+      expect(isValidEntityName('Tên Châu')).toBe(false);
+      expect(isValidEntityName('Tên Huyện')).toBe(false);
     });
   });
 
@@ -47,6 +53,21 @@ describe('Triple Extractor Unit Tests', () => {
       const alias = triples.find((t) => t.relationType === 'ALIAS_OF');
       expect(alias).toBeDefined();
       expect(alias?.confidence).toBe(1.0);
+    });
+
+    it('should extract PART_OF when explicit subordination is present', () => {
+      const text = 'Nguyễn Huệ thuộc triều đại Tây Sơn.';
+      const triples = extractTriplesFromText(text);
+      const partOf = triples.find((t) => t.relationType === 'PART_OF');
+      expect(partOf).toBeDefined();
+    });
+
+    it('should NOT extract spurious PART_OF relation from temporal clauses like Trong thời Lương', () => {
+      const text = 'Trong thời Lương, nước ta bị đô hộ nặng nề.';
+      const triples = extractTriplesFromText(text);
+      const spurious = triples.find((t) => t.sourceEntityName === 'Trong' || t.targetEntityName === 'Trong');
+      expect(spurious).toBeUndefined();
+      expect(triples.length).toBe(0);
     });
   });
 

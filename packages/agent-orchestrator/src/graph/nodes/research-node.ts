@@ -5,16 +5,15 @@
  * candidate pool + provenance into `researchResults` for the VLM inspector.
  */
 
-import { createLogger, VisualCandidate } from '@chronoviet/shared-spec';
+import { VisualCandidate } from '@chronoviet/shared-spec';
 import { resolveImageCandidates } from '@chronoviet/vlm-inspector';
-import { ChronoGraphState, ResearchSceneResult } from '../state.js';
-
-const log = createLogger({ service: 'agent-orchestrator' });
+import { ChronoGraphState, getNodeLogger, ResearchSceneResult } from '../state.js';
 
 const RESEARCH_CANDIDATE_LIMIT = 3;
 
 export async function researchNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
-  log.info('orchestrator.research_started', `Researching visual candidates for ${state.scenes.length} scenes`, {
+  const nodeLog = getNodeLogger(state, 'research');
+  nodeLog.info('orchestrator.research_started', `Researching visual candidates for ${state.scenes.length} scenes`, {
     projectId: state.projectId,
   });
 
@@ -27,7 +26,7 @@ export async function researchNode(state: ChronoGraphState): Promise<Partial<Chr
       batch.map(async (scene) => {
         // Only IMAGE scenes need visual research; PURE_CODE scenes are skipped
         if (scene.contentType !== 'IMAGE') {
-          log.debug('orchestrator.research_skip_pure_code', `Skipping research for PURE_CODE scene ${scene.sceneId}`);
+          nodeLog.debug('orchestrator.research_skip_pure_code', `Skipping research for PURE_CODE scene ${scene.sceneId}`);
           return;
         }
 
@@ -50,13 +49,13 @@ export async function researchNode(state: ChronoGraphState): Promise<Partial<Chr
             provenance,
             resolvedAt: new Date().toISOString(),
           };
-          log.debug('orchestrator.research_scene_done', `Researched ${candidates.length} candidates for scene ${scene.sceneId}`, {
+          nodeLog.debug('orchestrator.research_scene_done', `Researched ${candidates.length} candidates for scene ${scene.sceneId}`, {
             sceneId: scene.sceneId,
             keywords,
             latencyMs: Date.now() - startedAt,
           });
         } catch (err: any) {
-          log.warn('orchestrator.research_scene_failed', `Research failed for scene ${scene.sceneId}: ${err.message}`, {
+          nodeLog.warn('orchestrator.research_scene_failed', `Research failed for scene ${scene.sceneId}: ${err.message}`, {
             sceneId: scene.sceneId,
             error: err.message,
           });

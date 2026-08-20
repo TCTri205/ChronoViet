@@ -19,9 +19,11 @@ Hệ thống **ChronoViet** áp dụng chiến lược lưu trữ tối giản h
 │ └──────────────────────────────────────┘  └──────────────────────────────────────────┘ │
 │ ┌────────────────────────────────────────────────────────────────────────────────────┐ │
 │ │ 3. Local Host Media Volume Storage (/media)                                        │ │
-│ │ - /media/raw-assets/ (Ảnh thô & VieNeu Audio WAV)                                  │ │
+│ │ - /media/projects/:id/ (Cấu trúc SSOT Workspace: assets, audio, temp, output)     │ │
+│ │ - /media/projects/:id/output/video.mp4 (Video MP4 đầu ra SSOT)                     │ │
+│ │ - /media/audio-cache/ (Bộ nhớ đệm âm thanh VieNeu TTS tái sử dụng)                │ │
+│ │ - /media/raw-assets/ (Ảnh thô & tư liệu số gốc)                                    │ │
 │ │ - /media/license-snapshots/ (Bằng chứng bản quyền Whitelisted & Response Headers) │ │
-│ │ - /media/rendered-videos/ (Video MP4 đầu ra cho client tải xuống)                  │ │
 │ └────────────────────────────────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -49,12 +51,22 @@ Hệ thống **ChronoViet** áp dụng chiến lược lưu trữ tối giản h
 * **Nhiệm vụ:** Đảm nhận đồng thời việc lưu vết hàng đợi BullMQ Jobs (với `appendonly yes`), lưu trữ bộ đệm (Prompt Cache, Asset VLM Scores), và truyền thông điệp real-time qua PubSub.
 * **Max Memory & Policy:** Giới hạn max 1GB RAM (`maxmemory 1gb`), cơ chế không tự hủy queue (`noeviction` cho DB queue, LRU cho DB cache).
 
-### 2.3. Local Host Media Storage (Tư Liệu Số, License Snapshots & Video MP4)
-* **Nhiệm vụ:** Lưu trữ các tệp phương tiện dưới dạng file system cục bộ tại Mount Volume `/media`, được Caddy Reverse Proxy serve static trực tiếp đến client với tốc độ cao.
-* **Cấu trúc Thư mục `/media`:**
-  * `/media/raw-assets/`: Chứa hình ảnh crawl và file âm thanh VieNeu TTS `.wav`.
-  * `/media/license-snapshots/`: Chứa file ảnh snapshot + JSON response headers để đối soát giấy phép thương mại (`Public Domain`, `CC0`, `CC-BY`).
-  * `/media/rendered-videos/`: Chứa file video MP4 hoàn thành.
+### 2.3. Local Host Media Storage (SSOT Project Workspace & Video Streaming)
+* **Nhiệm vụ:** Lưu trữ các tệp phương tiện dưới dạng file system cục bộ tại Mount Volume `/media`, được quản lý nhất quán thông qua `initProjectWorkspace()` của `@chronoviet/shared-spec`.
+* **Cấu trúc Thư mục `/media` Chuẩn Hóa:**
+  * `/media/projects/:projectId/`:
+    * `assets/`: Hình ảnh và clip minh họa phục vụ dự án.
+    * `audio/`: File âm thanh giọng đọc VieNeu TTS `.wav`/`.mp3` theo từng phân cảnh.
+    * `captions/`: Phụ đề chi tiết `.srt`, `.vtt` hoặc `.json`.
+    * `temp/`: Dữ liệu đệm phục vụ render Chromium (được tự động dọn dẹp sau render).
+    * `output/video.mp4`: Video MP4 hoàn thiện đầu ra chuẩn SSOT.
+    * `project_schema.json`: Schema chi tiết của project (bị chặn truy cập công khai qua Caddy 403).
+  * `/media/audio-cache/`: Bộ nhớ đệm audio TTS dùng chung.
+  * `/media/raw-assets/`: Tư liệu gốc chưa qua xử lý.
+  * `/media/license-snapshots/`: Ảnh snapshot + JSON response headers đối soát bản quyền (`Public Domain`, `CC0`, `CC-BY`).
+* **Phân phối Video & Phục vụ Media:**
+  * **Video Streaming:** Endpoint `/api/v1/projects/:id/video` hỗ trợ chuẩn HTTP 206 Partial Content (Range Requests) cho trình duyệt tua và phát video mượt mà.
+  * **Static Media:** Caddy Reverse Proxy phân phối file tĩnh từ `/media/` kèm `Cache-Control` và bảo mật `X-Content-Type-Options: nosniff`.
 
 ---
 

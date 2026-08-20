@@ -76,16 +76,17 @@ ChronoViet thiết kế chiến lược nạp mô hình phân tầng **Resident 
                                  32GB UMA RAM ALLOCATION (OPTIMIZED UNIFIED STACK)
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │ RESIDENT MODELS (Thường trực ~18.5 GB)                                                   │
-│ ├── Qwen3.8-27B Unified LLM & VLM (GGUF Q4_K_M + mmproj): ~16.5 GB                      │
-│ ├── bge-m3 Vector Embedding (GGUF / Dense 1024d): ~1.0 GB                               │
+│ ├── Qwen3.8-27B Unified LLM & VLM (Port 8092 - GGUF Q4_K_M + mmproj): ~16.5 GB           │
+│ ├── bge-m3 Vector Embedding (Port 8090 - GGUF / Dense 1024d): ~1.0 GB                   │
 │ └── Qwen3-Reranker-0.6B (GGUF Q8_0): ~0.8 GB                                            │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
-│ DYNAMIC WORKING MEMORY (Dynamic ~7.5 GB)                                                │
-│ ├── KV Cache (Dynamic Context Buffer 32K–64K): ~4.0 – 6.0 GB                            │
-│ └── ON-DEMAND UTILITIES & INGESTION (Nạp khi cần / Batch Ingestion): ~1.0 – 1.5 GB      │
+│ DYNAMIC WORKING MEMORY & 2-STAGE INGESTION (~7.5 GB)                                    │
+│ ├── Qwen3.5-4B-Instruct (Port 8094 - Stage 2 Triples Extraction): ~2.5 GB               │
+│ ├── KV Cache (Dynamic Context Buffer 32K–64K): ~3.0 – 4.0 GB                            │
+│ └── ON-DEMAND UTILITIES (Nạp khi cần): ~1.0 – 1.5 GB                                     │
 │     ├── SigLIP 2 ONNX Fast Filter (Chỉ dùng khi bulk-filter ảnh): ~0.4 GB               │
 │     ├── Historical OCR Ingestion Worker (PaddleOCR v5 Hán-Nôm): ~1.0 GB                 │
-│     └── VieNeu TTS ONNX Service: ~0.8 GB                                                │
+│     └── VieNeu TTS ONNX Service (Port 8080): ~0.8 GB                                    │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
 │ OS & CORE SYSTEM (Hệ điều hành macOS & App Core): ~6.0 GB                               │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
@@ -310,29 +311,77 @@ Bản trả lời của LLM phải phân rã cấu trúc câu trả lời theo m
 
 ## 6. CẤU HÌNH & THỰC THI CHO DEVELOPER (SPEC UPDATES)
 
+### 🌟 Khởi Động Dự Án & Các Profile Phù Hợp Phần Cứng
+ChronoViet hỗ trợ đa dạng cấu hình khởi động để tối ưu tài nguyên phần cứng máy Mac:
+
+```bash
+# 1. Khởi động trọn gói 1-Lệnh: Docker Infra + AI Supervisor + VieNeu TTS + Web UI + Worker
+pnpm dev:stack
+
+# 2. Khởi động theo Profile công việc tối ưu tài nguyên (Daily Dev Profiles):
+pnpm dev:hybrid      # Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local, tiết kiệm tối đa)
+pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
+
+# 3. Quản lý AI & TTS Local Runtime thống nhất (Unified AI CLI):
+pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8080) & model đã nạp
+pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 27B 8092)
+pnpm ai:lite         # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
+pnpm ai:emb          # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
+pnpm ai:extract      # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler
+pnpm ai:llm          # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 27B)
+pnpm ai:tts          # Khởi chạy microservice VieNeu TTS FastAPI trong Docker (Port 8080)
+pnpm ai:stop         # Dừng/giải phóng toàn bộ tiến trình AI & TTS (host & Docker), trả lại 100% RAM/VRAM
+
+# 4. Tải model weights theo nhu cầu
+pnpm models:download          # Tải toàn bộ model tiêu chuẩn
+pnpm models:download:lite     # Chỉ tải BGE-M3 + Qwen Extraction LLM (~2.4GB)
+pnpm models:download:emb      # Chỉ tải BGE-M3 (~605MB)
+pnpm models:download:extract  # Chỉ tải Qwen Extraction LLM (~1.8GB)
+```
+
+---
+
 ### Bước 1: Khai báo Biến Môi Trường (`.env`)
 ```env
 # Cấu hình Local Model Gateway & Endpoints
 USE_LOCAL_LLM=true
 LOCAL_LLM_BACKEND=llama_cpp # Lựa chọn: llama_cpp | ollama | mlx
-LLM_BASE_URL=http://localhost:8091
+LLM_BASE_URL=http://localhost:8092
+LLM_PORT=8092
 
 # Supported Gateway Endpoints:
 # - POST /v1/chat/completions  (OpenAI Format)
 # - POST /v1/responses         (OpenAI Responses API)
 # - POST /v1/messages          (Anthropic Messages API)
 
+# Dynamic Resource Management & Eviction
+AI_AUTO_EVICT_IDLE_MINUTES=10
+AI_STANDBY_ON_RENDER=true
+MEMORY_PRESSURE_THRESHOLD_PCT=85
+RENDER_MUTEX_LOCK_KEY=chronoviet:render_lock
+RENDER_MUTEX_TTL_SECONDS=900
+
 # LLM Primary Local & Cloud Fallback Strategy (Unified Text Reasoning & Multimodal Inspector)
 LOCAL_LLM_PRIMARY_MODEL=qwen3.8-27b-instruct-q4_k_m
 
-# Cloud API Fallback Configuration (Agnes 2.5 Flash)
+# Cloud API Fallback Configuration (Agnes 2.5 Flash / Gemini / OpenAI / OpenRouter)
 ENABLE_CLOUD_FALLBACK=true
 REMOTE_FALLBACK_MODEL=agnes-2.5-flash
 AGNES_API_KEY=your_agnes_api_key_here
 REMOTE_FALLBACK_TIMEOUT_MS=35000
 
+# Stage 2 Lightweight Extraction Model (Port 8094) for High-Speed Knowledge Triples Ingestion
+LOCAL_LLM_EXTRACTION_MODEL=qwen3.5-4b-instruct-q4_k_m
+LOCAL_LLM_EXTRACTION_PORT=8094
+LOCAL_LLM_EXTRACTION_BASE_URL=http://localhost:8094
+LOCAL_LLM_EXTRACTION_CTX_SIZE=8192
+LOCAL_LLM_EXTRACTION_PARALLEL=4
+LOCAL_LLM_EXTRACTION_THREADS=6
+
 # Embedding & Rerank Strategy (SSOT 1024-dim Vector Space)
 LOCAL_EMBEDDING_MODEL=bge-m3
+EMBEDDING_PORT=8090
+EMBEDDING_API_URL=http://localhost:8090/v1/embeddings
 EMBEDDING_DIMENSION=1024
 LOCAL_RERANK_MODEL=qwen3-reranker-0.6b
 
@@ -348,11 +397,25 @@ VIENEU_PYTHON_URL=http://localhost:8080
 
 ---
 
-### Bước 2: Khởi chạy Llama-Server Backend trên macOS
+### Bước 2: Quản lý Process Thông Minh qua AI Supervisor (`scripts/ai-supervisor.ts`)
 
 ```bash
-# 1. Khởi chạy llama-server Metal Engine cho Primary LLM (Qwen3.8-27B trên Port 8091)
-# (Trang bị Flash Attention + Q8_0 KV Cache + Continuous Batching 2 Slots)
+# Khởi chạy AI Process Supervisor (giám sát tự động nạp/giải phóng RAM, an toàn giải phóng port)
+tsx scripts/ai-supervisor.ts
+
+# Hoặc khởi chạy thủ công Stage 2 Extraction Server (Qwen3.5-4B trên Port 8094, 4 slots song song):
+llama-server \
+  --model ./models/qwen3.5-4b-instruct-q4_k_m.gguf \
+  --alias qwen3.5-4b \
+  --ctx-size 8192 \
+  --n-gpu-layers 99 \
+  --flash-attn auto \
+  --cont-batching \
+  --parallel 4 \
+  --threads 6 \
+  --port 8094
+
+# Hoặc khởi chạy thủ công llama-server Metal Engine (Port 8092 cho LLM, Port 8090 cho Embedding):
 llama-server \
   --model ./models/qwen3.8-27b-instruct-q4_k_m.gguf \
   --alias qwen3.8-27b \
@@ -363,9 +426,9 @@ llama-server \
   --cache-type-v q8_0 \
   --cont-batching \
   --parallel 2 \
-  --port 8091
+  --port 8092
 
-# 2. Khởi chạy Embedding Server (BGE-M3 1024d trên Port 8090)
+# Khởi chạy Embedding Server (BGE-M3 1024d trên Port 8090)
 llama-server \
   --model ./models/bge-m3.gguf \
   --alias bge-m3 \

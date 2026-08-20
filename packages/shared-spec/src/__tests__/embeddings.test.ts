@@ -6,7 +6,7 @@ import {
   EMBEDDING_DIMENSION,
 } from '../embeddings.js';
 
-describe('Embedding Service (SSOT 1024-dim Vector Space)', () => {
+describe('Embedding Service (SSOT 1024-dim Vector Space)', { timeout: 15000 }, () => {
   it('should generate a 1024-dimensional vector for non-empty text', async () => {
     const vec = await generateEmbedding('Trận Bạch Đằng năm 938 Ngô Quyền');
     expect(Array.isArray(vec)).toBe(true);

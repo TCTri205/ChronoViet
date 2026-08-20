@@ -6,7 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { chunkDocumentHierarchical } from '@chronoviet/data-ingestion/src/chunking/hierarchical-chunker.js';
+import { chunkDocumentHierarchical } from '@chronoviet/data-ingestion';
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
 import { HighResolutionLatencyProfiler } from '../metrics/latency-profiler.js';
 

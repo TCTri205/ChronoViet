@@ -91,6 +91,11 @@ export const RemotionRoot: React.FC = () => {
     });
 
     const durationInFrames = Math.max(1, totalFrames);
+    if (durationInFrames < 30) {
+      console.warn(
+        `[remotion-engine] render.duration_warning: Computed video duration (${durationInFrames} frames) is abnormally short (<30 frames).`
+      );
+    }
     const aspectRatio = typedProps.aspectRatio || '16:9';
     const dimensions = CANVAS_DIMENSIONS[aspectRatio] || CANVAS_DIMENSIONS['16:9'];
 

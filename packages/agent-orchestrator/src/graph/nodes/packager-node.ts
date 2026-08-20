@@ -3,21 +3,18 @@
  * Synthesizes final Remotion-compatible project schema and validates against VideoProjectSchema
  */
 
-import * as fs from 'fs';
 import {
   CaptionWord,
   ChronoVideoProps,
-  createLogger,
   saveProjectSchema,
   TimelineScene,
   VideoProjectSchema,
 } from '@chronoviet/shared-spec';
-import { ChronoGraphState } from '../state.js';
-
-const log = createLogger({ service: 'agent-orchestrator' });
+import { ChronoGraphState, getNodeLogger } from '../state.js';
 
 export async function packagerNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
-  log.info('orchestrator.packager_started', `Packaging ${state.scenes.length} scenes into project_schema.json`, {
+  const nodeLog = getNodeLogger(state, 'packager');
+  nodeLog.info('orchestrator.packager_started', `Packaging ${state.scenes.length} scenes into project_schema.json`, {
     projectId: state.projectId,
   });
 
@@ -90,9 +87,9 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
   // Save to project workspace disk
   try {
     saveProjectSchema(state.projectId, validatedSchema);
-    log.info('orchestrator.schema_saved', `Saved validated project_schema.json to workspace for ${state.projectId}`);
+    nodeLog.info('orchestrator.schema_saved', `Saved validated project_schema.json to workspace for ${state.projectId}`);
   } catch (err: any) {
-    log.warn('orchestrator.save_schema_error', `Could not save to disk workspace: ${err.message}`);
+    nodeLog.warn('orchestrator.save_schema_error', `Could not save to disk workspace: ${err.message}`);
   }
 
   return {

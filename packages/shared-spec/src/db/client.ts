@@ -143,9 +143,10 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
   checkAttempted = true;
 
   const cfg = getPoolConfig();
+  const timeoutMs = Math.max(2000, envConfig.PG_CONNECTION_TIMEOUT_MS || 5000);
   try {
     if (!pgPool) {
-      pgPool = new Pool({ ...cfg, connectionTimeoutMillis: 300 });
+      pgPool = new Pool({ ...cfg, connectionTimeoutMillis: timeoutMs });
       pgPool.on('error', () => {
         pgConnected = false;
       });
@@ -153,7 +154,7 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
 
     const client = await Promise.race([
       pgPool.connect(),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('PG Timeout')), 300)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('PG Timeout')), timeoutMs)),
     ]);
 
     await client.query('SELECT 1');

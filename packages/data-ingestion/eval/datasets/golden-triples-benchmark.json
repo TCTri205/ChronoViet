@@ -1,0 +1,2975 @@
+[
+  {
+    "id": "TC_EPOCH01_001",
+    "epochId": "EPOCH_01",
+    "sourceText": "Vua An Dương Vương xây thành Cổ Loa tại Đông Anh để củng cố phòng thủ nước Âu Lạc.",
+    "groundTruthEntities": [
+      {
+        "id": "person_an_duong_vuong",
+        "name": "An Dương Vương",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Thục Phán"
+        ],
+        "startOffset": 4,
+        "endOffset": 18
+      },
+      {
+        "id": "loc_thanh_co_loa",
+        "name": "thành Cổ Loa",
+        "type": "LOCATION",
+        "aliases": [
+          "Cổ Loa"
+        ],
+        "startOffset": 23,
+        "endOffset": 35
+      },
+      {
+        "id": "loc_dong_anh",
+        "name": "Đông Anh",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 40,
+        "endOffset": 48
+      },
+      {
+        "id": "dynasty_au_lac",
+        "name": "Âu Lạc",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 75,
+        "endOffset": 81
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_thanh_co_loa",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dong_anh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_thanh_co_loa",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_au_lac",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Âu Lạc and Cổ Loa fortress"
+  },
+  {
+    "id": "TC_EPOCH01_002",
+    "epochId": "EPOCH_01",
+    "sourceText": "Nỏ Liên Châu do Cao Lỗ chế tạo giúp nước Âu Lạc đánh lui quân Triệu Đà.",
+    "groundTruthEntities": [
+      {
+        "id": "artifact_no_lien_chau",
+        "name": "Nỏ Liên Châu",
+        "type": "ARTIFACT",
+        "aliases": [
+          "Nỏ thần"
+        ],
+        "startOffset": 0,
+        "endOffset": 12
+      },
+      {
+        "id": "person_cao_lo",
+        "name": "Cao Lỗ",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 16,
+        "endOffset": 22
+      },
+      {
+        "id": "dynasty_au_lac",
+        "name": "Âu Lạc",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 41,
+        "endOffset": 47
+      },
+      {
+        "id": "person_trieu_da",
+        "name": "Triệu Đà",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 62,
+        "endOffset": 70
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "artifact_no_lien_chau",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_au_lac",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Legendary artifact Cao Lo crossbow"
+  },
+  {
+    "id": "TC_EPOCH01_003",
+    "epochId": "EPOCH_01",
+    "sourceText": "Trống đồng Đông Sơn là biểu tượng văn minh thời đại Văn Lang được tìm thấy ở Thanh Hóa.",
+    "groundTruthEntities": [
+      {
+        "id": "artifact_trong_dong_dong_son",
+        "name": "Trống đồng Đông Sơn",
+        "type": "ARTIFACT",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 19
+      },
+      {
+        "id": "dynasty_van_lang",
+        "name": "Văn Lang",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 52,
+        "endOffset": 60
+      },
+      {
+        "id": "loc_thanh_hoa",
+        "name": "Thanh Hóa",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 77,
+        "endOffset": 86
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "artifact_trong_dong_dong_son",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_van_lang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "artifact_trong_dong_dong_son",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thanh_hoa",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Dong Son Bronze Drum artifact"
+  },
+  {
+    "id": "TC_EPOCH02_001",
+    "epochId": "EPOCH_02",
+    "sourceText": "Hai Bà Trưng phất cờ khởi nghĩa tại Mê Linh lật đổ ách đô hộ của nhà Đông Hán.",
+    "groundTruthEntities": [
+      {
+        "id": "person_hai_ba_trung",
+        "name": "Hai Bà Trưng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Trưng Trắc",
+          "Trưng Nhị"
+        ],
+        "startOffset": 0,
+        "endOffset": 12
+      },
+      {
+        "id": "loc_me_linh",
+        "name": "Mê Linh",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 36,
+        "endOffset": 43
+      },
+      {
+        "id": "dynasty_dong_han",
+        "name": "nhà Đông Hán",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 65,
+        "endOffset": 77
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_hai_ba_trung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_me_linh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Hai Ba Trung uprising at Me Linh"
+  },
+  {
+    "id": "TC_EPOCH02_002",
+    "epochId": "EPOCH_02",
+    "sourceText": "Bà Triệu lãnh đạo cuộc khởi nghĩa Căn Cứ Phú Điền chống quân Đông Ngô tại Thanh Hóa.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ba_trieu",
+        "name": "Bà Triệu",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Triệu Thị Trinh"
+        ],
+        "startOffset": 0,
+        "endOffset": 8
+      },
+      {
+        "id": "loc_phu_dien",
+        "name": "Căn Cứ Phú Điền",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 34,
+        "endOffset": 49
+      },
+      {
+        "id": "dynasty_dong_ngo",
+        "name": "Đông Ngô",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 61,
+        "endOffset": 69
+      },
+      {
+        "id": "loc_thanh_hoa",
+        "name": "Thanh Hóa",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 74,
+        "endOffset": 83
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_phu_dien",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thanh_hoa",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Lady Trieu uprising"
+  },
+  {
+    "id": "TC_EPOCH02_003",
+    "epochId": "EPOCH_02",
+    "sourceText": "Lý Nam Đế thành lập nhà Tiền Lý và đặt tên nước là Vạn Xuân.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ly_nam_de",
+        "name": "Lý Nam Đế",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Lý Bí"
+        ],
+        "startOffset": 0,
+        "endOffset": 9
+      },
+      {
+        "id": "dynasty_nha_tien_ly",
+        "name": "nhà Tiền Lý",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 20,
+        "endOffset": 31
+      },
+      {
+        "id": "dynasty_van_xuan",
+        "name": "Vạn Xuân",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 51,
+        "endOffset": 59
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_ly_nam_de",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_tien_ly",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "dynasty_nha_tien_ly",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_van_xuan",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ly Nam De and Van Xuan dynasty"
+  },
+  {
+    "id": "TC_EPOCH02_004",
+    "epochId": "EPOCH_02",
+    "sourceText": "Triệu Quang Phục nối ngôi Lý Nam Đế xưng là Dạ Trạch Vương đánh đuổi quân Lương.",
+    "groundTruthEntities": [
+      {
+        "id": "person_trieu_quang_phuc",
+        "name": "Triệu Quang Phục",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Dạ Trạch Vương"
+        ],
+        "startOffset": 0,
+        "endOffset": 16
+      },
+      {
+        "id": "person_ly_nam_de",
+        "name": "Lý Nam Đế",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Lý Bí"
+        ],
+        "startOffset": 26,
+        "endOffset": 35
+      },
+      {
+        "id": "person_trieu_quang_phuc",
+        "name": "Dạ Trạch Vương",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 44,
+        "endOffset": 58
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_trieu_quang_phuc",
+        "relationType": "ROYAL_LINEAGE",
+        "targetEntityId": "person_ly_nam_de",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Trieu Quang Phuc succession"
+  },
+  {
+    "id": "TC_EPOCH02_005",
+    "epochId": "EPOCH_02",
+    "sourceText": "Khởi nghĩa Mai Thúc Loan bùng nổ tại Hoan Châu chống ách đô hộ của nhà Đường.",
+    "groundTruthEntities": [
+      {
+        "id": "person_mai_thuc_loan",
+        "name": "Mai Thúc Loan",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Mai Hắc Đế"
+        ],
+        "startOffset": 11,
+        "endOffset": 24
+      },
+      {
+        "id": "loc_hoan_chau",
+        "name": "Hoan Châu",
+        "type": "LOCATION",
+        "aliases": [
+          "Nghệ An"
+        ],
+        "startOffset": 37,
+        "endOffset": 46
+      },
+      {
+        "id": "dynasty_nha_duong",
+        "name": "nhà Đường",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 67,
+        "endOffset": 76
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_hoan_chau",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_nghe_an",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Mai Hac De in Hoan Chau (Nghe An)"
+  },
+  {
+    "id": "TC_EPOCH02_006",
+    "epochId": "EPOCH_02",
+    "sourceText": "Phùng Hưng được nhân dân tôn xưng là Bố Cái Đại Vương sau cuộc khởi nghĩa Đường Lâm.",
+    "groundTruthEntities": [
+      {
+        "id": "person_phung_hung",
+        "name": "Phùng Hưng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Bố Cái Đại Vương"
+        ],
+        "startOffset": 0,
+        "endOffset": 10
+      },
+      {
+        "id": "person_phung_hung",
+        "name": "Bố Cái Đại Vương",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 37,
+        "endOffset": 53
+      },
+      {
+        "id": "loc_duong_lam",
+        "name": "Đường Lâm",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 74,
+        "endOffset": 83
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_phung_hung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_duong_lam",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Phung Hung Bo Cai Dai Vuong"
+  },
+  {
+    "id": "TC_EPOCH02_007",
+    "epochId": "EPOCH_02",
+    "sourceText": "Khúc Thừa Dụ xưng Tiết độ sứ mở đầu thời kỳ tự chủ của người Việt.",
+    "groundTruthEntities": [
+      {
+        "id": "person_khuc_thua_du",
+        "name": "Khúc Thừa Dụ",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 12
+      }
+    ],
+    "groundTruthTriples": [],
+    "notes": "Khuc Thua Du autonomy"
+  },
+  {
+    "id": "TC_EPOCH03_001",
+    "epochId": "EPOCH_03",
+    "sourceText": "Trận Bạch Đằng năm 938 do Ngô Quyền chỉ huy trên sông Bạch Đằng đánh tan quân Nam Hán.",
+    "groundTruthEntities": [
+      {
+        "id": "event_bach_dang_938",
+        "name": "Trận Bạch Đằng năm 938",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 22
+      },
+      {
+        "id": "person_ngo_quyen",
+        "name": "Ngô Quyền",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Tiền Ngô Vương"
+        ],
+        "startOffset": 26,
+        "endOffset": 35
+      },
+      {
+        "id": "loc_song_bach_dang",
+        "name": "sông Bạch Đằng",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 49,
+        "endOffset": 63
+      },
+      {
+        "id": "dynasty_nam_han",
+        "name": "Nam Hán",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 78,
+        "endOffset": 85
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_bach_dang_938",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_ngo_quyen",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_bach_dang_938",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_bach_dang",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Historic Battle of Bach Dang 938 led by Ngo Quyen"
+  },
+  {
+    "id": "TC_EPOCH03_002",
+    "epochId": "EPOCH_03",
+    "sourceText": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân, lên ngôi Đinh Tiên Hoàng đóng đô tại Hoa Lư.",
+    "groundTruthEntities": [
+      {
+        "id": "person_dinh_tien_hoang",
+        "name": "Đinh Bộ Lĩnh",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Đinh Tiên Hoàng",
+          "Vạn Thắng Vương"
+        ],
+        "startOffset": 0,
+        "endOffset": 12
+      },
+      {
+        "id": "person_dinh_tien_hoang",
+        "name": "Đinh Tiên Hoàng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 43,
+        "endOffset": 58
+      },
+      {
+        "id": "loc_hoa_lu",
+        "name": "Hoa Lư",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 71,
+        "endOffset": 77
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_dinh_tien_hoang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hoa_lu",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_hoa_lu",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_ninh_binh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Dinh Bo Linh unifies 12 warlords at Hoa Lu"
+  },
+  {
+    "id": "TC_EPOCH03_003",
+    "epochId": "EPOCH_03",
+    "sourceText": "Lê Hoàn lên ngôi Lê Đại Hành lãnh đạo quân dân đánh tan quân Tống trong Trận Bạch Đằng năm 981.",
+    "groundTruthEntities": [
+      {
+        "id": "person_le_dai_hanh",
+        "name": "Lê Hoàn",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Lê Đại Hành"
+        ],
+        "startOffset": 0,
+        "endOffset": 7
+      },
+      {
+        "id": "person_le_dai_hanh",
+        "name": "Lê Đại Hành",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 17,
+        "endOffset": 28
+      },
+      {
+        "id": "dynasty_nha_tong",
+        "name": "quân Tống",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 56,
+        "endOffset": 65
+      },
+      {
+        "id": "event_bach_dang_981",
+        "name": "Trận Bạch Đằng năm 981",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 72,
+        "endOffset": 94
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_bach_dang_981",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_le_dai_hanh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Le Dai Hanh in Bach Dang 981"
+  },
+  {
+    "id": "TC_EPOCH04_001",
+    "epochId": "EPOCH_04",
+    "sourceText": "Năm 1010, Lý Thái Tổ ban Chiếu dời đô dời kinh đô từ Hoa Lư về Thăng Long.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ly_thai_to",
+        "name": "Lý Thái Tổ",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Lý Công Uẩn"
+        ],
+        "startOffset": 10,
+        "endOffset": 20
+      },
+      {
+        "id": "doc_chieu_doi_do",
+        "name": "Chiếu dời đô",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 25,
+        "endOffset": 37
+      },
+      {
+        "id": "loc_hoa_lu",
+        "name": "Hoa Lư",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 53,
+        "endOffset": 59
+      },
+      {
+        "id": "loc_thang_long",
+        "name": "Thăng Long",
+        "type": "LOCATION",
+        "aliases": [
+          "Đông Đô",
+          "Hà Nội"
+        ],
+        "startOffset": 63,
+        "endOffset": 73
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_ly_thai_to",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_chieu_doi_do",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_thang_long",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_ha_noi",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_hoa_lu",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_ninh_binh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ly Thai To moves capital to Thang Long with Chieu doi do"
+  },
+  {
+    "id": "TC_EPOCH04_002",
+    "epochId": "EPOCH_04",
+    "sourceText": "Thái úy Lý Thường Kiệt chỉ huy Trận phòng tuyến sông Như Nguyệt đánh lui quân Tống.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ly_thuong_kiet",
+        "name": "Lý Thường Kiệt",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Ngô Tuấn"
+        ],
+        "startOffset": 8,
+        "endOffset": 22
+      },
+      {
+        "id": "event_phong_tuyen_nhu_nguyet",
+        "name": "Trận phòng tuyến sông Như Nguyệt",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 31,
+        "endOffset": 63
+      },
+      {
+        "id": "loc_song_nhu_nguyet",
+        "name": "sông Như Nguyệt",
+        "type": "LOCATION",
+        "aliases": [
+          "sông Cầu"
+        ],
+        "startOffset": 48,
+        "endOffset": 63
+      },
+      {
+        "id": "dynasty_nha_tong",
+        "name": "quân Tống",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 73,
+        "endOffset": 82
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_phong_tuyen_nhu_nguyet",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_ly_thuong_kiet",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_phong_tuyen_nhu_nguyet",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_nhu_nguyet",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ly Thuong Kiet on Nhu Nguyet River"
+  },
+  {
+    "id": "TC_EPOCH04_003",
+    "epochId": "EPOCH_04",
+    "sourceText": "Bài thơ Nam quốc sơn hà được vang lên bên sông Như Nguyệt khích lệ tướng sĩ nhà Lý.",
+    "groundTruthEntities": [
+      {
+        "id": "doc_nam_quoc_son_ha",
+        "name": "Nam quốc sơn hà",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 8,
+        "endOffset": 23
+      },
+      {
+        "id": "loc_song_nhu_nguyet",
+        "name": "sông Như Nguyệt",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 42,
+        "endOffset": 57
+      },
+      {
+        "id": "dynasty_nha_ly",
+        "name": "nhà Lý",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 76,
+        "endOffset": 82
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "doc_nam_quoc_son_ha",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_ly",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_nam_quoc_son_ha",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_nhu_nguyet",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Nam quoc son ha poem"
+  },
+  {
+    "id": "TC_EPOCH04_004",
+    "epochId": "EPOCH_04",
+    "sourceText": "Văn Miếu Quốc Tử Giám được vua Lý Thánh Tông sáng lập tại Thăng Long năm 1070.",
+    "groundTruthEntities": [
+      {
+        "id": "loc_van_mieu_quoc_tu_giam",
+        "name": "Văn Miếu Quốc Tử Giám",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 21
+      },
+      {
+        "id": "person_ly_thanh_tong",
+        "name": "Lý Thánh Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 31,
+        "endOffset": 44
+      },
+      {
+        "id": "loc_thang_long",
+        "name": "Thăng Long",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 58,
+        "endOffset": 68
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_van_mieu_quoc_tu_giam",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Van Mieu Quoc Tu Giam founded"
+  },
+  {
+    "id": "TC_EPOCH05_001",
+    "epochId": "EPOCH_05",
+    "sourceText": "Trần Hưng Đạo soạn Hịch tướng sĩ để hiệu triệu quân đội nhà Trần quyết chiến.",
+    "groundTruthEntities": [
+      {
+        "id": "person_tran_hung_dao",
+        "name": "Trần Hưng Đạo",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Trần Quốc Tuấn",
+          "Hưng Đạo Đại Vương"
+        ],
+        "startOffset": 0,
+        "endOffset": 13
+      },
+      {
+        "id": "doc_hich_tuong_si",
+        "name": "Hịch tướng sĩ",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 19,
+        "endOffset": 32
+      },
+      {
+        "id": "dynasty_nha_tran",
+        "name": "nhà Trần",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 56,
+        "endOffset": 64
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_tran_hung_dao",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_hich_tuong_si",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_tran_hung_dao",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_tran",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Tran Hung Dao writes Hich tuong si"
+  },
+  {
+    "id": "TC_EPOCH05_002",
+    "epochId": "EPOCH_05",
+    "sourceText": "Trận Bạch Đằng năm 1288 do Hưng Đạo Vương Trần Quốc Tuấn chỉ huy đại phá quân Nguyên Mông.",
+    "groundTruthEntities": [
+      {
+        "id": "event_bach_dang_1288",
+        "name": "Trận Bạch Đằng năm 1288",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 23
+      },
+      {
+        "id": "person_tran_hung_dao",
+        "name": "Trần Quốc Tuấn",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Trần Hưng Đạo"
+        ],
+        "startOffset": 42,
+        "endOffset": 56
+      },
+      {
+        "id": "org_quan_nguyen_mong",
+        "name": "quân Nguyên Mông",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 73,
+        "endOffset": 89
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_bach_dang_1288",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_tran_hung_dao",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Bach Dang 1288"
+  },
+  {
+    "id": "TC_EPOCH05_003",
+    "epochId": "EPOCH_05",
+    "sourceText": "Vua Trần Nhân Tông sau khi đánh thắng giặc Nguyên đã sáng lập Thiền phái Trúc Lâm Yên Tử.",
+    "groundTruthEntities": [
+      {
+        "id": "person_tran_nhan_tong",
+        "name": "Trần Nhân Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Trần Khâm",
+          "Điều Ngự Giác Hoàng"
+        ],
+        "startOffset": 4,
+        "endOffset": 18
+      },
+      {
+        "id": "org_thien_phai_truc_lam",
+        "name": "Thiền phái Trúc Lâm Yên Tử",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 62,
+        "endOffset": 88
+      },
+      {
+        "id": "loc_yen_tu",
+        "name": "Yên Tử",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 82,
+        "endOffset": 88
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "org_thien_phai_truc_lam",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_yen_tu",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Tran Nhan Tong creates Truc Lam Yen Tu"
+  },
+  {
+    "id": "TC_EPOCH05_004",
+    "epochId": "EPOCH_05",
+    "sourceText": "Hội nghị Diên Hồng được Thượng hoàng Trần Thánh Tông và vua Trần Nhân Tông triệu tập tại Thăng Long.",
+    "groundTruthEntities": [
+      {
+        "id": "event_hoi_nghi_dien_hong",
+        "name": "Hội nghị Diên Hồng",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 18
+      },
+      {
+        "id": "person_tran_thanh_tong",
+        "name": "Trần Thánh Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 37,
+        "endOffset": 52
+      },
+      {
+        "id": "person_tran_nhan_tong",
+        "name": "Trần Nhân Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 60,
+        "endOffset": 74
+      },
+      {
+        "id": "loc_thang_long",
+        "name": "Thăng Long",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 89,
+        "endOffset": 99
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_hoi_nghi_dien_hong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_tran_nhan_tong",
+        "relationType": "ROYAL_LINEAGE",
+        "targetEntityId": "person_tran_thanh_tong",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Dien Hong conference with royal lineage"
+  },
+  {
+    "id": "TC_EPOCH05_005",
+    "epochId": "EPOCH_05",
+    "sourceText": "Trần Quốc Toản bóp nát quả cam tại Hội nghị Bình Than rồi chiêu mộ đội quân đánh giặc.",
+    "groundTruthEntities": [
+      {
+        "id": "person_tran_quoc_toan",
+        "name": "Trần Quốc Toản",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Hoài Văn Hầu"
+        ],
+        "startOffset": 0,
+        "endOffset": 14
+      },
+      {
+        "id": "event_hoi_nghi_binh_than",
+        "name": "Hội nghị Bình Than",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 35,
+        "endOffset": 53
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_tran_quoc_toan",
+        "relationType": "PART_OF",
+        "targetEntityId": "event_hoi_nghi_binh_than",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Tran Quoc Toan at Binh Than"
+  },
+  {
+    "id": "TC_EPOCH06_001",
+    "epochId": "EPOCH_06",
+    "sourceText": "Hồ Quý Ly lập nên nhà Hồ, dời kinh đô về Tây Đô và cho phát hành tiền giấy Thông Bảo Hội Sao.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ho_quy_ly",
+        "name": "Hồ Quý Ly",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 9
+      },
+      {
+        "id": "dynasty_nha_ho",
+        "name": "nhà Hồ",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 18,
+        "endOffset": 24
+      },
+      {
+        "id": "loc_tay_do",
+        "name": "Tây Đô",
+        "type": "LOCATION",
+        "aliases": [
+          "Thành nhà Hồ",
+          "Thanh Hóa"
+        ],
+        "startOffset": 41,
+        "endOffset": 47
+      },
+      {
+        "id": "artifact_thong_bao_hoi_sao",
+        "name": "Thông Bảo Hội Sao",
+        "type": "ARTIFACT",
+        "aliases": [],
+        "startOffset": 75,
+        "endOffset": 92
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_ho_quy_ly",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_ho",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "artifact_thong_bao_hoi_sao",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_ho",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ho Quy Ly paper currency and Tay Do"
+  },
+  {
+    "id": "TC_EPOCH06_002",
+    "epochId": "EPOCH_06",
+    "sourceText": "Thành nhà Hồ được Hồ Quý Ly xây dựng hoàn toàn bằng đá khối tại Thanh Hóa.",
+    "groundTruthEntities": [
+      {
+        "id": "loc_thanh_nha_ho",
+        "name": "Thành nhà Hồ",
+        "type": "LOCATION",
+        "aliases": [
+          "Tây Đô"
+        ],
+        "startOffset": 0,
+        "endOffset": 12
+      },
+      {
+        "id": "person_ho_quy_ly",
+        "name": "Hồ Quý Ly",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 18,
+        "endOffset": 27
+      },
+      {
+        "id": "loc_thanh_hoa",
+        "name": "Thanh Hóa",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 64,
+        "endOffset": 73
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_thanh_nha_ho",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thanh_hoa",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ho Dynasty Citadel"
+  },
+  {
+    "id": "TC_EPOCH07_001",
+    "epochId": "EPOCH_07",
+    "sourceText": "Lê Lợi phát động Khởi nghĩa Lam Sơn tại Thanh Hóa chống lại ách đô hộ của nhà Minh.",
+    "groundTruthEntities": [
+      {
+        "id": "person_le_loi",
+        "name": "Lê Lợi",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Bình Định Vương",
+          "Lê Thái Tổ"
+        ],
+        "startOffset": 0,
+        "endOffset": 6
+      },
+      {
+        "id": "event_khoi_nghia_lam_son",
+        "name": "Khởi nghĩa Lam Sơn",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 17,
+        "endOffset": 35
+      },
+      {
+        "id": "loc_thanh_hoa",
+        "name": "Thanh Hóa",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 40,
+        "endOffset": 49
+      },
+      {
+        "id": "dynasty_nha_minh",
+        "name": "nhà Minh",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 74,
+        "endOffset": 82
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_khoi_nghia_lam_son",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_le_loi",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoi_nghia_lam_son",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thanh_hoa",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Lam Son uprising led by Le Loi"
+  },
+  {
+    "id": "TC_EPOCH07_002",
+    "epochId": "EPOCH_07",
+    "sourceText": "Trận Chi Lăng - Xương Giang do nghĩa quân Lam Sơn chỉ huy đã chém đầu Liễu Thăng tại ải Chi Lăng.",
+    "groundTruthEntities": [
+      {
+        "id": "event_chi_lang_xuong_giang",
+        "name": "Trận Chi Lăng - Xương Giang",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 27
+      },
+      {
+        "id": "org_nghia_quan_lam_son",
+        "name": "nghĩa quân Lam Sơn",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 31,
+        "endOffset": 49
+      },
+      {
+        "id": "person_lieu_thang",
+        "name": "Liễu Thăng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 70,
+        "endOffset": 80
+      },
+      {
+        "id": "loc_ai_chi_lang",
+        "name": "ải Chi Lăng",
+        "type": "LOCATION",
+        "aliases": [
+          "Lạng Sơn"
+        ],
+        "startOffset": 85,
+        "endOffset": 96
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_chi_lang_xuong_giang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ai_chi_lang",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Chi Lang battle"
+  },
+  {
+    "id": "TC_EPOCH07_003",
+    "epochId": "EPOCH_07",
+    "sourceText": "Nguyễn Trãi thừa lệnh Lê Lợi viết Bình Ngô đại cáo bố cáo thiên hạ sau ngày đại thắng.",
+    "groundTruthEntities": [
+      {
+        "id": "person_nguyen_trai",
+        "name": "Nguyễn Trãi",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Ức Trai"
+        ],
+        "startOffset": 0,
+        "endOffset": 11
+      },
+      {
+        "id": "person_le_loi",
+        "name": "Lê Lợi",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Lê Thái Tổ"
+        ],
+        "startOffset": 22,
+        "endOffset": 28
+      },
+      {
+        "id": "doc_binh_ngo_dai_cao",
+        "name": "Bình Ngô đại cáo",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 34,
+        "endOffset": 50
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_nguyen_trai",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_binh_ngo_dai_cao",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Binh Ngo dai cao written by Nguyen Trai"
+  },
+  {
+    "id": "TC_EPOCH07_004",
+    "epochId": "EPOCH_07",
+    "sourceText": "Trận Tốt Động - Chúc Động đánh tan đạo quân viện binh của Vương Thông tại Hà Đông.",
+    "groundTruthEntities": [
+      {
+        "id": "event_tot_dong_chuc_dong",
+        "name": "Trận Tốt Động - Chúc Động",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 25
+      },
+      {
+        "id": "person_vuong_thong",
+        "name": "Vương Thông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 58,
+        "endOffset": 69
+      },
+      {
+        "id": "loc_ha_dong",
+        "name": "Hà Đông",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 74,
+        "endOffset": 81
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_tot_dong_chuc_dong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ha_dong",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Tot Dong Chuc Dong battle"
+  },
+  {
+    "id": "TC_EPOCH08_001",
+    "epochId": "EPOCH_08",
+    "sourceText": "Vua Lê Thánh Tông ban hành Quốc triều hình luật còn gọi là Luật Hồng Đức tại Đông Kinh.",
+    "groundTruthEntities": [
+      {
+        "id": "person_le_thanh_tong",
+        "name": "Lê Thánh Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Lê Tư Thành"
+        ],
+        "startOffset": 4,
+        "endOffset": 17
+      },
+      {
+        "id": "doc_luat_hong_duc",
+        "name": "Luật Hồng Đức",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [
+          "Quốc triều hình luật"
+        ],
+        "startOffset": 59,
+        "endOffset": 72
+      },
+      {
+        "id": "loc_dong_kinh",
+        "name": "Đông Kinh",
+        "type": "LOCATION",
+        "aliases": [
+          "Thăng Long",
+          "Hà Nội"
+        ],
+        "startOffset": 77,
+        "endOffset": 86
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_le_thanh_tong",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_luat_hong_duc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_dong_kinh",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_ha_noi",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Le Thanh Tong promulgates Hong Duc Law in Dong Kinh"
+  },
+  {
+    "id": "TC_EPOCH08_002",
+    "epochId": "EPOCH_08",
+    "sourceText": "Hội Tao Đàn do vua Lê Thánh Tông sáng lập quy tụ hai mươi tám vị tiến sĩ Tao Đàn Nhị Thập Bát Tú.",
+    "groundTruthEntities": [
+      {
+        "id": "org_hoi_tao_dan",
+        "name": "Hội Tao Đàn",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 11
+      },
+      {
+        "id": "person_le_thanh_tong",
+        "name": "Lê Thánh Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 19,
+        "endOffset": 32
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "org_hoi_tao_dan",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_le_thanh_tong",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Tao Dan literary society"
+  },
+  {
+    "id": "TC_EPOCH08_003",
+    "epochId": "EPOCH_08",
+    "sourceText": "Đại Việt sử ký toàn thư do sử quan Ngô Sĩ Liên biên soạn dưới triều nhà Lê Sơ.",
+    "groundTruthEntities": [
+      {
+        "id": "doc_dai_viet_su_ky_toan_thu",
+        "name": "Đại Việt sử ký toàn thư",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 23
+      },
+      {
+        "id": "person_ngo_si_lien",
+        "name": "Ngô Sĩ Liên",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 35,
+        "endOffset": 46
+      },
+      {
+        "id": "dynasty_nha_le_so",
+        "name": "nhà Lê Sơ",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 68,
+        "endOffset": 77
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_ngo_si_lien",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_dai_viet_su_ky_toan_thu",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_dai_viet_su_ky_toan_thu",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_le_so",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Dai Viet su ky toan thu written by Ngo Si Lien"
+  },
+  {
+    "id": "TC_EPOCH09_001",
+    "epochId": "EPOCH_09",
+    "sourceText": "Nguyễn Hoàng vào trấn thủ Thuận Hóa năm 1558 mở đầu cơ nghiệp các chúa Nguyễn ở Đàng Trong.",
+    "groundTruthEntities": [
+      {
+        "id": "person_nguyen_hoang",
+        "name": "Nguyễn Hoàng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Chúa Tiên"
+        ],
+        "startOffset": 0,
+        "endOffset": 12
+      },
+      {
+        "id": "loc_thuan_hoa",
+        "name": "Thuận Hóa",
+        "type": "LOCATION",
+        "aliases": [
+          "Huế"
+        ],
+        "startOffset": 26,
+        "endOffset": 35
+      },
+      {
+        "id": "org_chua_nguyen",
+        "name": "chúa Nguyễn",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 66,
+        "endOffset": 77
+      },
+      {
+        "id": "loc_dang_trong",
+        "name": "Đàng Trong",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 80,
+        "endOffset": 90
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_nguyen_hoang",
+        "relationType": "PART_OF",
+        "targetEntityId": "org_chua_nguyen",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_thuan_hoa",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_hue",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Nguyen Hoang enters Thuan Hoa"
+  },
+  {
+    "id": "TC_EPOCH09_002",
+    "epochId": "EPOCH_09",
+    "sourceText": "Chúa Trịnh Kiểm nắm thực quyền ở Đàng Ngoài phò tá vua Lê Trang Tông lập nên triều đình Lê - Trịnh.",
+    "groundTruthEntities": [
+      {
+        "id": "person_trinh_kiem",
+        "name": "Trịnh Kiểm",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 5,
+        "endOffset": 15
+      },
+      {
+        "id": "loc_dang_ngoai",
+        "name": "Đàng Ngoài",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 33,
+        "endOffset": 43
+      },
+      {
+        "id": "person_le_trang_tong",
+        "name": "Lê Trang Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 55,
+        "endOffset": 68
+      }
+    ],
+    "groundTruthTriples": [],
+    "notes": "Trinh Kiem in Dang Ngoai"
+  },
+  {
+    "id": "TC_EPOCH09_003",
+    "epochId": "EPOCH_09",
+    "sourceText": "Sông Gianh tại Quảng Bình là ranh giới chia cắt Đàng Trong và Đàng Ngoài suốt cuộc chiến tranh Trịnh - Nguyễn.",
+    "groundTruthEntities": [
+      {
+        "id": "loc_song_gianh",
+        "name": "Sông Gianh",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 10
+      },
+      {
+        "id": "loc_quang_binh",
+        "name": "Quảng Bình",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 15,
+        "endOffset": 25
+      },
+      {
+        "id": "loc_dang_trong",
+        "name": "Đàng Trong",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 48,
+        "endOffset": 58
+      },
+      {
+        "id": "loc_dang_ngoai",
+        "name": "Đàng Ngoài",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 62,
+        "endOffset": 72
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_song_gianh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_quang_binh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Song Gianh border between Dang Trong and Dang Ngoai"
+  },
+  {
+    "id": "TC_EPOCH09_004",
+    "epochId": "EPOCH_09",
+    "sourceText": "Trạng Trình Nguyễn Bỉnh Khiêm đưa ra lời sấm Hoành Sơn nhất đái vạn đại dung thân cho Nguyễn Hoàng.",
+    "groundTruthEntities": [
+      {
+        "id": "person_nguyen_binh_khiem",
+        "name": "Nguyễn Bỉnh Khiêm",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Trạng Trình"
+        ],
+        "startOffset": 12,
+        "endOffset": 29
+      },
+      {
+        "id": "person_nguyen_hoang",
+        "name": "Nguyễn Hoàng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 86,
+        "endOffset": 98
+      }
+    ],
+    "groundTruthTriples": [],
+    "notes": "Nguyen Binh Khiem prophecy to Nguyen Hoang"
+  },
+  {
+    "id": "TC_EPOCH_OVERLAP_001",
+    "epochId": "EPOCH_10",
+    "epochIds": [
+      "EPOCH_09",
+      "EPOCH_10"
+    ],
+    "sourceText": "Năm 1771, ba anh em Tây Sơn là Nguyễn Nhạc, Nguyễn Huệ và Nguyễn Lữ dựng cờ khởi nghĩa tại ấp Tây Sơn.",
+    "groundTruthEntities": [
+      {
+        "id": "person_nguyen_nhac",
+        "name": "Nguyễn Nhạc",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Tây Sơn Vương"
+        ],
+        "startOffset": 31,
+        "endOffset": 42
+      },
+      {
+        "id": "person_quang_trung",
+        "name": "Nguyễn Huệ",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Quang Trung",
+          "Hồ Thơm"
+        ],
+        "startOffset": 44,
+        "endOffset": 54
+      },
+      {
+        "id": "person_nguyen_lu",
+        "name": "Nguyễn Lữ",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Đông Định Vương"
+        ],
+        "startOffset": 58,
+        "endOffset": 67
+      },
+      {
+        "id": "loc_tay_son",
+        "name": "ấp Tây Sơn",
+        "type": "LOCATION",
+        "aliases": [
+          "Bình Định"
+        ],
+        "startOffset": 91,
+        "endOffset": 101
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_quang_trung",
+        "relationType": "ALIAS_OF",
+        "targetEntityId": "person_quang_trung",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_tay_son",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_binh_dinh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Hard Case: 1771 Tay Son uprising start falls under both EPOCH_09 and EPOCH_10"
+  },
+  {
+    "id": "TC_EPOCH_OVERLAP_002",
+    "epochId": "EPOCH_10",
+    "epochIds": [
+      "EPOCH_09",
+      "EPOCH_10"
+    ],
+    "sourceText": "Năm 1777, nghĩa quân Tây Sơn đánh chiếm Gia Định lật đổ chính quyền chúa Nguyễn ở Đàng Trong.",
+    "groundTruthEntities": [
+      {
+        "id": "org_tay_son",
+        "name": "nghĩa quân Tây Sơn",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 10,
+        "endOffset": 28
+      },
+      {
+        "id": "loc_gia_dinh",
+        "name": "Gia Định",
+        "type": "LOCATION",
+        "aliases": [
+          "Sài Gòn",
+          "Thành phố Hồ Chí Minh"
+        ],
+        "startOffset": 40,
+        "endOffset": 48
+      },
+      {
+        "id": "org_chua_nguyen",
+        "name": "chúa Nguyễn",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 68,
+        "endOffset": 79
+      },
+      {
+        "id": "loc_dang_trong",
+        "name": "Đàng Trong",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 82,
+        "endOffset": 92
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_gia_dinh",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_ho_chi_minh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Hard Case: 1777 overthrow of Dang Trong Lord Nguyen falls under EPOCH_09 & EPOCH_10"
+  },
+  {
+    "id": "TC_EPOCH10_001",
+    "epochId": "EPOCH_10",
+    "sourceText": "Trận Rạch Gầm - Xoài Mút năm 1785 do Nguyễn Huệ chỉ huy đánh tan 5 vạn quân Xiêm La trên sông Tiền.",
+    "groundTruthEntities": [
+      {
+        "id": "event_rach_gam_xoai_mut",
+        "name": "Trận Rạch Gầm - Xoài Mút",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 24
+      },
+      {
+        "id": "person_quang_trung",
+        "name": "Nguyễn Huệ",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Quang Trung",
+          "Bắc Bình Vương"
+        ],
+        "startOffset": 37,
+        "endOffset": 47
+      },
+      {
+        "id": "dynasty_xiem_la",
+        "name": "Xiêm La",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 76,
+        "endOffset": 83
+      },
+      {
+        "id": "loc_song_tien",
+        "name": "sông Tiền",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 89,
+        "endOffset": 98
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_rach_gam_xoai_mut",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_quang_trung",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_rach_gam_xoai_mut",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_tien",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Rach Gam Xoai Mut battle"
+  },
+  {
+    "id": "TC_EPOCH10_002",
+    "epochId": "EPOCH_10",
+    "sourceText": "Trận Ngọc Hồi - Đống Đa do Hoàng đế Quang Trung chỉ huy tiến vào Thăng Long đại phá 29 vạn quân Mãn Thanh.",
+    "groundTruthEntities": [
+      {
+        "id": "event_ngoc_hoi_dong_da",
+        "name": "Trận Ngọc Hồi - Đống Đa",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 23
+      },
+      {
+        "id": "person_quang_trung",
+        "name": "Quang Trung",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Nguyễn Huệ",
+          "Hồ Thơm"
+        ],
+        "startOffset": 36,
+        "endOffset": 47
+      },
+      {
+        "id": "loc_thang_long",
+        "name": "Thăng Long",
+        "type": "LOCATION",
+        "aliases": [
+          "Hà Nội"
+        ],
+        "startOffset": 65,
+        "endOffset": 75
+      },
+      {
+        "id": "org_quan_man_thanh",
+        "name": "quân Mãn Thanh",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 91,
+        "endOffset": 105
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_ngoc_hoi_dong_da",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_quang_trung",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_ngoc_hoi_dong_da",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_thang_long",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_ha_noi",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ngoc Hoi Dong Da battle"
+  },
+  {
+    "id": "TC_EPOCH10_003",
+    "epochId": "EPOCH_10",
+    "sourceText": "Bắc Bình Vương Nguyễn Huệ lên ngôi Hoàng đế tại núi Bân ở Phú Xuân lấy niên hiệu là Quang Trung.",
+    "groundTruthEntities": [
+      {
+        "id": "person_quang_trung",
+        "name": "Bắc Bình Vương",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Nguyễn Huệ",
+          "Quang Trung"
+        ],
+        "startOffset": 0,
+        "endOffset": 14
+      },
+      {
+        "id": "person_quang_trung",
+        "name": "Nguyễn Huệ",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 15,
+        "endOffset": 25
+      },
+      {
+        "id": "loc_nui_ban",
+        "name": "núi Bân",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 48,
+        "endOffset": 55
+      },
+      {
+        "id": "loc_phu_xuan",
+        "name": "Phú Xuân",
+        "type": "LOCATION",
+        "aliases": [
+          "Huế"
+        ],
+        "startOffset": 58,
+        "endOffset": 66
+      },
+      {
+        "id": "person_quang_trung",
+        "name": "Quang Trung",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 84,
+        "endOffset": 95
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_nui_ban",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_phu_xuan",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_phu_xuan",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_hue",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Hard Case: Aliases of Quang Trung and location Phu Xuan -> Hue"
+  },
+  {
+    "id": "TC_EPOCH10_004",
+    "epochId": "EPOCH_10",
+    "sourceText": "Đô đốc Bùi Thị Xuân chỉ huy đội tượng binh Tây Sơn lập nhiều chiến công hiển hách.",
+    "groundTruthEntities": [
+      {
+        "id": "person_bui_thi_xuan",
+        "name": "Bùi Thị Xuân",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 7,
+        "endOffset": 19
+      },
+      {
+        "id": "org_tay_son",
+        "name": "Tây Sơn",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 43,
+        "endOffset": 50
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_bui_thi_xuan",
+        "relationType": "PART_OF",
+        "targetEntityId": "org_tay_son",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Bui Thi Xuan elephant cavalry"
+  },
+  {
+    "id": "TC_EPOCH11_001",
+    "epochId": "EPOCH_11",
+    "sourceText": "Nguyễn Ánh lên ngôi Hoàng đế lấy niên hiệu Gia Long lập nên nhà Nguyễn đóng đô tại Phú Xuân.",
+    "groundTruthEntities": [
+      {
+        "id": "person_gia_long",
+        "name": "Nguyễn Ánh",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Gia Long"
+        ],
+        "startOffset": 0,
+        "endOffset": 10
+      },
+      {
+        "id": "person_gia_long",
+        "name": "Gia Long",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 43,
+        "endOffset": 51
+      },
+      {
+        "id": "dynasty_nha_nguyen",
+        "name": "nhà Nguyễn",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 60,
+        "endOffset": 70
+      },
+      {
+        "id": "loc_phu_xuan",
+        "name": "Phú Xuân",
+        "type": "LOCATION",
+        "aliases": [
+          "Huế"
+        ],
+        "startOffset": 83,
+        "endOffset": 91
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_gia_long",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_nguyen",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_phu_xuan",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_hue",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Gia Long establishes Nguyen Dynasty at Phu Xuan"
+  },
+  {
+    "id": "TC_EPOCH11_002",
+    "epochId": "EPOCH_11",
+    "sourceText": "Vua Minh Mạng ban hành cải cách hành chính chia cả nước thành 30 tỉnh và một phủ Thừa Thiên.",
+    "groundTruthEntities": [
+      {
+        "id": "person_minh_mang",
+        "name": "Minh Mạng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Nguyễn Phúc Đảm"
+        ],
+        "startOffset": 4,
+        "endOffset": 13
+      },
+      {
+        "id": "loc_phu_thua_thien",
+        "name": "phủ Thừa Thiên",
+        "type": "LOCATION",
+        "aliases": [
+          "Thừa Thiên Huế"
+        ],
+        "startOffset": 77,
+        "endOffset": 91
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_phu_thua_thien",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_thua_thien_hue",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Minh Mang administrative reform"
+  },
+  {
+    "id": "TC_EPOCH11_003",
+    "epochId": "EPOCH_11",
+    "sourceText": "Đại Nam thực lục do Quốc sử quán triều Nguyễn biên soạn ghi chép lịch sử triều đại.",
+    "groundTruthEntities": [
+      {
+        "id": "doc_dai_nam_thuc_luc",
+        "name": "Đại Nam thực lục",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 16
+      },
+      {
+        "id": "org_quoc_su_quan_trieu_nguyen",
+        "name": "Quốc sử quán triều Nguyễn",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 20,
+        "endOffset": 45
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "org_quoc_su_quan_trieu_nguyen",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_dai_nam_thuc_luc",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Dai Nam thuc luc"
+  },
+  {
+    "id": "TC_EPOCH12_001",
+    "epochId": "EPOCH_12",
+    "sourceText": "Trận bán đảo Sơn Trà năm 1858 do Nguyễn Tri Phương chỉ huy chặn đứng liên quân Pháp - Tây Ban Nha tại Đà Nẵng.",
+    "groundTruthEntities": [
+      {
+        "id": "event_ban_dao_son_tra",
+        "name": "Trận bán đảo Sơn Trà",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 20
+      },
+      {
+        "id": "person_nguyen_tri_phuong",
+        "name": "Nguyễn Tri Phương",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 33,
+        "endOffset": 50
+      },
+      {
+        "id": "loc_da_nang",
+        "name": "Đà Nẵng",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 102,
+        "endOffset": 109
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_ban_dao_son_tra",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_nguyen_tri_phuong",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_ban_dao_son_tra",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_da_nang",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Son Tra battle 1858"
+  },
+  {
+    "id": "TC_EPOCH12_002",
+    "epochId": "EPOCH_12",
+    "sourceText": "Trương Định lãnh đạo nghĩa quân Tân An - Gò Công chống Pháp và được nhân dân tôn xưng là Bình Tây Đại nguyên soái.",
+    "groundTruthEntities": [
+      {
+        "id": "person_truong_dinh",
+        "name": "Trương Định",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Bình Tây Đại nguyên soái"
+        ],
+        "startOffset": 0,
+        "endOffset": 11
+      },
+      {
+        "id": "loc_go_cong",
+        "name": "Gò Công",
+        "type": "LOCATION",
+        "aliases": [
+          "Tiền Giang"
+        ],
+        "startOffset": 41,
+        "endOffset": 48
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_truong_dinh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_go_cong",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Truong Dinh in Go Cong"
+  },
+  {
+    "id": "TC_EPOCH12_003",
+    "epochId": "EPOCH_12",
+    "sourceText": "Phong trào Cần Vương do vua Hàm Nghi và Tôn Thất Thuyết phát động tại căn cứ Tân Sở thuộc Quảng Trị.",
+    "groundTruthEntities": [
+      {
+        "id": "event_phong_trao_can_vuong",
+        "name": "Phong trào Cần Vương",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 20
+      },
+      {
+        "id": "person_ham_nghi",
+        "name": "Hàm Nghi",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 28,
+        "endOffset": 36
+      },
+      {
+        "id": "person_ton_that_thuyet",
+        "name": "Tôn Thất Thuyết",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 40,
+        "endOffset": 55
+      },
+      {
+        "id": "loc_tan_so",
+        "name": "căn cứ Tân Sở",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 70,
+        "endOffset": 83
+      },
+      {
+        "id": "loc_quang_tri",
+        "name": "Quảng Trị",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 90,
+        "endOffset": 99
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_phong_trao_can_vuong",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_ham_nghi",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_tan_so",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_quang_tri",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Can Vuong movement"
+  },
+  {
+    "id": "TC_EPOCH12_004",
+    "epochId": "EPOCH_12",
+    "sourceText": "Phan Bội Châu sáng lập Hội Duy Tân và tổ chức Phong trào Đông Du đưa thanh niên sang Nhật Bản.",
+    "groundTruthEntities": [
+      {
+        "id": "person_phan_boi_chau",
+        "name": "Phan Bội Châu",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Sào Nam"
+        ],
+        "startOffset": 0,
+        "endOffset": 13
+      },
+      {
+        "id": "org_hoi_duy_tan",
+        "name": "Hội Duy Tân",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 23,
+        "endOffset": 34
+      },
+      {
+        "id": "event_dong_du",
+        "name": "Phong trào Đông Du",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 46,
+        "endOffset": 64
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "org_hoi_duy_tan",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_phan_boi_chau",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dong_du",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_phan_boi_chau",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Phan Boi Chau and Dong Du"
+  },
+  {
+    "id": "TC_EPOCH12_005",
+    "epochId": "EPOCH_12",
+    "sourceText": "Phan Chu Trinh lãnh đạo Phong trào Duy Tân tại Trung Kỳ chủ trương nâng cao dân trí khai hóa dân quyền.",
+    "groundTruthEntities": [
+      {
+        "id": "person_phan_chu_trinh",
+        "name": "Phan Chu Trinh",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Tây Hồ"
+        ],
+        "startOffset": 0,
+        "endOffset": 14
+      },
+      {
+        "id": "event_duy_tan_phan_chu_trinh",
+        "name": "Phong trào Duy Tân",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 24,
+        "endOffset": 42
+      },
+      {
+        "id": "loc_trung_ky",
+        "name": "Trung Kỳ",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 47,
+        "endOffset": 55
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_duy_tan_phan_chu_trinh",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_phan_chu_trinh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_duy_tan_phan_chu_trinh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_trung_ky",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Phan Chu Trinh in Trung Ky"
+  },
+  {
+    "id": "TC_EPOCH12_006",
+    "epochId": "EPOCH_12",
+    "sourceText": "Nguyễn Ái Quốc thành lập Hội Việt Nam Cách mạng Thanh niên tại Quảng Châu năm 1925.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ho_chi_minh",
+        "name": "Nguyễn Ái Quốc",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Hồ Chí Minh",
+          "Bác Hồ"
+        ],
+        "startOffset": 0,
+        "endOffset": 14
+      },
+      {
+        "id": "org_viet_nam_thanh_nien",
+        "name": "Hội Việt Nam Cách mạng Thanh niên",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 25,
+        "endOffset": 58
+      },
+      {
+        "id": "loc_quang_chau",
+        "name": "Quảng Châu",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 63,
+        "endOffset": 73
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "org_viet_nam_thanh_nien",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_ho_chi_minh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_viet_nam_thanh_nien",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_quang_chau",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Nguyen Ai Quoc founds Youth League"
+  },
+  {
+    "id": "TC_EPOCH12_007",
+    "epochId": "EPOCH_12",
+    "sourceText": "Khởi nghĩa Yên Bái do Nguyễn Thái Học lãnh đạo cùng Việt Nam Quốc dân Đảng chống thực dân Pháp năm 1930.",
+    "groundTruthEntities": [
+      {
+        "id": "event_khoi_nghia_yen_bai",
+        "name": "Khởi nghĩa Yên Bái",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 18
+      },
+      {
+        "id": "person_nguyen_thai_hoc",
+        "name": "Nguyễn Thái Học",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 22,
+        "endOffset": 37
+      },
+      {
+        "id": "org_viet_nam_quoc_dan_dang",
+        "name": "Việt Nam Quốc dân Đảng",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 52,
+        "endOffset": 74
+      },
+      {
+        "id": "loc_yen_bai",
+        "name": "Yên Bái",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 11,
+        "endOffset": 18
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_khoi_nghia_yen_bai",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_nguyen_thai_hoc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoi_nghia_yen_bai",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_yen_bai",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Yen Bai uprising"
+  },
+  {
+    "id": "TC_EPOCH13_001",
+    "epochId": "EPOCH_13",
+    "sourceText": "Chủ tịch Hồ Chí Minh đọc Tuyên ngôn Độc lập tại Quảng trường Ba Đình ngày 2 tháng 9 năm 1945 khai sinh nước Việt Nam Dân chủ Cộng hòa.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ho_chi_minh",
+        "name": "Hồ Chí Minh",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Nguyễn Ái Quốc",
+          "Bác Hồ"
+        ],
+        "startOffset": 9,
+        "endOffset": 20
+      },
+      {
+        "id": "doc_tuyen_ngon_doc_lap",
+        "name": "Tuyên ngôn Độc lập",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 25,
+        "endOffset": 43
+      },
+      {
+        "id": "loc_quang_truong_ba_dinh",
+        "name": "Quảng trường Ba Đình",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 48,
+        "endOffset": 68
+      },
+      {
+        "id": "dynasty_viet_nam_dan_chu_cong_hoa",
+        "name": "Việt Nam Dân chủ Cộng hòa",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 108,
+        "endOffset": 133
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_ho_chi_minh",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_tuyen_ngon_doc_lap",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_tuyen_ngon_doc_lap",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_quang_truong_ba_dinh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Declaration of Independence"
+  },
+  {
+    "id": "TC_EPOCH13_002",
+    "epochId": "EPOCH_13",
+    "sourceText": "Chiến dịch Điện Biên Phủ năm 1954 do Đại tướng Võ Nguyên Giáp làm Tổng tư lệnh tiêu diệt tập đoàn cứ điểm của quân Pháp.",
+    "groundTruthEntities": [
+      {
+        "id": "event_dien_bien_phu_1954",
+        "name": "Chiến dịch Điện Biên Phủ",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 24
+      },
+      {
+        "id": "person_vo_nguyen_giap",
+        "name": "Võ Nguyên Giáp",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Đại tướng Võ Nguyên Giáp",
+          "Anh Văn"
+        ],
+        "startOffset": 47,
+        "endOffset": 61
+      },
+      {
+        "id": "loc_dien_bien_phu",
+        "name": "Điện Biên Phủ",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 11,
+        "endOffset": 24
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_dien_bien_phu_1954",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_vo_nguyen_giap",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dien_bien_phu_1954",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dien_bien_phu",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Dien Bien Phu battle led by Vo Nguyen Giap"
+  },
+  {
+    "id": "TC_EPOCH13_003",
+    "epochId": "EPOCH_13",
+    "sourceText": "Chiến dịch Biên giới Thu Đông 1950 mở đường thông thương quốc tế giữa Việt Bắc và Trung Quốc.",
+    "groundTruthEntities": [
+      {
+        "id": "event_bien_gioi_1950",
+        "name": "Chiến dịch Biên giới Thu Đông 1950",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 34
+      },
+      {
+        "id": "loc_viet_bac",
+        "name": "Việt Bắc",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 70,
+        "endOffset": 78
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_bien_gioi_1950",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_viet_bac",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Border campaign 1950"
+  },
+  {
+    "id": "TC_EPOCH13_004",
+    "epochId": "EPOCH_13",
+    "sourceText": "Hiệp định Genève năm 1954 được ký kết tại Thụy Sĩ công nhận độc lập chủ quyền của ba nước Đông Dương.",
+    "groundTruthEntities": [
+      {
+        "id": "doc_hiep_dinh_geneve_1954",
+        "name": "Hiệp định Genève",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 16
+      }
+    ],
+    "groundTruthTriples": [],
+    "notes": "Geneva accords 1954"
+  },
+  {
+    "id": "TC_EPOCH14_001",
+    "epochId": "EPOCH_14",
+    "sourceText": "Phong trào Đồng Khởi năm 1960 do nữ tướng Nguyễn Thị Định lãnh đạo bùng nổ tại Mỏ Cày thuộc Bến Tre.",
+    "groundTruthEntities": [
+      {
+        "id": "event_dong_khoi_1960",
+        "name": "Phong trào Đồng Khởi",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 20
+      },
+      {
+        "id": "person_nguyen_thi_dinh",
+        "name": "Nguyễn Thị Định",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 42,
+        "endOffset": 57
+      },
+      {
+        "id": "loc_mo_cay",
+        "name": "Mỏ Cày",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 79,
+        "endOffset": 85
+      },
+      {
+        "id": "loc_ben_tre",
+        "name": "Bến Tre",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 92,
+        "endOffset": 99
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_dong_khoi_1960",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_nguyen_thi_dinh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_mo_cay",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ben_tre",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Dong Khoi movement in Ben Tre"
+  },
+  {
+    "id": "TC_EPOCH14_002",
+    "epochId": "EPOCH_14",
+    "sourceText": "Đường Trường Sơn còn gọi là Đường mòn Hồ Chí Minh là tuyến chi viện chiến lược từ miền Bắc vào miền Nam.",
+    "groundTruthEntities": [
+      {
+        "id": "loc_duong_truong_son",
+        "name": "Đường Trường Sơn",
+        "type": "LOCATION",
+        "aliases": [
+          "Đường mòn Hồ Chí Minh"
+        ],
+        "startOffset": 0,
+        "endOffset": 16
+      },
+      {
+        "id": "loc_duong_truong_son",
+        "name": "Đường mòn Hồ Chí Minh",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 28,
+        "endOffset": 49
+      }
+    ],
+    "groundTruthTriples": [],
+    "notes": "Truong Son Trail"
+  },
+  {
+    "id": "TC_EPOCH14_003",
+    "epochId": "EPOCH_14",
+    "sourceText": "Trận Điện Biên Phủ trên không năm 1972 bắn rơi nhiều máy bay B-52 trên bầu trời Hà Nội.",
+    "groundTruthEntities": [
+      {
+        "id": "event_dien_bien_phu_tren_khong_1972",
+        "name": "Trận Điện Biên Phủ trên không",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 29
+      },
+      {
+        "id": "loc_ha_noi",
+        "name": "Hà Nội",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 80,
+        "endOffset": 86
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_dien_bien_phu_tren_khong_1972",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ha_noi",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Dien Bien Phu in the air 1972"
+  },
+  {
+    "id": "TC_EPOCH14_004",
+    "epochId": "EPOCH_14",
+    "sourceText": "Chiến dịch Hồ Chí Minh năm 1975 do Đại tướng Văn Tiến Dũng làm Tư lệnh giải phóng Sài Gòn thống nhất đất nước.",
+    "groundTruthEntities": [
+      {
+        "id": "event_chien_dich_ho_chi_minh",
+        "name": "Chiến dịch Hồ Chí Minh",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 22
+      },
+      {
+        "id": "person_van_tien_dung",
+        "name": "Văn Tiến Dũng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 45,
+        "endOffset": 58
+      },
+      {
+        "id": "loc_sai_gon",
+        "name": "Sài Gòn",
+        "type": "LOCATION",
+        "aliases": [
+          "Thành phố Hồ Chí Minh"
+        ],
+        "startOffset": 82,
+        "endOffset": 89
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_chien_dich_ho_chi_minh",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_van_tien_dung",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_sai_gon",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_ho_chi_minh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ho Chi Minh Campaign 1975"
+  },
+  {
+    "id": "TC_EPOCH14_005",
+    "epochId": "EPOCH_14",
+    "sourceText": "Xe tăng 390 húc đổ cổng Dinh Độc Lập trưa ngày 30 tháng 4 năm 1975 tại Sài Gòn.",
+    "groundTruthEntities": [
+      {
+        "id": "artifact_xe_tang_390",
+        "name": "Xe tăng 390",
+        "type": "ARTIFACT",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 11
+      },
+      {
+        "id": "loc_dinh_doc_lap",
+        "name": "Dinh Độc Lập",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 24,
+        "endOffset": 36
+      },
+      {
+        "id": "loc_sai_gon",
+        "name": "Sài Gòn",
+        "type": "LOCATION",
+        "aliases": [
+          "Thành phố Hồ Chí Minh"
+        ],
+        "startOffset": 71,
+        "endOffset": 78
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_dinh_doc_lap",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_sai_gon",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Tank 390 at Independence Palace"
+  },
+  {
+    "id": "TC_EPOCH15_001",
+    "epochId": "EPOCH_15",
+    "sourceText": "Đại hội VI của Đảng Cộng sản Việt Nam năm 1986 tại Hà Nội đã khởi xướng đường lối Đổi Mới đất nước.",
+    "groundTruthEntities": [
+      {
+        "id": "org_dang_cong_san_viet_nam",
+        "name": "Đảng Cộng sản Việt Nam",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 15,
+        "endOffset": 37
+      },
+      {
+        "id": "loc_ha_noi",
+        "name": "Hà Nội",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 51,
+        "endOffset": 57
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "org_dang_cong_san_viet_nam",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ha_noi",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Doi Moi policy 1986"
+  },
+  {
+    "id": "TC_EPOCH15_002",
+    "epochId": "EPOCH_15",
+    "sourceText": "Trận Gạc Ma năm 1988 diễn ra tại quần đảo Trường Sa để bảo vệ chủ quyền biển đảo của Tổ quốc.",
+    "groundTruthEntities": [
+      {
+        "id": "event_gac_ma_1988",
+        "name": "Trận Gạc Ma",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 11
+      },
+      {
+        "id": "loc_truong_sa",
+        "name": "quần đảo Trường Sa",
+        "type": "LOCATION",
+        "aliases": [
+          "Khánh Hòa"
+        ],
+        "startOffset": 33,
+        "endOffset": 51
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_gac_ma_1988",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_truong_sa",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Gac Ma battle 1988"
+  },
+  {
+    "id": "TC_EPOCH15_003",
+    "epochId": "EPOCH_15",
+    "sourceText": "Nhà máy Thủy điện Hòa Bình được xây dựng trên sông Đà cung cấp nguồn năng lượng lớn cho cả nước.",
+    "groundTruthEntities": [
+      {
+        "id": "loc_thuy_dien_hoa_binh",
+        "name": "Nhà máy Thủy điện Hòa Bình",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 26
+      },
+      {
+        "id": "loc_song_da",
+        "name": "sông Đà",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 46,
+        "endOffset": 53
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "loc_thuy_dien_hoa_binh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_da",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Hoa Binh hydropower plant"
+  }
+]

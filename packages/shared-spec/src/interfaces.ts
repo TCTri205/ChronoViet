@@ -18,6 +18,12 @@ import {
   MediaAssetRegistryEntry,
   getCanonicalEntityIdPrefix,
   OrchestratorStatus,
+  CandidateEntitySpan,
+  HistoricalRelationType,
+  GoldenBenchmarkEntity,
+  GoldenBenchmarkTriple,
+  GoldenTripleBenchmarkItem,
+  GoldenTripleBenchmark,
 } from './schema.js';
 
 export type {
@@ -27,6 +33,12 @@ export type {
   EntityAuditLog,
   AuditActionType,
   AliasType,
+  CandidateEntitySpan,
+  HistoricalRelationType,
+  GoldenBenchmarkEntity,
+  GoldenBenchmarkTriple,
+  GoldenTripleBenchmarkItem,
+  GoldenTripleBenchmark,
 };
 export { getCanonicalEntityIdPrefix };
 
@@ -165,14 +177,38 @@ export interface IRenderWorker {
   getJobStatus(jobId: string): Promise<RenderJobProgress>;
 }
 
-// ============================================================================
-// 6. Data Preprocessing & Ingestion Engine Interface (`packages/rag-engine`)
-// ============================================================================
+export interface StageDurationBreakdown {
+  chunkingMs: number;
+  extractionMs: number;
+  embeddingMs: number;
+  dbInsertMs: number;
+  totalDurationMs: number;
+}
+
+export interface IngestionExecutionTelemetry {
+  correlationId: string;
+  durations: StageDurationBreakdown;
+  throughput: {
+    chunksPerSec: number;
+    wordsPerSec: number;
+    vectorsPerSec: number;
+  };
+  cacheStats: {
+    hits: number;
+    misses: number;
+    hitRate: number;
+  };
+  quarantineStats: {
+    totalQuarantined: number;
+    reasons: Record<string, number>;
+  };
+}
 
 export interface IngestionOptions {
   force?: boolean;
   useLocalLlm?: boolean;
   batchSize?: number;
+  correlationId?: string;
 }
 
 export interface IngestionResult {
@@ -181,6 +217,8 @@ export interface IngestionResult {
   entitiesExtracted: number;
   relationshipsExtracted: number;
   durationMs: number;
+  correlationId?: string;
+  telemetry?: IngestionExecutionTelemetry;
 }
 
 export interface IIngestionPipeline {

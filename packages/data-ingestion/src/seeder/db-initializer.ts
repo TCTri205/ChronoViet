@@ -53,6 +53,7 @@ export async function initializeDatabaseSchema(maxRetries = 5, retryIntervalMs =
         'document_chunks',
         'entity_chunks',
         'entity_audit_logs',
+        'orchestrator_checkpoints',
         'quarantine_triples',
         'unmapped_entities',
       ];
@@ -70,7 +71,7 @@ export async function initializeDatabaseSchema(maxRetries = 5, retryIntervalMs =
       return {
         success: true,
         pgAvailable: true,
-        message: `Database schema initialized successfully. Verified 7 Module 0 tables: ${requiredTables.join(', ')}`,
+        message: `Database schema initialized successfully. Verified ${requiredTables.length} tables: ${requiredTables.join(', ')}`,
       };
     } else {
       return {

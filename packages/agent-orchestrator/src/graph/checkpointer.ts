@@ -4,6 +4,7 @@
  */
 
 import * as fs from 'fs';
+import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import { MemorySaver } from '@langchain/langgraph';
 import { RunnableConfig } from '@langchain/core/runnables';
@@ -30,14 +31,17 @@ export class ChronoCheckpointer extends MemorySaver {
   }
 
   private async persistToDiskAndPostgres(projectId: string, state: ChronoGraphState): Promise<void> {
-    // 1. Persist to project workspace disk
+    // 1. Persist to project workspace disk asynchronously
     try {
       const paths = initProjectWorkspace(projectId);
       const checkpointFile = path.join(paths.rootDir, 'checkpoint_state.json');
-      fs.writeFileSync(checkpointFile, JSON.stringify(state, null, 2), 'utf-8');
-      log.debug('checkpointer.disk_saved', `Saved checkpoint state to disk for ${projectId}`);
+      await fsPromises.writeFile(checkpointFile, JSON.stringify(state, null, 2), 'utf-8');
+      log.debug('checkpointer.disk_saved', `Saved checkpoint state to disk for ${projectId}`, { projectId });
     } catch (err: any) {
-      log.debug('checkpointer.disk_save_skipped', `Disk checkpoint skipped: ${err.message}`);
+      log.warn('checkpointer.disk_save_skipped', `Disk checkpoint write skipped or failed: ${err.message}`, {
+        projectId,
+        error: err.message,
+      });
     }
 
     // 2. Persist to PostgreSQL if pool is available
@@ -54,10 +58,14 @@ export class ChronoCheckpointer extends MemorySaver {
                          updated_at = NOW()`,
           [projectId, state.currentStep || 1, state.status || 'INIT', JSON.stringify(state)]
         );
-        log.debug('checkpointer.postgres_saved', `Saved checkpoint to PostgreSQL for project ${projectId}`);
+        log.debug('checkpointer.postgres_saved', `Saved checkpoint to PostgreSQL for project ${projectId}`, { projectId });
       }
-    } catch {
+    } catch (dbErr: any) {
       // Postgres table may not exist yet or local offline mode
+      log.debug('checkpointer.postgres_save_failed', `Postgres checkpoint save failed: ${dbErr.message}`, {
+        projectId,
+        error: dbErr.message,
+      });
     }
   }
 
@@ -70,11 +78,14 @@ export class ChronoCheckpointer extends MemorySaver {
       const paths = initProjectWorkspace(projectId);
       const checkpointFile = path.join(paths.rootDir, 'checkpoint_state.json');
       if (fs.existsSync(checkpointFile)) {
-        const raw = fs.readFileSync(checkpointFile, 'utf-8');
+        const raw = await fsPromises.readFile(checkpointFile, 'utf-8');
         return JSON.parse(raw) as ChronoGraphState;
       }
-    } catch {
-      // disk file not found
+    } catch (diskErr: any) {
+      log.warn('checkpointer.disk_load_failed', `Failed reading disk checkpoint for ${projectId}: ${diskErr.message}`, {
+        projectId,
+        error: diskErr.message,
+      });
     }
 
     // 2. Try PostgreSQL
@@ -89,8 +100,11 @@ export class ChronoCheckpointer extends MemorySaver {
           return res.rows[0].state_data as ChronoGraphState;
         }
       }
-    } catch {
-      // Postgres not available
+    } catch (pgErr: any) {
+      log.debug('checkpointer.postgres_load_failed', `PostgreSQL checkpoint query failed for ${projectId}: ${pgErr.message}`, {
+        projectId,
+        error: pgErr.message,
+      });
     }
 
     return null;

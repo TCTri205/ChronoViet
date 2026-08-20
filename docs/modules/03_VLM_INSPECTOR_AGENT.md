@@ -1,8 +1,8 @@
 # CHI TIẾT MÔ-ĐUN 3: VLM INSPECTOR SUB-AGENT
 ## (Visual Quality Control, Whitelisted Licensing & Hybrid Fallback Sub-Agent Specification v3.3)
 
-> **Trạng thái:** `[✅ IMPLEMENTED — Visual Quality Control, Local Unified VLM & Cloud Gemini Scorers v3.3]`
-> **Cập nhật:** Eval Integrity Gates — khi `EVAL_STRICT=true`, VLM Inspector dùng **Local Unified Multimodal VLM (`qwen3.8-27b-instruct-q4_k_m` qua llama-server)** làm scorer bắt buộc; Gemini cloud & CLIP heuristic chỉ là chế độ dev (`EVAL_STRICT=false`).
+> **Trạng thái:** `[✅ IMPLEMENTED — Visual Quality Control, Local Unified VLM & Cloud Gemini Scorers v3.4]`
+> **Cập nhật:** Eval Integrity & Telemetry Gates — tích hợp **Correlation ID propagation**, **Failure latency metrics**, **Resource Payload Guards (5MB)**, **Binary Header Dimension Inspection (Layer 2)** và **Resilient JSON Parser**. Khi `EVAL_STRICT=true`, VLM Inspector dùng **Local Unified Multimodal VLM (`qwen3.8-27b-instruct-q4_k_m` qua llama-server)** làm scorer bắt buộc.
 
 ---
 
@@ -13,13 +13,14 @@ Mô-đun **VLM Inspector Sub-Agent** là tài liệu phân tích kỹ thuật ch
 Khi thu thập hình ảnh tư liệu lịch sử Việt Nam tự động từ Internet, các hệ thống AI thông thường đối mặt với 4 nguy cơ nghiêm trọng:
 1. **Sai lệch bối cảnh văn hóa (Cultural Anachronism):** Crawl nhầm ảnh phim cổ trang Trung Quốc, Hàn Quốc, hoặc trang phục triều đại không đúng thời kỳ lịch sử Việt Nam.
 2. **Nhiễu thị giác (Visual Noise):** Ảnh bị dính watermark, logo kênh truyền hình, chữ đè lung tung, hoặc ảnh chất lượng thấp, vỡ nét.
-3. **Ảnh không phù hợp định dạng:** Tỉ lệ ảnh bị bóp méo, thiếu tự nhiên.
+3. **Ảnh không phù hợp định dạng:** Tỉ lệ ảnh bị bóp méo, thiếu tự nhiên hoặc độ phân giải thấp (<720p).
 4. **Rủi ro pháp lý & Bản quyền (Copyright/License Risks):** Sử dụng hình ảnh không rõ nguồn gốc hoặc vi phạm bản quyền thương mại.
 
 **Quy tắc nguồn tư liệu cốt lõi:** Trong hệ thống ChronoViet:
 - **NGUỒN ẢNH CHỈ DUY NHẤT LÀ CRAWL** (từ Wikimedia Commons, kho ảnh bảo tàng, Flickr Creative Commons, thư viện ảnh cổ). Hệ thống **tuyệt đối không sử dụng các mô hình Generative AI để sinh ảnh giả lập**.
 - **Research Agent (Micro-Step 1C)** tìm ảnh online qua provider chain (SerpAPI / Tavily / Brave Search API → Wikimedia Commons → Curated Catalog) và chỉ chấp nhận ảnh từ **domain whitelist**; VLM Inspector chỉ chấm điểm/lọc candidate đã được research.
 - **100% ẢNH CRAWL PHẢI THUỘC WHITELIST LICENSE** (`Public Domain`, `CC0`, `CC-BY-4.0`, `CC-BY-SA-4.0`) và đi kèm thông tin `attribution`.
+- **Quan sát & Phối hợp ngữ cảnh (Observability & Trace Context):** Mọi tác vụ tải ảnh, lưu metadata và chấm điểm VLM đều mang theo `correlationId` và `sceneId` xuyên suốt; đo đạc `latencyMs` trên cả luồng thành công lẫn lỗi.
 
 VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiên thay đổi theo chế độ:
 - **Eval strict (`EVAL_STRICT=true`, mặc định):** **Local Unified VLM (`qwen3.8-27b-instruct-q4_k_m`) qua llama-server** (`LLM_BASE_URL`) là scorer bắt buộc. Local VLM fail → eval FAIL ngay, **không** rơi vào Gemini/CLIP.
@@ -51,21 +52,23 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
                                        │ (Miss)
                                        ▼
   ┌────────────────────────────────────────────────────────────────────────────┐
-  │ LỚP 2: METADATA & TECHNICAL FILTER                                         │
-  │ - Kiểm tra độ phân giải: Resolution >= 600 x 600 px                        │
-  │ - Kiểm tra định dạng file: JPEG, PNG, WEBP hợp lệ                         │
-  │ - Kiểm tra tỉ lệ khung hình (Aspect Ratio check)                           │
+  │ LỚP 2: METADATA & TECHNICAL QUALITY GATE (Binary Header Reader)            │
+  │ - Trích xuất kích thước nhị phân siêu nhẹ (PNG/JPEG/WEBP header decoder)   │
+  │ - Kiểm tra độ phân giải tối thiểu: Resolution >= 720p (1280x720 hoặc 720p) │
+  │ - Kiểm tra tỉ lệ khung hình (Aspect Ratio check sai số <= 15%)             │
+  │ - Chặn ảnh quá tải bộ nhớ (>5MB) trước khi encode Base64                   │
   └────────────────────────────────────┬───────────────────────────────────────┘
                                        │ (Pass Technical)
                                        ▼
   ┌────────────────────────────────────────────────────────────────────────────┐
-  │ LỚP 3: HYBRID VLM VISUAL & CONTEXT SCORING                                 │
+  │ LỚP 3: HYBRID VLM VISUAL & CONTEXT SCORING (Resilient JSON Parser)         │
   │ ├─ Eval strict: Local Unified VLM (qwen3.8-27b qua llama-server) — bắt buộc│
   │ ├─ Dev primary: Cloud Gemini 3.6 Flash API (khi có GEMINI_API_KEY)         │
   │ └─ Dev fallback (429/500/Timeout): Local CLIP/SigLIP Cosine Scorer        │
   │ - Historical Context Score (0-40): Đúng trang phục, cờ, kiến trúc VN?     │
   │ - Visual Noise Score (0-30): Có watermark, logo, chữ đè không?            │
   │ - Artistic & Resolution Fit (0-30): Độ sắc nét, phong cách nghệ thuật?   │
+  │ - Bộ trích xuất JSON bằng Regex bọc ngoại vi ({ ... }) chống preamble text │
   └────────────────────────────────────┬───────────────────────────────────────┘
                                        │
                    ┌───────────────────┴───────────────────┐

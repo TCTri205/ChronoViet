@@ -30,7 +30,7 @@ Mỗi process render Remotion sử dụng Puppeteer (Headless Chrome) để ch�
 ### 🟢 Thách Thức 2: Giảm Độ Trễ & Đảm Bảo Khả Năng Độc Lập Thẩm Định Ảnh (Multi-Provider VLM & License Filter)
 
 #### *Bài toán:*
-Việc thẩm định các bức ảnh tư liệu trong kịch bản qua mô hình Vision-Language (VLM) cần đảm bảo tính linh hoạt: hỗ trợ cả mô hình Vision cục bộ (Qwen2.5-VL, Ollama, llama-server) lẫn Cloud API (Gemini Vision) và fallback offline không phụ thuộc mạng.
+Việc thẩm định các bức ảnh tư liệu trong kịch bản qua mô hình Vision-Language (VLM) cần đảm bảo tính linh hoạt: hỗ trợ cả mô hình Vision cục bộ (Qwen3.8-27B Unified VLM qua llama-server mmproj, Ollama) lẫn Cloud API (Gemini Vision) và fallback offline không phụ thuộc mạng.
 
 #### *Giải pháp hoàn chỉnh:*
 1. **Lớp 0 - Whitelisted License Filter & Snapshotting (`Public Domain`, `CC0`, `CC-BY`):**
@@ -75,9 +75,15 @@ ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS c
 
 ---
 
-## 3. Cấu Hình Triển Khai VieNeu TTS API (Microservice & Docker Compose)
+## 3. Cấu Hình Triển Khai VieNeu TTS API, Compose Profiles & Distributed Mutex
 
-Service VieNeu được đóng gói container trong monorepo và tích hợp trực tiếp vào `docker-compose.yml`:
+### 3.1. Docker Compose Profiles
+ChronoViet chuẩn hóa triển khai với **Docker Compose Profiles**:
+- `["infra", "prod", "default"]`: `postgres`, `redis`
+- `["tts", "prod"]`: `vieneu-tts-service`
+- `["ai", "ai-cuda", "prod-cuda", "prod-all"]`: `local-ai-cuda-llm` (Port 8092, Qwen3.8-27B) & `local-ai-cuda-emb` (Port 8090, BGE-M3 1024d)
+- `["prod"]`: `app`, `worker`, `caddy` (kèm `postgres`, `redis`, `vieneu-tts-service`)
+- `["prod-all"]`: Full Stack Containerized bao gồm toàn bộ App, Infra, TTS và cả 2 Local AI CUDA Containers.
 
 ```yaml
   vieneu-tts-service:
@@ -85,6 +91,9 @@ Service VieNeu được đóng gói container trong monorepo và tích hợp tr�
       context: .
       dockerfile: services/vieneu-tts/Dockerfile
     container_name: vieneu_tts_engine
+    profiles:
+      - tts
+      - prod
     restart: always
     environment:
       - NODE_ENV=production
@@ -92,6 +101,7 @@ Service VieNeu được đóng gói container trong monorepo và tích hợp tr�
       - TTS_SERVICE_PORT=8080
       - MEDIA_DIR=/app/media
       - AUDIO_CACHE_DIR=/app/media/audio-cache
+      - WEB_CONCURRENCY=2
     ports:
       - "8080:8080"
     volumes:
@@ -103,6 +113,14 @@ Service VieNeu được đóng gói container trong monorepo và tích hợp tr�
       retries: 5
       start_period: 5s
 ```
+
+### 3.2. Dynamic Distributed Render Mutex (`ResourceSentinel`)
+Để bảo đảm tài nguyên RAM không vượt quá trần khi Render Video trên máy chủ hoặc Local macOS:
+- Khi BullMQ Video Worker khởi chạy render MP4, worker tự động khóa **Distributed Render Lock** (`ResourceSentinel.acquireRenderLock()`).
+- LLM Gateway (`llm-client.ts`) kiểm tra trạng thái lock và áp suất bộ nhớ (`shouldOffloadToCloud()`); nếu đang render, hệ thống tự động định tuyến các request AI sang Cloud API (Agnes 2.5 Flash / Gemini) mà không làm tăng bộ đếm lỗi circuit breaker.
+- Sau khi render xong (hoặc có lỗi), worker tự động giải phóng lock trong khối `finally`.
+
+---
 
 ### API Endpoint Spec (`POST /api/v1/synthesize`) & Response Payload:
 

@@ -3,10 +3,8 @@
  * Generates compelling voiceover narration while preserving cross-chapter narrative flow
  */
 
-import { callLlm, createLogger, envConfig } from '@chronoviet/shared-spec';
-import { ChronoGraphState, RunningNarrativeState } from '../state.js';
-
-const log = createLogger({ service: 'agent-orchestrator' });
+import { callLlm, envConfig } from '@chronoviet/shared-spec';
+import { ChronoGraphState, getNodeLogger, RunningNarrativeState, TelemetryAuditEntry } from '../state.js';
 
 function generateProportionalNarration(
   chapterTitle: string,
@@ -60,12 +58,14 @@ function generateProportionalNarration(
 }
 
 export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
-  log.info('orchestrator.scriptwriting_started', `Starting Scriptwriter Agent for ${state.chapters.length} chapters`, {
+  const nodeLog = getNodeLogger(state, 'scriptwriter');
+  nodeLog.info('orchestrator.scriptwriting_started', `Starting Scriptwriter Agent for ${state.chapters.length} chapters`, {
     projectId: state.projectId,
   });
 
   const chapterScripts: Record<number, string> = {};
   let currentNarrativeState: RunningNarrativeState = { ...state.runningNarrativeState };
+  const telemetryAudit: TelemetryAuditEntry[] = [];
 
   const verifiedEntities = state.ragContext?.verifiedContext || [];
 
@@ -140,7 +140,15 @@ NHẮC LẠI: Chỉ xuất văn xuôi lời bình để đọc TTS trực tiếp
       if (envConfig.EVAL_STRICT) {
         throw err;
       }
-      log.warn('orchestrator.scriptwriter_llm_fallback', `LLM call fallback for chapter ${i}: ${err.message}`);
+      nodeLog.warn('orchestrator.scriptwriter_llm_fallback', `LLM call fallback for chapter ${i}: ${err.message}`);
+      telemetryAudit.push({
+        timestamp: new Date().toISOString(),
+        node: 'scriptwriter',
+        level: 'WARN',
+        category: 'FALLBACK',
+        message: `LLM call fallback for chapter ${i}: ${err.message}`,
+        metadata: { chapterIndex: i, error: err.message },
+      });
       chapterScripts[i] = generateProportionalNarration(
         chapter.title,
         chapter.summary,
@@ -168,5 +176,6 @@ NHẮC LẠI: Chỉ xuất văn xuôi lời bình để đọc TTS trực tiếp
     currentStep: 4,
     chapterScripts,
     runningNarrativeState: currentNarrativeState,
+    telemetryAudit,
   };
 }

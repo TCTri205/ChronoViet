@@ -122,6 +122,26 @@ export const websocketActiveConnectionsGauge = new Gauge({
 });
 
 // ============================================================================
+// 5. Multi-Agent Orchestrator RED Metrics (LangGraph Pipeline)
+// ============================================================================
+
+export const orchestratorNodeDurationSeconds = new Histogram({
+  name: 'chronoviet_orchestrator_node_duration_seconds',
+  help: 'Duration of orchestrator graph node executions in seconds',
+  labelNames: ['node', 'status'],
+  buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60],
+  registers: [metricsRegistry],
+});
+
+export const orchestratorPacingErrorPercent = new Histogram({
+  name: 'chronoviet_orchestrator_pacing_error_percent',
+  help: 'Pacing error percentage across reconciled scenes',
+  labelNames: ['template_id'],
+  buckets: [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 5.0, 10.0],
+  registers: [metricsRegistry],
+});
+
+// ============================================================================
 // Utility Helpers & Cardinality Guardians
 // ============================================================================
 

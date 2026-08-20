@@ -3,6 +3,7 @@
  */
 
 import { VectorSearchResult } from './vector-search.js';
+import { QUESTION_STOPWORDS } from './question-ner.js';
 
 export function rerankCandidates(
   queryText: string,
@@ -11,15 +12,17 @@ export function rerankCandidates(
 ): VectorSearchResult[] {
   if (!candidates || candidates.length === 0) return [];
 
-  const queryTerms = queryText.toLowerCase().split(/\s+/).filter((t) => t.length > 2);
+  const queryLower = queryText.toLowerCase();
+  const queryTerms = queryLower
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 2 && !QUESTION_STOPWORDS.has(t));
   const isFactCheckQuery = /(xác minh|có thật không|thật hay giả|đúng hay sai|bằng chứng)/i.test(queryText);
 
   const scored = candidates.map((cand) => {
     let textScore = cand.score;
     const textLower = cand.textContent.toLowerCase();
     const titleLower = cand.title.toLowerCase();
-
-    const queryLower = queryText.toLowerCase();
 
     // 1. Keyword Overlap Bonus
     let keywordOverlapCount = 0;
@@ -31,7 +34,10 @@ export function rerankCandidates(
     textScore += overlapRatio * 0.8;
 
     // 1b. Title Alignment Bonus (Elevates exact matching topic chunks)
-    const titleWords = titleLower.split(/\s+/).filter((t) => t.length > 2);
+    const titleWords = titleLower
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter((t) => t.length >= 2 && !QUESTION_STOPWORDS.has(t));
     let titleMatchInQuery = 0;
     for (const tw of titleWords) {
       if (queryLower.includes(tw)) titleMatchInQuery++;

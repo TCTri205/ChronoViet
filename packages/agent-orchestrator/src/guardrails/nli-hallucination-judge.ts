@@ -15,8 +15,17 @@ export interface NliJudgeResult {
   explanation: string;
 }
 
+export const VIETNAMESE_STOP_WORDS = new Set([
+  'năm', 'thời', 'của', 'và', 'với', 'trong', 'cho', 'trên', 'dưới', 'tại',
+  'vào', 'ra', 'về', 'lại', 'các', 'những', 'một', 'đã', 'đang', 'sẽ',
+  'người', 'quân', 'cuộc', 'trận', 'nhà', 'vua', 'sau', 'trước', 'khi',
+  'không', 'có', 'là', 'được', 'bị', 'từ', 'đến', 'cùng', 'giữa', 'này',
+  'như', 'đó', 'thì', 'mà', 'vì', 'do', 'bởi', 'để', 'nên', 'rất',
+]);
+
 /**
  * Computes lexical & semantic overlap entailment score between script claim and ground truth context
+ * Filters out common grammatical stopwords to focus scoring on substantive entities and historical claims.
  */
 export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeResult {
   if (!request.scriptClaim.trim() || request.groundTruthChunks.length === 0) {
@@ -28,10 +37,14 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
     };
   }
 
-  const claimWords = request.scriptClaim
+  const cleanedClaim = request.scriptClaim
+    .replace(/[.,!?;:"'()“”‘’—…[\]]/g, ' ')
     .toLowerCase()
-    .split(/\s+/)
-    .filter((w) => w.length > 2);
+    .trim();
+
+  const rawWords = cleanedClaim.split(/\s+/).filter((w) => w.length > 1);
+  const contentWords = rawWords.filter((w) => !VIETNAMESE_STOP_WORDS.has(w));
+  const claimWords = contentWords.length > 0 ? contentWords : rawWords.filter((w) => w.length > 2);
 
   if (claimWords.length === 0) {
     return {
@@ -42,7 +55,10 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
     };
   }
 
-  const combinedGroundTruth = request.groundTruthChunks.join(' ').toLowerCase();
+  const combinedGroundTruth = request.groundTruthChunks
+    .join(' ')
+    .replace(/[.,!?;:"'()“”‘’—…[\]]/g, ' ')
+    .toLowerCase();
 
   let matchedWords = 0;
   for (const word of claimWords) {

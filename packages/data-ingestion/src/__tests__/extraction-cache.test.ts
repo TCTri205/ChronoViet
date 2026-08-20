@@ -55,12 +55,19 @@ describe('ExtractionCache Unit Tests', () => {
     expect((cached as any)?._meta?.cached).toBe(true);
   });
 
-  it('should clear cache properly and report accurate stats', async () => {
-    await cache.set('Text 1', 'chunk-1', []);
-    await cache.set('Text 2', 'chunk-2', []);
+  it('should clear cache properly and report accurate stats and detailed breakdown', async () => {
+    await cache.set('Text 1', 'chunk-1', [], { provider: 'OPENAI', model: 'gpt-4o-mini' });
+    await cache.set('Text 2', 'chunk-2', [], { provider: 'LOCAL_LLM', model: 'qwen3.5-4b' });
 
     let stats = await cache.getStats();
     expect(stats.count).toBe(2);
+
+    const detailedStats = await cache.getDetailedStats();
+    expect(detailedStats.count).toBe(2);
+    expect(detailedStats.totalSizeBytes).toBeGreaterThan(0);
+    expect(detailedStats.providerDistribution['OPENAI']).toBe(1);
+    expect(detailedStats.providerDistribution['LOCAL_LLM']).toBe(1);
+    expect(detailedStats.modelDistribution['gpt-4o-mini']).toBe(1);
 
     const clearedCount = await cache.clear();
     expect(clearedCount).toBe(2);
@@ -69,3 +76,4 @@ describe('ExtractionCache Unit Tests', () => {
     expect(stats.count).toBe(0);
   });
 });
+

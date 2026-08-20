@@ -1,15 +1,25 @@
-localhost {
-    # 1. Serve trực tiếp file media (Video MP4, Audio, License Snapshots)
+{$APP_DOMAIN:localhost} {
+    # 1. Block access to internal workspace schema & temp files, serve public media assets
     handle /media/* {
+        @blocked path /media/projects/*/project_schema.json /media/projects/*/temp/*
+        respond @blocked 403
+
+        header Cache-Control "public, max-age=3600"
+        header X-Content-Type-Options "nosniff"
         root * /app
         file_server
     }
 
-    # 2. Forward toàn bộ API & Web Dashboard & WebSockets đến App Monolith
+    # 2. Forward API & Web Dashboard & WebSockets to Next.js App Monolith
     handle {
-        reverse_proxy app:3000
+        reverse_proxy app:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
 
-    # 3. Tự động nén dữ liệu HTTP
+    # 3. HTTP Compression
     encode zstd gzip
 }
+

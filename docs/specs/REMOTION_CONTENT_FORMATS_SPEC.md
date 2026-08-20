@@ -64,10 +64,10 @@ Mỗi layout mode kích hoạt một UI Component chuyên biệt trong `src/comp
 | `OUTRO_CARD` | `OutroSlide.tsx` | Màn hình Kết bài — tóm tắt di sản, thông điệp CTA. | `title`, `quoteText`, `ctaText`, `bulletPoints[]` |
 | `ARTICLE_UI` | `ChronoIntro.tsx` | Màn hình mở đầu dạng báo chí / phim tài liệu chuyên sâu. | `title`, `author`, `seriesTitle` |
 | `SPONSOR_UI` | `SponsorSlide.tsx` | Màn hình giới thiệu tài trợ / đồng hành sản xuất. | `sponsorTitle`, `sponsorDesc`, `ctaText` |
-| `HERO_SPOTLIGHT` | Extended Layout | Màn hình tiêu điểm anh hùng dân tộc. | `name`, `title`, `details` |
+| `HERO_SPOTLIGHT` | `HeroSpotlight.tsx` | Màn hình tiêu điểm anh hùng dân tộc với typography hoàng kim và trích dẫn. | `name`, `title`, `role`, `details`, `quoteText`, `bulletPoints[]` |
 | `TIMELINE_CHRONO` | `TimelineChrono.tsx` | Trục thời gian diễn biến sự kiện lịch sử. | `title`, `subtitle` |
 | `MAP_TACTICAL` | `MapTactical.tsx` | Sơ đồ bản đồ tác chiến / hành quân. | `title`, `subtitle`, `details` |
-| `ARMY_STRENGTH` | Extended Layout | Biểu đồ quân số & tương quan lực lượng. | `title`, `statItems[]` |
+| `ARMY_STRENGTH` | `ArmyStrength.tsx` | Biểu đồ quân số & tương quan lực lượng quân sự kèm thanh tỉ lệ động. | `title`, `subtitle`, `leftSide{}`, `rightSide{}`, `statItems[]` |
 | `CHARACTER_PROFILE` | `CharacterProfile.tsx` | Hồ sơ chi tiết nhân vật lịch sử. | `name`, `role`, `details`, `quoteText` |
 | `ROYAL_DECREE` | `RoyalDecree.tsx` | Khung văn bản chiếu dời đô / hịch / chiếu thư. | `title`, `author`, `quoteText` |
 | `ARTIFACT_INSPECT` | `ArtifactInspect.tsx` | Giao diện soi chi tiết hoa văn cổ vật. | `title`, `subtitle`, `artifactInfo{}` |

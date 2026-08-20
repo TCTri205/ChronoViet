@@ -16,8 +16,8 @@ Thư mục này hỗ trợ 3 chế độ đánh giá linh hoạt từ cấp đ�
    - Ví dụ: `--module vieneu-tts` hoặc `--module remotion-engine`.
 
 3. **Chế độ Toàn Hệ Thống (Global Master Evaluation):**
-   - Chạy đồng loạt toàn bộ các bộ eval đơn lập và chuỗi tích hợp, tổng hợp báo cáo KPI kỹ thuật chung của toàn bộ Monorepo.
-   - Thường sử dụng trong CI/CD pipeline hoặc trước khi release.
+   - Chạy đồng loạt toàn bộ các bộ eval đơn lập (8 Modules) và 3 chuỗi tích hợp, tổng hợp báo cáo KPI kỹ thuật chung của toàn bộ Monorepo.
+   - Sử dụng khi kiểm định chất lượng toàn diện trước khi release hoặc đánh giá benchmark định kỳ (các tác vụ eval đo lường chất lượng phi-tất định không chạy trong CI/CD pipeline).
 
 ---
 
@@ -57,13 +57,13 @@ npx tsx eval/runner.ts --module vieneu-tts --fresh
 
 | Tham số / Flag | Viết tắt | Mô tả | Mặc định |
 | :--- | :---: | :--- | :--- |
-| `--all` | - | Chạy toàn bộ 7 mô-đun và 3 chuỗi tích hợp E2E | `true` |
+| `--all` | - | Chạy toàn bộ 8 mô-đun và 3 chuỗi tích hợp E2E | `true` |
 | `--chain <name>` | - | Chạy riêng 1 chuỗi tích hợp: `vieneu-remotion`, `ingest-rag`, `orchestrator-remotion` | - |
 | `--module <name>`| - | Chạy riêng 1 mô-đun: `data-ingestion`, `rag-engine`, `agent-orchestrator`, `vlm-inspector`, `remotion-engine`, `vieneu-tts`, `render-worker`, `web` | - |
 | `--fresh` | - | Tự động dọn dẹp audio rác, port treo và báo cáo cũ trước khi chạy | `false` |
 | `--clean` | - | Chỉ thực thi dọn dẹp rồi thoát (không chạy benchmark) | `false` |
 | `--testCase <file>` | `-t` | Chỉ định test case kịch bản cụ thể | - |
-| `--no-studio` / `--ci` | - | Tắt tự động mở Remotion Studio GUI (dành cho CI/CD headless) | `false` |
+| `--no-studio` / `--ci` | - | Tắt tự động mở Remotion Studio GUI (dành cho chế độ headless / non-interactive) | `false` |
 | `--port <port>` | `-p` | Cổng giải phóng / Remotion Studio | `9876` |
 | `--verbose` | `-v` | In log chi tiết quá trình đánh giá | `false` |
 

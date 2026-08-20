@@ -236,7 +236,7 @@ describe('ApiKeyRotator & Key Pool Engine', () => {
     it('should rotate exactly across Local and Cloud targets in interleaved sequence', async () => {
       const dispatcher = new HybridInferenceDispatcher();
       const mockTargets: InferenceTarget[] = [
-        { id: 'local:llama', type: 'local', provider: 'local', model: 'qwen3.8', baseUrl: 'http://localhost:8091' },
+        { id: 'local:llama', type: 'local', provider: 'local', model: 'qwen3.8', baseUrl: 'http://localhost:8092' },
         { id: 'cloud:agnes:k1', type: 'cloud', provider: 'agnes', model: 'agnes-2.5', baseUrl: 'https://apihub.agnes-ai.com/v1', apiKey: 'sk-agnes-1' },
         { id: 'cloud:gemini:k1', type: 'cloud', provider: 'gemini', model: 'gemini-3.6-flash', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', apiKey: 'AQ-gemini-1' },
       ];
@@ -291,7 +291,7 @@ describe('ApiKeyRotator & Key Pool Engine', () => {
     it('should failover from Local to Cloud when Local model fails', async () => {
       const dispatcher = new HybridInferenceDispatcher();
       const mockTargets: InferenceTarget[] = [
-        { id: 'local:llama', type: 'local', provider: 'local', model: 'qwen3.8', baseUrl: 'http://localhost:8091' },
+        { id: 'local:llama', type: 'local', provider: 'local', model: 'qwen3.8', baseUrl: 'http://localhost:8092' },
         { id: 'cloud:agnes:k1', type: 'cloud', provider: 'agnes', model: 'agnes-2.5', baseUrl: 'https://apihub.agnes-ai.com/v1', apiKey: 'sk-agnes-1' },
       ];
 
@@ -314,7 +314,7 @@ describe('ApiKeyRotator & Key Pool Engine', () => {
       const dispatcher = new HybridInferenceDispatcher();
       const mockTargets: InferenceTarget[] = [
         { id: 'cloud:agnes:k1', type: 'cloud', provider: 'agnes', model: 'agnes-2.5', baseUrl: 'https://apihub.agnes-ai.com/v1', apiKey: 'sk-agnes-1' },
-        { id: 'local:llama', type: 'local', provider: 'local', model: 'qwen3.8', baseUrl: 'http://localhost:8091' },
+        { id: 'local:llama', type: 'local', provider: 'local', model: 'qwen3.8', baseUrl: 'http://localhost:8092' },
       ];
 
       vi.spyOn(dispatcher, 'getInferenceTargets').mockReturnValue(mockTargets);

@@ -6,9 +6,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { extractTriplesFromText } from '@chronoviet/data-ingestion/src/triple-extractor.js';
-import { resolveCanonicalEntity } from '@chronoviet/data-ingestion/src/entity-disambiguator.js';
-import { ComponentBenchmarkReport, GoldReasoningTriple } from '@chronoviet/shared-spec';
+import { extractTriplesFromText } from '@chronoviet/data-ingestion';
+import { resolveCanonicalEntity, ComponentBenchmarkReport, GoldReasoningTriple } from '@chronoviet/shared-spec';
 import { HighResolutionLatencyProfiler } from '../metrics/latency-profiler.js';
 
 const __filename = fileURLToPath(import.meta.url);

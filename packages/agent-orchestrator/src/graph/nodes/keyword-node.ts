@@ -5,10 +5,8 @@
  * Agent can crawl with precise historical keywords.
  */
 
-import { createLogger, SceneGeneration } from '@chronoviet/shared-spec';
-import { ChronoGraphState } from '../state.js';
-
-const log = createLogger({ service: 'agent-orchestrator' });
+import { SceneGeneration } from '@chronoviet/shared-spec';
+import { ChronoGraphState, getNodeLogger } from '../state.js';
 
 const VIETNAMESE_STOP_WORDS = new Set([
   'năm', 'thời', 'của', 'và', 'với', 'trong', 'cho', 'trên', 'dưới', 'tại',
@@ -52,7 +50,8 @@ export function extractSearchKeywordsFromText(
 }
 
 export async function keywordNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
-  log.info('orchestrator.keyword_extraction_started', `Extracting search keywords for ${state.scenes.length} scenes`, {
+  const nodeLog = getNodeLogger(state, 'keyword');
+  nodeLog.info('orchestrator.keyword_extraction_started', `Extracting search keywords for ${state.scenes.length} scenes`, {
     projectId: state.projectId,
   });
 

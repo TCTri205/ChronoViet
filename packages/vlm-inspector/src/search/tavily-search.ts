@@ -31,6 +31,7 @@ export class TavilyImageSearchProvider implements ImageSearchProvider {
     const runSearchWithKey = async (apiKey: string): Promise<VisualCandidate[]> => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 8000);
+      const startTime = Date.now();
 
       try {
         const res = await fetch('https://api.tavily.com/search', {
@@ -50,11 +51,18 @@ export class TavilyImageSearchProvider implements ImageSearchProvider {
           }),
           signal: controller.signal,
         });
-        clearTimeout(timer);
 
+        const latencyMs = Date.now() - startTime;
         if (!res.ok) {
           const err = new Error(`Tavily HTTP ${res.status}: ${res.statusText}`);
           (err as any).status = res.status;
+          (err as any).latencyMs = latencyMs;
+          log.warn('vlm.tavily_http_error', `HTTP ${res.status} from Tavily for "${keywords}"`, {
+            keywords,
+            status: res.status,
+            statusText: res.statusText,
+            latencyMs,
+          });
           throw err;
         }
 
@@ -78,30 +86,46 @@ export class TavilyImageSearchProvider implements ImageSearchProvider {
           if (candidates.length >= limit) break;
         }
 
+        log.debug('vlm.tavily_success', `Tavily returned ${candidates.length} candidates`, {
+          keywords,
+          candidateCount: candidates.length,
+          latencyMs,
+        });
+
         return candidates;
       } catch (err: any) {
-        clearTimeout(timer);
+        const latencyMs = Date.now() - startTime;
+        if (!err.latencyMs) {
+          err.latencyMs = latencyMs;
+        }
         throw err;
+      } finally {
+        clearTimeout(timer);
       }
     };
 
-    if (this.explicitApiKey !== undefined) {
-      if (!this.explicitApiKey) {
-        log.warn('vlm.tavily_no_key', 'TAVILY_API_KEY is empty; skipping Tavily provider');
+    try {
+      if (this.explicitApiKey !== undefined) {
+        if (!this.explicitApiKey) {
+          log.warn('vlm.tavily_no_key', 'TAVILY_API_KEY is empty; skipping Tavily provider');
+          return [];
+        }
+        return await runSearchWithKey(this.explicitApiKey);
+      }
+
+      if (!hasAvailableApiKeys('tavily') && !envConfig.TAVILY_API_KEY) {
+        log.warn('vlm.tavily_no_key', 'TAVILY_API_KEY is not configured; skipping Tavily provider');
         return [];
       }
-      return await runSearchWithKey(this.explicitApiKey);
-    }
 
-    if (!hasAvailableApiKeys('tavily') && !envConfig.TAVILY_API_KEY) {
-      log.warn('vlm.tavily_no_key', 'TAVILY_API_KEY is not configured; skipping Tavily provider');
-      return [];
-    }
-
-    try {
       return await executeWithKeyRotation('tavily', (key: string) => runSearchWithKey(key));
     } catch (err: any) {
-      log.warn('vlm.tavily_search_failed', `Tavily search failed for "${keywords}": ${err.message}`);
+      log.warn('vlm.tavily_search_failed', `Tavily search failed for "${keywords}": ${err.message}`, {
+        keywords,
+        error: err.message,
+        status: err.status,
+        latencyMs: err.latencyMs,
+      });
       return [];
     }
   }

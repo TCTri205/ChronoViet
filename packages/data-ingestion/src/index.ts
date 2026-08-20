@@ -9,3 +9,4 @@ export * from './ingest-pipeline.js';
 export * from './utils/path-utils.js';
 export * from './utils/text-utils.js';
 export * from './cache/extraction-cache.js';
+export * from './diagnostics/index.js';

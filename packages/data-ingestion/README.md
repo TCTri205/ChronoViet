@@ -45,25 +45,32 @@ packages/data-ingestion/
 │   ├── cli/                           # Bộ lệnh CLI Seeders & Khởi tạo
 │   │   ├── init-db.ts                 # CLI khởi tạo SQL Schema & HNSW index (db:init)
 │   │   ├── crawl-corpus.ts            # CLI cào dữ liệu (--all, --epoch=EPOCH_XX, --topics)
-│   │   ├── crawl-pdf-extracted.ts     # CLI xử lý corpus PDF đã trích xuất
-│   │   ├── extract-pdf-md.ts          # CLI chuyển đổi PDF sang Markdown
-│   │   ├── ingest-knowledge.ts        # CLI nạp & làm sạch văn bản lịch sử (Text ETL)
-│   │   ├── ingest-diagnostic.ts       # CLI chẩn đoán chất lượng dữ liệu nạp
+│   │   ├── crawl-pdf-extracted.ts     # CLI xử lý corpus PDF đã trích xuất (crawl:pdf)
+│   │   ├── extract-pdf-md.ts          # CLI chuyển đổi PDF scan sang Markdown (extract:pdf)
+│   │   ├── ingest-knowledge.ts        # CLI nạp & làm sạch văn bản lịch sử (ingest:knowledge)
+│   │   ├── ingest-diagnostic.ts       # CLI chẩn đoán chất lượng dữ liệu nạp (eval:diagnostic)
+│   │   ├── quarantine-inspector.ts    # CLI kiểm toán & giải phóng vùng cách ly (db:audit-quarantine)
 │   │   ├── re-resolve-cli.ts          # CLI hợp giải thực thể & ghi nhật ký entity_audit_logs
-│   │   └── seed-eval.ts               # CLI nạp 5 tập Golden Datasets vào eval/
+│   │   └── seed-eval.ts               # CLI nạp 5 tập Golden Datasets vào eval/ (eval:seed)
 │   │
+│   ├── cache/                         # Checkpoint Disk Cache cho tiến trình trích xuất Triples
 │   ├── crawler/                       # Master Corpus Catalog & Wiki/Web Scraper
-│   ├── text/                          # OCR, Text Normalizer, Historical Entity Mapper
-│   ├── chunking/                      # Hierarchical Chunker & Metadata Enricher
+│   ├── text/                          # OCR, Text Normalizer, Pure TS Historical NER Engine
+│   ├── chunking/                      # Hierarchical Temporal Chunker & Metadata Enricher
 │   ├── seeder/                        # Dual-Branch Vector/Graph Indexing Engine & DB Initializer
 │   ├── diagnostics/                   # Diagnostic Types & Quality Analyzers
 │   ├── pdf/                           # PDF Text Extractor (TCVN3, Zlib Stream)
 │   ├── utils/                         # Text & Path Utilities (Frontmatter parser)
+│   ├── triple-extractor.ts            # 2-Stage Triples Extractor (Stage 1 NER + Stage 2 LLM/Rule)
+│   ├── ingest-pipeline.ts             # Orchestrator điều phối toàn trình Ingest Pipeline
+│   ├── types.ts                       # Ingestion Data Types & Interfaces
 │   └── index.ts                       # Entrypoint export public APIs
 │
 ├── eval/                              # Tầng Đánh Giá & Benchmark Module 0
 │   ├── datasets/                      # Tập dữ liệu mẫu chuẩn (Disambiguation Benchmark)
-│   ├── runner.ts                      # Benchmark Runner cho Mô-đun 0 (KPI 1-4)
+│   ├── ner-runner.ts                  # Runner đánh giá Stage 1 Pure TS Historical NER (eval:ner)
+│   ├── triples-runner.ts              # Runner đánh giá Stage 2 Triples Extractor (eval:triples)
+│   ├── runner.ts                      # Master Benchmark Runner cho Mô-đun 0 (eval / eval:all)
 │   ├── metrics.ts                     # Đo lường Disambiguation, Extraction, Chunk Quality
 │   └── README.md                      # Tài liệu hướng dẫn đánh giá 2 Trụ Cột Thực Chiến
 │
@@ -75,36 +82,41 @@ packages/data-ingestion/
 
 ## ⚡ 4. Hướng Dẫn Sử Dụng & Bộ Lệnh CLI (CLI Commands)
 
-Tất cả các lệnh có thể thực thi từ root monorepo:
+Tất cả các lệnh có thể thực thi từ root monorepo hoặc trực tiếp trong package:
 
 ```bash
 # 1. Khởi động hạ tầng CSDL PostgreSQL (pgvector HNSW) & Redis
-docker compose up -d postgres redis
+pnpm stack:infra
 
 # 2. Khởi tạo SQL Schema & xác nhận đủ 7 bảng trên PostgreSQL
-pnpm --filter @chronoviet/data-ingestion db:init
+pnpm db:init
 
-# 3. Cào TỰ ĐỘNG TOÀN BỘ 15 Thời kỳ Lịch sử Việt Nam (Master Corpus Crawl)
-pnpm crawl:all
-# Hoặc cào riêng 1 Epoch:
-pnpm --filter @chronoviet/data-ingestion crawl:corpus --epoch=EPOCH_05
+# 3. Thu thập dữ liệu Lịch sử (Crawler Pipeline)
+pnpm crawl:all                                  # Cào tự động TOÀN BỘ 15 Thời kỳ Lịch sử Việt Nam
+pnpm crawl:corpus --epoch=EPOCH_05              # Hoặc cào riêng 1 Epoch cụ thể
+pnpm extract:pdf                                # Trích xuất PDF scan sử liệu sang Markdown
+pnpm crawl:pdf                                  # Nạp dữ liệu Markdown đã trích xuất từ PDF vào catalog
 
-# 4. Nạp kho tri thức vào CSDL thật (Text & Graph ETL với chế độ STRICT kiểm soát AI Gateway)
-pnpm ingest:knowledge --strict
-# Hoặc nạp nhanh offline / regex:
-pnpm --filter @chronoviet/data-ingestion ingest:knowledge --offline
+# 4. Nạp kho tri thức vào CSDL thật (Stage-by-Stage Dual-Branch Ingestion)
+pnpm ingest:vector                              # Stage 1: Nạp Chunks & Vector Store (BGE-M3 1024d) + Fast NER
+pnpm ingest:graph                               # Stage 2: Nạp Knowledge Graph Triples bằng LLM & Re-resolve
+pnpm ingest:knowledge                           # Nạp trọn gói cả 2 Stage liên hoàn
+pnpm ingest:knowledge --strict                  # Nạp với chế độ STRICT (kiểm soát chặt chẽ AI Gateway)
+pnpm ingest:knowledge --offline                 # Nạp nhanh offline (Regex + Fallback, không cần LLM)
+pnpm ingest:knowledge --force                   # Nạp mới từ đầu (xóa cache checkpoint & truncate DB)
 
-# 5. Hợp giải mâu thuẫn thực thể & ghi vết nhật ký audit log
-pnpm --filter @chronoviet/data-ingestion rag:re-resolve
+# 5. Quản trị Thực thể, Kiểm toán & Hợp giải
+pnpm db:audit-quarantine                        # Kiểm toán, thăng cấp hoặc thanh lọc cạnh tri thức cách ly
+pnpm rag:re-resolve                             # Hợp giải mâu thuẫn thực thể & ghi nhật ký entity_audit_logs
 
-# 6. Chẩn đoán chất lượng dữ liệu kho văn bản thật (Trụ Cột 1)
-pnpm eval:ingest:diagnostic
-
-# 7. Chạy bộ kiểm thử Benchmark đo lường 4 KPI cục bộ Mô-đun 0 (In-memory Fast Check)
-pnpm --filter @chronoviet/data-ingestion eval
-
-# 8. Đánh giá chất lượng tri thức toàn diện trên CSDL thật (Trụ Cột 2 - E2E RAG Search Chain)
-pnpm eval --chain ingest-rag
+# 6. Đánh Giá & Benchmark Chất Lượng (Evaluation Commands)
+pnpm eval:ingest:vector                         # Đánh giá nhanh Stage 1 (Vector & Chunk Store vừa nạp trên DB thật)
+pnpm eval:ingest:graph                          # Đánh giá Stage 2 (Knowledge Graph Triples, Connectivity, Quarantine)
+pnpm eval:ingest                                # Master Benchmark đánh giá toàn diện Module 0 (Cả Vector + Graph)
+pnpm eval:ingest:diagnostic                     # Chẩn đoán chất lượng kho văn bản (Parent/Child chunks, unmapped entities)
+pnpm --filter @chronoviet/data-ingestion eval:ner      # Benchmark Stage 1 Pure TS Historical NER (40 test cases)
+pnpm --filter @chronoviet/data-ingestion eval:triples  # Benchmark Stage 2 Triples Extractor
+pnpm eval --chain ingest-rag                    # Benchmark chuỗi E2E Ingest-RAG Chain (MRR, nDCG@5, Fact Precision)
 ```
 
 ### 📋 Bảng Tham Số & Cờ Tùy Chọn CLI (CLI Flags & Options):
@@ -112,6 +124,9 @@ pnpm eval --chain ingest-rag
 #### 1. `ingest:knowledge` (Nạp kho tri thức):
 | Tham số / Flag | Mô tả | Mặc định |
 | :--- | :--- | :--- |
+| `--stage=vector` / `--stage=1` | Chỉ chạy Stage 1 (Chunking + Vector Embeddings + Fast NER) | `all` |
+| `--stage=graph` / `--stage=2` | Chỉ chạy Stage 2 (LLM Triples Extraction + Graph Sync + Re-resolve) | `all` |
+| `--stage=all` | Chạy trọn gói liên hoàn cả Stage 1 và Stage 2 | `all` |
 | `--input=<path>` | Đường dẫn thư mục hoặc file tài liệu nguồn (`.txt`, `.md`, `.json`, `.pdf`) | `data/raw_corpus` |
 | `--force` / `--fresh` / `--clean` | Chế độ nạp mới từ đầu: Xóa sạch cache checkpoint (`.cache/extraction_triples/`) và `TRUNCATE CASCADE` database | `false` |
 | `--resume` / `--append` | Giữ nguyên chế độ tiếp tục (Resume), tái sử dụng kết quả trích xuất chunk đã có | `true` (Mặc định tự động bật Resume) |
@@ -141,9 +156,39 @@ pnpm eval --chain ingest-rag
 | `--offline` | Chạy hoàn toàn offline (Regex + Fallback) | `false` |
 | `--strict` | Báo cáo chi tiết các trường hợp chạm ngưỡng chất lượng | `false` |
 
+#### 4. `db:audit-quarantine` (Kiểm toán & Quản trị Vùng Cách Ly):
+| Tham số / Flag | Mô tả | Mặc định |
+| :--- | :--- | :--- |
+| `--threshold=<n>` | Ngưỡng độ tin cậy tối thiểu để thẩm định/thăng cấp quan hệ | `0.85` |
+| `--accept-all-high-conf` | Tự động thăng cấp các bộ ba có `confidence >= threshold` và thực thể nguồn/đích hợp lệ vào bảng `relationships`, đổi trạng thái thành `APPROVED` và ghi nhật ký `entity_audit_logs` | `false` |
+| `--purge-spurious` | Xóa bỏ các quan hệ tự trỏ (self-loops), các cạnh bị từ chối (`REJECTED`) hoặc độ tin cậy rác (< 0.25) trong `quarantine_triples`, và thực thể rác (`DISCARDED_AS_NOISE`) trong `unmapped_entities` | `false` |
+| `--dry-run` | Chạy mô phỏng kiểm tra, xuất báo cáo danh sách cạnh/thực thể bị tác động mà không thay đổi CSDL | `false` |
+
+#### 5. Quản trị & Kiểm toán CSDL Hệ thống:
+| Lệnh CLI | Mô tả & Chức năng |
+| :--- | :--- |
+| `pnpm db:init` | Khởi tạo PostgreSQL schema với pgvector extension (1024d HNSW index, BM25 FTS tsvector index, entities aliases GIN index) và 8 bảng CSDL (`entities`, `relationships`, `document_chunks`, `entity_chunks`, `entity_audit_logs`, `orchestrator_checkpoints`, `quarantine_triples`, `unmapped_entities`) |
+| `pnpm db:health` | Audit sức khỏe toàn diện CSDL: Đếm quan hệ, phát hiện self-loops, kiểm tra trùng lặp, phát hiện dangling references, kiểm tra độ phủ vector embeddings, xác minh 3 chỉ mục lõi (`idx_rel_unique`, `idx_chunks_embedding_hnsw`, `idx_chunks_fts`), và thống kê bộ đệm cách ly |
+| `pnpm db:clean` | Dọn dẹp bản ghi trùng lặp, xóa self-loops, thanh lọc quan hệ lơ lửng (dangling edges) trong giao dịch nguyên tử (`withTransaction`), tái lập unique index `idx_rel_unique` và ghi vết `entity_audit_logs` |
+
 ---
 
-## 📄 5. Giấy Phép (License)
+## 📊 5. Khả Năng Quan Sát & Đo Lường Hiệu Năng (Observability & Telemetry)
+
+Module 0 được trang bị hệ thống Telemetry chuẩn hóa:
+1. **Correlation ID Tracing:** Tự động sinh `correlationId` (hoặc truyền qua `IngestionOptions.correlationId`) gắn kết từ CLI qua Pipeline, Seeder, Crawler và từng worker trích xuất.
+2. **RED Metrics & Stage Durations:** Thu thập chi tiết qua `IngestionMetricsCollector`:
+   - `durations`: `chunkingMs`, `extractionMs`, `embeddingMs`, `dbInsertMs`, `totalDurationMs`.
+   - `throughput`: `chunksPerSec`, `wordsPerSec`, `vectorsPerSec`.
+   - `cacheStats`: `hits`, `misses`, `hitRate`.
+   - `quarantineStats`: `totalQuarantined`, `reasons` (`LOW_CONFIDENCE`, `DANGLING_RELATION`).
+3. **Sub-batched Vector Generation:** Chia nhỏ batch embedding thành các sub-batches cố định (64 chunks) kèm telemetry `embedding.batch_completed` giám sát tốc độ sinh vector ngăn ngừa quá tải VRAM / HTTP timeout.
+4. **Detailed Cache Analytics:** Phương thức `extractionCache.getDetailedStats()` cung cấp thông tin dung lượng byte, số lượng mục và phân bố provider/model.
+
+---
+
+## 📄 6. Giấy Phép (License)
 
 Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**.
+
 

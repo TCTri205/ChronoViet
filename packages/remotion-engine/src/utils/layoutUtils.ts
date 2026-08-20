@@ -48,6 +48,15 @@ export function isFullscreenLayout(layoutMode?: LayoutMode): boolean {
     'ROYAL_DECREE',
     'POEM_RECITING',
     'TIMELINE_CHRONO',
+    'HERO_SPOTLIGHT',
+    'ARMY_STRENGTH',
+    'VERSUS_CARD',
+    'SPLIT_THEORY',
+    'MAP_TACTICAL',
+    'PURE_IMAGE_FULL',
+    'DOCUMENTARY_GRID',
+    'NEWSPAPER_ARCHIVE',
+    'GALLERY_3D',
   ] as LayoutMode[]).includes(layoutMode);
 }
 
@@ -74,6 +83,10 @@ export function isPureCodeLayout(layoutMode?: LayoutMode): boolean {
     'CHARACTER_PROFILE',
     'ROYAL_DECREE',
     'ARTIFACT_INSPECT',
+    'HERO_SPOTLIGHT',
+    'STAT_CARD',
+    'BULLET_HIGHLIGHT',
+    'MUSEUM_TAG',
   ] as LayoutMode[]).includes(layoutMode);
 }
 

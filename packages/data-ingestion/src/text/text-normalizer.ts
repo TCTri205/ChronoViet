@@ -3,11 +3,12 @@
  */
 
 const OCR_CLEANUP_RULES: Array<[RegExp, string]> = [
-  [/[\r\n]+/g, '\n'],
+  [/\r\n/g, '\n'], // Normalize Windows CRLF to standard LF
+  [/\r/g, '\n'],   // Normalize legacy Mac CR to standard LF
   [/[ \t]+/g, ' '],
   [/\b([a-zA-ZÀ-ỹ]+)-\s*\n\s*([a-zA-ZÀ-ỹ]+)\b/g, '$1$2'], // Fix hyphenated line-breaks
   [/[^\S\r\n]+\n/g, '\n'], // Trim trailing whitespace per line
-  [/\n{3,}/g, '\n\n'], // Max 2 consecutive linebreaks
+  [/\n{3,}/g, '\n\n'], // Max 2 consecutive linebreaks (preserve paragraph boundaries)
   [/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''], // Remove non-printable control chars
   [/\[\s*Trang\s+\d+\s*\]/gi, ''], // Remove inline page tags like [Trang 12]
 ];

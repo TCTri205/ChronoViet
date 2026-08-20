@@ -61,7 +61,7 @@ Cung cấp các Zod Schema và TypeScript Interfaces chuẩn hóa cho toàn bộ
 - Tái cấu trúc và mở rộng từ `text-cleaner.ts` hiện tại.
 - Làm sạch lỗi OCR, loại bỏ ký tự rác, chuẩn hóa từ ngữ Hán-Việt, bỏ dấu trang và khoảng trắng thừa.
 
-#### [NEW] [historical-entity-mapper.ts](../../packages/data-ingestion/src/text/historical-entity-mapper.ts)
+#### [NEW] [historical-entities.ts](../../packages/shared-spec/src/historical-entities.ts)
 - Tái cấu trúc và nâng cấp từ `entity-disambiguator.ts` hiện tại. Quản lý 2 bảng từ điển chuẩn hóa sử liệu core:
   1. **Bảng Ánh Xạ Địa Danh Qua Các Thời Kỳ (`SAME_AS_LOCATION`):**
      Ánh xạ Thăng Long $\rightarrow$ Đông Quan $\rightarrow$ Đông Kinh $\rightarrow$ Hà Nội theo mốc triều đại và thời gian.

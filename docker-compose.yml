@@ -1,7 +1,9 @@
 services:
   caddy:
     image: caddy:2-alpine
-    restart: always
+    profiles:
+      - prod
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
@@ -21,7 +23,11 @@ services:
 
   postgres:
     image: pgvector/pgvector:pg15
-    restart: always
+    profiles:
+      - infra
+      - prod
+      - default
+    restart: unless-stopped
     environment:
       POSTGRES_DB: chronoviet_db
       POSTGRES_USER: chronoviet
@@ -44,7 +50,11 @@ services:
 
   redis:
     image: redis:7-alpine
-    restart: always
+    profiles:
+      - infra
+      - prod
+      - default
+    restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy noeviction
     ports:
       - "127.0.0.1:6379:6379"
@@ -67,7 +77,10 @@ services:
       context: .
       dockerfile: services/vieneu-tts/Dockerfile
     container_name: vieneu_tts_engine
-    restart: always
+    profiles:
+      - tts
+      - prod
+    restart: unless-stopped
     environment:
       - NODE_ENV=production
       - LOG_FORMAT=json
@@ -92,17 +105,137 @@ services:
           memory: 2000M
     logging: *default-logging
 
+  local-ai-cuda-llm:
+    image: ghcr.io/ggerganov/llama.cpp:server-cuda
+    container_name: local_ai_cuda_llm
+    profiles:
+      - ai
+      - ai-cuda
+      - prod-cuda
+      - prod-all
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    volumes:
+      - ./models:/models:ro
+    command: >
+      -m /models/${LOCAL_LLM_PRIMARY_MODEL:-qwen3.8-27b-instruct-q4_k_m}.gguf
+      --port 8092
+      --ctx-size ${LLM_CTX_SIZE:-16384}
+      --n-gpu-layers 99
+      --flash-attn auto
+      --cont-batching
+      --parallel 2
+      --host 0.0.0.0
+      ${LLM_EXTRA_ARGS:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8092/v1/models || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    logging: *default-logging
+
+  local-ai-cuda-emb:
+    image: ghcr.io/ggerganov/llama.cpp:server-cuda
+    container_name: local_ai_cuda_emb
+    profiles:
+      - ai
+      - ai-cuda
+      - prod-cuda
+      - prod-all
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./models:/models:ro
+    command: >
+      -m /models/${LOCAL_EMBEDDING_MODEL:-bge-m3}.gguf
+      --port 8090
+      --embedding
+      --ctx-size ${EMBEDDING_CTX_SIZE:-8192}
+      --n-gpu-layers 99
+      --flash-attn auto
+      --host 0.0.0.0
+      ${EMBEDDING_EXTRA_ARGS:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8090/v1/models || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    logging: *default-logging
+
+  local-ai-cuda-ext:
+    image: ghcr.io/ggerganov/llama.cpp:server-cuda
+    container_name: local_ai_cuda_ext
+    profiles:
+      - ai
+      - ai-cuda
+      - prod-cuda
+      - prod-all
+    restart: unless-stopped
+    ports:
+      - "8094:8094"
+    volumes:
+      - ./models:/models:ro
+    command: >
+      -m /models/${LOCAL_LLM_EXTRACTION_MODEL:-qwen3.5-4b-instruct-q4_k_m}.gguf
+      --port 8094
+      --ctx-size ${LOCAL_LLM_EXTRACTION_CTX_SIZE:-8192}
+      --n-gpu-layers 99
+      --flash-attn auto
+      --cont-batching
+      --parallel ${LOCAL_LLM_EXTRACTION_PARALLEL:-4}
+      --threads ${LOCAL_LLM_EXTRACTION_THREADS:-6}
+      --host 0.0.0.0
+      ${LOCAL_LLM_EXTRACTION_EXTRA_ARGS:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8094/v1/models || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    logging: *default-logging
+
   app:
     build:
       context: .
       dockerfile: Dockerfile.app
-    restart: always
+    profiles:
+      - prod
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=production
       - LOG_FORMAT=json
       - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
       - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://local-ai-cuda-llm:8092}
+      - EMBEDDING_API_URL=${EMBEDDING_API_URL:-http://local-ai-cuda-emb:8090/v1/embeddings}
       - AGNES_BASE_URL=${AGNES_BASE_URL:-https://apihub.agnes-ai.com/v1}
       - GEMINI_API_KEYS=${GEMINI_API_KEYS:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
@@ -145,8 +278,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.worker
-    restart: always
+    profiles:
+      - prod
+    restart: unless-stopped
     shm_size: '2gb'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     deploy:
       resources:
         limits:
@@ -161,6 +298,8 @@ services:
       - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
       - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://local-ai-cuda-llm:8092}
+      - EMBEDDING_API_URL=${EMBEDDING_API_URL:-http://local-ai-cuda-emb:8090/v1/embeddings}
       - AGNES_BASE_URL=${AGNES_BASE_URL:-https://apihub.agnes-ai.com/v1}
       - GEMINI_API_KEYS=${GEMINI_API_KEYS:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}

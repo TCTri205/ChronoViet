@@ -19,6 +19,8 @@ import { MapTactical } from '../components/MapTactical';
 import { CharacterProfile } from '../components/CharacterProfile';
 import { ArtifactInspect } from '../components/ArtifactInspect';
 import { PoemReciting } from '../components/PoemReciting';
+import { HeroSpotlight } from '../components/HeroSpotlight';
+import { ArmyStrength } from '../components/ArmyStrength';
 
 interface HistorySlideProps {
   scene: TimelineScene;
@@ -33,6 +35,7 @@ interface HistorySlideProps {
 export const HistoryBackground: React.FC<HistorySlideProps> = ({
   scene,
   durationInFrames,
+  index,
   theme,
 }) => {
   const hasAsset = Boolean(scene.assetUrl || scene.secondaryAssetUrl);
@@ -52,6 +55,8 @@ export const HistoryBackground: React.FC<HistorySlideProps> = ({
           filterStyle={scene.filterStyle || 'HISTORICAL'}
           rotateDeg={scene.rotateDeg}
           isPureCodeScene={scene.type === 'PURE_CODE'}
+          sceneId={scene.id}
+          index={index}
         />
       ) : (
         <AbsoluteFill
@@ -139,6 +144,37 @@ const getForegroundContent = (
         title={od?.title}
         author={od?.author}
         poemText={od?.quoteText || scene.text || ''}
+        durationInFrames={durationInFrames}
+        theme={theme}
+      />
+    );
+  }
+
+  if (layoutMode === 'HERO_SPOTLIGHT') {
+    return (
+      <HeroSpotlight
+        title={od?.title}
+        name={od?.name || od?.title}
+        role={od?.role}
+        subtitle={od?.subtitle}
+        details={od?.details || scene.text}
+        quote={od?.quoteText}
+        bulletPoints={od?.bulletPoints}
+        durationInFrames={durationInFrames}
+        theme={theme}
+      />
+    );
+  }
+
+  if (layoutMode === 'ARMY_STRENGTH') {
+    return (
+      <ArmyStrength
+        title={od?.title}
+        subtitle={od?.subtitle}
+        leftSide={od?.leftSide}
+        rightSide={od?.rightSide}
+        statItems={od?.statItems}
+        details={od?.details || scene.text}
         durationInFrames={durationInFrames}
         theme={theme}
       />

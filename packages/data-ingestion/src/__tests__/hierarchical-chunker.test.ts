@@ -54,4 +54,18 @@ describe('chunkDocumentHierarchical child chunk bounds (300-500 words)', () => {
       expect(chunk.metadata.parentChunkId).toBe(parentId);
     }
   });
+
+  it('safely partitions an oversized document (10,000 words) without double newlines into multiple parent chunks', () => {
+    const sentences: string[] = [];
+    for (let i = 0; i < 200; i++) {
+      sentences.push(makeText(50) + '.');
+    }
+    const text = sentences.join(' ');
+    const result = chunkDocumentHierarchical(text, { title: 'Tài liệu dài không ngắt đoạn' });
+    expect(result.parentChunks.length).toBeGreaterThan(1);
+    for (const chunk of result.parentChunks) {
+      expect(chunk.wordCount).toBeGreaterThanOrEqual(1000);
+      expect(chunk.wordCount).toBeLessThanOrEqual(3500);
+    }
+  });
 });

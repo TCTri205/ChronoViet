@@ -54,13 +54,20 @@ export function computeSha256(buffer: Buffer): string {
   return crypto.createHash('sha256').update(buffer).digest('hex');
 }
 
+export interface DownloadCandidateOptions {
+  customBaseDir?: string;
+  timeoutMs?: number;
+  correlationId?: string;
+  sceneId?: string;
+}
+
 /**
  * Downloads a candidate image to project workspace.
  */
 export async function downloadCandidateImage(
   projectId: string,
   candidate: VisualCandidate,
-  options: { customBaseDir?: string; timeoutMs?: number } = {}
+  options: DownloadCandidateOptions = {}
 ): Promise<DownloadedAssetResult> {
   const paths = initProjectWorkspace(projectId, options.customBaseDir);
   const candidateId = candidate.candidateId;
@@ -94,9 +101,9 @@ export async function downloadCandidateImage(
       imageBuffer = null;
     }
   } else if (candidate.imageUrl.startsWith('http://') || candidate.imageUrl.startsWith('https://')) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeout);
       const res = await fetch(candidate.imageUrl, {
         signal: controller.signal,
         headers: {
@@ -105,14 +112,17 @@ export async function downloadCandidateImage(
         },
         cache: 'no-store',
       });
-      clearTimeout(timer);
 
+      const latencyMs = Date.now() - startTime;
       if (!res.ok) {
         log.warn('vlm.download_http_error', `HTTP ${res.status} when downloading image candidate from ${candidate.imageUrl}`, {
           candidateId,
           imageUrl: candidate.imageUrl,
           status: res.status,
           statusText: res.statusText,
+          latencyMs,
+          correlationId: options.correlationId,
+          sceneId: options.sceneId,
         });
         imageBuffer = null;
       } else {
@@ -122,16 +132,24 @@ export async function downloadCandidateImage(
           candidateId,
           imageUrl: candidate.imageUrl,
           sizeBytes: imageBuffer.length,
-          latencyMs: Date.now() - startTime,
+          latencyMs,
+          correlationId: options.correlationId,
+          sceneId: options.sceneId,
         });
       }
     } catch (err: any) {
+      const latencyMs = Date.now() - startTime;
       log.warn('vlm.download_failed', `Failed to download image from ${candidate.imageUrl}: ${err.message}`, {
         candidateId,
         imageUrl: candidate.imageUrl,
         error: err.message,
+        latencyMs,
+        correlationId: options.correlationId,
+        sceneId: options.sceneId,
       });
       imageBuffer = null;
+    } finally {
+      clearTimeout(timer);
     }
   } else {
     imageBuffer = null;
@@ -182,6 +200,9 @@ export async function downloadCandidateImage(
         localPath: targetFilePath,
         fileSizeBytes: imageBuffer.length,
         downloadedAt: new Date().toISOString(),
+        correlationId: options.correlationId,
+        sceneId: options.sceneId,
+        projectId,
       },
       null,
       2
@@ -204,7 +225,7 @@ export async function downloadCandidateImage(
 export async function downloadCandidateBatch(
   projectId: string,
   candidates: VisualCandidate[],
-  options: { customBaseDir?: string; timeoutMs?: number } = {}
+  options: DownloadCandidateOptions = {}
 ): Promise<VisualCandidate[]> {
   const downloadPromises = candidates.map(async (cand) => {
     const validated = VisualCandidateSchema.parse(cand);

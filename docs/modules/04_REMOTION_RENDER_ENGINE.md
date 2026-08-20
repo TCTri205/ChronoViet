@@ -408,13 +408,31 @@ Engine đã đăng ký sẵn 1 Composition chung, 5 Compositions chuẩn theo do
 Khi Orchestrator hoặc Render Worker kích hoạt CLI từ **Root Monorepo**:
 
 ```bash
-# Render MP4 theo props từ file JSON kịch bản do Multi-Agent tạo ra:
-pnpm --filter @chronoviet/remotion-engine cli render -i tmp/battle_scene_v3.json -o media/rendered-videos/battle_output.mp4
+# Render MP4 theo props từ file JSON kịch bản do Multi-Agent tạo ra (Chuẩn SSOT Workspace):
+pnpm --filter @chronoviet/remotion-engine cli render -i media/projects/battle_001/project_schema.json -o media/projects/battle_001/output/video.mp4
+
+# Render với correlation ID và project ID để đồng bộ distributed logs:
+pnpm --filter @chronoviet/remotion-engine cli render -i media/projects/battle_001/project_schema.json -o media/projects/battle_001/output/video.mp4 -k job-12345 -p project-abc
 
 # Render các kịch bản domain chuẩn:
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/rendered-videos/biography.mp4
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/rendered-videos/battle.mp4
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/rendered-videos/dynasty.mp4
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/mystery_le_chi_vien.json -o media/rendered-videos/mystery.mp4
-pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/artifact_trong_dong_ngoc_lu.json -o media/rendered-videos/artifact.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/biography_tran_hung_dao.json -o media/projects/biography_001/output/video.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/battle_bach_dang_938.json -o media/projects/battle_002/output/video.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/dynasty_nha_ly.json -o media/projects/dynasty_001/output/video.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/mystery_le_chi_vien.json -o media/projects/mystery_001/output/video.mp4
+pnpm --filter @chronoviet/remotion-engine cli render -i eval/test-cases/artifact_trong_dong_ngoc_lu.json -o media/projects/artifact_001/output/video.mp4
+
+# Chạy deterministic unit tests (Tier 4 verification):
+pnpm --filter @chronoviet/remotion-engine test
+
+# Chạy evaluation benchmark suite:
+pnpm --filter @chronoviet/remotion-engine eval
 ```
+
+---
+
+## 6. Khả Năng Quan Sát & Telemetry (Observability)
+
+1. **Structured Asset Load Telemetry:** Khi ảnh tư liệu bị lỗi (404, network failure, invalid format), `SlideImage.tsx` tự động ghi log cảnh báo cấu trúc `render.asset_load_failed` (kèm `assetUrl`, `sceneId`, `layoutMode`) và fallback an toàn sang vector placeholder để Chromium render trơn tru mà không bị crash pipeline.
+2. **Runtime Sanity Checks:** `Root.tsx` cảnh báo tự động `render.duration_warning` khi video có thời lượng bất thường (<30 frames).
+3. **Correlation Context:** CLI hỗ trợ `--correlation-id` (`-k`) và `--project-id` (`-p`) gắn vào Logger Context giúp trace log liền mạch qua BullMQ queues và Orchestrator state.
+

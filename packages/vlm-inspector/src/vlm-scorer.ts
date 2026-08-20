@@ -29,7 +29,11 @@ export interface ScoreImageOptions {
   baseUrl?: string;
   model?: string;
   metadata?: { title?: string; author?: string; license?: string };
+  correlationId?: string;
+  sceneId?: string;
 }
+
+const MAX_IMAGE_PAYLOAD_BYTES = 5 * 1024 * 1024; // 5MB guard limit
 
 function buildScoringPrompt(eventDescription: string, options: ScoreImageOptions): string {
   return `Bạn là chuyên gia thẩm định thị giác và bản sắc lịch sử Việt Nam cho nền tảng ChronoViet.
@@ -51,11 +55,45 @@ Trả về DUY NHẤT một JSON object:
 }`;
 }
 
-function parseScoreJson(rawText: string, scorerType: 'LOCAL_VLM' | 'OPENAI_VLM' | 'GEMINI_CLOUD'): VLMScoreResult {
-  const parsedJson = JSON.parse(rawText);
-  const hScore = Math.min(40, Math.max(0, Number(parsedJson.historicalContextScore) || 20));
-  const nScore = Math.min(30, Math.max(0, Number(parsedJson.visualNoiseScore) || 20));
-  const aScore = Math.min(30, Math.max(0, Number(parsedJson.artisticFitScore) || 20));
+export function extractAndParseJson(
+  rawText: string,
+  scorerType: 'LOCAL_VLM' | 'OPENAI_VLM' | 'GEMINI_CLOUD'
+): VLMScoreResult {
+  let cleaned = rawText.trim();
+  // Strip markdown code block wrappers if present
+  const markdownMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (markdownMatch) {
+    cleaned = markdownMatch[1].trim();
+  }
+
+  // Find JSON object boundaries using regex
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
+
+  let parsedJson: any;
+  try {
+    parsedJson = JSON.parse(jsonStr);
+  } catch (err: any) {
+    log.warn('vlm.json_parse_fallback', `Failed to parse VLM response JSON directly: ${err.message}`, {
+      rawText: rawText.substring(0, 300),
+      scorerType,
+    });
+    // Fallback: Attempt heuristic regex extraction of score numbers
+    const hMatch = rawText.match(/historicalContextScore["'\s:]+(\d+)/i) || rawText.match(/historical[_\s]context["'\s:]+(\d+)/i);
+    const nMatch = rawText.match(/visualNoiseScore["'\s:]+(\d+)/i) || rawText.match(/visual[_\s]noise["'\s:]+(\d+)/i);
+    const aMatch = rawText.match(/artisticFitScore["'\s:]+(\d+)/i) || rawText.match(/artistic[_\s]fit["'\s:]+(\d+)/i);
+
+    parsedJson = {
+      historicalContextScore: hMatch ? Number(hMatch[1]) : 20,
+      visualNoiseScore: nMatch ? Number(nMatch[1]) : 20,
+      artisticFitScore: aMatch ? Number(aMatch[1]) : 20,
+      reasons: [`Trích xuất heuristic từ ${scorerType}`],
+    };
+  }
+
+  const hScore = Math.min(40, Math.max(0, Number(parsedJson.historicalContextScore ?? parsedJson.historical_context_score) || 20));
+  const nScore = Math.min(30, Math.max(0, Number(parsedJson.visualNoiseScore ?? parsedJson.visual_noise_score) || 20));
+  const aScore = Math.min(30, Math.max(0, Number(parsedJson.artisticFitScore ?? parsedJson.artistic_fit_score) || 20));
   const totalScore = hScore + nScore + aScore;
 
   return {
@@ -64,10 +102,16 @@ function parseScoreJson(rawText: string, scorerType: 'LOCAL_VLM' | 'OPENAI_VLM' 
     artisticFitScore: aScore,
     totalScore,
     passed: totalScore >= 60,
-    reasons: Array.isArray(parsedJson.reasons) ? parsedJson.reasons : [`Thẩm định bởi ${scorerType}`],
+    reasons: Array.isArray(parsedJson.reasons)
+      ? parsedJson.reasons
+      : parsedJson.reason
+      ? [parsedJson.reason]
+      : [`Thẩm định bởi ${scorerType}`],
     scorerType,
   };
 }
+
+export const parseScoreJson = extractAndParseJson;
 
 /**
  * Score an image with an OpenAI-compatible Vision Endpoint (e.g. llama-server, Ollama, vLLM, Qwen2.5-VL, etc.)
@@ -87,6 +131,14 @@ export async function scoreImageWithLocalVLM(
   if (fs.existsSync(imageUrl)) {
     try {
       const imageBuffer = fs.readFileSync(imageUrl);
+      if (imageBuffer.length > MAX_IMAGE_PAYLOAD_BYTES) {
+        log.warn('vlm.payload_size_warning', `Image ${imageUrl} size (${(imageBuffer.length / 1024 / 1024).toFixed(2)}MB) exceeds 5MB limit`, {
+          imageUrl,
+          sizeBytes: imageBuffer.length,
+          correlationId: options.correlationId,
+          sceneId: options.sceneId,
+        });
+      }
       const base64Data = imageBuffer.toString('base64');
       const ext = imageUrl.split('.').pop()?.toLowerCase();
       let mimeType = 'image/jpeg';
@@ -136,8 +188,7 @@ export async function scoreImageWithLocalVLM(
     throw new Error('Empty response from VLM Vision endpoint');
   }
 
-  const cleaned = rawText.replace(/```json|```/g, '').trim();
-  return parseScoreJson(cleaned, effectiveApiKey ? 'OPENAI_VLM' : 'LOCAL_VLM');
+  return extractAndParseJson(rawText, effectiveApiKey ? 'OPENAI_VLM' : 'LOCAL_VLM');
 }
 
 /**
@@ -155,6 +206,14 @@ export async function scoreImageWithGeminiApi(
   if (fs.existsSync(imageUrl)) {
     try {
       const imageBuffer = fs.readFileSync(imageUrl);
+      if (imageBuffer.length > MAX_IMAGE_PAYLOAD_BYTES) {
+        log.warn('vlm.payload_size_warning', `Image ${imageUrl} size (${(imageBuffer.length / 1024 / 1024).toFixed(2)}MB) exceeds 5MB limit`, {
+          imageUrl,
+          sizeBytes: imageBuffer.length,
+          correlationId: options.correlationId,
+          sceneId: options.sceneId,
+        });
+      }
       const base64Data = imageBuffer.toString('base64');
       const ext = imageUrl.split('.').pop()?.toLowerCase();
       let mimeType = 'image/jpeg';
@@ -205,7 +264,7 @@ export async function scoreImageWithGeminiApi(
       throw new Error('Empty response from Gemini API');
     }
 
-    return parseScoreJson(rawText, 'GEMINI_CLOUD');
+    return extractAndParseJson(rawText, 'GEMINI_CLOUD');
   };
 
   if (options.apiKey) {
@@ -219,11 +278,10 @@ export async function scoreImageWithGeminiApi(
  * Score an image using the unified provider chain:
  * 1. Redis / In-Memory Dual-Cache
  * 2. Strict Eval: Local/Configured VLM only (throws on failure)
- * 3. Provider Routing:
- *    - 'local' | 'openai' | 'auto': attempts OpenAI-compatible Vision Endpoint (llama-server, Qwen2.5-VL, Ollama, etc.)
- *    - 'gemini': attempts Gemini Cloud API (if key present)
- *    - 'clip': falls back immediately to Local CLIP
- * 4. Resilient Fallback: Local CLIP Cosine Similarity Scorer
+ * 3. Hybrid Round-Robin Mode (Rotates across Local Vision & Gemini Cloud Vision keys)
+ * 4. Attempt Local / OpenAI Vision Model (llama-server, Qwen2.5-VL, Ollama, etc.)
+ * 5. Attempt Gemini Cloud Vision API (when key configured)
+ * 6. Offline Fallback: Local CLIP Cosine Similarity Scorer
  */
 export async function scoreImageWithVLM(
   imageUrl: string,
@@ -248,6 +306,8 @@ export async function scoreImageWithVLM(
       sha256: options.sha256,
       contextHash,
       score: cached.totalScore,
+      correlationId: options.correlationId,
+      sceneId: options.sceneId,
     });
     return cached;
   }
@@ -299,7 +359,10 @@ export async function scoreImageWithVLM(
         await setCachedVLMScore(result, cacheOpts);
         return result;
       } catch (hybridErr: any) {
-        log.warn('vlm.hybrid_targets_exhausted', `All VLM hybrid targets failed: ${hybridErr.message}; falling back to Priority/CLIP flow`);
+        log.warn('vlm.hybrid_targets_exhausted', `All VLM hybrid targets failed: ${hybridErr.message}; falling back to Priority/CLIP flow`, {
+          correlationId: options.correlationId,
+          sceneId: options.sceneId,
+        });
       }
     }
   }
@@ -317,6 +380,8 @@ export async function scoreImageWithVLM(
         vlmBaseUrl,
         vlmModel,
         error: errMsg,
+        correlationId: options.correlationId,
+        sceneId: options.sceneId,
       });
 
       // If explicitly configured for local/openai only and failed, don't silently jump to Gemini unless in auto mode
@@ -336,7 +401,7 @@ export async function scoreImageWithVLM(
     }
   }
 
-  // 4. Attempt Gemini Cloud Vision API if configured
+  // 5. Attempt Gemini Cloud Vision API if configured
   if ((hasAvailableApiKeys('gemini') || envConfig.GEMINI_API_KEY) && (vlmProvider === 'gemini' || vlmProvider === 'auto')) {
     try {
       const result = await scoreImageWithGeminiApi(imageUrl, eventDescription, options);
@@ -346,6 +411,8 @@ export async function scoreImageWithVLM(
       log.warn('vlm.gemini_call_failed', `Gemini API call failed: ${geminiErr.message}; activating Local CLIP fallback`, {
         imageUrl,
         error: geminiErr.message,
+        correlationId: options.correlationId,
+        sceneId: options.sceneId,
       });
 
       logFallbackAlert({
@@ -362,7 +429,7 @@ export async function scoreImageWithVLM(
     }
   }
 
-  // 5. Offline Fallback: Local CLIP Heuristic
+  // 6. Offline Fallback: Local CLIP Heuristic
   logFallbackAlert({
     subsystem: 'VLM_INSPECTOR',
     primaryTarget: `VLM Inspector (${vlmBaseUrl}) [${vlmModel}]`,

@@ -19,6 +19,14 @@ export interface CachedChunkExtraction {
   version: number;
 }
 
+export interface DetailedCacheStats {
+  count: number;
+  dir: string;
+  totalSizeBytes: number;
+  providerDistribution: Record<string, number>;
+  modelDistribution: Record<string, number>;
+}
+
 export class ExtractionCache {
   private cacheDir: string;
   private initialized = false;
@@ -151,6 +159,57 @@ export class ExtractionCache {
       return { count: jsonFiles.length, dir: this.cacheDir };
     } catch {
       return { count: 0, dir: this.cacheDir };
+    }
+  }
+
+  public async getDetailedStats(): Promise<DetailedCacheStats> {
+    const emptyStats: DetailedCacheStats = {
+      count: 0,
+      dir: this.cacheDir,
+      totalSizeBytes: 0,
+      providerDistribution: {},
+      modelDistribution: {},
+    };
+
+    try {
+      const exists = await fs.stat(this.cacheDir).then(() => true).catch(() => false);
+      if (!exists) return emptyStats;
+
+      const files = await fs.readdir(this.cacheDir);
+      const jsonFiles = files.filter((f) => f.endsWith('.json'));
+
+      let totalSizeBytes = 0;
+      const providerDistribution: Record<string, number> = {};
+      const modelDistribution: Record<string, number> = {};
+
+      for (const file of jsonFiles) {
+        try {
+          const filePath = path.join(this.cacheDir, file);
+          const stat = await fs.stat(filePath);
+          totalSizeBytes += stat.size;
+
+          const content = await fs.readFile(filePath, 'utf-8');
+          const parsed: CachedChunkExtraction = JSON.parse(content);
+          if (parsed) {
+            const provider = parsed.provider || 'UNKNOWN';
+            const model = parsed.model || 'UNKNOWN';
+            providerDistribution[provider] = (providerDistribution[provider] || 0) + 1;
+            modelDistribution[model] = (modelDistribution[model] || 0) + 1;
+          }
+        } catch {
+          // Ignore invalid/corrupted individual cache files
+        }
+      }
+
+      return {
+        count: jsonFiles.length,
+        dir: this.cacheDir,
+        totalSizeBytes,
+        providerDistribution,
+        modelDistribution,
+      };
+    } catch {
+      return emptyStats;
     }
   }
 }

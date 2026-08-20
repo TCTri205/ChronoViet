@@ -1,8 +1,15 @@
 /**
  * Question Entity Extraction & Keyword Parsing (Question NER)
+ * Component of Chrono-RAG Runtime
+ *
+ * Characteristics:
+ * - Powered by Stage 1 Pure TS Historical NER Engine (< 1ms execution, 0 LLM latency)
+ * - Resolves canonical master entities and aliases deterministically
+ * - Extracts temporal keywords and historical entities for hybrid graph retrieval
  */
 
-import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
+import { resolveCanonicalEntity, isKnownMasterEntity } from '@chronoviet/shared-spec';
+import { extractHistoricalCandidateSpans } from '@chronoviet/data-ingestion';
 
 export interface ExtractedQueryInfo {
   entityIds: string[];
@@ -10,136 +17,51 @@ export interface ExtractedQueryInfo {
   keywords: string[];
 }
 
-const HISTORICAL_SEED_TERMS = [
-  'Quang Trung',
-  'Nguyễn Huệ',
-  'Hồ Thơm',
-  'Bắc Bình Vương',
-  'Nguyễn Nhạc',
-  'Nguyễn Lữ',
-  'Tây Sơn Vương',
-  'Trần Hưng Đạo',
-  'Trần Quốc Tuấn',
-  'Hưng Đạo Đại Vương',
-  'Lê Lợi',
-  'Lê Thái Tổ',
-  'Bình Định Vương',
-  'Nguyễn Trãi',
-  'Ức Trai',
-  'Ngô Quyền',
-  'Tiền Ngô Vương',
-  'Lý Thường Kiệt',
-  'Ngô Tuấn',
-  'Lý Thái Tổ',
-  'Lý Công Uẩn',
-  'Đinh Tiên Hoàng',
-  'Đinh Bộ Lĩnh',
-  'Lê Hoàn',
-  'Lê Đại Hành',
-  'Hai Bà Trưng',
-  'Trưng Trắc',
-  'Trưng Nhị',
-  'Trưng Nữ Vương',
-  'An Dương Vương',
-  'Thục Phán',
-  'Cao Lỗ',
-  'Võ Nguyên Giáp',
-  'Phạm Văn Đồng',
-  'Liễu Thăng',
-  'Vương Thông',
-  'Sầm Nghi Đống',
-  'Tôn Sĩ Nghị',
-  'Hà Nội',
-  'Thăng Long',
-  'Đại La',
-  'Đông Đô',
-  'Đông Quan',
-  'Đông Kinh',
-  'Hoa Lư',
-  'Sài Gòn',
-  'Gia Định',
-  'Bến Nghé',
-  'Huế',
-  'Phú Xuân',
-  'Thuận Hóa',
-  'Lam Sơn',
-  'Cổ Loa',
-  'Bạch Đằng',
-  'Sông Bạch Đằng',
-  'Như Nguyệt',
-  'Sông Như Nguyệt',
-  'Rạch Gầm',
-  'Xoài Mút',
-  'Chi Lăng',
-  'Xương Giang',
-  'Trận Ngọc Hồi',
-  'Đống Đa',
-  'Tốt Động',
-  'Chúc Động',
-  'Điện Biên Phủ',
-  'Mê Linh',
-  'Quy Nhơn',
-  'Nhà Tây Sơn',
-  'Tây Sơn',
-  'Nhà Lê',
-  'Lê Sơ',
-  'Tiền Lê',
-  'Nhà Trần',
-  'Nhà Lý',
-  'Nhà Đinh',
-  'Nhà Ngô',
-  'Nhà Nguyễn',
-  'Nhà Hồ',
-  'Văn Lang',
-  'Âu Lạc',
-  'Trưng Vương',
-  'Trống đồng Đông Sơn',
-  'Trống đồng Ngọc Lũ',
-  'Văn hóa Đông Sơn',
-  'Nỏ Liên Châu',
-  'Nỏ thần',
-  'Bình Ngô Đại Cáo',
-  'Hịch Tướng Sĩ',
-  'Nam Quốc Sơn Hà',
-  'Chiếu dời đô',
-  'Lệ Chi Viên',
-  'Đại Việt Sử Ký Toàn Thư',
-  'Nguyên Sử',
-];
+export const QUESTION_STOPWORDS = new Set([
+  'ai', 'gì', 'nào', 'đâu', 'khi', 'bao', 'năm', 'thế', 'nào', 'sao', 'tại',
+  'là', 'của', 'và', 'trong', 'với', 'ở', 'được', 'vào', 'có', 'đã', 'sẽ',
+  'như', 'thì', 'ra', 'lại', 'về', 'cho', 'này', 'đó', 'kia', 'hãy', 'kể',
+  'cho', 'biết', 'tóm', 'tắt', 'diễn', 'biến', 'nguyên', 'nhân', 'kết', 'quả',
+  'ý', 'nghĩa', 'lịch', 'sử', 'trận', 'đánh', 'chiến', 'thắng'
+]);
 
 export function extractQueryEntities(queryText: string): ExtractedQueryInfo {
-  if (!queryText) return { entityIds: [], entityNames: [], keywords: [] };
+  if (!queryText || typeof queryText !== 'string' || queryText.trim().length === 0) {
+    return { entityIds: [], entityNames: [], keywords: [] };
+  }
 
   const entityIds: string[] = [];
   const entityNames: string[] = [];
-  const keywords: string[] = queryText.split(/\s+/).filter((w) => w.length > 2);
 
-  // Sort seed terms by length descending to match longest phrases first (e.g. "Trần Hưng Đạo" before "Trần")
-  const sortedSeeds = [...HISTORICAL_SEED_TERMS].sort((a, b) => b.length - a.length);
+  // 1. Stage 1 Pure TS Historical NER Extraction (< 1ms)
+  const candidateSpans = extractHistoricalCandidateSpans(queryText);
 
-  for (const seed of sortedSeeds) {
-    if (queryText.toLowerCase().includes(seed.toLowerCase())) {
-      const entity = resolveCanonicalEntity(seed);
-      if (!entityIds.includes(entity.entityId)) {
-        entityIds.push(entity.entityId);
-        entityNames.push(entity.canonicalName);
+  for (const span of candidateSpans) {
+    let entityId: string = span.suggestedCanonicalId || `ent_${span.text}`;
+    let entityName: string = span.text;
+
+    if (isKnownMasterEntity(span.text)) {
+      const canonicalInfo = resolveCanonicalEntity(span.text);
+      if (canonicalInfo && canonicalInfo.entityId) {
+        entityId = canonicalInfo.entityId;
+        entityName = canonicalInfo.canonicalName;
       }
+    }
+
+    if (!entityIds.includes(entityId)) {
+      entityIds.push(entityId);
+      entityNames.push(entityName);
     }
   }
 
-  // Fallback: If no seed term matched, extract capitalized phrases
-  if (entityIds.length === 0) {
-    const caps = queryText.match(/[A-ZÀ-Ỹ][a-zà-ỹ]+(?:\s+[A-ZÀ-Ỹ][a-zà-ỹ]+)*/g);
-    if (caps && caps.length > 0) {
-      for (const candidate of caps) {
-        const entity = resolveCanonicalEntity(candidate);
-        if (!entityIds.includes(entity.entityId)) {
-          entityIds.push(entity.entityId);
-          entityNames.push(entity.canonicalName);
-        }
-      }
-    }
-  }
+  // 2. Keyword Extraction from tokens (filtering question stopwords)
+  const tokens = queryText
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
+
+  const keywords = Array.from(new Set(tokens));
 
   return {
     entityIds,
