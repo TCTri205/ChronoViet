@@ -6,10 +6,12 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
 export interface RenderProgressData {
-  percent: number;
+  percent?: number;
+  progressPercent?: number;
   currentFrame?: number;
   totalFrames?: number;
   remainingSeconds?: number;
+  estimatedRemainingSec?: number;
   status: "INIT" | "RENDERING" | "COMPLETED" | "FAILED";
 }
 
@@ -22,7 +24,9 @@ export function RenderProgressBar({
   data,
   className = "",
 }: RenderProgressBarProps) {
-  const isCompleted = data.percent >= 100 || data.status === "COMPLETED";
+  const percentValue = data.progressPercent ?? data.percent ?? 0;
+  const remainingSec = data.estimatedRemainingSec ?? data.remainingSeconds;
+  const isCompleted = percentValue >= 100 || data.status === "COMPLETED";
 
   return (
     <div
@@ -54,18 +58,18 @@ export function RenderProgressBar({
             variant={isCompleted ? "completed" : "rendering"}
             className="font-mono text-xs tabular-nums"
           >
-            {Math.round(data.percent)}%
+            {Math.round(percentValue)}%
           </Badge>
         </div>
       </div>
 
-      <Progress value={data.percent} className="h-2.5" />
+      <Progress value={percentValue} className="h-2.5" />
 
       <div className="flex justify-between items-center text-[10px] text-text-muted font-mono">
         <span>Remotion v4 Engine • GPU Concurrency=1</span>
-        {!isCompleted && data.remainingSeconds !== undefined && data.remainingSeconds > 0 && (
+        {!isCompleted && remainingSec !== undefined && remainingSec > 0 && (
           <span className="tabular-nums">
-            Ước tính còn: ~{data.remainingSeconds}s
+            Ước tính còn: ~{remainingSec}s
           </span>
         )}
       </div>

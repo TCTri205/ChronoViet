@@ -13,7 +13,7 @@ import {
   executeWithKeyRotation,
   hasAvailableApiKeys,
 } from '@chronoviet/shared-spec';
-import { ImageSearchProvider } from './image-search-provider.js';
+import { ImageSearchProvider, ImageSearchProviderOptions } from './image-search-provider.js';
 
 const log = createLogger({ service: 'vlm-inspector' });
 
@@ -26,15 +26,27 @@ export class SerpApiImageSearchProvider implements ImageSearchProvider {
     this.explicitApiKey = apiKey;
   }
 
-  async search(keywords: string, limit: number): Promise<VisualCandidate[]> {
+  async search(keywords: string, limit: number, options?: ImageSearchProviderOptions): Promise<VisualCandidate[]> {
     const runSearchWithKey = async (apiKey: string): Promise<VisualCandidate[]> => {
+      // Build Google Images tbs parameters: Creative Commons + Large Resolution + Aspect Ratio
+      const tbsParts = ['sur:fmc'];
+      if (options?.minResolution !== 'ANY') {
+        tbsParts.push('isz:l');
+      }
+      if (options?.aspectRatio === '16:9') {
+        tbsParts.push('iar:w');
+      } else if (options?.aspectRatio === '9:16') {
+        tbsParts.push('iar:t');
+      } else if (options?.aspectRatio === '1:1') {
+        tbsParts.push('iar:s');
+      }
+
       const params = new URLSearchParams({
         engine: 'google_images',
         q: keywords,
         api_key: apiKey,
         num: String(Math.min(20, Math.max(1, limit * 3))),
-        // Request Creative Commons / free-to-use images whenever possible
-        tbs: 'sur:fmc',
+        tbs: tbsParts.join(','),
         safe: 'active',
       });
 

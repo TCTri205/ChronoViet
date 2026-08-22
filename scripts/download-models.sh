@@ -81,13 +81,15 @@ download_file() {
 
 echo ""
 echo "Select models to download:"
-echo "1) Standard Stack: Qwen 3.5 9B (Q4_K_M) + BGE-M3 Embedding + Qwen 3.5 4B Extraction (~8.2 GB)"
+echo "1) Standard Stack: Qwen 3.5 9B (Q4_K_M) + BGE-M3 Embedding + Qwen 3.5 4B Extraction + Qwen 3 Reranker (~9.0 GB)"
 echo "2) Lightweight Dev Stack: Qwen 3.5 9B (Q4_K_M) + BGE-M3 Embedding (~6.4 GB)"
 echo "3) Embedding Only: BGE-M3 1024d (~605 MB)"
 echo "4) Extraction LLM Only: Qwen 3.5 4B (~1.8 GB - Data Ingestion Prep Only)"
 echo "5) AI Lite Stack: BGE-M3 + Qwen Extraction LLM (~2.4 GB)"
 echo "6) Primary LLM Only: Qwen 3.5 9B (~5.8 GB - Runtime Production)"
-echo "7) All Models"
+echo "7) Reranker Only: Qwen 3 Reranker 0.6B / BGE Reranker v2 (~600-800 MB)"
+echo "8) All Models (LLM + VLM Projector + Embedding + Extraction + Reranker + Piper TTS)"
+echo "9) VieNeu Piper TTS Only (vi_VN-vivos-medium ONNX + config)"
 
 DOWNLOAD_CHOICE="${1:-1}"
 
@@ -97,6 +99,7 @@ case "${DOWNLOAD_CHOICE}" in
     download_file "bge-m3.gguf" "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-Q8_0.gguf"
     download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
     download_file "qwen3.5-4b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+    download_file "qwen3-reranker-0.6b.gguf" "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-Q8_0.gguf"
     ;;
 
   2|dev|lightweight)
@@ -126,12 +129,30 @@ case "${DOWNLOAD_CHOICE}" in
     download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
     ;;
 
-  7|all)
+  7|rerank|reranker)
+    echo ">>> Provisioning Reranker Model Only..."
+    download_file "qwen3-reranker-0.6b.gguf" "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-Q8_0.gguf"
+    ;;
+
+  8|all)
     echo ">>> Provisioning All Available Models..."
     download_file "bge-m3.gguf" "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-Q8_0.gguf"
     download_file "qwen3.5-9b-mmproj.gguf" "https://huggingface.co/bartowski/Qwen_Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf"
     download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
     download_file "qwen3.5-4b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+    download_file "qwen3-reranker-0.6b.gguf" "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-Q8_0.gguf"
+    download_file "vi_VN-vivos-medium.onnx" "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/medium/vi_VN-vivos-medium.onnx"
+    download_file "vi_VN-vivos-medium.onnx.json" "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/medium/vi_VN-vivos-medium.onnx.json"
+    mkdir -p "${ROOT_DIR}/services/vieneu-tts/models"
+    cp -f "${MODEL_DIR}/vi_VN-vivos-medium.onnx"* "${ROOT_DIR}/services/vieneu-tts/models/" 2>/dev/null || true
+    ;;
+
+  9|tts|piper)
+    echo ">>> Provisioning VieNeu Piper Vietnamese TTS Model..."
+    download_file "vi_VN-vivos-medium.onnx" "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/medium/vi_VN-vivos-medium.onnx"
+    download_file "vi_VN-vivos-medium.onnx.json" "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/medium/vi_VN-vivos-medium.onnx.json"
+    mkdir -p "${ROOT_DIR}/services/vieneu-tts/models"
+    cp -f "${MODEL_DIR}/vi_VN-vivos-medium.onnx"* "${ROOT_DIR}/services/vieneu-tts/models/" 2>/dev/null || true
     ;;
 
   *)

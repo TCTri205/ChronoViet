@@ -1,20 +1,21 @@
 /**
  * ChronoViet — Granular Local AI Management CLI (`ai-cli.ts`)
  * Provides discrete lifecycle controls for Local AI services:
- * - `status` / `health`: Probe ports 8090, 8092, 8094, 8080 & check loaded models
+ * - `status` / `health`: Probe ports 8090, 8092, 8094, 8096, 8080 & check loaded models
  * - `stop` / `kill`: Gracefully kill lingering llama-server / TTS processes
  * - `llm`: Start only Primary LLM/VLM (Port 8092 - Qwen 3.5 9B)
  * - `emb`: Start only Embedding Server (Port 8090 - BGE-M3)
+ * - `rerank`: Start only Reranker Engine (Port 8096 - Qwen3-Reranker-0.6B / BGE-Reranker-v2)
  * - `extract`: Start only Stage 2 Extraction LLM (Port 8094 - Qwen 3.5 4B)
  * - `lite`: Start lightweight pair: Embedding (8090) + Extraction (8094) (~3.1 GB RAM)
- * - `all`: Start full AI stack (Port 8090, 8092, 8094)
+ * - `all`: Start full AI stack (Port 8090, 8092, 8094, 8096) + TTS (Port 8080)
  */
 
 import { spawn, execSync, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
-import { envConfig, createLogger } from '../packages/shared-spec/src/index.js';
+import { envConfig, createLogger, getAiExecutionSummary } from '../packages/shared-spec/src/index.js';
 
 const log = createLogger({ service: 'ai-cli' });
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -23,6 +24,7 @@ const MODEL_DIR = path.resolve(ROOT_DIR, envConfig.MODEL_DIR || './models');
 const LLM_PORT = envConfig.LLM_PORT || 8092;
 const EMBEDDING_PORT = envConfig.EMBEDDING_PORT || 8090;
 const EXTRACTION_PORT = envConfig.LOCAL_LLM_EXTRACTION_PORT || 8094;
+const RERANK_PORT = envConfig.RERANK_PORT || 8096;
 const TTS_PORT = 8080;
 
 const colors = {
@@ -162,7 +164,23 @@ export function resolveWeights() {
     }
   }
 
-  return { llmPath, mmprojPath, embPath, extPath };
+  // Reranker candidates
+  const rerankCandidates = [
+    path.join(MODEL_DIR, `${envConfig.LOCAL_RERANK_MODEL || 'qwen3-reranker-0.6b'}.gguf`),
+    path.join(MODEL_DIR, 'qwen3-reranker-0.6b.gguf'),
+    path.join(MODEL_DIR, 'bge-reranker-v2-m3.gguf'),
+    path.join(MODEL_DIR, 'bge-reranker-v2-m3-q8_0.gguf'),
+    path.join(MODEL_DIR, 'bge-reranker-v2-m3-Q8_0.gguf'),
+  ];
+  let rerankPath: string | null = null;
+  for (const c of rerankCandidates) {
+    if (fs.existsSync(c)) {
+      rerankPath = c;
+      break;
+    }
+  }
+
+  return { llmPath, mmprojPath, embPath, extPath, rerankPath };
 }
 
 function formatFileSize(bytes: number): string {
@@ -187,10 +205,12 @@ function getFileSize(filePath: string | null): string {
 // ==============================================================================
 export async function showStatus() {
   const weights = resolveWeights();
+  const summary = getAiExecutionSummary();
 
   console.log(`\n${colors.bright}${colors.cyan}==============================================================================${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan} CHRONOVIET LOCAL AI RUNTIME & SERVICES STATUS${colors.reset}`);
-  console.log(`${colors.dim} Models Directory: ${MODEL_DIR}${colors.reset}`);
+  console.log(`${colors.dim} Centralized Models Hub: ${MODEL_DIR}${colors.reset}`);
+  console.log(`${colors.dim} AI Execution Mode:     ${colors.bright}${colors.yellow}[${summary.mode.toUpperCase()}]${colors.reset} (Routing: ${summary.routingMode}, Cloud Fallback: ${summary.enableCloudFallback ? 'Enabled' : 'Disabled'})`);
   console.log(`${colors.bright}${colors.cyan}==============================================================================${colors.reset}\n`);
 
   const services = [
@@ -213,6 +233,15 @@ export async function showStatus() {
       recommendedFor: 'pnpm eval:triples, Crawler, Knowledge Graph Ingestion',
     },
     {
+      id: 'rerank',
+      name: 'Reranker Engine',
+      port: RERANK_PORT,
+      expectedModel: 'Qwen3-Reranker-0.6B / BGE-Reranker-v2',
+      filePath: weights.rerankPath,
+      probePath: '/v1/models',
+      recommendedFor: 'Cross-Encoder Context Reranking & Disambiguation',
+    },
+    {
       id: 'llm',
       name: 'Primary LLM / VLM',
       port: LLM_PORT,
@@ -233,13 +262,17 @@ export async function showStatus() {
   ];
 
   for (const s of services) {
-    const proc = getProcessOnPort(s.port);
-    const probe = await probeHttpService(s.port, s.probePath);
+    const proc = s.port ? getProcessOnPort(s.port) : null;
+    const probe = s.port && s.probePath ? await probeHttpService(s.port, s.probePath) : { ok: false };
 
     let statusBadge = `${colors.red}❌ OFFLINE${colors.reset}`;
     let loadedModelInfo = '';
 
-    if (probe.ok) {
+    if (s.port === null) {
+      statusBadge = s.filePath
+        ? `${colors.green}✅ EMBEDDED (In-Process Runtime)${colors.reset}`
+        : `${colors.cyan}ℹ️ BUILT-IN (Algorithmic / In-Process)${colors.reset}`;
+    } else if (probe.ok) {
       statusBadge = `${colors.green}✅ ONLINE (Healthy)${colors.reset}`;
       if (probe.data?.data?.[0]?.id) {
         loadedModelInfo = ` | Loaded: ${colors.green}${probe.data.data[0].id}${colors.reset}`;
@@ -249,13 +282,14 @@ export async function showStatus() {
     }
 
     const pidInfo = proc ? ` | PID: ${colors.yellow}${proc.pid}${colors.reset}` : '';
+    const portLabel = s.port ? `Port ${s.port}` : 'In-Process';
     const weightStatus = s.filePath
       ? `${colors.green}✓ ${path.basename(s.filePath)} (${getFileSize(s.filePath)})${colors.reset}`
       : s.id === 'tts'
-      ? `${colors.dim}Python venv service${colors.reset}`
-      : `${colors.red}✗ Model weights missing in ./models${colors.reset}`;
+      ? `${colors.dim}Python venv / Docker service${colors.reset}`
+      : `${colors.red}✗ Model weights missing in ./models (Download: pnpm models:download:${s.id})${colors.reset}`;
 
-    console.log(`• ${colors.bright}${s.name.padEnd(24, ' ')}${colors.reset} [Port ${s.port}] -> ${statusBadge}${pidInfo}${loadedModelInfo}`);
+    console.log(`• ${colors.bright}${s.name.padEnd(24, ' ')}${colors.reset} [${portLabel}] -> ${statusBadge}${pidInfo}${loadedModelInfo}`);
     console.log(`  ${colors.dim}Target Model:${colors.reset} ${weightStatus}`);
     console.log(`  ${colors.dim}Usage:${colors.reset}        ${s.recommendedFor}\n`);
   }
@@ -264,9 +298,10 @@ export async function showStatus() {
   console.log(`${colors.dim}------------------------------------------------------------------------------${colors.reset}`);
   console.log(`${colors.bright}Unified Commands (CLI: 'pnpm ai <cmd>' or npm scripts 'pnpm ai:<cmd>'):${colors.reset}`);
   console.log(` • ${colors.cyan}pnpm ai${colors.reset} / ${colors.cyan}pnpm ai:status${colors.reset} -> Check services health & loaded models`);
-  console.log(` • ${colors.cyan}pnpm ai start${colors.reset} / ${colors.cyan}pnpm ai:all${colors.reset}   -> Launch full AI stack (Embedding + Extraction + Primary LLM)`);
+  console.log(` • ${colors.cyan}pnpm ai start${colors.reset} / ${colors.cyan}pnpm ai:all${colors.reset}   -> Launch full AI stack (Embedding + Extraction + LLM + Reranker + TTS)`);
   console.log(` • ${colors.cyan}pnpm ai lite${colors.reset} / ${colors.cyan}pnpm ai:lite${colors.reset}     -> Launch lightweight pair: Embedding (8090) + Extraction (8094) (~3.1 GB)`);
   console.log(` • ${colors.cyan}pnpm ai emb${colors.reset} / ${colors.cyan}pnpm ai:emb${colors.reset}       -> Launch Embedding server (Port 8090) for Vector RAG`);
+  console.log(` • ${colors.cyan}pnpm ai rerank${colors.reset} / ${colors.cyan}pnpm ai:rerank${colors.reset} -> Launch Reranker Engine (Port 8096) for Cross-Encoder`);
   console.log(` • ${colors.cyan}pnpm ai extract${colors.reset} / ${colors.cyan}pnpm ai:extract${colors.reset} -> Launch Stage 2 Extraction LLM (Port 8094)`);
   console.log(` • ${colors.cyan}pnpm ai llm${colors.reset} / ${colors.cyan}pnpm ai:llm${colors.reset}       -> Launch Primary 9B LLM / VLM (Port 8092)`);
   console.log(` • ${colors.cyan}pnpm ai tts${colors.reset} / ${colors.cyan}pnpm ai:tts${colors.reset}       -> Launch VieNeu TTS Voice Engine in Docker (Port 8080)`);
@@ -279,7 +314,7 @@ export async function showStatus() {
 export async function stopAllAi() {
   console.log(`\n${colors.bright}${colors.yellow}[*] Stopping and reclaiming all Local AI and TTS processes...${colors.reset}`);
 
-  const targetPorts = [EMBEDDING_PORT, EXTRACTION_PORT, LLM_PORT, TTS_PORT];
+  const targetPorts = [EMBEDDING_PORT, EXTRACTION_PORT, RERANK_PORT, LLM_PORT, TTS_PORT];
   let killedCount = 0;
 
   // 1. Kill by listening ports (exclude Docker host processes)
@@ -351,6 +386,7 @@ export function spawnLlamaService(
     ctxSize?: number;
     extraArgs?: string[];
     isEmbedding?: boolean;
+    isReranking?: boolean;
     tag: string;
     tagColor: string;
   }
@@ -368,6 +404,7 @@ export function spawnLlamaService(
     '--flash-attn',
     'auto',
     ...(options.isEmbedding ? ['--embedding'] : []),
+    ...(options.isReranking ? ['--reranking'] : []),
     ...(options.extraArgs || []),
   ];
 
@@ -600,22 +637,34 @@ export async function launchLitePair() {
   process.on('SIGTERM', cleanup);
 }
 
-export async function launchTtsOnly() {
+export async function launchTts(): Promise<boolean> {
   console.log(`\n${colors.bright}${colors.cyan}=== Starting VieNeu TTS Service (Port ${TTS_PORT}) ===${colors.reset}`);
   console.log(`${colors.dim}Launching Docker container vieneu-tts-service...${colors.reset}\n`);
 
   try {
     execSync('bash scripts/start-tts-local.sh', { cwd: ROOT_DIR, stdio: 'inherit' });
+    return true;
   } catch (err: any) {
     console.error(`${colors.red}❌ Failed to start TTS service: ${err.message}${colors.reset}`);
+    return false;
+  }
+}
+
+export async function stopTts() {
+  try {
+    execSync('docker stop vieneu_tts_engine 2>/dev/null || true', { stdio: 'ignore' });
+  } catch {}
+}
+
+export async function launchTtsOnly() {
+  const ok = await launchTts();
+  if (!ok) {
     process.exit(1);
   }
 
   const cleanup = () => {
     console.log(`\n${colors.yellow}[*] Stopping VieNeu TTS container...${colors.reset}`);
-    try {
-      execSync('docker stop vieneu_tts_engine 2>/dev/null || true', { stdio: 'ignore' });
-    } catch {}
+    void stopTts();
     process.exit(0);
   };
 
@@ -633,7 +682,7 @@ export async function launchAll() {
   const procs: ChildProcess[] = [];
 
   console.log(`\n${colors.bright}${colors.cyan}==============================================================================${colors.reset}`);
-  console.log(`${colors.bright}${colors.cyan} CHRONOVIET FULL LOCAL AI STACK (Embedding, Extraction, Primary LLM)${colors.reset}`);
+  console.log(`${colors.bright}${colors.cyan} CHRONOVIET FULL LOCAL AI STACK (Embedding, Extraction, LLM, Reranker + TTS)${colors.reset}`);
   console.log(`${colors.dim} Press Ctrl+C to terminate all local AI servers.${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}==============================================================================${colors.reset}\n`);
 
@@ -705,6 +754,21 @@ export async function launchAll() {
     console.log(`${colors.yellow}⚠️  Primary LLM model weights missing. Skipping Port 8092.${colors.reset}`);
   }
 
+  // 4. Reranker Server
+  if (weights.rerankPath) {
+    procs.push(
+      spawnLlamaService('Reranker Engine', RERANK_PORT, weights.rerankPath, {
+        ctxSize: 8192,
+        isReranking: true,
+        tag: 'RERANK-8096',
+        tagColor: colors.yellow,
+      })
+    );
+  } else {
+    console.log(`${colors.yellow}⚠️  Reranker model weights missing. Skipping Port 8096.${colors.reset}`);
+  }
+
+  // 5. VieNeu TTS Voice Engine (Docker, Port 8080)
   const cleanup = () => {
     console.log(`\n${colors.yellow}[*] Shutting down all Local AI services...${colors.reset}`);
     for (const p of procs) {
@@ -712,11 +776,48 @@ export async function launchAll() {
         p.kill('SIGTERM');
       } catch {}
     }
+    void stopTts();
     process.exit(0);
   };
 
+  // Register cleanup BEFORE awaiting TTS so Ctrl+C never orphans the llama-servers
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
+
+  const ttsOk = await launchTts();
+  if (!ttsOk) {
+    console.log(`${colors.yellow}⚠️  TTS failed to start. Continuing without Port 8080 (Dual-layer Synthetic Fallback active).${colors.reset}`);
+  }
+}
+
+export async function launchRerankOnly() {
+  const weights = resolveWeights();
+  if (!weights.rerankPath) {
+    console.error(`${colors.red}❌ ERROR: Reranker model weights not found in ./models.${colors.reset}`);
+    console.error(`Please place ${colors.cyan}qwen3-reranker-0.6b.gguf${colors.reset} or ${colors.cyan}bge-reranker-v2-m3.gguf${colors.reset} into ./models`);
+    process.exit(1);
+  }
+  if (!checkLlamaCli()) {
+    console.error(`${colors.red}❌ ERROR: llama-server executable not found in PATH.${colors.reset}`);
+    process.exit(1);
+  }
+
+  console.log(`\n${colors.bright}${colors.yellow}=== Starting Reranker Server (Port ${RERANK_PORT}) ===${colors.reset}`);
+  console.log(`${colors.dim}Press Ctrl+C to terminate.${colors.reset}\n`);
+
+  const proc = spawnLlamaService('Reranker Engine', RERANK_PORT, weights.rerankPath, {
+    ctxSize: 8192,
+    isReranking: true,
+    tag: 'RERANK-8096',
+    tagColor: colors.yellow,
+  });
+
+  process.on('SIGINT', () => {
+    try {
+      proc.kill('SIGTERM');
+    } catch {}
+    process.exit(0);
+  });
 }
 
 // ==============================================================================
@@ -753,6 +854,11 @@ switch (command.toLowerCase()) {
     launchEmbeddingOnly();
     break;
 
+  case 'rerank':
+  case 'reranker':
+    launchRerankOnly();
+    break;
+
   case 'llm':
   case 'chat':
   case 'vlm':
@@ -769,7 +875,7 @@ switch (command.toLowerCase()) {
     break;
 
   default:
-    console.log(`Unknown command: "${command}". Available commands: status, start, all, stop, lite, emb, extract, llm, tts`);
+    console.log(`Unknown command: "${command}". Available commands: status, start, all, stop, lite, emb, rerank, extract, llm, tts`);
     showStatus();
     break;
 }

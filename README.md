@@ -23,7 +23,7 @@
 Dự án ứng dụng mô hình **Decoupled Event-Driven Architecture** với 5 mô-đun xử lý chuyên biệt:
 0. **Data Preprocessing &amp; Ingestion Engine [✅]**: Nạp tri thức lịch sử offline, cào tự động toàn bộ 15 thời kỳ lịch sử (`pnpm crawl:all`), làm sạch lỗi OCR, chuẩn hóa địa danh qua các thời kỳ (`SAME_AS_LOCATION`), khử nhập nhằng nhân vật (`ALIAS_OF`), Dynamic Hierarchical Chunking, xử lý song song có kiểm soát (Concurrency Worker Pool), điều phối Hierarchical 2-Level Interleaved Rotation, nạp PostgreSQL pgvector (1024d BGE-M3 + FTS BM25), Relational Graph &amp; Append-Only Audit Trail (`entity_audit_logs`).
 
-1. **Hybrid GraphRAG Engine [✅]**: Động cơ tìm kiếm kết hợp Knowledge Graph + Dense Vector BGE-M3 + Sparse BM25 (lọc Stopword tiếng Việt) + PostgreSQL Recursive CTE Subgraph Search (Cycle Pruning) + BGE Reranker v2 (bảo tồn danh xưng 2 ký tự) + LRU Query Embedding Cache + Global Singleton Schema Init. Đảm bảo tri thức lịch sử chính xác 100%, loại bỏ hoàn toàn suy đoán sai (Hallucination Rate 0%).
+1. **Hybrid GraphRAG Engine [✅]**: Động cơ tìm kiếm kết hợp Knowledge Graph + Dense Vector BGE-M3 + Sparse BM25 (lọc Stopword tiếng Việt) + PostgreSQL Recursive CTE Subgraph Search (Cycle Pruning) + Pure Local Cross-Encoder Reranker (`Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0 qua `POST /v1/rerank` trên `llama-server` Port 8096, bảo tồn danh xưng 2 ký tự) + Multi-Factor Historical Fusion + LRU Query Embedding Cache + Global Singleton Schema Init. Đảm bảo tri thức lịch sử chính xác 100%, loại bỏ hoàn toàn suy đoán sai (Hallucination Rate 0%).
 2. **Multi-Agent Orchestrator (LangGraph.js) [✅]**: Lập kịch bản video chi tiết, phân chia phân cảnh & chọn bố cục trực quan phù hợp, tích hợp NLI Entailment Hallucination Judge & Folklore Guardrail Gate.
 3. **VLM Inspector Agent (Gemini 3.6 Flash / Agnes / CLIP) [✅]**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
 4. **Remotion Render Engine [✅]**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v4.1.
@@ -124,19 +124,21 @@ cp .env.example .env
 ### Bước 2: Tải Trọng Số Mô Hình AI & Khởi Tạo Cơ Sở Dữ Liệu
 
 ```bash
-# 1. Tải các mô hình AI cục bộ GGUF (BGE-M3 1024d, Qwen 3.5 9B, mmproj, Qwen 3.5 4B)
+# 1. Tải các mô hình AI cục bộ GGUF (BGE-M3 1024d, Qwen 3.5 9B, Qwen 3.5 4B, Qwen3-Reranker 0.6B)
 pnpm models:download
 
 # Hoặc tải tùy chọn theo nhu cầu công việc (Granular Downloads):
 pnpm models:download:lite     # Chỉ tải BGE-M3 + Qwen Extraction LLM (~2.4 GB)
 pnpm models:download:emb      # Chỉ tải BGE-M3 (~605 MB)
+pnpm models:download:rerank   # Chỉ tải Qwen3-Reranker-0.6B / BGE-Reranker-v2 (~800 MB)
 pnpm models:download:extract  # Chỉ tải Qwen Extraction LLM (~1.8 GB)
 pnpm models:download:llm      # Chỉ tải Qwen 3.5 9B (~5.8 GB)
+pnpm models:download:all      # Tải toàn bộ models (LLM + VLM Projector + Embedding + Extraction + Reranker)
 
 # 2. Khởi chạy hạ tầng cơ sở dữ liệu (PostgreSQL pgvector & Redis)
 pnpm stack:infra
 
-# 3. Khởi tạo schema cơ sở dữ liệu 7 bảng chuẩn hóa
+# 3. Khởi tạo schema cơ sở dữ liệu 8 bảng chuẩn hóa
 pnpm db:init
 ```
 
@@ -145,12 +147,13 @@ pnpm db:init
 ### Bước 3: Khởi Chạy Toàn Bộ Hệ Thống (1-Lệnh Duy Nhất)
 
 ```bash
-# [Khuyến nghị] Khởi chạy trọn gói: Docker Infra + AI Supervisor + VieNeu TTS + Web UI + Worker
-pnpm dev:stack
+# [Khuyến nghị] 🚀 1-Click Smart Dev: Tự động khởi động Docker Infra (Postgres+Redis) + Auto AI Detect + Web & Worker
+pnpm dev
 
-# Hoặc khởi chạy theo Profile công việc tối ưu tài nguyên (Daily Dev Profiles):
-pnpm dev:hybrid      # Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
-pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
+# Hoặc khởi chạy theo chế độ chuyên biệt:
+pnpm dev:full        # Full Stack: Docker Infra + AI Supervisor + VieNeu TTS + Web UI + Worker
+pnpm dev:cloud       # Chế độ siêu nhẹ: 0% GPU/RAM máy, Web + Worker với Cloud AI
+pnpm dev:data        # Data Ingestion Stack: Postgres + Redis + AI Lite (8090 + 8094)
 ```
 
 *Mở trình duyệt tại `http://localhost:3000` để trải nghiệm Không gian Tra cứu Sử liệu RAG & Xưởng Phim Tự Động 1-Click.*
@@ -163,6 +166,7 @@ pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho D
 | **Remotion Studio UI** | `9876` | Visual Preview & Debug 31 LayoutModes & Transitions |
 | **Local LLM Gateway (Qwen 3.5 9B)** | `8092` | Lõi suy luận ngôn ngữ kịch bản, VLM & RAG Chatbot |
 | **Stage 2 Extraction LLM (Qwen 3.5 4B)** | `8094` | Lõi trích xuất quan hệ tri thức Knowledge Triples cho Data Pipeline & eval:triples (Data Prep) |
+| **Local Reranker Engine (Qwen3-Reranker-0.6B / BGE-Reranker-v2)** | `8096` | Lõi Cross-Encoder Reranker chấm điểm ngữ cảnh chuyên sâu cho RAG |
 | **Local Embedding Gateway (BGE-M3)**| `8090` | Không gian vector SSOT 1024 chiều (pgvector Indexing) |
 | **VieNeu Neural TTS Service** | `8080` | Engine tổng hợp giọng đọc & align word timestamps |
 | **PostgreSQL (pgvector)** | `5432` | Cơ sở dữ liệu quan hệ, BGE-M3 vectors & Graph CTEs |
@@ -207,26 +211,44 @@ pnpm remotion:render:mongolviet2
 
 ## ⚡ 5. Bảng Tra Cứu Bộ Lệnh Theo Mục Đích Sử Dụng (Commands by Workflow)
 
-### 💻 1. Dành Cho Phát Triển Hàng Ngày (Local Development Workflow)
+### 💻 1. Bộ 4 Lệnh Cốt Lõi Hàng Ngày (Core 4 Essential Commands)
 ```bash
-pnpm dev:stack                                  # [Khuyến nghị] 1-Lệnh khởi động trọn gói: Docker Infra + AI Supervisor + TTS + Web + Worker
-pnpm dev:hybrid                                 # Khởi động Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
-pnpm dev:data                                   # Khởi động Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
-pnpm dev                                        # Chạy song song Web App (port 3000) và Render Worker
-pnpm dev:web                                    # Chạy riêng Web App Next.js (port 3000)
-pnpm dev:worker                                 # Chạy riêng BullMQ Video Render Worker (port 3001)
+pnpm dev             # 🚀 Smart 1-Click Dev: Tự bật Docker Infra + Tự kết nối AI + Chạy Web & Worker
+pnpm data:setup      # 📦 1-Click Data: Bật Infra -> Init Schema CSDL -> Nạp Tri thức chuẩn -> Health Audit
+pnpm ai              # 🤖 AI Dashboard TUI: Quản lý, kiểm tra port & bật/tắt Local AI Stack
+pnpm check           # ✅ Verification Gate: Typecheck -> Lint -> Test -> Build (100% Pass)
+```
+
+### 🛠️ 2. Các Chế Độ Thực Thi Chuyên Biệt (Specialized Dev Profiles)
+```bash
+pnpm dev:full        # Khởi chạy Full Stack: Docker Infra + AI Supervisor + TTS + Web + Worker
+pnpm dev:cloud       # Khởi động Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
+pnpm dev:data        # Khởi động Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
+pnpm remotion:studio # Mở Remotion Studio UI xem trước kịch bản & căn chỉnh bố cục (port 9876)
+pnpm dev:web         # Chạy riêng Web App Next.js (port 3000)
+pnpm dev:worker      # Chạy riêng BullMQ Video Render Worker (port 3001)
 pnpm remotion:studio                            # Mở Remotion Studio UI xem trước kịch bản & căn chỉnh bố cục (port 9876)
 
 # Quản lý AI & TTS Local Runtime thống nhất (Unified AI CLI):
-pnpm ai                                         # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8080) & model đã nạp
-pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092)
+pnpm ai                                         # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8096, 8080) & model đã nạp
+pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092 + Reranker 8096 + TTS 8080)
 pnpm ai:lite                                    # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb                                     # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
+pnpm ai:rerank                                  # Chỉ chạy Reranker Engine (Port 8096, Qwen3-Reranker-0.6B / BGE-Reranker-v2 ~800MB)
 pnpm ai:extract                                 # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler (Data Prep)
 pnpm ai:llm                                     # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 9B)
 pnpm ai:tts                                     # Khởi chạy microservice VieNeu TTS FastAPI trong Docker (Port 8080)
 pnpm ai:stop                                    # Dừng/giải phóng toàn bộ tiến trình AI & TTS (host & Docker), trả lại 100% RAM/VRAM
 pnpm ai:supervisor                              # Daemon giám sát llama-server: auto-evict RAM khi idle, JIT wake-up
+
+# Tải trọng số mô hình GGUF từ Hugging Face CDN:
+pnpm models:download                            # Tải Standard Stack (BGE-M3 + Qwen 9B + Qwen 4B + Qwen Reranker)
+pnpm models:download:rerank                     # Chỉ tải Reranker Model (Qwen3-Reranker-0.6B / BGE-Reranker-v2)
+pnpm models:download:emb                        # Chỉ tải Embedding Model (BGE-M3 1024d)
+pnpm models:download:extract                    # Chỉ tải Extraction LLM (Qwen 3.5 4B)
+pnpm models:download:llm                        # Chỉ tải Primary LLM (Qwen 3.5 9B)
+pnpm models:download:lite                       # Tải BGE-M3 + Extraction LLM (~2.4 GB)
+pnpm models:download:all                        # Tải toàn bộ models (LLM + VLM Projector + Embedding + Extraction + Reranker)
 ```
 
 ### 🚀 2. Dành Cho Triển Khai Production & Quản Trị Docker (Production & Infra)

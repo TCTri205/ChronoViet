@@ -59,11 +59,11 @@ export async function runC2Benchmark(): Promise<ComponentBenchmarkReport> {
     }
 
     // Measure Canonical Resolution Accuracy
-    if (queryInfo.entityIds.length > 0) {
-      if (queryInfo.entityIds.includes(expectedName) || queryInfo.entityIds.length > 0) {
+    if (expectedName) {
+      if (queryInfo.entityIds.includes(expectedName)) {
         canonicalResolutionCorrect++;
       }
-    } else {
+    } else if (queryInfo.entityIds.length === 0) {
       canonicalResolutionCorrect++;
     }
 

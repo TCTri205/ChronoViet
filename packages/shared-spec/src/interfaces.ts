@@ -7,6 +7,7 @@ import {
   ChronoVideoProps,
   LicenseType,
   RagSearchRequest,
+  RagSearchRequestInput,
   HistoricalContextEntity,
   RagSearchResponse,
   SourceReliability,
@@ -24,6 +25,11 @@ import {
   GoldenBenchmarkTriple,
   GoldenTripleBenchmarkItem,
   GoldenTripleBenchmark,
+  Conversation,
+  ConversationMessage,
+  VideoBrief,
+  GraphTripleItem,
+  HistoricalCitationItem,
 } from './schema.js';
 
 export type {
@@ -39,6 +45,11 @@ export type {
   GoldenBenchmarkTriple,
   GoldenTripleBenchmarkItem,
   GoldenTripleBenchmark,
+  Conversation,
+  ConversationMessage,
+  VideoBrief,
+  GraphTripleItem,
+  HistoricalCitationItem,
 };
 export { getCanonicalEntityIdPrefix };
 
@@ -57,10 +68,8 @@ export const CHUNK_CHILD_OVERLAP_WORDS = 40;
 // 1. Chrono-RAG Engine Interface (`packages/rag-engine`)
 // ============================================================================
 
-export type { RagSearchRequest, HistoricalContextEntity, RagSearchResponse };
-
 export interface IRagEngine {
-  search(request: RagSearchRequest): Promise<RagSearchResponse>;
+  search(request: RagSearchRequestInput): Promise<RagSearchResponse>;
   ingestDocument(content: string, metadata: { title: string; source: string }): Promise<void>;
 }
 
@@ -89,7 +98,11 @@ export interface VlmScoringResult {
   historicalContextScore: number;
   visualNoiseScore: number;
   artisticFitScore: number;
-  overallScore: number;
+  overallScore?: number;
+  totalScore?: number;
+  passed?: boolean;
+  reasons?: string[];
+  scorerType?: 'GEMINI_CLOUD' | 'LOCAL_VLM' | 'OPENAI_VLM' | 'CLIP_LOCAL_FALLBACK' | 'REDIS_CACHE';
 }
 
 export interface LicenseCheckResult {
@@ -167,9 +180,14 @@ export interface RenderJobProgress {
 
 export interface RenderJobResult {
   projectId: string;
-  videoUrl: string;
-  renderDurationMs: number;
-  fileSizeMb: number;
+  videoUrl?: string;
+  outputPath?: string;
+  renderDurationMs?: number;
+  durationMs?: number;
+  fileSizeMb?: number;
+  fileSizeBytes?: number;
+  peakMemoryMb?: number;
+  totalFrames?: number;
 }
 
 export interface IRenderWorker {

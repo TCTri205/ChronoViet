@@ -17,10 +17,11 @@ graph TD
 ```
 
 1. **Lớp 1 (Primary Neural Engine)**: `app.py` (Python FastAPI Microservice)
-   - Sử dụng mô hình `VieNeu-TTS` ONNX & NeuCodec phát âm thanh chất lượng cao chuẩn **24 kHz (PCM 16-bit)**.
+   - Tích hợp mô hình nơ-ron **Piper ONNX Vietnamese Voice** (`vi_VN-vivos-medium.onnx` + config) và **VieNeu-TTS ONNX** chuẩn **24 kHz (PCM 16-bit)** với cơ chế tự động tải model (auto-provisioning) từ Hugging Face.
    - Thuật toán phân bổ timestamp từ ngữ linh hoạt theo số ký tự và khoảng dừng dấu câu (`.`, `,`, `?`, `!`, `;`, `:`).
+   - Tích hợp bộ lọc access log loại bỏ log spam từ chu kỳ probe `/health`.
 2. **Lớp 2 (Zero-Downtime Fallback Engine)**: `src/engine.ts` (`SyntheticTTSFallbackEngine`)
-   - Tự động kích hoạt khi microservice Python bị offline hoặc timeout.
+   - Tự động kích hoạt khi microservice Python bị offline hoặc timeout trong môi trường dev.
    - Sinh xung âm thanh định thanh 480Hz để kiểm thử toán học khung hình video Remotion, đảm bảo tiến trình render không bao giờ bị gián đoạn.
 
 ---
@@ -54,7 +55,7 @@ Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai bá
     endMs: number;
   }>;
   errorMsg?: string;               // Thông báo lỗi chi tiết (nếu status === 'ERROR')
-  engineType?: 'REAL_NEURAL_ONNX' | 'SYNTHETIC_FALLBACK_TONE' // Chế độ engine thực thi
+  engineType?: 'PIPER_NEURAL_ONNX' | 'REAL_NEURAL_ONNX' | 'SYNTHETIC_FALLBACK_PYTHON' | 'SYNTHETIC_FALLBACK_TONE' // Chế độ engine thực thi
 }
 ```
 

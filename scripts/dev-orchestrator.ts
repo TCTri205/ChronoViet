@@ -37,55 +37,91 @@ const colors = {
 const services: Record<string, ServiceInfo> = {
   postgres: { name: 'PostgreSQL + pgvector', tag: 'DB', color: colors.blue, status: 'PENDING' },
   redis: { name: 'Redis Cache & Mutex', tag: 'REDIS', color: colors.red, status: 'PENDING' },
-  aiSupervisor: { name: 'AI Supervisor (LLM 9B / Emb)', tag: 'AI-SUP', color: colors.magenta, status: 'PENDING' },
+  aiSupervisor: { name: 'AI Supervisor (LLM/Emb/Extract/Rerank)', tag: 'AI-SUP', color: colors.magenta, status: 'PENDING' },
   tts: { name: 'VieNeu TTS Microservice', tag: 'TTS', color: colors.cyan, status: 'PENDING' },
   web: { name: 'ChronoViet Web UI', tag: 'WEB', color: colors.green, status: 'PENDING' },
   worker: { name: 'Remotion Render Worker', tag: 'WORKER', color: colors.yellow, status: 'PENDING' },
 };
 
 let isShuttingDown = false;
+let hasRenderedBanner = false;
 const activeProcesses: ChildProcess[] = [];
 
-function printDashboard() {
-  console.clear();
-  console.log(`${colors.bright}${colors.cyan}╔════════════════════════════════════════════════════════════════════════════╗${colors.reset}`);
-  console.log(`${colors.bright}${colors.cyan}║                   ChronoViet Dev Stack Orchestrator                        ║${colors.reset}`);
-  console.log(`${colors.bright}${colors.cyan}╚════════════════════════════════════════════════════════════════════════════╝${colors.reset}\n`);
+function getStatusBadge(svc: ServiceInfo): { statusColor: string; icon: string } {
+  let statusColor = colors.yellow;
+  let icon = '⏳';
+  if (svc.status === 'HEALTHY') {
+    statusColor = colors.green;
+    icon = '✅';
+  } else if (svc.status === 'WARNING') {
+    statusColor = colors.yellow;
+    icon = '⚠️ ';
+  } else if (svc.status === 'FAILED') {
+    statusColor = colors.red;
+    icon = '❌';
+  } else if (svc.status === 'OFFLINE') {
+    statusColor = colors.gray;
+    icon = '⚪';
+  }
+  return { statusColor, icon };
+}
 
-  for (const [key, svc] of Object.entries(services)) {
-    let statusColor = colors.yellow;
-    let icon = '⏳';
-    if (svc.status === 'HEALTHY') {
-      statusColor = colors.green;
-      icon = '✅';
-    } else if (svc.status === 'WARNING') {
-      statusColor = colors.yellow;
-      icon = '⚠️ ';
-    } else if (svc.status === 'FAILED') {
-      statusColor = colors.red;
-      icon = '❌';
-    } else if (svc.status === 'OFFLINE') {
-      statusColor = colors.gray;
-      icon = '⚪';
+function printDashboard() {
+  if (!hasRenderedBanner) {
+    console.clear();
+    hasRenderedBanner = true;
+    console.log(`${colors.bright}${colors.cyan}╔════════════════════════════════════════════════════════════════════════════╗${colors.reset}`);
+    console.log(`${colors.bright}${colors.cyan}║                   ChronoViet Dev Stack Orchestrator                        ║${colors.reset}`);
+    console.log(`${colors.bright}${colors.cyan}╚════════════════════════════════════════════════════════════════════════════╝${colors.reset}\n`);
+
+    for (const [, svc] of Object.entries(services)) {
+      const { statusColor, icon } = getStatusBadge(svc);
+      const padName = svc.name.padEnd(38, ' ');
+      const padStatus = `${statusColor}${icon} ${svc.status}${colors.reset}`.padEnd(20, ' ');
+      const details = svc.details ? `${colors.dim}(${svc.details})${colors.reset}` : '';
+      console.log(`  ${svc.color}[${svc.tag.padEnd(6, ' ')}]${colors.reset} ${padName} ${padStatus} ${details}`);
     }
 
-    const padName = svc.name.padEnd(30, ' ');
-    const padStatus = `${statusColor}${icon} ${svc.status}${colors.reset}`.padEnd(20, ' ');
-    const details = svc.details ? `${colors.dim}(${svc.details})${colors.reset}` : '';
-    console.log(`  ${svc.color}[${svc.tag.padEnd(6, ' ')}]${colors.reset} ${padName} ${padStatus} ${details}`);
+    console.log(`\n${colors.dim}-----------------------------------------------------------------------------${colors.reset}`);
+    console.log(`${colors.bright}Live Logs Aggregate (Press Ctrl+C to stop entire stack):${colors.reset}\n`);
   }
+}
 
-  console.log(`\n${colors.dim}-----------------------------------------------------------------------------${colors.reset}`);
-  console.log(`${colors.bright}Live Logs Aggregate (Press Ctrl+C to stop entire stack):${colors.reset}\n`);
+function updateStatus(key: string, status: ServiceInfo['status'], details?: string) {
+  const svc = services[key];
+  if (!svc) return;
+  const changed = svc.status !== status || (details !== undefined && svc.details !== details);
+  svc.status = status;
+  if (details !== undefined) svc.details = details;
+
+  if (!hasRenderedBanner) {
+    printDashboard();
+  } else if (changed) {
+    const { statusColor, icon } = getStatusBadge(svc);
+    const detailStr = svc.details ? ` (${svc.details})` : '';
+    console.log(`${svc.color}[${svc.tag.padEnd(6, ' ')}]${colors.reset} ${svc.name} -> ${statusColor}${icon} ${svc.status}${colors.reset}${colors.dim}${detailStr}${colors.reset}`);
+  }
 }
 
 function streamLog(tag: string, color: string, data: Buffer | string) {
   const lines = data.toString().split('\n');
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed) {
-      console.log(`${color}[${tag}]${colors.reset} ${trimmed}`);
+    if (!trimmed) continue;
+
+    // Filter out repetitive periodic dev probe logs and build progress bars
+    if (
+      trimmed.includes('GET /api/readyz 200') ||
+      trimmed.includes('GET /readyz 200') ||
+      trimmed.includes('GET /api/healthz 200') ||
+      trimmed.includes('GET /healthz 200') ||
+      /^#\d+\s+/.test(trimmed) ||
+      trimmed.includes('━━━')
+    ) {
+      continue;
     }
+
+    console.log(`${color}[${tag}]${colors.reset} ${trimmed}`);
   }
 }
 
@@ -102,11 +138,8 @@ function isDockerRunning(): boolean {
 // 2. Start Docker Infra (Postgres & Redis)
 async function startDockerInfra(): Promise<boolean> {
   if (!isDockerRunning()) {
-    services.postgres.status = 'WARNING';
-    services.postgres.details = 'Docker daemon not running; checking direct host ports';
-    services.redis.status = 'WARNING';
-    services.redis.details = 'Docker daemon not running; checking direct host ports';
-    printDashboard();
+    updateStatus('postgres', 'WARNING', 'Docker daemon not running; checking direct host ports');
+    updateStatus('redis', 'WARNING', 'Docker daemon not running; checking direct host ports');
 
     console.log(`${colors.yellow}⚠️  Docker Desktop is not currently running.${colors.reset}`);
     console.log(`   Attempting to connect to PostgreSQL (5432) and Redis (6379) on localhost...`);
@@ -114,9 +147,8 @@ async function startDockerInfra(): Promise<boolean> {
   }
 
   try {
-    services.postgres.status = 'STARTING';
-    services.redis.status = 'STARTING';
-    printDashboard();
+    updateStatus('postgres', 'STARTING');
+    updateStatus('redis', 'STARTING');
 
     execSync('docker compose --profile infra up -d', {
       cwd: ROOT_DIR,
@@ -137,16 +169,14 @@ async function checkDatabaseHealth(): Promise<boolean> {
     if (isShuttingDown) return false;
     const ok = await isPgAvailable();
     if (ok) {
-      services.postgres.status = 'HEALTHY';
-      services.postgres.details = `Connected to ${envConfig.POSTGRES_DB}`;
+      updateStatus('postgres', 'HEALTHY', `Connected to ${envConfig.POSTGRES_DB}`);
       return true;
     }
     attempts++;
     await new Promise((r) => setTimeout(r, 1000));
   }
 
-  services.postgres.status = 'WARNING';
-  services.postgres.details = 'DB offline (running in offline/mock mode)';
+  updateStatus('postgres', 'WARNING', 'DB offline (running in offline/mock mode)');
   return false;
 }
 
@@ -157,27 +187,23 @@ async function checkRedisHealth(): Promise<boolean> {
     return await new Promise<boolean>((resolve) => {
       const socket = net.createConnection({ port: 6379, host: '127.0.0.1' }, () => {
         socket.end();
-        services.redis.status = 'HEALTHY';
-        services.redis.details = 'Port 6379 ready';
+        updateStatus('redis', 'HEALTHY', 'Port 6379 ready');
         resolve(true);
       });
       socket.on('error', () => {
-        services.redis.status = 'WARNING';
-        services.redis.details = 'Offline (using In-Memory cache fallback)';
+        updateStatus('redis', 'WARNING', 'Offline (using In-Memory cache fallback)');
         resolve(false);
       });
     });
   } catch {
-    services.redis.status = 'WARNING';
-    services.redis.details = 'Offline fallback';
+    updateStatus('redis', 'WARNING', 'Offline fallback');
     return false;
   }
 }
 
 // 5. Start AI Supervisor Process
 function startAiSupervisor(): void {
-  services.aiSupervisor.status = 'STARTING';
-  printDashboard();
+  updateStatus('aiSupervisor', 'STARTING');
 
   const proc = spawn('pnpm', ['exec', 'tsx', 'scripts/ai-supervisor.ts'], {
     cwd: ROOT_DIR,
@@ -190,9 +216,7 @@ function startAiSupervisor(): void {
   proc.stdout?.on('data', (d) => {
     const text = d.toString();
     if (text.includes('HEALTHY') || text.includes('Operating in Cloud Gateway')) {
-      services.aiSupervisor.status = 'HEALTHY';
-      services.aiSupervisor.details = text.includes('Cloud') ? 'Cloud Gateway Mode' : 'Local llama-server Ready';
-      printDashboard();
+      updateStatus('aiSupervisor', 'HEALTHY', text.includes('Cloud') ? 'Cloud Gateway Mode' : 'Local llama-server (8090, 8092, 8094, 8096) Ready');
     }
     streamLog('AI-SUP', colors.magenta, d);
   });
@@ -201,16 +225,14 @@ function startAiSupervisor(): void {
 
   proc.on('exit', () => {
     if (!isShuttingDown) {
-      services.aiSupervisor.status = 'OFFLINE';
-      printDashboard();
+      updateStatus('aiSupervisor', 'OFFLINE');
     }
   });
 }
 
 // 6. Start TTS Service
 function startTtsService(): void {
-  services.tts.status = 'STARTING';
-  printDashboard();
+  updateStatus('tts', 'STARTING');
 
   const scriptPath = path.join(ROOT_DIR, 'scripts/start-tts-local.sh');
   const proc = spawn(scriptPath, [], {
@@ -221,48 +243,73 @@ function startTtsService(): void {
   activeProcesses.push(proc);
   services.tts.process = proc;
 
+  let isTtsLoggedAttached = false;
+  const attachTtsLogs = () => {
+    if (isTtsLoggedAttached) return;
+    isTtsLoggedAttached = true;
+    try {
+      const ttsLogProc = spawn('docker', ['logs', '-f', '--tail', '0', 'vieneu_tts_engine'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      activeProcesses.push(ttsLogProc);
+      ttsLogProc.stdout?.on('data', (d) => streamLog('TTS', colors.cyan, d));
+      ttsLogProc.stderr?.on('data', (d) => streamLog('TTS', colors.cyan, d));
+    } catch {}
+  };
+
   proc.stdout?.on('data', (d) => {
     const text = d.toString();
     if (text.includes('8080') || text.includes('Uvicorn running') || text.includes('VieNeu')) {
-      services.tts.status = 'HEALTHY';
-      services.tts.details = 'Port 8080 Ready';
-      printDashboard();
+      updateStatus('tts', 'HEALTHY', 'Port 8080 Ready');
+      attachTtsLogs();
     }
     streamLog('TTS', colors.cyan, d);
   });
 
   proc.stderr?.on('data', (d) => streamLog('TTS', colors.cyan, d));
 
-  proc.on('exit', () => {
+  proc.on('exit', (code) => {
     if (isShuttingDown) return;
-    const req = http.get({ hostname: '127.0.0.1', port: 8080, path: '/health', timeout: 1500 }, (res) => {
-      if (res.statusCode === 200) {
-        services.tts.status = 'HEALTHY';
-        services.tts.details = 'Port 8080 Ready (Docker)';
-      } else {
-        services.tts.status = 'WARNING';
-        services.tts.details = 'Dual-layer Synthetic Fallback Active';
-      }
-      printDashboard();
-    });
-    req.on('error', () => {
-      services.tts.status = 'WARNING';
-      services.tts.details = 'Dual-layer Synthetic Fallback Active';
-      printDashboard();
-    });
-    req.on('timeout', () => {
-      req.destroy();
-      services.tts.status = 'WARNING';
-      services.tts.details = 'Dual-layer Synthetic Fallback Active';
-      printDashboard();
-    });
+    if (code === 0 && services.tts.status === 'HEALTHY') {
+      attachTtsLogs();
+      return;
+    }
+    let attempts = 0;
+    const probeTts = () => {
+      if (isShuttingDown) return;
+      let resolved = false;
+      const done = (isOk: boolean) => {
+        if (resolved) return;
+        resolved = true;
+        if (isOk) {
+          updateStatus('tts', 'HEALTHY', 'Port 8080 Ready (Docker)');
+          attachTtsLogs();
+        } else if (attempts < 10) {
+          attempts++;
+          setTimeout(probeTts, 1000);
+        } else {
+          updateStatus('tts', 'WARNING', 'Dual-layer Synthetic Fallback Active');
+        }
+      };
+
+      const req = http.get({ hostname: '127.0.0.1', port: 8080, path: '/health', timeout: 2000 }, (res) => {
+        res.resume();
+        done(res.statusCode === 200);
+      });
+      req.on('error', () => done(false));
+      req.on('timeout', () => {
+        req.destroy();
+        done(false);
+      });
+    };
+    probeTts();
   });
 }
 
 // 7. Start Web App & Render Worker
 function startApps(): void {
   // Web App
-  services.web.status = 'STARTING';
+  updateStatus('web', 'STARTING');
   const webProc = spawn('pnpm', ['--filter', '@chronoviet/web', 'dev'], {
     cwd: ROOT_DIR,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -273,16 +320,14 @@ function startApps(): void {
   webProc.stdout?.on('data', (d) => {
     const text = d.toString();
     if (text.includes('Ready') || text.includes('http://localhost') || text.includes('3000')) {
-      services.web.status = 'HEALTHY';
-      services.web.details = 'http://localhost:3000';
-      printDashboard();
+      updateStatus('web', 'HEALTHY', 'http://localhost:3000');
     }
     streamLog('WEB', colors.green, d);
   });
   webProc.stderr?.on('data', (d) => streamLog('WEB', colors.green, d));
 
   // Render Worker
-  services.worker.status = 'STARTING';
+  updateStatus('worker', 'STARTING');
   const workerProc = spawn('pnpm', ['--filter', '@chronoviet/render-worker', 'dev'], {
     cwd: ROOT_DIR,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -300,9 +345,7 @@ function startApps(): void {
       text.includes('render_worker.ready') ||
       text.includes('Initializing BullMQ workers')
     ) {
-      services.worker.status = 'HEALTHY';
-      services.worker.details = 'BullMQ Workers Ready';
-      printDashboard();
+      updateStatus('worker', 'HEALTHY', 'BullMQ Workers Ready');
     }
     streamLog('WORKER', colors.yellow, d);
   });
@@ -348,7 +391,6 @@ async function main() {
   // Phase A: Infrastructure
   await startDockerInfra();
   await Promise.all([checkDatabaseHealth(), checkRedisHealth()]);
-  printDashboard();
 
   // Phase B: AI & Audio Engines
   startAiSupervisor();
@@ -356,11 +398,9 @@ async function main() {
 
   // Give auxiliary services a moment to initialize ports
   await new Promise((r) => setTimeout(r, 2000));
-  printDashboard();
 
   // Phase C: Web App & Worker
   startApps();
-  printDashboard();
 }
 
 main().catch((err) => {

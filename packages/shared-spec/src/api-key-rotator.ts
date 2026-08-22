@@ -1145,8 +1145,15 @@ export class HybridInferenceDispatcher {
     this.failureCounts.set(target.id, currentFailures);
 
     if (target.type === 'local') {
-      // Local model failure (server down/OOM/timeout): Cooldown for 20s to allow Cloud failover
-      const cooldownMs = 20000;
+      const hasCloudTargets =
+        hasAvailableApiKeys('gemini') ||
+        hasAvailableApiKeys('agnes') ||
+        hasAvailableApiKeys('openrouter') ||
+        hasAvailableApiKeys('openai');
+
+      // If cloud fallback is available, cooldown for 20s to allow Cloud failover.
+      // If pure local (no cloud fallback), use short 3s cooldown to re-probe without long lockouts.
+      const cooldownMs = hasCloudTargets ? 20000 : 3000;
       this.targetCooldowns.set(target.id, Date.now() + cooldownMs);
       persistQuarantineToRedis('target', target.id, cooldownMs, {
         provider: 'local',
@@ -1155,6 +1162,7 @@ export class HybridInferenceDispatcher {
       log.warn('dispatcher.local_cooldown', `Local model target [${target.id}] unreachable/failed; quarantined for ${cooldownMs}ms before re-probing`, {
         targetId: target.id,
         cooldownMs,
+        hasCloudFallback: hasCloudTargets,
       });
     } else {
       // Cloud Key failure: fine-grained classification

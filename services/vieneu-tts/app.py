@@ -41,6 +41,12 @@ log.setLevel(logging.INFO)
 log.addHandler(handler)
 log.propagate = False
 
+class EndpointFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "/health" not in record.getMessage()
+
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
+
 app = FastAPI(title="VieNeu TTS Microservice & Neural Engine")
 
 app.add_middleware(
@@ -55,27 +61,73 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Check standard media volume or local media dir
 MEDIA_ROOT = os.getenv("MEDIA_DIR", os.path.join(BASE_DIR, "media"))
 CACHE_DIR = os.getenv("AUDIO_CACHE_DIR", os.path.join(MEDIA_ROOT, "audio-cache"))
+MODELS_DIR = os.getenv("PIPER_MODELS_DIR", os.path.join(BASE_DIR, "models"))
 os.makedirs(CACHE_DIR, exist_ok=True)
+os.makedirs(MODELS_DIR, exist_ok=True)
 
 app.mount("/static/audio", StaticFiles(directory=CACHE_DIR), name="static_audio")
+
+def ensure_piper_model(target_dir: str) -> tuple[str, str]:
+    """Ensure Piper Vietnamese ONNX voice weights and config exist, downloading if needed."""
+    os.makedirs(target_dir, exist_ok=True)
+    m_path = os.path.join(target_dir, "vi_VN-vivos-medium.onnx")
+    c_path = os.path.join(target_dir, "vi_VN-vivos-medium.onnx.json")
+    base_url = "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/medium"
+
+    if not os.path.exists(m_path):
+        try:
+            import urllib.request
+            log.info(f"Downloading Piper Vietnamese ONNX voice weights to {m_path}...")
+            urllib.request.urlretrieve(f"{base_url}/vi_VN-vivos-medium.onnx", m_path)
+            log.info("Downloaded vi_VN-vivos-medium.onnx successfully.")
+        except Exception as err:
+            log.warning(f"Failed to auto-download Piper ONNX voice weights: {err}")
+
+    if not os.path.exists(c_path):
+        try:
+            import urllib.request
+            log.info(f"Downloading Piper Vietnamese config to {c_path}...")
+            urllib.request.urlretrieve(f"{base_url}/vi_VN-vivos-medium.onnx.json", c_path)
+            log.info("Downloaded vi_VN-vivos-medium.onnx.json successfully.")
+        except Exception as err:
+            log.warning(f"Failed to auto-download Piper config: {err}")
+
+    return m_path, c_path
 
 # Initialize Neural Engine or Graceful Fallback
 tts_engine = None
 engine_type = "SYNTHETIC_FALLBACK_PYTHON"
 
 try:
-    from vieneu import Vieneu
-    log.info("Loading VieNeu ONNX Neural Engine...")
-    tts_engine = Vieneu()
-    engine_type = "REAL_NEURAL_ONNX"
-    log.info("VieNeu ONNX Neural Engine loaded successfully!")
-except Exception as init_err:
-    log.warning(
-        f"VieNeu ONNX library or model weights not initialized ({init_err}). "
-        "Operating in resilient Python PCM-16 Synthesizer mode."
-    )
-    tts_engine = None
-    engine_type = "SYNTHETIC_FALLBACK_PYTHON"
+    from piper import PiperVoice
+    default_m, default_c = os.path.join(MODELS_DIR, "vi_VN-vivos-medium.onnx"), os.path.join(MODELS_DIR, "vi_VN-vivos-medium.onnx.json")
+    model_path = os.getenv("PIPER_MODEL_PATH", default_m)
+    config_path = os.getenv("PIPER_CONFIG_PATH", default_c)
+
+    if not os.path.exists(model_path):
+        ensure_piper_model(MODELS_DIR)
+
+    if os.path.exists(model_path):
+        log.info(f"Loading Piper ONNX Neural Voice Engine ({model_path})...")
+        tts_engine = PiperVoice.load(model_path, config_path=config_path if os.path.exists(config_path) else None)
+        engine_type = "PIPER_NEURAL_ONNX"
+        log.info("Piper ONNX Voice Engine loaded successfully!")
+    else:
+        raise FileNotFoundError(f"Model weights not found at {model_path}")
+except Exception as p_err:
+    try:
+        from vieneu import Vieneu
+        log.info("Loading VieNeu ONNX Neural Engine...")
+        tts_engine = Vieneu()
+        engine_type = "REAL_NEURAL_ONNX"
+        log.info("VieNeu ONNX Neural Engine loaded successfully!")
+    except Exception as init_err:
+        log.warning(
+            f"Neural ONNX voice model not initialized (piper: {p_err}, vieneu: {init_err}). "
+            "Operating in resilient Python Synthesizer mode."
+        )
+        tts_engine = None
+        engine_type = "SYNTHETIC_FALLBACK_PYTHON"
 
 class VieNeuRequest(BaseModel):
     text: str
@@ -161,17 +213,21 @@ def synthesize(req: VieNeuRequest, request: Request):
     if not os.path.exists(file_path):
         if tts_engine is not None:
             try:
-                audio_data = tts_engine.infer(text)
-                sr = getattr(tts_engine, "sample_rate", sample_rate)
-                if hasattr(tts_engine, "save") and callable(getattr(tts_engine, "save")):
-                    try:
-                        tts_engine.save(audio_data, file_path)
-                    except Exception:
+                if engine_type == "PIPER_NEURAL_ONNX":
+                    with wave.open(file_path, "wb") as wav_file:
+                        tts_engine.synthesize(text, wav_file)
+                else:
+                    audio_data = tts_engine.infer(text)
+                    sr = getattr(tts_engine, "sample_rate", sample_rate)
+                    if hasattr(tts_engine, "save") and callable(getattr(tts_engine, "save")):
+                        try:
+                            tts_engine.save(audio_data, file_path)
+                        except Exception:
+                            audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
+                            sf.write(file_path, audio_int16, sr, subtype="PCM_16")
+                    else:
                         audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
                         sf.write(file_path, audio_int16, sr, subtype="PCM_16")
-                else:
-                    audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
-                    sf.write(file_path, audio_int16, sr, subtype="PCM_16")
             except Exception as infer_err:
                 log.warning(f"Neural inference failed ({infer_err}), falling back to Python PCM synthesizer")
                 current_engine = "SYNTHETIC_FALLBACK_PYTHON"

@@ -150,11 +150,27 @@ export function resolveModelPaths() {
     }
   }
 
+  let rerankModelPath = path.join(MODEL_DIR, `${envConfig.LOCAL_RERANK_MODEL || 'qwen3-reranker-0.6b'}.gguf`);
+  if (!fs.existsSync(rerankModelPath)) {
+    const candidates = [
+      path.join(MODEL_DIR, 'qwen3-reranker-0.6b.gguf'),
+      path.join(MODEL_DIR, 'bge-reranker-v2-m3.gguf'),
+      path.join(MODEL_DIR, 'bge-reranker-v2-m3-q8_0.gguf'),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) {
+        rerankModelPath = c;
+        break;
+      }
+    }
+  }
+
   return {
     llmModelPath: llmModelPath && fs.existsSync(llmModelPath) ? llmModelPath : null,
     mmprojPath: mmprojPath && fs.existsSync(mmprojPath) ? mmprojPath : null,
     embModelPath: embModelPath && fs.existsSync(embModelPath) ? embModelPath : null,
     extModelPath: extModelPath && fs.existsSync(extModelPath) ? extModelPath : null,
+    rerankModelPath: rerankModelPath && fs.existsSync(rerankModelPath) ? rerankModelPath : null,
   };
 }
 
@@ -172,7 +188,9 @@ const weights = resolveModelPaths();
 const llamaCliPresent = isLlamaServerAvailable();
 const EXTRACTION_PORT = envConfig.LOCAL_LLM_EXTRACTION_PORT || 8094;
 
-const services: Record<'llm' | 'emb' | 'extraction', ManagedService> = {
+const RERANK_PORT = envConfig.RERANK_PORT || 8096;
+
+const services: Record<'llm' | 'emb' | 'extraction' | 'rerank', ManagedService> = {
   llm: {
     name: 'LLM / VLM (Qwen 3.5 9B)',
     port: LLM_PORT,
@@ -198,6 +216,16 @@ const services: Record<'llm' | 'emb' | 'extraction', ManagedService> = {
     port: EXTRACTION_PORT,
     modelPath: weights.extModelPath || '',
     extraArgs: [],
+    process: null,
+    status: 'STOPPED',
+    lastActivityTime: Date.now(),
+    probePath: '/v1/models',
+  },
+  rerank: {
+    name: 'Reranker Engine (Qwen3/BGE)',
+    port: RERANK_PORT,
+    modelPath: weights.rerankModelPath || '',
+    extraArgs: ['--reranking'],
     process: null,
     status: 'STOPPED',
     lastActivityTime: Date.now(),
@@ -243,7 +271,7 @@ export async function waitForServiceReady(port: number, probePath = '/v1/models'
 }
 
 // 5. Start Service Process
-export async function startService(key: 'llm' | 'emb' | 'extraction'): Promise<boolean> {
+export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank'): Promise<boolean> {
   const svc = services[key];
   if (!llamaCliPresent || !svc.modelPath || !fs.existsSync(svc.modelPath)) {
     log.warn('supervisor.service_skipped', `Skipping local ${svc.name}: missing model weights or llama-server CLI. Active mode: Cloud Fallback Gateway.`);
@@ -258,6 +286,8 @@ export async function startService(key: 'llm' | 'emb' | 'extraction'): Promise<b
       ? (envConfig.LLM_CTX_SIZE || 131072)
       : key === 'extraction'
       ? (envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 8192)
+      : key === 'rerank'
+      ? 8192
       : (envConfig.EMBEDDING_CTX_SIZE || 8192);
 
   const args = [
@@ -305,10 +335,24 @@ export async function startService(key: 'llm' | 'emb' | 'extraction'): Promise<b
 
   proc.stdout.on('data', (d) => {
     svc.lastActivityTime = Date.now();
+    const lines = d.toString().split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed && (trimmed.includes('HTTP server listening') || trimmed.includes('model loaded') || trimmed.includes('all slots are idle') || trimmed.includes('system info'))) {
+        console.log(`[AI-SUP:${svc.port}] ${trimmed}`);
+      }
+    }
   });
 
   proc.stderr.on('data', (d) => {
     svc.lastActivityTime = Date.now();
+    const lines = d.toString().split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed && (trimmed.includes('HTTP server listening') || trimmed.includes('error') || trimmed.includes('model loaded') || trimmed.includes('system info') || trimmed.includes('warmup'))) {
+        console.log(`[AI-SUP:${svc.port}] ${trimmed}`);
+      }
+    }
   });
 
   proc.on('exit', (code, sig) => {
@@ -334,7 +378,7 @@ export async function startService(key: 'llm' | 'emb' | 'extraction'): Promise<b
 }
 
 // 6. Graceful Eviction & JIT Wake-up
-export function evictService(key: 'llm' | 'emb' | 'extraction'): void {
+export function evictService(key: 'llm' | 'emb' | 'extraction' | 'rerank'): void {
   const svc = services[key];
   if (svc.process && svc.status === 'RUNNING') {
     log.info('supervisor.evicting_idle', `Auto-evicting idle service ${svc.name} to free RAM...`);
@@ -351,7 +395,7 @@ export function checkIdleEviction(): void {
   const idleThresholdMs = AUTO_EVICT_MINUTES * 60 * 1000;
   const now = Date.now();
 
-  for (const key of ['llm', 'emb', 'extraction'] as const) {
+  for (const key of ['llm', 'emb', 'extraction', 'rerank'] as const) {
     const svc = services[key];
     if (svc.status === 'RUNNING' && now - svc.lastActivityTime > idleThresholdMs) {
       log.info('supervisor.idle_detected', `${svc.name} has been idle for >${AUTO_EVICT_MINUTES}m (${Math.round((now - svc.lastActivityTime) / 60000)}m)`);
@@ -365,7 +409,7 @@ export function shutdownAll(): void {
   isShuttingDown = true;
   log.info('supervisor.shutdown', 'Shutting down all managed llama-server processes cleanly...');
 
-  for (const key of ['llm', 'emb', 'extraction'] as const) {
+  for (const key of ['llm', 'emb', 'extraction', 'rerank'] as const) {
     const svc = services[key];
     if (svc.process) {
       try {
@@ -381,7 +425,7 @@ export function shutdownAll(): void {
 export async function runSupervisor() {
   console.log('\n======================================================');
   console.log(' ChronoViet — AI Process Supervisor & JIT Daemon');
-  console.log(` Config: LLM_PORT=${LLM_PORT} | EMB_PORT=${EMBEDDING_PORT} | EXT_PORT=${EXTRACTION_PORT} | AUTO_EVICT=${AUTO_EVICT_MINUTES}m`);
+  console.log(` Config: LLM_PORT=${LLM_PORT} | EMB_PORT=${EMBEDDING_PORT} | EXT_PORT=${EXTRACTION_PORT} | RERANK_PORT=${RERANK_PORT} | AUTO_EVICT=${AUTO_EVICT_MINUTES}m`);
   console.log('======================================================\n');
 
   if (!llamaCliPresent) {
@@ -410,6 +454,7 @@ export async function runSupervisor() {
   await startService('llm');
   await startService('emb');
   await startService('extraction');
+  await startService('rerank');
 
   // Start periodic idle eviction monitor (every 30s)
   setInterval(() => {

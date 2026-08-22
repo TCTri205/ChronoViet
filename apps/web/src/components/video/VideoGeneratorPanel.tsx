@@ -24,6 +24,7 @@ import { toast } from "sonner";
 
 export interface VideoGeneratorPanelProps {
   initialTopic?: string;
+  initialConversationId?: string;
   onProjectCreated?: (projectId: string) => void;
   onProjectCompleted?: () => void;
   activeProjectId?: string | null;
@@ -32,6 +33,7 @@ export interface VideoGeneratorPanelProps {
 
 export function VideoGeneratorPanel({
   initialTopic = "",
+  initialConversationId = "",
   onProjectCreated,
   onProjectCompleted,
   activeProjectId = null,
@@ -174,6 +176,7 @@ export function VideoGeneratorPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: topic,
+          conversationId: initialConversationId || undefined,
           targetDurationMinutes: parseInt(duration, 10) || 3,
           aspectRatio,
           tone,

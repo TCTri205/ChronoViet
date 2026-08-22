@@ -1,0 +1,99 @@
+/**
+ * Context Window Budgeting & Pruner (4,200 token peak recall zone)
+ * Preserves Turn 1 Topic Anchor, RAG Context, Semantic Graph Triples, and Backward-Pruned Recent History.
+ */
+
+import { ChatTurnContext } from './query-rewriter.js';
+
+export interface ContextBudgetPlan {
+  systemPersonaBudget: number;      // ~300 tokens
+  turn1AnchorBudget: number;        // ~80 tokens
+  ragContextBudget: number;         // ~2,100 tokens
+  historyBudget: number;            // ~800 tokens
+  generationBuffer: number;         // ~900 tokens
+}
+
+export const DEFAULT_CONTEXT_BUDGET: ContextBudgetPlan = {
+  systemPersonaBudget: 300,
+  turn1AnchorBudget: 80,
+  ragContextBudget: 2100,
+  historyBudget: 800,
+  generationBuffer: 900,
+};
+
+/**
+ * Approximate token count for Vietnamese text (approx 1 token ~ 3.5 chars / 0.75 words)
+ */
+export function estimateTokens(text: string): number {
+  if (!text) return 0;
+  return Math.ceil(text.length / 3.5);
+}
+
+function clampTurnContent(content: string, maxTurnTokens: number = 300): string {
+  if (!content) return '';
+  const est = estimateTokens(content);
+  if (est <= maxTurnTokens) return content;
+  const maxChars = Math.floor(maxTurnTokens * 3.5);
+  return content.slice(0, maxChars) + '...';
+}
+
+/**
+ * Prunes conversation history turns to stay strictly within historyBudget (default 800 tokens)
+ * Always preserves Turn 1 (initial anchor topic) if present.
+ */
+export function pruneConversationHistory(
+  history: ChatTurnContext[],
+  maxTokens: number = DEFAULT_CONTEXT_BUDGET.historyBudget
+): ChatTurnContext[] {
+  if (!history || history.length === 0) return [];
+
+  const turn1Raw = history[0];
+  const turn1: ChatTurnContext = {
+    role: turn1Raw.role,
+    content: clampTurnContent(turn1Raw.content, Math.min(120, DEFAULT_CONTEXT_BUDGET.turn1AnchorBudget * 1.5)),
+  };
+
+  if (history.length === 1) {
+    return [turn1];
+  }
+
+  const remaining = history.slice(1);
+  const selectedReversed: ChatTurnContext[] = [];
+
+  let tokenSum = estimateTokens(turn1.content);
+
+  // Accumulate turns backwards from most recent
+  for (let i = remaining.length - 1; i >= 0; i--) {
+    const rawTurn = remaining[i];
+    const turn: ChatTurnContext = {
+      role: rawTurn.role,
+      content: clampTurnContent(rawTurn.content, 250),
+    };
+    const turnTokens = estimateTokens(turn.content);
+    if (tokenSum + turnTokens > maxTokens) {
+      break;
+    }
+    tokenSum += turnTokens;
+    selectedReversed.push(turn);
+  }
+
+  const selectedInOrder = selectedReversed.reverse();
+
+  // Combine Turn 1 with selected recent turns
+  return [turn1, ...selectedInOrder];
+}
+
+/**
+ * Truncates RAG context to fit within ragContextBudget (default 2,100 tokens)
+ */
+export function pruneRagContext(
+  contextText: string,
+  maxTokens: number = DEFAULT_CONTEXT_BUDGET.ragContextBudget
+): string {
+  if (!contextText) return '';
+  const est = estimateTokens(contextText);
+  if (est <= maxTokens) return contextText;
+
+  const maxChars = Math.floor(maxTokens * 3.5);
+  return contextText.slice(0, maxChars) + '\n[...nội dung được rút gọn theo giới hạn ngữ cảnh...]';
+}

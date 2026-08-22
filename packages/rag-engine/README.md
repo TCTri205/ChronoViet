@@ -14,7 +14,7 @@ Gói `@chronoviet/rag-engine` đảm nhận nhiệm vụ truy xuất dữ liệu
 * **Lexical FTS Keyword Sanitization:** Tiền xử lý câu hỏi tự nhiên qua bộ lọc stopword tiếng Việt (`sanitizeFtsQuery`), ngăn chặn triệt để hiện tượng False Negative khi người dùng hỏi các câu tự nhiên như *"Ai là người...", "Tại sao..."*.
 * **Score Calibration & Fair Co-Retrieval Boost:** Chuẩn hóa điểm khởi tạo của Graph Chunks về thang RRF $1 / (60 + \text{rank})$ và cộng điểm thưởng `CO_RETRIEVAL_BOOST = 0.35` cho các đoạn trích được đồng xác thực bởi cả hai nhánh (Graph + Vector).
 * **In-Memory LRU Embedding Cache:** Bộ nhớ đệm LRU Cache (`SimpleLRUCache`, 500 mục) lưu trữ vector embedding của các câu hỏi phổ biến, đạt độ trễ truy xuất sub-millisecond ($< 0.1\text{ms}$).
-* **Bảo Tồn Danh Từ Lịch Sử 2 Ký Tự Trong Reranker:** Hỗ trợ đầy đủ các token độ dài $\ge 2$ ký tự (*Lê, Lý, Hồ, Ba, Đô, Võ*) kết hợp trọng số tin cậy nguồn $W_{\text{source}} \le 15\%$.
+* **Pure Local Cross-Encoder Reranker & Multi-Factor Historical Fusion:** Xếp hạng ngữ nghĩa chuyên sâu bằng mô hình Cross-Encoder cục bộ (`Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0 qua `POST /v1/rerank` trên `llama-server` Metal Engine, Port 8096), kết hợp Multi-Factor Fusion (75% AI Score + 15% Cấp sử liệu LEVEL_1/2/3 + 10% Co-retrieval Boost) và bảo toàn danh xưng lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô, Võ*).
 * **Citation Traceability & Accuracy:** Đảm bảo tính chính xác lịch sử 100%, truy xuất nguồn gốc trích dẫn đầy đủ và loại bỏ suy đoán sai (Hallucination Rate 0%).
 * **Shared Database Layer:** Tận dụng Lớp Cơ sở dữ liệu PostgreSQL & In-Memory Store trung tâm từ [`@chronoviet/shared-spec`](../shared-spec) quản lý các bảng tri thức `document_chunks`, `entities`, `relationships`, `entity_chunks` và `entity_audit_logs`.
 
@@ -32,7 +32,7 @@ packages/rag-engine/
 │   │   ├── graph-cte-search.ts        # PostgreSQL Relational Graph Recursive CTE Cycle Pruning
 │   │   ├── question-ner.ts            # Phân tích câu hỏi & nhận dạng thực thể NER (< 1ms)
 │   │   ├── chunk-retriever.ts         # Graph-Guided Chunk Retrieval với Calibrated Score
-│   │   └── reranker.ts                # Cross-Encoder BGE Reranker v2 (bảo tồn tên 2 ký tự)
+│   │   └── reranker.ts                # Pure Local Cross-Encoder Reranker & Multi-Factor Fusion
 │   │
 │   ├── rag-engine.ts                  # Class điều phối chính ChronoRagEngine (Singleton Schema Init)
 │   ├── index.ts                       # Entrypoint export public APIs

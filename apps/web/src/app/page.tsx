@@ -37,12 +37,9 @@ const VideoPlayer = dynamic(
 );
 
 export default function MasterWorkspacePage() {
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(
-    "proj_bach_dang_1288"
-  );
-  const [videoTopic, setVideoTopic] = useState<string>(
-    "Chiến Thắng Bạch Đằng Năm 1288"
-  );
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [videoTopic, setVideoTopic] = useState<string>("");
   const [mobileActiveTab, setMobileActiveTab] = useState<"chat" | "studio">(
     "chat"
   );
@@ -54,8 +51,12 @@ export default function MasterWorkspacePage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const queryId = params.get("projectId");
+      const convId = params.get("conversationId");
       if (queryId) {
         setActiveProjectId(queryId);
+      }
+      if (convId) {
+        setActiveConversationId(convId);
       }
     }
   }, []);
@@ -69,16 +70,33 @@ export default function MasterWorkspacePage() {
     }
   };
 
+  const handleSelectConversation = (conversationId: string) => {
+    setActiveConversationId(conversationId);
+    setMobileActiveTab("chat");
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("conversationId", conversationId);
+      window.history.pushState({}, "", url.toString());
+    }
+  };
+
   const handleNewProject = () => {
-    const newId = `proj_${Date.now()}`;
-    setActiveProjectId(newId);
+    setActiveProjectId(null);
     setVideoTopic("");
     setIsTheaterDockOpen(false);
     setMobileActiveTab("studio");
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("projectId");
+      window.history.pushState({}, "", url.toString());
+    }
   };
 
-  const handleHandoverFromChat = (topic: string) => {
+  const handleHandoverFromChat = (topic: string, conversationId?: string) => {
     setVideoTopic(topic);
+    if (conversationId) {
+      setActiveConversationId(conversationId);
+    }
     setMobileActiveTab("studio");
   };
 
@@ -95,13 +113,18 @@ export default function MasterWorkspacePage() {
       <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
         <SheetContent side="left" className="p-0 w-80 bg-lacquer-surface border-r border-primary/20">
           <SheetHeader className="sr-only">
-            <SheetTitle>Kho Lưu Trữ Dự Án</SheetTitle>
-            <SheetDescription>Chọn hoặc tìm kiếm các thước phim lịch sử đã khởi tạo</SheetDescription>
+            <SheetTitle>Kho Lưu Trữ Dự Án & Đoạn Chat</SheetTitle>
+            <SheetDescription>Chọn hoặc tìm kiếm các thước phim và cuộc trò chuyện lịch sử</SheetDescription>
           </SheetHeader>
           <Sidebar
             activeProjectId={activeProjectId || undefined}
+            activeConversationId={activeConversationId || undefined}
             onSelectProject={(id) => {
               handleSelectProject(id);
+              setIsMobileDrawerOpen(false);
+            }}
+            onSelectConversation={(id) => {
+              handleSelectConversation(id);
               setIsMobileDrawerOpen(false);
             }}
             className="w-full h-full border-r-0"
@@ -145,7 +168,9 @@ export default function MasterWorkspacePage() {
         {/* Left Side Navigation (Desktop History Rail & Panel) */}
         <Sidebar
           activeProjectId={activeProjectId || undefined}
+          activeConversationId={activeConversationId || undefined}
           onSelectProject={handleSelectProject}
+          onSelectConversation={handleSelectConversation}
           className="hidden sm:flex"
         />
 
@@ -154,7 +179,11 @@ export default function MasterWorkspacePage() {
           <ResizablePanelGroup direction="horizontal">
             {/* Left/Middle Column: Knowledge Chat Hub (45%) */}
             <ResizablePanel defaultSize={45} minSize={30}>
-              <ChatContainer onHandoverToVideo={handleHandoverFromChat} />
+              <ChatContainer
+                activeConversationId={activeConversationId}
+                onSelectConversation={setActiveConversationId}
+                onHandoverToVideo={handleHandoverFromChat}
+              />
             </ResizablePanel>
 
             <ResizableHandle withHandle />
@@ -163,6 +192,7 @@ export default function MasterWorkspacePage() {
             <ResizablePanel defaultSize={55} minSize={35}>
               <VideoGeneratorPanel
                 initialTopic={videoTopic}
+                initialConversationId={activeConversationId || undefined}
                 activeProjectId={activeProjectId}
                 onProjectCreated={(id) => {
                   setActiveProjectId(id);
@@ -179,10 +209,15 @@ export default function MasterWorkspacePage() {
         {/* Mobile View (< 1024px) Tabbed Container */}
         <div className="lg:hidden flex-1 h-full overflow-hidden">
           {mobileActiveTab === "chat" ? (
-            <ChatContainer onHandoverToVideo={handleHandoverFromChat} />
+            <ChatContainer
+              activeConversationId={activeConversationId}
+              onSelectConversation={setActiveConversationId}
+              onHandoverToVideo={handleHandoverFromChat}
+            />
           ) : (
             <VideoGeneratorPanel
               initialTopic={videoTopic}
+              initialConversationId={activeConversationId || undefined}
               activeProjectId={activeProjectId}
               onProjectCreated={(id) => {
                 setActiveProjectId(id);

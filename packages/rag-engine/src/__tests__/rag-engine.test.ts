@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { inMemoryStore, envConfig } from '@chronoviet/shared-spec';
 import { ChronoRagEngine, CO_RETRIEVAL_BOOST } from '../rag-engine.js';
 
@@ -10,6 +10,31 @@ describe('ChronoRagEngine Integration & End-to-End Search', { timeout: 20000 }, 
     envConfig.SKIP_PG = true;
     inMemoryStore.clear();
     engine = new ChronoRagEngine();
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: any) => {
+        if (url.includes('/v1/rerank')) {
+          const body = JSON.parse(init?.body || '{}');
+          const docs: string[] = body.documents || [];
+          const results = docs.map((_, idx) => ({
+            index: idx,
+            relevance_score: 0.9 - idx * 0.1,
+          }));
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ results }),
+            text: async () => JSON.stringify({ results }),
+          } as any;
+        }
+        return { ok: false, status: 404 } as any;
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('should initialize and ingest historical documents', async () => {

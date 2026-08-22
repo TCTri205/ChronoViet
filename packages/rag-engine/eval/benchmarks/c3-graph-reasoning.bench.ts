@@ -65,7 +65,7 @@ export async function runC3Benchmark(): Promise<ComponentBenchmarkReport> {
   }
 
   const pathRecall = (validPathHits / Math.max(1, totalPathsEvaluated)) * 100;
-  const pathPrecision = totalRetrievedEdges > 0 ? (verifiedEdgesCount / totalRetrievedEdges) * 100 : 98.0;
+  const pathPrecision = totalRetrievedEdges > 0 ? (verifiedEdgesCount / totalRetrievedEdges) * 100 : 0.0;
   const shortestValidRate = pathRecall;
   const wrongPathRate = Math.max(0, 100 - pathRecall);
   const edgeDirectionAccuracy = pathPrecision;

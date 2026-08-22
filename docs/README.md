@@ -119,6 +119,12 @@ pnpm install
 
 # 2. Tạo cấu hình môi trường từ template
 cp .env.example .env
+
+# 3. (Tùy chọn) Chọn Chế Độ Vận Hành AI (AI_EXECUTION_MODE trong .env):
+# - AI_EXECUTION_MODE=local_only : 100% Local LLM (8092/8094), không dùng Cloud, 0 phí API.
+# - AI_EXECUTION_MODE=fallback   : (Mặc định) Ưu tiên Local, tự động fallback sang Cloud khi lỗi/render.
+# - AI_EXECUTION_MODE=hybrid     : Chia tải Round-Robin giữa Local và Cloud API Keys.
+# - AI_EXECUTION_MODE=cloud_only : 100% Cloud (Agnes/Gemini/OpenRouter), 0% RAM Local, không cần GPU.
 ```
 
 #### Bước 2: Tải Mô Hình AI Cục Bộ & Khởi Tạo Cơ Sở Dữ Liệu
@@ -141,30 +147,38 @@ pnpm db:init
 
 #### Bước 3: Khởi Chạy Toàn Bộ Hệ Thống (1-Lệnh Duy Nhất)
 ```bash
-# [Khuyến nghị] Khởi chạy trọn gói: Docker Infra + AI Supervisor + VieNeu TTS + Web UI + Worker
-pnpm dev:stack
+# [Khuyến nghị] 🚀 1-Click Smart Dev: Tự động khởi động Docker Infra (Postgres+Redis) + Auto AI Detect + Web & Worker
+pnpm dev
 
-# Hoặc khởi chạy theo Profile công việc tối ưu tài nguyên (Daily Dev Profiles):
-pnpm dev:hybrid      # Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
-pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
+# Hoặc khởi chạy theo chế độ chuyên biệt:
+pnpm dev:full        # Full Stack: Docker Infra + AI Supervisor + VieNeu TTS + Web UI + Worker
+pnpm dev:cloud       # Chế độ siêu nhẹ: 0% GPU/RAM máy, Web + Worker với Cloud AI
+pnpm dev:data        # Data Ingestion Stack: Postgres + Redis + AI Lite (8090 + 8094)
 ```
 
 ### Bảng Tra Cứu Bộ Lệnh Toàn Hệ Thống:
 ```bash
 # ===============================================================
-# 1. PHÁT TRIỂN & ĐIỀU PHỐI HỆ THỐNG
+# 1. BỘ 4 LỆNH CỐT LÕI HÀNG NGÀY (CORE 4 ESSENTIALS)
 # ===============================================================
-pnpm dev:stack                                  # 1-Lệnh khởi động trọn gói: Docker Infra + AI Supervisor + TTS + Web + Worker
-pnpm dev:hybrid                                 # Khởi động Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
-pnpm dev:data                                   # Khởi động Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
-pnpm dev                                        # Chạy song song Web App (port 3000) và Render Worker
-pnpm dev:web                                    # Chạy riêng Web App Next.js (port 3000)
-pnpm dev:worker                                 # Chạy riêng BullMQ Video Render Worker (port 3001)
+pnpm dev             # 🚀 Smart 1-Click Dev: Tự bật Docker Infra + Tự kết nối AI + Chạy Web & Worker
+pnpm data:setup      # 📦 1-Click Data: Bật Infra -> Init Schema CSDL -> Nạp Tri thức chuẩn -> Health Audit
+pnpm ai              # 🤖 AI Dashboard TUI: Quản lý, kiểm tra port & bật/tắt Local AI Stack
+pnpm check           # ✅ Verification Gate: Typecheck -> Lint -> Test -> Build (100% Pass)
 
 # ===============================================================
-# 2. HẠ TẦNG DOCKER & COMPOSE PROFILES
+# 2. CÁC CHẾ ĐỘ THỰC THI CHUYÊN BIỆT (SPECIALIZED DEV PROFILES)
 # ===============================================================
-pnpm stack:infra                                # Khởi chạy cụm Postgres (pgvector) & Redis Cache
+pnpm dev:full        # Khởi chạy Full Stack: Docker Infra + AI Supervisor + TTS + Web + Worker
+pnpm dev:cloud       # Khởi động Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
+pnpm dev:data        # Khởi động Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
+pnpm dev:web         # Chạy riêng Web App Next.js (port 3000)
+pnpm dev:worker      # Chạy riêng BullMQ Video Render Worker (port 3001)
+
+# ===============================================================
+# 3. HẠ TẦNG DOCKER & COMPOSE PROFILES
+# ===============================================================
+pnpm stack:infra     # Khởi chạy cụm Postgres (pgvector) & Redis Cache
 pnpm stack:prod                                 # Khởi chạy cụm Production Containers (DB, Redis, TTS, App, Worker, Caddy)
 pnpm stack:prod:all                             # Khởi chạy Full Stack Production bao gồm cả Local CUDA LLM & Embedding (Linux GPU)
 pnpm stack:ai                                   # Khởi chạy containers llama.cpp CUDA (LLM 8092 + Embedding 8090)
@@ -181,8 +195,8 @@ pnpm models:download:lite                       # Chỉ tải BGE-M3 + Qwen Extr
 pnpm models:download:emb                        # Chỉ tải BGE-M3 (~605 MB)
 pnpm models:download:extract                    # Chỉ tải Qwen Extraction LLM (~1.8 GB)
 pnpm models:download:llm                        # Chỉ tải Qwen 3.5 9B (~5.8 GB)
-pnpm ai                                         # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8080) & model đã nạp
-pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092)
+pnpm ai                                         # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8096, 8080) & model đã nạp
+pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092 + Reranker 8096 + TTS 8080)
 pnpm ai:lite                                    # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb                                     # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
 pnpm ai:extract                                 # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler (Data Prep)

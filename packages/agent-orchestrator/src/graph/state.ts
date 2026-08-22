@@ -140,6 +140,10 @@ export const ChronoGraphAnnotation = Annotation.Root({
     reducer: updateValue,
     default: () => '',
   }),
+  videoBriefId: Annotation<string | undefined>({
+    reducer: updateValue,
+    default: () => undefined,
+  }),
   targetDurationMinutes: Annotation<number>({
     reducer: updateValue,
     default: () => 1,

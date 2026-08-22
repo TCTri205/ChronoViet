@@ -184,8 +184,12 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
    - *Hiệu năng:* Giảm 30–50% tổng thời gian truy vấn so với thực thi tuần tự.
 3. **Step 4b - Co-Retrieval Fusion Boost (+0.35):**
    - Khi một đoạn trích được tìm thấy và đồng xác thực bởi cả 2 nhánh (vừa tương đồng ngữ nghĩa vừa nằm trên đường dẫn tri thức đồ thị), hệ thống cộng điểm thưởng `CO_RETRIEVAL_BOOST = 0.35` và bảo toàn thứ hạng `rankVector`, `rankFts`, đảm bảo các tài liệu này có thứ hạng ưu tiên cao nhất trước khi Reranking.
-4. **Step 5 - Reranking & Context Formatting:**
-   - Sử dụng Reranker tính điểm trùng khớp từ khóa (bảo tồn toàn diện danh xưng lịch sử 2 ký tự như *Lê, Lý, Hồ*), căn chỉnh tiêu đề, phạt distractor lạc đề, và áp dụng trọng số độ tin cậy nguồn $W_{\text{source}} \le 15\%$ cho câu hỏi xác minh.
+4. **Step 5 - Pure Model Cross-Encoder Reranking & Multi-Factor Historical Fusion:**
+   - Thực thi trực tiếp mô hình Cross-Encoder cục bộ (**`Qwen3-Reranker-0.6B`** hoặc **`bge-reranker-v2-m3`** GGUF Q8_0 qua endpoint `POST /v1/rerank` trên `llama-server` Metal Engine).
+   - Tiếp nhận tối đa 12 candidates từ hai nhánh Vector và Graph, cắt ngắn 512 tokens (~1.500 ký tự)/chunk để giới hạn độ trễ $\le 40\text{ ms}$.
+   - Áp dụng công thức tính điểm kết hợp đa yếu tố:
+     $$\text{Score}_{\text{final}} = 0.75 \times \text{Score}_{\text{AI}} + 0.15 \times \text{Weight}_{\text{Source}} + 0.10 \times \text{Boost}_{\text{CoRetrieval}}$$
+     (Trong đó `LEVEL_1` = 1.0, `LEVEL_2` = 0.8, `LEVEL_3` = 0.5; `Boost` = 0.10 cho các chunk được đồng xác thực từ đồ thị).
    - Định dạng `verifiedContext` có trích dẫn nguồn rõ ràng phục vụ thẩm định nội dung cho Multi-Agent Orchestrator.
 
 ---

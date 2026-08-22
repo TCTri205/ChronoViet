@@ -218,37 +218,22 @@ export class VisualQualityGate {
     };
   }
 
-  public evaluateQuality(width = 1920, height = 1080, targetAspectRatio: string = '16:9'): VisualQualityGateResult {
-    let minWidth = 1280;
-    let minHeight = 720;
-    let expectedRatio = 16 / 9;
-
-    if (targetAspectRatio === '9:16') {
-      minWidth = 720;
-      minHeight = 1280;
-      expectedRatio = 9 / 16;
-    } else if (targetAspectRatio === '1:1') {
-      minWidth = 720;
-      minHeight = 720;
-      expectedRatio = 1;
-    } else if (targetAspectRatio === '4:3') {
-      minWidth = 960;
-      minHeight = 720;
-      expectedRatio = 4 / 3;
-    }
+  public evaluateQuality(width = 1920, height = 1080, _targetAspectRatio: string = '16:9'): VisualQualityGateResult {
+    // In ChronoViet, the target video output is 16:9 (1920x1080).
+    // Visual assets of any aspect ratio (portrait, vertical, square, wide, panoramic)
+    // are fully supported and seamlessly composited by Remotion Engine (via BLUR_BG,
+    // HISTORICAL_FRAME, FULL_CONTAIN, DOCUMENTARY_GRID layouts).
+    // We only enforce a minimal sanity dimension (>= 200x200) to reject corrupted/tiny icons.
+    const minWidth = 200;
+    const minHeight = 200;
 
     const minResolutionMet = width >= minWidth && height >= minHeight;
-    const actualRatio = width / Math.max(1, height);
-
-    const ratioDiff = Math.abs(actualRatio - expectedRatio);
-    const aspectRatioValid = ratioDiff <= 0.15;
+    const aspectRatioValid = true;
     const noiseScoreEstimate = 0.05;
 
     let rejectionReason: string | undefined;
     if (!minResolutionMet) {
-      rejectionReason = `Resolution ${width}x${height} below minimum threshold (${minWidth}x${minHeight})`;
-    } else if (!aspectRatioValid) {
-      rejectionReason = `Aspect ratio mismatch: actual ${actualRatio.toFixed(2)}, expected ${expectedRatio.toFixed(2)}`;
+      rejectionReason = `Resolution ${width}x${height} below minimum sanity threshold (${minWidth}x${minHeight})`;
     }
 
     return {

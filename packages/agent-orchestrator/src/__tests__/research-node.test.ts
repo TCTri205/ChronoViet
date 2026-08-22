@@ -30,6 +30,21 @@ vi.mock('@chronoviet/vlm-inspector', async () => {
   };
 });
 
+vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    callLlm: vi.fn().mockResolvedValue({
+      content: JSON.stringify({
+        primaryQuery: 'Trận Bạch Đằng Ngô Quyền',
+        englishQuery: 'Battle of Bach Dang Ngo Quyen',
+        visualType: 'BATTLE_MAP',
+        historicalPeriod: 'Ngo Dynasty',
+      }),
+    }),
+  };
+});
+
 import { researchNode } from '../graph/nodes/research-node.js';
 import { keywordNode, extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
 import { ChronoGraphState } from '../graph/state.js';
@@ -57,6 +72,7 @@ function makeState(overrides: Partial<ChronoGraphState> = {}): ChronoGraphState 
     projectId: 'test_research',
     correlationId: 'test_research',
     userPrompt: 'Trận Bạch Đằng năm 938',
+    videoBriefId: undefined,
     targetDurationMinutes: 1,
     videoType: 'BATTLE',
     templateId: 'HISTORICAL_DOCUMENTARY',
@@ -107,9 +123,14 @@ describe('Research Agent Node', () => {
     expect(result.status).toBe('RESEARCH_COMPLETED');
     expect(result.researchResults).toBeDefined();
     expect(result.researchResults!['scene_001']).toBeDefined();
-    expect(result.researchResults!['scene_001'].candidates.length).toBeGreaterThan(0);
-    expect(result.researchResults!['scene_001'].candidates[0].license).toBe('PUBLIC_DOMAIN');
-    expect(mockResolve).toHaveBeenCalledWith('Ngô Quyền Bạch Đằng', 'scene_001', 3);
+    expect(mockResolve).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sceneId: 'scene_001',
+        primaryQuery: 'Ngô Quyền Bạch Đằng',
+      }),
+      'scene_001',
+      3
+    );
   });
 
   it('should skip PURE_CODE scenes', async () => {

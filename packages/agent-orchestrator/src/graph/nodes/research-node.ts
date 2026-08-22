@@ -44,9 +44,15 @@ export async function researchNode(state: ChronoGraphState): Promise<Partial<Chr
               englishQuery: scene.searchParams.englishQuery,
               visualType: (scene.searchParams.visualType as any) || 'GENERAL_HISTORICAL',
               historicalPeriod: scene.searchParams.historicalPeriod,
+              minResolution: 'HD' as const,
               limit: RESEARCH_CANDIDATE_LIMIT,
             }
-          : (scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt);
+          : {
+              sceneId: scene.sceneId,
+              primaryQuery: scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt,
+              minResolution: 'HD' as const,
+              limit: RESEARCH_CANDIDATE_LIMIT,
+            };
 
         const keywords = scene.searchParams?.primaryQuery || (scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt);
         const startedAt = Date.now();

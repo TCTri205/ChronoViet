@@ -8,6 +8,7 @@ import { CitationBadge, CitationItem } from "./CitationBadge";
 
 export interface MessageData {
   id: string;
+  conversationId?: string;
   role: "user" | "assistant";
   content: string;
   citations?: CitationItem[];
@@ -17,7 +18,7 @@ export interface MessageData {
 export interface ChatMessageProps {
   message: MessageData;
   onCitationClick?: (citation: CitationItem) => void;
-  onCreateVideoFromTopic?: (topic: string) => void;
+  onCreateVideoFromTopic?: (topic: string, conversationId?: string) => void;
 }
 
 // Pure module-level topic title extractor for 1-click video handover
@@ -107,11 +108,11 @@ function ChatMessageComponent({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onCreateVideoFromTopic(extractTopicFromMessage(message.content))}
+              onClick={() => onCreateVideoFromTopic(extractTopicFromMessage(message.content), message.conversationId)}
               className="text-xs h-7 gap-1.5 border-primary/30 text-gold-300 hover:bg-primary/20 hover:text-white"
             >
               <Film className="w-3.5 h-3.5 text-primary" />
-              <span>⚡ Tạo Video từ chủ đề này</span>
+              <span>⚡ Tạo Video từ cuộc trò chuyện này</span>
             </Button>
           </div>
         )}

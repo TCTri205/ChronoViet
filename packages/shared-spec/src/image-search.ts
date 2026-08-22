@@ -26,6 +26,8 @@ export const ImageSearchToolInputSchema = z.object({
   englishQuery: z.string().optional().describe("Từ khóa tiếng Anh tương ứng để tối ưu tìm kiếm trên Wikimedia/Google"),
   visualType: ImageSearchVisualTypeSchema.optional().default('GENERAL_HISTORICAL').describe("Loại hình ảnh tư liệu mong muốn"),
   historicalPeriod: z.string().optional().describe("Thời kỳ / Triều đại lịch sử liên quan"),
+  aspectRatio: z.enum(['16:9', '9:16', '1:1']).optional().describe("Tỷ lệ khung hình mong muốn cho Remotion video"),
+  minResolution: z.enum(['HD', 'FHD', '4K', 'ANY']).optional().default('HD').describe("Độ phân giải tối thiểu"),
   limit: z.number().int().min(1).max(10).optional().default(3).describe("Số lượng ứng viên ảnh cần tìm"),
 });
 export type ImageSearchToolInput = z.input<typeof ImageSearchToolInputSchema>;
@@ -85,7 +87,18 @@ export const DEFAULT_IMAGE_DOMAIN_WHITELIST = [
   'collectionapi.metmuseum.org',
   'www.britishmuseum.org',
   'media.britishmuseum.org',
-  'upload.wikimedia.org',
+  'baotanglichsu.vn',
+  'btlsqs.vn',
+  'archives.gov.vn',
+  'dsvh.gov.vn',
+  'ditichlichsuvanhoa.vn',
+  'nhandan.vn',
+  'chinhphu.vn',
+  'vietnam.vn',
+  'loc.gov',
+  'nga.gov',
+  'si.edu',
+  'rijksmuseum.nl',
 ];
 
 /**
@@ -138,6 +151,7 @@ export function getImageSearchProviderChain(): ImageSearchProviderName[] {
 /**
  * Infers a copyright license for an image URL based on its host.
  * Wikimedia / Flickr hosts are treated as PUBLIC_DOMAIN or CC0 (safe defaults),
+ * museum / public archive hosts are treated as PUBLIC_DOMAIN / CC0 / CC_BY_4_0,
  * anything else returns UNKNOWN (license-filter will reject it downstream).
  */
 export function inferLicenseFromDomain(imageUrl: string): LicenseType {
@@ -156,9 +170,37 @@ export function inferLicenseFromDomain(imageUrl: string): LicenseType {
   if (
     host === 'images.metmuseum.org' ||
     host === 'www.britishmuseum.org' ||
-    host === 'media.britishmuseum.org'
+    host === 'media.britishmuseum.org' ||
+    host === 'rijksmuseum.nl' ||
+    host.endsWith('.rijksmuseum.nl') ||
+    host === 'nga.gov' ||
+    host.endsWith('.nga.gov') ||
+    host === 'loc.gov' ||
+    host.endsWith('.loc.gov') ||
+    host === 'si.edu' ||
+    host.endsWith('.si.edu')
   ) {
     return 'CC0';
+  }
+  if (
+    host === 'baotanglichsu.vn' ||
+    host.endsWith('.baotanglichsu.vn') ||
+    host === 'btlsqs.vn' ||
+    host.endsWith('.btlsqs.vn') ||
+    host === 'archives.gov.vn' ||
+    host.endsWith('.archives.gov.vn') ||
+    host === 'dsvh.gov.vn' ||
+    host.endsWith('.dsvh.gov.vn') ||
+    host === 'ditichlichsuvanhoa.vn' ||
+    host.endsWith('.ditichlichsuvanhoa.vn') ||
+    host === 'nhandan.vn' ||
+    host.endsWith('.nhandan.vn') ||
+    host === 'chinhphu.vn' ||
+    host.endsWith('.chinhphu.vn') ||
+    host === 'vietnam.vn' ||
+    host.endsWith('.vietnam.vn')
+  ) {
+    return 'CC_BY_4_0';
   }
   return 'UNKNOWN';
 }

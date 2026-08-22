@@ -28,15 +28,34 @@ export interface RegressionCheckInput {
   };
 }
 
-export function evaluateRegressionGates(input: RegressionCheckInput): {
+export interface QualityFloorConfig {
+  minFactPrecision: number;
+  maxHallucinationRate: number;
+  minRecallAt10: number;
+  minNdcgAt5: number;
+  maxLatencyP95Ms: number;
+}
+
+export const DEFAULT_QUALITY_FLOORS: QualityFloorConfig = {
+  minFactPrecision: 90.0,
+  maxHallucinationRate: 5.0,
+  minRecallAt10: 70.0,
+  minNdcgAt5: 0.70,
+  maxLatencyP95Ms: 300.0,
+};
+
+export function evaluateRegressionGates(
+  input: RegressionCheckInput,
+  floors: QualityFloorConfig = DEFAULT_QUALITY_FLOORS
+): {
   allPassed: boolean;
   gates: RegressionQualityGate[];
 } {
   const gates: RegressionQualityGate[] = [];
 
-  // Gate 1: Fact Precision Drop Gate (Delta < 0.0% -> BLOCK)
+  // Gate 1: Fact Precision Gate (Absolute Floor >= 90.0% AND Relative Delta >= -2.0%)
   const deltaFact = input.current.factPrecision - input.baseline.factPrecision;
-  const passGate1 = deltaFact >= 0.0 || input.current.factPrecision >= 99.2;
+  const passGate1 = input.current.factPrecision >= floors.minFactPrecision && deltaFact >= -2.0;
   gates.push({
     gate_id: 'GATE_1_FACT_PRECISION',
     metric_name: 'Fact Precision',
@@ -46,12 +65,14 @@ export function evaluateRegressionGates(input: RegressionCheckInput): {
     threshold: 0.0,
     passed: passGate1,
     is_blocking: true,
-    message: passGate1 ? 'PASS: No Fact Precision regression' : 'FAIL: Fact Precision dropped below baseline!',
+    message: passGate1
+      ? `PASS: Fact Precision ${input.current.factPrecision}% >= floor ${floors.minFactPrecision}% (delta ${deltaFact.toFixed(2)}%)`
+      : `FAIL: Fact Precision failed floor check (${input.current.factPrecision}% < ${floors.minFactPrecision}%) or dropped significantly!`,
   });
 
-  // Gate 2: Hallucination Rate Increase Gate (Delta > 0.0% -> BLOCK)
+  // Gate 2: Hallucination Rate Gate (Absolute Ceiling <= 5.0% AND Relative Delta <= 2.0%)
   const deltaHalluc = input.current.hallucinationRate - input.baseline.hallucinationRate;
-  const passGate2 = deltaHalluc <= 0.0 || input.current.hallucinationRate <= 0.8;
+  const passGate2 = input.current.hallucinationRate <= floors.maxHallucinationRate && deltaHalluc <= 2.0;
   gates.push({
     gate_id: 'GATE_2_HALLUCINATION_RATE',
     metric_name: 'Hallucination Rate',
@@ -61,12 +82,14 @@ export function evaluateRegressionGates(input: RegressionCheckInput): {
     threshold: 0.0,
     passed: passGate2,
     is_blocking: true,
-    message: passGate2 ? 'PASS: Hallucination rate within bounds' : 'FAIL: Hallucination rate increased!',
+    message: passGate2
+      ? `PASS: Hallucination rate ${input.current.hallucinationRate}% <= ceiling ${floors.maxHallucinationRate}% (delta ${deltaHalluc.toFixed(2)}%)`
+      : `FAIL: Hallucination rate exceeded ceiling (${input.current.hallucinationRate}% > ${floors.maxHallucinationRate}%) or spiked!`,
   });
 
-  // Gate 3: Retrieval Recall Regression Gate (Delta Recall@10 < -1.0% -> BLOCK)
+  // Gate 3: Retrieval Recall Regression Gate (Absolute Floor >= 70.0% AND Relative Delta >= -5.0%)
   const deltaRecall = input.current.recallAt10 - input.baseline.recallAt10;
-  const passGate3 = deltaRecall >= -1.0 || input.current.recallAt10 >= 80.0;
+  const passGate3 = input.current.recallAt10 >= floors.minRecallAt10 && deltaRecall >= -5.0;
   gates.push({
     gate_id: 'GATE_3_RETRIEVAL_RECALL',
     metric_name: 'Retrieval Recall@10',
@@ -76,12 +99,14 @@ export function evaluateRegressionGates(input: RegressionCheckInput): {
     threshold: -1.0,
     passed: passGate3,
     is_blocking: true,
-    message: passGate3 ? 'PASS: Recall@10 stable' : 'FAIL: Recall@10 dropped by > 1.0%!',
+    message: passGate3
+      ? `PASS: Recall@10 ${input.current.recallAt10}% >= floor ${floors.minRecallAt10}% (delta ${deltaRecall.toFixed(2)}%)`
+      : `FAIL: Recall@10 dropped below floor (${input.current.recallAt10}% < ${floors.minRecallAt10}%)!`,
   });
 
-  // Gate 4: Ranking Quality Regression Gate (Delta nDCG@5 < -0.02 -> BLOCK)
+  // Gate 4: Ranking Quality Regression Gate (Absolute Floor >= 0.70 AND Relative Delta >= -0.05)
   const deltaNdcg = input.current.ndcgAt5 - input.baseline.ndcgAt5;
-  const passGate4 = deltaNdcg >= -0.02 || input.current.ndcgAt5 >= 0.80;
+  const passGate4 = input.current.ndcgAt5 >= floors.minNdcgAt5 && deltaNdcg >= -0.05;
   gates.push({
     gate_id: 'GATE_4_RANKING_NDCG',
     metric_name: 'Ranking nDCG@5',
@@ -91,21 +116,25 @@ export function evaluateRegressionGates(input: RegressionCheckInput): {
     threshold: -0.02,
     passed: passGate4,
     is_blocking: true,
-    message: passGate4 ? 'PASS: nDCG@5 ranking quality maintained' : 'FAIL: nDCG@5 dropped by > 0.02!',
+    message: passGate4
+      ? `PASS: nDCG@5 ${input.current.ndcgAt5} >= floor ${floors.minNdcgAt5} (delta ${deltaNdcg.toFixed(3)})`
+      : `FAIL: nDCG@5 dropped below floor (${input.current.ndcgAt5} < ${floors.minNdcgAt5})!`,
   });
 
-  // Gate 5: Latency Regression Gate (p95 > 300ms -> BLOCK)
-  const passGate5 = input.current.latencyP95Ms <= 300;
+  // Gate 5: Latency Regression Gate (p95 <= maxLatencyP95Ms)
+  const passGate5 = input.current.latencyP95Ms <= floors.maxLatencyP95Ms;
   gates.push({
     gate_id: 'GATE_5_LATENCY_P95',
     metric_name: 'p95 Latency SLA',
     baseline_value: input.baseline.latencyP95Ms,
     current_value: input.current.latencyP95Ms,
     delta: Number((input.current.latencyP95Ms - input.baseline.latencyP95Ms).toFixed(2)),
-    threshold: 300,
+    threshold: floors.maxLatencyP95Ms,
     passed: passGate5,
     is_blocking: true,
-    message: passGate5 ? 'PASS: p95 latency within SLA (< 300ms)' : 'FAIL: p95 latency exceeds 300ms!',
+    message: passGate5
+      ? `PASS: p95 latency ${input.current.latencyP95Ms}ms within SLA (< ${floors.maxLatencyP95Ms}ms)`
+      : `FAIL: p95 latency ${input.current.latencyP95Ms}ms exceeds SLA (${floors.maxLatencyP95Ms}ms)!`,
   });
 
   const allPassed = gates.every((g) => g.passed);

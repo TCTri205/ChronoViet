@@ -3,19 +3,15 @@
  */
 
 import Redis from 'ioredis';
-import { createLogger, envConfig, formatErrorMessage } from '@chronoviet/shared-spec';
+import { createLogger, envConfig, formatErrorMessage, VlmScoringResult } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'vlm-inspector' });
 
-export interface VLMScoreResult {
-  historicalContextScore: number;
-  visualNoiseScore: number;
-  artisticFitScore: number;
+export type VLMScoreResult = VlmScoringResult & {
   totalScore: number;
   passed: boolean;
   reasons: string[];
-  scorerType?: 'GEMINI_CLOUD' | 'LOCAL_VLM' | 'OPENAI_VLM' | 'CLIP_LOCAL_FALLBACK' | 'REDIS_CACHE';
-}
+};
 
 let redisClient: Redis | null = null;
 const MAX_MEMORY_CACHE_ENTRIES = 1000;

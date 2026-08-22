@@ -204,7 +204,7 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
    - Tiền xử lý Lexical FTS (`sanitizeFtsQuery`) làm sạch stopword tiếng Việt trước khi tạo tsquery, loại bỏ False Negative.
    - Chuẩn hóa thang điểm khởi tạo Graph Chunks ($1 / (60 + \text{rank})$) và cộng Co-Retrieval Boost ($+0.35$) cho các tài liệu đồng xác thực.
    - Tích hợp In-Memory LRU Embedding Cache (`SimpleLRUCache`, 500 mục) đạt tốc độ truy xuất sub-millisecond cho query lặp.
-   - BGE Reranker v2 bảo tồn toàn diện danh xưng lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô*) kết hợp trọng số độ tin cậy nguồn $W_{\text{source}} \le 15\%$.
+   - Pure Local Cross-Encoder Reranker (`Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0 trên `llama-server` Metal Engine, Port 8096) kết hợp Multi-Factor Historical Fusion (75% AI Score + 15% Cấp sử liệu LEVEL_1/2/3 + 10% Co-retrieval Boost) và bảo tồn toàn diện danh xưng lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô*).
 4. **Triển khai `packages/rag-engine/eval/`:**
    - Xây dựng bộ test benchmark **ChronoEval-1000** trong `packages/rag-engine/eval/datasets/`.
    - Viết runner đánh giá 3 chỉ số RAG cốt lõi:

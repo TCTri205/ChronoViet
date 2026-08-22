@@ -78,7 +78,7 @@ ChronoViet thiết kế chiến lược nạp mô hình phân tầng **Resident 
 │ RESIDENT MODELS (Thường trực ~7.5 GB)                                                   │
 │ ├── Qwen3.5-9B Unified LLM & VLM (Port 8092 - GGUF Q4_K_M + mmproj): ~5.5 GB            │
 │ ├── bge-m3 Vector Embedding (Port 8090 - GGUF / Dense 1024d): ~1.0 GB                   │
-│ └── Qwen3-Reranker-0.6B (GGUF Q8_0): ~0.8 GB                                            │
+│ └── Qwen3-Reranker-0.6B (Port 8096 - GGUF Q8_0): ~0.8 GB                                │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
 │ DYNAMIC WORKING MEMORY & 2-STAGE INGESTION (~5.5 GB)                                    │
 │ ├── Qwen3.5-4B-Instruct (Port 8094 - Data Prep Triples Extraction): ~2.5 GB             │
@@ -321,10 +321,11 @@ pnpm dev:hybrid      # Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local
 pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
 
 # 3. Quản lý AI & TTS Local Runtime thống nhất (Unified AI CLI):
-pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8080) & model đã nạp
-pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092)
+pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8096, 8080) & model đã nạp
+pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092 + Reranker 8096 + TTS 8080)
 pnpm ai:lite         # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb          # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
+pnpm ai:rerank       # Chỉ chạy Reranker Engine (Port 8096, Qwen3-Reranker-0.6B / BGE-Reranker-v2 ~800MB)
 pnpm ai:extract      # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler (Data Prep)
 pnpm ai:llm          # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 9B)
 pnpm ai:tts          # Khởi chạy microservice VieNeu TTS FastAPI trong Docker (Port 8080)
@@ -342,7 +343,10 @@ pnpm models:download:llm      # Chỉ tải Qwen 3.5 9B (~5.8GB)
 
 ### Bước 1: Khai báo Biến Môi Trường (`.env`)
 ```env
-# Cấu hình Local Model Gateway & Endpoints
+# AI Execution Mode: local_only | fallback | hybrid | cloud_only
+AI_EXECUTION_MODE=fallback
+
+# Cấu hình Local Model Gateway & Endpoints (Tùy chọn ghi đè)
 USE_LOCAL_LLM=true
 LOCAL_LLM_BACKEND=llama_cpp # Lựa chọn: llama_cpp | ollama | mlx
 LLM_BASE_URL=http://localhost:8092
@@ -383,6 +387,9 @@ EMBEDDING_PORT=8090
 EMBEDDING_API_URL=http://localhost:8090/v1/embeddings
 EMBEDDING_DIMENSION=1024
 LOCAL_RERANK_MODEL=qwen3-reranker-0.6b
+LOCAL_RERANK_URL=http://localhost:8096/v1/rerank
+RERANK_PORT=8096
+RERANK_TIMEOUT_MS=15000
 
 # Vision & Historical OCR Settings
 LOCAL_VISION_FILTER=siglip-2-multilingual-onnx

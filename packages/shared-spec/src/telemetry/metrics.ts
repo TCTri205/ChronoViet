@@ -122,6 +122,27 @@ export const ragSearchDurationSeconds = new Histogram({
   registers: [metricsRegistry],
 });
 
+export const ragTimeoutsTotal = new Counter({
+  name: 'chronoviet_rag_timeouts_total',
+  help: 'Total number of RAG search queries aborted due to SLA timeout',
+  registers: [metricsRegistry],
+});
+
+export const rerankRequestsTotal = new Counter({
+  name: 'chronoviet_rerank_requests_total',
+  help: 'Total number of Cross-Encoder reranking requests',
+  labelNames: ['model', 'status'],
+  registers: [metricsRegistry],
+});
+
+export const rerankDurationSeconds = new Histogram({
+  name: 'chronoviet_rerank_duration_seconds',
+  help: 'Duration of Cross-Encoder reranking in seconds',
+  labelNames: ['model', 'status'],
+  buckets: [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5],
+  registers: [metricsRegistry],
+});
+
 export const vlmInspectionsTotal = new Counter({
   name: 'chronoviet_vlm_inspections_total',
   help: 'Total number of VLM asset inspections performed',

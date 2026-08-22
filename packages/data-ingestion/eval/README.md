@@ -59,7 +59,7 @@ Khi chạy bộ kiểm thử đánh giá nhanh độc lập (`pnpm --filter @chr
 
 ## 📏 Giới Hạn Phân Đoạn Chunk Chuẩn Hóa (SSOT)
 
-Mọi giới hạn phân đoạn được định nghĩa tập trung tại [`@chronoviet/shared-spec`](../../shared-spec/src/chunking.ts):
+Mọi giới hạn phân đoạn được định nghĩa tập trung tại [`@chronoviet/shared-spec`](../../shared-spec/src/interfaces.ts):
 
 - **Parent Chunk:** `2000 - 3000` từ (`CHUNK_PARENT_MIN_WORDS` - `CHUNK_PARENT_MAX_WORDS`)
 - **Child Chunk:** `300 - 500` từ (`CHUNK_CHILD_MIN_WORDS` - `CHUNK_CHILD_MAX_WORDS`, target `400`, overlap `40`)

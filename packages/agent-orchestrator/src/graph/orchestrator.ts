@@ -58,6 +58,34 @@ export function buildOrchestratorGraph() {
         let ragContext = state.ragContext;
         const telemetryAudit: TelemetryAuditEntry[] = [];
 
+        if (!ragContext && state.videoBriefId) {
+          try {
+            const { getVideoBriefById } = await import('../brief/chat-to-brief-compiler.js');
+            const brief = await getVideoBriefById(state.videoBriefId);
+            if (brief) {
+              ragContext = {
+                verifiedContext: [
+                  {
+                    entityId: `brief_${brief.id}`,
+                    canonicalName: brief.topic,
+                    aliases: brief.keyEntities,
+                    summary: brief.summary,
+                    citations: brief.citations.map((c) => (typeof c === 'string' ? c : c.sourceTitle)),
+                    confidenceScore: 0.99,
+                  },
+                ],
+                aliasTable: { [brief.topic]: brief.keyEntities },
+                citations: brief.citations.map((c) => (typeof c === 'string' ? c : c.sourceTitle)),
+              };
+              nodeLog.info('orchestrator.brief_context_hydrated', `Hydrated RAG context from video brief ${brief.id}`, {
+                briefId: brief.id,
+              });
+            }
+          } catch (briefErr: any) {
+            nodeLog.warn('orchestrator.brief_hydration_warning', `Could not load video brief: ${briefErr.message}`);
+          }
+        }
+
         if (!ragContext) {
           try {
             const { ChronoRagEngine } = await import('@chronoviet/rag-engine');

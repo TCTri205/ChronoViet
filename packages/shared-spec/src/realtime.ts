@@ -7,6 +7,7 @@ import { z } from 'zod';
 import Redis from 'ioredis';
 import { envConfig } from './config.js';
 import { createLogger, formatErrorMessage } from './logger.js';
+import { GraphTripleItemSchema, HistoricalCitationItemSchema } from './schema.js';
 
 const log = createLogger({ service: 'shared-spec' });
 
@@ -95,7 +96,6 @@ export const ProjectSummarySchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime().optional(),
   videoUrl: z.string().optional(),
-  progressPercent: z.number().min(0).max(100).optional(),
 });
 export type ProjectSummary = z.infer<typeof ProjectSummarySchema>;
 
@@ -104,10 +104,14 @@ export type ProjectSummary = z.infer<typeof ProjectSummarySchema>;
 // ============================================================================
 
 export const ChatStreamResponseSchema = z.object({
-  type: z.enum(['token', 'citation', 'done', 'error']),
+  type: z.enum(['token', 'citation', 'intent', 'triples', 'done', 'error']),
   content: z.string().optional(),
-  citations: z.array(z.string()).optional(),
+  citations: z.array(z.union([z.string(), HistoricalCitationItemSchema])).optional(),
+  intent: z.string().optional(),
+  triples: z.array(GraphTripleItemSchema).optional(),
   error: z.string().optional(),
+  conversationId: z.string().optional(),
+  messageId: z.string().optional(),
 });
 export type ChatStreamResponse = z.infer<typeof ChatStreamResponseSchema>;
 

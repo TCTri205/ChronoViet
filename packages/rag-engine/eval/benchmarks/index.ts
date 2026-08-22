@@ -21,11 +21,16 @@ import { runSystemAblation } from './sys-ablation-regression.bench.js';
 import { evaluateRegressionGates } from './regression-gate.js';
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
 import { assertEvalPreflight } from '../../../../eval/utils/preflight.js';
+import { ensureBenchmarkDatabaseSeeded } from '../datasets/seeder.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export async function runMasterBenchmarkSuite(args: string[] = process.argv.slice(2)): Promise<void> {
+  if (process.env.EVAL_STRICT === undefined) {
+    process.env.EVAL_STRICT = 'true';
+  }
+
   const isAll = args.length === 0 || args.includes('--all') || args.includes('--fresh');
   const runC0 = isAll || args.includes('--c0');
   const runC1 = isAll || args.includes('--c1');
@@ -44,7 +49,10 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
   console.log('🏛️  CHRONOEVAL v2.0: COMPREHENSIVE COMPONENT-LEVEL & E2E EVALUATION SUITE');
   console.log('================================================================================\n');
 
-  const preflight = await assertEvalPreflight(['llm', 'embedding']);
+  const preflight = await assertEvalPreflight(['llm', 'embedding', 'postgres', 'reranker']);
+
+  console.log('📦 Ensuring benchmark database is initialized and seeded...');
+  await ensureBenchmarkDatabaseSeeded({ forceRebuild: args.includes('--fresh') });
 
   const reports: ComponentBenchmarkReport[] = [];
 

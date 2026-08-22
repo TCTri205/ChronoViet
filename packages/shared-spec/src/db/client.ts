@@ -76,7 +76,7 @@ export interface DbUnmappedEntity {
   occurrence_count?: number;
   sample_context?: string;
   chunk_id?: string;
-  status?: 'PENDING_TRIAGE' | 'MAPPED_TO_ALIAS' | 'DISCARDED_AS_NOISE';
+  status?: 'PENDING_TRIAGE' | 'MAPPED_TO_ALIAS' | 'DISCARDED_AS_NOISE' | 'PROMOTED';
   metadata?: Record<string, unknown>;
   created_at?: string;
   updated_at?: string;
@@ -91,6 +91,9 @@ class InMemoryRagStore {
   auditLogs: DbEntityAuditLog[] = [];
   quarantineTriples: DbQuarantineTriple[] = [];
   unmappedEntities = new Map<string, DbUnmappedEntity>();
+  conversations = new Map<string, any>();
+  conversationMessages: any[] = [];
+  videoBriefs = new Map<string, any>();
   nextRelId = 1;
   nextAuditLogId = 1;
   nextQuarantineId = 1;
@@ -103,6 +106,9 @@ class InMemoryRagStore {
     this.auditLogs = [];
     this.quarantineTriples = [];
     this.unmappedEntities.clear();
+    this.conversations.clear();
+    this.conversationMessages = [];
+    this.videoBriefs.clear();
     this.nextRelId = 1;
     this.nextAuditLogId = 1;
     this.nextQuarantineId = 1;
@@ -114,6 +120,8 @@ export const inMemoryStore = new InMemoryRagStore();
 let pgPool: Pool | null = null;
 let pgConnected = false;
 let checkAttempted = false;
+let lastCheckTime = 0;
+const NEGATIVE_CACHE_TTL_MS = 5000;
 
 export function getPoolConfig() {
   const db = getDatabaseConfig();
@@ -139,8 +147,14 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
     return false;
   }
 
-  if (checkAttempted && !forceCheck) return pgConnected;
+  const now = Date.now();
+  if (pgConnected && !forceCheck) return true;
+  if (!pgConnected && checkAttempted && !forceCheck && now - lastCheckTime < NEGATIVE_CACHE_TTL_MS) {
+    return false;
+  }
+
   checkAttempted = true;
+  lastCheckTime = now;
 
   const cfg = getPoolConfig();
   const timeoutMs = Math.max(2000, envConfig.PG_CONNECTION_TIMEOUT_MS || 5000);
@@ -236,6 +250,7 @@ export async function closePool(): Promise<void> {
     pgPool = null;
     pgConnected = false;
     checkAttempted = false;
+    lastCheckTime = 0;
   }
 }
 

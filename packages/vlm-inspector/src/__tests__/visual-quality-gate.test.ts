@@ -23,25 +23,26 @@ describe('VisualQualityGate Unit Tests', () => {
   });
 
   describe('Technical Quality & Dimension Checks', () => {
-    it('enforces 720p minimum resolution and aspect ratio constraints', () => {
+    it('accepts images of any aspect ratio (portrait, vertical, square, wide) and enforces sanity threshold', () => {
       const valid1080p = gate.evaluateQuality(1920, 1080, '16:9');
       expect(valid1080p.passed).toBe(true);
       expect(valid1080p.width).toBe(1920);
       expect(valid1080p.height).toBe(1080);
 
-      const validShorts916 = gate.evaluateQuality(1080, 1920, '9:16');
-      expect(validShorts916.passed).toBe(true);
+      const validPortrait = gate.evaluateQuality(800, 1200, '16:9');
+      expect(validPortrait.passed).toBe(true);
+      expect(validPortrait.aspectRatioValid).toBe(true);
 
-      const validSquare11 = gate.evaluateQuality(1080, 1080, '1:1');
-      expect(validSquare11.passed).toBe(true);
+      const validSquare = gate.evaluateQuality(800, 800, '16:9');
+      expect(validSquare.passed).toBe(true);
+      expect(validSquare.aspectRatioValid).toBe(true);
 
-      const lowRes = gate.evaluateQuality(640, 480, '16:9');
-      expect(lowRes.passed).toBe(false);
-      expect(lowRes.minResolutionMet).toBe(false);
+      const validWidePanorama = gate.evaluateQuality(2560, 1080, '16:9');
+      expect(validWidePanorama.passed).toBe(true);
 
-      const badRatio = gate.evaluateQuality(1920, 400, '16:9');
-      expect(badRatio.passed).toBe(false);
-      expect(badRatio.aspectRatioValid).toBe(false);
+      const tinyCorruptedIcon = gate.evaluateQuality(120, 80, '16:9');
+      expect(tinyCorruptedIcon.passed).toBe(false);
+      expect(tinyCorruptedIcon.minResolutionMet).toBe(false);
     });
 
     it('rejects asset with non-compliant license in validateAndRegister', async () => {

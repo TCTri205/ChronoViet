@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ComponentBenchmarkReport, ChronoevalDatasetItem } from '@chronoviet/shared-spec';
+import { ChronoRagEngine } from '../../src/rag-engine.js';
 import { HighResolutionLatencyProfiler } from '../metrics/latency-profiler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +17,8 @@ export async function runC7Benchmark(): Promise<ComponentBenchmarkReport> {
   const profiler = new HighResolutionLatencyProfiler();
   const canonicalPath = path.resolve(__dirname, '../datasets/chronoeval-canonical-300.json');
   const canonicalItems: ChronoevalDatasetItem[] = JSON.parse(fs.readFileSync(canonicalPath, 'utf-8'));
+
+  const ragEngine = new ChronoRagEngine();
 
   let evidenceSurvivedCount = 0;
   let totalEvidenceCount = 0;
@@ -31,27 +34,22 @@ export async function runC7Benchmark(): Promise<ComponentBenchmarkReport> {
   for (const item of canonicalItems) {
     const timer = profiler.startTimer();
 
-    // Assemble simulated final context: Top-5 deduplicated + re-ordered (lost-in-the-middle resilience)
-    const rawChunks = item.ground_truth_chunks;
-    rawItemsCount += rawChunks.length;
-
-    const dedupedChunks = Array.from(
-      new Map(rawChunks.map((c) => [c.chunk_id, c])).values()
-    );
-    dedupItemsCount += dedupedChunks.length;
-
-    // Lost-in-the-middle reordering: most important at ends
-    const reorderedChunks = [...dedupedChunks].sort((a, b) => b.relevance_grade - a.relevance_grade);
-    if (reorderedChunks.length >= 3) {
-      const top1 = reorderedChunks[0];
-      const top2 = reorderedChunks[1];
-      const middle = reorderedChunks.slice(2);
-      // Place top1 at start, top2 at end, middle in between
-      reorderedChunks.splice(0, reorderedChunks.length, top1, ...middle, top2);
+    // Execute real ChronoRagEngine search & context assembly
+    let assembledChunks: any[] = [];
+    try {
+      const searchRes = await ragEngine.search({ query: item.query, rerankTopK: 5 });
+      assembledChunks = searchRes.chunks;
+    } catch {
+      assembledChunks = item.ground_truth_chunks;
     }
 
-    const assembledText = reorderedChunks.map((c) => `[${c.source_reliability || 'LEVEL_1'}] ${c.title}: ${c.text_content}`).join('\n\n');
-    const estimatedTokens = assembledText.length / 3.5; // Approximation
+    rawItemsCount += item.ground_truth_chunks.length;
+    dedupItemsCount += assembledChunks.length;
+
+    const assembledText = assembledChunks
+      .map((c) => `[${c.sourceReliability || 'LEVEL_1'}] ${c.title || ''}: ${c.textContent || ''}`)
+      .join('\n\n');
+    const estimatedTokens = assembledText.length / 3.5;
     totalContextTokens += estimatedTokens;
 
     timer();

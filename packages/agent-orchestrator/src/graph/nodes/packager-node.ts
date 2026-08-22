@@ -6,6 +6,7 @@
 import {
   CaptionWord,
   ChronoVideoProps,
+  envConfig,
   saveProjectSchema,
   TimelineScene,
   VideoProjectSchema,
@@ -92,8 +93,52 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
     nodeLog.warn('orchestrator.save_schema_error', `Could not save to disk workspace: ${err.message}`);
   }
 
+  let finalStatus: 'PACKAGED' | 'RENDERING' | 'COMPLETED' = 'PACKAGED';
+
+  // Auto-enqueue to BullMQ remotion-render-queue
+  const autoDispatch = envConfig.AUTO_DISPATCH_RENDER !== false && process.env.AUTO_DISPATCH_RENDER !== 'false';
+  if (autoDispatch && envConfig.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'test') {
+    try {
+      const { enqueueRenderJob, getProjectPaths } = await import('@chronoviet/shared-spec');
+      const { jobId } = await enqueueRenderJob(state.projectId, {
+        correlationId: state.correlationId || state.projectId,
+        outputFormat: 'mp4',
+      });
+      finalStatus = 'RENDERING';
+
+      // Persist active jobId in metadata.json for accurate abort and progress tracking
+      try {
+        const paths = getProjectPaths(state.projectId);
+        let metadata: Record<string, any> = { projectId: state.projectId };
+        const fs = await import('fs');
+        if (fs.existsSync(paths.metadataFile)) {
+          try {
+            metadata = JSON.parse(fs.readFileSync(paths.metadataFile, 'utf-8'));
+          } catch {}
+        }
+        metadata.status = 'RENDERING';
+        metadata.renderJobId = jobId;
+        metadata.enqueuedAt = new Date().toISOString();
+        metadata.updatedAt = new Date().toISOString();
+        fs.writeFileSync(paths.metadataFile, JSON.stringify(metadata, null, 2), 'utf-8');
+      } catch (metaErr: any) {
+        nodeLog.warn('orchestrator.metadata_job_id_warning', `Could not persist renderJobId to metadata: ${metaErr.message}`);
+      }
+
+      nodeLog.info('orchestrator.auto_render_dispatched', `Auto-dispatched project ${state.projectId} to render queue (jobId: ${jobId})`, {
+        jobId,
+        projectId: state.projectId,
+      });
+    } catch (enqueueErr: any) {
+      nodeLog.warn('orchestrator.auto_render_enqueue_failed', `Failed to auto-dispatch render: ${enqueueErr.message}`);
+      finalStatus = 'PACKAGED';
+    }
+  } else {
+    finalStatus = 'COMPLETED';
+  }
+
   return {
-    status: 'COMPLETED',
+    status: finalStatus,
     currentStep: 12,
     videoProps: validatedSchema,
   };

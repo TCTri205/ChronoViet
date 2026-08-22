@@ -14,4 +14,6 @@ export * from './telemetry/metrics.js';
 export * from './api-key-rotator.js';
 export * from './resource-sentinel.js';
 export * from './circuit-breaker.js';
+export * from './queues.js';
+export * from './reranker-client.js';
 

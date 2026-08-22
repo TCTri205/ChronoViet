@@ -14,7 +14,7 @@ This package contains the automated component-level and end-to-end benchmark sui
 | **C3** | Graph Traversal & Reasoning | `benchmarks/c3-graph-reasoning.bench.ts` | Gold path recall, shortest valid path rate, hub node guards, CTE latency |
 | **C4** | Dense + Lexical Hybrid Retrieval | `benchmarks/c4-hybrid-retrieval.bench.ts` | Dense/FTS Recall@10, Candidate Union Recall, Hybrid Fusion Recall@10/5, RRF sweep |
 | **C5** | Graph-Guided Chunk Linking | `benchmarks/c5-graph-chunk-link.bench.ts` | Graph-exclusive recall, hop-distance precision (1h vs 2h), noise suppression |
-| **C6** | Reranker & Relevance Ordering | `benchmarks/c6-reranker.bench.ts` | Graded relevance (nDCG@5), pairwise ranking accuracy, delta MRR, $W_{\text{source}}$ |
+| **C6** | Reranker & Relevance Ordering | `benchmarks/c6-reranker.bench.ts` | Pure Local Cross-Encoder (nDCG@5), pairwise ranking accuracy, delta MRR, Multi-Factor Fusion |
 | **C7** | Context Assembly & Budgeting | `benchmarks/c7-context-assembly.bench.ts` | Context evidence recall, deduplication loss, lost-in-the-middle resilience |
 | **C8** | Answer Generation & Correctness | `benchmarks/c8-generation.bench.ts` | Historical fact precision ($> 99.2\%$), answer completeness, temporal correctness |
 | **C9** | Grounding & Citation Verification | `benchmarks/c9-grounding-citation.bench.ts` | Claim-level faithfulness, hallucination rate ($< 0.8\%$), citation entailment |

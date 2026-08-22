@@ -14,9 +14,11 @@ import {
   executeWithKeyRotation,
   hasAvailableApiKeys,
 } from '@chronoviet/shared-spec';
-import { ImageSearchProvider } from './image-search-provider.js';
+import { ImageSearchProvider, ImageSearchProviderOptions } from './image-search-provider.js';
 
 const log = createLogger({ service: 'vlm-inspector' });
+
+const UNSUPPORTED_EXTENSIONS = ['.svg', '.gif', '.ico', '.pdf', '.djvu'];
 
 export class BraveImageSearchProvider implements ImageSearchProvider {
   readonly name = 'brave';
@@ -27,14 +29,12 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
     this.explicitApiKey = apiKey;
   }
 
-  async search(keywords: string, limit: number): Promise<VisualCandidate[]> {
+  async search(keywords: string, limit: number, _options?: ImageSearchProviderOptions): Promise<VisualCandidate[]> {
     const runSearchWithKey = async (apiKey: string): Promise<VisualCandidate[]> => {
       const params = new URLSearchParams({
         q: keywords,
         count: String(Math.min(50, Math.max(1, limit * 3))),
-        safesearch: 'strict',
-        country: 'VN',
-        search_lang: 'vi',
+        safesearch: 'moderate',
       });
 
       const controller = new AbortController();
@@ -72,6 +72,11 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
           // Original full-resolution image lives in properties.url; thumbnail.src is a Brave proxy
           const imageUrl = item?.properties?.url || item?.thumbnail?.src;
           if (!imageUrl || typeof imageUrl !== 'string' || !isAllowedImageDomain(imageUrl)) {
+            continue;
+          }
+
+          const lowerUrl = imageUrl.toLowerCase().split('?')[0];
+          if (UNSUPPORTED_EXTENSIONS.some((ext) => lowerUrl.endsWith(ext))) {
             continue;
           }
 

@@ -10,14 +10,21 @@ import { HistoricalSourceModal } from "./HistoricalSourceModal";
 import { CitationItem } from "./CitationBadge";
 
 export interface ChatContainerProps {
-  onHandoverToVideo?: (topic: string) => void;
+  activeConversationId?: string | null;
+  onSelectConversation?: (conversationId: string) => void;
+  onHandoverToVideo?: (topic: string, conversationId?: string) => void;
   className?: string;
 }
 
 export function ChatContainer({
+  activeConversationId = null,
+  onSelectConversation,
   onHandoverToVideo,
   className = "",
 }: ChatContainerProps) {
+  const [currentConversationId, setCurrentConversationId] = useState<string>(
+    () => activeConversationId || `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+  );
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +35,47 @@ export function ChatContainer({
 
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // Sync activeConversationId when changed externally (e.g. from Sidebar)
+  useEffect(() => {
+    if (activeConversationId && activeConversationId !== currentConversationId) {
+      setCurrentConversationId(activeConversationId);
+      // Fetch messages for this conversation
+      fetch(`/api/v1/conversations/${activeConversationId}/messages`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && Array.isArray(data.messages)) {
+            const mapped: MessageData[] = data.messages.map((m: any) => ({
+              id: m.id,
+              conversationId: m.conversationId,
+              role: m.role,
+              content: m.content,
+              citations: Array.isArray(m.citations)
+                ? m.citations.map((c: any, idx: number) => ({
+                    id: idx + 1,
+                    sourceTitle: typeof c === 'string' ? c : c.sourceTitle || "Đại Việt Sử Ký Toàn Thư",
+                    annalsName: typeof c === 'string' ? "Chính Sử" : c.annalsName || "Bản Kỷ Toàn Thư",
+                    dynasty: typeof c === 'string' ? "Thời Trần / Lê" : c.dynasty || "Thời Trần",
+                    period: typeof c === 'string' ? "Lịch Sử Cổ Trung Đại" : c.period || "Thế kỷ XIII",
+                    reliabilityLevel: 1,
+                    originalExcerpt: typeof c === 'string' ? c : c.excerpt || "",
+                  }))
+                : [],
+              timestamp: m.createdAt,
+            }));
+            setMessages(mapped);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [activeConversationId]);
+
+  const handleNewConversation = () => {
+    const newConvId = `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setCurrentConversationId(newConvId);
+    setMessages([]);
+    onSelectConversation?.(newConvId);
+  };
 
   // Handle scroll detection
   const handleScroll = () => {
@@ -63,6 +111,7 @@ export function ChatContainer({
 
     const userMessage: MessageData = {
       id: `user_${Date.now()}`,
+      conversationId: currentConversationId,
       role: "user",
       content: query,
       timestamp: new Date().toISOString(),
@@ -76,6 +125,7 @@ export function ChatContainer({
     const assistantMsgId = `assistant_${Date.now()}`;
     const initialAssistantMsg: MessageData = {
       id: assistantMsgId,
+      conversationId: currentConversationId,
       role: "assistant",
       content: "",
       citations: [],
@@ -87,7 +137,10 @@ export function ChatContainer({
       const response = await fetch("/api/v1/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({
+          query,
+          conversationId: currentConversationId,
+        }),
       });
 
       if (!response.ok) {
@@ -266,6 +319,15 @@ export function ChatContainer({
             </span>
           </div>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleNewConversation}
+          className="text-xs h-7 gap-1 border-primary/20 text-text-secondary hover:text-gold-300 hover:bg-primary/10"
+        >
+          <span>➕ Đoạn chat mới</span>
+        </Button>
       </div>
 
       {/* Messages Scroll Area */}
@@ -284,7 +346,9 @@ export function ChatContainer({
               key={msg.id}
               message={msg}
               onCitationClick={handleCitationClick}
-              onCreateVideoFromTopic={onHandoverToVideo}
+              onCreateVideoFromTopic={(topic, convId) =>
+                onHandoverToVideo?.(topic, convId || currentConversationId)
+              }
             />
           ))
         )}

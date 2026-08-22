@@ -24,7 +24,7 @@ export interface HeaderProps {
 export function Header({
   onNewProject,
   onOpenMobileMenu,
-  activeProjectTitle = "Chiến Thắng Bạch Đằng 1288",
+  activeProjectTitle,
   className = "",
 }: HeaderProps) {
   const [nodes, setNodes] = useState<NodeHealth[]>([

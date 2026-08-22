@@ -5,11 +5,11 @@
  * from producing a misleading PASS during evaluation.
  */
 
-import { envConfig, isLLMServiceHealthy, isEmbeddingServiceHealthy, createLogger, hasAvailableApiKeys } from '../../packages/shared-spec/src/index.js';
+import { envConfig, isLLMServiceHealthy, isEmbeddingServiceHealthy, createLogger, hasAvailableApiKeys, isPgAvailable, query, getDatabaseConfig } from '../../packages/shared-spec/src/index.js';
 
 const log = createLogger({ service: 'eval-preflight' });
 
-export type EvalService = 'llm' | 'embedding' | 'tts' | 'vlm' | 'search';
+export type EvalService = 'llm' | 'embedding' | 'tts' | 'vlm' | 'search' | 'postgres' | 'reranker';
 
 export interface PreflightCheck {
   service: EvalService;
@@ -207,12 +207,104 @@ async function checkSearchHealth(): Promise<PreflightCheck> {
   };
 }
 
+async function checkPostgresHealth(): Promise<PreflightCheck> {
+  const dbCfg = getDatabaseConfig();
+  try {
+    const isConnected = await isPgAvailable(true);
+    if (!isConnected) {
+      return {
+        service: 'postgres',
+        healthy: false,
+        provider: 'IN_MEMORY_FALLBACK',
+        required: true,
+        details: `PostgreSQL connection failed at ${dbCfg.host}:${dbCfg.port}/${dbCfg.database}`,
+      };
+    }
+
+    const rows = await query<{ extname: string }>('SELECT extname FROM pg_extension WHERE extname = $1;', ['vector']);
+    if (rows.length === 0) {
+      return {
+        service: 'postgres',
+        healthy: false,
+        provider: `POSTGRES_WITHOUT_PGVECTOR (${dbCfg.host}:${dbCfg.port}/${dbCfg.database})`,
+        required: true,
+        details: `Connected to PostgreSQL, but 'vector' (pgvector) extension is not installed or enabled in ${dbCfg.database}`,
+      };
+    }
+
+    return {
+      service: 'postgres',
+      healthy: true,
+      provider: `REAL_POSTGRES_PGVECTOR (${dbCfg.host}:${dbCfg.port}/${dbCfg.database})`,
+      required: true,
+    };
+  } catch (err: any) {
+    return {
+      service: 'postgres',
+      healthy: false,
+      provider: 'IN_MEMORY_FALLBACK',
+      required: true,
+      details: `PostgreSQL check error: ${err?.message || String(err)}`,
+    };
+  }
+}
+
+async function checkRerankerHealth(): Promise<PreflightCheck> {
+  const url = envConfig.LOCAL_RERANK_URL || 'http://localhost:8096/v1/rerank';
+  const model = envConfig.LOCAL_RERANK_MODEL || 'qwen3-reranker-0.6b';
+  const endpoint = url.endsWith('/v1/rerank') ? url : `${url.replace(/\/+$/, '')}/v1/rerank`;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        query: 'health_check',
+        documents: ['ping', 'pong'],
+        top_n: 2,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (res.ok) {
+      return {
+        service: 'reranker',
+        healthy: true,
+        provider: `REAL_CROSS_ENCODER_RERANKER (${endpoint}) [${model}]`,
+        required: true,
+      };
+    }
+
+    return {
+      service: 'reranker',
+      healthy: false,
+      provider: 'HEURISTIC_KEYWORD_FALLBACK',
+      required: true,
+      details: `Local Reranker endpoint HTTP ${res.status} at ${endpoint}`,
+    };
+  } catch (err: any) {
+    return {
+      service: 'reranker',
+      healthy: false,
+      provider: 'HEURISTIC_KEYWORD_FALLBACK',
+      required: true,
+      details: `Local Reranker unreachable at ${endpoint}: ${err?.message || String(err)}`,
+    };
+  }
+}
+
 const CHECKERS: Record<EvalService, () => Promise<PreflightCheck>> = {
   llm: checkLlmHealth,
   embedding: checkEmbeddingHealth,
   tts: checkTtsHealth,
   vlm: checkVlmHealth,
   search: checkSearchHealth,
+  postgres: checkPostgresHealth,
+  reranker: checkRerankerHealth,
 };
 
 /**

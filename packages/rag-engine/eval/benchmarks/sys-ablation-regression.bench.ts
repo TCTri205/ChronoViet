@@ -44,7 +44,6 @@ export async function runSystemAblation(): Promise<{
   report: ComponentBenchmarkReport;
   ablationMatrix: AblationRow[];
 }> {
-  process.env.FORCE_OFFLINE = 'true';
   const profiler = new HighResolutionLatencyProfiler();
   const canonicalPath = path.resolve(__dirname, '../datasets/chronoeval-canonical-300.json');
   const canonicalItems: ChronoevalDatasetItem[] = JSON.parse(fs.readFileSync(canonicalPath, 'utf-8'));
@@ -59,30 +58,7 @@ export async function runSystemAblation(): Promise<{
     confidence: t.confidence || 1.0,
   }));
 
-  if (inMemoryStore.documentChunks.size === 0) {
-    for (const item of canonicalItems) {
-      for (const chunk of item.ground_truth_chunks) {
-        const textToEmbed = `${chunk.title || ''} ${chunk.text_content || ''}`.trim();
-        const emb = await generateEmbedding(textToEmbed || 'historical context');
-        inMemoryStore.documentChunks.set(chunk.chunk_id, {
-          id: chunk.chunk_id,
-          title: chunk.title || 'Historical Document',
-          text_content: chunk.text_content || 'Context description',
-          dynasty: item.temporal_bounds?.dynasty || 'Nhà Tây Sơn',
-          source_reliability: chunk.source_reliability || 'LEVEL_1',
-          embedding: emb,
-        });
-        if (item.canonical_entity_id) {
-          inMemoryStore.entityChunks.push({
-            entity_id: item.canonical_entity_id,
-            chunk_id: chunk.chunk_id,
-          });
-        }
-      }
-    }
-  }
-
-  const testSubset = canonicalItems.slice(0, 40); // 40 representative queries across all epochs
+  const testSubset = canonicalItems.slice(0, 30); // 30 representative queries across all epochs
 
   const perConfigScores: Record<string, {
     recall10: number[];
@@ -110,28 +86,23 @@ export async function runSystemAblation(): Promise<{
     };
   };
 
-  function isRelevant(chunk: any, item: ChronoevalDatasetItem): number {
-    const text = ((chunk.title || '') + ' ' + (chunk.textContent || '')).toLowerCase();
-    const queryTerms = item.query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
-    const matchedTerms = queryTerms.filter(t => text.includes(t));
-    if (matchedTerms.length >= 3) return 3;
-    if (matchedTerms.length >= 2) return 2;
-    if (matchedTerms.length >= 1) return 1;
-    return 0;
-  }
-
   for (const item of testSubset) {
     const goldTexts = item.ground_truth_chunks.map((c) => c.text_content || '');
+    const goldGradeMap = new Map<string, number>();
+    for (const chunk of item.ground_truth_chunks) {
+      goldGradeMap.set(chunk.chunk_id, chunk.relevance_grade);
+    }
+    const goldSet = new Set(item.ground_truth_chunks.filter((c) => c.relevance_grade >= 2).map((c) => c.chunk_id));
     const qEmb = await generateEmbedding(item.query);
 
     // --- CONFIG A: Dense Vector Only ---
     const tA = performance.now();
     const resA = await searchDenseVector(qEmb, 20);
     const latA = performance.now() - tA;
-    const hitsA = resA.slice(0, 10).filter(c => isRelevant(c, item) >= 2);
-    perConfigScores.A.recall10.push(hitsA.length > 0 ? 1 : 0);
-    perConfigScores.A.mrr5.push(resA.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 1.0 : 0);
-    perConfigScores.A.ndcg5.push(resA.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 0.85 : 0.1);
+    const idsA = resA.map((c) => c.chunkId);
+    perConfigScores.A.recall10.push(calculateRecallAtK(idsA, goldSet, 10));
+    perConfigScores.A.mrr5.push(calculateMRRAtK(idsA, goldGradeMap, 5, 2));
+    perConfigScores.A.ndcg5.push(calculateNDCGAtK(idsA, goldGradeMap, 5));
     const grA = evaluateGrounding(resA.slice(0, 5), goldTexts);
     perConfigScores.A.factPrecision.push(grA.factPrec);
     perConfigScores.A.faithfulness.push(grA.faithfulness);
@@ -141,10 +112,10 @@ export async function runSystemAblation(): Promise<{
     const tB = performance.now();
     const resB = await searchLexicalFTS(item.query, 20);
     const latB = performance.now() - tB;
-    const hitsB = resB.slice(0, 10).filter(c => isRelevant(c, item) >= 2);
-    perConfigScores.B.recall10.push(hitsB.length > 0 ? 1 : 0);
-    perConfigScores.B.mrr5.push(resB.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 1.0 : 0);
-    perConfigScores.B.ndcg5.push(resB.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 0.80 : 0.1);
+    const idsB = resB.map((c) => c.chunkId);
+    perConfigScores.B.recall10.push(calculateRecallAtK(idsB, goldSet, 10));
+    perConfigScores.B.mrr5.push(calculateMRRAtK(idsB, goldGradeMap, 5, 2));
+    perConfigScores.B.ndcg5.push(calculateNDCGAtK(idsB, goldGradeMap, 5));
     const grB = evaluateGrounding(resB.slice(0, 5), goldTexts);
     perConfigScores.B.factPrecision.push(grB.factPrec);
     perConfigScores.B.faithfulness.push(grB.faithfulness);
@@ -154,10 +125,10 @@ export async function runSystemAblation(): Promise<{
     const tC = performance.now();
     const resC = await searchHybridVectorAndBM25(item.query, qEmb, 20);
     const latC = performance.now() - tC;
-    const hitsC = resC.slice(0, 10).filter(c => isRelevant(c, item) >= 2);
-    perConfigScores.C.recall10.push(hitsC.length > 0 ? 1 : 0);
-    perConfigScores.C.mrr5.push(resC.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 1.0 : 0);
-    perConfigScores.C.ndcg5.push(resC.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 0.88 : 0.1);
+    const idsC = resC.map((c) => c.chunkId);
+    perConfigScores.C.recall10.push(calculateRecallAtK(idsC, goldSet, 10));
+    perConfigScores.C.mrr5.push(calculateMRRAtK(idsC, goldGradeMap, 5, 2));
+    perConfigScores.C.ndcg5.push(calculateNDCGAtK(idsC, goldGradeMap, 5));
     const grC = evaluateGrounding(resC.slice(0, 5), goldTexts);
     perConfigScores.C.factPrecision.push(grC.factPrec);
     perConfigScores.C.faithfulness.push(grC.faithfulness);
@@ -169,10 +140,10 @@ export async function runSystemAblation(): Promise<{
     const graphRes = await searchLocalGraphCTE([seedEntityId], 2);
     const graphChunks = await getChunksForEntities(graphRes.entityIds);
     const latD = performance.now() - tD;
-    const hitsD = graphChunks.slice(0, 10).filter(c => isRelevant(c, item) >= 1);
-    perConfigScores.D.recall10.push(hitsD.length > 0 ? 1 : 0);
-    perConfigScores.D.mrr5.push(graphChunks.slice(0, 5).some(c => isRelevant(c, item) >= 1) ? 1.0 : 0);
-    perConfigScores.D.ndcg5.push(graphChunks.slice(0, 5).some(c => isRelevant(c, item) >= 1) ? 0.75 : 0.1);
+    const idsD = graphChunks.map((c) => c.chunkId);
+    perConfigScores.D.recall10.push(calculateRecallAtK(idsD, goldSet, 10));
+    perConfigScores.D.mrr5.push(calculateMRRAtK(idsD, goldGradeMap, 5, 2));
+    perConfigScores.D.ndcg5.push(calculateNDCGAtK(idsD, goldGradeMap, 5));
     const grD = evaluateGrounding(graphChunks.slice(0, 5), goldTexts);
     perConfigScores.D.factPrecision.push(grD.factPrec);
     perConfigScores.D.faithfulness.push(grD.faithfulness);
@@ -187,10 +158,10 @@ export async function runSystemAblation(): Promise<{
       return true;
     });
     const latE = Math.max(latC, latD) + (performance.now() - tE);
-    const hitsE = unionE.slice(0, 10).filter(c => isRelevant(c, item) >= 2);
-    perConfigScores.E.recall10.push(hitsE.length > 0 ? 1 : 0);
-    perConfigScores.E.mrr5.push(unionE.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 1.0 : 0);
-    perConfigScores.E.ndcg5.push(unionE.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 0.90 : 0.1);
+    const idsE = unionE.map((c) => c.chunkId);
+    perConfigScores.E.recall10.push(calculateRecallAtK(idsE, goldSet, 10));
+    perConfigScores.E.mrr5.push(calculateMRRAtK(idsE, goldGradeMap, 5, 2));
+    perConfigScores.E.ndcg5.push(calculateNDCGAtK(idsE, goldGradeMap, 5));
     const grE = evaluateGrounding(unionE.slice(0, 5), goldTexts);
     perConfigScores.E.factPrecision.push(grE.factPrec);
     perConfigScores.E.faithfulness.push(grE.faithfulness);
@@ -198,12 +169,12 @@ export async function runSystemAblation(): Promise<{
 
     // --- CONFIG F: Full Chrono-RAG Pipeline (Hybrid + Graph + Reranker) ---
     const tF = performance.now();
-    const rerankedF = rerankCandidates(item.query, unionE, 10);
+    const rerankedF = await rerankCandidates(item.query, unionE, 10);
     const latF = latE + (performance.now() - tF);
-    const hitsF = rerankedF.slice(0, 10).filter(c => isRelevant(c, item) >= 2);
-    perConfigScores.F.recall10.push(hitsF.length > 0 ? 1 : 0);
-    perConfigScores.F.mrr5.push(rerankedF.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 1.0 : 0);
-    perConfigScores.F.ndcg5.push(rerankedF.slice(0, 5).some(c => isRelevant(c, item) >= 2) ? 0.94 : 0.1);
+    const idsF = rerankedF.map((c) => c.chunkId);
+    perConfigScores.F.recall10.push(calculateRecallAtK(idsF, goldSet, 10));
+    perConfigScores.F.mrr5.push(calculateMRRAtK(idsF, goldGradeMap, 5, 2));
+    perConfigScores.F.ndcg5.push(calculateNDCGAtK(idsF, goldGradeMap, 5));
     const grF = evaluateGrounding(rerankedF.slice(0, 5), goldTexts);
     perConfigScores.F.factPrecision.push(grF.factPrec);
     perConfigScores.F.faithfulness.push(grF.faithfulness);

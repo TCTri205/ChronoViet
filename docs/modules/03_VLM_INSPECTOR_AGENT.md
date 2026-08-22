@@ -159,7 +159,7 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
 
 ## 5. Tương Tác Giữa VLM Sub-Agent Và Multi-Agent Orchestrator
 
-**Đầu vào candidate:** VLM Inspector **nhận candidate pool từ Research Agent (Micro-Step 1C)** qua state `researchResults[sceneId]`. Research Agent gọi công cụ **`executeImageSearchTool`** với đầu vào **`ImageSearchToolInput`** chuẩn (`primaryQuery`, `englishQuery`, `visualType`, `historicalPeriod`), kích hoạt provider chain online (SerpAPI / Tavily / Brave Search API → Wikimedia Commons Live → Curated Catalog 13 assets verified) và chỉ chấp nhận ảnh từ domain whitelist, bảo đảm ảnh tải về được tự động tối ưu qua **Sharp Resizer (1080p, <=2MB)** trước khi VLM Inspector tiến hành chấm điểm bối cảnh lịch sử, nhiễu thị giác và thẩm mỹ.
+**Đầu vào candidate:** VLM Inspector **nhận candidate pool từ Research Agent (Micro-Step 1C)** qua state `researchResults[sceneId]`. Research Agent gọi công cụ **`executeImageSearchTool`** với đầu vào **`ImageSearchToolInput`** chuẩn (`primaryQuery`, `englishQuery`, `visualType`, `historicalPeriod`, `aspectRatio`, `minResolution`), kích hoạt provider chain online (SerpAPI / Tavily / Brave Search API → Wikimedia Commons Live → Curated Catalog 14 assets verified) và chỉ chấp nhận ảnh từ domain whitelist, bảo đảm ảnh tải về được tự động tối ưu qua **Sharp Resizer (1080p, <=2MB)** trước khi VLM Inspector tiến hành chấm điểm bối cảnh lịch sử, nhiễu thị giác và thẩm mỹ.
 
 ```json
 // Output trả về từ VLM Sub-Agent gửi đến Master Orchestrator:

@@ -10,6 +10,11 @@ import { createLogger, VisualCandidate } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'vlm-inspector' });
 
+export interface ImageSearchProviderOptions {
+  aspectRatio?: '16:9' | '9:16' | '1:1';
+  minResolution?: 'HD' | 'FHD' | '4K' | 'ANY';
+}
+
 export interface ImageSearchProvider {
   readonly name: string;
   /**
@@ -17,7 +22,7 @@ export interface ImageSearchProvider {
    * Must return an empty array (never throw) when the provider is unavailable
    * or returns no usable results, so the chain can fall through cleanly.
    */
-  search(keywords: string, limit: number): Promise<VisualCandidate[]>;
+  search(keywords: string, limit: number, options?: ImageSearchProviderOptions): Promise<VisualCandidate[]>;
 }
 
 export interface ProviderSearchResult {
@@ -36,7 +41,8 @@ export interface ProviderSearchResult {
 export async function searchWithProviderChain(
   providers: ImageSearchProvider[],
   keywords: string,
-  limit: number
+  limit: number,
+  options?: ImageSearchProviderOptions
 ): Promise<ProviderSearchResult[]> {
   const results: ProviderSearchResult[] = [];
   let collected = 0;
@@ -45,7 +51,7 @@ export async function searchWithProviderChain(
     if (collected >= limit) break;
     const start = Date.now();
     try {
-      const candidates = await provider.search(keywords, limit - collected);
+      const candidates = await provider.search(keywords, limit - collected, options);
       results.push({
         provider: provider.name,
         candidates,

@@ -101,6 +101,7 @@ export function extractAndParseJson(
     visualNoiseScore: nScore,
     artisticFitScore: aScore,
     totalScore,
+    overallScore: totalScore,
     passed: totalScore >= 60,
     reasons: Array.isArray(parsedJson.reasons)
       ? parsedJson.reasons

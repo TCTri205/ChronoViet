@@ -26,55 +26,46 @@ export interface ProjectItem {
   createdAt: string;
 }
 
+export interface ConversationItem {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
 export interface SidebarProps {
   activeProjectId?: string;
+  activeConversationId?: string;
   onSelectProject?: (projectId: string) => void;
+  onSelectConversation?: (conversationId: string) => void;
   className?: string;
 }
 
 export function Sidebar({
   activeProjectId,
+  activeConversationId,
   onSelectProject,
+  onSelectConversation,
   className = "",
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<"projects" | "conversations">("projects");
   const [searchQuery, setSearchQuery] = useState("");
-  const [projects, setProjects] = useState<ProjectItem[]>([
-    {
-      id: "proj_bach_dang_1288",
-      topic: "Trận chiến Bạch Đằng năm 1288",
-      status: "COMPLETED",
-      aspectRatio: "16:9",
-      durationSeconds: 180,
-      createdAt: "Vừa xong",
-    },
-    {
-      id: "proj_hai_ba_trung",
-      topic: "Khởi nghĩa Hai Bà Trưng (Năm 40)",
-      status: "COMPLETED",
-      aspectRatio: "9:16",
-      durationSeconds: 60,
-      createdAt: "Hôm qua",
-    },
-    {
-      id: "proj_lam_son_1427",
-      topic: "Khởi nghĩa Lam Sơn & Bình Ngô Đại Cáo",
-      status: "COMPLETED",
-      aspectRatio: "16:9",
-      durationSeconds: 300,
-      createdAt: "3 ngày trước",
-    },
-  ]);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
 
-  // Load actual project list from API
+  // Load actual project and conversation lists from API
   useEffect(() => {
     let isMounted = true;
-    const fetchProjects = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/v1/projects?limit=20");
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted && data.items && data.items.length > 0) {
+        const [projRes, convRes] = await Promise.all([
+          fetch("/api/v1/projects?limit=20").catch(() => null),
+          fetch("/api/v1/conversations").catch(() => null),
+        ]);
+
+        if (projRes && projRes.ok) {
+          const data = await projRes.json();
+          if (isMounted && Array.isArray(data.items)) {
             const normalized: ProjectItem[] = data.items.map((item: any) => ({
               id: item.id || item.projectId,
               topic: item.topic || item.title || item.projectId || "Chủ đề chưa đặt tên",
@@ -86,11 +77,24 @@ export function Sidebar({
             setProjects(normalized);
           }
         }
+
+        if (convRes && convRes.ok) {
+          const cData = await convRes.json();
+          if (isMounted && Array.isArray(cData.conversations)) {
+            setConversations(
+              cData.conversations.map((c: any) => ({
+                id: c.id,
+                title: c.title || "Đoạn trao đổi sử liệu",
+                updatedAt: c.updatedAt ? new Date(c.updatedAt).toLocaleDateString("vi-VN") : "Gần đây",
+              }))
+            );
+          }
+        }
       } catch {
-        // keep initial default projects
+        // keep initial defaults
       }
     };
-    fetchProjects();
+    fetchData();
   }, []);
 
   const filteredProjects = projects.filter((p) =>
@@ -149,14 +153,40 @@ export function Sidebar({
         </button>
       </div>
 
+      {/* Tab Switcher (when expanded) */}
+      {!isCollapsed && (
+        <div className="flex border-b border-primary/10 bg-lacquer-deep/40 text-xs">
+          <button
+            onClick={() => setActiveTab("projects")}
+            className={`flex-1 py-2 font-semibold text-center transition-colors border-b-2 ${
+              activeTab === "projects"
+                ? "border-primary text-gold-300 bg-primary/10"
+                : "border-transparent text-text-muted hover:text-text-primary"
+            }`}
+          >
+            🎬 Dự Án ({projects.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("conversations")}
+            className={`flex-1 py-2 font-semibold text-center transition-colors border-b-2 ${
+              activeTab === "conversations"
+                ? "border-primary text-gold-300 bg-primary/10"
+                : "border-transparent text-text-muted hover:text-text-primary"
+            }`}
+          >
+            💬 Đoạn Chat ({conversations.length})
+          </button>
+        </div>
+      )}
+
       {/* Search Input (only visible when expanded) */}
       {!isCollapsed && (
-        <div className="p-3 border-b border-primary/10">
+        <div className="p-2.5 border-b border-primary/10">
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-text-muted" />
             <Input
               type="text"
-              placeholder="Tìm kiếm thước phim..."
+              placeholder={activeTab === "projects" ? "Tìm thước phim..." : "Tìm đoạn chat..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 h-8 text-xs bg-lacquer-deep/60"
@@ -165,65 +195,111 @@ export function Sidebar({
         </div>
       )}
 
-      {/* Projects List */}
+      {/* List Area */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
         <TooltipProvider delayDuration={150}>
-          {filteredProjects.map((proj) => {
-            const isActive = activeProjectId === proj.id;
-            if (isCollapsed) {
-              return (
-                <Tooltip key={proj.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => onSelectProject?.(proj.id)}
-                      className={`w-full h-11 rounded-lg flex items-center justify-center transition-colors ${
-                        isActive
-                          ? "bg-primary/20 text-gold-300 border border-primary/40"
-                          : "text-text-secondary hover:bg-lacquer-elevated hover:text-text-primary"
-                      }`}
-                      aria-label={proj.topic}
-                    >
-                      <Film className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    <div className="flex flex-col gap-1">
-                      <span className="font-semibold text-gold-300">{proj.topic}</span>
-                      <div className="flex items-center gap-2 text-[10px]">
-                        {getStatusBadge(proj.status)}
-                        <span>{proj.aspectRatio || "16:9"}</span>
-                      </div>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
+          {activeTab === "projects" ? (
+            filteredProjects.length === 0 ? (
+              !isCollapsed && (
+                <div className="p-4 text-center text-text-muted text-xs flex flex-col items-center justify-center min-h-[140px]">
+                  <Film className="w-6 h-6 mb-2 opacity-30 text-gold-300" />
+                  <p className="font-medium text-text-secondary">Chưa có dự án nào</p>
+                  <p className="text-[11px] text-text-muted/70 mt-1">Tạo thước phim mới ở khung bên phải</p>
+                </div>
+              )
+            ) : (
+              filteredProjects.map((proj) => {
+                const isActive = activeProjectId === proj.id;
+                if (isCollapsed) {
+                  return (
+                    <Tooltip key={proj.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => onSelectProject?.(proj.id)}
+                          className={`w-full h-11 rounded-lg flex items-center justify-center transition-colors ${
+                            isActive
+                              ? "bg-primary/20 text-gold-300 border border-primary/40"
+                              : "text-text-secondary hover:bg-lacquer-elevated hover:text-text-primary"
+                          }`}
+                          aria-label={proj.topic}
+                        >
+                          <Film className="w-4 h-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold text-gold-300">{proj.topic}</span>
+                          <div className="flex items-center gap-2 text-[10px]">
+                            {getStatusBadge(proj.status)}
+                            <span>{proj.aspectRatio || "16:9"}</span>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
 
-            return (
-              <button
-                key={proj.id}
-                onClick={() => onSelectProject?.(proj.id)}
-                className={`w-full p-3 rounded-lg text-left transition-all border ${
-                  isActive
-                    ? "bg-primary/10 border-primary/40 text-gold-300 shadow-sm"
-                    : "bg-lacquer-deep/40 border-primary/10 text-text-secondary hover:border-primary/25 hover:text-text-primary"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <span className="font-medium text-xs text-text-primary line-clamp-2 leading-snug">
-                    {proj.topic}
-                  </span>
+                return (
+                  <button
+                    key={proj.id}
+                    onClick={() => onSelectProject?.(proj.id)}
+                    className={`w-full p-3 rounded-lg text-left transition-all border ${
+                      isActive
+                        ? "bg-primary/10 border-primary/40 text-gold-300 shadow-sm"
+                        : "bg-lacquer-deep/40 border-primary/10 text-text-secondary hover:border-primary/25 hover:text-text-primary"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <span className="font-medium text-xs text-text-primary line-clamp-2 leading-snug">
+                        {proj.topic}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-text-muted mt-2">
+                      <div className="flex items-center gap-1.5">
+                        {getStatusBadge(proj.status)}
+                        <span className="font-mono">{proj.aspectRatio || "16:9"}</span>
+                      </div>
+                      <span className="tabular-nums">{proj.createdAt}</span>
+                    </div>
+                  </button>
+                );
+              })
+            )
+          ) : (
+            conversations.filter((c) => (c.title || "").toLowerCase().includes((searchQuery || "").toLowerCase())).length === 0 ? (
+              !isCollapsed && (
+                <div className="p-4 text-center text-text-muted text-xs flex flex-col items-center justify-center min-h-[140px]">
+                  <Scroll className="w-6 h-6 mb-2 opacity-30 text-gold-300" />
+                  <p className="font-medium text-text-secondary">Chưa có đoạn chat nào</p>
+                  <p className="text-[11px] text-text-muted/70 mt-1">Bắt đầu tra cứu ở khung bên trái</p>
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-text-muted mt-2">
-                  <div className="flex items-center gap-1.5">
-                    {getStatusBadge(proj.status)}
-                    <span className="font-mono">{proj.aspectRatio || "16:9"}</span>
-                  </div>
-                  <span className="tabular-nums">{proj.createdAt}</span>
-                </div>
-              </button>
-            );
-          })}
+              )
+            ) : (
+              conversations
+                .filter((c) => (c.title || "").toLowerCase().includes((searchQuery || "").toLowerCase()))
+                .map((conv) => {
+                  const isActive = activeConversationId === conv.id;
+                  return (
+                    <button
+                      key={conv.id}
+                      onClick={() => onSelectConversation?.(conv.id)}
+                      className={`w-full p-2.5 rounded-lg text-left transition-all border ${
+                        isActive
+                          ? "bg-primary/15 border-primary/40 text-gold-300 shadow-sm"
+                          : "bg-lacquer-deep/40 border-primary/10 text-text-secondary hover:border-primary/25 hover:text-text-primary"
+                      }`}
+                    >
+                      <span className="font-medium text-xs text-text-primary line-clamp-2 leading-snug block">
+                        {conv.title}
+                      </span>
+                      <span className="text-[10px] text-text-muted mt-1 block">
+                        {conv.updatedAt}
+                      </span>
+                    </button>
+                  );
+                })
+            )
+          )}
         </TooltipProvider>
       </div>
 

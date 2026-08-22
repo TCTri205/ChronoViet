@@ -344,12 +344,15 @@ Theo kiến trúc chuẩn phân tách trách nhiệm (Separation of Concerns):
 ### 6.2. Bộ Lệnh CLI Seeders & Kiểm Định Dữ Liệu Thật
 
 ```bash
+# [1-CLICK KHUYẾN NGHỊ] Thiết lập và nạp trọn gói toàn bộ dữ liệu & kiểm tra sức khỏe CSDL:
+pnpm data:setup               # Tự động: Bật Infra -> Init 8 Bảng -> Nạp Tri thức -> Kiểm tra Health DB
+
+# Hoặc thực thi từng bước thủ công:
 # 0. Tải trọng số mô hình AI GGUF (BGE-M3 1024d & Qwen3.5-4B cho 2-Stage Triples Extraction)
 pnpm models:download:lite     # Tải nhanh bộ đôi AI Lite (~2.4 GB)
 
 # Khởi động môi trường AI phục vụ trích xuất & nạp tri thức:
-pnpm dev:data                 # [Khuyến nghị] Bật Postgres + Redis + AI Lite (Embedding 8090 + Extraction 8094)
-# Hoặc bật riêng rẽ:
+pnpm dev:data                 # Bật Postgres + Redis + AI Lite (Embedding 8090 + Extraction 8094)
 # pnpm ai:extract             # Chỉ bật Extraction LLM (Port 8094) cho trích xuất quan hệ & eval:triples
 # pnpm ai:emb                 # Chỉ bật Embedding Server (Port 8090) cho nạp vector
 

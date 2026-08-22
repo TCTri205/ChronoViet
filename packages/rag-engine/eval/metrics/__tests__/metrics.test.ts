@@ -145,3 +145,27 @@ describe('High-Resolution Latency Profiler', () => {
     expect(summary.p99_ms).toBeCloseTo(99.01, 0);
   });
 });
+
+import { evaluateRegressionGates } from '../../benchmarks/regression-gate.js';
+
+describe('Regression Quality Gates', () => {
+  it('passes when metrics meet floors and show no regression', () => {
+    const res = evaluateRegressionGates({
+      baseline: { factPrecision: 95.0, hallucinationRate: 2.0, recallAt10: 75.0, ndcgAt5: 0.80, latencyP95Ms: 120.0 },
+      current: { factPrecision: 96.0, hallucinationRate: 1.5, recallAt10: 78.0, ndcgAt5: 0.82, latencyP95Ms: 110.0 },
+    });
+    expect(res.allPassed).toBe(true);
+    expect(res.gates.length).toBe(5);
+    expect(res.gates.every((g) => g.passed)).toBe(true);
+  });
+
+  it('fails and blocks when a metric drops below absolute quality floor', () => {
+    const res = evaluateRegressionGates({
+      baseline: { factPrecision: 95.0, hallucinationRate: 2.0, recallAt10: 75.0, ndcgAt5: 0.80, latencyP95Ms: 120.0 },
+      current: { factPrecision: 80.0, hallucinationRate: 1.5, recallAt10: 78.0, ndcgAt5: 0.82, latencyP95Ms: 110.0 }, // 80% < 90% floor
+    });
+    expect(res.allPassed).toBe(false);
+    const gate1 = res.gates.find((g) => g.gate_id === 'GATE_1_FACT_PRECISION');
+    expect(gate1?.passed).toBe(false);
+  });
+});

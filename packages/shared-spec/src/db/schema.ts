@@ -99,10 +99,46 @@ CREATE TABLE IF NOT EXISTS unmapped_entities (
     occurrence_count INT DEFAULT 1,
     sample_context TEXT,
     chunk_id TEXT,
-    status TEXT DEFAULT 'PENDING_TRIAGE', -- PENDING_TRIAGE, MAPPED_TO_ALIAS, DISCARDED_AS_NOISE
+    status TEXT DEFAULT 'PENDING_TRIAGE', -- PENDING_TRIAGE, MAPPED_TO_ALIAS, DISCARDED_AS_NOISE, PROMOTED
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. Conversations Table (Multi-turn Chat Persistence)
+CREATE TABLE IF NOT EXISTS conversations (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    mode TEXT DEFAULT 'RESEARCH',
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. Conversation Messages Table (Chat Turns & Grounded Citations)
+CREATE TABLE IF NOT EXISTS conversation_messages (
+    id TEXT PRIMARY KEY,
+    conversation_id TEXT REFERENCES conversations(id) ON DELETE CASCADE,
+    role TEXT NOT NULL, -- 'user', 'assistant', 'system'
+    content TEXT NOT NULL,
+    citations JSONB DEFAULT '[]'::jsonb,
+    intent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. Video Briefs Table (Compiled Research Briefs for 1-Click Studio Handover)
+CREATE TABLE IF NOT EXISTS video_briefs (
+    id TEXT PRIMARY KEY,
+    conversation_id TEXT REFERENCES conversations(id) ON DELETE SET NULL,
+    project_id TEXT,
+    topic TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    key_entities JSONB DEFAULT '[]'::jsonb,
+    citations JSONB DEFAULT '[]'::jsonb,
+    target_duration_sec INT DEFAULT 60,
+    aspect_ratio TEXT DEFAULT '16:9',
+    narrative_tone TEXT DEFAULT 'epic',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Migrations for existing tables (Upgrading to TEXT type for zero length restrictions)
@@ -125,7 +161,7 @@ ALTER TABLE entity_audit_logs ALTER COLUMN entity_id TYPE TEXT;
 
 ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', title || ' ' || text_content)) STORED;
 
--- 10. Indexes
+-- 13. Indexes
 CREATE INDEX IF NOT EXISTS idx_entities_aliases ON entities USING GIN (aliases);
 
 CREATE INDEX IF NOT EXISTS idx_rel_source ON relationships (source_entity_id);
@@ -145,5 +181,10 @@ CREATE INDEX IF NOT EXISTS idx_checkpoints_status ON orchestrator_checkpoints (s
 CREATE INDEX IF NOT EXISTS idx_quarantine_reason ON quarantine_triples (reason);
 CREATE INDEX IF NOT EXISTS idx_quarantine_status ON quarantine_triples (status);
 CREATE INDEX IF NOT EXISTS idx_unmapped_status ON unmapped_entities (status);
+CREATE INDEX IF NOT EXISTS idx_conversations_created ON conversations (created_at);
+CREATE INDEX IF NOT EXISTS idx_conv_messages_cid ON conversation_messages (conversation_id);
+CREATE INDEX IF NOT EXISTS idx_conv_messages_created ON conversation_messages (created_at);
+CREATE INDEX IF NOT EXISTS idx_video_briefs_cid ON video_briefs (conversation_id);
+CREATE INDEX IF NOT EXISTS idx_video_briefs_proj ON video_briefs (project_id);
 `;
 

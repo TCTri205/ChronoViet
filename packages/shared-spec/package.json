@@ -15,6 +15,10 @@
     "./interfaces": {
       "types": "./dist/interfaces.d.ts",
       "default": "./dist/interfaces.js"
+    },
+    "./db": {
+      "types": "./dist/db/index.d.ts",
+      "default": "./dist/db/index.js"
     }
   },
   "scripts": {
@@ -26,6 +30,7 @@
     "eval": "echo [shared-spec] No evaluation suite needed"
   },
   "dependencies": {
+    "bullmq": "^5.1.0",
     "dotenv": "^16.4.7",
     "ioredis": "^5.3.2",
     "pg": "^8.11.3",

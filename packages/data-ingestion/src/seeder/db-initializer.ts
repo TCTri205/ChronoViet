@@ -56,6 +56,9 @@ export async function initializeDatabaseSchema(maxRetries = 5, retryIntervalMs =
         'orchestrator_checkpoints',
         'quarantine_triples',
         'unmapped_entities',
+        'conversations',
+        'conversation_messages',
+        'video_briefs',
       ];
 
       const missingTables = requiredTables.filter((t) => !tableNames.has(t));

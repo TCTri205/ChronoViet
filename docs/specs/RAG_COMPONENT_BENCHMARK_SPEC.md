@@ -560,7 +560,7 @@ ChronoEval v2.0 đã được thực thi và xác thực trực tiếp trên cơ
 | **C3** | **Graph Traversal & Path Reasoning** | SQL Recursive CTEs trên 82,849 quan hệ | 100 | 61.71 ms | ✅ **PASS** |
 | **C4** | **Dense + Lexical Hybrid Retrieval** | pgvector HNSW + BM25 FTS trên 9,258 chunks | **100** | **4.82 ms** | ✅ **PASS** |
 | **C5** | **Graph-Guided Chunk Linking** | Mở rộng liên kết Entity $\rightarrow$ Chunks | 50 | 182.55 ms | ✅ **PASS** |
-| **C6** | **Reranker & Relevance Ordering** | Tái xếp hạng theo độ tin cậy nguồn sử liệu | 300 | 0.10 ms | ✅ **PASS** |
+| **C6** | **Reranker & Relevance Ordering** | Pure Local Cross-Encoder & Multi-Factor Fusion | 300 | 25.40 ms | ✅ **PASS** |
 | **C7** | **Context Assembly & Budgeting** | Đóng gói ngữ cảnh trong ngân sách token | 300 | 0.00 ms | ✅ **PASS** |
 | **C8** | **Answer Generation Correctness** | Độ chính xác dữ kiện lịch sử (99.5%) | 300 | 0.00 ms | ✅ **PASS** |
 | **C9** | **Grounding & Citation Verification** | Tỷ lệ ảo giác (Hallucination = 0.0%) | 300 | 0.08 ms | ✅ **PASS** |

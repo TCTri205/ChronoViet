@@ -65,40 +65,31 @@ Guidelines, operational constraints, and verification protocols for AI Agents an
 
 ## 5. Command Reference
 
-### 1. Development & Runtime
+### 1. Essential Daily Commands (Core 4)
 ```bash
-pnpm dev:hybrid      # Web + Worker with Cloud AI fallback (0% local GPU)
-pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction)
-pnpm dev:stack       # Full Stack: Docker Infra + AI Supervisor + TTS + Web + Worker
+pnpm dev             # 🚀 Smart 1-Click Dev: Auto Infra (DB+Redis) + Auto AI Detect + Web & Worker
+pnpm data:setup      # 📦 1-Click Data: Docker Infra -> DB Init -> Ingest Knowledge -> Health Audit
+pnpm ai              # 🤖 Interactive AI Dashboard: Inspect ports, start/stop Local AI stack
+pnpm check           # ✅ Verification Gate: Typecheck -> Lint -> Test -> Build
+```
 
+### 2. Specialized Execution Modes
+```bash
+pnpm dev:full        # Full Stack: Docker Infra + AI Supervisor + TTS + Web + Worker
+pnpm dev:cloud       # Fast Cloud mode: 0% local GPU/RAM overhead (Web + Worker with Cloud AI)
+pnpm dev:data        # Data Ingestion Stack: Postgres + Redis + AI Lite (8090 + 8094)
 pnpm remotion:studio # Remotion Studio UI (Port 9876)
-pnpm ai              # AI Status & interactive quick launcher
-pnpm ai:start        # Start Full Local AI Stack (8090, 8092, 8094)
+```
+
+### 3. AI & Infrastructure Management
+```bash
+pnpm ai:start        # Start Full Local AI Stack (8090, 8092, 8094, 8096, 8080 + TTS)
 pnpm ai:lite         # Start Lightweight Pair (8090 + 8094) (~3.1 GB RAM)
-pnpm ai:tts          # Start VieNeu TTS Voice Engine in Docker (Port 8080)
-pnpm ai:status       # Check AI port status (8090, 8092, 8094, 8080)
+pnpm ai:status       # Check AI port status (8090, 8092, 8094, 8096, 8080)
 pnpm ai:stop         # Stop all background AI & TTS processes
-```
-
-### 2. Infrastructure & Database
-```bash
-pnpm stack:infra         # Start PostgreSQL (pgvector) & Redis
-pnpm stack:down          # Stop all containers
-pnpm db:init             # Initialize vector & graph schema (8 tables)
-pnpm db:health           # Audit DB health (relationships, embeddings, indexes)
-pnpm db:backup --name <version_name>   # Backup snapshot with version name (e.g. pnpm db:backup --name post_ingest_v1)
-pnpm db:restore --file <path_to_dump> # Restore DB from version snapshot (e.g. pnpm db:restore --file backups/post_ingest_v1.dump)
-pnpm db:clean            # Remove duplicate entities and dangling relations
-pnpm db:audit-quarantine # Audit quarantined knowledge edges
-```
-
-### 3. Verification & Quality Gates
-```bash
-pnpm check:all           # Master verification gate: typecheck -> lint -> test -> build
-pnpm typecheck           # Monorepo typecheck
-pnpm lint                # Monorepo linting
-pnpm test                # Deterministic unit/integration test suite
-pnpm eval:all --fresh    # Full evaluation suite (Local benchmark only)
+pnpm stack:infra     # Start PostgreSQL (pgvector) & Redis
+pnpm stack:down      # Stop all Docker containers
+pnpm db:health       # Audit DB health (relationships, embeddings, indexes)
 ```
 
 ---

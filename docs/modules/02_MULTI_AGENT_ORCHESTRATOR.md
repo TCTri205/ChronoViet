@@ -175,7 +175,7 @@ Mô-đun chịu trách nhiệm:
 #### 3.2.5. Visual Query Planning & Keyword Extractor Agent (Micro-Step 1C)
 * **Input:** Danh sách các scenes trong Chapter có `contentType: "IMAGE"`, `ragContext` và `userPrompt`.
 * **Nhiệm vụ:** Hoạt động như một **Query Planning Agent**:
-  - Khi có LLM: Phân tích `voiceoverText` của từng cảnh, tự động sinh ra cấu trúc **`ImageSearchToolInput`** chuẩn (`sceneId`, `primaryQuery` tiếng Việt giàu ngữ cảnh lịch sử, `englishQuery` chuẩn xác cho kho ảnh quốc tế, `visualType`: `PORTRAIT` / `BATTLE_SCENE` / `MAP_CHRONO` / `ARTIFACT` / `LANDSCAPE` / `ARCHAEOLOGY` / `GENERAL_HISTORICAL`, và `historicalPeriod`).
+  - Khi có LLM: Phân tích `voiceoverText` của từng cảnh, tự động sinh ra cấu trúc **`ImageSearchToolInput`** chuẩn (`sceneId`, `primaryQuery` tiếng Việt giàu ngữ cảnh lịch sử, `englishQuery` chuẩn xác cho kho ảnh quốc tế, `visualType`: `PORTRAIT` / `BATTLE_SCENE` / `MAP_CHRONO` / `ARTIFACT` / `LANDSCAPE` / `ARCHAEOLOGY` / `GENERAL_HISTORICAL`, `historicalPeriod`, `aspectRatio`: `16:9` / `9:16` / `1:1`, và `minResolution`: `HD` / `FHD` / `4K`).
   - Khi Offline/Fallback: Áp dụng thuật toán bóc tách thực thể song ngữ (loại bỏ dấu tiếng Việt + nhận diện `inferVisualTypeHeuristic`) để tạo ra `searchParams` và mảng `searchKeywords` hợp lệ.
 
 #### 3.2.6. Research Agent (Micro-Step 1C — Agentic Tool Image Search)

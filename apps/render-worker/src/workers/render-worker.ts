@@ -19,6 +19,8 @@ import {
   saveProjectSchema,
   renderDurationSeconds,
   ResourceSentinel,
+  RenderJobPayload,
+  RenderJobResult as BaseRenderJobResult,
 } from '@chronoviet/shared-spec';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 import { parseRemotionStdoutLine } from '../lib/remotion-progress-parser.js';
@@ -26,21 +28,15 @@ import { parseRemotionStdoutLine } from '../lib/remotion-progress-parser.js';
 const log = createLogger({ service: 'render-worker' });
 const pubsub = new RedisPubSubManager();
 
-export interface RenderJobData {
-  projectId: string;
-  correlationId?: string;
-  outputFormat?: 'mp4';
-  priority?: number;
-}
+export type RenderJobData = RenderJobPayload;
 
-export interface RenderJobResult {
-  projectId: string;
+export type RenderJobResult = BaseRenderJobResult & {
   outputPath: string;
   fileSizeBytes: number;
   durationMs: number;
   peakMemoryMb: number;
   totalFrames: number;
-}
+};
 
 export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJobResult> {
   const { projectId, correlationId = projectId } = job.data;

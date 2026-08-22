@@ -16,7 +16,7 @@ import { ImageSearchProvider, searchWithProviderChain } from './image-search-pro
 import { SerpApiImageSearchProvider } from './serpapi-search.js';
 import { TavilyImageSearchProvider } from './tavily-search.js';
 import { BraveImageSearchProvider } from './brave-search.js';
-import { CuratedCatalogProvider, WikimediaSearchProvider } from '../wikimedia-search.js';
+import { CuratedCatalogProvider, WikimediaSearchProvider } from './wikimedia-search.js';
 
 const log = createLogger({ service: 'vlm-inspector' });
 
@@ -39,14 +39,14 @@ export function buildProviderChain(): ImageSearchProvider[] {
 
 /**
  * Execute structured Agentic Image Search Tool:
- * Accepts structured parameters (sceneId, primaryQuery, englishQuery, visualType, historicalPeriod, limit)
+ * Accepts structured parameters (sceneId, primaryQuery, englishQuery, visualType, historicalPeriod, aspectRatio, minResolution, limit)
  * Performs bilingual multi-query search to maximize discovery of accurate historical assets.
  */
 export async function executeImageSearchTool(
   input: ImageSearchToolInput
 ): Promise<ImageSearchToolResult> {
   const validated = ImageSearchToolInputSchema.parse(input);
-  const { sceneId, primaryQuery, englishQuery, visualType, historicalPeriod, limit = 3 } = validated;
+  const { sceneId, primaryQuery, englishQuery, visualType, historicalPeriod, aspectRatio, minResolution, limit = 3 } = validated;
 
   const providers = buildProviderChain();
   const candidates: VisualCandidate[] = [];
@@ -61,7 +61,10 @@ export async function executeImageSearchTool(
   for (const query of queriesToTry) {
     if (candidates.length >= limit) break;
     const needed = limit - candidates.length;
-    const chainResults = await searchWithProviderChain(providers, query, needed);
+    const chainResults = await searchWithProviderChain(providers, query, needed, {
+      aspectRatio,
+      minResolution,
+    });
 
     for (const result of chainResults) {
       for (const cand of result.candidates) {

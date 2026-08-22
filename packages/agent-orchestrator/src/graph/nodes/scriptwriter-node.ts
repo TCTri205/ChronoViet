@@ -98,7 +98,8 @@ QUY TẮC BẮT BUỘC DÀNH CHO TTS:
 2. TUYỆT ĐỐI KHÔNG chèn nhãn người nói như: "MC:", "Người dẫn chuyện:", "Lời bình:".
 3. TUYỆT ĐỐI KHÔNG dùng định dạng tiêu đề Markdown như: #, ##, **, * ở đầu đoạn.
 4. Chỉ xuất văn bản lời đọc thuần túy (Plain Text), liền mạch, giàu cảm xúc, chuẩn xác sử liệu.
-5. Đối với sự kiện dã sử/truyền thuyết, hãy tự nhiên sử dụng các cụm từ 'theo truyền thuyết', 'tương truyền'.`;
+5. Đối với sự kiện dã sử/truyền thuyết, hãy tự nhiên sử dụng các cụm từ 'theo truyền thuyết', 'tương truyền'.
+6. CHUẨN XÁC SỬ LIỆU & THÂN TỘC: Tuyệt đối không tự suy diễn hoặc bịa đặt quan hệ thân tộc, năm sinh năm mất, chức tước hoặc sự kiện không có trong tư liệu sử liệu.`;
 
     const userMessage = `Hãy viết lời dẫn chuyện cho Chương ${i + 1}: "${chapter.title}".
 Tóm tắt nội dung chương: ${chapter.summary}

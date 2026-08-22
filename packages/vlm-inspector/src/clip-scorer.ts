@@ -191,6 +191,7 @@ export function scoreImageWithLocalCLIP(
     visualNoiseScore: noiseScore,
     artisticFitScore: artisticScore,
     totalScore,
+    overallScore: totalScore,
     passed,
     reasons,
     scorerType: 'CLIP_LOCAL_FALLBACK',

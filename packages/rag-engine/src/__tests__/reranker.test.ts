@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { rerankCandidates } from '../retrieval/reranker.js';
 import { VectorSearchResult } from '../retrieval/vector-search.js';
 
-describe('Integrated Context Reranker', () => {
+describe('Pure Model Context Reranker', () => {
   const sampleCandidates: VectorSearchResult[] = [
     {
       chunkId: 'chunk_1',
@@ -29,39 +29,86 @@ describe('Integrated Context Reranker', () => {
     },
   ];
 
-  it('should return empty array for empty candidate list', () => {
-    const res = rerankCandidates('Quang Trung đại phá quân Thanh', []);
+  beforeEach(() => {
+    // Mock global fetch for deterministic /v1/rerank response
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: any) => {
+        if (url.includes('/v1/rerank')) {
+          const body = JSON.parse(init?.body || '{}');
+          const docs: string[] = body.documents || [];
+          const query: string = (body.query || '').toLowerCase();
+
+          // Compute mock semantic relevance score based on query keywords
+          const results = docs.map((doc, idx) => {
+            const docLower = doc.toLowerCase();
+            let score = 0.2;
+            if (
+              (query.includes('quang trung') || query.includes('ngọc hồi')) &&
+              (docLower.includes('quang trung') || docLower.includes('ngọc hồi'))
+            ) {
+              score = 0.95;
+            } else if (query.includes('nhà lê') && docLower.includes('nhà lê')) {
+              score = 0.92;
+            } else if (query.includes('đinh bộ lĩnh') && docLower.includes('đinh')) {
+              score = 0.85;
+            } else if (docLower.includes('mường')) {
+              score = 0.05;
+            }
+            return { index: idx, relevance_score: score };
+          });
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ results }),
+            text: async () => JSON.stringify({ results }),
+          } as any;
+        }
+        return { ok: false, status: 404 } as any;
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should return empty array for empty candidate list', async () => {
+    const res = await rerankCandidates('Quang Trung đại phá quân Thanh', []);
     expect(res).toEqual([]);
   });
 
-  it('should boost candidate matching query keywords and title', () => {
+  it('should boost candidate matching query with Cross-Encoder and LEVEL_1 source', async () => {
     const query = 'Vua Quang Trung lãnh đạo đại thắng Ngọc Hồi Đống Đa năm nào?';
-    const res = rerankCandidates(query, sampleCandidates, 3);
+    const res = await rerankCandidates(query, sampleCandidates, 3);
 
     expect(res.length).toBe(3);
     expect(res[0].chunkId).toBe('chunk_1');
     expect(res[0].score).toBeGreaterThan(res[1].score);
   });
 
-  it('should penalize completely irrelevant distractors', () => {
+  it('should penalize completely irrelevant distractors with low AI relevance', async () => {
     const query = 'Vua Quang Trung đại phá quân Thanh';
-    const res = rerankCandidates(query, sampleCandidates, 3);
+    const res = await rerankCandidates(query, sampleCandidates, 3);
 
     const distractor = res.find((c) => c.chunkId === 'chunk_3');
     expect(distractor).toBeDefined();
-    // Distractor should receive a score discount (< initial 0.5)
-    expect(distractor!.score).toBeLessThan(0.5);
+    // Distractor should have lower score than relevant candidates
+    expect(distractor!.score).toBeLessThan(res[0].score);
   });
 
-  it('should apply source reliability weighting (W_source) on fact-check queries', () => {
+  it('should apply Multi-Factor Fusion (75% AI + 15% Source Reliability + 10% Co-retrieval)', async () => {
     const query = 'Xác minh sự thật về chiến thắng Ngọc Hồi Đống Đa có đúng hay sai?';
-    const res = rerankCandidates(query, sampleCandidates, 2);
+    const res = await rerankCandidates(query, sampleCandidates, 2);
 
-    expect(res[0].chunkId).toBe('chunk_1'); // LEVEL_1 source + high keyword relevance
-    expect(res.length).toBe(2); // rerankTopK = 2
+    expect(res[0].chunkId).toBe('chunk_1');
+    expect(res.length).toBe(2);
+    // Score calculation: 0.75 * 0.95 + 0.15 * 1.0 (LEVEL_1) + 0.10 (score >= 0.35) = 0.9625
+    expect(res[0].score).toBeGreaterThan(0.9);
   });
 
-  it('should preserve and match 2-character historical names like Lê, Lý, Hồ', () => {
+  it('should preserve and rank 2-character historical names via Cross-Encoder', async () => {
     const candidates: VectorSearchResult[] = [
       {
         chunkId: 'chunk_le',
@@ -80,7 +127,7 @@ describe('Integrated Context Reranker', () => {
     ];
 
     const query = 'Nhà Lê do ai sáng lập?';
-    const res = rerankCandidates(query, candidates, 2);
+    const res = await rerankCandidates(query, candidates, 2);
 
     expect(res[0].chunkId).toBe('chunk_le');
     expect(res[0].score).toBeGreaterThan(res[1].score);

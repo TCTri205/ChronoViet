@@ -58,11 +58,55 @@ export async function POST(req: NextRequest) {
     const videoType = (body.videoType || 'BIOGRAPHY') as any;
     const templateId = (body.templateId || 'HISTORICAL_DOCUMENTARY') as any;
 
+    const conversationId = body.conversationId;
+    let videoBriefId = body.videoBriefId;
+
+    // If conversationId is supplied without a videoBriefId, compile brief from actual conversation history
+    if (conversationId && !videoBriefId) {
+      try {
+        let historyTurns: { role: 'user' | 'assistant' | 'system'; content: string }[] = [];
+        const { query: dbQuery, isPgAvailable, inMemoryStore } = await import('@chronoviet/shared-spec');
+        const pgUp = await isPgAvailable();
+        if (pgUp) {
+          const rows = await dbQuery<any>(
+            `SELECT role, content FROM conversation_messages WHERE conversation_id = $1 ORDER BY created_at ASC`,
+            [conversationId]
+          );
+          historyTurns = rows.map((r) => ({
+            role: (r.role === 'assistant' || r.role === 'system' ? r.role : 'user') as 'user' | 'assistant' | 'system',
+            content: r.content,
+          }));
+        } else {
+          historyTurns = inMemoryStore.conversationMessages
+            .filter((m: any) => m.conversationId === conversationId)
+            .map((m: any) => ({
+              role: (m.role === 'assistant' || m.role === 'system' ? m.role : 'user') as 'user' | 'assistant' | 'system',
+              content: m.content,
+            }));
+        }
+
+        const { compileChatToVideoBrief } = await import('@chronoviet/agent-orchestrator');
+        const brief = await compileChatToVideoBrief(historyTurns, {
+          conversationId,
+          projectId,
+          topic,
+          targetDurationSec: targetDurationMinutes * 60,
+          aspectRatio: body.aspectRatio || '16:9',
+          narrativeTone: body.tone || 'epic',
+        });
+        videoBriefId = brief.id;
+      } catch (compileErr: any) {
+        reqLog.warn('api.compile_brief_fallback', `Could not compile brief: ${compileErr.message}`);
+      }
+    }
+
     const paths = initProjectWorkspace(projectId);
 
     // Save initial metadata asynchronously
     const metadata = {
       projectId,
+      conversationId: conversationId || null,
+      videoBriefId: videoBriefId || null,
       topic,
       targetDurationMinutes,
       videoType,
@@ -83,6 +127,8 @@ export async function POST(req: NextRequest) {
     projectLog.info('api.project_created', `Initialized project ${projectId} for topic "${truncateSnippet(topic)}"`, {
       projectId,
       topicSnippet: truncateSnippet(topic),
+      videoBriefId,
+      conversationId,
     });
 
     // Launch orchestrator pipeline asynchronously in background with correlationId
@@ -90,6 +136,7 @@ export async function POST(req: NextRequest) {
       projectId,
       correlationId,
       userPrompt: topic,
+      videoBriefId: videoBriefId || undefined,
       targetDurationMinutes,
       videoType,
       templateId,
@@ -97,8 +144,8 @@ export async function POST(req: NextRequest) {
       currentStep: 0,
     };
 
-    // Launch orchestrator pipeline asynchronously in background only if not requested in streaming mode
-    const shouldAutoStart = body.autoStart !== false && body.stream !== true;
+    // Launch orchestrator pipeline asynchronously in background only if explicitly requested (headless/CLI mode)
+    const shouldAutoStart = body.autoStart === true;
     if (shouldAutoStart) {
       runOrchestratorPipeline(initialState as ChronoGraphState).catch((err) => {
         projectLog.error('api.orchestrator_background_failed', `Background pipeline failed for ${projectId}: ${err.message}`, {

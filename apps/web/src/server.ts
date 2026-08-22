@@ -1,5 +1,4 @@
 import http from 'http';
-import { parse } from 'url';
 import next from 'next';
 import { createLogger, envConfig } from '@chronoviet/shared-spec';
 import { WebSocketGateway } from './server/ws-gateway';
@@ -19,8 +18,7 @@ async function bootstrap() {
 
   const server = http.createServer(async (req, res) => {
     try {
-      const parsedUrl = parse(req.url!, true);
-      await handle(req, res, parsedUrl);
+      await handle(req, res);
     } catch (err: any) {
       log.error('server.request_error', `HTTP handler error: ${err.message}`, { error: err });
       res.statusCode = 500;
@@ -32,7 +30,7 @@ async function bootstrap() {
   const wsGateway = new WebSocketGateway(server);
 
   server.listen(port, () => {
-    log.info('server.ready', `> ChronoViet Web & API Server ready on http://${hostname}:${port}`);
+    log.info('server.ready', `> ChronoViet Web & API Server ready on http://${hostname}:${port} [AI Mode: ${envConfig.AI_EXECUTION_MODE.toUpperCase()}]`);
   });
 
   let isShuttingDown = false;

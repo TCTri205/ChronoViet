@@ -24,7 +24,7 @@ export * from './workers/render-worker.js';
 const log = createLogger({ service: 'render-worker' });
 
 export function initializeAllWorkers() {
-  log.info('render_worker.starting', 'Initializing BullMQ workers for ChronoViet (TTS, VLM, Remotion Render)');
+  log.info('render_worker.starting', `Initializing BullMQ workers for ChronoViet (TTS, VLM, Remotion Render) [Routing Mode: ${envConfig.INFERENCE_ROUTING_MODE.toUpperCase()}]`);
   const ttsWorker = startTTSWorker();
   const vlmWorker = startVLMWorker();
   const renderWorker = startRenderWorker();

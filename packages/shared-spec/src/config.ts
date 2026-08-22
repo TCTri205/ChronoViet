@@ -92,6 +92,9 @@ const EnvSchema = z.object({
   EMBEDDING_PORT: z.coerce.number().int().positive().default(8090),
   EMBEDDING_CTX_SIZE: z.coerce.number().int().positive().default(8192),
   EMBEDDING_EXTRA_ARGS: z.string().optional(),
+  LOCAL_EMBEDDING_PARALLEL: z.coerce.number().int().positive().default(4),
+  LOCAL_EMBEDDING_THREADS: z.coerce.number().int().positive().default(6),
+  LOCAL_EMBEDDING_EXTRA_ARGS: z.string().optional(),
   MODEL_DIR: z.string().default('./models'),
   LOCAL_LLM_PRIMARY_MODEL: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
   LOCAL_LLM_BENCHMARK_MODEL: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
@@ -109,6 +112,18 @@ const EnvSchema = z.object({
   RENDER_MUTEX_LOCK_KEY: z.string().default('chronoviet:render_lock'),
   RENDER_MUTEX_TTL_SECONDS: z.coerce.number().int().positive().default(900),
 
+  // ==========================================
+  // AI Execution Mode (Master Preset)
+  // Options:
+  // - 'local_only': 100% Local LLM & VLM. No cloud fallback, zero API cost.
+  // - 'fallback': (Default) Local-first. Calls Cloud fallback only when Local fails / crashes / during render mutex.
+  // - 'hybrid': Distributes load across Local and Cloud keys via Round-Robin.
+  // - 'cloud_only': 100% Cloud LLM. Disables local LLM requirement (useful for lightweight dev).
+  // ==========================================
+  AI_EXECUTION_MODE: z
+    .enum(['local_only', 'fallback', 'hybrid', 'cloud_only'])
+    .default('fallback'),
+
   // Cloud API Fallback Configuration (Agnes 2.5 Flash / OpenAI / OpenRouter / Gemini)
   ENABLE_CLOUD_FALLBACK: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
@@ -117,7 +132,7 @@ const EnvSchema = z.object({
   // 'priority_fallback' (Local first, fallback to Cloud on error), or 'local_only'
   INFERENCE_ROUTING_MODE: z
     .enum(['hybrid_round_robin', 'priority_fallback', 'local_only'])
-    .default('hybrid_round_robin'),
+    .default('priority_fallback'),
   // 1-Day (24h) Quota Cooldown for exhausted Cloud API Keys (86,400,000 ms)
   DAILY_KEY_QUARANTINE_MS: z.coerce.number().int().positive().default(86400000),
   REMOTE_FALLBACK_MODEL: z.string().default('agnes-2.5-flash'),
@@ -140,7 +155,15 @@ const EnvSchema = z.object({
   EMBEDDING_TIMEOUT_MS: z.coerce.number().int().positive().default(60000),
   EMBEDDING_CONCURRENCY: z.coerce.number().int().positive().default(4),
   EMBEDDING_BATCH_SIZE: z.coerce.number().int().positive().default(16),
+  EMBEDDING_MAX_CHARS: z.coerce.number().int().positive().default(24000),
+  ALLOW_SYNTHETIC_EMBEDDINGS: z
+    .union([z.boolean(), z.string().transform((v) => v === 'true')])
+    .default(false),
   LOCAL_RERANK_MODEL: z.string().default('qwen3-reranker-0.6b'),
+  LOCAL_RERANK_URL: z.string().default('http://localhost:8096/v1/rerank'),
+  RERANK_PORT: z.coerce.number().int().positive().default(8096),
+  RERANK_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  RAG_SEARCH_TIMEOUT_MS: z.coerce.number().int().positive().default(4500),
   LOCAL_VISION_FILTER: z.string().default('siglip-2-multilingual-onnx'),
   LOCAL_VLM_INSPECTOR: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
   HISTORICAL_OCR_ENGINE: z.string().default('paddleocr_v5_hannom'),
@@ -163,8 +186,11 @@ const EnvSchema = z.object({
   TTS_HTTP_TIMEOUT_MS: z.coerce.number().int().positive().default(60000),
 
   // ==========================================
-  // Remotion Engine
+  // Remotion Engine & Render Dispatch
   // ==========================================
+  AUTO_DISPATCH_RENDER: z
+    .union([z.boolean(), z.string().transform((v) => v !== 'false')])
+    .default(true),
   REMOTION_PORT: z.coerce.number().int().positive().default(9876),
   REMOTION_NODE_OPTIONS: z.string().default('--max-old-space-size=4096'),
 
@@ -214,9 +240,77 @@ const EnvSchema = z.object({
 const isNode = typeof process !== 'undefined' && !!process?.versions?.node;
 const rawProcessEnv: Record<string, string | undefined> = typeof process !== 'undefined' && process?.env ? process.env : {};
 
+// Resolve AI_EXECUTION_MODE and apply presets for subordinate flags
+const rawMode = rawProcessEnv.AI_EXECUTION_MODE;
+let resolvedMode: 'local_only' | 'fallback' | 'hybrid' | 'cloud_only';
+
+if (rawMode && ['local_only', 'fallback', 'hybrid', 'cloud_only'].includes(rawMode)) {
+  resolvedMode = rawMode as any;
+} else {
+  // Deduce mode from subordinate flags for backward compatibility
+  const explicitRouting = rawProcessEnv.INFERENCE_ROUTING_MODE;
+  const explicitLocal = rawProcessEnv.USE_LOCAL_LLM;
+  const explicitCloud = rawProcessEnv.ENABLE_CLOUD_FALLBACK;
+
+  if (explicitRouting === 'local_only' || explicitCloud === 'false') {
+    resolvedMode = 'local_only';
+  } else if (explicitLocal === 'false') {
+    resolvedMode = 'cloud_only';
+  } else if (explicitRouting === 'hybrid_round_robin') {
+    resolvedMode = 'hybrid';
+  } else {
+    // Default safe mode: local-first with cloud fallback
+    resolvedMode = 'fallback';
+  }
+}
+
+// Preset mappings based on resolvedMode
+let presetUseLocalLlm: string;
+let presetEnableCloudFallback: string;
+let presetInferenceRoutingMode: string;
+let presetStandbyOnRender: string;
+let presetVlmProvider: string | undefined;
+
+switch (resolvedMode) {
+  case 'local_only':
+    presetUseLocalLlm = 'true';
+    presetEnableCloudFallback = 'false';
+    presetInferenceRoutingMode = 'local_only';
+    presetStandbyOnRender = 'false';
+    presetVlmProvider = 'local';
+    break;
+  case 'fallback':
+    presetUseLocalLlm = 'true';
+    presetEnableCloudFallback = 'true';
+    presetInferenceRoutingMode = 'priority_fallback';
+    presetStandbyOnRender = 'true';
+    presetVlmProvider = 'auto';
+    break;
+  case 'hybrid':
+    presetUseLocalLlm = 'true';
+    presetEnableCloudFallback = 'true';
+    presetInferenceRoutingMode = 'hybrid_round_robin';
+    presetStandbyOnRender = 'true';
+    presetVlmProvider = 'auto';
+    break;
+  case 'cloud_only':
+    presetUseLocalLlm = 'false';
+    presetEnableCloudFallback = 'true';
+    presetInferenceRoutingMode = 'priority_fallback';
+    presetStandbyOnRender = 'false';
+    presetVlmProvider = 'auto';
+    break;
+}
+
 // Normalization & Backward-Compatibility aliases
 const processEnv: Record<string, string | undefined> = {
   ...rawProcessEnv,
+  AI_EXECUTION_MODE: resolvedMode,
+  USE_LOCAL_LLM: rawProcessEnv.USE_LOCAL_LLM ?? presetUseLocalLlm,
+  ENABLE_CLOUD_FALLBACK: rawProcessEnv.ENABLE_CLOUD_FALLBACK ?? presetEnableCloudFallback,
+  INFERENCE_ROUTING_MODE: rawProcessEnv.INFERENCE_ROUTING_MODE ?? presetInferenceRoutingMode,
+  AI_STANDBY_ON_RENDER: rawProcessEnv.AI_STANDBY_ON_RENDER ?? presetStandbyOnRender,
+  VLM_PROVIDER: rawProcessEnv.VLM_PROVIDER ?? presetVlmProvider,
   REMOTE_LLM_BASE_URL: rawProcessEnv.REMOTE_LLM_BASE_URL || rawProcessEnv.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
   AGNES_BASE_URL: rawProcessEnv.AGNES_BASE_URL || rawProcessEnv.REMOTE_LLM_BASE_URL || 'https://apihub.agnes-ai.com/v1',
   AGNES_API_KEY: rawProcessEnv.AGNES_API_KEY || (rawProcessEnv.AGNES_API_KEYS ? rawProcessEnv.AGNES_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
@@ -232,13 +326,77 @@ const processEnv: Record<string, string | undefined> = {
 };
 
 const parsed = EnvSchema.safeParse(processEnv);
-if (!parsed.success && isNode && processEnv.NODE_ENV !== 'test') {
-  console.error('❌ Invalid environment configuration:', JSON.stringify(parsed.error.format(), null, 2));
+if (!parsed.success) {
+  if (isNode && processEnv.NODE_ENV !== 'test') {
+    console.error('❌ Invalid environment configuration:', JSON.stringify(parsed.error.format(), null, 2));
+  }
+  if (processEnv.NODE_ENV === 'production') {
+    throw new Error(`[CRITICAL_CONFIG_ERROR] Invalid environment variables in production: ${parsed.error.message}`);
+  }
 }
 
-export const envConfig = parsed.success ? parsed.data : EnvSchema.parse({});
+export const envConfig = parsed.success
+  ? parsed.data
+  : (() => {
+      // In dev/test, merge defaults with valid parsed keys to avoid dropping entire config
+      const defaults = EnvSchema.parse({});
+      const sanitized: Record<string, any> = { ...defaults };
+      for (const [key, value] of Object.entries(processEnv)) {
+        if (value !== undefined && key in EnvSchema.shape) {
+          const fieldSchema = (EnvSchema.shape as any)[key];
+          if (fieldSchema) {
+            const fieldRes = fieldSchema.safeParse(value);
+            if (fieldRes.success) {
+              sanitized[key] = fieldRes.data;
+            }
+          }
+        }
+      }
+      return sanitized as z.infer<typeof EnvSchema>;
+    })();
 
 export type EnvConfig = z.infer<typeof EnvSchema>;
+
+export interface AiExecutionSummary {
+  mode: 'local_only' | 'fallback' | 'hybrid' | 'cloud_only';
+  useLocalLlm: boolean;
+  enableCloudFallback: boolean;
+  routingMode: 'hybrid_round_robin' | 'priority_fallback' | 'local_only';
+  vlmProvider: string;
+  localEndpoints: {
+    llm: string;
+    extraction: string;
+    embedding: string;
+    rerank: string;
+  };
+  cloudProvidersConfigured: string[];
+}
+
+/**
+ * Returns a structured snapshot of active AI execution mode and routing parameters.
+ */
+export function getAiExecutionSummary(): AiExecutionSummary {
+  const configuredClouds: string[] = [];
+  if (envConfig.AGNES_API_KEY || envConfig.AGNES_API_KEYS) configuredClouds.push('Agnes');
+  if (envConfig.GEMINI_API_KEY || envConfig.GEMINI_API_KEYS) configuredClouds.push('Gemini');
+  if (envConfig.OPENROUTER_API_KEY || envConfig.OPENROUTER_API_KEYS) configuredClouds.push('OpenRouter');
+  if (envConfig.OPENAI_API_KEY || envConfig.OPENAI_API_KEYS) configuredClouds.push('OpenAI');
+
+  return {
+    mode: envConfig.AI_EXECUTION_MODE,
+    useLocalLlm: envConfig.USE_LOCAL_LLM,
+    enableCloudFallback: envConfig.ENABLE_CLOUD_FALLBACK,
+    routingMode: envConfig.INFERENCE_ROUTING_MODE,
+    vlmProvider: envConfig.VLM_PROVIDER,
+    localEndpoints: {
+      llm: envConfig.LLM_BASE_URL,
+      extraction: envConfig.LOCAL_LLM_EXTRACTION_BASE_URL,
+      embedding: `http://localhost:${envConfig.EMBEDDING_PORT}`,
+      rerank: envConfig.LOCAL_RERANK_URL,
+    },
+    cloudProvidersConfigured: configuredClouds,
+  };
+}
 
 /**
  * Parse a PostgreSQL connection URL into individual components.

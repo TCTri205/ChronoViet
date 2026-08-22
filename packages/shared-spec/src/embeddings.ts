@@ -142,8 +142,20 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
 
   if (!apiUrl || isCircuitOpen) {
+    const allowSynthetic = Boolean(envConfig.ALLOW_SYNTHETIC_EMBEDDINGS) || process.env.ALLOW_SYNTHETIC_EMBEDDINGS === 'true';
     if (envConfig.EVAL_STRICT) {
       throw new Error('[EVAL_STRICT] Embedding server unavailable during evaluation; fallback disabled');
+    }
+    const isProdFailLoud =
+      (envConfig.NODE_ENV === 'production' || process.env.NODE_ENV === 'production') &&
+      !allowSynthetic &&
+      !process.env.VITEST;
+    if (isProdFailLoud) {
+      log.error('embedding.production_unavailable', 'Embedding server unavailable in production; failing loud', {
+        apiUrl,
+        circuitState,
+      });
+      throw new Error(`[PRODUCTION_FAIL_LOUD] Embedding server unavailable (${apiUrl || 'unconfigured'}). Set ALLOW_SYNTHETIC_EMBEDDINGS=true to allow fallback.`);
     }
 
     if (!warnedMissingApiUrl && envConfig.NODE_ENV !== 'test' && !isCircuitOpen) {
@@ -174,7 +186,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
     const isOllamaEmbeddingsEndpoint = apiUrl.includes('11434') || apiUrl.includes('/api/embeddings');
     // BGE-M3 max context is 8192 tokens (~24,000 chars). Clamp text to prevent physical batch overflow
-    const maxChars = Number(process.env.EMBEDDING_MAX_CHARS) || 24000;
+    const maxChars = Number(envConfig.EMBEDDING_MAX_CHARS) || Number(process.env.EMBEDDING_MAX_CHARS) || 24000;
     const sanitizedText = trimmed.length > maxChars ? trimmed.slice(0, maxChars) : trimmed;
 
     const reqBody = isOllamaEmbeddingsEndpoint
@@ -246,8 +258,21 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     embeddingDurationSeconds.observe({ model: resolvedEmbeddingModel }, (performance.now() - startTime) / 1000);
 
     const errMsg = err instanceof Error ? err.message : String(err);
+    const allowSynthetic = Boolean(envConfig.ALLOW_SYNTHETIC_EMBEDDINGS) || process.env.ALLOW_SYNTHETIC_EMBEDDINGS === 'true';
     if (envConfig.EVAL_STRICT) {
       throw new Error(`[EVAL_STRICT] Embedding server unavailable during evaluation; pseudo-random fallback disabled: ${errMsg}`);
+    }
+    const isCatchProdFailLoud =
+      (envConfig.NODE_ENV === 'production' || process.env.NODE_ENV === 'production') &&
+      !allowSynthetic &&
+      !process.env.VITEST;
+    if (isCatchProdFailLoud) {
+      log.error('embedding.production_failed', 'Embedding API request failed in production; failing loud', {
+        error: errMsg,
+        apiUrl,
+        model: resolvedEmbeddingModel,
+      });
+      throw new Error(`[PRODUCTION_FAIL_LOUD] Embedding request failed in production: ${errMsg}. Set ALLOW_SYNTHETIC_EMBEDDINGS=true to allow fallback.`);
     }
     if (!warnedFailedApiUrl) {
       log.warn('embedding.api_failed', 'Embedding API server offline/unreachable; using deterministic pseudo-random fallback', {
@@ -312,7 +337,7 @@ export async function generateEmbeddingsBatch(
     const targetApiUrl = apiUrl;
     const batchSize = envConfig.EMBEDDING_BATCH_SIZE || 16;
     const timeoutMs = envConfig.NODE_ENV === 'test' ? 1000 : (envConfig.EMBEDDING_TIMEOUT_MS || 60000);
-    const maxChars = Number(process.env.EMBEDDING_MAX_CHARS) || 24000;
+    const maxChars = Number(envConfig.EMBEDDING_MAX_CHARS) || Number(process.env.EMBEDDING_MAX_CHARS) || 24000;
     const concurrencySlots = envConfig.EMBEDDING_CONCURRENCY || 4;
 
     interface BatchTask {

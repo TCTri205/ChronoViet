@@ -411,14 +411,80 @@ export const HistoricalContextEntitySchema = z.object({
   confidenceScore: z.number().min(0).max(1).default(1.0),
 });
 
+export const GraphTripleItemSchema = z.object({
+  source: z.string(),
+  relation: z.string(),
+  target: z.string(),
+  confidence: z.number().min(0).max(1).default(1.0),
+});
+
+export const HistoricalCitationItemSchema = z.object({
+  id: z.union([z.number(), z.string()]).optional(),
+  sourceTitle: z.string(),
+  quote: z.string().optional(),
+  originalExcerpt: z.string().optional(),
+  pageNumber: z.number().int().optional(),
+  reliability: z.string().optional(),
+  reliabilityLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  dynasty: z.string().optional(),
+  period: z.string().optional(),
+  annalsName: z.string().optional(),
+  confidenceScore: z.number().optional(),
+  chunkId: z.string().optional(),
+});
+
+const IsoDateStringSchema = z
+  .union([z.string(), z.date()])
+  .transform((v) => (v instanceof Date ? v.toISOString() : v))
+  .optional();
+
+export const ConversationSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  mode: z.enum(['RESEARCH', 'STUDIO']).default('RESEARCH'),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+  createdAt: IsoDateStringSchema,
+  updatedAt: IsoDateStringSchema,
+});
+
+export const ConversationMessageSchema = z.object({
+  id: z.string(),
+  conversationId: z.string(),
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.string(),
+  citations: z.array(z.union([z.string(), HistoricalCitationItemSchema])).default([]),
+  intent: z.string().optional(),
+  createdAt: IsoDateStringSchema,
+});
+
+export const VideoBriefSchema = z.object({
+  id: z.string(),
+  conversationId: z.string().nullable().optional(),
+  projectId: z.string().nullable().optional(),
+  topic: z.string(),
+  summary: z.string(),
+  keyEntities: z.array(z.string()).default([]),
+  citations: z.array(z.union([z.string(), HistoricalCitationItemSchema])).default([]),
+  targetDurationSec: z.number().int().positive().default(60),
+  aspectRatio: AspectRatioSchema.default('16:9'),
+  narrativeTone: z.enum(['epic', 'academic', 'reflective']).default('epic'),
+  createdAt: IsoDateStringSchema,
+});
+
 export const RagSearchResponseSchema = z.object({
   verifiedContext: z.array(HistoricalContextEntitySchema),
   aliasTable: z.record(z.string(), z.array(z.string())),
   citations: z.array(z.string()),
+  triples: z.array(GraphTripleItemSchema).default([]),
   retrievalLatencyMs: z.number().min(0),
 });
 
 // Type Exports
+export type GraphTripleItem = z.infer<typeof GraphTripleItemSchema>;
+export type HistoricalCitationItem = z.infer<typeof HistoricalCitationItemSchema>;
+export type Conversation = z.infer<typeof ConversationSchema>;
+export type ConversationMessage = z.infer<typeof ConversationMessageSchema>;
+export type VideoBrief = z.infer<typeof VideoBriefSchema>;
 export type AssetMetadata = z.infer<typeof AssetMetadataSchema>;
 export type StatItem = z.infer<typeof StatItemSchema>;
 export type VersusSide = z.infer<typeof VersusSideSchema>;
@@ -859,9 +925,11 @@ export const OrchestratorStatusSchema = z.enum([
   'KEYWORDS_EXTRACTED',
   'ASSETS_AUDITED',
   'PACKAGED',
+  'RENDERING',
   'COMPLETED',
   'NEEDS_HUMAN_REVIEW',
   'FAILED',
+  'ABORTED',
 ]);
 
 export type ProjectWorkspaceConfig = z.infer<typeof ProjectWorkspaceConfigSchema>;

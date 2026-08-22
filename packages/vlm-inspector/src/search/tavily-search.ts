@@ -14,7 +14,7 @@ import {
   executeWithKeyRotation,
   hasAvailableApiKeys,
 } from '@chronoviet/shared-spec';
-import { ImageSearchProvider } from './image-search-provider.js';
+import { ImageSearchProvider, ImageSearchProviderOptions } from './image-search-provider.js';
 
 const log = createLogger({ service: 'vlm-inspector' });
 
@@ -27,7 +27,7 @@ export class TavilyImageSearchProvider implements ImageSearchProvider {
     this.explicitApiKey = apiKey;
   }
 
-  async search(keywords: string, limit: number): Promise<VisualCandidate[]> {
+  async search(keywords: string, limit: number, _options?: ImageSearchProviderOptions): Promise<VisualCandidate[]> {
     const runSearchWithKey = async (apiKey: string): Promise<VisualCandidate[]> => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 8000);

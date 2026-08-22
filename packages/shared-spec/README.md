@@ -49,6 +49,8 @@ Gói `@chronoviet/shared-spec` đóng vai trò là **Hợp đồng Dữ liệu D
    * Tích hợp `embeddingCache` với thuật toán `evictOldestCacheEntries()` tự động giải phóng 20% bản ghi cũ nhất (FIFO/LRU) khi đầy dung lượng (`MAX_CACHE_SIZE = 5000`), giữ lại 80% warm cache chống Cache Stampede.
 8. **Prometheus RED & USE Centralized Metrics (`telemetry/metrics.ts`):**
    * Cung cấp registry duy nhất `metricsRegistry` và bộ metrics RED/USE cho HTTP, LLM, TTS, Embedding, RAG Search, VLM Inspector, Remotion Render và BullMQ queues với guard chặn cardinality bomb.
+9. **Local Cross-Encoder Reranker Client (`reranker-client.ts`):**
+   * Cung cấp hàm `rerankWithLocalCrossEncoder(query, documents, options)` gửi request trực tiếp qua HTTP `POST /v1/rerank` tới `llama-server` Metal Engine (Port 8096, `Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0), hỗ trợ chuyển đổi logit/sigmoid tự động và timeout an toàn.
 
 ---
 

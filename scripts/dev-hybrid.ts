@@ -57,7 +57,7 @@ async function runDevHybrid() {
   console.log(`${colors.green}[WEB]${colors.reset} Starting Web UI (Port 3000)...`);
   const webProc = spawn('pnpm', ['--filter', '@chronoviet/web', 'dev'], {
     cwd: ROOT_DIR,
-    env: { ...process.env, USE_LOCAL_LLM: 'false', ENABLE_CLOUD_FALLBACK: 'true' },
+    env: { ...process.env, AI_EXECUTION_MODE: 'cloud_only', USE_LOCAL_LLM: 'false', ENABLE_CLOUD_FALLBACK: 'true' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   webProc.stdout.on('data', (d) => streamLog('WEB', colors.green, d));
@@ -68,7 +68,7 @@ async function runDevHybrid() {
   console.log(`${colors.yellow}[WORKER]${colors.reset} Starting Render Worker (Port 3001)...`);
   const workerProc = spawn('pnpm', ['--filter', '@chronoviet/render-worker', 'dev'], {
     cwd: ROOT_DIR,
-    env: { ...process.env, USE_LOCAL_LLM: 'false', ENABLE_CLOUD_FALLBACK: 'true' },
+    env: { ...process.env, AI_EXECUTION_MODE: 'cloud_only', USE_LOCAL_LLM: 'false', ENABLE_CLOUD_FALLBACK: 'true' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   workerProc.stdout.on('data', (d) => streamLog('WORKER', colors.yellow, d));

@@ -20,14 +20,29 @@ export interface ProjectWorkspacePaths {
   metadataFile: string;
 }
 
+/**
+ * Finds the monorepo root directory by looking for pnpm-workspace.yaml or package.json with chronoviet-monorepo.
+ */
+export function findMonorepoRoot(startDir: string = process.cwd()): string {
+  let current = path.resolve(startDir);
+  while (current !== path.dirname(current)) {
+    if (
+      fs.existsSync(path.join(current, 'pnpm-workspace.yaml')) ||
+      (fs.existsSync(path.join(current, 'package.json')) &&
+        fs.readFileSync(path.join(current, 'package.json'), 'utf-8').includes('chronoviet-monorepo'))
+    ) {
+      return current;
+    }
+    current = path.dirname(current);
+  }
+  return path.resolve(startDir);
+}
+
 export function getDefaultProjectsBaseDir(): string {
   if (envConfig.PROJECTS_MEDIA_ROOT) {
-    return envConfig.PROJECTS_MEDIA_ROOT;
+    return path.resolve(envConfig.PROJECTS_MEDIA_ROOT);
   }
-  if (envConfig.MEDIA_DIR) {
-    return path.join(envConfig.MEDIA_DIR, 'projects');
-  }
-  // If running in Docker / Linux with /media/projects available
+  // If running in Docker / Linux with /media/projects available and writable
   if (fs.existsSync('/media/projects')) {
     try {
       fs.accessSync('/media/projects', fs.constants.W_OK);
@@ -36,7 +51,16 @@ export function getDefaultProjectsBaseDir(): string {
       // not writable, fallback to local workspace media
     }
   }
-  return path.resolve(process.cwd(), 'media/projects');
+
+  const root = findMonorepoRoot();
+  if (envConfig.MEDIA_DIR) {
+    if (path.isAbsolute(envConfig.MEDIA_DIR)) {
+      return path.join(envConfig.MEDIA_DIR, 'projects');
+    }
+    return path.resolve(root, envConfig.MEDIA_DIR, 'projects');
+  }
+
+  return path.resolve(root, 'media/projects');
 }
 
 /**
@@ -174,12 +198,29 @@ export function saveProjectSchema(
  */
 export function loadProjectSchema(projectId: string, customBaseDir?: string): ChronoVideoProps {
   const paths = initProjectWorkspace(projectId, customBaseDir);
-  if (!fs.existsSync(paths.schemaFile)) {
-    throw new Error(`Project schema not found at: ${paths.schemaFile}`);
+  if (fs.existsSync(paths.schemaFile)) {
+    const raw = fs.readFileSync(paths.schemaFile, 'utf-8');
+    return VideoProjectSchema.parse(JSON.parse(raw));
   }
 
-  const raw = fs.readFileSync(paths.schemaFile, 'utf-8');
-  return VideoProjectSchema.parse(JSON.parse(raw));
+  // Cross-app candidate discovery in Monorepo Dev (e.g. apps/web/media, media/projects, apps/render-worker/media)
+  const root = findMonorepoRoot();
+  const candidateDirs = [
+    path.resolve(root, 'media/projects', projectId),
+    path.resolve(root, 'apps/web/media/projects', projectId),
+    path.resolve(root, 'apps/render-worker/media/projects', projectId),
+    path.resolve(process.cwd(), 'media/projects', projectId),
+  ];
+
+  for (const dir of candidateDirs) {
+    const candFile = path.join(dir, 'project_schema.json');
+    if (fs.existsSync(candFile)) {
+      const raw = fs.readFileSync(candFile, 'utf-8');
+      return VideoProjectSchema.parse(JSON.parse(raw));
+    }
+  }
+
+  throw new Error(`Project schema not found at: ${paths.schemaFile}`);
 }
 
 /**

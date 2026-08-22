@@ -131,8 +131,13 @@ QUY TẮC:
             nodeLog.warn('orchestrator.nli_hallucination_flag', `NLI Hallucination flagged in chapter ${chapterIndex}`, {
               score: nliResult.entailmentScore,
             });
-            escalationTier = Math.max(escalationTier, 2);
-            auditDetails += ` NLI Entailment score: ${nliResult.entailmentScore}.`;
+            if (nliResult.entailmentScore < 0.6 || nliResult.verdict === 'CONTRADICTION') {
+              escalationTier = Math.max(escalationTier, 3);
+              auditDetails += ` Critical NLI Entailment failure (score: ${nliResult.entailmentScore}); routed to human review.`;
+            } else {
+              escalationTier = Math.max(escalationTier, 2);
+              auditDetails += ` NLI Entailment score: ${nliResult.entailmentScore}.`;
+            }
           }
         }
 

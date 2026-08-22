@@ -126,8 +126,8 @@ export class ChronoRagEngine implements IRagEngine {
 
     const allCandidates = Array.from(candidateMap.values());
 
-    // Step 5: Integrated Reranker & Response Formatting
-    const topChunks = rerankCandidates(queryText, allCandidates, rerankTopK);
+    // Step 5: Pure Model Cross-Encoder Reranker & Response Formatting
+    const topChunks = await rerankCandidates(queryText, allCandidates, rerankTopK);
 
     log.debug('rag.search_completed', 'RAG search completed', {
       query: queryText,
@@ -175,12 +175,20 @@ export class ChronoRagEngine implements IRagEngine {
       (chunk) => `${chunk.title} [Nguồn: ${chunk.sourceReliability || 'LEVEL_1'}]`
     );
 
+    const triples = graphResult.triples.map((t) => ({
+      source: t.sourceEntityId,
+      relation: t.relationType,
+      target: t.targetEntityId,
+      confidence: t.confidence,
+    }));
+
     const retrievalLatencyMs = Date.now() - startTime;
 
     return {
       verifiedContext,
       aliasTable: graphResult.aliasTable,
       citations,
+      triples,
       retrievalLatencyMs,
     };
   }

@@ -16,8 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy FastAPI microservice
 COPY services/vieneu-tts/app.py ./
 
-# Create persistent audio cache volume directory
-RUN mkdir -p /app/media/audio-cache
+# Create persistent audio cache volume and models directory
+RUN mkdir -p /app/media/audio-cache /app/models
 
 EXPOSE 8080
 
@@ -28,4 +28,4 @@ ENV PYTHONUNBUFFERED=1
 HEALTHCHECK --interval=5s --timeout=3s --retries=3 --start-period=5s \
   CMD curl -f http://localhost:8080/health || exit 1
 
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080} --workers ${WEB_CONCURRENCY:-1}"]
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080} --workers ${WEB_CONCURRENCY:-1} --no-access-log"]

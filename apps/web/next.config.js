@@ -4,6 +4,7 @@ const nextConfig = {
     '@chronoviet/shared-spec',
     '@chronoviet/rag-engine',
     '@chronoviet/agent-orchestrator',
+    '@chronoviet/vieneu-tts',
   ],
   experimental: {
     serverComponentsExternalPackages: ['bullmq', 'ioredis', 'sharp', '@chronoviet/vlm-inspector'],

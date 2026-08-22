@@ -91,6 +91,8 @@ export async function runOrchestratorRemotionChain(
       videoProps: undefined,
       errorLog: undefined,
       needsHumanReview: false,
+      videoBriefId: undefined,
+      telemetryAudit: [],
     };
 
     try {

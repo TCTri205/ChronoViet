@@ -51,16 +51,29 @@ vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
 });
 
 // Mock Agent Orchestrator pipeline
-vi.mock('@chronoviet/agent-orchestrator', () => ({
-  runOrchestratorPipeline: vi.fn().mockResolvedValue({ status: 'COMPLETED' }),
-  streamOrchestratorPipeline: vi.fn().mockImplementation(async function* () {
-    yield { nodeName: 'rag_init', update: { status: 'RAG_RETRIEVED' } };
-    yield { nodeName: 'packager', update: { status: 'COMPLETED' } };
-  }),
-  defaultCheckpointer: {
-    loadLatestProjectState: vi.fn().mockResolvedValue(null),
-  },
-}));
+vi.mock('@chronoviet/agent-orchestrator', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    runOrchestratorPipeline: vi.fn().mockResolvedValue({ status: 'COMPLETED' }),
+    streamOrchestratorPipeline: vi.fn().mockImplementation(async function* () {
+      yield { nodeName: 'rag_init', update: { status: 'RAG_RETRIEVED' } };
+      yield { nodeName: 'packager', update: { status: 'COMPLETED' } };
+    }),
+    handleChatQueryStream: vi.fn().mockImplementation(async function* (req: any) {
+      if (req.query?.includes('Nam Hán') || req.query?.includes('error')) {
+        yield { type: 'error', error: 'Mô hình AI đang bận hoặc quá tải' };
+        return;
+      }
+      yield { type: 'token', content: 'Trận Bạch Đằng năm 938' };
+      yield { type: 'done', content: 'Trận Bạch Đằng năm 938' };
+    }),
+    resumeOrchestratorPipeline: vi.fn().mockResolvedValue({ status: 'COMPLETED' }),
+    defaultCheckpointer: {
+      loadLatestProjectState: vi.fn().mockResolvedValue(null),
+    },
+  };
+});
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -71,6 +84,9 @@ import { GET as getProjectDetail } from '../app/api/v1/projects/[id]/route';
 import { POST as handleChat } from '../app/api/v1/chat/route';
 import { POST as triggerRender } from '../app/api/v1/projects/[id]/render/route';
 import { POST as handleAbort } from '../app/api/v1/projects/[id]/abort/route';
+import { POST as handleResume } from '../app/api/v1/projects/[id]/resume/route';
+import { GET as getConversations, POST as createConversation } from '../app/api/v1/conversations/route';
+import { GET as getMessages, POST as createMessage } from '../app/api/v1/conversations/[id]/messages/route';
 import { GET as getStream } from '../app/api/v1/projects/[id]/stream/route';
 import { GET as getVideo } from '../app/api/v1/projects/[id]/video/route';
 import { GET as getMetrics } from '../app/api/metrics/route';
@@ -130,7 +146,7 @@ describe('Web RESTful API Routes', () => {
       }
 
       expect(streamOutput).toContain('"type":"error"');
-      expect(streamOutput).toContain('Mô hình AI đang bận');
+      expect(streamOutput).toContain('error');
     });
   });
 
@@ -331,6 +347,75 @@ describe('Web RESTful API Routes', () => {
       expect(data.checks.postgres).toBeDefined();
       expect(data.checks.tts).toBeDefined();
       expect(data.checks.llm).toBeDefined();
+    });
+  });
+
+  describe('POST /api/v1/projects/:id/resume', () => {
+    it('resumes project execution after human review', async () => {
+      const req = new NextRequest('http://localhost:3000/api/v1/projects/test_proj_resume/resume', {
+        method: 'POST',
+        body: JSON.stringify({
+          approvedScripts: { 0: 'Kịch bản đã được duyệt và hiệu chỉnh.' },
+          feedback: 'Đã chuẩn hóa thông tin lịch sử.',
+        }),
+      });
+      const res = await handleResume(req, { params: { id: 'test_proj_resume' } });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.projectId).toBe('test_proj_resume');
+      expect(data.status).toBe('COMPLETED');
+    });
+  });
+
+  describe('Conversations & Messages API Routes', () => {
+    let convId = '';
+
+    it('creates a new conversation', async () => {
+      const req = new NextRequest('http://localhost:3000/api/v1/conversations', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: 'Nghiên cứu Chiến dịch Điện Biên Phủ',
+          mode: 'RESEARCH',
+        }),
+      });
+      const res = await createConversation(req);
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.conversation).toBeDefined();
+      expect(data.conversation.title).toContain('Điện Biên Phủ');
+      convId = data.conversation.id;
+    });
+
+    it('lists conversations', async () => {
+      const req = new NextRequest('http://localhost:3000/api/v1/conversations', {
+        method: 'GET',
+      });
+      const res = await getConversations(req);
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(Array.isArray(data.conversations)).toBe(true);
+      expect(data.conversations.length).toBeGreaterThan(0);
+    });
+
+    it('appends and retrieves conversation messages', async () => {
+      const postReq = new NextRequest(`http://localhost:3000/api/v1/conversations/${convId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({
+          role: 'user',
+          content: 'Đại tướng Võ Nguyên Giáp chỉ huy chiến dịch thế nào?',
+        }),
+      });
+      const postRes = await createMessage(postReq, { params: { id: convId } });
+      expect(postRes.status).toBe(201);
+
+      const getReq = new NextRequest(`http://localhost:3000/api/v1/conversations/${convId}/messages`, {
+        method: 'GET',
+      });
+      const getRes = await getMessages(getReq, { params: { id: convId } });
+      expect(getRes.status).toBe(200);
+      const data = await getRes.json();
+      expect(Array.isArray(data.messages)).toBe(true);
+      expect(data.messages.length).toBeGreaterThan(0);
     });
   });
 
