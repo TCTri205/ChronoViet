@@ -10,7 +10,7 @@
  *   pnpm db:audit-quarantine --dry-run
  */
 
-import { query, isPgAvailable, createLogger, logEntityAuditAction, closePool } from '@chronoviet/shared-spec';
+import { query, isPgAvailable, createLogger, logEntityAuditAction, closePool, resolveCanonicalEntity } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'quarantine-inspector' });
 
@@ -44,12 +44,15 @@ export async function runQuarantineInspector() {
   const isDryRun = args.includes('--dry-run');
   const isPurgeSpurious = args.includes('--purge-spurious');
   const isAcceptHighConf = args.includes('--accept-all-high-conf');
+  const isPromoteUnmapped = args.includes('--promote-unmapped');
   const thresholdArg = args.find((a) => a.startsWith('--threshold='));
   const threshold = thresholdArg ? parseFloat(thresholdArg.split('=')[1]) : 0.85;
+  const minOccurrencesArg = args.find((a) => a.startsWith('--min-occurrences='));
+  const minOccurrences = minOccurrencesArg ? parseInt(minOccurrencesArg.split('=')[1], 10) : 3;
 
   console.log('===============================================================');
   console.log(' CHRONOVIET KNOWLEDGE GRAPH QUARANTINE INSPECTOR & AUDITOR');
-  console.log(` Options: dry-run=${isDryRun} | accept-high-conf=${isAcceptHighConf} | threshold=${threshold} | purge-spurious=${isPurgeSpurious}`);
+  console.log(` Options: dry-run=${isDryRun} | accept-high-conf=${isAcceptHighConf} | threshold=${threshold} | promote-unmapped=${isPromoteUnmapped} (min=${minOccurrences}) | purge-spurious=${isPurgeSpurious}`);
   console.log('===============================================================\n');
 
   const pgReady = await isPgAvailable();
@@ -211,6 +214,62 @@ export async function runQuarantineInspector() {
         console.log(`✅ Successfully promoted ${promotedCount} triple(s) into active relationships graph.`);
       } else {
         console.log(`[DRY-RUN] Would promote ${promotableTriples.length} candidate triple(s) into relationships graph.`);
+      }
+    }
+  }
+
+  if (isPromoteUnmapped) {
+    console.log('--- [ACTION: PROMOTE UNMAPPED ENTITIES] ---');
+    console.log(`[*] Promoting unmapped entities with occurrence_count >= ${minOccurrences}...`);
+
+    const eligibleUnmapped = await query<UnmappedEntityRow>(`
+      SELECT id, raw_name, inferred_type, occurrence_count
+      FROM unmapped_entities
+      WHERE status = 'PENDING_TRIAGE'
+        AND occurrence_count >= $1
+      ORDER BY occurrence_count DESC;
+    `, [minOccurrences]);
+
+    console.log(`[*] Found ${eligibleUnmapped.length} unmapped candidate(s) eligible for promotion.`);
+
+    if (eligibleUnmapped.length > 0) {
+      if (!isDryRun) {
+        let promotedEntitiesCount = 0;
+        for (const ue of eligibleUnmapped) {
+          const canonical = resolveCanonicalEntity(ue.raw_name);
+          const entityType = ue.inferred_type || canonical.type || 'HISTORICAL_PERSON';
+          const mergedAliases = Array.from(new Set([...(canonical.aliases || []), ue.raw_name]));
+
+          await query(`
+            INSERT INTO entities (id, name, type, aliases, metadata)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (id) DO UPDATE SET aliases = ARRAY(SELECT DISTINCT unnest(array_cat(entities.aliases, EXCLUDED.aliases)));
+          `, [
+            canonical.entityId,
+            canonical.canonicalName,
+            entityType,
+            mergedAliases,
+            JSON.stringify({ promoted_from_unmapped: true, original_raw_name: ue.raw_name, occurrences: ue.occurrence_count }),
+          ]);
+
+          await query(`
+            UPDATE unmapped_entities
+            SET status = 'PROMOTED'
+            WHERE id = $1;
+          `, [ue.id]);
+
+          await logEntityAuditAction({
+            entity_id: canonical.entityId,
+            action_type: 'CONFLICT_RESOLVE',
+            modified_by: 'QUARANTINE_OPERATOR',
+            rationale: `Promoted unmapped entity '${ue.raw_name}' (${ue.occurrence_count} occurrences) to canonical ID '${canonical.entityId}'`,
+          });
+
+          promotedEntitiesCount++;
+        }
+        console.log(`✅ Successfully promoted ${promotedEntitiesCount} unmapped entity/entities into master entities table.`);
+      } else {
+        console.log(`[DRY-RUN] Would promote ${eligibleUnmapped.length} unmapped entity/entities into master entities table.`);
       }
     }
   }

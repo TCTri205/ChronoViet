@@ -123,7 +123,7 @@ export async function scoreImageWithLocalVLM(
 ): Promise<VLMScoreResult> {
   const prompt = buildScoringPrompt(eventDescription, options);
   const baseUrl = (options.baseUrl || envConfig.VLM_BASE_URL || envConfig.LLM_BASE_URL || 'http://localhost:8092').replace(/\/$/, '');
-  const modelName = options.model || envConfig.VLM_MODEL || envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.8-27b-instruct-q4_k_m';
+  const modelName = options.model || envConfig.VLM_MODEL || envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.5-9b-instruct-q4_k_m';
   const endpoint = `${baseUrl}/v1/chat/completions`;
 
   let imagePart: { type: 'image_url'; image_url: { url: string } };
@@ -328,7 +328,7 @@ export async function scoreImageWithVLM(
   }
 
   const vlmProvider = envConfig.VLM_PROVIDER || 'auto';
-  const vlmModel = envConfig.VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.8-27b-instruct-q4_k_m';
+  const vlmModel = envConfig.VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.5-9b-instruct-q4_k_m';
   const vlmBaseUrl = envConfig.VLM_BASE_URL || envConfig.LLM_BASE_URL || 'http://localhost:8092';
 
   // 3. Hybrid Round-Robin Mode (Rotates across Local Vision & Gemini Cloud Vision keys)

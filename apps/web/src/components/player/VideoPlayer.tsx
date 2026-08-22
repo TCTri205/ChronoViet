@@ -29,43 +29,11 @@ export interface VideoPlayerProps {
 }
 
 export function VideoPlayer({
-  videoUrl = "/api/v1/projects/proj_bach_dang_1288/video",
+  videoUrl,
   projectId = "proj_bach_dang_1288",
   projectTitle = "Chiến Thắng Bạch Đằng Năm 1288",
-  subtitles = [
-    {
-      text: "Vạn Kiếp sấm vang, sông Bạch Đằng cuộn sóng...",
-      startMs: 0,
-      endMs: 4000,
-      words: [
-        { word: "Vạn", startMs: 0, endMs: 500 },
-        { word: "Kiếp", startMs: 500, endMs: 1000 },
-        { word: "sấm", startMs: 1000, endMs: 1500 },
-        { word: "vang,", startMs: 1500, endMs: 2000 },
-        { word: "sông", startMs: 2000, endMs: 2500 },
-        { word: "Bạch", startMs: 2500, endMs: 3000 },
-        { word: "Đằng", startMs: 3000, endMs: 3500 },
-        { word: "cuộn", startMs: 3500, endMs: 3800 },
-        { word: "sóng...", startMs: 3800, endMs: 4000 },
-      ],
-    },
-  ],
-  attributions = [
-    {
-      id: "attr_1",
-      title: "Tranh khắc mộc bản Trận Thủy Chiến Bạch Đằng",
-      sourceType: "WOODBLOCK_SCROLL",
-      license: "PUBLIC_DOMAIN",
-      institution: "Viện Nghiên Cứu Hán Nôm",
-    },
-    {
-      id: "attr_2",
-      title: "Bản đồ cổ địa thế sông Bạch Đằng thế kỷ XIII",
-      sourceType: "MAP_CHART",
-      license: "CC0",
-      institution: "Bảo Tàng Lịch Sử Quân Sự",
-    },
-  ],
+  subtitles,
+  attributions,
   aspectRatio = "16:9",
   className = "",
 }: VideoPlayerProps) {
@@ -81,30 +49,171 @@ export function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAttributionOpen, setIsAttributionOpen] = useState(false);
 
-  // Time & Duration updater
+  // Dynamic project hydration states
+  const [effectiveVideoUrl, setEffectiveVideoUrl] = useState(
+    videoUrl || `/api/v1/projects/${projectId}/video`
+  );
+  const [effectiveTitle, setEffectiveTitle] = useState(projectTitle);
+  const [dynamicSubtitles, setDynamicSubtitles] = useState<SubtitleSegment[]>(
+    subtitles || [
+      {
+        text: "Vạn Kiếp sấm vang, sông Bạch Đằng cuộn sóng...",
+        startMs: 0,
+        endMs: 4000,
+        words: [
+          { word: "Vạn", startMs: 0, endMs: 500 },
+          { word: "Kiếp", startMs: 500, endMs: 1000 },
+          { word: "sấm", startMs: 1000, endMs: 1500 },
+          { word: "vang,", startMs: 1500, endMs: 2000 },
+          { word: "sông", startMs: 2000, endMs: 2500 },
+          { word: "Bạch", startMs: 2500, endMs: 3000 },
+          { word: "Đằng", startMs: 3000, endMs: 3500 },
+          { word: "cuộn", startMs: 3500, endMs: 3800 },
+          { word: "sóng...", startMs: 3800, endMs: 4000 },
+        ],
+      },
+    ]
+  );
+  const [dynamicAttributions, setDynamicAttributions] = useState<MediaAttribution[]>(
+    attributions || [
+      {
+        id: "attr_1",
+        title: "Tranh khắc mộc bản Trận Thủy Chiến Bạch Đằng",
+        sourceType: "WOODBLOCK_SCROLL",
+        license: "PUBLIC_DOMAIN",
+        institution: "Viện Nghiên Cứu Hán Nôm",
+      },
+      {
+        id: "attr_2",
+        title: "Bản đồ cổ địa thế sông Bạch Đằng thế kỷ XIII",
+        sourceType: "MAP_CHART",
+        license: "CC0",
+        institution: "Bảo Tàng Lịch Sử Quân Sự",
+      },
+    ]
+  );
+  const [videoStatus, setVideoStatus] = useState<"READY" | "PROCESSING">("READY");
+
+  // Hydrate project manifest dynamically when projectId changes
+  useEffect(() => {
+    if (!projectId) return;
+
+    let isCancelled = false;
+    fetch(`/api/v1/projects/${projectId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isCancelled || !data) return;
+
+        if (data.metadata?.topic || data.metadata?.title) {
+          setEffectiveTitle(data.metadata.topic || data.metadata.title);
+        }
+
+        if (data.videoUrl) {
+          setEffectiveVideoUrl(data.videoUrl);
+          setVideoStatus("READY");
+        } else if (data.status && data.status !== "COMPLETED") {
+          setVideoStatus("PROCESSING");
+        }
+
+        // Hydrate subtitles from timeline schema if not provided via props
+        if (!subtitles && data.schema?.timeline && Array.isArray(data.schema.timeline)) {
+          let elapsedMs = 0;
+          const parsedSubs: SubtitleSegment[] = [];
+          const parsedAttrs: MediaAttribution[] = [];
+
+          for (const scene of data.schema.timeline) {
+            const sceneDurMs = Math.round(
+              (scene.audioDurationSeconds || scene.targetDurationSeconds || 5) * 1000
+            );
+            const startMs = elapsedMs;
+            const endMs = elapsedMs + sceneDurMs;
+
+            if (scene.voiceoverText) {
+              parsedSubs.push({
+                text: scene.voiceoverText,
+                startMs,
+                endMs,
+                words:
+                  scene.wordTimestamps?.map((w: any) => ({
+                    word: w.word,
+                    startMs: startMs + (w.startMs || 0),
+                    endMs: startMs + (w.endMs || 250),
+                  })) || [],
+              });
+            }
+
+            if (scene.selectedAsset) {
+              parsedAttrs.push({
+                id: scene.selectedAsset.candidateId || scene.sceneId || `attr_${parsedAttrs.length + 1}`,
+                title: scene.selectedAsset.title || scene.voiceoverText?.slice(0, 45) || "Tư liệu sử liệu",
+                sourceType: scene.selectedAsset.sourceType || "HISTORICAL_IMAGE",
+                license: scene.selectedAsset.license || "PUBLIC_DOMAIN",
+                institution:
+                  scene.selectedAsset.institution ||
+                  scene.selectedAsset.author ||
+                  "Kho Tư Liệu ChronoViet",
+              });
+            }
+
+            elapsedMs = endMs;
+          }
+
+          if (parsedSubs.length > 0) setDynamicSubtitles(parsedSubs);
+          if (parsedAttrs.length > 0) setDynamicAttributions(parsedAttrs);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [projectId, subtitles, attributions]);
+
+  // Time & Duration updater with resilience against NaN and Infinity
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+      const cur = videoRef.current.currentTime;
+      if (Number.isFinite(cur) && !Number.isNaN(cur) && cur >= 0) {
+        setCurrentTime(cur);
+      }
     }
   };
 
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration || 180);
+      const rawDuration = videoRef.current.duration;
+      if (Number.isFinite(rawDuration) && !Number.isNaN(rawDuration) && rawDuration > 0) {
+        setDuration(rawDuration);
+      } else {
+        setDuration(180);
+      }
     }
   };
 
+  const isPlayingRef = useRef(isPlaying);
+  const isMutedRef = useRef(isMuted);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+
   const togglePlay = () => {
     if (!videoRef.current) return;
-    if (isPlaying) {
+    if (isPlayingRef.current) {
       videoRef.current.pause();
       setIsPlaying(false);
     } else {
       videoRef.current.play().catch(() => {
         // Autoplay policy fallback: mute and play
-        videoRef.current!.muted = true;
-        setIsMuted(true);
-        videoRef.current!.play();
+        if (videoRef.current) {
+          videoRef.current.muted = true;
+          setIsMuted(true);
+          videoRef.current.play();
+        }
       });
       setIsPlaying(true);
     }
@@ -112,14 +221,14 @@ export function VideoPlayer({
 
   const toggleMute = () => {
     if (!videoRef.current) return;
-    const nextMute = !isMuted;
+    const nextMute = !isMutedRef.current;
     videoRef.current.muted = nextMute;
     setIsMuted(nextMute);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const time = parseFloat(e.target.value);
-    if (videoRef.current) {
+    if (Number.isFinite(time) && videoRef.current) {
       videoRef.current.currentTime = time;
       setCurrentTime(time);
     }
@@ -136,7 +245,7 @@ export function VideoPlayer({
     }
   };
 
-  // Keyboard Shortcuts Listener
+  // Keyboard Shortcuts Listener (bound once on mount)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is typing in input or textarea
@@ -159,13 +268,34 @@ export function VideoPlayer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPlaying, isMuted]);
+  }, []);
 
   const formatTime = (secs: number) => {
+    if (!Number.isFinite(secs) || Number.isNaN(secs) || secs < 0) {
+      return "0:00";
+    }
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
+
+  if (videoStatus === "PROCESSING") {
+    return (
+      <div
+        className={`w-full aspect-video bg-lacquer-surface border border-primary/25 rounded-2xl flex flex-col items-center justify-center p-6 text-center shadow-xl ${className}`}
+      >
+        <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mb-3">
+          <Sparkles className="w-6 h-6 text-primary animate-spin" />
+        </div>
+        <h4 className="text-sm font-headline font-bold text-gold-300">
+          Đang Chuẩn Bị Kết Xuất Thước Phim Lịch Sử...
+        </h4>
+        <p className="text-xs text-text-muted mt-1.5 max-w-sm leading-relaxed">
+          {effectiveTitle} đang được chuỗi Multi-Agent tự động xử lý kịch bản, âm thanh và kết xuất Remotion.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -178,7 +308,7 @@ export function VideoPlayer({
       <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
         <video
           ref={videoRef}
-          src={videoUrl}
+          src={effectiveVideoUrl}
           playsInline
           // @ts-ignore
           webkit-playsinline="true"
@@ -196,7 +326,7 @@ export function VideoPlayer({
         {/* Karaoke Subtitles Overlay */}
         <KaraokeSubtitles
           currentTimeMs={currentTime * 1000}
-          subtitles={subtitles}
+          subtitles={dynamicSubtitles}
           isVisible={isCcActive}
         />
 
@@ -259,7 +389,7 @@ export function VideoPlayer({
             </Button>
 
             <span className="text-xs font-headline font-semibold text-gold-300 hidden md:inline truncate max-w-xs">
-              {projectTitle}
+              {effectiveTitle}
             </span>
           </div>
 
@@ -290,7 +420,7 @@ export function VideoPlayer({
             </Button>
 
             <a
-              href={videoUrl}
+              href={effectiveVideoUrl}
               download={`${projectId || "video"}.mp4`}
               className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium bg-primary/10 hover:bg-primary/20 text-gold-300 border border-primary/20 gap-1.5 transition-colors"
               aria-label="Tải video 1080p về máy"
@@ -314,7 +444,7 @@ export function VideoPlayer({
 
       {/* Attribution Drawer */}
       <AttributionDrawer
-        attributions={attributions}
+        attributions={dynamicAttributions}
         isOpen={isAttributionOpen}
         onClose={() => setIsAttributionOpen(false)}
       />

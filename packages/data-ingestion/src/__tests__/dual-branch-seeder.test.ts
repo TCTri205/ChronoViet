@@ -93,7 +93,7 @@ Quân Tây Sơn thần tốc tiến vào Thăng Long giải phóng kinh thành.
     expect(result.highConfidenceTriplesCount).toBeGreaterThan(0);
     expect(result.quarantinedTriplesCount).toBeGreaterThan(0);
     expect(result.isPgMode).toBe(false);
-    expect(callCount).toBe(result.chunksIngested);
+    expect(callCount).toBe(result.childChunksCount);
   });
 
   it('should isolate chunk extraction failures without crashing the whole seed process', async () => {

@@ -48,10 +48,10 @@ apps/web    apps/render-  services/vieneu-tts   agent-orchestrator  rag-engine
 | **Logging Format** | `JSON Lines` (1 record = 1 dòng JSON) khi `NODE_ENV=production` hoặc `LOG_FORMAT=json`; pretty-print khi dev |
 | **Level filter** | `LOG_LEVEL` trong `.env` (`debug`, `info`, `warn`, `error`) — Milestone cấp Job/Pipeline ghi ở `info`; sub-scene chunking, static audio streaming, health/metrics probes chuyển về `debug` để chống lag terminal |
 | **Fallback Throttling** | `logFallbackAlert()` tự động gom cụm và throttle 30s cooldown theo subsystem để chống bùng nổ log khi chạy song song nhiều scene |
-| **Correlation ID** | Sinh/nhận từ Client HTTP `x-request-id` → Middleware Next.js → LangGraph State → BullMQ Job data → Worker child logger |
+| **Correlation ID & W3C Tracing** | Sinh/nhận từ Client HTTP `x-request-id` hoặc W3C `traceparent` (`00-<trace_id>-<parent_id>-<flags>`) → Middleware Next.js → LangGraph State → BullMQ Job data → Worker child logger |
 | **Child logger** | `log.child({ correlationId?, fields? })` — gắn context (`projectId`, `jobId`, `sceneId`) mà không làm ô nhiễm log gốc |
 | **Metrics Engine** | `prom-client` chuẩn Prometheus với guard chống cardinality bomb (chỉ dùng bounded labels: route template, status class) |
-| **Health Probes** | `/api/healthz` (liveness), `/api/readyz` (readiness kiểm tra PG + Redis), worker probe port 3001, Docker `HEALTHCHECK` |
+| **Health Probes & Shutdown** | `/api/healthz`, `/api/readyz`, worker probe port 3001, Docker `HEALTHCHECK`; multi-tier graceful shutdown (`wsGateway` → BullMQ `closeQueues()` → HTTP `server.close()`) |
 | **Security & PII** | `sanitizePayload()` redact secret keys (`token`, `api_key`); `truncateSnippet()` cắt ngắn prompt/topic tránh lộ PII |
 
 ---
@@ -101,10 +101,18 @@ docker compose logs | jq -c 'select(.correlationId == "a1b2c3d4-xxxx-yyyy")'
 | `chronoviet_http_request_duration_seconds` | Histogram | `method`, `route`, `status_class` | Phân phối độ trễ request (Duration, p95, p99) |
 | `chronoviet_llm_requests_total` | Counter | `provider`, `model`, `status` | Tổng số gọi LLM nội bộ / Cloud fallback |
 | `chronoviet_llm_request_duration_seconds` | Histogram | `provider`, `model` | Độ trễ suy luận mô hình LLM |
-| `chronoviet_circuit_breaker_state` | Gauge | `subsystem` | Trạng thái Circuit Breaker (0 = CLOSED, 1 = OPEN) |
+| `chronoviet_embedding_requests_total` | Counter | `model`, `status` | Tổng số lượt yêu cầu tạo dense embedding BGE-M3 |
+| `chronoviet_embedding_duration_seconds` | Histogram | `model` | Thời gian sinh vector nhúng BGE-M3 |
+| `chronoviet_rag_search_requests_total` | Counter | `status` | Tổng số lượt truy vấn tìm kiếm RAG Context |
+| `chronoviet_rag_search_duration_seconds` | Histogram | `status` | Thời gian thực thi truy vấn tìm kiếm RAG |
+| `chronoviet_vlm_inspections_total` | Counter | `provider`, `verdict` | Tổng số lượt thẩm định tư liệu ảnh qua VLM Inspector |
+| `chronoviet_vlm_inspection_duration_seconds` | Histogram | `provider` | Thời gian thẩm định hình ảnh qua VLM Inspector |
+| `chronoviet_circuit_breaker_state` | Gauge | `subsystem` (`llm_local`, `llm_cloud`, `embedding`) | Trạng thái Circuit Breaker (0 = CLOSED, 1 = OPEN) |
+| `chronoviet_circuit_breaker_failures` | Gauge | `subsystem` (`llm_local`, `llm_cloud`, `embedding`) | Số lỗi liên tiếp ghi nhận bởi Circuit Breaker |
 | `chronoviet_bullmq_queue_jobs` | Gauge | `queue`, `state` | Độ sâu hàng đợi BullMQ (`waiting`, `active`, `failed`...) |
 | `chronoviet_websocket_active_connections` | Gauge | — | Số kết nối WebSocket client đang hoạt động |
 | `chronoviet_render_duration_seconds` | Histogram | `status` | Thời gian render video MP4 qua Remotion Engine |
+| `chronoviet_tts_requests_total` | Counter | `engine`, `status` | Tổng số lượt yêu cầu tổng hợp âm thanh VieNeu TTS |
 | `chronoviet_tts_synthesis_duration_seconds` | Histogram | `engine` | Thời gian tổng hợp âm thanh VieNeu TTS |
 | `chronoviet_orchestrator_node_duration_seconds` | Histogram | `node`, `status` | Thời gian thực thi từng node trong Orchestrator StateGraph |
 | `chronoviet_orchestrator_pacing_error_percent` | Histogram | `template_id` | Phân phối sai số nhịp độ (% lệch Target vs Actual Duration) |

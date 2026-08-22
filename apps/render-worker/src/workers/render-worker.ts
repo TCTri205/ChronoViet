@@ -83,14 +83,17 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       path.resolve(process.cwd(), projectSchema.audioUrl),
     ];
     for (const p of candidatePaths) {
-      if (fs.existsSync(p) && fs.statSync(p).isFile()) {
-        const buf = fs.readFileSync(p);
-        const ext = path.extname(p).toLowerCase();
-        const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
-        projectSchema.audioUrl = `data:${mime};base64,${buf.toString('base64')}`;
-        schemaMutated = true;
-        break;
-      }
+      try {
+        const stat = await fs.promises.stat(p);
+        if (stat.isFile()) {
+          const buf = await fs.promises.readFile(p);
+          const ext = path.extname(p).toLowerCase();
+          const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
+          projectSchema.audioUrl = `data:${mime};base64,${buf.toString('base64')}`;
+          schemaMutated = true;
+          break;
+        }
+      } catch {}
     }
   }
 
@@ -102,14 +105,17 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       path.resolve(process.cwd(), projectSchema.bgmUrl),
     ];
     for (const p of candidatePaths) {
-      if (fs.existsSync(p) && fs.statSync(p).isFile()) {
-        const buf = fs.readFileSync(p);
-        const ext = path.extname(p).toLowerCase();
-        const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
-        projectSchema.bgmUrl = `data:${mime};base64,${buf.toString('base64')}`;
-        schemaMutated = true;
-        break;
-      }
+      try {
+        const stat = await fs.promises.stat(p);
+        if (stat.isFile()) {
+          const buf = await fs.promises.readFile(p);
+          const ext = path.extname(p).toLowerCase();
+          const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
+          projectSchema.bgmUrl = `data:${mime};base64,${buf.toString('base64')}`;
+          schemaMutated = true;
+          break;
+        }
+      } catch {}
     }
   }
 
@@ -122,14 +128,17 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
         path.resolve(paths.rootDir, scene.sceneAudioUrl),
       ];
       for (const p of candidatePaths) {
-        if (fs.existsSync(p) && fs.statSync(p).isFile()) {
-          const buf = fs.readFileSync(p);
-          const ext = path.extname(p).toLowerCase();
-          const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
-          scene.sceneAudioUrl = `data:${mime};base64,${buf.toString('base64')}`;
-          schemaMutated = true;
-          break;
-        }
+        try {
+          const stat = await fs.promises.stat(p);
+          if (stat.isFile()) {
+            const buf = await fs.promises.readFile(p);
+            const ext = path.extname(p).toLowerCase();
+            const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
+            scene.sceneAudioUrl = `data:${mime};base64,${buf.toString('base64')}`;
+            schemaMutated = true;
+            break;
+          }
+        } catch {}
       }
     }
     if (scene.sfxUrl && !scene.sfxUrl.startsWith('http') && !scene.sfxUrl.startsWith('data:')) {
@@ -139,14 +148,17 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
         path.resolve(paths.rootDir, scene.sfxUrl),
       ];
       for (const p of candidatePaths) {
-        if (fs.existsSync(p) && fs.statSync(p).isFile()) {
-          const buf = fs.readFileSync(p);
-          const ext = path.extname(p).toLowerCase();
-          const mime = ext === '.mp3' ? 'audio/mp3' : 'audio/wav';
-          scene.sfxUrl = `data:${mime};base64,${buf.toString('base64')}`;
-          schemaMutated = true;
-          break;
-        }
+        try {
+          const stat = await fs.promises.stat(p);
+          if (stat.isFile()) {
+            const buf = await fs.promises.readFile(p);
+            const ext = path.extname(p).toLowerCase();
+            const mime = ext === '.mp3' ? 'audio/mp3' : 'audio/wav';
+            scene.sfxUrl = `data:${mime};base64,${buf.toString('base64')}`;
+            schemaMutated = true;
+            break;
+          }
+        } catch {}
       }
     }
     if (scene.assetUrl && scene.assetUrl.includes('RFVNTVlfSU1BR0VfREFUQV')) {
@@ -160,14 +172,17 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
         path.resolve(paths.rootDir, scene.assetUrl),
       ];
       for (const p of candidatePaths) {
-        if (fs.existsSync(p) && fs.statSync(p).isFile()) {
-          const buf = fs.readFileSync(p);
-          const ext = path.extname(p).toLowerCase();
-          const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
-          scene.assetUrl = `data:${mime};base64,${buf.toString('base64')}`;
-          schemaMutated = true;
-          break;
-        }
+        try {
+          const stat = await fs.promises.stat(p);
+          if (stat.isFile()) {
+            const buf = await fs.promises.readFile(p);
+            const ext = path.extname(p).toLowerCase();
+            const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+            scene.assetUrl = `data:${mime};base64,${buf.toString('base64')}`;
+            schemaMutated = true;
+            break;
+          }
+        } catch {}
       }
     }
   }
@@ -198,7 +213,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
   const defaultConcurrency = Math.max(1, Math.min(os.cpus().length - 1, 4));
   const renderConcurrency = String(envConfig.RENDER_CONCURRENCY || process.env.RENDER_CONCURRENCY || defaultConcurrency);
 
-  log.info('worker.remotion_rendering', `Invoking Remotion engine for ${projectId} with concurrency=${renderConcurrency}`, {
+  workerLog.info('worker.remotion_rendering', `Invoking Remotion engine for ${projectId} with concurrency=${renderConcurrency}`, {
     remotionEntry,
     schemaPath,
     outputPath,

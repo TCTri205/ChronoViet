@@ -86,6 +86,8 @@ pnpm stack:infra         # Start PostgreSQL (pgvector) & Redis
 pnpm stack:down          # Stop all containers
 pnpm db:init             # Initialize vector & graph schema (8 tables)
 pnpm db:health           # Audit DB health (relationships, embeddings, indexes)
+pnpm db:backup --name <version_name>   # Backup snapshot with version name (e.g. pnpm db:backup --name post_ingest_v1)
+pnpm db:restore --file <path_to_dump> # Restore DB from version snapshot (e.g. pnpm db:restore --file backups/post_ingest_v1.dump)
 pnpm db:clean            # Remove duplicate entities and dangling relations
 pnpm db:audit-quarantine # Audit quarantined knowledge edges
 ```

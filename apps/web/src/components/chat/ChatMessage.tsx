@@ -20,20 +20,33 @@ export interface ChatMessageProps {
   onCreateVideoFromTopic?: (topic: string) => void;
 }
 
+// Pure module-level topic title extractor for 1-click video handover
+export function extractTopicFromMessage(text: string): string {
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && !l.startsWith("⚠️") && !l.startsWith("*Hệ thống") && !l.startsWith("🏛️"));
+
+  if (lines.length > 0) {
+    const candidate = lines[0].replace(/^[#*`\-_:> ]+/g, "").replace(/[*`_]/g, "").trim();
+    if (candidate.length > 5 && candidate.length < 80) {
+      return candidate;
+    }
+  }
+
+  const fallbackCandidate = text.split("\n")[0].replace(/[#*`⚠️🏛️]/g, "").trim();
+  return fallbackCandidate.length > 5 && fallbackCandidate.length < 80
+    ? fallbackCandidate
+    : "Sự kiện lịch sử từ đoạn hội thoại";
+}
+
 function ChatMessageComponent({
   message,
   onCitationClick,
   onCreateVideoFromTopic,
 }: ChatMessageProps) {
   const isUser = message.role === "user";
-
-  // Extract initial topic title for 1-click handover
-  const extractTopic = (text: string): string => {
-    const firstLine = text.split("\n")[0].replace(/[#*`]/g, "").trim();
-    return firstLine.length > 5 && firstLine.length < 80
-      ? firstLine
-      : "Sự kiện lịch sử từ đoạn hội thoại";
-  };
+  const isErrorMessage = !isUser && (message.content.includes("⚠️") || message.content.includes("Không thể kết nối"));
 
   return (
     <div
@@ -43,8 +56,10 @@ function ChatMessageComponent({
     >
       {/* AI Avatar */}
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-lacquer-surface border border-primary/40 shrink-0 flex items-center justify-center shadow-md shadow-gold-glow/20 mt-1">
-          <span className="text-primary text-xs font-bold">🏛️</span>
+        <div className={`w-8 h-8 rounded-full bg-lacquer-surface border ${
+          isErrorMessage ? "border-amber-500/40" : "border-primary/40"
+        } shrink-0 flex items-center justify-center shadow-md shadow-gold-glow/20 mt-1`}>
+          <span className="text-primary text-xs font-bold">{isErrorMessage ? "⚠️" : "🏛️"}</span>
         </div>
       )}
 
@@ -54,6 +69,8 @@ function ChatMessageComponent({
           className={`p-4 rounded-xl text-sm leading-relaxed ${
             isUser
               ? "bg-primary/15 border border-primary/30 text-text-primary rounded-tr-xs"
+              : isErrorMessage
+              ? "bg-lacquer-surface/95 border border-amber-500/30 text-text-primary rounded-tl-xs shadow-md"
               : "bg-lacquer-surface/90 border border-primary/20 text-text-primary rounded-tl-xs shadow-md"
           }`}
         >
@@ -90,7 +107,7 @@ function ChatMessageComponent({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onCreateVideoFromTopic(extractTopic(message.content))}
+              onClick={() => onCreateVideoFromTopic(extractTopicFromMessage(message.content))}
               className="text-xs h-7 gap-1.5 border-primary/30 text-gold-300 hover:bg-primary/20 hover:text-white"
             >
               <Film className="w-3.5 h-3.5 text-primary" />

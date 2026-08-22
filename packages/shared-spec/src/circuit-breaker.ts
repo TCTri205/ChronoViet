@@ -32,6 +32,13 @@ export const cloudFallbackCircuit: CircuitBreakerState = {
   nextProbeTime: 0,
 };
 
+export const embeddingCircuit: CircuitBreakerState = {
+  status: 'CLOSED',
+  failures: 0,
+  lastFailureTime: 0,
+  nextProbeTime: 0,
+};
+
 export const CIRCUIT_FAILURE_THRESHOLD = 2;
 export const CIRCUIT_COOLDOWN_MS = 30000;
 
@@ -125,6 +132,53 @@ export function recordCloudCircuitFailure(err?: unknown): void {
 }
 
 /**
+ * Checks the current state of the Embedding Service circuit breaker.
+ */
+export function checkEmbeddingCircuitState(): 'ALLOW' | 'PROBE' | 'FAST_FAIL' {
+  if (embeddingCircuit.status === 'CLOSED') return 'ALLOW';
+  const now = Date.now();
+  if (now >= embeddingCircuit.nextProbeTime) {
+    embeddingCircuit.status = 'HALF_OPEN';
+    return 'PROBE';
+  }
+  return 'FAST_FAIL';
+}
+
+/**
+ * Records a successful Embedding Service request to close/reset the circuit breaker.
+ */
+export function recordEmbeddingCircuitSuccess(): void {
+  if (embeddingCircuit.status !== 'CLOSED') {
+    log.info('embedding.circuit_recovered', 'Embedding Service recovered; circuit closed', {
+      previousFailures: embeddingCircuit.failures,
+    });
+  }
+  embeddingCircuit.status = 'CLOSED';
+  embeddingCircuit.failures = 0;
+  circuitBreakerGauge.set({ subsystem: 'embedding' }, 0);
+  circuitBreakerFailuresGauge.set({ subsystem: 'embedding' }, 0);
+}
+
+/**
+ * Records a failed Embedding Service request, tripping the circuit if threshold exceeded.
+ */
+export function recordEmbeddingCircuitFailure(err?: unknown): void {
+  embeddingCircuit.failures += 1;
+  embeddingCircuit.lastFailureTime = Date.now();
+  circuitBreakerFailuresGauge.set({ subsystem: 'embedding' }, embeddingCircuit.failures);
+  if (embeddingCircuit.failures >= CIRCUIT_FAILURE_THRESHOLD) {
+    embeddingCircuit.status = 'OPEN';
+    embeddingCircuit.nextProbeTime = Date.now() + CIRCUIT_COOLDOWN_MS;
+    circuitBreakerGauge.set({ subsystem: 'embedding' }, 1);
+    log.warn('embedding.circuit_opened', 'Embedding Service circuit opened (cooldown 30s)', {
+      failures: embeddingCircuit.failures,
+      cooldownMs: CIRCUIT_COOLDOWN_MS,
+      error: err instanceof Error ? err.message : String(err || ''),
+    });
+  }
+}
+
+/**
  * Reset circuit breakers (primarily for unit testing and admin diagnostics).
  */
 export function resetCircuitBreakers(): void {
@@ -138,8 +192,15 @@ export function resetCircuitBreakers(): void {
   cloudFallbackCircuit.lastFailureTime = 0;
   cloudFallbackCircuit.nextProbeTime = 0;
 
+  embeddingCircuit.status = 'CLOSED';
+  embeddingCircuit.failures = 0;
+  embeddingCircuit.lastFailureTime = 0;
+  embeddingCircuit.nextProbeTime = 0;
+
   circuitBreakerGauge.set({ subsystem: 'llm_local' }, 0);
   circuitBreakerFailuresGauge.set({ subsystem: 'llm_local' }, 0);
   circuitBreakerGauge.set({ subsystem: 'llm_cloud' }, 0);
   circuitBreakerFailuresGauge.set({ subsystem: 'llm_cloud' }, 0);
+  circuitBreakerGauge.set({ subsystem: 'embedding' }, 0);
+  circuitBreakerFailuresGauge.set({ subsystem: 'embedding' }, 0);
 }

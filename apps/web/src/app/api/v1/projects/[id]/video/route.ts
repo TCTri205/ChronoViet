@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
-  initProjectWorkspace,
+  getProjectPaths,
   createLogger,
   httpRequestsTotal,
   httpRequestDurationSeconds,
@@ -22,18 +22,34 @@ export async function GET(
   const reqLog = log.child({ correlationId, fields: { projectId } });
 
   try {
-    const paths = initProjectWorkspace(projectId);
+    let paths;
+    try {
+      paths = getProjectPaths(projectId);
+    } catch {
+      const durationSec = (Date.now() - startTime) / 1000;
+      httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '4xx' });
+      httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '4xx' }, durationSec);
+      return new Response(JSON.stringify({ error: `Invalid project id: ${projectId}` }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'x-request-id': correlationId },
+      });
+    }
+
     const videoPath = path.join(paths.outputDir, 'video.mp4');
 
-    if (!fs.existsSync(videoPath)) {
+    let stat: fs.Stats;
+    try {
+      stat = await fs.promises.stat(videoPath);
+    } catch {
+      const durationSec = (Date.now() - startTime) / 1000;
       httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '4xx' });
+      httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '4xx' }, durationSec);
       return new Response(JSON.stringify({ error: `Video not found for project: ${projectId}` }), {
         status: 404,
         headers: { 'Content-Type': 'application/json', 'x-request-id': correlationId },
       });
     }
 
-    const stat = fs.statSync(videoPath);
     const fileSize = stat.size;
     const range = req.headers.get('range');
 
@@ -43,10 +59,14 @@ export async function GET(
       const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
 
       if (start >= fileSize || end >= fileSize) {
+        const durationSec = (Date.now() - startTime) / 1000;
+        httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '4xx' });
+        httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '4xx' }, durationSec);
         return new Response(null, {
           status: 416,
           headers: {
             'Content-Range': `bytes */${fileSize}`,
+            'x-request-id': correlationId,
           },
         });
       }
@@ -66,6 +86,10 @@ export async function GET(
         },
       });
 
+      const durationSec = (Date.now() - startTime) / 1000;
+      httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '2xx' });
+      httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '2xx' }, durationSec);
+
       return new Response(webStream, {
         status: 206,
         headers: {
@@ -74,6 +98,7 @@ export async function GET(
           'Content-Length': String(chunkSize),
           'Content-Type': 'video/mp4',
           'Cache-Control': 'public, max-age=31536000, immutable',
+          'x-request-id': correlationId,
         },
       });
     } else {
@@ -89,6 +114,10 @@ export async function GET(
         },
       });
 
+      const durationSec = (Date.now() - startTime) / 1000;
+      httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '2xx' });
+      httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '2xx' }, durationSec);
+
       return new Response(webStream, {
         status: 200,
         headers: {
@@ -96,14 +125,21 @@ export async function GET(
           'Content-Type': 'video/mp4',
           'Accept-Ranges': 'bytes',
           'Cache-Control': 'public, max-age=31536000, immutable',
+          'x-request-id': correlationId,
         },
       });
     }
   } catch (err: any) {
-    log.error('api.video_stream_failed', `Failed to stream video: ${err.message}`, { error: err });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '5xx' });
+    httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/video', status_class: '5xx' }, durationSec);
+    reqLog.error('api.video_stream_failed', `Failed to stream video: ${err.message}`, { error: err });
     return new Response(JSON.stringify({ error: err.message || 'Internal Server Error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': correlationId,
+      },
     });
   }
 }

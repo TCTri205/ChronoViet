@@ -119,7 +119,7 @@ services:
     volumes:
       - ./models:/models:ro
     command: >
-      -m /models/${LOCAL_LLM_PRIMARY_MODEL:-qwen3.8-27b-instruct-q4_k_m}.gguf
+      -m /models/${LOCAL_LLM_PRIMARY_MODEL:-qwen3.5-9b-instruct-q4_k_m}.gguf
       --port 8092
       --ctx-size ${LLM_CTX_SIZE:-16384}
       --n-gpu-layers 99

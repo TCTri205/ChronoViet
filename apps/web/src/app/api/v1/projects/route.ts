@@ -17,6 +17,28 @@ const log = createLogger({ service: 'web-api-projects' });
 
 export const dynamic = 'force-dynamic';
 
+// In-memory cache for directory entries list to prevent disk amplification
+interface ProjectsDirCache {
+  timestamp: number;
+  dirNames: string[];
+}
+
+let dirCache: ProjectsDirCache | null = null;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL
+
+function invalidateProjectsCache(): void {
+  dirCache = null;
+}
+
+function extractTimestampFromDirName(name: string): number {
+  const match = name.match(/^proj_(\d+)/);
+  if (match) {
+    const ts = parseInt(match[1], 10);
+    if (!isNaN(ts)) return ts;
+  }
+  return 0;
+}
+
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
@@ -38,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     const paths = initProjectWorkspace(projectId);
 
-    // Save initial metadata
+    // Save initial metadata asynchronously
     const metadata = {
       projectId,
       topic,
@@ -52,7 +74,10 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    fs.writeFileSync(paths.metadataFile, JSON.stringify(metadata, null, 2), 'utf-8');
+    await fs.promises.writeFile(paths.metadataFile, JSON.stringify(metadata, null, 2), 'utf-8');
+
+    // Invalidate project list cache on new project creation
+    invalidateProjectsCache();
 
     const projectLog = reqLog.child({ fields: { projectId } });
     projectLog.info('api.project_created', `Initialized project ${projectId} for topic "${truncateSnippet(topic)}"`, {
@@ -120,64 +145,106 @@ export async function GET(req: NextRequest) {
     const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10));
 
     const baseDir = getDefaultProjectsBaseDir();
-    let summaries: ProjectSummary[] = [];
+    let sortedDirNames: string[] = [];
 
-    if (fs.existsSync(baseDir)) {
-      const entries = await fs.promises.readdir(baseDir, { withFileTypes: true });
-      const dirEntries = entries.filter((e) => e.isDirectory());
+    const now = Date.now();
+    if (dirCache && now - dirCache.timestamp < CACHE_TTL_MS) {
+      sortedDirNames = dirCache.dirNames;
+    } else {
+      try {
+        const entries = await fs.promises.readdir(baseDir, { withFileTypes: true });
+        const validDirNames: string[] = [];
 
-      const summaryPromises = dirEntries.map(async (entry) => {
-        const projectId = entry.name;
-        const projectDir = path.join(baseDir, projectId);
-        const metaPath = path.join(projectDir, 'metadata.json');
-        const videoPath = path.join(projectDir, 'output', 'video.mp4');
+        await Promise.all(
+          entries
+            .filter((e) => e.isDirectory())
+            .map(async (e) => {
+              const metaPath = path.join(baseDir, e.name, 'metadata.json');
+              const schemaPath = path.join(baseDir, e.name, 'project_schema.json');
+              try {
+                const hasMeta = await fs.promises.access(metaPath, fs.constants.F_OK).then(() => true).catch(() => false);
+                const hasSchema = !hasMeta && await fs.promises.access(schemaPath, fs.constants.F_OK).then(() => true).catch(() => false);
+                if (hasMeta || hasSchema) {
+                  validDirNames.push(e.name);
+                }
+              } catch {}
+            })
+        );
 
-        let meta: Record<string, any> = {};
-        try {
-          const metaRaw = await fs.promises.readFile(metaPath, 'utf-8');
-          meta = JSON.parse(metaRaw);
-        } catch {}
+        // Sort directory names by extracted timestamp desc or lexicographically desc
+        sortedDirNames = validDirNames.sort((a, b) => {
+          const tsA = extractTimestampFromDirName(a);
+          const tsB = extractTimestampFromDirName(b);
+          if (tsA && tsB) return tsB - tsA;
+          if (tsA) return -1;
+          if (tsB) return 1;
+          return b.localeCompare(a);
+        });
 
-        let hasVideo = false;
-        try {
-          await fs.promises.access(videoPath, fs.constants.F_OK);
-          hasVideo = true;
-        } catch {}
-
-        const title = meta.topic || meta.title || projectId;
-        const status = hasVideo ? 'COMPLETED' : meta.status || 'INIT';
-        const currentStep = hasVideo ? 12 : meta.currentStep || (status === 'PACKAGED' ? 12 : 0);
-
-        let birthtimeIso = new Date().toISOString();
-        let mtimeIso = new Date().toISOString();
-        try {
-          const stats = await fs.promises.stat(projectDir);
-          birthtimeIso = new Date(stats.birthtimeMs).toISOString();
-          mtimeIso = new Date(stats.mtimeMs).toISOString();
-        } catch {}
-
-        return {
-          id: projectId,
-          projectId,
-          status,
-          currentStep,
-          title,
-          topic: meta.topic || title,
-          createdAt: meta.createdAt || birthtimeIso,
-          updatedAt: meta.updatedAt || mtimeIso,
-          videoUrl: hasVideo ? `/api/v1/projects/${projectId}/video` : undefined,
-          progressPercent: hasVideo ? 100 : status === 'PACKAGED' ? 90 : 20,
-        } as ProjectSummary;
-      });
-
-      summaries = await Promise.all(summaryPromises);
+        dirCache = {
+          timestamp: now,
+          dirNames: sortedDirNames,
+        };
+      } catch {
+        sortedDirNames = [];
+      }
     }
 
-    // Sort by createdAt descending
-    summaries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const total = sortedDirNames.length;
+    const paginatedDirNames = sortedDirNames.slice(offset, offset + limit);
 
-    const total = summaries.length;
-    const paginatedItems = summaries.slice(offset, offset + limit);
+    // Lazy load metadata & video status only for the requested page slice
+    const summaryPromises = paginatedDirNames.map(async (projectId) => {
+      const projectDir = path.join(baseDir, projectId);
+      const metaPath = path.join(projectDir, 'metadata.json');
+      const videoPath = path.join(projectDir, 'output', 'video.mp4');
+
+      let meta: Record<string, any> = {};
+      try {
+        const metaRaw = await fs.promises.readFile(metaPath, 'utf-8');
+        meta = JSON.parse(metaRaw);
+      } catch {}
+
+      let hasVideo = false;
+      try {
+        await fs.promises.access(videoPath, fs.constants.F_OK);
+        hasVideo = true;
+      } catch {}
+
+      const title = meta.topic || meta.title || projectId;
+      const status = hasVideo ? 'COMPLETED' : meta.status || 'INIT';
+      const currentStep = hasVideo ? 12 : meta.currentStep || (status === 'PACKAGED' ? 12 : 0);
+
+      let birthtimeIso = meta.createdAt;
+      let mtimeIso = meta.updatedAt;
+
+      if (!birthtimeIso || !mtimeIso) {
+        try {
+          const stats = await fs.promises.stat(projectDir);
+          birthtimeIso = birthtimeIso || new Date(stats.birthtimeMs).toISOString();
+          mtimeIso = mtimeIso || new Date(stats.mtimeMs).toISOString();
+        } catch {
+          const nowIso = new Date().toISOString();
+          birthtimeIso = birthtimeIso || nowIso;
+          mtimeIso = mtimeIso || nowIso;
+        }
+      }
+
+      return {
+        id: projectId,
+        projectId,
+        status,
+        currentStep,
+        title,
+        topic: meta.topic || title,
+        createdAt: birthtimeIso,
+        updatedAt: mtimeIso,
+        videoUrl: hasVideo ? `/api/v1/projects/${projectId}/video` : undefined,
+        progressPercent: hasVideo ? 100 : status === 'PACKAGED' ? 90 : 20,
+      } as ProjectSummary;
+    });
+
+    const paginatedItems = await Promise.all(summaryPromises);
 
     const durationSec = (Date.now() - startTime) / 1000;
     httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects', status_class: '2xx' });

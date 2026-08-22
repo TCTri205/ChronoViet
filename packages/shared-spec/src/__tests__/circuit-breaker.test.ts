@@ -2,12 +2,16 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   localLlmCircuit,
   cloudFallbackCircuit,
+  embeddingCircuit,
   checkCircuitState,
   recordCircuitSuccess,
   recordCircuitFailure,
   checkCloudCircuitState,
   recordCloudCircuitSuccess,
   recordCloudCircuitFailure,
+  checkEmbeddingCircuitState,
+  recordEmbeddingCircuitSuccess,
+  recordEmbeddingCircuitFailure,
   resetCircuitBreakers,
   CIRCUIT_FAILURE_THRESHOLD,
   CIRCUIT_COOLDOWN_MS,
@@ -81,6 +85,45 @@ describe('Circuit Breaker Module', () => {
       expect(cloudFallbackCircuit.status).toBe('CLOSED');
       expect(cloudFallbackCircuit.failures).toBe(0);
       expect(checkCloudCircuitState()).toBe('ALLOW');
+    });
+  });
+
+  describe('Embedding Service Circuit Breaker', () => {
+    it('should start in CLOSED state and ALLOW requests', () => {
+      expect(embeddingCircuit.status).toBe('CLOSED');
+      expect(embeddingCircuit.failures).toBe(0);
+      expect(checkEmbeddingCircuitState()).toBe('ALLOW');
+    });
+
+    it('should transition to OPEN after threshold failures', () => {
+      for (let i = 0; i < CIRCUIT_FAILURE_THRESHOLD; i++) {
+        recordEmbeddingCircuitFailure(new Error('Embedding server unreachable'));
+      }
+      expect(embeddingCircuit.status).toBe('OPEN');
+      expect(embeddingCircuit.failures).toBe(CIRCUIT_FAILURE_THRESHOLD);
+      expect(checkEmbeddingCircuitState()).toBe('FAST_FAIL');
+    });
+
+    it('should transition to HALF_OPEN (PROBE) after cooldown expires', () => {
+      for (let i = 0; i < CIRCUIT_FAILURE_THRESHOLD; i++) {
+        recordEmbeddingCircuitFailure(new Error('Embedding server unreachable'));
+      }
+      expect(checkEmbeddingCircuitState()).toBe('FAST_FAIL');
+
+      // Simulate cooldown expiry
+      embeddingCircuit.nextProbeTime = Date.now() - 1000;
+      expect(checkEmbeddingCircuitState()).toBe('PROBE');
+      expect(embeddingCircuit.status).toBe('HALF_OPEN');
+    });
+
+    it('should close embedding circuit on success', () => {
+      recordEmbeddingCircuitFailure(new Error('Timeout'));
+      expect(embeddingCircuit.failures).toBe(1);
+
+      recordEmbeddingCircuitSuccess();
+      expect(embeddingCircuit.status).toBe('CLOSED');
+      expect(embeddingCircuit.failures).toBe(0);
+      expect(checkEmbeddingCircuitState()).toBe('ALLOW');
     });
   });
 });

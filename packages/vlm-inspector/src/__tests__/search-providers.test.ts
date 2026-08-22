@@ -173,3 +173,24 @@ describe('Domain whitelist & license inference', () => {
     expect(inferLicenseFromDomain('https://cdn.example.com/a.jpg')).toBe('UNKNOWN');
   });
 });
+
+describe('Agentic Image Search Tool Execution', () => {
+  it('executes search tool with structured parameters and relabels candidates with sceneId', async () => {
+    const { executeImageSearchTool } = await import('../search/index.js');
+    const result = await executeImageSearchTool({
+      sceneId: 'scene_battle_01',
+      primaryQuery: 'Trận Bạch Đằng Ngô Quyền',
+      englishQuery: 'Battle of Bach Dang River',
+      visualType: 'BATTLE_SCENE',
+      historicalPeriod: 'Năm 938',
+      limit: 2,
+    });
+
+    expect(result.sceneId).toBe('scene_battle_01');
+    expect(result.visualType).toBe('BATTLE_SCENE');
+    expect(result.candidates.length).toBeGreaterThan(0);
+    expect(result.candidates[0].candidateId).toMatch(/^cand_scene_battle_01_/);
+    expect(result.provenance.length).toBeGreaterThan(0);
+  });
+});
+

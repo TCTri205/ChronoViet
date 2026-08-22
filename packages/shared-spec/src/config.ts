@@ -79,12 +79,13 @@ const EnvSchema = z.object({
   LOCAL_LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
   LLM_BASE_URL: z.string().default('http://localhost:8092'),
   LLM_PORT: z.coerce.number().int().positive().default(8092),
-  LLM_CTX_SIZE: z.coerce.number().int().positive().default(16384),
+  LLM_CTX_SIZE: z.coerce.number().int().positive().default(131072),
+  LOCAL_LLM_PARALLEL: z.coerce.number().int().positive().default(4),
   LLM_EXTRA_ARGS: z.string().optional(),
   LOCAL_LLM_EXTRACTION_PORT: z.coerce.number().int().positive().default(8094),
   LOCAL_LLM_EXTRACTION_BASE_URL: z.string().default('http://localhost:8094'),
   LOCAL_LLM_EXTRACTION_MODEL: z.string().default('qwen3.5-4b-instruct-q4_k_m'),
-  LOCAL_LLM_EXTRACTION_CTX_SIZE: z.coerce.number().int().positive().default(8192),
+  LOCAL_LLM_EXTRACTION_CTX_SIZE: z.coerce.number().int().positive().default(32768),
   LOCAL_LLM_EXTRACTION_PARALLEL: z.coerce.number().int().positive().default(4),
   LOCAL_LLM_EXTRACTION_THREADS: z.coerce.number().int().positive().default(6),
   LOCAL_LLM_EXTRACTION_EXTRA_ARGS: z.string().optional(),
@@ -92,8 +93,8 @@ const EnvSchema = z.object({
   EMBEDDING_CTX_SIZE: z.coerce.number().int().positive().default(8192),
   EMBEDDING_EXTRA_ARGS: z.string().optional(),
   MODEL_DIR: z.string().default('./models'),
-  LOCAL_LLM_PRIMARY_MODEL: z.string().default('qwen3.8-27b-instruct-q4_k_m'),
-  LOCAL_LLM_BENCHMARK_MODEL: z.string().default('qwen3.6-27b-instruct-q4_k_m'),
+  LOCAL_LLM_PRIMARY_MODEL: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
+  LOCAL_LLM_BENCHMARK_MODEL: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
   HYBRID_DEV: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(false),
@@ -141,7 +142,7 @@ const EnvSchema = z.object({
   EMBEDDING_BATCH_SIZE: z.coerce.number().int().positive().default(16),
   LOCAL_RERANK_MODEL: z.string().default('qwen3-reranker-0.6b'),
   LOCAL_VISION_FILTER: z.string().default('siglip-2-multilingual-onnx'),
-  LOCAL_VLM_INSPECTOR: z.string().default('qwen3.8-27b-instruct-q4_k_m'),
+  LOCAL_VLM_INSPECTOR: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
   HISTORICAL_OCR_ENGINE: z.string().default('paddleocr_v5_hannom'),
 
   // Vision Language Model (VLM) Inspector Configuration
@@ -207,7 +208,7 @@ const EnvSchema = z.object({
   EVAL_ALLOW_CLOUD_FALLBACK: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(false),
-  EVAL_VLM_MODEL: z.string().default('qwen3.8-27b-instruct-q4_k_m'),
+  EVAL_VLM_MODEL: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
 });
 
 const isNode = typeof process !== 'undefined' && !!process?.versions?.node;

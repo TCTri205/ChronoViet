@@ -793,8 +793,8 @@ export const ChapterPlanSchema = z.object({
 
 export const VisualCandidateSchema = z.object({
   candidateId: z.string(),
-  imageUrl: z.string().url(),
-  sourceUrl: z.string().url().optional(),
+  imageUrl: z.string().min(1),
+  sourceUrl: z.string().optional(),
   title: z.string().optional(),
   author: z.string().optional(),
   license: LicenseTypeSchema,
@@ -821,6 +821,14 @@ export const SceneGenerationSchema = z.object({
   contentType: z.enum(['IMAGE', 'PURE_CODE']).default('IMAGE'),
   targetDurationSeconds: z.number().positive(),
   searchKeywords: z.array(z.string()).default([]),
+  searchParams: z.object({
+    sceneId: z.string().optional(),
+    primaryQuery: z.string().min(1),
+    englishQuery: z.string().optional(),
+    visualType: z.string().optional(),
+    historicalPeriod: z.string().optional(),
+    limit: z.number().optional(),
+  }).optional(),
   candidates: z.array(VisualCandidateSchema).default([]),
   selectedAsset: VisualCandidateSchema.optional(),
   audioPath: z.string().optional(),

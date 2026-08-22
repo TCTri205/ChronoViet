@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import {
-  initProjectWorkspace,
+  getProjectPaths,
   createLogger,
   httpRequestsTotal,
   httpRequestDurationSeconds,
@@ -22,9 +22,22 @@ export async function POST(
   const reqLog = log.child({ correlationId, fields: { projectId } });
 
   try {
-    const paths = initProjectWorkspace(projectId);
+    let paths;
+    try {
+      paths = getProjectPaths(projectId);
+    } catch {
+      const durationSec = (Date.now() - startTime) / 1000;
+      httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/projects/:id/render', status_class: '4xx' });
+      httpRequestDurationSeconds.observe({ method: 'POST', route: '/api/v1/projects/:id/render', status_class: '4xx' }, durationSec);
+      return NextResponse.json(
+        { error: `Invalid project id: ${projectId}` },
+        { status: 400, headers: { 'x-request-id': correlationId } }
+      );
+    }
 
-    if (!fs.existsSync(paths.schemaFile)) {
+    try {
+      await fs.promises.access(paths.schemaFile, fs.constants.F_OK);
+    } catch {
       httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/projects/:id/render', status_class: '4xx' });
       return NextResponse.json(
         { error: `Project schema not ready for rendering: ${projectId}. Run orchestrator first.` },

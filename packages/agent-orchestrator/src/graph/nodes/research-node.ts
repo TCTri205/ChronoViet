@@ -37,11 +37,22 @@ export async function researchNode(state: ChronoGraphState): Promise<Partial<Chr
           return;
         }
 
-        const keywords = scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt;
+        const searchInput = scene.searchParams
+          ? {
+              sceneId: scene.sceneId,
+              primaryQuery: scene.searchParams.primaryQuery,
+              englishQuery: scene.searchParams.englishQuery,
+              visualType: (scene.searchParams.visualType as any) || 'GENERAL_HISTORICAL',
+              historicalPeriod: scene.searchParams.historicalPeriod,
+              limit: RESEARCH_CANDIDATE_LIMIT,
+            }
+          : (scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt);
+
+        const keywords = scene.searchParams?.primaryQuery || (scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt);
         const startedAt = Date.now();
 
         try {
-          const { candidates, provenance } = await resolveImageCandidates(keywords, scene.sceneId, RESEARCH_CANDIDATE_LIMIT);
+          const { candidates, provenance } = await resolveImageCandidates(searchInput as any, scene.sceneId, RESEARCH_CANDIDATE_LIMIT);
           researchResults[scene.sceneId] = {
             sceneId: scene.sceneId,
             keywords,

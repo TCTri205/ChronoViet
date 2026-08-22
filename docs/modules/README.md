@@ -36,11 +36,11 @@ Từ khi kích hoạt `EVAL_STRICT=true` (mặc định), mọi eval runner sẽ
 
 | Service | Cấu hình | Lệnh khởi động gợi ý |
 | :--- | :--- | :--- |
-| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8092`) | `llama-server -m models/qwen3.8-27b-q4_k_m.gguf --mmproj models/qwen3.8-27b-mmproj.gguf --port 8092` |
+| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8092`) | `llama-server -m models/qwen3.5-9b-instruct-q4_k_m.gguf --mmproj models/qwen3.5-9b-mmproj.gguf --port 8092` |
 | Stage 2 Extraction LLM | `LOCAL_LLM_EXTRACTION_BASE_URL` (vd `http://localhost:8094`) | `pnpm ai:extract` hoặc `llama-server -m models/qwen3.5-4b-instruct-q4_k_m.gguf --port 8094 --ctx-size 8192 --parallel 4 --threads 6 --cont-batching` |
 | Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `bge-m3` (1024 dimensions) trên Port 8090 |
 | VieNeu Python TTS | `VIENEU_PYTHON_URL` (vd `http://localhost:8080`) | `python app.py` trong `services/vieneu-tts/` |
-| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.8-27b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8092) |
+| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.5-9b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8092) |
 | PostgreSQL pgvector | `DATABASE_URL` | `pnpm stack:infra` |
 
 **Tắt strict (dev-only, KHÔNG hợp lệ làm benchmark):** đặt `EVAL_STRICT=false` trong `.env` — khi đó các fallback cũ được phép dùng lại.

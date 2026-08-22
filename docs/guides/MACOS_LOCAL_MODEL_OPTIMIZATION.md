@@ -26,7 +26,7 @@ ChronoViet chính thức lựa chọn **`llama.cpp` (Metal & GGML Ecosystem)** l
    * `POST /v1/messages` (Anthropic Messages API format compatible).
    * Continuous Batching & Prompt Caching cho xử lý đa truy vấn.
    * Native Embedding & Reranking Endpoints (hỗ trợ GGUF quantized embeddings & rerankers).
-   * Multimodal VLM Support (`mmproj` cho vision-language models như Qwen3.8/Qwen3-VL).
+   * Multimodal VLM Support (`mmproj` cho vision-language models như Qwen3.5-9B/Qwen2.5-VL).
    * Structured JSON Schema Output & Function Calling cho Agentic workflows.
 3. **Độ ổn định & Quản lý Bộ nhớ Production-Grade:** Quản lý RAM/VRAM chặt chẽ, hỗ trợ cơ chế tự động chuyển vùng (fallback) sang Cloud API (**`Agnes 2.5 Flash`**) khi tài nguyên local quá tải hoặc cạn kiệt RAM.
 
@@ -51,11 +51,11 @@ ChronoViet duy trì lớp trừu tượng **Local Model Gateway** (`ModelProvide
  ┌──────┴──────┐      ┌─────┴──────┐   ┌─────┴──────┐      ┌─────┴──────┐     ┌─────┴──────┐
  │             │      │            │   │            │      │            │     │            │
 llama-server Agnes 2.5 llama-server MLX llama-server MLX SigLIP 2 Qwen3-VL  VieNeu   MPS/CPU
-(Qwen3.8-27B-Q4) (Flash API) (llama.cpp)      (llama.cpp)      (CoreML) PaddleOCR (ONNX)   Benchmark
+(Qwen3.5-9B-Q4) (Flash API) (llama.cpp)      (llama.cpp)      (CoreML) PaddleOCR (ONNX)   Benchmark
  (Primary)   (Fallback)
 ```
 
-* **`llama-server` (`Qwen3.8-27B-Q4` Local Metal Engine) — PRIMARY PRODUCTION ENGINE:**
+* **`llama-server` (`Qwen3.5-9B-Q4` Local Metal Engine) — PRIMARY PRODUCTION ENGINE:**
   Backend chính cho LLM Generation, Text Embedding, Reranking và VLM Inspection chạy cục bộ trên macOS. Tích hợp adaptive timeout 45s và tự động cách ly 30s khi gặp sự cố/quá tải.
 * **`Agnes 2.5 Flash` & Multi-Cloud Gateway (`gemini`, `openai`, `openrouter`) — HIERARCHICAL 2-LEVEL ROTATION:**
   Chế độ dự phòng và luân chuyển linh hoạt qua hệ thống Key Rotator phân cấp 2 tầng (`HybridInferenceDispatcher`). Tự động luân chuyển Provider Round-Robin, cách ly 24h cho lỗi Quota/429, cách ly 30s cho lỗi tạm thời/503/timeout, áp dụng adaptive timeout mặc định 35s (`REMOTE_FALLBACK_TIMEOUT_MS=35000`) và kích hoạt fast failover retry tức thì.
@@ -66,35 +66,35 @@ llama-server Agnes 2.5 llama-server MLX llama-server MLX SigLIP 2 Qwen3-VL  VieN
 
 ---
 
-### 2.2. Chiến lược Quản lý Bộ nhớ UMA (32GB RAM Target Benchmark Profile)
+### 2.2. Chiến lược Quản lý Bộ nhớ UMA (16GB - 32GB RAM Target Benchmark Profile)
 
-Khi vận hành nhiều mô hình AI đồng thời trên Mac 32GB RAM, tổng dung lượng RAM nếu nạp tất cả mô hình cùng lúc có thể đạt 36.5GB+, gây ra **Memory Swapping / Compression** và dẫn tới **Metal OOM Crash**. 
+Khi vận hành mô hình Qwen 3.5 9B tối ưu, hệ thống tiêu thụ mức RAM cực kỳ tinh gọn (~5.5 - 6.5 GB), cho phép máy 16GB hoặc 32GB RAM chạy hoàn hảo mà không bao giờ gặp **Memory Swapping / Compression** hay **Metal OOM Crash**. 
 
 ChronoViet thiết kế chiến lược nạp mô hình phân tầng **Resident vs. On-Demand**:
 
 ```text
-                                 32GB UMA RAM ALLOCATION (OPTIMIZED UNIFIED STACK)
+                        16GB / 32GB UMA RAM ALLOCATION (OPTIMIZED UNIFIED STACK)
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│ RESIDENT MODELS (Thường trực ~18.5 GB)                                                   │
-│ ├── Qwen3.8-27B Unified LLM & VLM (Port 8092 - GGUF Q4_K_M + mmproj): ~16.5 GB           │
+│ RESIDENT MODELS (Thường trực ~7.5 GB)                                                   │
+│ ├── Qwen3.5-9B Unified LLM & VLM (Port 8092 - GGUF Q4_K_M + mmproj): ~5.5 GB            │
 │ ├── bge-m3 Vector Embedding (Port 8090 - GGUF / Dense 1024d): ~1.0 GB                   │
 │ └── Qwen3-Reranker-0.6B (GGUF Q8_0): ~0.8 GB                                            │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
-│ DYNAMIC WORKING MEMORY & 2-STAGE INGESTION (~7.5 GB)                                    │
-│ ├── Qwen3.5-4B-Instruct (Port 8094 - Stage 2 Triples Extraction): ~2.5 GB               │
-│ ├── KV Cache (Dynamic Context Buffer 32K–64K): ~3.0 – 4.0 GB                            │
+│ DYNAMIC WORKING MEMORY & 2-STAGE INGESTION (~5.5 GB)                                    │
+│ ├── Qwen3.5-4B-Instruct (Port 8094 - Data Prep Triples Extraction): ~2.5 GB             │
+│ ├── KV Cache (Dynamic Context Buffer 16K–32K): ~2.0 – 3.0 GB                            │
 │ └── ON-DEMAND UTILITIES (Nạp khi cần): ~1.0 – 1.5 GB                                     │
 │     ├── SigLIP 2 ONNX Fast Filter (Chỉ dùng khi bulk-filter ảnh): ~0.4 GB               │
 │     ├── Historical OCR Ingestion Worker (PaddleOCR v5 Hán-Nôm): ~1.0 GB                 │
 │     └── VieNeu TTS ONNX Service (Port 8080): ~0.8 GB                                    │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
-│ OS & CORE SYSTEM (Hệ điều hành macOS & App Core): ~6.0 GB                               │
+│ OS & CORE SYSTEM (Hệ điều hành macOS & App Core): ~4.0 – 6.0 GB                         │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 #### Quy tắc Vận hành Concurrency & Tinh gọn:
-1. **Resident Unified Tier:** Giữ `Qwen3.8-27B` (đảm nhiệm cả suy luận ngôn ngữ lẫn phân tích hình ảnh đa phương thức), `bge-m3` Embedding và `Qwen3-Reranker-0.6B` thường trực trong UMA RAM.
-2. **Loại bỏ phân mảnh VLM:** Không cần nạp thêm mô hình VLM 8B riêng biệt. `Qwen3.8-27B` tích hợp sẵn vision encoder qua `mmproj` xử lý toàn bộ các tác vụ thẩm định visual và bố cục.
+1. **Resident Unified Tier:** Giữ `Qwen3.5-9B` (đảm nhiệm cả suy luận kịch bản, Chatbot RAG lẫn phân tích hình ảnh đa phương thức), `bge-m3` Embedding và `Qwen3-Reranker-0.6B` thường trực trong UMA RAM.
+2. **Loại bỏ phân mảnh VLM:** Không cần nạp thêm mô hình VLM riêng biệt. `Qwen3.5-9B` tích hợp sẵn vision encoder qua `mmproj` xử lý toàn bộ các tác vụ thẩm định visual và bố cục.
 3. **SSOT Không gian Vector (1024 Dimensions):** Cố định duy nhất chuẩn biểu diễn `bge-m3` cho toàn bộ quá trình Data Ingestion, pgvector Indexing và RAG Dense Retrieval.
 4. **Quantization Precision Hygiene:** Đối với domain lịch sử, các sai sót nhỏ về con số và danh xưng (như *1788 vs 1789*, *Nguyễn Huệ vs Nguyễn Nhạc*, *Lê sơ vs Lê Trung Hưng*) là không thể chấp nhận được. ChronoViet bắt buộc benchmark đối chiếu giữa `Q4_K_M` và `Q5_K_M` để đảm bảo độ chính xác dữ kiện cao nhất.
 
@@ -106,23 +106,23 @@ ChronoViet thiết kế chiến lược nạp mô hình phân tầng **Resident 
 
 | Thành phần | File Spec Cũ | Đánh giá / Cập nhật 2026 | Lựa chọn Chính thức (ChronoViet Spec 2026) |
 | :--- | :--- | :--- | :--- |
-| **LLM & Multimodal** | Qwen3.6-27B + Qwen3-VL-8B | 🟢 Hợp nhất 1 Core Multimodal duy nhất, tránh lãng phí RAM | **Qwen3.8-27B-Instruct (Q4_K_M + mmproj)** (Unified Core) |
+| **LLM & Multimodal** | Qwen3.8-27B | 🟢 Tối ưu RAM & Tốc độ gấp 3x | **Qwen3.5-9B-Instruct (Q4_K_M + mmproj)** (Unified Core) |
 | **Embedding** | qwen3-embedding 0.6B/4B | 🟢 Cố định 1 Vector Space SSOT 1024d tránh phân mảnh DB | **bge-m3 (Dense 1024-dim Vector Space)** |
 | **Reranker** | Qwen3-Reranker-0.6B | 🟢 Rất tốt, tốc độ <30ms | **Qwen3-Reranker-0.6B** |
 | **Visual Filter** | SigLIP | 🟡 Dùng cho bulk ingestion filter | **SigLIP 2 ONNX** (Multilingual Fast Filter) |
-| **Visual Inspection**| Qwen3-VL-8B | 🟢 Hợp nhất trực tiếp vào Core Model 27B | **Qwen3.8-27B Multimodal Gateway** |
+| **Visual Inspection**| Qwen3-VL-8B | 🟢 Hợp nhất trực tiếp vào Core Model 9B | **Qwen3.5-9B Multimodal Gateway** |
 | **Historical OCR** | Chưa có engine riêng | 🔴 Cần pipeline offline chuyên biệt cho Hán-Nôm cổ | **Historical OCR Pipeline** (PaddleOCR v5 Hán-Nôm + LLM Correction) |
 | **TTS Engine** | VieNeu | 🟢 Đã triển khai | **VieNeu ONNX (Port 8080)** |
 | **Runtime Engine** | llama.cpp Metal | 🟢 Rất hợp lý | **`llama-server` (`llama.cpp` Metal)** + **Agnes 2.5 Flash Fallback** |
 
 ---
 
-### 3.1. Core Multimodal & Historical Reasoning Engine (`Qwen3.8-27B`)
+### 3.1. Core Multimodal & Historical Reasoning Engine (`Qwen3.5-9B`)
 
-ChronoViet chọn **`Qwen3.8-27B-Instruct` làm Mô hình Thống nhất Toàn diện (Unified Core)**. 
+ChronoViet chọn **`Qwen3.5-9B-Instruct` làm Mô hình Thống nhất Toàn diện (Unified Core)**. 
 
 #### Lý do lựa chọn:
-* **Unified Vision-Language Foundation:** Tích hợp trực tiếp vision encoder vào lõi 27B parameters, giải quyết đồng thời cả tác vụ viết kịch bản, trích xuất tri thức quan hệ lịch sử lẫn thẩm định y phục, kiến trúc, bản đồ cổ trong một endpoint duy nhất (`/v1/chat/completions`).
+* **Unified Vision-Language Foundation:** Tích hợp trực tiếp vision encoder vào lõi 9B parameters, giải quyết đồng thời cả tác vụ viết kịch bản, trích xuất tri thức quan hệ lịch sử lẫn thẩm định y phục, kiến trúc, bản đồ cổ trong một endpoint duy nhất (`/v1/chat/completions`).
 * **Đa ngữ vượt trội (201 languages/dialects):** Hiểu sâu cấu trúc từ vựng Hán-Nôm, âm Hán-Việt, văn ngôn cổ và các bản dịch tiếng Pháp/Anh thời Nguyễn và Pháp thuộc.
 * **Context Window dài (262K native, mở rộng 1M):** Hỗ trợ xử lý các bộ sử liệu lớn khi cần tổng hợp chuỗi sự kiện.
 
@@ -152,7 +152,7 @@ Quy trình thẩm định hình ảnh tư liệu:
                   Lọc nhanh loại bỏ ảnh không liên quan (<10ms)
                                  │
                                  ▼
-                Tier 2: Qwen3.8-27B Unified Multimodal Inspector
+                Tier 2: Qwen3.5-9B Unified Multimodal Inspector
                   Phân tích chi tiết y phục, niên đại, anachronisms, bố cục tranh
 ```
 
@@ -186,7 +186,7 @@ Quốc ngữ Cổ Engine       Hán / Nôm Engine           Ấn triện / VLM
                                 │
                                 ▼
               Historical LLM Post-OCR Correction
-         (Qwen3.8-27B khôi phục dấu, từ cổ & ngữ cảnh)
+         (Qwen3.5-9B khôi phục dấu, từ cổ & ngữ cảnh)
                                 │
                                 ▼
              Văn bản Sạch + Độ tin cậy + Provenance
@@ -197,7 +197,7 @@ Quốc ngữ Cổ Engine       Hán / Nôm Engine           Ấn triện / VLM
 2. **OCR Router & Specialized Engines:**
    * Văn bản Chữ Quốc ngữ cổ: Sử dụng ViOCR / Tesseract fine-tuned.
    * Văn bản Chữ Hán / Chữ Nôm: Sử dụng mô hình **PaddleOCRv5 fine-tuned trên tập dữ liệu Hán-Nôm cổ** (giúp nâng cao accuracy vượt trội so với OCR tiêu chuẩn).
-3. **Historical LLM Post-OCR Processing:** Áp dụng phương pháp nghiên cứu tiên tiến (AAAI 2025), đưa văn bản đầu ra của OCR qua `Qwen3.8-27B` để tự động sửa lỗi ký tự diacritic, khôi phục từ cổ bị nhòe dựa vào ngữ cảnh câu và tri thức lịch sử.
+3. **Historical LLM Post-OCR Processing:** Áp dụng phương pháp nghiên cứu tiên tiến (AAAI 2025), đưa văn bản đầu ra của OCR qua `Qwen3.5-9B` để tự động sửa lỗi ký tự diacritic, khôi phục từ cổ bị nhòe dựa vào ngữ cảnh câu và tri thức lịch sử.
 4. **Provenance & Confidence Metadata:** Mỗi từ/dòng OCR thu được đều đi kèm điểm độ tin cậy (`confidence_score`) và tọa độ bounding box để bảo tồn nguồn gốc tư liệu.
 
 ---
@@ -280,12 +280,11 @@ Bản trả lời của LLM phải phân rã cấu trúc câu trả lời theo m
 
 | Tác vụ AI | Primary Backend | Secondary Backend | Không khuyến nghị |
 | :--- | :--- | :--- | :--- |
-| **LLM Historical Reasoning** | **`Qwen3.8-27B` (`llama-server` Metal)** | `Qwen3.6-27B` / `MLX` | vLLM (Chỉ tối ưu CUDA), Hardcode CoreML |
-| **Text Embedding Tier 1** | **`Qwen3-Embedding-0.6B` (`llama-server`)**| ONNX CoreML EP | Model tiếng Việt generic cũ (`e5-base`) |
-| **Text Embedding Tier 2** | **`Qwen3-Embedding-4B` (`llama-server`)**  | MLX | Embedding quá nhỏ không hiểu từ Hán-Việt |
-| **Reranking Layer** | **`Qwen3-Reranker-0.6B` (`llama-server`)**   | `Qwen3-Reranker-4B` | Bỏ qua lớp Reranker |
+| **LLM Historical Reasoning** | **`Qwen3.5-9B` (`llama-server` Metal)** | `Qwen3.5-4B` / `MLX` | vLLM (Chỉ tối ưu CUDA), Hardcode CoreML |
+| **Text Embedding Tier 1** | **`bge-m3` (`llama-server` 1024d)** | `Qwen3-Embedding-0.6B` | Model tiếng Việt generic cũ (`e5-base`) |
+| **Reranking Layer** | **`Qwen3-Reranker-0.6B` (`llama-server`)** | `Qwen3-Reranker-4B` | Bỏ qua lớp Reranker |
 | **Vision Fast Filter** | **`SigLIP 2` ONNX (CoreML/MPS)** | FastEmbed | SigLIP v1 cũ |
-| **Vision General Inspector** | **`Qwen3-VL-8B` (`llama.cpp` mmproj / MLX)** | CoreML | Bắt Heavy VLM làm toàn bộ OCR |
+| **Vision General Inspector** | **`Qwen3.5-9B` (`llama.cpp` mmproj / MLX)** | CoreML | Bắt Heavy VLM làm toàn bộ OCR |
 | **Historical OCR Engine** | **PaddleOCRv5 Hán-Nôm + ViOCR + LLM** | Tesseract | Tin tưởng tuyệt đối vào VLM OCR |
 | **Heritage TTS Engine** | **VieNeu ONNX (`services/vieneu-tts`)** | MPS / CoreML | Giả định sai về ANE Hardware |
 
@@ -299,10 +298,9 @@ Bản trả lời của LLM phải phân rã cấu trúc câu trả lời theo m
 
 | Model ID | Backend Runtime | Quant / Precision | Context Size | Target Metrics | UMA RAM Peak | Status |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
-| Qwen3.8-27B | llama-server | Q4_K_M vs Q5_K_M | 8,192 tok | tok/s & Fact Acc % | ~16 - 18 GB | Active Flagship |
-| Qwen3.6-27B | llama-server | Q4_K_M | 8,192 tok | tok/s & Agentic Score | ~16 GB | Candidate |
-| Qwen3-Embed-0.6B | llama-server | GGUF Q8_0 | 512 tok | Recall@10 & Latency | ~0.8 GB | Active Default |
-| Qwen3-Embed-4B | llama-server | GGUF Q4_K_M | 512 tok | Recall@10 & Latency | ~2.5 GB | Active High-Tier |
+| Qwen3.5-9B | llama-server | Q4_K_M vs Q5_K_M | 16,384 tok | tok/s & Fact Acc % | ~5.5 - 6.5 GB | Active Flagship |
+| Qwen3.5-4B | llama-server | Q4_K_M | 32,768 tok | tok/s & Triples Ingest | ~2.5 GB | Data Prep Engine |
+| bge-m3 | llama-server | GGUF Q8_0 | 8,192 tok | Recall@10 & Latency | ~1.0 GB | SSOT Default |
 | SigLIP 2 | ONNX CoreML | FP16 | Image 384x384 | Zero-shot Acc & Latency | ~0.4 GB | Active Filter |
 | PaddleOCRv5 Hán-Nôm| ONNX / PyTorch | FP16 | Scan Page | Exact Character Acc % | ~0.8 GB | Active OCR Engine |
 | VieNeu-TTS | ONNX MPS | FP32 | 10s Audio | RTF & Proper-Name Acc | ~0.5 GB | Active Heritage TTS |
@@ -324,11 +322,11 @@ pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho D
 
 # 3. Quản lý AI & TTS Local Runtime thống nhất (Unified AI CLI):
 pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8080) & model đã nạp
-pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 27B 8092)
+pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092)
 pnpm ai:lite         # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb          # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
-pnpm ai:extract      # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler
-pnpm ai:llm          # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 27B)
+pnpm ai:extract      # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler (Data Prep)
+pnpm ai:llm          # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 9B)
 pnpm ai:tts          # Khởi chạy microservice VieNeu TTS FastAPI trong Docker (Port 8080)
 pnpm ai:stop         # Dừng/giải phóng toàn bộ tiến trình AI & TTS (host & Docker), trả lại 100% RAM/VRAM
 
@@ -337,6 +335,7 @@ pnpm models:download          # Tải toàn bộ model tiêu chuẩn
 pnpm models:download:lite     # Chỉ tải BGE-M3 + Qwen Extraction LLM (~2.4GB)
 pnpm models:download:emb      # Chỉ tải BGE-M3 (~605MB)
 pnpm models:download:extract  # Chỉ tải Qwen Extraction LLM (~1.8GB)
+pnpm models:download:llm      # Chỉ tải Qwen 3.5 9B (~5.8GB)
 ```
 
 ---
@@ -362,7 +361,7 @@ RENDER_MUTEX_LOCK_KEY=chronoviet:render_lock
 RENDER_MUTEX_TTL_SECONDS=900
 
 # LLM Primary Local & Cloud Fallback Strategy (Unified Text Reasoning & Multimodal Inspector)
-LOCAL_LLM_PRIMARY_MODEL=qwen3.8-27b-instruct-q4_k_m
+LOCAL_LLM_PRIMARY_MODEL=qwen3.5-9b-instruct-q4_k_m
 
 # Cloud API Fallback Configuration (Agnes 2.5 Flash / Gemini / OpenAI / OpenRouter)
 ENABLE_CLOUD_FALLBACK=true
@@ -374,7 +373,7 @@ REMOTE_FALLBACK_TIMEOUT_MS=35000
 LOCAL_LLM_EXTRACTION_MODEL=qwen3.5-4b-instruct-q4_k_m
 LOCAL_LLM_EXTRACTION_PORT=8094
 LOCAL_LLM_EXTRACTION_BASE_URL=http://localhost:8094
-LOCAL_LLM_EXTRACTION_CTX_SIZE=8192
+LOCAL_LLM_EXTRACTION_CTX_SIZE=32768
 LOCAL_LLM_EXTRACTION_PARALLEL=4
 LOCAL_LLM_EXTRACTION_THREADS=6
 
@@ -387,7 +386,7 @@ LOCAL_RERANK_MODEL=qwen3-reranker-0.6b
 
 # Vision & Historical OCR Settings
 LOCAL_VISION_FILTER=siglip-2-multilingual-onnx
-LOCAL_VLM_INSPECTOR=qwen3.8-27b-instruct-q4_k_m
+LOCAL_VLM_INSPECTOR=qwen3.5-9b-instruct-q4_k_m
 HISTORICAL_OCR_ENGINE=paddleocr_v5_hannom
 
 # TTS Provider (VieNeu TTS FastAPI Microservice / Port 8080)
@@ -417,15 +416,15 @@ llama-server \
 
 # Hoặc khởi chạy thủ công llama-server Metal Engine (Port 8092 cho LLM, Port 8090 cho Embedding):
 llama-server \
-  --model ./models/qwen3.8-27b-instruct-q4_k_m.gguf \
-  --alias qwen3.8-27b \
-  --ctx-size 16384 \
+  --model ./models/qwen3.5-9b-instruct-q4_k_m.gguf \
+  --alias qwen3.5-9b \
+  --ctx-size 131072 \
   --n-gpu-layers 99 \
   --flash-attn \
   --cache-type-k q8_0 \
   --cache-type-v q8_0 \
   --cont-batching \
-  --parallel 2 \
+  --parallel 4 \
   --port 8092
 
 # Khởi chạy Embedding Server (BGE-M3 1024d trên Port 8090)
@@ -457,17 +456,16 @@ flowchart TD
 
     subgraph LLM_Tier [LLM Primary Reasoning & Fallback Tier]
         LlamaServer[llama-server Metal Engine]
-        Qwen38[Qwen3.8-27B-Q4 Local Primary Model]
-        Qwen36[Qwen3.6-27B Benchmark Candidate]
+        Qwen35_9B[Qwen3.5-9B-Q4 Local Primary Model]
+        Qwen35_4B[Qwen3.5-4B Extraction Engine]
         AgnesFlash[Agnes 2.5 Flash API Cloud Fallback]
-        LlamaServer --> Qwen38
-        LlamaServer -.-> Qwen36
+        LlamaServer --> Qwen35_9B
+        LlamaServer -.-> Qwen35_4B
         Router -.->|Fallback on Local OOM/Busy| AgnesFlash
     end
 
     subgraph Retrieval_Tier [Retrieval & Temporal Knowledge Tier]
-        QEmbed06[Qwen3-Embedding-0.6B Default]
-        QEmbed4B[Qwen3-Embedding-4B High-Quality]
+        BGEM3[BGE-M3 SSOT 1024d Vector Embedding]
         QRerank[Qwen3-Reranker-0.6B]
         GraphEngine[(Temporal GraphRAG + Source Metadata)]
     end
@@ -477,8 +475,8 @@ flowchart TD
         OCRRouter{Historical OCR Router}
         ViOCR[ViOCR Quốc ngữ Cổ]
         HanNomOCR[PaddleOCRv5 Hán-Nôm]
-        LLMCorrect[Qwen3.8-27B Post-OCR Correction]
-        QwenVL[Qwen3-VL-8B Fast Inspector]
+        LLMCorrect[Qwen3.5-9B Post-OCR Correction]
+        QwenVL[Qwen3.5-9B Fast Inspector]
     end
 
     subgraph Voice_Tier [Speech Synthesis Tier]
@@ -508,7 +506,7 @@ flowchart LR
     DocInput[Hình ảnh / Bản ghi Sử liệu] --> SigLIP2Filter[SigLIP 2 Fast Filter]
     SigLIP2Filter -->|Pass| OCRPipeline[Historical OCR Pipeline]
     OCRPipeline --> TextExtract[Candidate Text + BBox]
-    TextExtract --> PostCorrection[Qwen3.8-27B LLM Correction]
+    TextExtract --> PostCorrection[Qwen3.5-9B LLM Correction]
 
     PostCorrection --> ScoreCalc[Điểm Xác thực Historical Evidence Score]
     
@@ -522,4 +520,4 @@ flowchart LR
 
 ---
 
-> **Tóm lại:** Bản thiết kế cập nhật năm 2026 này nâng tầm ChronoViet từ một hệ thống RAG cơ bản thành một **Historical Document Intelligence System** thực sự: đặt **Qwen3.8-27B làm mô hình suy luận cốt lõi**, phân tầng **2-Tier Embedding**, nâng cấp **SigLIP 2**, xây dựng **Historical OCR Pipeline chuyên biệt cho chữ Hán-Nôm và Quốc ngữ cổ**, áp dụng **Temporal Normalization trong GraphRAG**, và quản lý bộ nhớ UMA 32GB RAM tối ưu, sẵn sàng cho sản xuất và nghiên cứu lịch sử chuyên sâu.
+> **Tóm lại:** Bản thiết kế cập nhật năm 2026 này nâng tầm ChronoViet từ một hệ thống RAG cơ bản thành một **Historical Document Intelligence System** thực sự: đặt **Qwen3.5-9B làm mô hình suy luận cốt lõi**, chuẩn hóa **BGE-M3 1024-dim Vector Space**, nâng cấp **SigLIP 2**, xây dựng **Historical OCR Pipeline chuyên biệt cho chữ Hán-Nôm và Quốc ngữ cổ**, áp dụng **Temporal Normalization trong GraphRAG**, và quản lý bộ nhớ UMA 16GB–32GB RAM tối ưu, sẵn sàng cho sản xuất và nghiên cứu lịch sử chuyên sâu.

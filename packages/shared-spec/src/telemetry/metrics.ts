@@ -92,6 +92,51 @@ export const ttsSynthesisDurationSeconds = new Histogram({
   registers: [metricsRegistry],
 });
 
+export const embeddingRequestsTotal = new Counter({
+  name: 'chronoviet_embedding_requests_total',
+  help: 'Total number of embedding generation requests',
+  labelNames: ['model', 'status'],
+  registers: [metricsRegistry],
+});
+
+export const embeddingDurationSeconds = new Histogram({
+  name: 'chronoviet_embedding_duration_seconds',
+  help: 'Duration of embedding generation in seconds',
+  labelNames: ['model'],
+  buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+  registers: [metricsRegistry],
+});
+
+export const ragSearchRequestsTotal = new Counter({
+  name: 'chronoviet_rag_search_requests_total',
+  help: 'Total number of RAG search/retrieval queries',
+  labelNames: ['status'],
+  registers: [metricsRegistry],
+});
+
+export const ragSearchDurationSeconds = new Histogram({
+  name: 'chronoviet_rag_search_duration_seconds',
+  help: 'Duration of RAG search queries in seconds',
+  labelNames: ['status'],
+  buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10],
+  registers: [metricsRegistry],
+});
+
+export const vlmInspectionsTotal = new Counter({
+  name: 'chronoviet_vlm_inspections_total',
+  help: 'Total number of VLM asset inspections performed',
+  labelNames: ['provider', 'verdict'],
+  registers: [metricsRegistry],
+});
+
+export const vlmInspectionDurationSeconds = new Histogram({
+  name: 'chronoviet_vlm_inspection_duration_seconds',
+  help: 'Duration of VLM asset inspection in seconds',
+  labelNames: ['provider'],
+  buckets: [0.1, 0.5, 1, 2, 5, 10, 20],
+  registers: [metricsRegistry],
+});
+
 // ============================================================================
 // 3. Queue & Background Tasks USE Metrics (BullMQ & Remotion)
 // ============================================================================

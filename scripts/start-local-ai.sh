@@ -3,7 +3,7 @@ set -eo pipefail
 
 # ==============================================================================
 # ChronoViet — Local AI (LLM & Embedding) Starter Script
-# Launches llama-server for Qwen3.8 LLM and Embedding models with Agnes Fallback
+# Launches llama-server for Qwen 3.5 LLM and Embedding models with Agnes Fallback
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,13 +43,15 @@ echo "Config: LLM_PORT=${LLM_PORT}, EMBEDDING_PORT=${EMBEDDING_PORT}, HYBRID_DEV
 
 # 1. Check if llama-server CLI is installed
 if command -v llama-server >/dev/null 2>&1; then
-  LLM_MODEL_PATH="${MODEL_DIR}/${LOCAL_LLM_PRIMARY_MODEL:-qwen3.8-27b-instruct-q4_k_m}.gguf"
-  if [ ! -f "${LLM_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/Qwen3.8-27B-Q4_K_M.gguf" ]; then
-    LLM_MODEL_PATH="${MODEL_DIR}/Qwen3.8-27B-Q4_K_M.gguf"
-  elif [ ! -f "${LLM_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/qwen3.8-27b-instruct-q4_k_m.gguf" ]; then
-    LLM_MODEL_PATH="${MODEL_DIR}/qwen3.8-27b-instruct-q4_k_m.gguf"
+  LLM_MODEL_PATH="${MODEL_DIR}/${LOCAL_LLM_PRIMARY_MODEL:-qwen3.5-9b-instruct-q4_k_m}.gguf"
+  if [ ! -f "${LLM_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/qwen3.5-9b-instruct-q4_k_m.gguf" ]; then
+    LLM_MODEL_PATH="${MODEL_DIR}/qwen3.5-9b-instruct-q4_k_m.gguf"
+  elif [ ! -f "${LLM_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/Qwen3.5-9B-Instruct-Q4_K_M.gguf" ]; then
+    LLM_MODEL_PATH="${MODEL_DIR}/Qwen3.5-9B-Instruct-Q4_K_M.gguf"
+  elif [ ! -f "${LLM_MODEL_PATH}" ] && [ -f "${MODEL_DIR}/Qwen2.5-7B-Instruct-Q4_K_M.gguf" ]; then
+    LLM_MODEL_PATH="${MODEL_DIR}/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
   fi
-  MMPROJ_PATH="${MODEL_DIR}/qwen3.8-27b-mmproj.gguf"
+  MMPROJ_PATH="${MODEL_DIR}/qwen3.5-9b-mmproj.gguf"
   
   # Resolve embedding model path
   EMB_MODEL_NAME="${LOCAL_EMBEDDING_MODEL:-${LOCAL_EMBEDDING_DEFAULT:-bge-m3}}"
@@ -69,7 +71,8 @@ if command -v llama-server >/dev/null 2>&1; then
       echo "[Local AI] ✅ Multimodal projector found for VL model: ${MMPROJ_PATH}"
       EXTRA_ARGS="--mmproj ${MMPROJ_PATH}"
     fi
-    LLM_CTX_SIZE="${LLM_CTX_SIZE:-16384}"
+    LLM_CTX_SIZE="${LLM_CTX_SIZE:-131072}"
+    LOCAL_LLM_PARALLEL="${LOCAL_LLM_PARALLEL:-4}"
     llama-server \
       -m "${LLM_MODEL_PATH}" \
       --port "${LLM_PORT}" \
@@ -79,7 +82,7 @@ if command -v llama-server >/dev/null 2>&1; then
       --cache-type-k q8_0 \
       --cache-type-v q8_0 \
       --cont-batching \
-      --parallel 2 \
+      --parallel "${LOCAL_LLM_PARALLEL}" \
       ${EXTRA_ARGS} ${LLM_EXTRA_ARGS:-} &
     LLM_PID=$!
     echo "[Local AI] LLM/VLM server running with PID ${LLM_PID}"

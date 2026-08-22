@@ -6,19 +6,37 @@
 
 import fs from 'fs';
 import path from 'path';
-import { GoldenTripleBenchmarkItem } from '@chronoviet/shared-spec';
+import { GoldenTripleBenchmarkItem, isLLMServiceHealthy } from '@chronoviet/shared-spec';
 import { extractTriplesFromTextAsync, ExtractedTriple } from '../src/triple-extractor.js';
 import { computeStrictTripleMetrics, StrictTripleMetrics } from './metrics.js';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
 import { loadGoldenTriplesBenchmark } from './ner-runner.js';
+
+process.env.EVAL_STRICT = 'true';
 
 export async function runTriplesEval() {
   console.log('===============================================================');
   console.log(' CHRONOVIET STAGE 2 KNOWLEDGE GRAPH TRIPLES EVALUATION RUNNER');
   console.log('===============================================================\n');
 
+  // Pre-flight check: Strict Extraction LLM requirement
+  const llmHealth = await isLLMServiceHealthy({ task: 'extraction' });
+  if (!llmHealth.healthy) {
+    console.error('================================================================');
+    console.error(' [!] FATAL PRE-FLIGHT ERROR: Extraction LLM Server is OFFLINE');
+    console.error('================================================================');
+    console.error(' Stage 2 Knowledge Graph Triples Evaluation requires active Qwen-4B Extraction LLM.');
+    console.error(` Details: ${llmHealth.details || 'Port 8094 unreachable'}`);
+    console.error(' Heuristic rule-based fallback is disabled in STRICT evaluation mode.\n');
+    console.error(' 👉 Action required: Start local Extraction Server with:');
+    console.error('    pnpm ai:extract   (or: pnpm ai:lite / pnpm ai:start)\n');
+    console.error('================================================================\n');
+    throw new Error(`[STRICT_EVAL] Extraction LLM is offline (${llmHealth.details}). Run \`pnpm ai:extract\` first.`);
+  }
+
   const dataset = loadGoldenTriplesBenchmark();
   console.log(`[*] Loaded ${dataset.length} golden benchmark snippets for Stage 2 Triples Evaluation...`);
+  console.log(`[*] Extraction Engine: ${llmHealth.provider}\n`);
 
   let totalGtTriples = 0;
   let totalExtractedTriples = 0;
@@ -37,7 +55,7 @@ export async function runTriplesEval() {
 
   for (const snippet of dataset) {
     const text = snippet.sourceText;
-    const extracted = await extractTriplesFromTextAsync(text, { allowFallback: true });
+    const extracted = await extractTriplesFromTextAsync(text, { allowFallback: false, strict: true });
 
     const candidateTriples = extracted.map((t: ExtractedTriple) => ({
       sourceEntityId: t.sourceEntityId,

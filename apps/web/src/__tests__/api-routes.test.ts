@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, afterAll } from 'vitest';
 import { NextRequest } from 'next/server';
-import { cleanProjectWorkspace } from '@chronoviet/shared-spec';
 
 // Mock Queues
 vi.mock('../lib/queues', () => ({
@@ -63,11 +62,21 @@ vi.mock('@chronoviet/agent-orchestrator', () => ({
   },
 }));
 
+import * as fs from 'fs';
+import * as path from 'path';
+import { initProjectWorkspace, cleanProjectWorkspace } from '@chronoviet/shared-spec';
+
 import { GET as getProjects, POST as createProject } from '../app/api/v1/projects/route';
 import { GET as getProjectDetail } from '../app/api/v1/projects/[id]/route';
 import { POST as handleChat } from '../app/api/v1/chat/route';
 import { POST as triggerRender } from '../app/api/v1/projects/[id]/render/route';
 import { POST as handleAbort } from '../app/api/v1/projects/[id]/abort/route';
+import { GET as getStream } from '../app/api/v1/projects/[id]/stream/route';
+import { GET as getVideo } from '../app/api/v1/projects/[id]/video/route';
+import { GET as getMetrics } from '../app/api/metrics/route';
+import { GET as getReadyz } from '../app/api/readyz/route';
+import { GET as getHealthz } from '../app/api/healthz/route';
+import { middleware } from '../middleware';
 
 describe('Web RESTful API Routes', () => {
   describe('POST /api/v1/chat', () => {
@@ -96,6 +105,32 @@ describe('Web RESTful API Routes', () => {
       const { value } = await reader!.read();
       const text = new TextDecoder().decode(value);
       expect(text).toContain('data:');
+    });
+
+    it('emits error chunk and fallback when LLM stream encounters an error', async () => {
+      const { generateLLMCompletionStream } = await import('@chronoviet/shared-spec');
+      vi.mocked(generateLLMCompletionStream).mockImplementationOnce(async function* () {
+        throw new Error('Mô hình AI đang bận hoặc quá tải');
+      });
+
+      const req = new NextRequest('http://localhost:3000/api/v1/chat', {
+        method: 'POST',
+        body: JSON.stringify({ query: 'Ngô Quyền đánh quân Nam Hán' }),
+      });
+      const res = await handleChat(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('text/event-stream');
+
+      const reader = res.body?.getReader();
+      let streamOutput = '';
+      while (true) {
+        const { done, value } = await reader!.read();
+        if (done) break;
+        streamOutput += new TextDecoder().decode(value);
+      }
+
+      expect(streamOutput).toContain('"type":"error"');
+      expect(streamOutput).toContain('Mô hình AI đang bận');
     });
   });
 
@@ -146,6 +181,26 @@ describe('Web RESTful API Routes', () => {
       expect(typeof data.total).toBe('number');
       expect(Array.isArray(data.projects)).toBe(true);
     });
+
+    it('filters out non-project directories lacking metadata.json from project list', async () => {
+      const { getDefaultProjectsBaseDir } = await import('@chronoviet/shared-spec');
+      const baseDir = getDefaultProjectsBaseDir();
+      const dummyTestDir = path.join(baseDir, 'dummy_empty_folder_without_metadata');
+      
+      try {
+        await fs.promises.mkdir(dummyTestDir, { recursive: true });
+        const req = new NextRequest('http://localhost:3000/api/v1/projects');
+        const res = await getProjects(req);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        const found = data.items.some((item: any) => item.id === 'dummy_empty_folder_without_metadata');
+        expect(found).toBe(false);
+      } finally {
+        try {
+          await fs.promises.rm(dummyTestDir, { recursive: true, force: true });
+        } catch {}
+      }
+    });
   });
 
   describe('GET /api/v1/projects/[id]', () => {
@@ -178,6 +233,144 @@ describe('Web RESTful API Routes', () => {
       expect(data.status).toBe('ABORTED');
       expect(data.projectId).toBe('test_proj_abort_123');
       createdProjectIds.push('test_proj_abort_123');
+    });
+  });
+
+  describe('GET /api/v1/projects/[id]/stream', () => {
+    it('initializes SSE stream and sends events with correlation ID header', async () => {
+      const projectId = 'test_proj_stream_001';
+      createdProjectIds.push(projectId);
+      const req = new NextRequest(`http://localhost:3000/api/v1/projects/${projectId}/stream`, {
+        headers: { 'x-request-id': 'test-sse-corr-id' },
+      });
+      const res = await getStream(req, { params: { id: projectId } });
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('text/event-stream');
+      expect(res.headers.get('x-request-id')).toBe('test-sse-corr-id');
+
+      const reader = res.body?.getReader();
+      expect(reader).toBeDefined();
+      const { value } = await reader!.read();
+      const text = new TextDecoder().decode(value);
+      expect(text).toContain('data:');
+      expect(text).toContain('test_proj_stream_001');
+    });
+  });
+
+  describe('GET /api/v1/projects/[id]/video', () => {
+    it('returns 404 with correlation ID for non-existent video', async () => {
+      const req = new NextRequest('http://localhost:3000/api/v1/projects/non_existent_proj/video', {
+        headers: { 'x-request-id': 'test-vid-404' },
+      });
+      const res = await getVideo(req, { params: { id: 'non_existent_proj' } });
+      expect(res.status).toBe(404);
+      expect(res.headers.get('x-request-id')).toBe('test-vid-404');
+    });
+
+    it('returns 200 full video stream and 206 partial content when video file exists', async () => {
+      const projectId = 'test_proj_video_001';
+      createdProjectIds.push(projectId);
+      const paths = initProjectWorkspace(projectId);
+      const videoBuffer = Buffer.from('mock-mp4-test-video-stream-bytes-1234567890');
+      fs.writeFileSync(path.join(paths.outputDir, 'video.mp4'), videoBuffer);
+
+      // Test full GET (200)
+      const fullReq = new NextRequest(`http://localhost:3000/api/v1/projects/${projectId}/video`, {
+        headers: { 'x-request-id': 'test-vid-200' },
+      });
+      const fullRes = await getVideo(fullReq, { params: { id: projectId } });
+      expect(fullRes.status).toBe(200);
+      expect(fullRes.headers.get('content-type')).toBe('video/mp4');
+      expect(fullRes.headers.get('content-length')).toBe(String(videoBuffer.length));
+      expect(fullRes.headers.get('x-request-id')).toBe('test-vid-200');
+
+      // Test Range GET (206)
+      const rangeReq = new NextRequest(`http://localhost:3000/api/v1/projects/${projectId}/video`, {
+        headers: {
+          range: 'bytes=0-10',
+          'x-request-id': 'test-vid-206',
+        },
+      });
+      const rangeRes = await getVideo(rangeReq, { params: { id: projectId } });
+      expect(rangeRes.status).toBe(206);
+      expect(rangeRes.headers.get('content-range')).toContain('bytes 0-10/');
+      expect(rangeRes.headers.get('content-length')).toBe('11');
+      expect(rangeRes.headers.get('x-request-id')).toBe('test-vid-206');
+
+      // Test Invalid Range (416)
+      const invalidRangeReq = new NextRequest(`http://localhost:3000/api/v1/projects/${projectId}/video`, {
+        headers: {
+          range: 'bytes=99999-100000',
+          'x-request-id': 'test-vid-416',
+        },
+      });
+      const invalidRangeRes = await getVideo(invalidRangeReq, { params: { id: projectId } });
+      expect(invalidRangeRes.status).toBe(416);
+      expect(invalidRangeRes.headers.get('x-request-id')).toBe('test-vid-416');
+    });
+  });
+
+  describe('GET /api/healthz', () => {
+    it('returns 200 with service status', async () => {
+      const res = await getHealthz();
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.status).toBe('ok');
+      expect(data.service).toBe('web-app');
+    });
+  });
+
+  describe('GET /api/readyz', () => {
+    it('returns 200 with health checks across 4 primary dependencies', async () => {
+      const res = await getReadyz();
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.status).toBeDefined();
+      expect(data.checks).toBeDefined();
+      expect(data.checks.redis).toBeDefined();
+      expect(data.checks.postgres).toBeDefined();
+      expect(data.checks.tts).toBeDefined();
+      expect(data.checks.llm).toBeDefined();
+    });
+  });
+
+  describe('GET /api/metrics', () => {
+    it('returns Prometheus metrics snapshot containing chronoviet metrics', async () => {
+      const res = await getMetrics();
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('text/plain');
+      const text = await res.text();
+      expect(text).toContain('chronoviet_http_requests_total');
+      expect(text).toContain('chronoviet_http_request_duration_seconds');
+    });
+  });
+
+  describe('Middleware Distributed Tracing & Correlation Header Propagation', () => {
+    it('propagates W3C traceparent and x-correlation-id to downstream request and response', () => {
+      const traceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
+      const correlationId = 'corr-trace-123';
+      const req = new NextRequest('http://localhost:3000/api/v1/projects', {
+        headers: {
+          traceparent,
+          'x-correlation-id': correlationId,
+        },
+      });
+      const res = middleware(req);
+      expect(res.headers.get('traceparent')).toBe(traceparent);
+      expect(res.headers.get('x-correlation-id')).toBe(correlationId);
+      expect(res.headers.get('x-request-id')).toBe(correlationId);
+    });
+
+    it('derives requestId from traceparent when x-request-id and x-correlation-id are absent', () => {
+      const traceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
+      const req = new NextRequest('http://localhost:3000/api/v1/projects', {
+        headers: {
+          traceparent,
+        },
+      });
+      const res = middleware(req);
+      expect(res.headers.get('traceparent')).toBe(traceparent);
+      expect(res.headers.get('x-request-id')).toBe('4bf92f3577b34da6a3ce929d0e0e4736');
     });
   });
 });

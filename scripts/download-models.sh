@@ -8,9 +8,8 @@ set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-MODEL_DIR="${MODEL_DIR:-${ROOT_DIR}/models}"
 
-# 1. Load .env if present for HF_TOKEN
+# 1. Load .env if present
 if [ -f "${ROOT_DIR}/.env" ]; then
   set -a
   # shellcheck source=/dev/null
@@ -18,6 +17,7 @@ if [ -f "${ROOT_DIR}/.env" ]; then
   set +a
 fi
 
+MODEL_DIR="${MODEL_DIR:-${ROOT_DIR}/models}"
 HF_AUTH_TOKEN="${HF_TOKEN:-${HUGGINGFACE_HUB_TOKEN:-${HUGGINGFACE_TOKEN:-}}}"
 
 mkdir -p "${MODEL_DIR}"
@@ -81,29 +81,28 @@ download_file() {
 
 echo ""
 echo "Select models to download:"
-echo "1) Standard Stack: Qwen2.5-32B (Q4_K_M) + BGE-M3 Embedding + Qwen-3B Extraction (~22.4 GB)"
-echo "2) Lightweight Dev Stack: Qwen2.5-7B (Q4_K_M) + BGE-M3 Embedding + Qwen-3B Extraction (~7.4 GB)"
+echo "1) Standard Stack: Qwen 3.5 9B (Q4_K_M) + BGE-M3 Embedding + Qwen 3.5 4B Extraction (~8.2 GB)"
+echo "2) Lightweight Dev Stack: Qwen 3.5 9B (Q4_K_M) + BGE-M3 Embedding (~6.4 GB)"
 echo "3) Embedding Only: BGE-M3 1024d (~605 MB)"
-echo "4) Extraction LLM Only: Qwen-3.5-4B / 2.5-3B (~1.8 GB)"
+echo "4) Extraction LLM Only: Qwen 3.5 4B (~1.8 GB - Data Ingestion Prep Only)"
 echo "5) AI Lite Stack: BGE-M3 + Qwen Extraction LLM (~2.4 GB)"
-echo "6) Primary LLM Only: Qwen2.5-32B (~18.5 GB)"
+echo "6) Primary LLM Only: Qwen 3.5 9B (~5.8 GB - Runtime Production)"
 echo "7) All Models"
 
 DOWNLOAD_CHOICE="${1:-1}"
 
 case "${DOWNLOAD_CHOICE}" in
   1|standard)
-    echo ">>> Provisioning Standard Stack..."
+    echo ">>> Provisioning Standard Production Stack..."
     download_file "bge-m3.gguf" "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-Q8_0.gguf"
-    download_file "qwen3.8-27b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-32B-Instruct-GGUF/resolve/main/Qwen2.5-32B-Instruct-Q4_K_M.gguf"
+    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
     download_file "qwen3.5-4b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
     ;;
 
   2|dev|lightweight)
     echo ">>> Provisioning Lightweight Dev Stack..."
     download_file "bge-m3.gguf" "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-Q8_0.gguf"
-    download_file "qwen3.8-27b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
-    download_file "qwen3.5-4b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
     ;;
 
   3|emb|embedding)
@@ -112,7 +111,7 @@ case "${DOWNLOAD_CHOICE}" in
     ;;
 
   4|extract|extraction)
-    echo ">>> Provisioning Extraction LLM Model Only..."
+    echo ">>> Provisioning Extraction LLM Model Only (Data Prep)..."
     download_file "qwen3.5-4b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
     ;;
 
@@ -123,17 +122,16 @@ case "${DOWNLOAD_CHOICE}" in
     ;;
 
   6|llm)
-    echo ">>> Provisioning Primary LLM (Qwen2.5-32B)..."
-    download_file "qwen3.8-27b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-32B-Instruct-GGUF/resolve/main/Qwen2.5-32B-Instruct-Q4_K_M.gguf"
+    echo ">>> Provisioning Primary LLM (Qwen 3.5 9B)..."
+    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
     ;;
 
   7|all)
     echo ">>> Provisioning All Available Models..."
     download_file "bge-m3.gguf" "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-Q8_0.gguf"
-    download_file "qwen3.8-27b-mmproj.gguf" "https://huggingface.co/bartowski/Qwen_Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf"
-    download_file "qwen3.8-27b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-32B-Instruct-GGUF/resolve/main/Qwen2.5-32B-Instruct-Q4_K_M.gguf"
+    download_file "qwen3.5-9b-mmproj.gguf" "https://huggingface.co/bartowski/Qwen_Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf"
+    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
     download_file "qwen3.5-4b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
-    download_file "qwen3.6-27b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-14B-Instruct-GGUF/resolve/main/Qwen2.5-14B-Instruct-Q4_K_M.gguf"
     ;;
 
   *)

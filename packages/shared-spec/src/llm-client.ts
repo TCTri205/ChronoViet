@@ -138,23 +138,56 @@ async function executeTargetCompletion(
 
   try {
     if (target.type === 'local') {
-      const endpoint = `${target.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: target.model,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
-          ...(options.response_format ? { response_format: options.response_format } : {}),
-        }),
-        signal: controller.signal,
-        cache: 'no-store',
-      });
+      const isExtraction = options.task === 'extraction';
+      const targetBaseUrl = isExtraction
+        ? (envConfig.LOCAL_LLM_EXTRACTION_BASE_URL || `http://localhost:${envConfig.LOCAL_LLM_EXTRACTION_PORT || 8094}`)
+        : target.baseUrl;
+      const targetModel = isExtraction
+        ? (envConfig.LOCAL_LLM_EXTRACTION_MODEL || 'qwen3.5-4b-instruct-q4_k_m')
+        : target.model;
+
+      let endpoint = `${targetBaseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+      let response: Response;
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            messages,
+            temperature,
+            max_tokens: maxTokens,
+            ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
+            ...(options.response_format ? { response_format: options.response_format } : {}),
+          }),
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+      } catch (fetchErr: any) {
+        if (isExtraction && targetBaseUrl !== target.baseUrl) {
+          endpoint = `${target.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: targetModel,
+              messages,
+              temperature,
+              max_tokens: maxTokens,
+              ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
+              ...(options.response_format ? { response_format: options.response_format } : {}),
+            }),
+            signal: controller.signal,
+            cache: 'no-store',
+          });
+        } else {
+          throw fetchErr;
+        }
+      }
       clearTimeout(timer);
 
       if (!response.ok) {
@@ -626,42 +659,70 @@ function isValidApiKey(key?: string): boolean {
 /**
  * Pre-flight health check for LLM Service
  */
-export async function isLLMServiceHealthy(): Promise<{ healthy: boolean; provider: string; details?: string }> {
+export async function isLLMServiceHealthy(options?: {
+  task?: 'extraction' | 'general';
+}): Promise<{ healthy: boolean; provider: string; details?: string }> {
   // 1. Check Local LLM if enabled
   if (envConfig.USE_LOCAL_LLM) {
-    try {
-      const endpoint = `${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/models`;
-      const res = await fetch(endpoint, { signal: AbortSignal.timeout(2000), cache: 'no-store' });
-      if (res.ok) {
-        return {
-          healthy: true,
-          provider: `LOCAL_LLM (${envConfig.LLM_BASE_URL}) [${envConfig.LOCAL_LLM_PRIMARY_MODEL}]`,
-        };
+    const isExtraction = options?.task === 'extraction';
+    const localEndpoints = isExtraction
+      ? [
+          {
+            url: envConfig.LOCAL_LLM_EXTRACTION_BASE_URL || `http://localhost:${envConfig.LOCAL_LLM_EXTRACTION_PORT || 8094}`,
+            model: envConfig.LOCAL_LLM_EXTRACTION_MODEL || 'qwen3.5-4b-instruct-q4_k_m',
+          },
+          {
+            url: envConfig.LLM_BASE_URL,
+            model: envConfig.LOCAL_LLM_PRIMARY_MODEL,
+          },
+        ]
+      : [
+          {
+            url: envConfig.LLM_BASE_URL,
+            model: envConfig.LOCAL_LLM_PRIMARY_MODEL,
+          },
+          {
+            url: envConfig.LOCAL_LLM_EXTRACTION_BASE_URL || `http://localhost:${envConfig.LOCAL_LLM_EXTRACTION_PORT || 8094}`,
+            model: envConfig.LOCAL_LLM_EXTRACTION_MODEL || 'qwen3.5-4b-instruct-q4_k_m',
+          },
+        ];
+
+    for (const ep of localEndpoints) {
+      try {
+        const endpoint = `${ep.url.replace(/\/$/, '')}/v1/models`;
+        const res = await fetch(endpoint, { signal: AbortSignal.timeout(2000), cache: 'no-store' });
+        if (res.ok) {
+          return {
+            healthy: true,
+            provider: `LOCAL_LLM (${ep.url}) [${ep.model}]`,
+          };
+        }
+      } catch (_err) {
+        // Continue to next endpoint or cloud fallback
       }
-    } catch (_err) {
-      // Local LLM check failed, test cloud fallback
     }
   }
 
-  // 2. Check Gemini API if key is present and valid
-  const geminiKey = getNextApiKey('gemini') || envConfig.GEMINI_API_KEY;
-  if (hasAvailableApiKeys('gemini') || isValidApiKey(geminiKey)) {
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`, {
-        signal: AbortSignal.timeout(3000),
-        cache: 'no-store',
-      });
-      if (res.ok) {
-        return {
-          healthy: true,
-          provider: 'GEMINI_CLOUD_API',
-        };
-      }
-    } catch {}
-  }
+  // 2. Check Cloud LLMs only if ENABLE_CLOUD_FALLBACK is true and not in EVAL_STRICT
+  if (envConfig.ENABLE_CLOUD_FALLBACK && !envConfig.EVAL_STRICT) {
+    // 2.1 Check Gemini API if key is present and valid
+    const geminiKey = getNextApiKey('gemini') || envConfig.GEMINI_API_KEY;
+    if (hasAvailableApiKeys('gemini') || isValidApiKey(geminiKey)) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`, {
+          signal: AbortSignal.timeout(3000),
+          cache: 'no-store',
+        });
+        if (res.ok) {
+          return {
+            healthy: true,
+            provider: 'GEMINI_CLOUD_API',
+          };
+        }
+      } catch {}
+    }
 
-  // 3. Check Remote Cloud LLM (OpenRouter / OpenAI / Agnes / Custom Gateway)
-  if (envConfig.ENABLE_CLOUD_FALLBACK) {
+    // 2.2 Check Remote Cloud LLM (OpenRouter / OpenAI / Agnes / Custom Gateway)
     const remoteCfg = getActiveRemoteLLMConfig();
     if (isValidApiKey(remoteCfg.apiKey)) {
       try {
@@ -718,10 +779,16 @@ export async function isLLMServiceHealthy(): Promise<{ healthy: boolean; provide
     }
   }
 
+  const isExtraction = options?.task === 'extraction';
+  const targetPort = isExtraction ? (envConfig.LOCAL_LLM_EXTRACTION_PORT || 8094) : (envConfig.LLM_PORT || 8092);
+  const targetModel = isExtraction ? (envConfig.LOCAL_LLM_EXTRACTION_MODEL || 'qwen3.5-4b-instruct-q4_k_m') : envConfig.LOCAL_LLM_PRIMARY_MODEL;
+
   return {
     healthy: false,
     provider: 'NONE',
-    details: `Local LLM at ${envConfig.LLM_BASE_URL} is unreachable and remote cloud providers are offline`,
+    details: envConfig.USE_LOCAL_LLM
+      ? `Local llama-server is offline on port ${targetPort} [${targetModel}] and Cloud Fallback is ${envConfig.ENABLE_CLOUD_FALLBACK ? 'unavailable' : 'disabled (ENABLE_CLOUD_FALLBACK=false)'}`
+      : 'No healthy LLM provider available.',
   };
 }
 

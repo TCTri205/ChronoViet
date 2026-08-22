@@ -18,6 +18,8 @@ import {
 } from '@chronoviet/shared-spec';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
 
+process.env.EVAL_STRICT = 'true';
+
 export interface VectorBenchmarkItem {
   id: string;
   category: string;
@@ -92,8 +94,36 @@ export async function runVectorEval(): Promise<VectorChunkEvalReport> {
   console.log(' Target KPIs: 100% DB Scan | Hit@5 >= 80% | MRR >= 0.70 | Health >= 95%');
   console.log('================================================================\n');
 
+  // Pre-flight check: Strict real DB requirement
   const pgConnected = await isPgAvailable();
-  console.log(`[*] Target Storage: ${pgConnected ? 'PostgreSQL (pgvector HNSW)' : 'In-Memory Store (Fallback)'}`);
+  if (!pgConnected) {
+    console.error('================================================================');
+    console.error(' [!] FATAL PRE-FLIGHT ERROR: PostgreSQL is OFFLINE');
+    console.error('================================================================');
+    console.error(' Real database vector evaluation requires PostgreSQL with pgvector.');
+    console.error(' In-memory fallback is disabled in STRICT evaluation mode.\n');
+    console.error(' 👉 Action required: Start database infrastructure with:');
+    console.error('    pnpm stack:infra\n');
+    console.error('================================================================\n');
+    throw new Error('[STRICT_EVAL] PostgreSQL is offline. Run `pnpm stack:infra` first.');
+  }
+
+  // Pre-flight check: Strict Embedding Server requirement
+  const embHealth = await isEmbeddingServiceHealthy();
+  if (!embHealth.healthy) {
+    console.error('================================================================');
+    console.error(' [!] FATAL PRE-FLIGHT ERROR: Embedding Server is OFFLINE');
+    console.error('================================================================');
+    console.error(' Real semantic vector retrieval benchmark requires an active BGE-M3 Embedding Engine.');
+    console.error(` Details: ${embHealth.details || 'Port 8090 unreachable'}`);
+    console.error(' Pseudo-random vector fallback is disabled in STRICT evaluation mode.\n');
+    console.error(' 👉 Action required: Start local Embedding Server with:');
+    console.error('    pnpm ai:emb   (or: pnpm ai:lite / pnpm ai:start)\n');
+    console.error('================================================================\n');
+    throw new Error(`[STRICT_EVAL] Embedding Engine is offline (${embHealth.details}). Run \`pnpm ai:emb\` first.`);
+  }
+
+  console.log(`[*] Target Storage: PostgreSQL (${embHealth.provider})`);
 
   let totalChunks = 0;
   let parentCount = 0;

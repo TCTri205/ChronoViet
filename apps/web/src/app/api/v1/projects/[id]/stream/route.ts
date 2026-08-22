@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import * as fs from 'fs';
 import {
-  initProjectWorkspace,
+  getProjectPaths,
   createLogger,
   SseEvent,
   httpRequestsTotal,
@@ -27,14 +27,24 @@ export async function GET(
   const reqLog = log.child({ correlationId, fields: { projectId } });
 
   try {
-    const paths = initProjectWorkspace(projectId);
+    let paths;
+    try {
+      paths = getProjectPaths(projectId);
+    } catch {
+      const durationSec = (Date.now() - startTime) / 1000;
+      httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '4xx' });
+      httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '4xx' }, durationSec);
+      return new Response(JSON.stringify({ error: `Invalid project id: ${projectId}` }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'x-request-id': correlationId },
+      });
+    }
 
     let metadata: any = {};
-    if (fs.existsSync(paths.metadataFile)) {
-      try {
-        metadata = JSON.parse(fs.readFileSync(paths.metadataFile, 'utf-8'));
-      } catch {}
-    }
+    try {
+      const metaRaw = await fs.promises.readFile(paths.metadataFile, 'utf-8');
+      metadata = JSON.parse(metaRaw);
+    } catch {}
 
     reqLog.info('api.sse_connected', `SSE Client connected to stream for project ${projectId}`, { projectId });
 
@@ -81,7 +91,8 @@ export async function GET(
             controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
           }
         } catch (streamErr: any) {
-          log.error('api.sse_stream_error', `SSE stream failed for ${projectId}: ${streamErr.message}`, {
+          httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '5xx' });
+          reqLog.error('api.sse_stream_error', `SSE stream failed for ${projectId}: ${streamErr.message}`, {
             error: streamErr,
           });
           const errorEvent: SseEvent = {
@@ -99,18 +110,29 @@ export async function GET(
       },
     });
 
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '2xx' });
+    httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '2xx' }, durationSec);
+
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
         Connection: 'keep-alive',
+        'x-request-id': correlationId,
       },
     });
   } catch (err: any) {
-    log.error('api.sse_init_failed', `Failed to initialize SSE: ${err.message}`, { error: err });
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '5xx' });
+    httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '5xx' }, durationSec);
+    reqLog.error('api.sse_init_failed', `Failed to initialize SSE: ${err.message}`, { error: err });
     return new Response(JSON.stringify({ error: err.message || 'Internal Server Error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': correlationId,
+      },
     });
   }
 }

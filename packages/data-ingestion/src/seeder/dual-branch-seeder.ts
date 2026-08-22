@@ -112,7 +112,7 @@ export async function seedDualBranch(
   const isVectorOnly = options?.stage === 'vector';
   const isGraphOnly = options?.stage === 'graph';
 
-  // 2. Parallel Chunk Triple Extraction with Controlled Concurrency Pool
+  // 2. Hierarchical Chunk Triple Extraction with Controlled Concurrency Pool
   const chunkEntityMap = new Map<string, Set<string>>(); // chunkId -> Set of entityIds
 
   interface ChunkExtractionResult {
@@ -125,16 +125,32 @@ export async function seedDualBranch(
 
   metricsCollector.startStage('extraction');
 
+  // Stage 1 Fast-Path NER for Parent Chunks (2,000–3,000 words) — <1ms/chunk, 0% GPU
+  log.info(
+    'dual_branch_seeder.parent_chunks_ner',
+    `Processed ${parentChunks.length} parent chunks via Stage 1 Fast-Path NER (<1ms/chunk)`,
+    { correlationId, parentChunksCount: parentChunks.length }
+  );
+  for (let i = 0; i < parentChunks.length; i++) {
+    const parentChunk = parentChunks[i];
+    const fastTriples = extractTriplesFromText(parentChunk.textContent);
+    chunkResults[i] = { chunk: parentChunk, triples: fastTriples };
+  }
+
   if (isVectorOnly) {
-    // Fast Path: Stage 1 Pure TS NER & Rule-based extraction (Bypass LLM)
-    log.info('dual_branch_seeder.stage_vector_only', `Stage 1 (Vector): Extracting Fast NER candidate entities for ${allChunks.length} chunks (LLM bypassed)`, { correlationId, totalChunks: allChunks.length });
-    for (let i = 0; i < allChunks.length; i++) {
-      const chunk = allChunks[i];
-      const fastTriples = extractTriplesFromText(chunk.textContent);
-      chunkResults[i] = { chunk, triples: fastTriples };
+    // Fast Path: Stage 1 Pure TS NER & Rule-based extraction for Child Chunks (Bypass LLM)
+    log.info(
+      'dual_branch_seeder.stage_vector_only',
+      `Stage 1 (Vector): Extracting Fast NER candidate entities for ${childChunks.length} child chunks (LLM bypassed)`,
+      { correlationId, childChunksCount: childChunks.length }
+    );
+    for (let i = 0; i < childChunks.length; i++) {
+      const childChunk = childChunks[i];
+      const fastTriples = extractTriplesFromText(childChunk.textContent);
+      chunkResults[parentChunks.length + i] = { chunk: childChunk, triples: fastTriples };
     }
-  } else {
-    // Stage 2 (or Full): Parallel Chunk Triple Extraction via LLM / Cache
+  } else if (childChunks.length > 0) {
+    // Stage 2 (or Full): Parallel Child Chunk Triple Extraction via LLM / Cache
     const activeTargetsCount = hybridInferenceDispatcher.getActiveTargets('llm').length;
     const isLocalOnlyMode =
       envConfig.INFERENCE_ROUTING_MODE === 'local_only' ||
@@ -145,16 +161,20 @@ export async function seedDualBranch(
       ? Math.max(1, envConfig.LOCAL_LLM_MAX_CONCURRENCY || 1)
       : Math.min(6, Math.max(1, activeTargetsCount));
 
-    log.info('dual_branch_seeder.extract_triples_parallel', `Extracting triples for ${allChunks.length} chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`, { correlationId, totalChunks: allChunks.length, concurrency, activeTargetsCount });
+    log.info(
+      'dual_branch_seeder.extract_triples_parallel',
+      `Extracting triples for ${childChunks.length} child chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`,
+      { correlationId, childChunksCount: childChunks.length, concurrency, activeTargetsCount }
+    );
 
-    let nextChunkIndex = 0;
-    let completedChunks = 0;
-    const extractionStartTime = Date.now();
+    let nextChildIndex = 0;
+    let completedChildChunks = 0;
 
-    async function extractionWorker() {
-      while (nextChunkIndex < allChunks.length) {
-        const idx = nextChunkIndex++;
-        const chunk = allChunks[idx];
+    async function childExtractionWorker() {
+      while (nextChildIndex < childChunks.length) {
+        const childIdx = nextChildIndex++;
+        const chunk = childChunks[childIdx];
+        const resultIdx = parentChunks.length + childIdx;
         const chunkStartTime = Date.now();
 
         // 1. Check persistent extraction cache (unless regex-only)
@@ -165,20 +185,20 @@ export async function seedDualBranch(
 
         if (cachedTriples) {
           metricsCollector.recordCache(true);
-          chunkResults[idx] = { chunk, triples: cachedTriples };
-          completedChunks++;
-          const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+          chunkResults[resultIdx] = { chunk, triples: cachedTriples };
+          completedChildChunks++;
+          const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
           const meta = (cachedTriples as any)?._meta;
           const providerName = meta?.provider || 'CACHED';
           const modelName = meta?.model ? ` (${meta.model})` : '';
 
           log.info(
             'dual_branch_seeder.chunk_cached',
-            `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> ${cachedTriples.length} triples via [${providerName}${modelName}] (CACHED / RESUMED)`,
+            `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> ${cachedTriples.length} triples via [${providerName}${modelName}] (CACHED / RESUMED)`,
             {
               correlationId,
-              chunkIndex: completedChunks,
-              totalChunks: allChunks.length,
+              chunkIndex: completedChildChunks,
+              childChunksCount: childChunks.length,
               chunkId: chunk.id,
               triplesCount: cachedTriples.length,
               provider: providerName,
@@ -193,8 +213,8 @@ export async function seedDualBranch(
 
         try {
           const triples = await extractTriplesFromTextAsync(chunk.textContent, options);
-          chunkResults[idx] = { chunk, triples };
-          completedChunks++;
+          chunkResults[resultIdx] = { chunk, triples };
+          completedChildChunks++;
 
           // Save successful extraction to persistent cache (NEVER cache if regex-only, LLM errored, or rule-based fallback)
           const meta = (triples as any)?._meta;
@@ -212,7 +232,7 @@ export async function seedDualBranch(
             });
           }
 
-          const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+          const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
           const providerName = meta?.provider || 'LOCAL_LLM';
           const modelName = meta?.model ? ` (${meta.model})` : '';
           const chunkDurationMs = (meta?.durationMs) ?? (Date.now() - chunkStartTime);
@@ -220,11 +240,11 @@ export async function seedDualBranch(
 
           log.info(
             'dual_branch_seeder.chunk_success',
-            `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
+            `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
             {
               correlationId,
-              chunkIndex: completedChunks,
-              totalChunks: allChunks.length,
+              chunkIndex: completedChildChunks,
+              childChunksCount: childChunks.length,
               chunkId: chunk.id,
               triplesCount: triples.length,
               provider: providerName,
@@ -234,30 +254,30 @@ export async function seedDualBranch(
             }
           );
         } catch (err: any) {
-          completedChunks++;
-          const percent = ((completedChunks / allChunks.length) * 100).toFixed(1);
+          completedChildChunks++;
+          const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
           const conciseErrMsg = formatConciseError(err);
           const fallbackTriples = extractTriplesFromText(chunk.textContent);
           failedExtractionChunkIds.push(chunk.id);
           log.warn(
             'dual_branch_seeder.chunk_failed',
-            `Chunk [${completedChunks}/${allChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples.`,
+            `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples.`,
             {
               correlationId,
-              chunkIndex: completedChunks,
-              totalChunks: allChunks.length,
+              chunkIndex: completedChildChunks,
+              childChunksCount: childChunks.length,
               chunkId: chunk.id,
               error: conciseErrMsg,
               salvagedCount: fallbackTriples.length,
             }
           );
-          chunkResults[idx] = { chunk, triples: fallbackTriples };
+          chunkResults[resultIdx] = { chunk, triples: fallbackTriples };
         }
       }
     }
 
-    const workerCount = Math.min(concurrency, allChunks.length);
-    const workers = Array.from({ length: workerCount }, () => extractionWorker());
+    const workerCount = Math.min(concurrency, childChunks.length);
+    const workers = Array.from({ length: workerCount }, () => childExtractionWorker());
     await Promise.all(workers);
   }
 
@@ -307,7 +327,21 @@ export async function seedDualBranch(
       }
 
       // Quality Validation Gate: Route to Quarantine or Production Graph
-      if (t.confidence < CONFIDENCE_PRODUCTION_THRESHOLD) {
+      if (tgtEntity && srcEntity.entityId === tgtEntity.entityId) {
+        metricsCollector.recordQuarantine('SELF_LOOP');
+        quarantineTriplesList.push({
+          source_entity_id: srcEntity.entityId,
+          target_entity_id: tgtEntity.entityId,
+          source_name: t.sourceEntityName,
+          target_name: t.targetEntityName,
+          relation_type: t.relationType,
+          confidence: t.confidence,
+          chunk_id: chunk.id,
+          reason: 'SELF_LOOP',
+          status: 'REJECTED',
+          metadata: { note: 'Self-loop relationship excluded from production graph' },
+        });
+      } else if (t.confidence < CONFIDENCE_PRODUCTION_THRESHOLD) {
         metricsCollector.recordQuarantine('LOW_CONFIDENCE');
         quarantineTriplesList.push({
           source_entity_id: srcEntity.entityId,

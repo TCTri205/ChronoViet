@@ -131,7 +131,7 @@ async function performPreflightHealthCheck(options: IngestCliOptions): Promise<v
       return;
     }
 
-    const llmStatus = await isLLMServiceHealthy();
+    const llmStatus = await isLLMServiceHealthy({ task: 'extraction' });
     if (llmStatus.healthy) {
       log.info('ingest.preflight_llm_online', 'LLM knowledge gateway online', {
         provider: llmStatus.provider,

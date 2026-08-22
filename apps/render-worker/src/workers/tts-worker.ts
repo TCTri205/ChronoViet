@@ -5,7 +5,15 @@
 import { Worker, Job } from 'bullmq';
 import * as fs from 'fs';
 import * as path from 'path';
-import { createLogger, envConfig, formatErrorMessage, initProjectWorkspace, WordTimestamp } from '@chronoviet/shared-spec';
+import {
+  createLogger,
+  envConfig,
+  formatErrorMessage,
+  initProjectWorkspace,
+  WordTimestamp,
+  ttsRequestsTotal,
+  ttsSynthesisDurationSeconds,
+} from '@chronoviet/shared-spec';
 import { VieNeuEngine } from '@chronoviet/vieneu-tts';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 
@@ -30,6 +38,7 @@ export interface TTSJobResult {
 
 export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult> {
   const { projectId, correlationId = projectId, sceneId, voiceoverText } = job.data;
+  const startTime = Date.now();
   const workerLog = log.child({
     correlationId,
     fields: { projectId, sceneId, jobId: job.id },
@@ -61,19 +70,28 @@ export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult>
     wordTimestamps = ttsResult.wordTimestamps;
     engine = 'local_vieneu';
 
+    const ttsDurationSec = (Date.now() - startTime) / 1000;
+    ttsRequestsTotal.inc({ engine: 'local_vieneu', status: 'completed' });
+    ttsSynthesisDurationSeconds.observe({ engine: 'local_vieneu' }, ttsDurationSec);
+
     if (ttsResult.audioUrl && ttsResult.audioUrl.startsWith('/static/audio/')) {
       const cachedFile = path.resolve(process.cwd(), 'services/vieneu-tts/media/audio-cache', path.basename(ttsResult.audioUrl));
-      if (fs.existsSync(cachedFile)) {
-        fs.copyFileSync(cachedFile, audioFilePath);
-      }
+      try {
+        await fs.promises.copyFile(cachedFile, audioFilePath);
+      } catch {}
     }
   } catch (err: any) {
+    const ttsDurationSec = (Date.now() - startTime) / 1000;
     // Eval Integrity: strict mode must not substitute heuristic word timing
     if (envConfig.EVAL_STRICT) {
+      ttsRequestsTotal.inc({ engine: 'local_vieneu', status: 'failed' });
+      ttsSynthesisDurationSeconds.observe({ engine: 'local_vieneu' }, ttsDurationSec);
       throw err;
     }
     engine = 'synthetic_timing';
-    log.warn('worker.tts_synthesis_failed', `TTS synthesis failed for ${sceneId}, falling back to synthetic word timing: ${err.message}`, {
+    ttsRequestsTotal.inc({ engine: 'synthetic_timing', status: 'fallback' });
+    ttsSynthesisDurationSeconds.observe({ engine: 'synthetic_timing' }, ttsDurationSec);
+    workerLog.warn('worker.tts_synthesis_failed', `TTS synthesis failed for ${sceneId}, falling back to synthetic word timing: ${err.message}`, {
       sceneId,
       error: err.message,
       engine,

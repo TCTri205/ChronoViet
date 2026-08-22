@@ -21,9 +21,9 @@ Gói `@chronoviet/data-ingestion` đóng vai trò là Lớp Nạp Dữ Liệu Of
 
 ---
 
-## 🗄️ 2. Cấu Trúc 7 Bảng CSDL Chuẩn Hóa (Database Schema)
+## 🗄️ 2. Cấu Trúc 8 Bảng CSDL Chuẩn Hóa (Database Schema)
 
-Module 0 quản lý và khởi tạo trực tiếp 7 bảng lưu trữ dữ liệu tri thức trên PostgreSQL:
+Module 0 quản lý và khởi tạo trực tiếp 8 bảng lưu trữ dữ liệu tri thức trên PostgreSQL:
 
 | Bảng CSDL | Loại Dữ Liệu | Mục Đích Lưu Trữ |
 | :--- | :--- | :--- |
@@ -34,6 +34,7 @@ Module 0 quản lý và khởi tạo trực tiếp 7 bảng lưu trữ dữ li�
 | `entity_audit_logs` | Audit Trail | Ghi nhật ký thay đổi append-only khi hợp giải, sáp nhập hoặc cập nhật thực thể |
 | `quarantine_triples` | Quarantine Buffer | Lưu trữ tạm các bộ ba quan hệ nghi vấn (confidence < 0.85, dangling context) chờ rà soát |
 | `unmapped_entities` | Triage Buffer | Lưu trữ các thực thể mới xuất hiện trong văn bản chưa có trong Master Ontology |
+| `orchestrator_checkpoints` | LangGraph Persistence | Lưu trữ state checkpoints phục vụ điều phối Multi-Agent |
 
 ---
 
@@ -105,15 +106,34 @@ pnpm ingest:knowledge --strict                  # Nạp với chế độ STRICT
 pnpm ingest:knowledge --offline                 # Nạp nhanh offline (Regex + Fallback, không cần LLM)
 pnpm ingest:knowledge --force                   # Nạp mới từ đầu (xóa cache checkpoint & truncate DB)
 
-# 5. Quản trị Thực thể, Kiểm toán & Hợp giải
-pnpm db:audit-quarantine                        # Kiểm toán, thăng cấp hoặc thanh lọc cạnh tri thức cách ly
-pnpm rag:re-resolve                             # Hợp giải mâu thuẫn thực thể & ghi nhật ký entity_audit_logs
+# 5. Quy Trình Làm Sạch & Chuẩn Hóa Dữ Liệu Sau Ingestion (Post-Ingestion Data Governance)
+# Sau khi chạy ingest:vector & ingest:graph, thực thi chuỗi lệnh sau để bảo vệ và hoàn thiện kho tri thức:
+# Bước 0: Tạo Snapshot Sao Lưu Dự Phòng Theo Phiên Bản
+pnpm db:backup --name post_ingest_v1            # Tạo snapshot nhị phân backups/post_ingest_v1.dump bảo vệ dữ liệu
 
-# 6. Đánh Giá & Benchmark Chất Lượng (Evaluation Commands)
+# Bước 1: Sanitization & Health Check
+pnpm db:clean                                   # Xóa self-loops, duplicate edges, dangling relations & tái lập unique index
+pnpm db:health                                  # Audit sức khỏe CSDL (yêu cầu PERFECTLY STABLE & HEALTHY)
+
+# Bước 2: Quarantine Triage & Promotion
+pnpm db:audit-quarantine                        # Xem danh sách pending review trong quarantine buffer
+pnpm db:audit-quarantine --accept-all-high-conf --threshold=0.85 # Thăng cấp quan hệ chất lượng cao (>= 0.85) vào Graph
+pnpm db:audit-quarantine --purge-spurious       # Thanh lọc quan hệ rác, spurious edges & thực thể nhiễu
+
+# Bước 3: Master Canonical Re-Resolution
+pnpm rag:re-resolve                             # Ánh xạ entities về Canonical ID, ghi nhật ký entity_audit_logs
+
+# (Tùy chọn) Phục hồi nếu xảy ra sự cố hỏng dữ liệu trong quá trình dọn dẹp:
+# pnpm db:restore --file backups/post_ingest_v1.dump # Khôi phục từ file phiên bản v1
+# pnpm db:restore                                    # Hoặc khôi phục nhanh từ snapshot mới nhất
+
+# Bước 4: Quality Diagnostics & Benchmarking
+pnpm eval:ingest:diagnostic                     # Chẩn đoán độ phủ, mật độ graph, unmapped entities
+pnpm eval:ingest                                # Master Benchmark Module 0: Đo lường 4 KPI chất lượng
+
+# 6. Đánh Giá & Benchmark Bổ Sung (Granular Evaluation Commands)
 pnpm eval:ingest:vector                         # Đánh giá nhanh Stage 1 (Vector & Chunk Store vừa nạp trên DB thật)
 pnpm eval:ingest:graph                          # Đánh giá Stage 2 (Knowledge Graph Triples, Connectivity, Quarantine)
-pnpm eval:ingest                                # Master Benchmark đánh giá toàn diện Module 0 (Cả Vector + Graph)
-pnpm eval:ingest:diagnostic                     # Chẩn đoán chất lượng kho văn bản (Parent/Child chunks, unmapped entities)
 pnpm --filter @chronoviet/data-ingestion eval:ner      # Benchmark Stage 1 Pure TS Historical NER (40 test cases)
 pnpm --filter @chronoviet/data-ingestion eval:triples  # Benchmark Stage 2 Triples Extractor
 pnpm eval --chain ingest-rag                    # Benchmark chuỗi E2E Ingest-RAG Chain (MRR, nDCG@5, Fact Precision)
@@ -164,11 +184,13 @@ pnpm eval --chain ingest-rag                    # Benchmark chuỗi E2E Ingest-R
 | `--purge-spurious` | Xóa bỏ các quan hệ tự trỏ (self-loops), các cạnh bị từ chối (`REJECTED`) hoặc độ tin cậy rác (< 0.25) trong `quarantine_triples`, và thực thể rác (`DISCARDED_AS_NOISE`) trong `unmapped_entities` | `false` |
 | `--dry-run` | Chạy mô phỏng kiểm tra, xuất báo cáo danh sách cạnh/thực thể bị tác động mà không thay đổi CSDL | `false` |
 
-#### 5. Quản trị & Kiểm toán CSDL Hệ thống:
+#### 5. Quản trị, Sao Lưu & Kiểm toán CSDL Hệ thống:
 | Lệnh CLI | Mô tả & Chức năng |
 | :--- | :--- |
 | `pnpm db:init` | Khởi tạo PostgreSQL schema với pgvector extension (1024d HNSW index, BM25 FTS tsvector index, entities aliases GIN index) và 8 bảng CSDL (`entities`, `relationships`, `document_chunks`, `entity_chunks`, `entity_audit_logs`, `orchestrator_checkpoints`, `quarantine_triples`, `unmapped_entities`) |
 | `pnpm db:health` | Audit sức khỏe toàn diện CSDL: Đếm quan hệ, phát hiện self-loops, kiểm tra trùng lặp, phát hiện dangling references, kiểm tra độ phủ vector embeddings, xác minh 3 chỉ mục lõi (`idx_rel_unique`, `idx_chunks_embedding_hnsw`, `idx_chunks_fts`), và thống kê bộ đệm cách ly |
+| `pnpm db:backup --name <version>` | Tạo snapshot CSDL có tên phiên bản cụ thể dưới dạng nhị phân (`.dump` qua `pg_dump -Fc`) lưu vào `backups/<version>.dump` và tự động cập nhật pointer `backups/db_latest.dump` |
+| `pnpm db:restore --file <path>` | Khôi phục toàn diện CSDL từ file snapshot chỉ định (hoặc từ `db_latest.dump` nếu không truyền flag), tự động clean bảng và thực hiện kiểm định sức khỏe (`pnpm db:health`) |
 | `pnpm db:clean` | Dọn dẹp bản ghi trùng lặp, xóa self-loops, thanh lọc quan hệ lơ lửng (dangling edges) trong giao dịch nguyên tử (`withTransaction`), tái lập unique index `idx_rel_unique` và ghi vết `entity_audit_logs` |
 
 ---

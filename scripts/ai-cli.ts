@@ -3,9 +3,9 @@
  * Provides discrete lifecycle controls for Local AI services:
  * - `status` / `health`: Probe ports 8090, 8092, 8094, 8080 & check loaded models
  * - `stop` / `kill`: Gracefully kill lingering llama-server / TTS processes
- * - `llm`: Start only Primary LLM/VLM (Port 8092 - Qwen 27B/32B)
+ * - `llm`: Start only Primary LLM/VLM (Port 8092 - Qwen 3.5 9B)
  * - `emb`: Start only Embedding Server (Port 8090 - BGE-M3)
- * - `extract`: Start only Stage 2 Extraction LLM (Port 8094 - Qwen 3.5-4B / 2.5-3B)
+ * - `extract`: Start only Stage 2 Extraction LLM (Port 8094 - Qwen 3.5 4B)
  * - `lite`: Start lightweight pair: Embedding (8090) + Extraction (8094) (~3.1 GB RAM)
  * - `all`: Start full AI stack (Port 8090, 8092, 8094)
  */
@@ -102,9 +102,8 @@ export function resolveWeights() {
   // LLM candidates
   const llmCandidates = [
     path.join(MODEL_DIR, `${envConfig.LOCAL_LLM_PRIMARY_MODEL}.gguf`),
-    path.join(MODEL_DIR, 'qwen3.8-27b-instruct-q4_k_m.gguf'),
-    path.join(MODEL_DIR, 'Qwen3.8-27B-Q4_K_M.gguf'),
-    path.join(MODEL_DIR, 'Qwen2.5-32B-Instruct-Q4_K_M.gguf'),
+    path.join(MODEL_DIR, 'qwen3.5-9b-instruct-q4_k_m.gguf'),
+    path.join(MODEL_DIR, 'Qwen3.5-9B-Instruct-Q4_K_M.gguf'),
     path.join(MODEL_DIR, 'Qwen2.5-7B-Instruct-Q4_K_M.gguf'),
     path.join(MODEL_DIR, `${envConfig.LOCAL_LLM_BENCHMARK_MODEL}.gguf`),
   ];
@@ -121,7 +120,7 @@ export function resolveWeights() {
   let mmprojPath: string | null = null;
   if (isVl) {
     const mmprojCandidates = [
-      path.join(MODEL_DIR, 'qwen3.8-27b-mmproj.gguf'),
+      path.join(MODEL_DIR, 'qwen3.5-9b-mmproj.gguf'),
       path.join(MODEL_DIR, 'mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf'),
     ];
     for (const m of mmprojCandidates) {
@@ -217,7 +216,7 @@ export async function showStatus() {
       id: 'llm',
       name: 'Primary LLM / VLM',
       port: LLM_PORT,
-      expectedModel: 'Qwen-3.8-27B / 32B',
+      expectedModel: 'Qwen-3.5-9B',
       filePath: weights.llmPath,
       probePath: '/v1/models',
       recommendedFor: 'Agent Orchestrator, RAG Chat, VLM Inspector',
@@ -269,7 +268,7 @@ export async function showStatus() {
   console.log(` • ${colors.cyan}pnpm ai lite${colors.reset} / ${colors.cyan}pnpm ai:lite${colors.reset}     -> Launch lightweight pair: Embedding (8090) + Extraction (8094) (~3.1 GB)`);
   console.log(` • ${colors.cyan}pnpm ai emb${colors.reset} / ${colors.cyan}pnpm ai:emb${colors.reset}       -> Launch Embedding server (Port 8090) for Vector RAG`);
   console.log(` • ${colors.cyan}pnpm ai extract${colors.reset} / ${colors.cyan}pnpm ai:extract${colors.reset} -> Launch Stage 2 Extraction LLM (Port 8094)`);
-  console.log(` • ${colors.cyan}pnpm ai llm${colors.reset} / ${colors.cyan}pnpm ai:llm${colors.reset}       -> Launch Primary 27B LLM / VLM (Port 8092)`);
+  console.log(` • ${colors.cyan}pnpm ai llm${colors.reset} / ${colors.cyan}pnpm ai:llm${colors.reset}       -> Launch Primary 9B LLM / VLM (Port 8092)`);
   console.log(` • ${colors.cyan}pnpm ai tts${colors.reset} / ${colors.cyan}pnpm ai:tts${colors.reset}       -> Launch VieNeu TTS Voice Engine in Docker (Port 8080)`);
   console.log(` • ${colors.cyan}pnpm ai stop${colors.reset} / ${colors.cyan}pnpm ai:stop${colors.reset}     -> Terminate all running local AI & TTS processes\n`);
 }
@@ -407,6 +406,19 @@ export function spawnLlamaService(
 // ==============================================================================
 // SERVICE LAUNCHERS
 // ==============================================================================
+export function getExtractionLlamaConfig() {
+  const extCtxSize = envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 32768;
+  const extExtraArgs: string[] = [
+    '--cont-batching',
+    '--parallel',
+    String(envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 4),
+    '--threads',
+    String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 6),
+    ...(envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS ? envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS.split(' ').filter(Boolean) : []),
+  ];
+  return { extCtxSize, extExtraArgs };
+}
+
 export async function launchExtractionOnly() {
   const weights = resolveWeights();
   if (!weights.extPath) {
@@ -423,15 +435,7 @@ export async function launchExtractionOnly() {
   console.log(`\n${colors.bright}${colors.green}=== Starting Stage 2 Extraction LLM (Port ${EXTRACTION_PORT}) ===${colors.reset}`);
   console.log(`${colors.dim}Press Ctrl+C to terminate.${colors.reset}\n`);
 
-  const extCtxSize = envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 8192;
-  const extExtraArgs: string[] = [
-    '--cont-batching',
-    '--parallel',
-    String(envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 4),
-    '--threads',
-    String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 6),
-    ...(envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS ? envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS.split(' ').filter(Boolean) : []),
-  ];
+  const { extCtxSize, extExtraArgs } = getExtractionLlamaConfig();
 
   const proc = spawnLlamaService('Stage 2 Extraction LLM', EXTRACTION_PORT, weights.extPath, {
     ctxSize: extCtxSize,
@@ -507,13 +511,21 @@ export async function launchLlmOnly() {
   console.log(`\n${colors.bright}${colors.cyan}=== Starting Primary LLM / VLM (Port ${LLM_PORT}) ===${colors.reset}`);
   console.log(`${colors.dim}Press Ctrl+C to terminate.${colors.reset}\n`);
 
-  const extraArgs: string[] = ['--cache-type-k', 'q8_0', '--cache-type-v', 'q8_0', '--cont-batching', '--parallel', '2'];
+  const extraArgs: string[] = [
+    '--cache-type-k',
+    'q8_0',
+    '--cache-type-v',
+    'q8_0',
+    '--cont-batching',
+    '--parallel',
+    String(envConfig.LOCAL_LLM_PARALLEL || 4),
+  ];
   if (weights.mmprojPath) {
     extraArgs.push('--mmproj', weights.mmprojPath);
   }
 
   const proc = spawnLlamaService('Primary LLM', LLM_PORT, weights.llmPath, {
-    ctxSize: envConfig.LLM_CTX_SIZE || 16384,
+    ctxSize: envConfig.LLM_CTX_SIZE || 131072,
     extraArgs,
     tag: 'LLM-8092',
     tagColor: colors.cyan,
@@ -565,6 +577,8 @@ export async function launchLitePair() {
     tag: 'EMB-8090',
     tagColor: colors.blue,
   });
+
+  const { extCtxSize, extExtraArgs } = getExtractionLlamaConfig();
 
   const extProc = spawnLlamaService('Extraction LLM', EXTRACTION_PORT, weights.extPath, {
     ctxSize: extCtxSize,
@@ -652,15 +666,7 @@ export async function launchAll() {
 
   // 2. Extraction Server
   if (weights.extPath) {
-    const extCtxSize = envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 8192;
-    const extExtraArgs: string[] = [
-      '--cont-batching',
-      '--parallel',
-      String(envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 4),
-      '--threads',
-      String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 6),
-      ...(envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS ? envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS.split(' ').filter(Boolean) : []),
-    ];
+    const { extCtxSize, extExtraArgs } = getExtractionLlamaConfig();
     procs.push(
       spawnLlamaService('Stage 2 Extraction LLM', EXTRACTION_PORT, weights.extPath, {
         ctxSize: extCtxSize,
@@ -675,13 +681,21 @@ export async function launchAll() {
 
   // 3. Primary LLM / VLM
   if (weights.llmPath) {
-    const extraArgs: string[] = ['--cache-type-k', 'q8_0', '--cache-type-v', 'q8_0', '--cont-batching', '--parallel', '2'];
+    const extraArgs: string[] = [
+      '--cache-type-k',
+      'q8_0',
+      '--cache-type-v',
+      'q8_0',
+      '--cont-batching',
+      '--parallel',
+      String(envConfig.LOCAL_LLM_PARALLEL || 4),
+    ];
     if (weights.mmprojPath) {
       extraArgs.push('--mmproj', weights.mmprojPath);
     }
     procs.push(
       spawnLlamaService('Primary LLM', LLM_PORT, weights.llmPath, {
-        ctxSize: envConfig.LLM_CTX_SIZE || 16384,
+        ctxSize: envConfig.LLM_CTX_SIZE || 131072,
         extraArgs,
         tag: 'LLM-8092',
         tagColor: colors.cyan,

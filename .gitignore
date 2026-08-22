@@ -78,6 +78,10 @@ media/audio-cache/*
 !media/audio-cache/.gitkeep
 data/
 
+# Database Backups
+backups/*
+!backups/.gitkeep
+
 # TTS Service Media
 services/vieneu-tts/media/audio-cache/*
 !services/vieneu-tts/media/audio-cache/.gitkeep

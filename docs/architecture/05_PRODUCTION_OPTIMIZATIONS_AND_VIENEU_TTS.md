@@ -30,7 +30,7 @@ Mỗi process render Remotion sử dụng Puppeteer (Headless Chrome) để ch�
 ### 🟢 Thách Thức 2: Giảm Độ Trễ & Đảm Bảo Khả Năng Độc Lập Thẩm Định Ảnh (Multi-Provider VLM & License Filter)
 
 #### *Bài toán:*
-Việc thẩm định các bức ảnh tư liệu trong kịch bản qua mô hình Vision-Language (VLM) cần đảm bảo tính linh hoạt: hỗ trợ cả mô hình Vision cục bộ (Qwen3.8-27B Unified VLM qua llama-server mmproj, Ollama) lẫn Cloud API (Gemini Vision) và fallback offline không phụ thuộc mạng.
+Việc thẩm định các bức ảnh tư liệu trong kịch bản qua mô hình Vision-Language (VLM) cần đảm bảo tính linh hoạt: hỗ trợ cả mô hình Vision cục bộ (Qwen3.5-9B Unified VLM qua llama-server mmproj, Ollama) lẫn Cloud API (Gemini Vision) và fallback offline không phụ thuộc mạng.
 
 #### *Giải pháp hoàn chỉnh:*
 1. **Lớp 0 - Whitelisted License Filter & Snapshotting (`Public Domain`, `CC0`, `CC-BY`):**
@@ -38,7 +38,7 @@ Việc thẩm định các bức ảnh tư liệu trong kịch bản qua mô hì
    * Lưu snapshot file ảnh + raw header + metadata bản quyền vào `/media/license-snapshots/` để minh bạch thông tin và bảo vệ pháp lý.
 2. **Multi-Provider VLM Routing & Zero-Downtime Fallback:**
    * *Primary Vision Router (`VLM_PROVIDER`):* Hỗ trợ `local` / `openai` / `gemini` / `auto`.
-   * *Local OpenAI-compatible Endpoint (`VLM_BASE_URL`):* Kết nối trực tiếp tới local/self-hosted vision models (như `qwen3.8-27b-instruct-q4_k_m`, `qwen2.5-vl`, llama-server `mmproj`, vLLM, Ollama) với độ trễ tối ưu và bảo mật dữ liệu.
+   * *Local OpenAI-compatible Endpoint (`VLM_BASE_URL`):* Kết nối trực tiếp tới local/self-hosted vision models (như `qwen3.5-9b-instruct-q4_k_m`, `qwen2.5-vl`, llama-server `mmproj`, vLLM, Ollama) với độ trễ tối ưu và bảo mật dữ liệu.
    * *Cloud Vision Fallback (Gemini API):* Tự động dự phòng qua Gemini API khi có `GEMINI_API_KEY`.
    * *Deterministic Offline Fallback:* Tự động kích hoạt **Local CLIP/SigLIP Cosine Similarity Scorer** khi offline/không có GPU, bảo đảm quy trình render không bao giờ bị dừng.
 3. **Bộ Đệm Chấm Điểm 2 Lớp (Dual-Layer VLM Score Cache trong Unified Redis):**
@@ -81,7 +81,7 @@ ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS c
 ChronoViet chuẩn hóa triển khai với **Docker Compose Profiles**:
 - `["infra", "prod", "default"]`: `postgres`, `redis`
 - `["tts", "prod"]`: `vieneu-tts-service`
-- `["ai", "ai-cuda", "prod-cuda", "prod-all"]`: `local-ai-cuda-llm` (Port 8092, Qwen3.8-27B) & `local-ai-cuda-emb` (Port 8090, BGE-M3 1024d)
+- `["ai", "ai-cuda", "prod-cuda", "prod-all"]`: `local-ai-cuda-llm` (Port 8092, Qwen3.5-9B) & `local-ai-cuda-emb` (Port 8090, BGE-M3 1024d)
 - `["prod"]`: `app`, `worker`, `caddy` (kèm `postgres`, `redis`, `vieneu-tts-service`)
 - `["prod-all"]`: Full Stack Containerized bao gồm toàn bộ App, Infra, TTS và cả 2 Local AI CUDA Containers.
 
@@ -183,5 +183,7 @@ Toàn bộ quy trình tổng hợp và chuyển đổi mốc từ đều đượ
 | **2. Độ trễ VLM Inspection** | Offload sang Gemini 3.6 Flash Cloud API + Dual-Layer Cache (Redis + pHash) | Giảm thời gian audit từ 30s xuống < 1s, tiết kiệm GPU. |
 | **3. Đồng bộ Audio - Visual** | Công thức $\lceil \frac{\text{DurationMs} + 300}{1000} \times 30 \rceil$ dựa trên file `.wav` thực tế | Tránh 100% rủi ro audio bị chèn hoặc hẫng nhịp. |
 | **4. Giọng đọc & Subtitle Karaoke** | Self-Hosted VieNeu TTS Dual-Layer Microservice + Alignment Timestamps Converter + Eval Suite (`eval/`) | Giọng đọc lịch sử truyền cảm, phụ đề Karaoke chạy chuẩn xác theo từ, có bộ đánh giá độc lập. |
+| **5. Web Disk I/O & Core Web Vitals** | Async non-blocking Route Handlers + Lazy Pagination Metadata Cache (60s) + Next.js Dynamic Imports (`VideoPlayer`) + Package Import Optimization | Triệt tiêu Node.js Event Loop blocking, giảm First Load JS, LCP/INP tối ưu, CLS = 0. |
+| **6. Background Worker Memory & Disk Safety** | Async non-blocking file streaming (`fs.promises.*`), sao chép đệm bất đồng bộ trong TTS Worker, dọn dẹp thư mục `temp/` tự động | Giảm 33% áp lực RAM trong Chromium & GC, triệt tiêu blocking I/O trong Worker pool. |
 
 

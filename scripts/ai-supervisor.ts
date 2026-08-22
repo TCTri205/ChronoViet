@@ -91,8 +91,9 @@ export function resolveModelPaths() {
   let llmModelPath = path.join(MODEL_DIR, `${envConfig.LOCAL_LLM_PRIMARY_MODEL}.gguf`);
   if (!fs.existsSync(llmModelPath)) {
     const candidates = [
-      path.join(MODEL_DIR, 'qwen3.8-27b-instruct-q4_k_m.gguf'),
-      path.join(MODEL_DIR, 'Qwen3.8-27B-Q4_K_M.gguf'),
+      path.join(MODEL_DIR, 'qwen3.5-9b-instruct-q4_k_m.gguf'),
+      path.join(MODEL_DIR, 'Qwen3.5-9B-Instruct-Q4_K_M.gguf'),
+      path.join(MODEL_DIR, 'Qwen2.5-7B-Instruct-Q4_K_M.gguf'),
       path.join(MODEL_DIR, `${envConfig.LOCAL_LLM_BENCHMARK_MODEL}.gguf`),
     ];
     for (const c of candidates) {
@@ -108,7 +109,7 @@ export function resolveModelPaths() {
   let mmprojPath: string | null = null;
   if (isVlModel) {
     const mmprojCandidates = [
-      path.join(MODEL_DIR, 'qwen3.8-27b-mmproj.gguf'),
+      path.join(MODEL_DIR, 'qwen3.5-9b-mmproj.gguf'),
       path.join(MODEL_DIR, 'mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf'),
     ];
     for (const m of mmprojCandidates) {
@@ -173,7 +174,7 @@ const EXTRACTION_PORT = envConfig.LOCAL_LLM_EXTRACTION_PORT || 8094;
 
 const services: Record<'llm' | 'emb' | 'extraction', ManagedService> = {
   llm: {
-    name: 'LLM / VLM (Qwen3.8-27B)',
+    name: 'LLM / VLM (Qwen 3.5 9B)',
     port: LLM_PORT,
     modelPath: weights.llmModelPath || '',
     extraArgs: weights.mmprojPath ? ['--mmproj', weights.mmprojPath] : [],
@@ -254,7 +255,7 @@ export async function startService(key: 'llm' | 'emb' | 'extraction'): Promise<b
 
   const ctxSize =
     key === 'llm'
-      ? (envConfig.LLM_CTX_SIZE || 16384)
+      ? (envConfig.LLM_CTX_SIZE || 131072)
       : key === 'extraction'
       ? (envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 8192)
       : (envConfig.EMBEDDING_CTX_SIZE || 8192);
@@ -270,7 +271,17 @@ export async function startService(key: 'llm' | 'emb' | 'extraction'): Promise<b
     '99',
     '--flash-attn',
     'auto',
-    ...(key === 'llm' ? ['--cache-type-k', 'q8_0', '--cache-type-v', 'q8_0', '--cont-batching', '--parallel', '2'] : []),
+    ...(key === 'llm'
+      ? [
+          '--cache-type-k',
+          'q8_0',
+          '--cache-type-v',
+          'q8_0',
+          '--cont-batching',
+          '--parallel',
+          String(envConfig.LOCAL_LLM_PARALLEL || 4),
+        ]
+      : []),
     ...(key === 'extraction'
       ? [
           '--cont-batching',

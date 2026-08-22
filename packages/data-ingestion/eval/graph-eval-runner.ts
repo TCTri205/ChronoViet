@@ -14,6 +14,8 @@ import {
 } from '@chronoviet/shared-spec';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
 
+process.env.EVAL_STRICT = 'true';
+
 export interface GraphEvalReport {
   timestamp: string;
   isPgMode: boolean;
@@ -59,8 +61,21 @@ export async function runGraphEval(): Promise<GraphEvalReport> {
   console.log(' CHRONOVIET STAGE 2 (KNOWLEDGE GRAPH) REAL DB EVALUATION');
   console.log('===============================================================\n');
 
+  // Pre-flight check: Strict real DB requirement
   const pgConnected = await isPgAvailable();
-  console.log(`[*] Target Storage: ${pgConnected ? 'PostgreSQL (Knowledge Graph)' : 'In-Memory Store (Fallback)'}`);
+  if (!pgConnected) {
+    console.error('================================================================');
+    console.error(' [!] FATAL PRE-FLIGHT ERROR: PostgreSQL is OFFLINE');
+    console.error('================================================================');
+    console.error(' Real database knowledge graph evaluation requires active PostgreSQL instance.');
+    console.error(' In-memory fallback is disabled in STRICT evaluation mode.\n');
+    console.error(' 👉 Action required: Start database infrastructure with:');
+    console.error('    pnpm stack:infra\n');
+    console.error('================================================================\n');
+    throw new Error('[STRICT_EVAL] PostgreSQL is offline. Run `pnpm stack:infra` first.');
+  }
+
+  console.log(`[*] Target Storage: PostgreSQL (Knowledge Graph Live DB)`);
 
   let totalEntities = 0;
   let totalRelationships = 0;
@@ -76,29 +91,37 @@ export async function runGraphEval(): Promise<GraphEvalReport> {
   let invertedEdges = 0;
 
   const connectedEntityIds = new Set<string>();
+  let totalConnectedNodes = 0;
   let auditLogsCount = 0;
 
   if (pgConnected) {
-    // 1. Fetch relationships from PostgreSQL
+    // 1. Fetch total relationships and verified count from PostgreSQL
+    const totalRelsRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM relationships;');
+    totalRelationships = parseInt(totalRelsRes[0]?.count || '0', 10);
+
+    const verifiedRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM relationships WHERE confidence >= 0.85;');
+    verifiedTriplesCount = parseInt(verifiedRes[0]?.count || '0', 10);
+
+    // 2. Fetch actually connected entity IDs count across all relationships
+    const connectedNodesRes = await query<{ count: string }>(`
+      SELECT COUNT(DISTINCT entity_id) as count FROM (
+        SELECT source_entity_id AS entity_id FROM relationships
+        UNION
+        SELECT target_entity_id AS entity_id FROM relationships
+      ) t;
+    `);
+    totalConnectedNodes = parseInt(connectedNodesRes[0]?.count || '0', 10);
+
+    // 3. Sample 5,000 relationships for Directionality Matrix Compliance
     const relRows = await query<any>(
-      `SELECT source_entity_id, target_entity_id, relation_type, confidence
-       FROM relationships LIMIT 1000;`
+      `SELECT source_entity_id, target_entity_id, relation_type
+       FROM relationships LIMIT 5000;`
     );
 
-    totalRelationships = relRows.length;
-
     for (const r of relRows) {
-      const conf = parseFloat(r.confidence || '0');
-      if (conf >= 0.85) {
-        verifiedTriplesCount++;
-      }
-
       const sId: string = r.source_entity_id || '';
       const tId: string = r.target_entity_id || '';
       const rel: string = r.relation_type || '';
-
-      connectedEntityIds.add(sId);
-      connectedEntityIds.add(tId);
 
       // Check Directionality Matrix Compliance
       const rule = CANONICAL_RELATION_RULES[rel];
@@ -122,7 +145,7 @@ export async function runGraphEval(): Promise<GraphEvalReport> {
       }
     }
 
-    // 2. Fetch Quarantine Stats
+    // 4. Fetch Quarantine Stats
     const qRows = await query<any>(
       `SELECT reason, COUNT(*) as count FROM quarantine_triples GROUP BY reason;`
     );
@@ -133,15 +156,15 @@ export async function runGraphEval(): Promise<GraphEvalReport> {
       if (qr.reason === 'DANGLING_RELATION') danglingCount += cnt;
     }
 
-    // 3. Fetch Unmapped Entities Count
+    // 5. Fetch Unmapped Entities Count
     const unmappedRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM unmapped_entities;');
     unmappedEntitiesCount = parseInt(unmappedRes[0]?.count || '0', 10);
 
-    // 4. Fetch Total Entities
+    // 6. Fetch Total Entities
     const entRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM entities;');
     totalEntities = parseInt(entRes[0]?.count || '0', 10);
 
-    // 5. Fetch Audit Logs Count
+    // 7. Fetch Audit Logs Count
     const auditRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM entity_audit_logs;');
     auditLogsCount = parseInt(auditRes[0]?.count || '0', 10);
   } else {
@@ -174,7 +197,7 @@ export async function runGraphEval(): Promise<GraphEvalReport> {
   const compliancePercent =
     evaluatedEdges > 0 ? Number(((compliantEdges / evaluatedEdges) * 100).toFixed(1)) : 100;
 
-  const connectedNodesCount = connectedEntityIds.size;
+  const connectedNodesCount = pgConnected ? totalConnectedNodes : connectedEntityIds.size;
   const isolatedNodesCount = Math.max(0, totalEntities - connectedNodesCount);
   const connectedRate =
     totalEntities > 0 ? Number(((connectedNodesCount / totalEntities) * 100).toFixed(1)) : 100;

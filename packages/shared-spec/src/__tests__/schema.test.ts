@@ -60,6 +60,34 @@ describe('Shared Schemas Validation (Phase 1 SSOT)', () => {
     expect(parsed.license).toBe('CC_BY_4_0');
     expect(parsed.score?.overallScore).toBe(91.5);
 
+    // Should support local absolute paths
+    const localPathCandidate = VisualCandidateSchema.parse({
+      ...validCandidate,
+      imageUrl: '/media/projects/proj_bach_dang/assets/ngo_quyen.jpg',
+    });
+    expect(localPathCandidate.imageUrl).toBe('/media/projects/proj_bach_dang/assets/ngo_quyen.jpg');
+
+    // Should support relative paths and data URIs
+    const relPathCandidate = VisualCandidateSchema.parse({
+      ...validCandidate,
+      imageUrl: './assets/rel_img.png',
+    });
+    expect(relPathCandidate.imageUrl).toBe('./assets/rel_img.png');
+
+    const dataUriCandidate = VisualCandidateSchema.parse({
+      ...validCandidate,
+      imageUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD',
+    });
+    expect(dataUriCandidate.imageUrl).toContain('data:image/jpeg;base64');
+
+    // Empty imageUrl should throw
+    expect(() =>
+      VisualCandidateSchema.parse({
+        ...validCandidate,
+        imageUrl: '',
+      })
+    ).toThrow();
+
     // Invalid license should throw
     expect(() =>
       VisualCandidateSchema.parse({

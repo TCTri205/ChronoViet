@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         .map((c) => `[${c.canonicalName}]: ${c.summary}`)
         .join('\n');
     } catch (ragErr: any) {
-      log.warn('api.chat_rag_fallback', `RAG query failed: ${ragErr.message}`);
+      reqLog.warn('api.chat_rag_fallback', `RAG query failed: ${ragErr.message}`);
     }
 
     const messages = [
@@ -77,8 +77,14 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Stream LLM tokens
+        let hasStreamedTokens = false;
         try {
           for await (const token of generateLLMCompletionStream(messages)) {
+            if (req.signal.aborted) {
+              reqLog.info('api.chat_aborted_by_client', 'Client aborted chat stream early');
+              break;
+            }
+            hasStreamedTokens = true;
             const tokenChunk: ChatStreamResponse = {
               type: 'token',
               content: token,
@@ -86,9 +92,18 @@ export async function POST(req: NextRequest) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify(tokenChunk)}\n\n`));
           }
         } catch (llmErr: any) {
+          reqLog.warn('api.chat_llm_stream_error', `LLM streaming failed: ${llmErr.message}`, { error: llmErr });
+          httpRequestsTotal.inc({ method: 'POST', route: '/api/v1/chat', status_class: '5xx' });
+          
+          let fallbackNotice = `⚠️ *Hệ thống AI đang phản hồi chậm hoặc đang chuyển tiếp kết nối.*`;
+          if (contextText && !hasStreamedTokens) {
+            fallbackNotice += `\n\n**Tóm lược tư liệu từ Chrono-RAG:**\n${contextText.slice(0, 500)}...`;
+          }
+
           const errChunk: ChatStreamResponse = {
             type: 'error',
-            error: llmErr.message,
+            error: llmErr.message || 'Lỗi kết nối mô hình ngôn ngữ',
+            content: fallbackNotice,
           };
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(errChunk)}\n\n`));
         }

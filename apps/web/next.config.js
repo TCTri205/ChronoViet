@@ -6,7 +6,8 @@ const nextConfig = {
     '@chronoviet/agent-orchestrator',
   ],
   experimental: {
-    serverComponentsExternalPackages: ['bullmq', 'ioredis'],
+    serverComponentsExternalPackages: ['bullmq', 'ioredis', 'sharp', '@chronoviet/vlm-inspector'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
   reactStrictMode: true,
   poweredByHeader: false,

@@ -66,7 +66,7 @@ ChronoViet hỗ trợ đồng thời 2 môi trường phần cứng với cơ ch
 
 ### 3.2. Target 2: Production trên Linux Server (NVIDIA CUDA GPU)
 - **100% Containerized:** Khai thác NVIDIA Container Toolkit, đóng gói toàn bộ hệ thống trong Docker Compose:
-  - `local-ai-cuda-llm` (Port 8092): Qwen3.8-27B Instruct + Flash Attention + Continuous Batching + mmproj.
+  - `local-ai-cuda-llm` (Port 8092): Qwen3.5-9B Instruct + Flash Attention + Continuous Batching + mmproj.
   - `local-ai-cuda-emb` (Port 8090): BGE-M3 (1024d Dense Vector Space) `--embedding`.
   - `vieneu-tts-service` (Port 8080): Python FastAPI ONNX Heritage TTS.
   - `postgres` (Port 5432) & `redis` (Port 6379).

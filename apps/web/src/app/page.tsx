@@ -1,18 +1,40 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatContainer } from "@/components/chat/ChatContainer";
 import { VideoGeneratorPanel } from "@/components/video/VideoGeneratorPanel";
-import { VideoPlayer } from "@/components/player/VideoPlayer";
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { MessageSquare, Film, X, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const VideoPlayer = dynamic(
+  () => import("@/components/player/VideoPlayer").then((mod) => mod.VideoPlayer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full aspect-video bg-lacquer-surface border border-primary/20 rounded-lg flex items-center justify-center animate-pulse">
+        <div className="flex items-center gap-2 text-text-muted text-xs font-mono">
+          <Film className="w-4 h-4 text-primary animate-spin" />
+          <span>Đang nạp trình phát video...</span>
+        </div>
+      </div>
+    ),
+  }
+);
 
 export default function MasterWorkspacePage() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(
@@ -24,7 +46,8 @@ export default function MasterWorkspacePage() {
   const [mobileActiveTab, setMobileActiveTab] = useState<"chat" | "studio">(
     "chat"
   );
-  const [isTheaterDockOpen, setIsTheaterDockOpen] = useState(true);
+  const [isTheaterDockOpen, setIsTheaterDockOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   // Restore active project from localStorage or query params
   useEffect(() => {
@@ -65,7 +88,26 @@ export default function MasterWorkspacePage() {
       <Header
         activeProjectTitle={videoTopic || undefined}
         onNewProject={handleNewProject}
+        onOpenMobileMenu={() => setIsMobileDrawerOpen(true)}
       />
+
+      {/* Mobile Navigation Drawer */}
+      <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
+        <SheetContent side="left" className="p-0 w-80 bg-lacquer-surface border-r border-primary/20">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Kho Lưu Trữ Dự Án</SheetTitle>
+            <SheetDescription>Chọn hoặc tìm kiếm các thước phim lịch sử đã khởi tạo</SheetDescription>
+          </SheetHeader>
+          <Sidebar
+            activeProjectId={activeProjectId || undefined}
+            onSelectProject={(id) => {
+              handleSelectProject(id);
+              setIsMobileDrawerOpen(false);
+            }}
+            className="w-full h-full border-r-0"
+          />
+        </SheetContent>
+      </Sheet>
 
       {/* Mobile Tab Switcher (< 1024px) */}
       <div className="lg:hidden flex border-b border-primary/20 bg-lacquer-surface shrink-0 z-20">
@@ -126,6 +168,9 @@ export default function MasterWorkspacePage() {
                   setActiveProjectId(id);
                   setIsTheaterDockOpen(false);
                 }}
+                onProjectCompleted={() => {
+                  setIsTheaterDockOpen(true);
+                }}
               />
             </ResizablePanel>
           </ResizablePanelGroup>
@@ -142,6 +187,9 @@ export default function MasterWorkspacePage() {
               onProjectCreated={(id) => {
                 setActiveProjectId(id);
                 setIsTheaterDockOpen(false);
+              }}
+              onProjectCompleted={() => {
+                setIsTheaterDockOpen(true);
               }}
             />
           )}

@@ -16,6 +16,129 @@ import {
 
 const log = createLogger({ service: 'vlm-inspector' });
 
+async function createSharpPipeline(buffer: Buffer) {
+  try {
+    const sharpMod = await import('sharp');
+    const sharpFn = (sharpMod as any).default || sharpMod;
+    return sharpFn(buffer, { failOn: 'none' });
+  } catch (err: any) {
+    log.debug('vlm.sharp_unavailable', `Sharp module dynamic load fallback: ${err?.message}`);
+    return null;
+  }
+}
+
+export interface ImageOptimizationOptions {
+  maxWidth?: number;
+  maxHeight?: number;
+  quality?: number;
+  maxSizeBytes?: number;
+}
+
+export const DEFAULT_IMAGE_OPTIMIZATION_OPTIONS: ImageOptimizationOptions = {
+  maxWidth: 1920,
+  maxHeight: 1080,
+  quality: 85,
+  maxSizeBytes: 2 * 1024 * 1024, // 2MB
+};
+
+export interface OptimizedImageResult {
+  buffer: Buffer;
+  format: string;
+  width?: number;
+  height?: number;
+  optimized: boolean;
+}
+
+/**
+ * Optimizes and compresses image buffers using Sharp:
+ * - Downscales if width > 1920 or height > 1080 without enlargement
+ * - Compresses high-res or heavy assets to MozJPEG/WebP to keep size under 2MB
+ * - Normalizes orientation from EXIF
+ * - Gracefully falls back if image format is unsupported
+ */
+export async function optimizeImageBuffer(
+  buffer: Buffer,
+  options: ImageOptimizationOptions = {}
+): Promise<OptimizedImageResult> {
+  try {
+    const maxWidth = options.maxWidth || DEFAULT_IMAGE_OPTIMIZATION_OPTIONS.maxWidth!;
+    const maxHeight = options.maxHeight || DEFAULT_IMAGE_OPTIMIZATION_OPTIONS.maxHeight!;
+    const quality = options.quality || DEFAULT_IMAGE_OPTIMIZATION_OPTIONS.quality!;
+    const maxSizeBytes = options.maxSizeBytes || DEFAULT_IMAGE_OPTIMIZATION_OPTIONS.maxSizeBytes!;
+
+    const image = await createSharpPipeline(buffer);
+    if (!image) {
+      return {
+        buffer,
+        format: 'jpg',
+        optimized: false,
+      };
+    }
+
+    const metadata = await image.metadata();
+
+    const currentWidth = metadata.width || 0;
+    const currentHeight = metadata.height || 0;
+    const currentFormat = (metadata.format || 'jpeg').toLowerCase();
+
+    const needsResize = currentWidth > maxWidth || currentHeight > maxHeight;
+    const isLarge = buffer.length > maxSizeBytes;
+    const isHeavyOrUncommon = ['tiff', 'raw', 'heif', 'bmp', 'avif'].includes(currentFormat);
+
+    if (!needsResize && !isLarge && !isHeavyOrUncommon && ['jpeg', 'jpg', 'png', 'webp'].includes(currentFormat)) {
+      return {
+        buffer,
+        format: currentFormat === 'jpeg' ? 'jpg' : currentFormat,
+        width: currentWidth,
+        height: currentHeight,
+        optimized: false,
+      };
+    }
+
+    let pipeline = image.rotate(); // Auto-orient based on EXIF
+
+    if (needsResize) {
+      pipeline = pipeline.resize(maxWidth, maxHeight, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      });
+    }
+
+    let outputBuffer: Buffer;
+    let targetFormat = 'jpg';
+
+    if (currentFormat === 'png' && !isLarge && !needsResize) {
+      outputBuffer = await pipeline.png({ compressionLevel: 8 }).toBuffer();
+      targetFormat = 'png';
+    } else if (currentFormat === 'webp' && !isLarge && !needsResize) {
+      outputBuffer = await pipeline.webp({ quality }).toBuffer();
+      targetFormat = 'webp';
+    } else {
+      outputBuffer = await pipeline.jpeg({ quality, mozjpeg: true }).toBuffer();
+      targetFormat = 'jpg';
+    }
+
+    const newMetaPipeline = await createSharpPipeline(outputBuffer);
+    const newMeta = newMetaPipeline ? await newMetaPipeline.metadata() : {};
+    return {
+      buffer: outputBuffer,
+      format: targetFormat,
+      width: newMeta.width,
+      height: newMeta.height,
+      optimized: true,
+    };
+  } catch (err: any) {
+    log.warn('vlm.image_optimization_fallback', `Sharp optimization skipped/failed: ${err.message}`, {
+      error: err.message,
+    });
+    return {
+      buffer,
+      format: 'jpg',
+      optimized: false,
+    };
+  }
+}
+
 export interface DownloadedAssetResult {
   candidate: VisualCandidate;
   localPath: string;
@@ -171,15 +294,23 @@ export async function downloadCandidateImage(
     };
   }
 
+  // Optimize and compress image buffer (resize to <=1920x1080, quality 85, <=2MB)
+  const optResult = await optimizeImageBuffer(imageBuffer);
+  imageBuffer = optResult.buffer;
+  ext = optResult.format || ext;
+
+  const finalFilename = `${candidateId}.${ext}`;
+  const finalFilePath = path.join(paths.assetsDir, finalFilename);
+
   // Save to target path
-  fs.writeFileSync(targetFilePath, imageBuffer);
+  fs.writeFileSync(finalFilePath, imageBuffer);
 
   const sha256 = computeSha256(imageBuffer);
   const pHash = computePHash(imageBuffer);
 
   const updatedCandidate: VisualCandidate = {
     ...candidate,
-    localPath: targetFilePath,
+    localPath: finalFilePath,
     sha256,
     pHash,
   };
@@ -197,8 +328,11 @@ export async function downloadCandidateImage(
         license: candidate.license,
         sha256,
         pHash,
-        localPath: targetFilePath,
+        localPath: finalFilePath,
         fileSizeBytes: imageBuffer.length,
+        width: optResult.width,
+        height: optResult.height,
+        optimized: optResult.optimized,
         downloadedAt: new Date().toISOString(),
         correlationId: options.correlationId,
         sceneId: options.sceneId,
@@ -212,7 +346,7 @@ export async function downloadCandidateImage(
 
   return {
     candidate: updatedCandidate,
-    localPath: targetFilePath,
+    localPath: finalFilePath,
     sha256,
     pHash,
     fileSizeBytes: imageBuffer.length,

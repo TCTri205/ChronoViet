@@ -123,14 +123,14 @@ cp .env.example .env
 
 #### Bước 2: Tải Mô Hình AI Cục Bộ & Khởi Tạo Cơ Sở Dữ Liệu
 ```bash
-# 1. Tải trọng số mô hình GGUF (BGE-M3 1024d, Qwen3.8-27B, mmproj, Qwen3.5-4B)
+# 1. Tải trọng số mô hình GGUF (BGE-M3 1024d, Qwen 3.5 9B, mmproj, Qwen 3.5 4B)
 pnpm models:download
 
 # Hoặc tải tùy chọn theo nhu cầu công việc (Granular Downloads):
 pnpm models:download:lite     # Chỉ tải BGE-M3 + Qwen Extraction LLM (~2.4 GB)
 pnpm models:download:emb      # Chỉ tải BGE-M3 (~605 MB)
 pnpm models:download:extract  # Chỉ tải Qwen Extraction LLM (~1.8 GB)
-pnpm models:download:llm      # Chỉ tải Qwen 27B/32B (~18.5 GB)
+pnpm models:download:llm      # Chỉ tải Qwen 3.5 9B (~5.8 GB)
 
 # 2. Khởi chạy cụm CSDL PostgreSQL pgvector & Redis
 pnpm stack:infra
@@ -180,13 +180,13 @@ pnpm models:download                            # Tải và xác thực model we
 pnpm models:download:lite                       # Chỉ tải BGE-M3 + Qwen Extraction LLM (~2.4 GB)
 pnpm models:download:emb                        # Chỉ tải BGE-M3 (~605 MB)
 pnpm models:download:extract                    # Chỉ tải Qwen Extraction LLM (~1.8 GB)
-pnpm models:download:llm                        # Chỉ tải Qwen 27B/32B (~18.5 GB)
+pnpm models:download:llm                        # Chỉ tải Qwen 3.5 9B (~5.8 GB)
 pnpm ai                                         # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8080) & model đã nạp
-pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 27B 8092)
+pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092)
 pnpm ai:lite                                    # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb                                     # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
-pnpm ai:extract                                 # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler
-pnpm ai:llm                                     # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 27B)
+pnpm ai:extract                                 # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler (Data Prep)
+pnpm ai:llm                                     # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 9B)
 pnpm ai:tts                                     # Khởi chạy microservice VieNeu TTS FastAPI trong Docker (Port 8080)
 pnpm ai:stop                                    # Dừng/giải phóng toàn bộ tiến trình AI & TTS (host & Docker), trả lại 100% RAM/VRAM
 pnpm ai:supervisor                              # Daemon giám sát llama-server: auto-evict RAM khi idle, JIT wake-up, giải phóng port
@@ -196,6 +196,9 @@ pnpm ai:supervisor                              # Daemon giám sát llama-server
 # ===============================================================
 pnpm db:init                                    # Khởi tạo CSDL & Schema Vector/Graph (pgvector 1024d)
 pnpm db:health                                  # Audit sức khỏe DB (dangling refs, embeddings, chunks, entities, indexes)
+pnpm db:backup --name post_ingest_v1            # Sao lưu snapshot CSDL theo tên phiên bản (backups/post_ingest_v1.dump & db_latest.dump)
+pnpm db:restore --file backups/post_ingest_v1.dump # Khôi phục CSDL từ file phiên bản cụ thể & tự động kiểm định tính toàn vẹn
+pnpm db:restore                                 # Khôi phục nhanh từ snapshot mới nhất (backups/db_latest.dump)
 pnpm db:clean                                   # Dọn dẹp transactional: xóa trùng lặp, self-loops & dangling relations
 pnpm db:audit-quarantine                        # Audit & xem danh sách cạnh cách ly / thực thể chưa ánh xạ (Quarantine Buffer)
 pnpm db:audit-quarantine --dry-run              # Chạy kiểm toán thử nghiệm mô phỏng không ghi CSDL

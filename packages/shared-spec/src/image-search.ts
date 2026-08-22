@@ -5,8 +5,48 @@
  * belongs to trusted public-domain / Creative-Commons repositories are accepted.
  */
 
+import { z } from 'zod';
 import { envConfig } from './config.js';
-import { LicenseType } from './schema.js';
+import { LicenseType, VisualCandidateSchema, VisualCandidate } from './schema.js';
+
+export const ImageSearchVisualTypeSchema = z.enum([
+  'PORTRAIT',
+  'BATTLE_SCENE',
+  'MAP_CHRONO',
+  'ARTIFACT',
+  'LANDSCAPE',
+  'ARCHAEOLOGY',
+  'GENERAL_HISTORICAL',
+]);
+export type ImageSearchVisualType = z.infer<typeof ImageSearchVisualTypeSchema>;
+
+export const ImageSearchToolInputSchema = z.object({
+  sceneId: z.string().describe("Mã định danh cảnh phim (ví dụ: 'scene_001')"),
+  primaryQuery: z.string().min(1).describe("Từ khóa tìm kiếm tiếng Việt chi tiết có ngữ cảnh lịch sử"),
+  englishQuery: z.string().optional().describe("Từ khóa tiếng Anh tương ứng để tối ưu tìm kiếm trên Wikimedia/Google"),
+  visualType: ImageSearchVisualTypeSchema.optional().default('GENERAL_HISTORICAL').describe("Loại hình ảnh tư liệu mong muốn"),
+  historicalPeriod: z.string().optional().describe("Thời kỳ / Triều đại lịch sử liên quan"),
+  limit: z.number().int().min(1).max(10).optional().default(3).describe("Số lượng ứng viên ảnh cần tìm"),
+});
+export type ImageSearchToolInput = z.input<typeof ImageSearchToolInputSchema>;
+
+export const ImageSearchProvenanceSchema = z.object({
+  provider: z.string(),
+  count: z.number(),
+  latencyMs: z.number(),
+});
+export type ImageSearchProvenance = z.infer<typeof ImageSearchProvenanceSchema>;
+
+export const ImageSearchToolResultSchema = z.object({
+  sceneId: z.string(),
+  primaryQuery: z.string(),
+  englishQuery: z.string().optional(),
+  visualType: ImageSearchVisualTypeSchema,
+  candidates: z.array(VisualCandidateSchema),
+  provenance: z.array(ImageSearchProvenanceSchema),
+  resolvedAt: z.string(),
+});
+export type ImageSearchToolResult = z.infer<typeof ImageSearchToolResultSchema>;
 
 export type ImageSearchProviderName =
   | 'serpapi'

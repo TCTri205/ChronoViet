@@ -124,14 +124,14 @@ cp .env.example .env
 ### Bước 2: Tải Trọng Số Mô Hình AI & Khởi Tạo Cơ Sở Dữ Liệu
 
 ```bash
-# 1. Tải các mô hình AI cục bộ GGUF (BGE-M3 1024d, Qwen3.8-27B, mmproj, Qwen3.5-4B)
+# 1. Tải các mô hình AI cục bộ GGUF (BGE-M3 1024d, Qwen 3.5 9B, mmproj, Qwen 3.5 4B)
 pnpm models:download
 
 # Hoặc tải tùy chọn theo nhu cầu công việc (Granular Downloads):
 pnpm models:download:lite     # Chỉ tải BGE-M3 + Qwen Extraction LLM (~2.4 GB)
 pnpm models:download:emb      # Chỉ tải BGE-M3 (~605 MB)
 pnpm models:download:extract  # Chỉ tải Qwen Extraction LLM (~1.8 GB)
-pnpm models:download:llm      # Chỉ tải Qwen 27B/32B (~18.5 GB)
+pnpm models:download:llm      # Chỉ tải Qwen 3.5 9B (~5.8 GB)
 
 # 2. Khởi chạy hạ tầng cơ sở dữ liệu (PostgreSQL pgvector & Redis)
 pnpm stack:infra
@@ -161,8 +161,8 @@ pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho D
 | **Web Frontend & API Gateway** | `3000` | Giao diện tương tác Heritage Workspace & REST/WS endpoints |
 | **Render Worker Probe & Metrics** | `3001` | Lắng nghe hàng đợi BullMQ, Render Lock & Health Probes |
 | **Remotion Studio UI** | `9876` | Visual Preview & Debug 31 LayoutModes & Transitions |
-| **Local LLM Gateway (Qwen3.8-27B)** | `8092` | Lõi suy luận ngôn ngữ, VLM & trích xuất tri thức quan hệ |
-| **Stage 2 Extraction LLM (Qwen3.5-4B)** | `8094` | Lõi trích xuất quan hệ tri thức Knowledge Triples cho Data Pipeline & eval:triples |
+| **Local LLM Gateway (Qwen 3.5 9B)** | `8092` | Lõi suy luận ngôn ngữ kịch bản, VLM & RAG Chatbot |
+| **Stage 2 Extraction LLM (Qwen 3.5 4B)** | `8094` | Lõi trích xuất quan hệ tri thức Knowledge Triples cho Data Pipeline & eval:triples (Data Prep) |
 | **Local Embedding Gateway (BGE-M3)**| `8090` | Không gian vector SSOT 1024 chiều (pgvector Indexing) |
 | **VieNeu Neural TTS Service** | `8080` | Engine tổng hợp giọng đọc & align word timestamps |
 | **PostgreSQL (pgvector)** | `5432` | Cơ sở dữ liệu quan hệ, BGE-M3 vectors & Graph CTEs |
@@ -219,11 +219,11 @@ pnpm remotion:studio                            # Mở Remotion Studio UI xem tr
 
 # Quản lý AI & TTS Local Runtime thống nhất (Unified AI CLI):
 pnpm ai                                         # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8080) & model đã nạp
-pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 27B 8092)
+pnpm ai:start                                   # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092)
 pnpm ai:lite                                    # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb                                     # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
-pnpm ai:extract                                 # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler
-pnpm ai:llm                                     # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 27B)
+pnpm ai:extract                                 # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~2.5GB) cho Triples/Crawler (Data Prep)
+pnpm ai:llm                                     # Chỉ chạy Chat/Agent LLM (Port 8092, Qwen 9B)
 pnpm ai:tts                                     # Khởi chạy microservice VieNeu TTS FastAPI trong Docker (Port 8080)
 pnpm ai:stop                                    # Dừng/giải phóng toàn bộ tiến trình AI & TTS (host & Docker), trả lại 100% RAM/VRAM
 pnpm ai:supervisor                              # Daemon giám sát llama-server: auto-evict RAM khi idle, JIT wake-up
@@ -243,9 +243,12 @@ pnpm stack:logs                                 # Xem stream logs containers th�
 
 ### 📚 3. Pipeline Dữ Liệu, Cào Sử Liệu & Nạp GraphRAG (Data & Knowledge Ingestion)
 ```bash
-# Quản trị Cơ sở Dữ liệu & Kiểm toán:
+# Quản trị Cơ sở Dữ liệu, Sao Lưu & Kiểm toán:
 pnpm db:init                                    # Khởi tạo CSDL & Schema Vector/Graph (pgvector 1024d, 8 bảng CSDL)
 pnpm db:health                                  # Audit sức khỏe DB (dangling refs, embeddings, chunks, entities, indexes)
+pnpm db:backup --name post_ingest_v1            # Sao lưu snapshot CSDL theo tên phiên bản (tạo backups/post_ingest_v1.dump & db_latest.dump)
+pnpm db:restore --file backups/post_ingest_v1.dump # Khôi phục CSDL từ file phiên bản cụ thể & tự động audit sức khỏe
+pnpm db:restore                                 # Khôi phục nhanh từ snapshot mới nhất (backups/db_latest.dump)
 pnpm db:clean                                   # Dọn dẹp transactional: xóa trùng lặp, self-loops & dangling relations
 pnpm db:audit-quarantine                        # Audit & xem danh sách cạnh cách ly / thực thể chưa ánh xạ (Quarantine Buffer)
 pnpm db:audit-quarantine --dry-run              # Chạy kiểm toán thử nghiệm mô phỏng không ghi CSDL
@@ -264,6 +267,26 @@ pnpm ingest:knowledge --force                   # Nạp mới từ đầu (xóa 
 pnpm ingest:knowledge --strict                  # Nạp với chế độ STRICT (yêu cầu đủ LLM + Postgres + Embedding)
 pnpm rag:re-resolve                             # Hợp giải thực thể mâu thuẫn & ghi audit logs
 pnpm rag:chat                                   # Chatbot tra cứu RAG trực tiếp trên Terminal
+```
+
+#### 🧹 Quy Trình 4 Bước Làm Sạch & Chuẩn Hóa Dữ Liệu Sau Ingestion (Data Governance & Quality Gate):
+Sau khi hoàn thành `pnpm ingest:vector` và `pnpm ingest:graph`, thực thi chuỗi lệnh sau để hoàn thiện kho tri thức đạt chuẩn 100%:
+
+```bash
+# BƯỚC 1: Dọn dẹp & Khử trùng lặp (Sanitization & Integrity)
+pnpm db:clean                                   # Xóa self-loops, duplicate edges, dangling relations & tái lập index
+pnpm db:health                                  # Kiểm tra 6 chiều toàn vẹn CSDL (yêu cầu PERFECTLY STABLE)
+
+# BƯỚC 2: Kiểm toán & Thăng cấp Vùng Cách Ly (Quarantine Triage)
+pnpm db:audit-quarantine --accept-all-high-conf --threshold=0.85 # Thăng cấp quan hệ chất lượng cao (>= 0.85) vào Graph
+pnpm db:audit-quarantine --purge-spurious       # Thanh lọc quan hệ rác, spurious edges & thực thể nhiễu
+
+# BƯỚC 3: Đồng nhất Thực thể Master Ontology (Entity Re-Resolution)
+pnpm rag:re-resolve                             # Quét & ánh xạ entities về Canonical ID, ghi nhật ký entity_audit_logs
+
+# BƯỚC 4: Chẩn đoán & Đo lường KPI Chất lượng (Diagnostics & Benchmark)
+pnpm eval:ingest:diagnostic                     # Chẩn đoán độ phủ, mật độ graph, unmapped entities
+pnpm eval:ingest                                # Đo lường 4 KPI: Normalization Accuracy, Cross-Linking, Duplicate Ratio
 ```
 
 ### 🎬 4. Xuất Bản & Render Video (Video Engine & CLI Rendering)

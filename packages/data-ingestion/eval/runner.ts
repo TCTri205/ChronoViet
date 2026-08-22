@@ -8,10 +8,12 @@
 
 import fs from 'fs';
 import path from 'path';
-import { isPgAvailable, query, inMemoryStore } from '@chronoviet/shared-spec';
+import { isPgAvailable, query, inMemoryStore, isEmbeddingServiceHealthy } from '@chronoviet/shared-spec';
 import { runVectorEval, VectorChunkEvalReport } from './vector-eval-runner.js';
 import { runGraphEval, GraphEvalReport } from './graph-eval-runner.js';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
+
+process.env.EVAL_STRICT = 'true';
 
 export interface MasterIngestRealDataReport {
   timestamp: string;
@@ -35,8 +37,36 @@ export async function runMasterIngestEval(): Promise<MasterIngestRealDataReport>
   console.log(' CHRONOVIET MODULE 0: MASTER REAL DATABASE EVALUATION RUNNER');
   console.log('================================================================\n');
 
+  // Pre-flight check: Strict real DB requirement
   const pgConnected = await isPgAvailable();
-  console.log(`[*] Target Storage: ${pgConnected ? 'PostgreSQL (Real Live DB)' : 'In-Memory Store (Fallback)'}\n`);
+  if (!pgConnected) {
+    console.error('================================================================');
+    console.error(' [!] FATAL PRE-FLIGHT ERROR: PostgreSQL is OFFLINE');
+    console.error('================================================================');
+    console.error(' Real database evaluation requires an active PostgreSQL instance with pgvector.');
+    console.error(' In-memory fallback is disabled in STRICT evaluation mode.\n');
+    console.error(' 👉 Action required: Start database infrastructure with:');
+    console.error('    pnpm stack:infra\n');
+    console.error('================================================================\n');
+    throw new Error('[STRICT_EVAL] PostgreSQL is offline. Run `pnpm stack:infra` first.');
+  }
+
+  // Pre-flight check: Strict Embedding Server requirement
+  const embHealth = await isEmbeddingServiceHealthy();
+  if (!embHealth.healthy) {
+    console.error('================================================================');
+    console.error(' [!] FATAL PRE-FLIGHT ERROR: Embedding Server is OFFLINE');
+    console.error('================================================================');
+    console.error(' Real database vector retrieval evaluation requires an active BGE-M3 Embedding Engine.');
+    console.error(` Details: ${embHealth.details || 'Port 8090 unreachable'}`);
+    console.error(' Pseudo-random vector fallback is disabled in STRICT evaluation mode.\n');
+    console.error(' 👉 Action required: Start local Embedding Server with:');
+    console.error('    pnpm ai:emb   (or: pnpm ai:lite / pnpm ai:start)\n');
+    console.error('================================================================\n');
+    throw new Error(`[STRICT_EVAL] Embedding Engine is offline (${embHealth.details}). Run \`pnpm ai:emb\` first.`);
+  }
+
+  console.log(`[*] Target Storage: PostgreSQL (Real Live DB - ${embHealth.provider})\n`);
 
   // 1. Evaluate Stage 1: Vector & Chunk Store
   const vectorReport = await runVectorEval();

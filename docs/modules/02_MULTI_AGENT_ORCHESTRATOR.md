@@ -21,7 +21,7 @@ Mô-đun chịu trách nhiệm:
    - Đối soát & Cân bằng thời lượng Scene với Target Chapter Duration (Micro-Step 1B-Reconcile).
    - Trích xuất từ khóa crawl ảnh (Micro-Step 1C).
 3. **Thực thi song song theo từng Cảnh (Scene-Level Parallelism & Fine-Grained Idempotency)** giữa công cụ sinh giọng nói TTS (VieNeu ONNX Engine) và thu thập tư liệu hình ảnh.
-4. **Chiến lược Crawl ảnh 3+3 Candidates & Multi-Provider VLM Inspection (Local Unified Multimodal VLM `qwen3.8-27b-instruct-q4_k_m` / Cloud Gemini + Offline Local CLIP cho dev)**: Lọc ảnh theo giấy phép whitelisted (`Public Domain`, `CC0`, `CC-BY`), chấm điểm VLM linh hoạt với cơ chế auto failover khi ngắt kết nối/rate limit.
+4. **Chiến lược Crawl ảnh 3+3 Candidates & Multi-Provider VLM Inspection (Local Unified Multimodal VLM `qwen3.5-9b-instruct-q4_k_m` / Cloud Gemini + Offline Local CLIP cho dev)**: Lọc ảnh theo giấy phép whitelisted (`Public Domain`, `CC0`, `CC-BY`), chấm điểm VLM linh hoạt với cơ chế auto failover khi ngắt kết nối/rate limit.
 5. **Code Rules Engine & PURE_CODE Layout Rotation**: Tự động ép chuyển cảnh sang `PURE_CODE` khi cả 6 ảnh không đạt chuẩn và xoay vòng layout động (Animated Maps, Timelines, Quotes) để không gây chán mắt.
 6. **Thang Xử Lý Lỗi 4 Tầng (4-Tier Escalation Path)**: Từ Self-Correction ➔ Code Override ➔ Cloud Model Escalation ➔ Human-in-the-Loop Review.
 7. **Quản lý Checkpoint State vào PostgreSQL** qua LangGraph.js Postgres Checkpointer với Content Hash Keys cho phép resume chính xác từng scene/worker.
@@ -172,16 +172,18 @@ Mô-đun chịu trách nhiệm:
   - Giới hạn time-stretch trong biên độ an toàn $\pm 10\%$ ($[0.90, 1.10]$).
   - Thuật toán phân bổ trọng số residual deviation và tinh chỉnh phần dư ở cảnh cuối bảo đảm **pacing error $< 3.0\%$**.
 
-#### 3.2.5. Keyword Extractor Agent (Micro-Step 1C)
-* **Input:** Danh sách các scenes trong Chapter có `contentType: "IMAGE"`.
-* **Nhiệm vụ:** Trích xuất từ khóa crawl ảnh từ `voiceoverText` + canonical entities/aliases trong RAG context. Tự động chèn thực thể RAG chính làm từ khóa bổ trợ khi câu thoại không nhắc lại trực tiếp tên riêng nhân vật.
+#### 3.2.5. Visual Query Planning & Keyword Extractor Agent (Micro-Step 1C)
+* **Input:** Danh sách các scenes trong Chapter có `contentType: "IMAGE"`, `ragContext` và `userPrompt`.
+* **Nhiệm vụ:** Hoạt động như một **Query Planning Agent**:
+  - Khi có LLM: Phân tích `voiceoverText` của từng cảnh, tự động sinh ra cấu trúc **`ImageSearchToolInput`** chuẩn (`sceneId`, `primaryQuery` tiếng Việt giàu ngữ cảnh lịch sử, `englishQuery` chuẩn xác cho kho ảnh quốc tế, `visualType`: `PORTRAIT` / `BATTLE_SCENE` / `MAP_CHRONO` / `ARTIFACT` / `LANDSCAPE` / `ARCHAEOLOGY` / `GENERAL_HISTORICAL`, và `historicalPeriod`).
+  - Khi Offline/Fallback: Áp dụng thuật toán bóc tách thực thể song ngữ (loại bỏ dấu tiếng Việt + nhận diện `inferVisualTypeHeuristic`) để tạo ra `searchParams` và mảng `searchKeywords` hợp lệ.
 
-#### 3.2.6. Research Agent (Micro-Step 1C — Online Image Search)
-* **Input:** `searchKeywords` của từng Scene (sau Keyword Extractor) + `userPrompt`.
-* **Nhiệm vụ:** Tìm kiếm ảnh tư liệu lịch sử online qua **Provider Chain**: `SerpAPI (Google Images)` → `Tavily` → `Brave Search API` → `Wikimedia Commons` → `Curated Catalog` (offline).
-* **Concurrency Pool:** Xử lý theo batch (concurrency pool = 4) để tránh kích hoạt cơ chế Rate Limit 429 từ các search providers.
-* **License safety:** Chỉ chấp nhận ảnh từ **domain whitelist** (`upload.wikimedia.org`, `commons.wikimedia.org`, `flickr.com`, kho bảo tàng).
-* **Output:** Lưu vào state `researchResults[sceneId]` để VLM Inspector chấm điểm. Cho phép resume/checkpoint chính xác.
+#### 3.2.6. Research Agent (Micro-Step 1C — Agentic Tool Image Search)
+* **Input:** `searchParams` (`ImageSearchToolInput`) của từng Scene từ Keyword Planning Agent.
+* **Nhiệm vụ:** Thực thi Tool **`executeImageSearchTool`** qua **Provider Chain**: `SerpAPI (Google Images)` → `Tavily` → `Brave Search API` → `Wikimedia Commons Live` → `Curated Catalog` (13 tư liệu lịch sử verified).
+* **Bilingual Multi-Query Strategy:** Tìm kiếm đồng thời với `englishQuery` và `primaryQuery` để tối đa hóa khả năng tìm được tư liệu lịch sử chính thống từ Wikimedia Commons và các bảo tàng thế giới.
+* **Concurrency Pool & License Safety:** Xử lý theo batch (concurrency pool = 4), chỉ chấp nhận ảnh từ **domain whitelist** (`upload.wikimedia.org`, `commons.wikimedia.org`, `flickr.com`, bảo tàng) với giấy phép bản quyền hợp lệ (`Public Domain`, `CC0`, `CC-BY`, `CC-BY-SA`).
+* **Output:** Lưu vào state `researchResults[sceneId]` gồm `candidates` (gắn mã `cand_${sceneId}_XX`), `provenance` và `resolvedAt` cho VLM Inspector.
 
 ---
 
@@ -196,7 +198,7 @@ Mô-đun chịu trách nhiệm:
   2. **License Whitelist Filter**: Chỉ nhận ảnh từ các nguồn minh bạch (Wikimedia Commons, Kho tư liệu lịch sử) thuộc giấy phép `Public Domain`, `CC0`, `CC-BY-4.0`, `CC-BY-SA-4.0`. Lưu thông tin `license` và `attribution` (tác giả, URL nguồn).
   3. **Strategy 3+3 Candidates**: Crawl đợt 1 (3 ảnh). Nếu không đạt $\ge 60$ điểm ➔ Crawl đợt 2 (3 ảnh bổ sung từ khóa mở rộng).
   4. **Hybrid Dual-Tier VLM Inspection**:
-     - *Eval strict (`EVAL_STRICT=true`)*: **Local Unified VLM (`qwen3.8-27b-instruct-q4_k_m` qua llama-server)** là scorer bắt buộc. Local VLM lỗi → pipeline throw, không dùng Gemini/CLIP.
+     - *Eval strict (`EVAL_STRICT=true`)*: **Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m` qua llama-server)** là scorer bắt buộc. Local VLM lỗi → pipeline throw, không dùng Gemini/CLIP.
      - *Dev primary*: VLM Cloud API (Gemini 3.6 Flash) chấm điểm độ phù hợp lịch sử và thẩm mỹ (khi có `GEMINI_API_KEY`, `EVAL_STRICT=false`).
      - *Dev offline fallback*: Nếu Gemini API gặp lỗi HTTP 429/500, timeout hoặc ngắt internet, tự động chuyển sang **Local CLIP/SigLIP Cosine Similarity Scorer** (ONNX model chạy offline, chỉ khi `EVAL_STRICT=false`).
   5. **Code Fallback Trigger**: Nếu điểm cao nhất cả 6 ảnh vẫn $< 60$ ➔ Ép cảnh sang `PURE_CODE`.
@@ -431,6 +433,6 @@ export type Attribution = z.infer<typeof AttributionSchema>;
 2. **Đảm Bảo Chất Lượng Lịch Sử Mềm Dẻo (Alias-Aware Fact-Checking):** Tránh false-positive nhờ **Historical Entity Alias Table**, diacritics normalization và kiểm tra logic đa mô hình / heuristic rules.
 3. **Không Bao Giờ Bị Treo Pipeline (4-Tier Escalation Path):** Khi retry quá 2 lần, tự động kích hoạt Code Auto-Fix Override, Cloud Model Escalation hoặc flag `NEEDS_HUMAN_REVIEW` cho biên tập viên.
 4. **Đối Soát Thời Lượng Chuẩn Xác (Duration Reconciliation):** Tổng thời lượng âm thanh và cảnh thực tế không lệch quá $\pm 10\%$ so với target chapter duration.
-5. **Hạ Tầng Linh Hoạt & Độc Lập (Hybrid VLM Scorer):** Chạy mượt mà với Local Unified VLM (`qwen3.8-27b-instruct-q4_k_m`, eval strict) hoặc Gemini Cloud VLM + Local CLIP fallback (dev) khi bị rate-limit hoặc ngắt mạng.
+5. **Hạ Tầng Linh Hoạt & Độc Lập (Hybrid VLM Scorer):** Chạy mượt mà với Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m`, eval strict) hoặc Gemini Cloud VLM + Local CLIP fallback (dev) khi bị rate-limit hoặc ngắt mạng.
 6. **An Toàn Bản Quyền Hình Ảnh (License Compliance):** 100% ảnh crawl có nhãn giấy phép whitelisted (`Public Domain`, `CC0`, `CC-BY`) kèm metadata `attribution` chuẩn xác.
 7. **Khôi Phục Tốc Độ Cao & An Toàn (Fine-Grained Idempotency):** Resume chính xác từng task (TTS/Crawl) khi rớt container dựa trên Hash Keys, không tiêu tốn lại token LLM hay băng thông network.

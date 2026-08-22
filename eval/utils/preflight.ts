@@ -65,7 +65,7 @@ async function checkVlmHealth(): Promise<PreflightCheck> {
   if (envConfig.USE_LOCAL_LLM) {
     try {
       const endpoint = `${envConfig.LLM_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`;
-      const vlmModel = envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.8-27b-instruct-q4_k_m';
+      const vlmModel = envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.5-9b-instruct-q4_k_m';
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(endpoint, {

@@ -100,26 +100,37 @@ export function ChatContainer({
         let fullText = "";
         let citations: CitationItem[] = [];
 
+        let streamBuffer = "";
         let lastRenderTime = 0;
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
+          streamBuffer += decoder.decode(value, { stream: true });
+          const lines = streamBuffer.split("\n");
+          // Retain trailing un-terminated fragment in buffer
+          streamBuffer = lines.pop() || "";
 
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const dataStr = line.replace("data: ", "").trim();
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith("data: ")) {
+              const dataStr = trimmedLine.replace("data: ", "").trim();
               if (dataStr === "[DONE]") continue;
 
               try {
                 const parsed = JSON.parse(dataStr);
-                const tokenText = parsed.content ?? parsed.token;
-                if (tokenText) {
-                  fullText += tokenText;
+                
+                if (parsed.type === "error" || parsed.error) {
+                  const errorDesc = parsed.content || `⚠️ Không thể kết nối với mô hình AI (${parsed.error || 'Lỗi xử lý'}).`;
+                  fullText = fullText ? `${fullText}\n\n${errorDesc}` : errorDesc;
+                } else {
+                  const tokenText = parsed.content ?? parsed.token;
+                  if (tokenText) {
+                    fullText += tokenText;
+                  }
                 }
+
                 if (parsed.citations && Array.isArray(parsed.citations)) {
                   citations = parsed.citations.map((c: any, idx: number) => ({
                     id: idx + 1,
@@ -153,6 +164,25 @@ export function ChatContainer({
               )
             );
           }
+        }
+
+        // Process any remaining tail in buffer
+        if (streamBuffer.trim().startsWith("data: ")) {
+          const dataStr = streamBuffer.trim().replace("data: ", "").trim();
+          if (dataStr && dataStr !== "[DONE]") {
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.content) fullText += parsed.content;
+            } catch {
+              fullText += dataStr;
+            }
+          }
+        }
+
+        if (!fullText.trim()) {
+          fullText = citations.length > 0
+            ? `🏛️ **Tư liệu sử liệu Chrono-RAG:**\n\nĐã tìm thấy ${citations.length} nguồn khảo chứng lịch sử phù hợp bên dưới. Vui lòng bấm vào trích dẫn để xem chi tiết bản dịch hoặc bấm tạo video.`
+            : `🏛️ Đã tiếp nhận yêu cầu tra cứu cho chủ đề "${query}". Vui lòng thử lại với từ khóa sự kiện hoặc nhân vật lịch sử cụ thể hơn.`;
         }
 
         // Final flush to ensure complete text & citations are rendered
@@ -200,7 +230,17 @@ export function ChatContainer({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    // Avoid triggering send while composing Vietnamese text with IME (Telex/VNI)
+    if (e.nativeEvent.isComposing) {
+      return;
+    }
+
+    if (e.key === "Enter") {
+      if (e.shiftKey) {
+        // Shift + Enter: insert new line (allow default behavior)
+        return;
+      }
+      // Enter or Cmd/Ctrl + Enter: send message immediately
       e.preventDefault();
       handleSendMessage();
     }
@@ -299,7 +339,7 @@ export function ChatContainer({
           </Button>
         </div>
         <div className="flex justify-between items-center text-[10px] text-text-muted mt-1.5 px-1">
-          <span>Nhấn ⌘ + Enter hoặc Ctrl + Enter để gửi nhanh</span>
+          <span>Nhấn Enter để gửi • Shift + Enter xuống dòng</span>
           <span>100% Khảo chứng sử học</span>
         </div>
       </div>

@@ -673,5 +673,230 @@
     "expectedKeywords": ["Gia Long", "Nguyễn Ánh", "Tây Sơn", "Bá Đa Lộc", "triều Nguyễn"],
     "expectedDynasty": "Triều Nguyễn",
     "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_076",
+    "category": "MULTIHOP_KINSHIP_POLITICAL",
+    "era": "THOI_TRAN",
+    "query": "Vai trò của Thái sư Trần Thủ Độ và Linh Từ quốc mẫu Trần Thị Dung trong việc chuyển giao quyền lực từ nhà Lý sang nhà Trần",
+    "expectedKeywords": ["Trần Thủ Độ", "Trần Thị Dung", "Lý Chiêu Hoàng", "Trần Cảnh", "nhà Trần", "nhà Lý"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_077",
+    "category": "MULTIHOP_KINSHIP_POLITICAL",
+    "era": "THOI_TAY_SON",
+    "query": "Mối quan hệ quyền lực giữa Thái sư Bùi Đắc Tuyên và vua Cảnh Thịnh Nguyễn Quang Toản gây nội loạn triều đình Tây Sơn",
+    "expectedKeywords": ["Bùi Đắc Tuyên", "Cảnh Thịnh", "Nguyễn Quang Toản", "Trần Văn Kỷ", "Tây Sơn"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_078",
+    "category": "MULTIHOP_KINSHIP_POLITICAL",
+    "era": "THOI_LY",
+    "query": "Thái phó Tô Hiến Thành kiên quyết từ chối vàng bạc đút lót của Chiêu Linh hoàng hậu để phò tá thái tử Lý Long Cán",
+    "expectedKeywords": ["Tô Hiến Thành", "Chiêu Linh", "Lý Cao Tông", "Long Cán", "Đỗ Thái hậu"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_079",
+    "category": "MULTIHOP_KINSHIP_POLITICAL",
+    "era": "THOI_AN_DUONG_VUONG",
+    "query": "Mối quan hệ hôn nhân liên minh giữa An Dương Vương Thục Phán và Triệu Đà qua Trọng Thủy Mỵ Nương cùng bi kịch nỏ thần",
+    "expectedKeywords": ["An Dương Vương", "Thục Phán", "Triệu Đà", "Trọng Thủy", "Mỵ Nương", "nỏ thần", "Cổ Loa"],
+    "expectedDynasty": "Nhà Thục",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_080",
+    "category": "MULTIHOP_KINSHIP_POLITICAL",
+    "era": "THOI_NGO",
+    "query": "Dương Tam Kha đoạt ngôi nhà Ngô xưng Dương Bình Vương và nhận nuôi Nam Tấn Vương Ngô Xương Văn",
+    "expectedKeywords": ["Dương Tam Kha", "Ngô Quyền", "Ngô Xương Văn", "Ngô Xương Ngập", "Dương Bình Vương"],
+    "expectedDynasty": "Nhà Ngô",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_081",
+    "category": "CROSS_DYNASTY_HOMONYM_CONFUSION",
+    "era": "THOI_LY",
+    "query": "Tướng quân Lê Phụng Hiểu thời Lý Thái Tông có công dẹp Loạn Tam Vương năm 1028 được ban lệ Thác Đao Điền",
+    "expectedKeywords": ["Lê Phụng Hiểu", "Loạn Tam Vương", "1028", "Lý Thái Tông", "Thác Đao"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_082",
+    "category": "CROSS_DYNASTY_HOMONYM_CONFUSION",
+    "era": "THOI_TRAN",
+    "query": "Danh tướng Lê Phụ Trần thời Trần Thái Tông dũng cảm dùng ván thuyền che tên cho vua trong trận Bình Lệ Nguyên 1258",
+    "expectedKeywords": ["Lê Phụ Trần", "Trần Thái Tông", "Bình Lệ Nguyên", "1258", "Chiêu Thánh", "quân Mông Cổ"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_083",
+    "category": "CROSS_DYNASTY_HOMONYM_CONFUSION",
+    "era": "THOI_TRAN",
+    "query": "Chiêu Văn Vương Trần Nhật Duật dùng tài ngoại giao và ngôn ngữ thu phục tù trưởng Trịnh Giác Mật ở Đà Giang",
+    "expectedKeywords": ["Trần Nhật Duật", "Chiêu Văn Vương", "Trịnh Giác Mật", "Đà Giang", "nhà Trần"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_084",
+    "category": "CROSS_DYNASTY_HOMONYM_CONFUSION",
+    "era": "THOI_TRAN",
+    "query": "Chiêu Minh Đại vương Trần Quang Khải lãnh đạo đại phá quân Nguyên ở bến Chương Dương và sáng tác bài thơ Tụng giá hoàn kinh sư",
+    "expectedKeywords": ["Trần Quang Khải", "Chiêu Minh Vương", "Chương Dương", "Tụng giá hoàn kinh sư", "Hàm Tử"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_085",
+    "category": "CROSS_DYNASTY_HOMONYM_CONFUSION",
+    "era": "THOI_LY",
+    "query": "Đỗ Anh Vũ chuyên quyền lộng hành thời Lý Anh Tông tư thông cùng Thái hậu Lê Thị gây chính biến cung đình",
+    "expectedKeywords": ["Đỗ Anh Vũ", "Lý Anh Tông", "Lê Thái hậu", "Cảm Thánh", "nhà Lý"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_086",
+    "category": "CROSS_DYNASTY_HOMONYM_CONFUSION",
+    "era": "THOI_DINH",
+    "query": "Tướng quân sứ quân Đỗ Cảnh Thạc hùng cứ Đỗ Động Giang thời Loạn 12 sứ quân bị Đinh Bộ Lĩnh tiến đánh dẹp yên",
+    "expectedKeywords": ["Đỗ Cảnh Thạc", "12 sứ quân", "Đinh Bộ Lĩnh", "Đỗ Động Giang", "Đinh Tiên Hoàng"],
+    "expectedDynasty": "Nhà Đinh",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_087",
+    "category": "ANACHRONISM_AND_TECHNOLOGY_TRAP",
+    "era": "THOI_HO",
+    "query": "Tướng quốc Hồ Nguyên Trừng phát minh súng Thần cơ pháo hỏa khí và đúc chiến thuyền Cổ lâu chống giặc Minh",
+    "expectedKeywords": ["Hồ Nguyên Trừng", "Thần cơ", "hỏa khí", "súng", "nhà Hồ", "quân Minh"],
+    "expectedDynasty": "Nhà Hồ",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_088",
+    "category": "ANACHRONISM_AND_TECHNOLOGY_TRAP",
+    "era": "NAM_TRIEU_BAC_TRIEU",
+    "query": "Đội thuyền chiến Thiết đĩnh bọc đồng của chúa Trịnh và súng đại bác phương Tây trong các đợt giao tranh thời Trịnh Nguyễn",
+    "expectedKeywords": ["Thiết đĩnh", "Chúa Trịnh", "Chúa Nguyễn", "Đàng Trong", "Đàng Ngoài", "súng đại bác"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_089",
+    "category": "ANACHRONISM_AND_TECHNOLOGY_TRAP",
+    "era": "THOI_TAY_SON",
+    "query": "Voi chiến trang bị hỏa hổ và ống phun lửa của đại quân Quang Trung phá nát đồn Ngọc Hồi Khương Thượng 1789",
+    "expectedKeywords": ["Quang Trung", "hỏa hổ", "voi chiến", "Ngọc Hồi", "Đống Đa", "1789", "quân Thanh"],
+    "expectedDynasty": "Nhà Tây Sơn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_090",
+    "category": "ANACHRONISM_AND_TECHNOLOGY_TRAP",
+    "era": "THOI_NGUYEN",
+    "query": "Tàu chiến chạy bằng hơi nước và xưởng đúc đại bác theo kiểu phương Tây do triều Nguyễn xây dựng thời Minh Mạng Thiệu Trị",
+    "expectedKeywords": ["Minh Mạng", "tàu hơi nước", "đại bác", "triều Nguyễn", "vũ khí"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_091",
+    "category": "GEOGRAPHICAL_MIGRATION_AND_RENAMING",
+    "era": "THOI_LY",
+    "query": "Quá trình biến đổi địa danh từ thành Đại La thời An Nam đô hộ phủ sang thành Thăng Long khi vua Lý Thái Tổ dời đô năm 1010",
+    "expectedKeywords": ["Đại La", "Thăng Long", "Lý Thái Tổ", "Chiếu dời đô", "1010", "Hoa Lư"],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_092",
+    "category": "GEOGRAPHICAL_MIGRATION_AND_RENAMING",
+    "era": "NAM_TRIEU_BAC_TRIEU",
+    "query": "Hệ thống Lũy Thầy Lũy Trường Dục do Đào Duy Từ kiến thiết tại Quảng Bình ngăn chặn quân Trịnh Nam tiến",
+    "expectedKeywords": ["Lũy Thầy", "Đào Duy Từ", "Quảng Bình", "Trường Dục", "Chúa Nguyễn", "Chúa Trịnh"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_093",
+    "category": "GEOGRAPHICAL_MIGRATION_AND_RENAMING",
+    "era": "THOI_NGUYEN",
+    "query": "Quy Thành thành Bát Quái Gia Định xây dựng năm 1790 theo lối kiến trúc phòng thủ Vauban của Pháp",
+    "expectedKeywords": ["Gia Định", "Bát Quái", "Quy Thành", "Nguyễn Ánh", "1790", "Vauban"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_094",
+    "category": "GEOGRAPHICAL_MIGRATION_AND_RENAMING",
+    "era": "THOI_TIEN_LE",
+    "query": "Cửa biển Thần Đầu hiểm trở nơi Lê Hoàn và các vua Lý Trần thường dẫn đại quân thủy bộ xuất kích",
+    "expectedKeywords": ["Thần Đầu", "Thần Phù", "Lê Hoàn", "cửa biển", "Chiêm Thành"],
+    "expectedDynasty": "Nhà Tiền Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_095",
+    "category": "DIPLOMACY_AND_TREATY_EDGE_CASES",
+    "era": "THOI_LE_SO",
+    "query": "Hội thề Đông Quan năm 1427 Lê Lợi mở đường hòa hiếu cấp ngựa thuyền cho Tổng binh Vương Thông dẫn 10 vạn quân Minh về nước",
+    "expectedKeywords": ["Đông Quan", "1427", "Lê Lợi", "Vương Thông", "hội thề", "Lam Sơn", "quân Minh"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_096",
+    "category": "DIPLOMACY_AND_TREATY_EDGE_CASES",
+    "era": "THOI_NGUYEN",
+    "query": "Hiệp ước Nhâm Tuất 1862 triều đình Huế do Phan Thanh Giản đàm phán nhượng ba tỉnh miền Đông Nam Kỳ cho Pháp",
+    "expectedKeywords": ["Nhâm Tuất", "1862", "Phan Thanh Giản", "Lâm Duy Hiệp", "Gia Định", "Biên Hòa", "Định Tường", "Pháp"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_097",
+    "category": "DIPLOMACY_AND_TREATY_EDGE_CASES",
+    "era": "THOI_NGUYEN",
+    "query": "Hiệp ước Patenôtre năm 1884 ký kết giữa triều đình Huế và thực dân Pháp chính thức xác lập nền đô hộ bảo hộ trên toàn cõi Việt Nam",
+    "expectedKeywords": ["Patenôtre", "1884", "triều đình Huế", "bảo hộ", "thực dân Pháp", "Hiệp ước Giáp Thân"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_098",
+    "category": "DIPLOMACY_AND_TREATY_EDGE_CASES",
+    "era": "THOI_TRAN",
+    "query": "Sứ thần Mạc Đĩnh Chi thời Trần đi sứ nhà Nguyên sáng tác bài phú Ngọc tỉnh liên và được phong Lưỡng quốc Trạng nguyên",
+    "expectedKeywords": ["Mạc Đĩnh Chi", "Ngọc tỉnh liên", "Lưỡng quốc Trạng nguyên", "nhà Nguyên", "đi sứ", "nhà Trần"],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_099",
+    "category": "DIPLOMACY_AND_TREATY_EDGE_CASES",
+    "era": "NAM_TRIEU_BAC_TRIEU",
+    "query": "Sứ thần Giang Văn Minh thời Lê Trung Hưng khẳng định chủ quyền dân tộc đanh thép trước mặt vua Minh Sùng Trinh",
+    "expectedKeywords": ["Giang Văn Minh", "đi sứ", "vua Minh", "Sùng Trinh", "Bạch Đằng", "nhà Lê"],
+    "expectedDynasty": "Nhà Lê",
+    "minTargetRank": 5
+  },
+  {
+    "id": "VEC_BENCH_100",
+    "category": "DIPLOMACY_AND_TREATY_EDGE_CASES",
+    "era": "THOI_NGUYEN",
+    "query": "Phái đoàn sứ thần Phan Thanh Giản và Phạm Phú Thứ sang Paris kinh đô nước Pháp năm 1863 đàm phán chuộc lại ba tỉnh Nam Kỳ",
+    "expectedKeywords": ["Phan Thanh Giản", "Phạm Phú Thứ", "1863", "sang Pháp", "Paris", "Nam Kỳ", "Napoléon III"],
+    "expectedDynasty": "Triều Nguyễn",
+    "minTargetRank": 5
   }
 ]

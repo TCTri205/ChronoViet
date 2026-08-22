@@ -46,16 +46,17 @@ export function LiveAgentStepper({
 }: LiveAgentStepperProps) {
   // Map current step name to phase index (1 to 6)
   const getPhaseStatuses = (step: string): StepperPhase["status"][] => {
-    const s = (step || "").toLowerCase();
+    const s = (step || "").toLowerCase().trim();
     let activeIdx = 1;
 
-    if (s.includes("rag_init") || s === "rag" || s.includes("research_topic")) activeIdx = 1;
-    else if (s.includes("chapter") || s.includes("script") || s.includes("segmenter") || s.includes("keyword")) activeIdx = 2;
-    else if (s.includes("fact") || s.includes("reconcil") || s.includes("duration")) activeIdx = 3;
-    else if (s.includes("tts") || s.includes("audio") || s.includes("synthesize")) activeIdx = 4;
-    else if (s.includes("vlm") || s.includes("research") || s.includes("inspect")) activeIdx = 5;
+    if (s === "completed" || s === "done" || s === "rendered" || s === "finished") activeIdx = 7;
     else if (s.includes("render") || s.includes("packag") || s.includes("remotion")) activeIdx = 6;
-    else if (s === "completed" || s === "done") activeIdx = 7; // All completed
+    else if (s.includes("vlm") || s === "research" || s.includes("inspect") || s.includes("asset")) activeIdx = 5;
+    else if (s.includes("tts") || s.includes("audio") || s.includes("synthesize") || s.includes("voice") || s.includes("reconcil") || s.includes("duration")) activeIdx = 4;
+    else if (s.includes("fact")) activeIdx = 3;
+    else if (s.includes("chapter") || s.includes("script") || s.includes("segmenter") || s.includes("keyword")) activeIdx = 2;
+    else if (s.includes("rag") || s.includes("research_topic") || s === "init") activeIdx = 1;
+    else activeIdx = 1;
 
     return [1, 2, 3, 4, 5, 6].map((phaseNum) => {
       if (errorPhase === phaseNum) return "error";

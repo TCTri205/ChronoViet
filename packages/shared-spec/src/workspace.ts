@@ -74,9 +74,9 @@ export function getProjectRootDir(projectId: string, customBaseDir?: string): st
 
 
 /**
- * Initializes the project workspace directory structure.
+ * Resolves the standard directory and file paths for a project workspace without creating them on disk.
  */
-export function initProjectWorkspace(projectId: string, customBaseDir?: string): ProjectWorkspacePaths {
+export function getProjectPaths(projectId: string, customBaseDir?: string): ProjectWorkspacePaths {
   const rootDir = getProjectRootDir(projectId, customBaseDir);
   const assetsDir = path.join(rootDir, 'assets');
   const audioDir = path.join(rootDir, 'audio');
@@ -85,13 +85,6 @@ export function initProjectWorkspace(projectId: string, customBaseDir?: string):
   const outputDir = path.join(rootDir, 'output');
   const schemaFile = path.join(rootDir, 'project_schema.json');
   const metadataFile = path.join(rootDir, 'metadata.json');
-
-  // Ensure all directories exist
-  [rootDir, assetsDir, audioDir, captionsDir, tempDir, outputDir].forEach((dir) => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-  });
 
   return {
     projectId: sanitizeProjectId(projectId),
@@ -104,6 +97,22 @@ export function initProjectWorkspace(projectId: string, customBaseDir?: string):
     schemaFile,
     metadataFile,
   };
+}
+
+/**
+ * Initializes the project workspace directory structure.
+ */
+export function initProjectWorkspace(projectId: string, customBaseDir?: string): ProjectWorkspacePaths {
+  const paths = getProjectPaths(projectId, customBaseDir);
+
+  // Ensure all directories exist
+  [paths.rootDir, paths.assetsDir, paths.audioDir, paths.captionsDir, paths.tempDir, paths.outputDir].forEach((dir) => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
+
+  return paths;
 }
 
 /**

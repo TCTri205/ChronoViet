@@ -32,6 +32,14 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
     author: 'Bảo tàng Lịch sử Quốc gia Việt Nam',
     license: 'PUBLIC_DOMAIN',
   },
+  {
+    topicKey: 'trong_dong_dong_son',
+    title: 'Họa tiết mặt Trống đồng Đông Sơn Việt Nam',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/43/Tr%E1%BB%91ng_%C4%91%E1%BB%93ng_%C4%90%C3%B4ng_S%C6%A1n_Vi%E1%BB%87t_Nam_Dong_Son_Drum.png',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Tr%E1%BB%91ng_%C4%91%E1%BB%93ng_%C4%90%C3%B4ng_S%C6%A1n_Vi%E1%BB%87t_Nam_Dong_Son_Drum.png',
+    author: 'Wikimedia Commons Contributor',
+    license: 'CC_BY_SA_4_0',
+  },
   // Hai Bà Trưng
   {
     topicKey: 'hai_ba_trung',
@@ -58,6 +66,15 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
     author: 'Viện Khảo cổ học Việt Nam',
     license: 'PUBLIC_DOMAIN',
   },
+  // Trần Hưng Đạo & Kháng chiến chống Nguyên Mông
+  {
+    topicKey: 'tran_hung_dao',
+    title: 'Tượng đài Quốc công Tiết chế Hưng Đạo Đại Vương Trần Quốc Tuấn',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/95/Statue_of_Tran_Hung_Dao_at_Me_Linh_Square.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Statue_of_Tran_Hung_Dao_at_Me_Linh_Square.jpg',
+    author: 'Wikimedia Contributor',
+    license: 'CC_BY_SA_4_0',
+  },
   // Đinh Bộ Lĩnh & Hoa Lư
   {
     topicKey: 'dinh_bo_linh',
@@ -65,6 +82,15 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Gate_at_Hoa_Lu_-_Vietnam_-_August_2023.jpg',
     sourceUrl: 'https://commons.wikimedia.org/wiki/File:Gate_at_Hoa_Lu_-_Vietnam_-_August_2023.jpg',
     author: 'Bảo tàng Ninh Bình',
+    license: 'CC_BY_SA_4_0',
+  },
+  // Lê Lợi & Khởi nghĩa Lam Sơn
+  {
+    topicKey: 'le_loi',
+    title: 'Tượng đài Bình Định Vương Lê Lợi Lê Thái Tổ tại Hà Nội',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/42/T%C6%B0%E1%BB%A3ng_%C4%91%C3%A0i_L%C3%AA_Th%C3%A1i_T%E1%BB%95_HN.JPG',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng_%C4%91%C3%A0i_L%C3%AA_Th%C3%A1i_T%E1%BB%95_HN.JPG',
+    author: 'Wikimedia Contributor',
     license: 'CC_BY_SA_4_0',
   },
   // Tây Sơn & Quang Trung
@@ -85,14 +111,6 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
     license: 'CC_BY_SA_4_0',
   },
   {
-    topicKey: 'quang_trung_portrait',
-    title: 'Chân dung Vua Quang Trung Nguyễn Huệ thời Càn Long',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Quang_Trung_statue_02.jpg',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Quang_Trung_statue_02.jpg',
-    author: 'Họa sĩ Cung đình Càn Long',
-    license: 'PUBLIC_DOMAIN',
-  },
-  {
     topicKey: 'rach_gam_xoai_mut',
     title: 'Chiến trường Rạch Gầm - Xoài Mút sông Tiền 1785',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/S%C3%B4ng_Ti%E1%BB%81n%2C_%C4%91o%E1%BA%A1n_R%E1%BA%A1ch_G%E1%BA%A7m-Xo%C3%A0i_M%C3%BAt.jpg',
@@ -108,13 +126,22 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
     author: 'Hội Sử học Việt Nam',
     license: 'PUBLIC_DOMAIN',
   },
+  // Lịch sử hiện đại & Thắng cảnh lịch sử
   {
-    topicKey: 'ngoc_hoi_dong_da',
-    title: 'Đại chiến Ngọc Hồi Đống Đa quét sạch 29 vạn quân Thanh',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Quang_Trung_statue_02.jpg',
-    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Quang_Trung_statue_02.jpg',
-    author: 'Tranh khắc lịch sử',
-    license: 'PUBLIC_DOMAIN',
+    topicKey: 'dien_bien_phu',
+    title: 'Thung lũng Mường Thanh cứ điểm Điện Biên Phủ 1954',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e8/M%C6%B0%E1%BB%9Dng_Thanh_Valley.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:M%C6%B0%E1%BB%9Dng_Thanh_Valley.jpg',
+    author: 'Wikimedia Contributor',
+    license: 'CC_BY_SA_4_0',
+  },
+  {
+    topicKey: 'ho_guom',
+    title: 'Tháp Rùa Hồ Gươm di tích lịch sử Hà Nội',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Hoan_Kiem.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Hoan_Kiem.jpg',
+    author: 'Wikimedia Contributor',
+    license: 'CC_BY_SA_4_0',
   },
 ];
 
@@ -179,8 +206,8 @@ export async function searchWikimediaCommons(
       const imageInfo = page.imageinfo?.[0];
       if (!imageInfo || !imageInfo.url) continue;
 
-      const mime = imageInfo.mime || '';
-      if (!mime.startsWith('image/')) continue;
+      const mime = (imageInfo.mime || '').toLowerCase();
+      if (!mime.startsWith('image/') || mime.includes('svg') || mime.includes('pdf') || mime.includes('djvu')) continue;
 
       const extMetadata = imageInfo.extmetadata || {};
       const artist = extMetadata.Artist?.value?.replace(/<[^>]*>/g, '') || 'Wikimedia Commons Contributor';

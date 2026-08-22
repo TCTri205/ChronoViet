@@ -274,12 +274,18 @@ Nhằm tối ưu hóa trải nghiệm trên mọi kích thước màn hình từ
 
 ### 4.1. Thanh Điều Hướng & Giám Sát Hạ Tầng (Header & Multi-Node Health)
 - **Brand Emblem**: Biểu tượng trống đồng Đông Sơn cách điệu ánh kim kết hợp chữ `ChronoViet` dập nổi phong thái hoàng triều.
-- **Multi-Node Health Indicators**: 4 nút trạng thái thời gian thực có tooltip chi tiết độ trễ:
-  - `PostgreSQL`: Trạng thái kết nối DB và HNSW vector store (`< 5ms`).
-  - `Redis`: Trạng thái hàng đợi BullMQ và PubSub gateway.
-  - `VieNeu TTS (Port 8080)`: Trạng thái engine tổng hợp giọng đọc tiếng Việt ONNX.
-  - `LLM Provider`: Model đang kết nối (`Qwen Local` hoặc `Agnes 2.5 Flash Cloud`).
+- **Mobile Navigation Drawer**: Trên thiết bị di động (`< sm` / `< 640px`), nút Hamburger Menu trên Header kích hoạt một `Sheet` (Radix UI) trượt từ bên trái chứa toàn bộ kho lưu trữ dự án (`Sidebar`), cho phép tìm kiếm và chuyển đổi giữa các dự án một cách trực quan.
+- **Multi-Node Health Indicators**: 4 nút trạng thái thời gian thực có tooltip chi tiết độ trễ, được định kỳ thăm dò (30s polling) qua endpoint live probe `/api/readyz` (kiểm tra `isPgAvailable()` và `redis.ping()` thực tế):
+  - `PostgreSQL`: Trạng thái kết nối DB và HNSW vector store (`healthy` < 100ms, `degraded` nếu offline/mock, `unreachable` nếu lỗi).
+  - `Redis`: Trạng thái hàng đợi BullMQ và PubSub gateway (`healthy`, `degraded`, `unreachable`).
+  - `VieNeu TTS (Port 8080)`: Trạng thái engine tổng hợp giọng đọc tiếng Việt ONNX (`wordTimestamps`).
+  - `LLM Provider`: Model đang kết nối (`Agnes 2.5 Flash / Qwen 3.8`).
+- **Chỉ Báo Trạng Thái 3 Màu Di Sản**:
+  - 🟢 **Xanh Lá (`#2ECC71`)**: Node phản hồi ổn định dưới 100ms.
+  - 🟠 **Vàng Cam (`#F39C12`)**: Node đang hoạt động ở chế độ fallback/degraded hoặc độ trễ cao.
+  - 🔴 **Đỏ Son (`--destructive`)**: Node mất kết nối hoặc không thể truy cập.
 - **Project Context Switcher**: Dropdown (`Select` / `DropdownMenu`) chuyển đổi nhanh giữa các dự án đang tạo.
+- **Client Bundle & Core Web Vitals Optimization**: Trình phát `VideoPlayer` được nạp động qua `next/dynamic` (`ssr: false`) kết hợp với `optimizePackageImports: ['lucide-react', '@radix-ui/react-icons']` trong `next.config.js`, giúp giảm kích thước First Load JS Bundle và đảm bảo CLS = 0.
 
 ---
 
@@ -287,6 +293,7 @@ Nhằm tối ưu hóa trải nghiệm trên mọi kích thước màn hình từ
 - **Dual-State Sidebar**:
   - *Thu gọn (Icon Rail 64px)*: Tiết kiệm tối đa diện tích khi người dùng đang tập trung tra cứu hoặc xem video; mọi icon đều gắn `aria-label` và `Tooltip`.
   - *Mở rộng (Panel 280px)*: Mở khi rê chuột hoặc bấm nút mở rộng để tìm kiếm, lọc và quản lý toàn diện dự án.
+  - *Mobile Sheet Drawer*: Tự động nhúng trong Sheet trượt từ cạnh trái khi xem trên mobile, đóng lại ngay khi người dùng chọn dự án.
 - **Card Dự Án (Flex Overflow Defense)**:
   - Sử dụng `min-w-0` trên mọi flex container con, tiêu đề dài áp dụng `truncate` hoặc `line-clamp-1` để không làm bung layout sidebar.
   - Hiển thị tên chủ đề, nhãn tỷ lệ (`16:9` / `9:16`), badge trạng thái (`COMPLETED`, `RENDERING`, `FAILED`), thời lượng thực tế và mốc thời gian tạo.
@@ -295,6 +302,11 @@ Nhằm tối ưu hóa trải nghiệm trên mọi kích thước màn hình từ
 
 ### 4.3. Cột Giữa: Khung Tra Cứu Sử Liệu RAG (`ChatContainer.tsx`)
 - **Streaming Token Response**: Gửi câu hỏi tới `POST /api/v1/chat`, render mượt mà 60 FPS, hỗ trợ Markdown bảng biểu và niên đại; vùng stream có `aria-live="polite"`.
+- **Keyboard Shortcuts & IME Composition Safety**:
+  - Nhấn `Enter` để gửi tin nhắn ngay lập tức.
+  - Nhấn `Shift + Enter` để xuống dòng mới.
+  - Hỗ trợ phím tắt chuyên nghiệp `⌘ + Enter` / `Ctrl + Enter`.
+  - Tích hợp kiểm tra `e.nativeEvent.isComposing` chống kích hoạt gửi nhầm khi người dùng đang gõ dấu tiếng Việt (Telex/VNI).
 - **Auto-Anchoring & Scroll-Lock Protection**:
   - Khi token đang streaming: Tự động bám đáy (`stick-to-bottom`) nếu người dùng đang ở cuối danh sách (`isAtBottom = true`).
   - Khi người dùng chủ động cuộn lên đọc tài liệu cũ: Ngắt ngay chế độ auto-scroll (tránh giật màn hình), đồng thời hiển thị nút nổi **`↓ Tin mới nhất`** (Floating Jump Button kèm badge số token mới) để người dùng quay lại đáy khi muốn.
@@ -309,9 +321,13 @@ Nhằm tối ưu hóa trải nghiệm trên mọi kích thước màn hình từ
   - Ô nhập Chủ đề / Prompt (`InputGroup` / `Field`) tự động gợi ý hoặc nhận từ Chat (`autocomplete="off"`).
   - Tùy chọn Thời lượng mục tiêu (`ToggleGroup`): `1 phút (Tóm lược)`, `3 phút (Tiêu chuẩn ★)`, `5 phút (Chuyên sâu)`.
   - Tùy chọn Tỷ lệ khung hình (`ToggleGroup`): `📺 16:9 (YouTube/Màn hình ngang)` hoặc `📱 9:16 (Shorts/Reels/TikTok)`.
+  - **Bộ Chọn Sắc Thái & Phong Cách Lời Bình (`ToggleGroup`)**:
+    1. ⚔️ **Hào Hùng (Sử Thi)** — `epic` (Mặc định): Phong cách tráng ca, nhịp điệu dồn dập, hào khí Đông A.
+    2. 📜 **Trang Nghiêm (Chính Sử)** — `academic`: Điềm tĩnh, ngôn phong sử học chuẩn tắc.
+    3. 🌊 **Trầm Lắng (Cảm Xúc)** — `reflective`: Lắng đọng, suy ngẫm tri ân công đức tiền nhân.
   - Nút bấm chính: **`Tạo Thước Phim Lịch Sử`** (Subtext: *Tự động hóa 15 trạng thái AI*, tự disable và hiện spinner chống double-click khi bấm).
 - **Bảng Giám Sát Tiến Trình Realtime (Live Agent Stepper - `aria-live="polite"`)**:
-  - Kết nối SSE stream `/api/v1/projects/:id/stream` hiển thị 6 giai đoạn cốt lõi:
+  - Kết nối SSE stream `/api/v1/projects/:id/stream` hiển thị 6 giai đoạn cốt lõi với khả năng dọn dẹp kết nối tự động khi đạt trạng thái kết thúc (`COMPLETED`, `FAILED`, `ABORTED`):
     1. *Truy xuất sử liệu GraphRAG* (Tìm kiếm văn bản, thực thể, quan hệ lịch sử).
     2. *Khởi tạo kịch bản 3 hồi* (Phân bổ thời lượng & nhịp điệu phim).
     3. *Hội đồng thẩm định lịch sử* (Thẩm định dữ kiện, bảo đảm 0 sai lệch).
@@ -336,6 +352,7 @@ Nhằm tối ưu hóa trải nghiệm trên mọi kích thước màn hình từ
   3. *Trượt mở Floating Theater Dock*: Dock phát video trượt nhẹ nhàng từ đáy lên (`translate-y-0 opacity-100 transition-all duration-500 ease-out`).
 - **Floating Theater Dock Controls & Native iOS Safari Protection**:
   - Trình phát MP4 1080p hỗ trợ tua seek tức thì qua HTTP Range Request.
+  - Tính toán thời lượng an toàn với `Number.isFinite()` ngăn chặn lỗi hiển thị `NaN:NaN` trên thanh trượt timeline.
   - Khai báo bắt buộc `playsInline` và `webkit-playsinline="true"` trên thẻ `<video>` chống hiện tượng QuickTime chiếm quyền toàn màn hình trên iOS.
   - Video sẵn sàng ở trạng thái Paused kèm nút CTA Play ánh hoàng kim nổi bật (tránh vi phạm Browser Autoplay Policy).
   - Nút Tải Video 1080p (`video.mp4`) và nút chia sẻ liên kết.

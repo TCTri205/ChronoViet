@@ -41,6 +41,14 @@ Gói `@chronoviet/shared-spec` đóng vai trò là **Hợp đồng Dữ liệu D
    * `ResourceSentinel.getMemoryStatus()`: Giám sát tài nguyên RAM với cơ chế debounce 3s, cảnh báo áp suất RAM cao (`MEMORY_PRESSURE_THRESHOLD_PCT`).
    * `ResourceSentinel.acquireRenderLock()` & `releaseRenderLock()`: Khóa phân tán Redis Distributed Lock kết hợp In-Memory Fallback điều phối tài nguyên render video.
    * `ResourceSentinel.shouldOffloadToCloud()`: Tự động phát hiện xung đột tài nguyên để định tuyến request LLM sang Cloud API an toàn không phạt Circuit Breaker.
+6. **Unified Circuit Breaker Subsystem (`circuit-breaker.ts`):**
+   * Quản lý trạng thái chịu lỗi (Fault Tolerance) 3 phân hệ: `localLlmCircuit`, `cloudFallbackCircuit`, `embeddingCircuit`.
+   * Tự động chuyển đổi `CLOSED` $\to$ `OPEN` khi đạt ngưỡng lỗi (threshold = 2), tự động sang `HALF_OPEN` (PROBE) sau cooldown 30s, đồng bộ trạng thái tới Prometheus gauges `{ subsystem }`.
+7. **Dense Vector Embedding Service & Smooth Partial Cache Eviction (`embeddings.ts`):**
+   * Chuẩn hóa không gian vector dense 1024 chiều BGE-M3 phục vụ GraphRAG và Semantic Search.
+   * Tích hợp `embeddingCache` với thuật toán `evictOldestCacheEntries()` tự động giải phóng 20% bản ghi cũ nhất (FIFO/LRU) khi đầy dung lượng (`MAX_CACHE_SIZE = 5000`), giữ lại 80% warm cache chống Cache Stampede.
+8. **Prometheus RED & USE Centralized Metrics (`telemetry/metrics.ts`):**
+   * Cung cấp registry duy nhất `metricsRegistry` và bộ metrics RED/USE cho HTTP, LLM, TTS, Embedding, RAG Search, VLM Inspector, Remotion Render và BullMQ queues với guard chặn cardinality bomb.
 
 ---
 

@@ -37,7 +37,7 @@ const colors = {
 const services: Record<string, ServiceInfo> = {
   postgres: { name: 'PostgreSQL + pgvector', tag: 'DB', color: colors.blue, status: 'PENDING' },
   redis: { name: 'Redis Cache & Mutex', tag: 'REDIS', color: colors.red, status: 'PENDING' },
-  aiSupervisor: { name: 'AI Supervisor (LLM 27B / Emb)', tag: 'AI-SUP', color: colors.magenta, status: 'PENDING' },
+  aiSupervisor: { name: 'AI Supervisor (LLM 9B / Emb)', tag: 'AI-SUP', color: colors.magenta, status: 'PENDING' },
   tts: { name: 'VieNeu TTS Microservice', tag: 'TTS', color: colors.cyan, status: 'PENDING' },
   web: { name: 'ChronoViet Web UI', tag: 'WEB', color: colors.green, status: 'PENDING' },
   worker: { name: 'Remotion Render Worker', tag: 'WORKER', color: colors.yellow, status: 'PENDING' },

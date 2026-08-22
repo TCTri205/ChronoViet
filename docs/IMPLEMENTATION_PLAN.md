@@ -19,7 +19,7 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 | **Mô-đun 1: Chrono-RAG Engine** | **[✅ IMPLEMENTED]** | Phức tạp | **100% Hoàn thiện codebase & Eval suite** (`packages/rag-engine/src/`, `eval/`). Hybrid GraphRAG dùng PostgreSQL 15+ (`pgvector` Dense Embedding 1024d + Relational Graph Schema CTEs $k=1,2$ + BM25 FTS + RRF + Integrated BGE Reranker v2). Đã vượt ma trận KPI: Fact Precision 100%, Hallucination Rate 0%, Citation Traceability 100%. | `packages/rag-engine/eval/` |
 | **Mô-đun 2: Multi-Agent Orchestrator** | **[✅ IMPLEMENTED]** | Rất Phức tạp | LangGraph.js State Machine trên Node.js/TS, Postgres Checkpointer SSOT, quy trình Chaptering Agent + 5 Script Micro-Steps, Duration Reconciler, Automated Guardrails (Folklore + NLI Entailment Judge), Keyword Extractor + Research Agent (Micro-Step 1C) tìm ảnh online qua SerpAPI/Tavily/Brave/Wikimedia/Catalog. | `packages/agent-orchestrator/eval/` |
 | **Mô-đun 3: VLM Inspector Sub-Agent** | **[✅ IMPLEMENTED]** | Trung bình | Local Unified Multimodal VLM (Local Primary trong `EVAL_STRICT`) + Multi-Key Cloud Gemini VLM (`VLM_PROVIDER=gemini|auto`) + Local CLIP ONNX Fallback + Whitelisted License Filter (CC0/PD/CC-BY) + Unified Redis Cache (SHA-256/pHash) + Chiến lược 3+3 Candidates (nhận candidate từ Research Agent + domain whitelist). | `packages/vlm-inspector/eval/` |
-| **Hạ tầng Worker, Realtime & Web App** | **[✅ IMPLEMENTED]** | Trung bình - Phức tạp | `apps/render-worker` (BullMQ queues, Process Isolation `CONCURRENCY=1`, Asset Pre-download về `/media`, Redis PubSub `project_events:${projectId}`) + `apps/web` (Next.js 14 App Router Monolith, NotebookLM Workspace UI/UX, REST API `/api/v1/chat`, `/api/v1/projects`, SSE Stream, WebSocket Gateway, 1-Click Video Studio). | `apps/render-worker/src/__tests__/` & `apps/web/eval/` |
+| **Hạ tầng Worker, Realtime & Web App** | **[✅ IMPLEMENTED]** | Trung bình - Phức tạp | `apps/render-worker` (BullMQ queues, Process Isolation `CONCURRENCY=1`, Asset Pre-download về `/media`, Redis PubSub `project_events:${projectId}`) + `apps/web` (Next.js 14 App Router Monolith, NotebookLM Workspace UI/UX, Mobile Navigation Drawer qua Sheet, Live Multi-Node `/api/readyz` Health Monitor, 3 Sắc thái lời bình, Phím tắt Chat an toàn IME tiếng Việt, REST API `/api/v1/chat`, `/api/v1/projects`, SSE Stream, WebSocket Gateway, 1-Click Video Studio). | `apps/render-worker/src/__tests__/` & `apps/web/eval/` |
 
 ### 1.2. Nguyên Tắc Bắt Buộc: Module-Level Evaluation (`eval/` per Module)
 
@@ -50,10 +50,10 @@ Qua quá trình rà soát toàn bộ tài liệu kiến trúc (`docs/architectur
 
 | Service | Cấu hình | Lệnh khởi động gợi ý |
 | :--- | :--- | :--- |
-| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8092`) | `llama-server -m models/qwen3.8-27b-q4_k_m.gguf --mmproj models/qwen3.8-27b-mmproj.gguf --port 8092` |
+| LLM & Unified VLM Server | `LLM_BASE_URL` (vd `http://localhost:8092`) | `llama-server -m models/qwen3.5-9b-instruct-q4_k_m.gguf --mmproj models/qwen3.5-9b-mmproj.gguf --port 8092` |
 | Embedding Server | `EMBEDDING_API_URL` (vd `http://localhost:8090/v1/embeddings`) | Serve model `bge-m3` (1024 dimensions) trên Port 8090 |
 | VieNeu Python TTS | `VIENEU_PYTHON_URL` (vd `http://localhost:8080`) | `python app.py` trong `services/vieneu-tts/` |
-| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.8-27b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8092) |
+| VLM Local Inspector | `EVAL_VLM_MODEL` (mặc định `qwen3.5-9b-instruct-q4_k_m`) | llama-server unified multimodal endpoint (Port 8092) |
 | PostgreSQL pgvector | `DATABASE_URL` | `pnpm stack:infra` |
 
 **Tắt strict (dev-only, KHÔNG hợp lệ làm benchmark):** đặt `EVAL_STRICT=false` trong `.env` — khi đó các fallback cũ (Agnes cloud, pseudo-random, sine-wave, CLIP) được phép dùng lại cho dev.

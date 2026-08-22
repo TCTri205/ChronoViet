@@ -1,7 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Film, Play, StopCircle, Sparkles, Loader2, Clock, Monitor, Smartphone } from "lucide-react";
+import {
+  Film,
+  Play,
+  StopCircle,
+  Sparkles,
+  Loader2,
+  Clock,
+  Monitor,
+  Smartphone,
+  Flame,
+  BookOpen,
+  Waves,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -13,6 +25,7 @@ import { toast } from "sonner";
 export interface VideoGeneratorPanelProps {
   initialTopic?: string;
   onProjectCreated?: (projectId: string) => void;
+  onProjectCompleted?: () => void;
   activeProjectId?: string | null;
   className?: string;
 }
@@ -20,6 +33,7 @@ export interface VideoGeneratorPanelProps {
 export function VideoGeneratorPanel({
   initialTopic = "",
   onProjectCreated,
+  onProjectCompleted,
   activeProjectId = null,
   className = "",
 }: VideoGeneratorPanelProps) {
@@ -46,57 +60,102 @@ export function VideoGeneratorPanel({
   useEffect(() => {
     if (!activeProjectId) return;
 
-    setIsGenerating(true);
     let sseSource: EventSource | null = null;
     let ws: WebSocket | null = null;
+    let isCancelled = false;
 
-    try {
-      // 1. SSE Stream for Multi-Agent Stepper
-      sseSource = new EventSource(`/api/v1/projects/${activeProjectId}/stream`);
-      sseSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.nodeName) {
-            setCurrentStep(data.nodeName);
-          }
-          if (data.status === "COMPLETED") {
-            setCurrentStep("completed");
-            setIsGenerating(false);
-            toast.success("Thước phim lịch sử đã hoàn tất kết xuất!");
-          }
-        } catch {
-          // ignore parsing error
+    // Check project status before assuming active generation
+    fetch(`/api/v1/projects/${activeProjectId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isCancelled || !data) return;
+        if (data.status === "COMPLETED" || data.videoUrl) {
+          setCurrentStep("completed");
+          setRenderProgress({ percent: 100, status: "COMPLETED" });
+          setIsGenerating(false);
+          return;
         }
-      };
+        if (data.status === "FAILED" || data.status === "ABORTED") {
+          setIsGenerating(false);
+          return;
+        }
 
-      // 2. WebSocket for Render Progress %
-      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/projects/${activeProjectId}`);
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "RENDER_PROGRESS") {
-            setRenderProgress({
-              percent: data.progressPercent || 0,
-              currentFrame: data.currentFrame,
-              totalFrames: data.totalFrames,
-              remainingSeconds: data.estimatedRemainingSec,
-              status: "RENDERING",
-            });
-          } else if (data.type === "RENDER_COMPLETED") {
-            setRenderProgress({ percent: 100, status: "COMPLETED" });
-            setCurrentStep("completed");
-            setIsGenerating(false);
-          }
-        } catch {
-          // fallback
+        // If in-progress project, connect live listeners
+        setIsGenerating(true);
+        if (data.metadata?.topic) {
+          setTopic(data.metadata.topic);
         }
-      };
-    } catch (e) {
-      // Offline fallback simulation for UI preview
-    }
+
+        try {
+          // 1. SSE Stream for Multi-Agent Stepper
+          sseSource = new EventSource(`/api/v1/projects/${activeProjectId}/stream`);
+          sseSource.onmessage = (event) => {
+            try {
+              const streamData = JSON.parse(event.data);
+              if (streamData.nodeName) {
+                setCurrentStep(streamData.nodeName);
+              }
+              if (streamData.status === "COMPLETED") {
+                setCurrentStep("completed");
+                setIsGenerating(false);
+                toast.success("Thước phim lịch sử đã hoàn tất kết xuất!");
+                onProjectCompleted?.();
+                sseSource?.close();
+                ws?.close();
+              } else if (streamData.status === "FAILED" || streamData.status === "ABORTED") {
+                setIsGenerating(false);
+                sseSource?.close();
+                ws?.close();
+              }
+            } catch {
+              // ignore parsing error
+            }
+          };
+
+          sseSource.onerror = () => {
+            sseSource?.close();
+          };
+
+          // 2. WebSocket for Render Progress %
+          const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+          ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/projects/${activeProjectId}`);
+          ws.onmessage = (event) => {
+            try {
+              const wsData = JSON.parse(event.data);
+              if (wsData.type === "RENDER_PROGRESS") {
+                setRenderProgress({
+                  percent: wsData.progressPercent || 0,
+                  currentFrame: wsData.currentFrame,
+                  totalFrames: wsData.totalFrames,
+                  remainingSeconds: wsData.estimatedRemainingSec,
+                  status: "RENDERING",
+                });
+              } else if (wsData.type === "RENDER_COMPLETED") {
+                setRenderProgress({ percent: 100, status: "COMPLETED" });
+                setCurrentStep("completed");
+                setIsGenerating(false);
+                onProjectCompleted?.();
+                ws?.close();
+              } else if (wsData.type === "RENDER_FAILED") {
+                setIsGenerating(false);
+                ws?.close();
+              }
+            } catch {
+              // fallback
+            }
+          };
+
+          ws.onerror = () => {
+            ws?.close();
+          };
+        } catch {
+          // Offline fallback
+        }
+      })
+      .catch(() => {});
 
     return () => {
+      isCancelled = true;
       sseSource?.close();
       ws?.close();
     };
@@ -250,6 +309,34 @@ export function VideoGeneratorPanel({
             <ToggleGroupItem value="9:16" className="flex-1 text-xs gap-1.5">
               <Smartphone className="w-3.5 h-3.5" />
               <span>9:16 (Dọc/TikTok/Shorts)</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+
+        {/* Narration Tone Selector */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span>Sắc Thái & Phong Cách Lời Bình</span>
+          </label>
+          <ToggleGroup
+            type="single"
+            value={tone}
+            onValueChange={(val) => val && setTone(val)}
+            disabled={isGenerating}
+            className="justify-start gap-2 flex-wrap"
+          >
+            <ToggleGroupItem value="epic" className="flex-1 text-xs gap-1.5 min-w-[120px]">
+              <Flame className="w-3.5 h-3.5 text-amber-500" />
+              <span>Hào Hùng (Sử Thi)</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="academic" className="flex-1 text-xs gap-1.5 min-w-[120px]">
+              <BookOpen className="w-3.5 h-3.5 text-gold-300" />
+              <span>Trang Nghiêm (Chính Sử)</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="reflective" className="flex-1 text-xs gap-1.5 min-w-[120px]">
+              <Waves className="w-3.5 h-3.5 text-blue-400" />
+              <span>Trầm Lắng (Cảm Xúc)</span>
             </ToggleGroupItem>
           </ToggleGroup>
         </div>

@@ -349,6 +349,8 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
   return Array.from(uniqueMap.values());
 }
 
+export const MAX_CANDIDATE_SPANS_IN_PROMPT = 30;
+
 /**
  * Stage 2 Lightweight LLM Extraction (Port 8094 / Qwen3.5-4B-Instruct)
  */
@@ -359,12 +361,23 @@ export async function extractTriplesWithLLMDetailed(
   // Stage 1: Extract Candidate Spans first
   const candidateSpans = extractHistoricalCandidateSpans(text);
 
+  // Deduplicate unique candidate entities for compact and token-efficient prompt
+  const seenCandidateKeys = new Set<string>();
+  const uniqueCandidateSpans = candidateSpans.filter((c) => {
+    const key = `${c.type}:${(c.suggestedCanonicalId || c.text).toLowerCase()}`;
+    if (seenCandidateKeys.has(key)) return false;
+    seenCandidateKeys.add(key);
+    return true;
+  });
+
+  const promptCandidateSpans = uniqueCandidateSpans.slice(0, MAX_CANDIDATE_SPANS_IN_PROMPT);
+
   try {
     const prompt = `Bạn là chuyên gia trích xuất Đồ thị Tri thức Lịch sử Việt Nam (Vietnamese History Knowledge Graph).
 Dưới đây là đoạn văn bản lịch sử và danh sách thực thể ứng viên đã được nhận diện (Stage 1 Candidate Entities):
 
 THỰC THỂ ỨNG VIÊN (CANDIDATE ENTITIES):
-${candidateSpans.map((c) => `- [${c.type}] "${c.text}" (ID đề xuất: ${c.suggestedCanonicalId})`).join('\n')}
+${promptCandidateSpans.map((c) => `- [${c.type}] "${c.text}" (ID đề xuất: ${c.suggestedCanonicalId})`).join('\n')}
 
 VĂN BẢN (TEXT):
 """

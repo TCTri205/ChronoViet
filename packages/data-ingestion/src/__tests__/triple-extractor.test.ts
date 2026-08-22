@@ -6,6 +6,7 @@ import {
   extractTriplesWithLLM,
   extractTriplesFromTextAsync,
   resolveHistoricalConflict,
+  MAX_CANDIDATE_SPANS_IN_PROMPT,
 } from '../triple-extractor.js';
 
 vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
@@ -140,6 +141,38 @@ describe('Triple Extractor Unit Tests', () => {
 
       const triples = await extractTriplesWithLLM('Văn bản lịch sử test', { allowFallback: true, strict: false });
       expect(triples).toEqual([]);
+    });
+
+    it('should cap candidate entities in LLM prompt to MAX_CANDIDATE_SPANS_IN_PROMPT (30)', async () => {
+      vi.mocked(generateLLMCompletion).mockResolvedValueOnce({
+        content: JSON.stringify({ triples: [] }),
+        model: 'agnes-2.5-flash',
+        provider: 'AGNES_FLASH_FALLBACK',
+        finishReason: 'stop',
+      });
+
+      const longEntityText = [
+        'Quang Trung', 'Nguyễn Huệ', 'Lê Lợi', 'Trần Hưng Đạo', 'Lý Thường Kiệt',
+        'Đinh Bộ Lĩnh', 'Ngô Quyền', 'An Dương Vương', 'Hùng Vương', 'Hai Bà Trưng',
+        'Bà Triệu', 'Lý Thái Tổ', 'Lê Thánh Tông', 'Gia Long', 'Minh Mạng',
+        'Thiệu Trị', 'Tự Đức', 'Hàm Nghi', 'Đồng Khánh', 'Thành Thái',
+        'Duy Tân', 'Khải Định', 'Bảo Đại', 'Phan Bội Châu', 'Phan Châu Trinh',
+        'Hoàng Hoa Thám', 'Nguyễn Thái Học', 'Võ Nguyên Giáp', 'Hồ Chí Minh', 'Phạm Văn Đồng',
+        'Trường Chinh', 'Lê Duẩn', 'Nguyễn Trãi', 'Chu Văn An', 'Nguyễn Du',
+      ].join(' cùng với ');
+
+      await extractTriplesWithLLM(longEntityText);
+
+      expect(generateLLMCompletion).toHaveBeenCalledTimes(1);
+      const callArgs = vi.mocked(generateLLMCompletion).mock.calls[0];
+      const messages = callArgs[0] as Array<{ role: string; content: string }>;
+      const userMessage = messages.find((m) => m.role === 'user')?.content || '';
+
+      const candidateSection = userMessage.split('THỰC THỂ ỨNG VIÊN (CANDIDATE ENTITIES):')[1]?.split('VĂN BẢN (TEXT):')[0] || '';
+      const candidateLines = candidateSection.trim().split('\n').filter((l) => l.startsWith('- ['));
+
+      expect(candidateLines.length).toBeLessThanOrEqual(MAX_CANDIDATE_SPANS_IN_PROMPT);
+      expect(candidateLines.length).toBe(30);
     });
   });
 

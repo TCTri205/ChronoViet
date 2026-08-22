@@ -30,6 +30,13 @@ export async function processVLMJob(job: Job<VLMJobData>): Promise<InspectSceneR
 
   const result = await inspectSceneVisuals(projectId, scene, candidatePool);
   await job.updateProgress(100);
+  workerLog.info('worker.vlm_inspected', `VLM inspection completed for scene ${scene.sceneId}`, {
+    projectId,
+    sceneId: scene.sceneId,
+    inspectedCount: result.inspectedCandidates?.length ?? 0,
+    hasSelectedCandidate: Boolean(result.selectedCandidate),
+    isPureCodeFallback: result.isPureCodeFallback,
+  });
   return result;
 }
 

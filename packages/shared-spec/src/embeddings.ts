@@ -4,6 +4,15 @@
 
 import { envConfig } from './config.js';
 import { logFallbackAlert, createLogger } from './logger.js';
+import {
+  checkEmbeddingCircuitState,
+  recordEmbeddingCircuitSuccess,
+  recordEmbeddingCircuitFailure,
+} from './circuit-breaker.js';
+import {
+  embeddingRequestsTotal,
+  embeddingDurationSeconds,
+} from './telemetry/metrics.js';
 
 const log = createLogger({ service: 'shared-spec' });
 
@@ -69,10 +78,31 @@ function generatePseudoRandomEmbedding(text: string): number[] {
   return vector;
 }
 
-const embeddingCache = new Map<string, number[]>();
-const MAX_CACHE_SIZE = 5000;
+export const embeddingCache = new Map<string, number[]>();
+export const MAX_CACHE_SIZE = 5000;
 let warnedMissingApiUrl = false;
 let warnedFailedApiUrl = false;
+
+/**
+ * Evicts oldest cache entries (FIFO/LRU partial eviction) on capacity overflow.
+ */
+export function evictOldestCacheEntries(count = Math.floor(MAX_CACHE_SIZE * 0.2)): void {
+  const iterator = embeddingCache.keys();
+  let evicted = 0;
+  while (evicted < count) {
+    const next = iterator.next();
+    if (next.done) break;
+    embeddingCache.delete(next.value);
+    evicted++;
+  }
+}
+
+function setEmbeddingCache(key: string, vector: number[]): void {
+  if (embeddingCache.size >= MAX_CACHE_SIZE) {
+    evictOldestCacheEntries();
+  }
+  embeddingCache.set(key, vector);
+}
 
 function normalizeVector(vector: number[]): number[] {
   let normSquare = 0;
@@ -95,8 +125,6 @@ function adaptDimension(vector: number[], targetDim: number): number[] {
  * 1. Primary: Local / OpenAI-compatible Embedding Server (EMBEDDING_API_URL, model: LOCAL_EMBEDDING_MODEL)
  * 2. Fallback: Deterministic Pseudo-Random Vector Generator (Offline / Testing only)
  */
-let serverUnreachableUntil = 0;
-
 export async function generateEmbedding(text: string): Promise<number[]> {
   if (!text || !text.trim()) {
     return new Array(EMBEDDING_DIMENSION).fill(0);
@@ -107,8 +135,10 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     return embeddingCache.get(trimmed)!;
   }
 
+  const startTime = performance.now();
   const apiUrl = envConfig.EMBEDDING_API_URL;
-  const isCircuitOpen = serverUnreachableUntil > Date.now();
+  const circuitState = checkEmbeddingCircuitState();
+  const isCircuitOpen = circuitState === 'FAST_FAIL';
   const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
 
   if (!apiUrl || isCircuitOpen) {
@@ -131,8 +161,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       warnedMissingApiUrl = true;
     }
     const fallbackVec = generatePseudoRandomEmbedding(trimmed);
-    if (embeddingCache.size >= MAX_CACHE_SIZE) embeddingCache.clear();
-    embeddingCache.set(trimmed, fallbackVec);
+    setEmbeddingCache(trimmed, fallbackVec);
+    embeddingRequestsTotal.inc({ model: 'pseudo-random-fallback', status: 'fallback' });
+    embeddingDurationSeconds.observe({ model: 'pseudo-random-fallback' }, (performance.now() - startTime) / 1000);
     return fallbackVec;
   }
 
@@ -203,11 +234,17 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const adapted = adaptDimension(rawVector, EMBEDDING_DIMENSION);
     const normalized = normalizeVector(adapted);
 
-    if (embeddingCache.size >= MAX_CACHE_SIZE) embeddingCache.clear();
-    embeddingCache.set(trimmed, normalized);
+    recordEmbeddingCircuitSuccess();
+    embeddingRequestsTotal.inc({ model: resolvedEmbeddingModel, status: 'success' });
+    embeddingDurationSeconds.observe({ model: resolvedEmbeddingModel }, (performance.now() - startTime) / 1000);
+
+    setEmbeddingCache(trimmed, normalized);
     return normalized;
   } catch (err) {
-    serverUnreachableUntil = Date.now() + 60000; // 60s cooldown for unreachable server
+    recordEmbeddingCircuitFailure(err);
+    embeddingRequestsTotal.inc({ model: resolvedEmbeddingModel, status: 'error' });
+    embeddingDurationSeconds.observe({ model: resolvedEmbeddingModel }, (performance.now() - startTime) / 1000);
+
     const errMsg = err instanceof Error ? err.message : String(err);
     if (envConfig.EVAL_STRICT) {
       throw new Error(`[EVAL_STRICT] Embedding server unavailable during evaluation; pseudo-random fallback disabled: ${errMsg}`);
@@ -228,8 +265,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       warnedFailedApiUrl = true;
     }
     const fallbackVec = generatePseudoRandomEmbedding(trimmed);
-    if (embeddingCache.size >= MAX_CACHE_SIZE) embeddingCache.clear();
-    embeddingCache.set(trimmed, fallbackVec);
+    setEmbeddingCache(trimmed, fallbackVec);
     return fallbackVec;
   }
 }
@@ -267,7 +303,7 @@ export async function generateEmbeddingsBatch(
   }
 
   const apiUrl = envConfig.EMBEDDING_API_URL;
-  const isCircuitOpen = serverUnreachableUntil > Date.now();
+  const isCircuitOpen = checkEmbeddingCircuitState() === 'FAST_FAIL';
   const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
   const isOllamaEmbeddingsEndpoint = apiUrl?.includes('11434') || apiUrl?.includes('/api/embeddings');
 
@@ -320,16 +356,17 @@ export async function generateEmbeddingsBatch(
                 const normalized = normalizeVector(adapted);
                 const origIdx = task.indices[k];
                 results[origIdx] = normalized;
-                if (embeddingCache.size >= MAX_CACHE_SIZE) embeddingCache.clear();
-                embeddingCache.set(task.sliceTexts[k], normalized);
+                setEmbeddingCache(task.sliceTexts[k], normalized);
               } else {
                 throw new Error('Malformed vector in batch response');
               }
             }
+            recordEmbeddingCircuitSuccess();
           } else {
             throw new Error('Batch response length mismatch');
           }
-        } catch {
+        } catch (err) {
+          recordEmbeddingCircuitFailure(err);
           nativeBatchSuccess = false;
           break;
         }

@@ -2,7 +2,7 @@
 ## (Visual Quality Control, Whitelisted Licensing & Hybrid Fallback Sub-Agent Specification v3.3)
 
 > **Trạng thái:** `[✅ IMPLEMENTED — Visual Quality Control, Local Unified VLM & Cloud Gemini Scorers v3.4]`
-> **Cập nhật:** Eval Integrity & Telemetry Gates — tích hợp **Correlation ID propagation**, **Failure latency metrics**, **Resource Payload Guards (5MB)**, **Binary Header Dimension Inspection (Layer 2)** và **Resilient JSON Parser**. Khi `EVAL_STRICT=true`, VLM Inspector dùng **Local Unified Multimodal VLM (`qwen3.8-27b-instruct-q4_k_m` qua llama-server)** làm scorer bắt buộc.
+> **Cập nhật:** Eval Integrity & Telemetry Gates — tích hợp **Correlation ID propagation**, **Failure latency metrics**, **Resource Payload Guards (5MB)**, **Binary Header Dimension Inspection (Layer 2)** và **Resilient JSON Parser**. Khi `EVAL_STRICT=true`, VLM Inspector dùng **Local Unified Multimodal VLM (`qwen3.5-9b-instruct-q4_k_m` qua llama-server)** làm scorer bắt buộc.
 
 ---
 
@@ -23,7 +23,7 @@ Khi thu thập hình ảnh tư liệu lịch sử Việt Nam tự động từ I
 - **Quan sát & Phối hợp ngữ cảnh (Observability & Trace Context):** Mọi tác vụ tải ảnh, lưu metadata và chấm điểm VLM đều mang theo `correlationId` và `sceneId` xuyên suốt; đo đạc `latencyMs` trên cả luồng thành công lẫn lỗi.
 
 VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiên thay đổi theo chế độ:
-- **Eval strict (`EVAL_STRICT=true`, mặc định):** **Local Unified VLM (`qwen3.8-27b-instruct-q4_k_m`) qua llama-server** (`LLM_BASE_URL`) là scorer bắt buộc. Local VLM fail → eval FAIL ngay, **không** rơi vào Gemini/CLIP.
+- **Eval strict (`EVAL_STRICT=true`, mặc định):** **Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m`) qua llama-server** (`LLM_BASE_URL`) là scorer bắt buộc. Local VLM fail → eval FAIL ngay, **không** rơi vào Gemini/CLIP.
 - **Dev (`EVAL_STRICT=false`):** Gemini 3.6 Flash Cloud API (Primary, hỗ trợ xoay vòng luân phiên `GEMINI_API_KEYS` Round-Robin và tự động failover/quarantine khi chạm rate limit HTTP 429) → Local CLIP/SigLIP Cosine Similarity Scorer (Offline Fallback khi mất kết nối hoặc toàn bộ key hết quota).
 - Dual-Cache Redis 2 lớp (SHA-256 + pHash) luôn được kiểm tra trước mọi scorer.
 
@@ -52,17 +52,20 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
                                        │ (Miss)
                                        ▼
   ┌────────────────────────────────────────────────────────────────────────────┐
-  │ LỚP 2: METADATA & TECHNICAL QUALITY GATE (Binary Header Reader)            │
+  │ LỚP 2: METADATA, SHARP RESIZER & TECHNICAL QUALITY GATE                     │
+  │ - Sharp Image Optimizer: Tự động thu nhỏ (fit inside <= 1920x1080)         │
+  │ - Nén tối ưu (MozJPEG / WebP quality 85), kiểm soát dung lượng file <= 2MB │
+  │ - Chuẩn hóa hướng chụp theo EXIF orientation                               │
   │ - Trích xuất kích thước nhị phân siêu nhẹ (PNG/JPEG/WEBP header decoder)   │
   │ - Kiểm tra độ phân giải tối thiểu: Resolution >= 720p (1280x720 hoặc 720p) │
   │ - Kiểm tra tỉ lệ khung hình (Aspect Ratio check sai số <= 15%)             │
-  │ - Chặn ảnh quá tải bộ nhớ (>5MB) trước khi encode Base64                   │
+  │ - Ngăn ngừa triệt để cảnh báo quá tải bộ nhớ (>5MB) và lỗi OOM khi render  │
   └────────────────────────────────────┬───────────────────────────────────────┘
                                        │ (Pass Technical)
                                        ▼
   ┌────────────────────────────────────────────────────────────────────────────┐
   │ LỚP 3: HYBRID VLM VISUAL & CONTEXT SCORING (Resilient JSON Parser)         │
-  │ ├─ Eval strict: Local Unified VLM (qwen3.8-27b qua llama-server) — bắt buộc│
+  │ ├─ Eval strict: Local Unified VLM (qwen3.5-9b qua llama-server) — bắt buộc │
   │ ├─ Dev primary: Cloud Gemini 3.6 Flash API (khi có GEMINI_API_KEY)         │
   │ └─ Dev fallback (429/500/Timeout): Local CLIP/SigLIP Cosine Scorer        │
   │ - Historical Context Score (0-40): Đúng trang phục, cờ, kiến trúc VN?     │
@@ -156,7 +159,7 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
 
 ## 5. Tương Tác Giữa VLM Sub-Agent Và Multi-Agent Orchestrator
 
-**Đầu vào candidate:** VLM Inspector **nhận candidate pool từ Research Agent (Micro-Step 1C)** qua state `researchResults[sceneId]`. Research Agent dùng provider chain online (SerpAPI / Tavily / Brave Search API → Wikimedia Commons → Curated Catalog) và chỉ chấp nhận ảnh từ domain whitelist, nên VLM Inspector không phải lọc nguồn rác — chỉ tập trung chấm điểm bối cảnh lịch sử, nhiễu thị giác và thẩm mỹ.
+**Đầu vào candidate:** VLM Inspector **nhận candidate pool từ Research Agent (Micro-Step 1C)** qua state `researchResults[sceneId]`. Research Agent gọi công cụ **`executeImageSearchTool`** với đầu vào **`ImageSearchToolInput`** chuẩn (`primaryQuery`, `englishQuery`, `visualType`, `historicalPeriod`), kích hoạt provider chain online (SerpAPI / Tavily / Brave Search API → Wikimedia Commons Live → Curated Catalog 13 assets verified) và chỉ chấp nhận ảnh từ domain whitelist, bảo đảm ảnh tải về được tự động tối ưu qua **Sharp Resizer (1080p, <=2MB)** trước khi VLM Inspector tiến hành chấm điểm bối cảnh lịch sử, nhiễu thị giác và thẩm mỹ.
 
 ```json
 // Output trả về từ VLM Sub-Agent gửi đến Master Orchestrator:
@@ -193,4 +196,4 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
 
 ## 6. Ý Nghĩa Kỹ Thuật Của VLM Inspector Sub-Agent (v3.3)
 
-Nhờ Sub-Agent VLM Inspector (Local Unified Multimodal VLM `qwen3.8-27b-instruct-q4_k_m` cho eval strict, Hybrid Gemini + Local CLIP cho dev, License Whitelist Filter và Redis Caching) và cơ chế Fallback Pure Code, ChronoViet giải quyết triệt để rủi ro lớn nhất của các hệ thống tự động hóa video: **Hệ thống luôn luôn render xuất ra được video hoàn chỉnh, đẹp mắt, an toàn về mặt văn hóa/lịch sử và tuân thủ bản quyền thương mại 100% ngay cả khi nguồn dữ liệu crawl trên internet bị thiếu sót hoặc cloud API gặp sự cố.**
+Nhờ Sub-Agent VLM Inspector (Local Unified Multimodal VLM `qwen3.5-9b-instruct-q4_k_m` cho eval strict, Hybrid Gemini + Local CLIP cho dev, License Whitelist Filter và Redis Caching) và cơ chế Fallback Pure Code, ChronoViet giải quyết triệt để rủi ro lớn nhất của các hệ thống tự động hóa video: **Hệ thống luôn luôn render xuất ra được video hoàn chỉnh, đẹp mắt, an toàn về mặt văn hóa/lịch sử và tuân thủ bản quyền thương mại 100% ngay cả khi nguồn dữ liệu crawl trên internet bị thiếu sót hoặc cloud API gặp sự cố.**

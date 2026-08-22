@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
-  initProjectWorkspace,
-  getProjectRootDir,
+  getProjectPaths,
   loadProjectSchema,
   createLogger,
   httpRequestsTotal,
@@ -24,11 +23,39 @@ export async function GET(
   const reqLog = log.child({ correlationId, fields: { projectId } });
 
   try {
-    const rootDir = getProjectRootDir(projectId);
-    const metaFile = path.join(rootDir, 'metadata.json');
-    const schemaFile = path.join(rootDir, 'project_schema.json');
+    let paths;
+    try {
+      paths = getProjectPaths(projectId);
+    } catch {
+      httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id', status_class: '4xx' });
+      return NextResponse.json(
+        { error: `Invalid project id: ${projectId}` },
+        { status: 400, headers: { 'x-request-id': correlationId } }
+      );
+    }
 
-    if (!fs.existsSync(rootDir) || (!fs.existsSync(metaFile) && !fs.existsSync(schemaFile))) {
+    let rootStat: fs.Stats | null = null;
+    try {
+      rootStat = await fs.promises.stat(paths.rootDir);
+    } catch {
+      rootStat = null;
+    }
+
+    let metaRaw: string | null = null;
+    try {
+      metaRaw = await fs.promises.readFile(paths.metadataFile, 'utf-8');
+    } catch {
+      metaRaw = null;
+    }
+
+    let schemaRaw: string | null = null;
+    try {
+      schemaRaw = await fs.promises.readFile(paths.schemaFile, 'utf-8');
+    } catch {
+      schemaRaw = null;
+    }
+
+    if (!rootStat || (!metaRaw && !schemaRaw)) {
       httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id', status_class: '4xx' });
       return NextResponse.json(
         { error: `Project not found: ${projectId}` },
@@ -36,17 +63,15 @@ export async function GET(
       );
     }
 
-    const paths = initProjectWorkspace(projectId);
-
     let metadata: any = {};
-    if (fs.existsSync(paths.metadataFile)) {
+    if (metaRaw) {
       try {
-        metadata = JSON.parse(fs.readFileSync(paths.metadataFile, 'utf-8'));
+        metadata = JSON.parse(metaRaw);
       } catch {}
     }
 
     let schema: any = null;
-    if (fs.existsSync(paths.schemaFile)) {
+    if (schemaRaw) {
       try {
         schema = loadProjectSchema(projectId);
       } catch (err: any) {
@@ -55,11 +80,16 @@ export async function GET(
     }
 
     const videoPath = path.join(paths.outputDir, 'video.mp4');
-    const hasVideo = fs.existsSync(videoPath);
+    let hasVideo = false;
+    try {
+      await fs.promises.access(videoPath, fs.constants.F_OK);
+      hasVideo = true;
+    } catch {}
+
     const status = hasVideo ? 'COMPLETED' : schema ? 'PACKAGED' : metadata.status || 'INIT';
     const currentStep = hasVideo ? 12 : schema ? 12 : metadata.currentStep || 0;
-    const createdAt = metadata.createdAt || new Date(fs.statSync(paths.rootDir).birthtimeMs).toISOString();
-    const updatedAt = metadata.updatedAt || new Date(fs.statSync(paths.rootDir).mtimeMs).toISOString();
+    const createdAt = metadata.createdAt || (rootStat ? new Date(rootStat.birthtimeMs).toISOString() : new Date().toISOString());
+    const updatedAt = metadata.updatedAt || (rootStat ? new Date(rootStat.mtimeMs).toISOString() : new Date().toISOString());
 
     const durationSec = (Date.now() - startTime) / 1000;
     httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id', status_class: '2xx' });

@@ -6,6 +6,7 @@ import { ChronoGraphState, getNodeLogger } from '../graph/state.js';
 import { defaultCheckpointer } from '../graph/checkpointer.js';
 import { runOrchestratorPipeline, resumeOrchestratorPipeline, streamOrchestratorPipeline } from '../graph/orchestrator.js';
 import { extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
+import { vlmInspectionNode } from '../graph/nodes/vlm-node.js';
 
 // Mock callLlm for deterministic unit testing
 vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
@@ -429,6 +430,37 @@ describe('Agent Orchestrator Unit Tests', () => {
       expect(keywords).toContain('Trận Bạch Đằng');
       expect(keywords).toContain('Ngô Quyền');
       expect(keywords.some((k) => k.includes('“') || k.includes('”') || k.includes('—'))).toBe(false);
+    });
+
+    it('should fallback to PURE_CODE layout when VLM inspection fails', async () => {
+      const { inspectSceneVisuals } = await import('@chronoviet/vlm-inspector');
+      vi.mocked(inspectSceneVisuals).mockRejectedValueOnce(new Error('VLM Connection Timeout (10s)'));
+
+      const sampleState: Partial<ChronoGraphState> = {
+        projectId: 'test_proj_vlm_fallback_001',
+        userPrompt: 'Chiến thắng Bạch Đằng',
+        status: 'RESEARCH_COMPLETED',
+        currentStep: 9,
+        scenes: [
+          {
+            sceneId: 'sc_vlm_err_1',
+            sceneIndex: 0,
+            voiceoverText: 'Trận chiến ác liệt trên sông',
+            layoutMode: 'HISTORICAL_FRAME',
+            contentType: 'IMAGE',
+            searchKeywords: ['bạch đằng'],
+            candidates: [],
+            usePureCodeFallback: false,
+            targetDurationSeconds: 10,
+          },
+        ],
+      };
+
+      const result = await vlmInspectionNode(sampleState as ChronoGraphState);
+      expect(result.status).toBe('ASSETS_AUDITED');
+      expect(result.scenes).toBeDefined();
+      expect(result.scenes![0].contentType).toBe('PURE_CODE');
+      expect(result.scenes![0].usePureCodeFallback).toBe(true);
     });
   });
 });

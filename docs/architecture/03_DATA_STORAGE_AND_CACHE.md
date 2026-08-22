@@ -109,6 +109,13 @@ Dịch vụ Redis được sử dụng làm bộ nhớ đệm đa tầng để t
 4. **Persistent ETL Chunk Extraction Checkpoint & Cache (`.cache/extraction_triples/`):**
    * Lưu kết quả trích xuất bộ ba tri thức theo mã băm SHA-256 của từng đoạn văn bản (`chunk`).
    * Hỗ trợ pipeline `pnpm ingest:knowledge` tự động tiếp tục (Resume) từ vị trí dừng mà không cần trích xuất lại các chunk đã hoàn thành, tiết kiệm thời gian và tài nguyên suy luận LLM. Xóa sạch khi dùng cờ `--force`.
+5. **Project Directory In-Memory Cache (TTL: 60 giây):**
+   * Bộ nhớ đệm danh sách thư mục dự án cho `GET /api/v1/projects` giúp triệt tiêu hiện tượng $O(N)$ Disk I/O Amplification khi quét thư mục lưu trữ `/media/projects`.
+   * Tự động vô hiệu hóa (Invalidate) tức thì khi có dự án mới được khởi tạo qua `POST /api/v1/projects`.
+   * Phân cấp quản lý đường dẫn: `getProjectPaths(id)` (chỉ truy xuất đường dẫn bộ nhớ, không tạo thư mục, an toàn cho các GET requests) và `initProjectWorkspace(id)` (khởi tạo cấu trúc thư mục đĩa idempotent cho pipeline ghi).
+6. **In-Memory Dense Vector Embedding Cache (Smooth 20% LRU/FIFO Eviction):**
+   * Lưu trữ bộ đệm các vector nhúng BGE-M3 (1024 chiều) trong `embeddingCache` (`MAX_CACHE_SIZE = 5000`).
+   * Thay vì xóa sạch 100% gây hiện tượng Cache Stampede khi quá tải, hàm `evictOldestCacheEntries()` tự động giải phóng 20% bản ghi cũ nhất (1000 items) theo thứ tự chèn (FIFO/LRU) và giữ lại 80% warm cache, bảo toàn tỷ lệ hit rate cao cho các tác vụ batch ingestion và multi-scene generation.
 
 ---
 
@@ -142,4 +149,49 @@ Trong môi trường phát triển (Development) và kiểm thử tự động (
 1. **Phân biệt rạch ròi môi trường:** Dữ liệu trong Codebase chỉ là Mock/Benchmark. Mọi dữ liệu thực tế phát sinh của người dùng đều lưu ở Postgres/Redis/Volume `/media`.
 2. **Unit Benchmark Nhanh:** Dev làm việc ở module nào chỉ cần chạy eval độc lập ở module đó (`pnpm --filter @chronoviet/rag-engine eval`) mà không bị phình dung lượng repo hay phụ thuộc môi trường ngoài.
 3. **E2E Regression Test:** Thư mục `/eval` tập trung tại Root chịu trách nhiệm chạy test tích hợp toàn pipeline từ A-Z để đảm bảo 0 lỗi phát sinh khi kết hợp các module lại với nhau trước khi release.
+
+---
+
+## 5. Chiến Lược Sao Lưu & Khôi Phục Dữ Liệu (PostgreSQL Backup & Disaster Recovery)
+
+Nhằm bảo vệ dữ liệu tri thức đồ thị (Knowledge Graph) và không gian vector (1024d HNSW Embeddings) trước các tác vụ làm sạch, chuẩn hóa hoặc kiểm thử phá hủy (destructive operations), hệ thống tích hợp sẵn bộ công cụ sao lưu và khôi phục tự động qua Docker:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                     POSTGRESQL BACKUP & DISASTER RECOVERY PIPELINE                      │
+│                                                                                         │
+│  [PostgreSQL Container]                                                                 │
+│           │                                                                             │
+│           ├───► pg_dump (-Fc Binary Custom Format) ───► backups/db_backup_<timestamp>.dump│
+│           │                                                    │ (Auto Copy)            │
+│           │                                                    ▼                        │
+│           │                                          backups/db_latest.dump             │
+│           │                                                    │                        │
+│           │     (When recovery needed)                         │                        │
+│           ◄─── pg_restore (--clean --if-exists) ───────────────┘                        │
+│           │                                                                             │
+│           └───► Auto Trigger: verifyDbHealth() ───► Audit 6 Chiều Toàn Vẹn CSDL         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 5.1. Đặc Tính Kỹ Thuật:
+1. **Binary Custom Format (`.dump` qua `-Fc`):**
+   - Nén nhị phân hiệu năng cao, bảo toàn 100% định nghĩa cấu trúc, chỉ mục Vector HNSW (`vector_cosine_ops`), Full-Text Search tsvector và toàn bộ ràng buộc khóa ngoại (Foreign Keys).
+2. **Pointer Bản Mới Nhất (`backups/db_latest.dump`):**
+   - Mỗi lần chạy sao lưu, hệ thống tự động cập nhật bản snapshot vào file `db_latest.dump` để có thể khôi phục tức thì bằng 1 lệnh mà không cần chỉ định tên file cụ thể.
+3. **Tự Động Kiểm Định Tính Toàn Vẹn (Automated Post-Restore Audit):**
+   - Lệnh khôi phục tự động kích hoạt `scripts/verify-db-health.ts` để rà soát 6 chiều: không có self-loops, không có quan hệ mồ côi (zero dangling references), 100% chỉ mục duy nhất và HNSW vector còn nguyên vẹn.
+
+### 5.2. Lệnh Vận Hành & Quản Lý Phiên Bản:
+```bash
+# 1. Tạo bản sao lưu Snapshot có định danh tên & phiên bản cụ thể (Khuyến nghị):
+pnpm db:backup --name post_ingest_v1
+# (Hệ thống tạo file backups/post_ingest_v1.dump và tự động cập nhật pointer backups/db_latest.dump)
+
+# 2. Khôi phục CSDL từ file phiên bản Snapshot cụ thể:
+pnpm db:restore --file backups/post_ingest_v1.dump
+
+# 3. Khôi phục nhanh từ bản Snapshot mới nhất:
+pnpm db:restore
+```
 

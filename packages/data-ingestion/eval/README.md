@@ -98,14 +98,27 @@ pnpm eval --chain ingest-rag
 *Báo cáo xuất tại:* `eval/reports/ingest-rag-chain-report.json`.
 
 ### 3. Đánh Giá Cục Bộ & Kiểm Thử Đơn Vị (Unit Tests & Local Benchmark)
-```bash
-# Chạy bộ benchmark 4 KPI của Module 0
-pnpm --filter @chronoviet/data-ingestion eval
 
-# Chạy deterministic unit tests (chạy trong CI)
+> ⚠️ **Chế độ Strict Pre-flight (`EVAL_STRICT`):** Khi chạy các lệnh đánh giá, hệ thống kết nối trực tiếp đến PostgreSQL và mô hình AI thật (BGE-M3 `port 8090`, Qwen-4B `port 8094`). Nếu DB hoặc Model chưa bật, hệ thống sẽ **báo lỗi chi tiết và dừng lại ngay lập tức (Fail-Fast)**, tuyệt đối không chạy fallback giả lập để đảm bảo kết quả đo đạc trung thực 100%.
+
+```bash
+# 0. Khởi động hạ tầng DB và AI cục bộ trước khi chạy eval:
+pnpm stack:infra                                # Khởi động PostgreSQL (pgvector)
+pnpm ai:lite                                    # Khởi động Embedding (8090) + Extraction (8094) (~3.1 GB RAM)
+
+# 1. Chạy Master Evaluation trên CSDL thật (Stage 1 Vector + Stage 2 Graph):
+pnpm eval:ingest                                # hoặc: pnpm --filter @chronoviet/data-ingestion eval
+
+# 2. Chạy đánh giá chuyên biệt từng thành phần:
+pnpm eval:ingest:vector                         # Benchmark 100 câu hỏi Vector Retrieval trên pgvector HNSW thật
+pnpm eval:ingest:graph                          # Đánh giá 82,849 quan hệ, ma trận hướng (99.5%) & độ kết nối
+pnpm eval:ingest:triples                        # Đánh giá mô hình trích xuất bộ ba với Qwen-4B thật
+pnpm eval:ingest:ner                            # Đánh giá bóc tách thực thể Stage 1 NER (F1: 97.04%, <0.4ms)
+
+# 3. Chạy deterministic unit tests (chạy trong CI):
 pnpm --filter @chronoviet/data-ingestion test
 ```
-*Báo cáo xuất tại:* `packages/data-ingestion/eval/reports/ingest-eval-report.json`.
+*Báo cáo xuất tại:* `packages/data-ingestion/eval/reports/ingest-eval-report.json`, `stage1-vector-eval-report.json`, `stage2-graph-eval-report.json`.
 
 ---
 
