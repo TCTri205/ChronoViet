@@ -17,7 +17,7 @@
     "@chronoviet/infra": "workspace:*",
     "@chronoviet/vlm-inspector": "workspace:*",
     "@chronoviet/remotion-engine": "workspace:*",
-    "bullmq": "^5.1.0",
+    "bullmq": "^6.2.0",
     "ioredis": "^5.3.2"
   },
   "devDependencies": {
