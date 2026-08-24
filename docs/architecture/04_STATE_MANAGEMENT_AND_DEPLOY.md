@@ -62,7 +62,7 @@ ChronoViet hỗ trợ đồng thời 2 môi trường phần cứng với cơ ch
 ### 3.1. Target 1: Local Dev trên macOS (Apple Silicon Metal & UMA)
 - **Host Native AI Engines:** Do Docker Desktop trên macOS không hỗ trợ passthrough Metal GPU, các mô hình `llama-server` (LLM/VLM 8092 & BGE-M3 Embedding 8090) chạy trực tiếp trên Host OS thông qua `scripts/ai-supervisor.ts` nhằm khai thác 100% băng thông Unified Memory Architecture (UMA).
 - **Containerized Auxiliary Services:** PostgreSQL (pgvector), Redis, và VieNeu TTS FastAPI ONNX chạy trong Docker Desktop (`docker compose --profile infra --profile tts up -d`).
-- **Orchestration:** Khởi động toàn bộ stack chỉ với 1 lệnh `pnpm dev:stack`.
+- **Orchestration:** Khởi động toàn bộ stack chỉ với 1 lệnh `pnpm dev` (hoặc `pnpm dev:full` khi cần kèm AI Supervisor + VieNeu TTS).
 
 ### 3.2. Target 2: Production trên Linux Server (NVIDIA CUDA GPU)
 - **100% Containerized:** Khai thác NVIDIA Container Toolkit, đóng gói toàn bộ hệ thống trong Docker Compose:

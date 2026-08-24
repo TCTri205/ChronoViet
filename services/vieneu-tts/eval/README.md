@@ -1,15 +1,19 @@
-# VieNeu TTS Engine Evaluation Suite (`services/vieneu-tts/eval/`)
+# VieNeu TTS Evaluation (`services/vieneu-tts/eval/`)
 
 ## 📌 Overview
-Bộ công cụ đánh giá chuyên biệt dành cho **VieNeu TTS Service** (NeuCodec ONNX Runtime Synthesis + Subtitle Word Timestamps Alignment). Đảm bảo chất lượng giọng đọc thuyết minh lịch sử Tiếng Việt, tốc độ xử lý âm thanh thực tế, và độ chính xác tuyệt đối khi quy đổi mốc từ sang khung hình phụ đề Remotion Karaoke.
+Bộ đánh giá chất lượng cho **VieNeu TTS Microservice** (Python FastAPI ONNX Runtime Synthesis + Subtitle Word Timestamps Alignment). Nhằm bảo đảm chất lượng giọng đọc thuyết minh lịch sử Tiếng Việt, đo độ trễ xử lý, và kiểm tra tính đầy đủ của `wordTimestamps` / audio trả về từ endpoint hoạt động (thay vì file giả).
+
+Benchmark được viết thuần **Python** tại [`eval.py`](eval.py) và chạy qua HTTP request tới `/api/v1/synthesize` — được điều phối bằng script `pnpm eval:tts` (hoặc chạy trực tiếp `python3 services/vieneu-tts/eval/eval.py`).
+
+> **Kiến trúc v4.0:** Toàn bộ Node.js Client SDK (`VieNeuEngine`, `convertVieNeuTimestampsToCaptions`, `calculateSceneDurationInFrames`) đã được chuyển về `packages/infra/src/tts/` và export từ `@chronoviet/infra`. Thư mục `services/vieneu-tts` chỉ còn là microservice Python thuần túy.
 
 ---
 
 ## 📊 Core Metrics & Targets (KPI Benchmark)
 
 1. **Real-Time Factor (RTF)**: $< 0.3\text{x}$ (Thời gian tổng hợp âm thanh / Thời lượng Audio thực tế trên CPU).
-2. **Word Timestamp Alignment Error**: $< 50\text{ms}$ (Không có hiện tượng đảo mốc thời gian `startMs > endMs` hoặc nén từ).
-3. **Duration Frame Calculation Error**: $< 1.0$ frame ($33.3\text{ms}$ tại 30 FPS) khi áp dụng công thức:
+2. **Word Timestamp Alignment**: `wordTimestamps` phải trả về đầy đủ, không đảo mốc thời gian (`startMs > endMs` hoặc nén từ).
+3. **Duration Frame Calculation**: $< 1.0$ frame ($33.3\text{ms}$ tại 30 FPS) khi áp dụng công thức:
    $$\text{calculatedFrames} = \left\lceil \frac{\text{audioDurationMs} + 300}{1000} \times 30 \right\rceil$$
 
 ---
@@ -18,47 +22,36 @@ Bộ công cụ đánh giá chuyên biệt dành cho **VieNeu TTS Service** (Neu
 
 ```
 eval/
-├── README.md                           # Tài liệu hướng dẫn này
-├── runner.ts                           # Main Eval Runner đo lường RTF, alignment & frame error (hỗ trợ --fresh, --clean)
-├── datasets/
-│   ├── historical_50_sentences.json    # Dataset 50 câu văn bản lịch sử tiếng Việt phức tạp
-│   └── remotion_script_sentences.json  # Dataset câu thoại trích xuất từ kịch bản Remotion thực tế
-├── scripts/
-│   └── extract_remotion_dataset.ts     # Tool trích xuất dataset từ file testcases kịch bản JSON
-└── reports/
-    ├── report_generator.ts             # Module tổng hợp báo cáo & xuất định dạng JSON/Markdown
-    ├── report.json                     # Kết quả báo cáo chi tiết dạng JSON
-    └── report.md                       # Báo cáo đánh giá tổng quan dạng GFM Markdown
+├── README.md             # Tài liệu hướng dẫn này
+├── eval.py               # Python Benchmark: gọi HTTP /synthesize, đo latency & timestamps
+├── datasets/             # Bộ dữ liệu câu tiếng Việt lịch sử phục vụ benchmark
+└── reports/              # Nơi lưu báo cáo kết quả đánh giá (JSON/Markdown)
 ```
 
 ---
 
-## 🚀 How to Run Evaluation & Extract Datasets
+## 🚀 How to Run Evaluation
 
-### 1. Chạy Evaluation Suite (từ Root Monorepo)
+### 1. Chạy Benchmark (từ Root Monorepo)
 ```bash
-# Thực thi qua pnpm workspace filter:
-pnpm --filter @chronoviet/vieneu-tts eval
+# Chạy qua script chuẩn hóa của monorepo
+pnpm eval:tts
 
-# Chạy với chế độ làm sạch báo cáo & audio rác trước khi eval:
-pnpm --filter @chronoviet/vieneu-tts eval -- --fresh
+# Hoặc chạy trực tiếp script Python
+python3 services/vieneu-tts/eval/eval.py
 ```
 
-### 2. Chạy với ngưỡng RTF tùy chỉnh qua biến môi trường
+### 2. Cấu hình endpoint
+Biến môi trường `VIENEU_TTS_API_URL` trỏ tới endpoint synthesize (mặc định `http://localhost:8080/api/v1/synthesize`):
 ```bash
-EVAL_MAX_RTF=0.4 pnpm --filter @chronoviet/vieneu-tts eval
+VIENEU_TTS_API_URL=http://localhost:8080/api/v1/synthesize python3 services/vieneu-tts/eval/eval.py
 ```
 
-### 3. Trích xuất Dataset kịch bản Remotion mới
-```bash
-npx tsx services/vieneu-tts/eval/scripts/extract_remotion_dataset.ts
-```
+### 3. Preflight bắt buộc (Eval Integrity)
+Khi chạy eval, microservice Python ONNX phải đang hoạt động tại `VIENEU_PYTHON_URL` (endpoint `GET /health`). Nếu service offline, benchmark sẽ báo `SKIPPED` cho từng mẫu — **không dùng sine-wave giả** để lấy điểm pass.
 
 ---
 
-## 📈 Engine Detection & Dual-Layer Mode
-Khi thực thi `runner.ts`, bộ đánh giá tự động nhận diện chế độ engine đang hoạt động:
-* 🤖 **REAL_NEURAL_ONNX**: Kết nối trực tiếp Python FastAPI Microservice (`app.py`, 24kHz NeuCodec ONNX).
-* ⚙️ **SYNTHETIC_FALLBACK_TONE**: Chỉ xuất hiện khi `EVAL_STRICT=false` (dev) — microservice Python chưa bật, dùng Sine Wave Generator.
-
-> ⚠️ **Preflight bắt buộc (Eval Integrity):** Khi `EVAL_STRICT=true` (mặc định), eval fail-fast nếu **VieNeu Python ONNX service** (`VIENEU_PYTHON_URL`, endpoint `GET /health`) không hoạt động — không dùng sine-wave giả. Report JSON ghi rõ `preflight` + `engineType`. Dev-mode: `EVAL_STRICT=false` (KHÔNG hợp lệ làm benchmark).
+## 📈 Engine Detection & Mode
+* 🤖 **REAL_NEURAL_ONNX**: Kết nối Python FastAPI Microservice (`app.py`, 24kHz NeuCodec ONNX) — chế độ hợp lệ làm benchmark.
+* ⚙️ **SYNTHETIC_FALLBACK_TONE**: Chỉ dùng trong dev khi `EVAL_STRICT=false` — Node.js fallback tại `@chronoviet/infra/src/tts/` sinh sine wave 480Hz (KHÔNG hợp lệ làm benchmark).

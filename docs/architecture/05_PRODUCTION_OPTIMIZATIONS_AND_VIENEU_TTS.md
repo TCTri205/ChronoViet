@@ -71,7 +71,7 @@ $$\text{durationInFrames} = \left\lceil \frac{7400 + 300}{1000} \times 30 \right
 #### *Giải pháp hoàn chỉnh:*
 ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS chuyên biệt cho tiếng Việt đóng gói dưới dạng Docker Container (Python 3.11 FastAPI) kết hợp kiến trúc phòng thủ 2 lớp (Dual-Layer Architecture):
 1. **Lớp Primary Neural Engine**: Python FastAPI microservice (`app.py`) chạy mô hình VieNeu ONNX & NeuCodec sinh file âm thanh chất lượng cao 24kHz (PCM 16-bit) kèm phân bổ mốc từ ngữ `wordTimestamps` thông minh. Khi chạy chế độ không weights, service tự động vận hành ở chế độ Python PCM-16 Synthesizer dự phòng mà không bao giờ sập container.
-2. **Lớp Dual-Layer Fallback Engine**: Node.js `SyntheticTTSFallbackEngine` (`src/engine.ts`) tự động kích hoạt khi microservice Python chưa khởi chạy hoặc timeout, sinh xung âm thanh định thanh 480Hz để tiến trình render video Remotion không bao giờ ngắt quãng.
+2. **Lớp Dual-Layer Fallback Engine**: Node.js `SyntheticTTSFallbackEngine` (`packages/infra/src/tts/`) tự động kích hoạt khi microservice Python chưa khởi chạy hoặc timeout, sinh xung âm thanh định thanh 480Hz để tiến trình render video Remotion không bao giờ ngắt quãng.
 
 ---
 
@@ -171,7 +171,7 @@ export function convertVieNeuTimestampsToCaptions(
 
 Dữ liệu `captions` này được truyền trực tiếp vào `DocumentarySubtitle.tsx` của Remotion Engine để tự động làm sáng từ Karaoke màu vàng/đỏ cổ điển khi giọng đọc VieNeu vang lên. 
 
-Toàn bộ quy trình tổng hợp và chuyển đổi mốc từ đều được tự động thẩm định độc lập qua bộ kiểm thử `services/vieneu-tts/eval/` với 3 tiêu chuẩn KPI bắt buộc: **RTF < 0.3x**, **Alignment Error < 50ms**, và **Frame Calculation Error < 1 frame**.
+Toàn bộ quy trình tổng hợp và chuyển đổi mốc từ đều được tự động thẩm định độc lập qua bộ benchmark Python `services/vieneu-tts/eval/eval.py` (chạy bằng `pnpm eval:tts`) với 3 tiêu chuẩn KPI bắt buộc: **RTF < 0.3x**, **Alignment Error < 50ms**, và **Frame Calculation Error < 1 frame**.
 
 ---
 
@@ -182,7 +182,7 @@ Toàn bộ quy trình tổng hợp và chuyển đổi mốc từ đều đượ
 | **1. Quản lý RAM/CPU khi Render** | Pre-download Local Assets + Chromium Process Cleanup sau mỗi Job | Giảm 70% RAM tiêu thụ, tránh đơ/OOM server. |
 | **2. Độ trễ VLM Inspection** | Offload sang Gemini 3.6 Flash Cloud API + Dual-Layer Cache (Redis + pHash) | Giảm thời gian audit từ 30s xuống < 1s, tiết kiệm GPU. |
 | **3. Đồng bộ Audio - Visual** | Công thức $\lceil \frac{\text{DurationMs} + 300}{1000} \times 30 \rceil$ dựa trên file `.wav` thực tế | Tránh 100% rủi ro audio bị chèn hoặc hẫng nhịp. |
-| **4. Giọng đọc & Subtitle Karaoke** | Self-Hosted VieNeu TTS Dual-Layer Microservice + Alignment Timestamps Converter + Eval Suite (`eval/`) | Giọng đọc lịch sử truyền cảm, phụ đề Karaoke chạy chuẩn xác theo từ, có bộ đánh giá độc lập. |
+| **4. Giọng đọc & Subtitle Karaoke** | Self-Hosted VieNeu TTS Microservice (Python ONNX + Node.js SDK tại `@chronoviet/infra/tts`) + Alignment Timestamps Converter + Benchmark Python (`eval/eval.py`) | Giọng đọc lịch sử truyền cảm, phụ đề Karaoke chạy chuẩn xác theo từ, có benchmark đánh giá độc lập. |
 | **5. Web Disk I/O & Core Web Vitals** | Async non-blocking Route Handlers + Lazy Pagination Metadata Cache (60s) + Next.js Dynamic Imports (`VideoPlayer`) + Package Import Optimization | Triệt tiêu Node.js Event Loop blocking, giảm First Load JS, LCP/INP tối ưu, CLS = 0. |
 | **6. Background Worker Memory & Disk Safety** | Async non-blocking file streaming (`fs.promises.*`), sao chép đệm bất đồng bộ trong TTS Worker, dọn dẹp thư mục `temp/` tự động | Giảm 33% áp lực RAM trong Chromium & GC, triệt tiêu blocking I/O trong Worker pool. |
 

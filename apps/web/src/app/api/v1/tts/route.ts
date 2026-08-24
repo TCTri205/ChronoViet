@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { VieNeuEngine } from '@chronoviet/vieneu-tts';
 import {
+  VieNeuEngine,
   createLogger,
   httpRequestsTotal,
   httpRequestDurationSeconds,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 
 const log = createLogger({ service: 'web-api-tts' });
 const ttsEngine = new VieNeuEngine();

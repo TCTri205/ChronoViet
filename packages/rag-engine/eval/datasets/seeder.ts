@@ -8,15 +8,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
+  ChronoevalDatasetItem,
+  GoldReasoningTriple,
+} from '@chronoviet/shared-spec';
+import {
   isPgAvailable,
   query,
   initSchema,
   generateEmbedding,
   inMemoryStore,
-  ChronoevalDatasetItem,
-  GoldReasoningTriple,
   createLogger,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { buildChronoEvalDatasets } from './builder.js';
 
 const log = createLogger({ service: 'rag-benchmark-seeder' });
@@ -182,26 +184,6 @@ export async function ensureBenchmarkDatabaseSeeded(options?: SeederOptions): Pr
   // 2. PostgreSQL Seeding
   await initSchema();
 
-  if (!forceRebuild) {
-    const chunkRows = await query<{ count: string }>('SELECT COUNT(*) as count FROM document_chunks;');
-    const relRows = await query<{ count: string }>('SELECT COUNT(*) as count FROM relationships;');
-    const currentChunks = parseInt(chunkRows[0]?.count || '0', 10);
-    const currentRels = parseInt(relRows[0]?.count || '0', 10);
-
-    if (currentChunks >= 100 && currentRels >= 50) {
-      log.info('seeder.already_seeded', 'PostgreSQL database already has benchmark dataset seeded', {
-        chunks: currentChunks,
-        relationships: currentRels,
-      });
-      return {
-        chunksCount: currentChunks,
-        relationshipsCount: currentRels,
-        entitiesCount: entityMap.size,
-        usedPostgres: true,
-      };
-    }
-  }
-
   log.info('seeder.seeding_postgres', 'Seeding benchmark dataset into PostgreSQL...', {
     totalEntities: entityMap.size,
     totalTriples: goldTriples.length,
@@ -219,74 +201,112 @@ export async function ensureBenchmarkDatabaseSeeded(options?: SeederOptions): Pr
     );
   }
 
-  // B. Seed Relationships
+  // B. Seed Relationships (always, so C3/SYS traverse the gold graph — not the production graph)
+  // First clear any stale relationships between benchmark entities so the gold graph is the
+  // ONLY graph those benchmarks traverse (the shared DB also contains production relations).
+  const benchmarkEntityIds = Array.from(entityMap.keys());
+  if (benchmarkEntityIds.length > 0) {
+    await query(
+      `DELETE FROM relationships
+       WHERE source_entity_id = ANY($1) OR target_entity_id = ANY($1);`,
+      [benchmarkEntityIds]
+    );
+  }
   for (const triple of goldTriples) {
     await query(
       `INSERT INTO relationships (source_entity_id, target_entity_id, relation_type, confidence)
-       VALUES ($1, $2, $3, $4);`,
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT DO NOTHING;`,
       [triple.subject, triple.object, triple.relation, triple.confidence ?? 1.0]
     );
   }
 
-  // C. Seed Document Chunks with real embeddings
+  // C. Skip embedding/chunk re-generation when the benchmark chunks already exist
+  if (!forceRebuild) {
+    const sampleCanonicalChunk = await query<{ count: string }>(
+      "SELECT COUNT(*) as count FROM document_chunks WHERE id LIKE 'chunk_%_narrative_primary' OR id = 'chunk_event_dung_nuoc_van_lang_narrative_primary';"
+    );
+    const benchmarkCount = parseInt(sampleCanonicalChunk[0]?.count || '0', 10);
+
+    if (benchmarkCount >= 100) {
+      log.info('seeder.already_seeded', 'PostgreSQL benchmark chunks already seeded; skipping embedding regeneration', {
+        benchmarkCanonicalChunks: benchmarkCount,
+      });
+      return {
+        chunksCount: benchmarkCount,
+        relationshipsCount: goldTriples.length,
+        entitiesCount: entityMap.size,
+        usedPostgres: true,
+      };
+    }
+  }
+
+  // D. Seed Document Chunks with real embeddings (in parallel batches)
   log.info('seeder.generating_embeddings', 'Generating real 1024d embeddings for benchmark chunks...');
-  for (const chunk of chunkMap.values()) {
-    const textToEmbed = `${chunk.title}: ${chunk.textContent}`.trim();
-    let emb: number[] | undefined;
-    try {
-      emb = await generateEmbedding(textToEmbed);
-    } catch {
-      emb = undefined;
-    }
+  const chunksArray = Array.from(chunkMap.values());
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < chunksArray.length; i += BATCH_SIZE) {
+    const batch = chunksArray.slice(i, i + BATCH_SIZE);
+    await Promise.all(
+      batch.map(async (chunk) => {
+        const textToEmbed = `${chunk.title}: ${chunk.textContent}`.trim();
+        let emb: number[] | undefined;
+        try {
+          emb = await generateEmbedding(textToEmbed);
+        } catch {
+          emb = undefined;
+        }
 
-    const vectorString = emb && emb.length > 0 ? `[${emb.join(',')}]` : null;
+        const vectorString = emb && emb.length > 0 ? `[${emb.join(',')}]` : null;
 
-    if (vectorString) {
-      await query(
-        `INSERT INTO document_chunks (id, title, text_content, dynasty, epoch_ids, source_reliability, time_start, time_end, embedding)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::vector)
-         ON CONFLICT (id) DO UPDATE
-         SET title = EXCLUDED.title, text_content = EXCLUDED.text_content, embedding = EXCLUDED.embedding, dynasty = EXCLUDED.dynasty;`,
-        [
-          chunk.id,
-          chunk.title,
-          chunk.textContent,
-          chunk.dynasty,
-          chunk.epochIds,
-          chunk.sourceReliability,
-          chunk.timeStart ?? null,
-          chunk.timeEnd ?? null,
-          vectorString,
-        ]
-      );
-    } else {
-      await query(
-        `INSERT INTO document_chunks (id, title, text_content, dynasty, epoch_ids, source_reliability, time_start, time_end)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-         ON CONFLICT (id) DO UPDATE
-         SET title = EXCLUDED.title, text_content = EXCLUDED.text_content, dynasty = EXCLUDED.dynasty;`,
-        [
-          chunk.id,
-          chunk.title,
-          chunk.textContent,
-          chunk.dynasty,
-          chunk.epochIds,
-          chunk.sourceReliability,
-          chunk.timeStart ?? null,
-          chunk.timeEnd ?? null,
-        ]
-      );
-    }
+        if (vectorString) {
+          await query(
+            `INSERT INTO document_chunks (id, title, text_content, dynasty, epoch_ids, source_reliability, time_start, time_end, embedding)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::vector)
+             ON CONFLICT (id) DO UPDATE
+             SET title = EXCLUDED.title, text_content = EXCLUDED.text_content, embedding = EXCLUDED.embedding, dynasty = EXCLUDED.dynasty;`,
+            [
+              chunk.id,
+              chunk.title,
+              chunk.textContent,
+              chunk.dynasty,
+              chunk.epochIds,
+              chunk.sourceReliability,
+              chunk.timeStart ?? null,
+              chunk.timeEnd ?? null,
+              vectorString,
+            ]
+          );
+        } else {
+          await query(
+            `INSERT INTO document_chunks (id, title, text_content, dynasty, epoch_ids, source_reliability, time_start, time_end)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (id) DO UPDATE
+             SET title = EXCLUDED.title, text_content = EXCLUDED.text_content, dynasty = EXCLUDED.dynasty;`,
+            [
+              chunk.id,
+              chunk.title,
+              chunk.textContent,
+              chunk.dynasty,
+              chunk.epochIds,
+              chunk.sourceReliability,
+              chunk.timeStart ?? null,
+              chunk.timeEnd ?? null,
+            ]
+          );
+        }
 
-    // Link entity_chunks
-    for (const entId of chunk.entityIds) {
-      await query(
-        `INSERT INTO entity_chunks (entity_id, chunk_id)
-         VALUES ($1, $2)
-         ON CONFLICT DO NOTHING;`,
-        [entId, chunk.id]
-      );
-    }
+        // Link entity_chunks
+        for (const entId of chunk.entityIds) {
+          await query(
+            `INSERT INTO entity_chunks (entity_id, chunk_id)
+             VALUES ($1, $2)
+             ON CONFLICT DO NOTHING;`,
+            [entId, chunk.id]
+          );
+        }
+      })
+    );
   }
 
   log.info('seeder.seeding_complete', 'Benchmark database seeding finished successfully');

@@ -30,6 +30,9 @@ import {
   VideoBrief,
   GraphTripleItem,
   HistoricalCitationItem,
+  GroundedClaimItem,
+  HistoricalAnswerGenerationRequest,
+  HistoricalAnswerResponse,
 } from './schema.js';
 
 export type {
@@ -50,6 +53,9 @@ export type {
   VideoBrief,
   GraphTripleItem,
   HistoricalCitationItem,
+  GroundedClaimItem,
+  HistoricalAnswerGenerationRequest,
+  HistoricalAnswerResponse,
 };
 export { getCanonicalEntityIdPrefix };
 
@@ -70,6 +76,7 @@ export const CHUNK_CHILD_OVERLAP_WORDS = 40;
 
 export interface IRagEngine {
   search(request: RagSearchRequestInput): Promise<RagSearchResponse>;
+  generateAnswer?(request: HistoricalAnswerGenerationRequest): Promise<HistoricalAnswerResponse>;
   ingestDocument(content: string, metadata: { title: string; source: string }): Promise<void>;
 }
 

@@ -7,7 +7,7 @@ import {
   createLogger,
   httpRequestsTotal,
   httpRequestDurationSeconds,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 
 const log = createLogger({ service: 'web-api-project-detail' });
 

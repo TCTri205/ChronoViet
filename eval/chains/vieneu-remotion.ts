@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import http from 'http';
 import { execSync } from 'child_process';
-import { ChronoVideoSchema, ChronoVideoProps, envConfig } from '../../packages/shared-spec/src';
-import { VieNeuEngine, convertVieNeuTimestampsToCaptions } from '../../services/vieneu-tts/src';
+import { ChronoVideoSchema, ChronoVideoProps } from '@chronoviet/shared-spec';
+import { VieNeuEngine, convertVieNeuTimestampsToCaptions, envConfig } from '@chronoviet/infra';
 import { cleanEvalArtifacts, isPortInUseSync, killPortProcessSync } from '../utils/cleaner';
 import { assertEvalPreflight } from '../utils/preflight';
 
@@ -180,8 +180,9 @@ export async function runVieNeuRemotionChain(options: {
       const fileName = path.basename(ttsResponse.audioUrl);
       
       const localPathsToTry = [
-        path.resolve(process.cwd(), 'services/vieneu-tts/media/audio-cache', fileName),
+        path.resolve(envConfig.AUDIO_CACHE_DIR, fileName),
         path.resolve(process.cwd(), 'media/audio-cache', fileName),
+        path.resolve('/media/audio-cache', fileName),
       ];
 
       for (const publicAudioDir of targetPublicAudioDirs) {

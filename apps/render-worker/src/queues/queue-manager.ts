@@ -5,7 +5,7 @@
 
 import { Queue, Worker, QueueEvents } from 'bullmq';
 import Redis from 'ioredis';
-import { createLogger, envConfig, formatErrorMessage, bullmqQueueJobsGauge } from '@chronoviet/shared-spec';
+import { createLogger, envConfig, formatErrorMessage, bullmqQueueJobsGauge } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'render-worker' });
 

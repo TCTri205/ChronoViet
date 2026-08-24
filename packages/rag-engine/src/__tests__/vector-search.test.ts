@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { inMemoryStore, envConfig } from '@chronoviet/shared-spec';
+import { inMemoryStore, envConfig } from '@chronoviet/infra';
 import {
   searchDenseVector,
   searchLexicalFTS,
   searchHybridVectorAndBM25,
   SimpleLRUCache,
   sanitizeFtsQuery,
+  removeVietnameseAccents,
 } from '../retrieval/vector-search.js';
 
 describe('Vector Search & Lexical FTS Retrieval', () => {
@@ -118,6 +119,25 @@ describe('Vector Search & Lexical FTS Retrieval', () => {
     const results = await searchLexicalFTS('Ai là người lãnh đạo cuộc khởi nghĩa Lam Sơn?', 5);
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].chunkId).toBe('chunk_lam_son');
+  });
+
+  it('should remove Vietnamese accents and tone marks correctly', () => {
+    expect(removeVietnameseAccents('Đại Việt Sử Ký Toàn Thư')).toBe('Dai Viet Su Ky Toan Thu');
+    expect(removeVietnameseAccents('Nguyễn Huệ Quang Trung Đống Đa')).toBe('Nguyen Hue Quang Trung Dong Da');
+  });
+
+  it('should match document chunks with unaccented or mixed diacritic query terms in lexical FTS', async () => {
+    inMemoryStore.documentChunks.set('chunk_quang_trung', {
+      id: 'chunk_quang_trung',
+      title: 'Vua Quang Trung',
+      text_content: 'Nguyễn Huệ chỉ huy quân Tây Sơn thần tốc tiến ra Thăng Long đại phá quân Thanh.',
+      source_reliability: 'LEVEL_1',
+    });
+
+    // Unaccented query "Nguyen Hue Tay Son"
+    const results = await searchLexicalFTS('Nguyen Hue Tay Son', 5);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].chunkId).toBe('chunk_quang_trung');
   });
 
   it('should cache and evict query embeddings using LRU policy in SimpleLRUCache', () => {

@@ -1,6 +1,6 @@
 import http from 'http';
 import next from 'next';
-import { createLogger, envConfig } from '@chronoviet/shared-spec';
+import { createLogger, envConfig } from '@chronoviet/infra';
 import { WebSocketGateway } from './server/ws-gateway';
 import { closeQueues } from './lib/queues';
 
@@ -30,23 +30,21 @@ async function bootstrap() {
   const wsGateway = new WebSocketGateway(server);
 
   server.listen(port, () => {
-    log.info('server.ready', `> ChronoViet Web & API Server ready on http://${hostname}:${port} [AI Mode: ${envConfig.AI_EXECUTION_MODE.toUpperCase()}]`);
+    log.info('server.ready', `Next.js & WebSocket Gateway running on http://${hostname}:${port} (dev=${dev})`);
   });
 
-  let isShuttingDown = false;
-  const shutdown = async (signal: string) => {
-    if (isShuttingDown) return;
-    isShuttingDown = true;
+  // Graceful shutdown handler
+  async function gracefulShutdown(signal: string) {
     log.info('server.shutdown', `Received ${signal}, gracefully shutting down server...`);
 
     try {
       // 1. Close WebSocket Gateway connections and subscriptions
-      await wsGateway.close().catch((err) => {
+      await wsGateway.close().catch((err: any) => {
         log.warn('server.ws_close_error', `Error closing WebSocket Gateway: ${err.message}`);
       });
 
       // 2. Close BullMQ queue connections
-      await closeQueues().catch((err) => {
+      await closeQueues().catch((err: any) => {
         log.warn('server.queues_close_error', `Error closing queues: ${err.message}`);
       });
 
@@ -63,8 +61,8 @@ async function bootstrap() {
     }
   };
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
 bootstrap().catch((err) => {

@@ -10,7 +10,8 @@
  *   pnpm db:audit-quarantine --dry-run
  */
 
-import { query, isPgAvailable, createLogger, logEntityAuditAction, closePool, resolveCanonicalEntity } from '@chronoviet/shared-spec';
+import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
+import { query, isPgAvailable, createLogger, logEntityAuditAction, closePool } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'quarantine-inspector' });
 

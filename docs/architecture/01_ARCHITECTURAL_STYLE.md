@@ -16,12 +16,16 @@ Dự án **ChronoViet** áp dụng kết hợp 3 mẫu kiến trúc hiện đạ
    * Quá trình sinh kịch bản, kiểm định ảnh VLM và render video Remotion diễn ra bất đồng bộ (Asynchronous) thông qua Redis BullMQ Message Queues.
    * Tầng biên tập nội dung AI (LangGraph.js) và Tầng dựng video React-Remotion giao tiếp với nhau duy nhất qua một **Data Contract chuẩn hóa (ChronoVideoScriptSchema v4.1 Zod SSOT từ `@chronoviet/shared-spec`)**.
 
-3. **Hexagonal Architecture / Clean Monorepo Architecture:**
-   * Phân tách rõ ràng trong pnpm Monorepo giữa các gói Core Business (`packages/agent-orchestrator`, `packages/rag-engine`, `packages/shared-spec`) và các Apps ứng dụng (`apps/web`, `apps/render-worker`).
+3. **Clean Monorepo & Pure Contract Boundary (Architecture v4.0):**
+   * **`@chronoviet/shared-spec` (Pure Contract SSOT):** Gói chứa duy nhất Zod schemas, TypeScript types, constants, không phụ thuộc bất kỳ runtime backend hay Node native module (`fs`, `net`, `tls`). Phục vụ an toàn cho cả browser (Remotion preview) và Node runtime.
+   * **`@chronoviet/infra` (Unified Runtime Infrastructure):** Gói hợp nhất chứa toàn bộ client hạ tầng Node.js (PostgreSQL pool, Redis BullMQ queues, Prometheus telemetry, structured logger, LLM rotator, BGE-M3 embedding caller, VieNeu TTS SDK).
+   * **Domain Packages:** `packages/agent-orchestrator` (LangGraph multi-agent + research provider chain), `packages/rag-engine` (GraphRAG CTE + vector retrieval), `packages/data-ingestion` (ETL crawler & dual-branch seeder), `packages/vlm-inspector` (deterministic visual quality gate), `packages/remotion-engine` (pure React video engine).
+   * **Applications:** `apps/web` (Next.js 14 Web App + WebSocket gateway) và `apps/render-worker` (BullMQ video rendering & background workers).
+   * **Microservice:** `services/vieneu-tts` (Python FastAPI ONNX standalone microservice).
 
 ---
 
-## 2. Phân Rã Dịch Vụ & Boundaries (Streamlined Service Topology)
+## 2. Phân Rã Dịch Vụ & Boundaries (Streamlined Service Topology v4.0)
 
 Hệ thống được thiết kế dưới dạng TypeScript Monorepo tinh gọn cho môi trường **Single-Host VPS Deployment**:
 
@@ -44,9 +48,15 @@ Hệ thống được thiết kế dưới dạng TypeScript Monorepo tinh gọn
                   ▼                                ▼                                ▼
        ┌────────────────────┐            ┌────────────────────┐          ┌────────────────────┐
        │   PostgreSQL DB    │            │ Unified Redis DB   │          │ AI & Render Worker │
-       │  (Relational + SSOT│            │ (BullMQ Job Queues │          │ (VieNeu TTS ONNX & │
-       │  + pgvector Search)│            │  + Multi-Cache)    │          │  Remotion Chrome)  │
-       └────────────────────┘            └────────────────────┘          └────────────────────┘
+       │  (Relational + SSOT│            │ (BullMQ Job Queues │          │ (Remotion Chrome & │
+       │  + pgvector Search)│            │  + Multi-Cache)    │          │  TTS Client Infra) │
+       └────────────────────┘            └────────────────────┘          └─────────┬──────────┘
+                                                                                   │ (HTTP :8080)
+                                                                                   ▼
+                                                                         ┌────────────────────┐
+                                                                         │ VieNeu TTS Service │
+                                                                         │ (Python ONNX micro)│
+                                                                         └────────────────────┘
 ```
 
 ### Chi tiết nhiệm vụ từng dịch vụ (Unified VPS Stack):
@@ -54,10 +64,11 @@ Hệ thống được thiết kế dưới dạng TypeScript Monorepo tinh gọn
 | Dịch vụ | Công nghệ chính | Trách nhiệm chính | Môi trường triển khai |
 | :--- | :--- | :--- | :--- |
 | **Caddy Gateway** | Caddy v2 Alpine | Route request, Auto-HTTPS/SSL Cert, Serve static `/media`, WebSocket forwarding, HTTP/2 & HTTP/3. | Docker Container (~30MB RAM) |
-| **App Monolith** | TypeScript / Node.js (Next.js / Fastify) | Quản lý NotebookLM Workspace (RAG Chatbot + 1-Click Video Generator), Projects CRUD, RAG Engine (Postgres `pgvector`), LangGraph Orchestrator (15 trạng thái, Postgres Checkpointer SSOT), Gemini Cloud VLM Inspection (LLM fallback: Agnes). | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
-| **Database Engine** | PostgreSQL 15+ (`pgvector`) | SSOT lưu trữ dữ liệu dự án, LangGraph state checkpoints, và Vector Embeddings (thay thế Qdrant/Neo4j để tiết kiệm tài nguyên). | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
+| **App Monolith** | Next.js 14 / TypeScript | Quản lý NotebookLM Workspace (RAG Chatbot + 1-Click Video Generator), Projects CRUD, RAG Engine (Postgres `pgvector`), LangGraph Orchestrator (Postgres Checkpointer SSOT). Sử dụng `@chronoviet/infra` và `@chronoviet/shared-spec`. | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
+| **Database Engine** | PostgreSQL 15+ (`pgvector`) | SSOT lưu trữ dữ liệu dự án, LangGraph state checkpoints, và Vector Embeddings (1024d HNSW index). | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
 | **Redis Engine** | Redis 7 Alpine | Đảm nhận cả BullMQ Job Queues (AOF persistence) lẫn LRU Caching & WebSocket PubSub trong 1 container duy nhất. | Docker Container (Max 0.5 CPU / 1.0GB RAM) |
-| **AI & Render Worker** | TypeScript / Node.js (Remotion CLI, Headless Chrome, VieNeu TTS ONNX) | Lắng nghe job từ Redis Queue: Sinh giọng nói VieNeu TTS ONNX, pre-fetch media từ Host Volume `/media`, render MP4 video và dọn dẹp Chromium process (`CONCURRENCY=1`). | Docker Container (Max 2.0 CPUs / 4.0GB RAM) |
+| **Render Worker** | Node.js / TypeScript (Remotion CLI, Headless Chrome) | Lắng nghe job từ Redis Queue: pre-fetch media từ Host Volume `/media`, render MP4 video và dọn dẹp Chromium process (`CONCURRENCY=1`). | Docker Container (Max 2.0 CPUs / 4.0GB RAM) |
+| **VieNeu TTS Service** | Python 3.11 / FastAPI / ONNX | Microservice độc lập sinh giọng thuyết minh tiếng Việt và wordTimestamps qua HTTP API Port 8080. | Docker Container (~1.0GB RAM) |
 
 ---
 

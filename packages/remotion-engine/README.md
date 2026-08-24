@@ -18,7 +18,7 @@ packages/remotion-engine/
 ├── eval/                  # Thư mục Đánh giá Độc lập (Evaluation Suite & Mock Assets)
 │   ├── README.md          # Tài liệu hướng dẫn đánh giá
 │   ├── runner.ts          # Evaluator runner script (hỗ trợ CLI parameters)
-│   ├── test-cases/        # Scenario test cases JSON v3.2
+│   ├── test-cases/        # Scenario test cases JSON v4.1
 │   ├── public/            # Mock Static Assets cho Studio Preview & Eval (`eval/public/assets`)
 │   ├── scripts/           # Scripts tải & tạo mock assets (WAV audio, images) cho eval
 │   ├── reports/           # Báo cáo JSON & Markdown kết quả kiểm định tự động

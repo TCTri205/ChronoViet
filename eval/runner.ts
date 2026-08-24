@@ -6,7 +6,7 @@ import { runIngestRagChain, ProductionRagQualityReport } from './chains/ingest-r
 import { runOrchestratorRemotionChain, OrchestratorRemotionChainReport } from './chains/orchestrator-remotion.js';
 import { cleanEvalArtifacts } from './utils/cleaner.js';
 import { assertEvalPreflight, PreflightResult } from './utils/preflight.js';
-import { envConfig, createLogger } from '../packages/shared-spec/src/index.js';
+import { envConfig, createLogger } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'eval-runner' });
 
@@ -100,12 +100,9 @@ async function main() {
       : [
           '@chronoviet/data-ingestion',
           '@chronoviet/rag-engine',
-          '@chronoviet/vieneu-tts',
           '@chronoviet/vlm-inspector',
           '@chronoviet/agent-orchestrator',
-          '@chronoviet/render-worker',
           '@chronoviet/remotion-engine',
-          '@chronoviet/web',
         ];
 
     console.log('\n--- [PHASE 1] RUNNING 8 ISOLATED MODULE EVALUATIONS ---');

@@ -5,7 +5,7 @@
  * from producing a misleading PASS during evaluation.
  */
 
-import { envConfig, isLLMServiceHealthy, isEmbeddingServiceHealthy, createLogger, hasAvailableApiKeys, isPgAvailable, query, getDatabaseConfig } from '../../packages/shared-spec/src/index.js';
+import { envConfig, isLLMServiceHealthy, isEmbeddingServiceHealthy, createLogger, hasAvailableApiKeys, isPgAvailable, query, getDatabaseConfig } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'eval-preflight' });
 

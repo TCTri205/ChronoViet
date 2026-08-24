@@ -21,7 +21,7 @@ Mô-đun chịu trách nhiệm:
    - Đối soát & Cân bằng thời lượng Scene với Target Chapter Duration (Micro-Step 1B-Reconcile).
    - Trích xuất từ khóa crawl ảnh (Micro-Step 1C).
 3. **Thực thi song song theo từng Cảnh (Scene-Level Parallelism & Fine-Grained Idempotency)** giữa công cụ sinh giọng nói TTS (VieNeu ONNX Engine) và thu thập tư liệu hình ảnh.
-4. **Chiến lược Crawl ảnh 3+3 Candidates & Multi-Provider VLM Inspection (Local Unified Multimodal VLM `qwen3.5-9b-instruct-q4_k_m` / Cloud Gemini + Offline Local CLIP cho dev)**: Lọc ảnh theo giấy phép whitelisted (`Public Domain`, `CC0`, `CC-BY`), chấm điểm VLM linh hoạt với cơ chế auto failover khi ngắt kết nối/rate limit.
+4. **Chiến lược 3+3 Candidates & Multi-Provider VLM Inspection (Research Agent tìm candidate pool + Local Unified Multimodal VLM `qwen3.5-9b-instruct-q4_k_m` / Cloud Gemini + Offline Local CLIP cho dev)**: Lọc ảnh theo giấy phép whitelisted (`Public Domain`, `CC0`, `CC-BY`), chấm điểm VLM linh hoạt với cơ chế auto failover khi ngắt kết nối/rate limit.
 5. **Code Rules Engine & PURE_CODE Layout Rotation**: Tự động ép chuyển cảnh sang `PURE_CODE` khi cả 6 ảnh không đạt chuẩn và xoay vòng layout động (Animated Maps, Timelines, Quotes) để không gây chán mắt.
 6. **Thang Xử Lý Lỗi 4 Tầng (4-Tier Escalation Path)**: Từ Self-Correction ➔ Code Override ➔ Cloud Model Escalation ➔ Human-in-the-Loop Review.
 7. **Quản lý Checkpoint State vào PostgreSQL** qua LangGraph.js Postgres Checkpointer với Content Hash Keys cho phép resume chính xác từng scene/worker.
@@ -192,11 +192,11 @@ Mô-đun chịu trách nhiệm:
 
 ---
 
-### 3.4. Parallel Worker B: Asset Crawler & Hybrid VLM Inspector (Strategy 3+3 Candidates & Licensing)
+### 3.4. Parallel Worker B: Research Agent & Hybrid VLM Inspector (Strategy 3+3 Candidates & Licensing)
 * **Nhiệm vụ:** 
   1. **Nhận candidate pool từ Research Agent** (state `researchResults[sceneId]`) thay vì tự crawl. Fallback: nếu chưa có (resume checkpoint cũ), tự gọi `resolveImageCandidates` inline.
   2. **License Whitelist Filter**: Chỉ nhận ảnh từ các nguồn minh bạch (Wikimedia Commons, Kho tư liệu lịch sử) thuộc giấy phép `Public Domain`, `CC0`, `CC-BY-4.0`, `CC-BY-SA-4.0`. Lưu thông tin `license` và `attribution` (tác giả, URL nguồn).
-  3. **Strategy 3+3 Candidates**: Crawl đợt 1 (3 ảnh). Nếu không đạt $\ge 60$ điểm ➔ Crawl đợt 2 (3 ảnh bổ sung từ khóa mở rộng).
+  3. **Strategy 3+3 Candidates**: Research Agent cung cấp 3 ảnh đợt 1. Nếu không đạt $\ge 60$ điểm ➔ yêu cầu Research Batch 2 (3 ảnh bổ sung từ khóa mở rộng).
   4. **Hybrid Dual-Tier VLM Inspection**:
      - *Eval strict (`EVAL_STRICT=true`)*: **Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m` qua llama-server)** là scorer bắt buộc. Local VLM lỗi → pipeline throw, không dùng Gemini/CLIP.
      - *Dev primary*: VLM Cloud API (Gemini 3.6 Flash) chấm điểm độ phù hợp lịch sử và thẩm mỹ (khi có `GEMINI_API_KEY`, `EVAL_STRICT=false`).
@@ -250,8 +250,8 @@ Hệ thống thiết lập **Cơ chế Kiểm tra Lỗi 4 Tầng & Escalation Ma
 │                        │                           │ - Eval strict: TTS fail → throw `[EVAL_STRICT]`,   │
 │                        │                           │   KHÔNG dùng sine-wave giả.                        │
 ├────────────────────────┼───────────────────────────┼───────────────────────────────────────────────────┤
-│ 3. Asset Crawling &    │ Crawl 404 / VLM < 60 /    │ - Lọc Whitelisted License (PD, CC0, CC-BY).       │
-│    VLM Inspection      │ Gemini API Rate Limit 429 │ - Chiến lược 3+3 Candidates Crawl.                │
+│ 3. Asset Research &    │ Research 404 / VLM < 60 /│ - Lọc Whitelisted License (PD, CC0, CC-BY).       │
+│    VLM Inspection      │ Gemini API Rate Limit 429 │ - Chiến lược 3+3 Candidates (Research Agent).     │
 │                        │                           │ - Dev: Cloud VLM Gemini fail ➔ Auto-Fallback sang  │
 │                        │                           │   Local CLIP/SigLIP Cosine Scorer (Offline).      │
 │                        │                           │ - Eval strict: Local VLM fail → throw `[EVAL_STRICT]`.│

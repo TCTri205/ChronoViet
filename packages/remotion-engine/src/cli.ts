@@ -2,9 +2,13 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
-import { ChronoVideoSchema, createLogger } from '@chronoviet/shared-spec';
+import { ChronoVideoSchema } from '@chronoviet/shared-spec';
 
-let log = createLogger({ service: 'remotion-engine' });
+const log = {
+  info: (code: string, msg: string, meta?: any) => console.log(`INFO  [remotion-cli] ${code}: ${msg}`, meta ? JSON.stringify(meta) : ''),
+  error: (code: string, msg: string, meta?: any) => console.error(`ERROR [remotion-cli] ${code}: ${msg}`, meta ? JSON.stringify(meta) : ''),
+  warn: (code: string, msg: string, meta?: any) => console.warn(`WARN  [remotion-cli] ${code}: ${msg}`, meta ? JSON.stringify(meta) : ''),
+};
 
 export interface CLIArgs {
   command: 'render' | 'still' | 'eval' | 'inspect' | 'help';
@@ -67,14 +71,6 @@ export function parseArgs(args: string[]): CLIArgs {
 export function runCLI() {
   const rawArgs = process.argv.slice(2);
   const options = parseArgs(rawArgs);
-
-  if (options.correlationId || options.projectId) {
-    log = createLogger({
-      service: 'remotion-engine',
-      correlationId: options.correlationId,
-      baseFields: options.projectId ? { projectId: options.projectId } : undefined,
-    });
-  }
 
   if (options.command === 'help' || rawArgs.includes('--help')) {
     console.log(`

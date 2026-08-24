@@ -6,4 +6,4 @@ export {
   cancelRenderJob,
   closeRenderQueues,
   closeRenderQueues as closeQueues,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';

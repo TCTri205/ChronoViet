@@ -44,7 +44,7 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
         isLeadingQuestion: true,
         questionType: 'KINSHIP',
         detectedEntities: [e1, e2].filter(Boolean),
-        suggestedDirective: `BẮT BUỘC KIỂM TRA TIỀN ĐỀ QUAN HỆ THÂN TỘC: Người dùng đang hỏi dạng mớm về quan hệ họ hàng giữa "${e1}" và "${e2}". Nếu không có bằng chứng chính sử xác thực, BẮT BUỘC phải bác bỏ rõ ràng ngay đầu câu trả lời (ví dụ: "Không, [A] và [B] không phải là..."). TUYỆT ĐỐI KHÔNG tự bịa đặt câu chuyện để đồng tình.`,
+        suggestedDirective: `BẮT BUỘC KIỂM TRA TIỀN ĐỀ QUAN HỆ THÂN TỘC: Người dùng đang hỏi dạng mớm về quan hệ họ hàng giữa "${e1}" và "${e2}". Nếu không có bằng chứng chính sử xác thực, BẮT BUỘC phải bác bỏ rõ ràng ngay đầu câu trả lời (ví dụ: "Không, ${e1} và ${e2} không phải là anh em/họ hàng..."). TUYỆT ĐỐI KHÔNG tự bịa đặt danh tính, tên khai sinh, năm sinh, niên hiệu, thứ bậc hoàng đế hoặc triều đại cho nhân vật không có trong chính sử. Nếu một trong các nhân vật không có trong chính sử, hãy nêu rõ "Trong chính sử không có ghi chép về nhân vật mang tên...".`,
       };
     }
   }
@@ -59,7 +59,7 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
         isLeadingQuestion: true,
         questionType: 'DYNASTY',
         detectedEntities: [e1, e2].filter(Boolean),
-        suggestedDirective: `BẮT BUỘC KIỂM TRA TIỀN ĐỀ TRIỀU ĐẠI: Người dùng đang hỏi gán ghép nhân vật "${e1}" với triều đại "${e2}". Hãy kiểm tra chính xác triều đại lịch sử thực tế và đính chính ngay nếu tiền đề sai lệch.`,
+        suggestedDirective: `BẮT BUỘC KIỂM TRA TIỀN ĐỀ TRIỀU ĐẠI: Người dùng đang hỏi gán ghép nhân vật "${e1}" với triều đại "${e2}". Hãy kiểm tra chính xác triều đại lịch sử thực tế và đính chính ngay nếu tiền đề sai lệch. Tuyệt đối không suy đoán nếu không có trong chính sử.`,
       };
     }
   }

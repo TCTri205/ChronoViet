@@ -8,7 +8,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { isPgAvailable, query, inMemoryStore, isEmbeddingServiceHealthy } from '@chronoviet/shared-spec';
+import { isPgAvailable, query, inMemoryStore, isEmbeddingServiceHealthy } from '@chronoviet/infra';
 import { runVectorEval, VectorChunkEvalReport } from './vector-eval-runner.js';
 import { runGraphEval, GraphEvalReport } from './graph-eval-runner.js';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';

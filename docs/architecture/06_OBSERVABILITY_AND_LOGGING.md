@@ -2,7 +2,7 @@
 
 ## Mục đích
 
-Tài liệu này mô tả toàn diện hệ thống **Observability** của ChronoViet bao gồm 4 trục: **Unified Structured Logging** (SSOT zero-dep tại `@chronoviet/shared-spec`), **Prometheus Metrics (RED & USE)** (`prom-client`), **Healthcheck Probes** (`/healthz`, `/readyz`), và **End-to-End Correlation ID Tracing** liên thông từ Web API → Agent Orchestrator → BullMQ Task Queues → Render Workers → VieNeu TTS Microservice.
+Tài liệu này mô tả toàn diện hệ thống **Observability** của ChronoViet bao gồm 4 trục: **Unified Structured Logging** (SSOT của logger tại `@chronoviet/infra/src/logger.ts`), **Prometheus Metrics (RED & USE)** (`prom-client`), **Healthcheck Probes** (`/healthz`, `/readyz`), và **End-to-End Correlation ID Tracing** liên thông từ Web API → Agent Orchestrator → BullMQ Task Queues → Render Workers → VieNeu TTS Microservice.
 
 **Mục tiêu thiết kế:** On-call engineer có thể trả lời 4 câu hỏi từ hệ thống giám sát:
 
@@ -17,7 +17,7 @@ Tài liệu này mô tả toàn diện hệ thống **Observability** của Chro
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│                    @chronoviet/shared-spec  (SSOT, Telemetry)                │
+│                    @chronoviet/infra  (Runtime Infra, Telemetry)                    │
 │                                                                               │
 │  createLogger({ service, correlationId?, baseFields? })                       │
 │    ├── level filter  ← envConfig.LOG_LEVEL (debug|info|warn|error)            │

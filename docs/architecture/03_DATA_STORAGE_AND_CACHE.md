@@ -52,7 +52,7 @@ Hệ thống **ChronoViet** áp dụng chiến lược lưu trữ tối giản h
 * **Max Memory & Policy:** Giới hạn max 1GB RAM (`maxmemory 1gb`), cơ chế không tự hủy queue (`noeviction` cho DB queue, LRU cho DB cache).
 
 ### 2.3. Local Host Media Storage (SSOT Project Workspace & Video Streaming)
-* **Nhiệm vụ:** Lưu trữ các tệp phương tiện dưới dạng file system cục bộ tại Mount Volume `/media`, được quản lý nhất quán thông qua `initProjectWorkspace()` của `@chronoviet/shared-spec`.
+* **Nhiệm vụ:** Lưu trữ các tệp phương tiện dưới dạng file system cục bộ tại Mount Volume `/media`, được quản lý nhất quán thông qua `initProjectWorkspace()` của `@chronoviet/infra`.
 * **Cấu trúc Thư mục `/media` Chuẩn Hóa:**
   * `/media/projects/:projectId/`:
     * `assets/`: Hình ảnh và clip minh họa phục vụ dự án.

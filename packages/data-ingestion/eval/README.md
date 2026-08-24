@@ -27,7 +27,7 @@ ChronoViet áp dụng 2 Trụ Cột Đánh Giá Chất Lượng Thực Chiến �
                                            ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ TRỤ CỘT 2: REAL-DATABASE HYBRID INGESTION & E2E RAG EVALUATION (CSDL Thật)             │
-│ Lệnh: pnpm ingest:knowledge --strict  ──►  pnpm eval --chain ingest-rag               │
+│ Lệnh: pnpm ingest:knowledge --strict  ──►  npx tsx eval/runner.ts --chain ingest-rag     │
 │ ├─ Nạp song song đa nhánh: Dense Vector pgvector (1024d HNSW) + Knowledge Graph Triples│
 │ │  + Junction Table entity_chunks vào PostgreSQL thật                                  │
 │ ├─ Chế độ --strict kiểm soát nghiêm ngặt AI Gateway, Embedding Server & PostgreSQL   │

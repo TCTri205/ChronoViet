@@ -183,7 +183,7 @@ Query: "Người nào đóng vai trò quan trọng trong việc chống quân Ng
 | `C3-M1` | **Gold Path Recall** | % queries mà Graph Retriever tìm thấy ít nhất 1 đường dẫn suy luận vàng | $\ge 90.0\%$ | $\ge 96.0\%$ |
 | `C3-M2` | **Path Precision** | $\frac{\text{Số reasoning paths hợp lệ hỗ trợ câu hỏi}}{\text{Tổng số paths được duyệt qua}}$ | $\ge 85.0\%$ | $\ge 92.0\%$ |
 | `C3-M3` | **Shortest Valid Path Rate** | Tỷ lệ path tìm được đạt độ dài tối ưu (không đi vòng qua hub không liên quan) | $\ge 90.0\%$ | $\ge 95.0\%$ |
-| `C3-M4` | **Wrong-Path Expansion Rate** | Tỷ lệ mở rộng sang nhánh quan hệ sai thời kỳ hoặc sai bản chất logic | $\le 5.0\%$ | $\le 1.0\%$ |
+| `C3-M4` | **Wrong-Path Expansion Rate** | $\frac{\text{Số edges duyệt qua nhưng KHÔNG nằm trong toàn bộ gold graph (gold-knowledge-graph-triples.json)}}{\text{Tổng số edges được duyệt qua}} \times 100\%$ (so sánh với full gold graph, không phải chỉ gold_reasoning_paths — tránh phạt các edges ALIAS_OF/HAPPENED_IN/HAPPENED_AT hợp lệ) | $\le 5.0\%$ | $\le 1.0\%$ |
 | `C3-M5` | **Edge Semantics & Direction Accuracy** | Tỷ lệ cạnh duyệt qua bảo toàn đúng ngữ nghĩa và chiều quan hệ | $\ge 98.0\%$ | $100\%$ |
 | `C3-M6` | **Hub Node Expansion Guard** | Số nodes tối đa sinh ra khi mở rộng qua Hub Node (ví dụ: `person_quang_trung`) | $\le 50\text{ nodes}$ | $\le 30\text{ nodes}$ |
 | `C3-M7` | **1-Hop / 2-Hop Node Recall** | Khả năng thu thập đủ các thực thể lân cận có ý nghĩa trong phạm vi 1–2 hops | $\text{1-hop} \ge 99\%$ | $\text{2-hop} \ge 92\%$ |
@@ -582,17 +582,35 @@ ChronoEval v2.0 đã được thực thi và xác thực trực tiếp trên cơ
 └─────────┴────────────┴─────────────────────────────────────┴───────────┴────────┴───────────┴──────────────┴─────────────┘
 ```
 
+> **Ghi chú (2026-08-23):** Các con số trong ma trận trên là **aspirational** từ v1. Số liệu **trước tối ưu** từ `ablation-study-report.json` (30 queries, `chronoeval-canonical-300.json` slice 30): CONFIG_A nDCG@5 = 0.487, B = 0.642, C = 0.590, D = 0.210, E = 0.566, F = 0.591. **Sau đợt tối ưu (2026-08-23)**: A = 0.595, B = 0.642, C = 0.549, D = **0.569** (Graph-Only tăng từ 0.210), E = **0.551 ≥ C** (trước đây E < C), F = **0.842** (MRR@5 = 1.0, p95 = 262ms ≤ 300ms SLA). `MarginalGain_GraphOverHybrid` được định nghĩa lại = `CONFIG_E.nDCG@5 − CONFIG_C.nDCG@5` = **+0.002** (thay cho ΔRecall@10 cũ luôn bằng 0 vô nghĩa).
+
 ### 9.3. Trạng Thái 5 Cổng Kiểm Soát Chất Lượng Tự Động (Automated Quality Gates)
 
 * **GATE 1 (Fact Precision):** Đạt **99.5%** ($\Delta = +5.0\%$, Vượt ngưỡng $\ge 95.0\%$) $\rightarrow$ ✅ **PASS**
 * **GATE 2 (Hallucination Rate):** Đạt **0.0%** ($\Delta = -2.0\%$, Vượt ngưỡng $\le 2.0\%$) $\rightarrow$ ✅ **PASS**
 * **GATE 3 (Retrieval Recall@10):** Đạt **100.0%** (Vượt ngưỡng $\ge 80.0\%$) $\rightarrow$ ✅ **PASS**
 * **GATE 4 (Ranking nDCG@5):** Đạt **0.940** (Vượt ngưỡng $\ge 0.800$) $\rightarrow$ ✅ **PASS**
-* **GATE 5 (p95 Latency SLA):** Đạt **186.77 ms** (Vượt ngưỡng $< 300.0\text{ ms}$) $\rightarrow$ ✅ **PASS**
+---
+
+## 10. Phiên Bản Nâng Cấp ChronoEval v2.1 (Dynamic & Anti-Hardcode Framework)
+
+Nhằm đảm bảo bộ benchmark đóng vai trò là **Hệ thống Kiểm định Độc lập (Black-Box Quality Gate)** bền vững qua các chu kỳ tái cấu trúc mã nguồn, ChronoEval v2.1 bổ sung 5 nguyên tắc chống hardcode:
+
+1. **Chunk ID Decoupling (Đánh giá không phụ thuộc ID):**
+   * Sử dụng `calculateEvidenceRecallAtK` và `calculateContentAwareGrades` trong [`ranking-metrics.ts`](../../packages/rag-engine/eval/metrics/ranking-metrics.ts).
+   * Đánh giá độ bao phủ thông tin dựa trên bằng chứng ngữ nghĩa (`key_evidence_claims`), giúp kết quả đo Retrieval Recall và nDCG@K không bị gãy khi hệ thống thay đổi chiến lược chunking hoặc định dạng ID.
+2. **Propositional Entailment over Word Matching:**
+   * Tầng C8 sử dụng `verifyClaimEntailment` để kiểm tra tính bao hàm ngữ nghĩa của câu trả lời, không phạt từ đồng nghĩa hay phong cách diễn đạt súc tích.
+3. **Discourse & Meta-Statement Isolation:**
+   * Tầng C9 tích hợp `isDiscourseOrMetaSentence` để phân lập câu chuyển đoạn, mở bài tự nhiên khỏi các khẳng định sự thật lịch sử, phản ánh chính xác tỷ lệ Hallucination Rate thực tế.
+4. **Strict Subgraph Reasoning (Loại bỏ Tautology trong C3):**
+   * Xóa bỏ các điều kiện khẳng định lỏng lẻo; kiểm tra chuẩn xác đường đi đồ thị (Gold Reasoning Paths) trên PostgreSQL CTE.
+5. **Self-Seeding Test Environment:**
+   * Mọi benchmark tự động đồng bộ hóa DB/In-memory store qua `ensureBenchmarkDatabaseSeeded()`.
 
 ---
 
 > **Tài liệu liên quan:**
 > - [`docs/modules/01_CHRONO_RAG_ENGINE.md`](../modules/01_CHRONO_RAG_ENGINE.md) — Kiến trúc tổng quan và 5-step pipeline của Chrono-RAG Engine
 > - [`docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md`](./KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) — Chuẩn quản trị dữ liệu sử liệu, phân cấp nguồn Level 1/2/3 và W_source
-> - [`packages/rag-engine/eval/README.md`](../../packages/rag-engine/eval/README.md) — Hướng dẫn vận hành hệ thống đánh giá ChronoEval
+> - [`packages/rag-engine/eval/README.md`](../../packages/rag-engine/eval/README.md) — Hướng dẫn vận hành hệ thống đánh giá ChronoEval v2.1

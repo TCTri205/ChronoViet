@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateLLMCompletion } from '@chronoviet/shared-spec';
+import { generateLLMCompletion } from '@chronoviet/infra';
 import {
   isValidEntityName,
   extractTriplesFromText,
@@ -9,8 +9,8 @@ import {
   MAX_CANDIDATE_SPANS_IN_PROMPT,
 } from '../triple-extractor.js';
 
-vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@chronoviet/shared-spec')>();
+vi.mock('@chronoviet/infra', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@chronoviet/infra')>();
   return {
     ...original,
     generateLLMCompletion: vi.fn(),

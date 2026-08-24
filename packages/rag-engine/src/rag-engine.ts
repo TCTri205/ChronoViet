@@ -5,29 +5,45 @@
 import {
   IRagEngine,
   RagSearchRequest,
+  RagSearchRequestInput,
   RagSearchResponse,
   HistoricalContextEntity,
+  resolveCanonicalEntity,
+  HistoricalAnswerGenerationRequest,
+  HistoricalAnswerResponse,
+} from '@chronoviet/shared-spec';
+import {
   createLogger,
   envConfig,
   isPgAvailable,
   initSchema,
   ingestHistoricalDocument,
-  resolveCanonicalEntity,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 
 import { extractQueryEntities } from './retrieval/question-ner.js';
-import { searchLocalGraphCTE } from './retrieval/graph-cte-search.js';
+import { searchLocalGraphCTE, GraphTriple } from './retrieval/graph-cte-search.js';
 import {
   searchHybridVectorAndBM25,
   VectorSearchResult,
   getCachedQueryEmbedding,
 } from './retrieval/vector-search.js';
-import { getChunksForEntities } from './retrieval/chunk-retriever.js';
-import { rerankCandidates } from './retrieval/reranker.js';
+import { getChunksForEntities, ChunkGraphSignal } from './retrieval/chunk-retriever.js';
+import { rerankCandidates, truncateToSentenceBoundary } from './retrieval/reranker.js';
+import { AnswerGenerator } from './generation/answer-generator.js';
 
 const log = createLogger({ service: 'rag-engine' });
 
-export const CO_RETRIEVAL_BOOST = 0.35;
+/**
+ * Small graph co-retrieval boost weighted by the chunk's graph signal
+ * (confidence x hop decay), replacing the previous flat +0.35 boost that
+ * displaced better FTS/vector candidates.
+ */
+export const GRAPH_BOOST_SCALE = 0.05;
+export const GRAPH_BRANCH_TIMEOUT_MS = process.env.GRAPH_BRANCH_TIMEOUT_MS
+  ? parseInt(process.env.GRAPH_BRANCH_TIMEOUT_MS, 10)
+  : 150;
+export const GRAPH_BRANCH_MAX_NODES = 50;
+export const GRAPH_ONLY_CHUNK_CAP = 10;
 
 let globalSchemaInitPromise: Promise<void> | null = null;
 
@@ -52,16 +68,12 @@ export function resetGlobalSchemaInitForTest(): void {
 }
 
 export class ChronoRagEngine implements IRagEngine {
-  private async ensureInitialized(): Promise<void> {
-    await ensureGlobalSchemaInitialized();
-  }
-
   /**
    * 5-Step Online Retrieval Engine with Dual-Branch Parallelism & Co-Retrieval Boost
    */
-  async search(request: RagSearchRequest): Promise<RagSearchResponse> {
+  async search(request: RagSearchRequestInput): Promise<RagSearchResponse> {
     const startTime = Date.now();
-    await this.ensureInitialized();
+    await ensureGlobalSchemaInitialized();
 
     // Eval Integrity: strict mode requires real Postgres — in-memory fallback is not a valid benchmark
     if (envConfig.EVAL_STRICT) {
@@ -72,7 +84,11 @@ export class ChronoRagEngine implements IRagEngine {
     }
 
     const queryText = request.query;
-    const rerankTopK = request.rerankTopK || 5;
+
+    // Step 1: Question NER & Keyword Extraction (< 1ms)
+    const queryInfo = extractQueryEntities(queryText);
+    const filterEntityIds = request.entityFilter || queryInfo.entityIds;
+    const rerankTopK = request.rerankTopK || Math.min(8, Math.max(5, queryInfo.entityIds.length * 2));
 
     log.debug('rag.search_started', 'RAG search started', {
       query: queryText,
@@ -81,15 +97,35 @@ export class ChronoRagEngine implements IRagEngine {
       maxTokens: request.maxTokens,
     });
 
-    // Step 1: Question NER & Keyword Extraction (< 1ms)
-    const queryInfo = extractQueryEntities(queryText);
-    const filterEntityIds = request.entityFilter || queryInfo.entityIds;
-
     // Steps 2, 3, 4: Dual-Branch Parallel Execution (Graph Branch & Vector Branch)
     const graphBranchPromise = (async () => {
-      const graphResult = await searchLocalGraphCTE(filterEntityIds, 2);
-      const graphChunks = await getChunksForEntities(graphResult.entityIds, 30);
-      return { graphResult, graphChunks };
+      const graphResult = await searchLocalGraphCTE(filterEntityIds, {
+        maxHops: 2,
+        maxNodes: GRAPH_BRANCH_MAX_NODES,
+        timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
+      });
+
+      // Entity -> (maxConfidence, minHop) signals for weighting graph chunks by relevance.
+      const graphSignals = new Map<string, ChunkGraphSignal>();
+      for (const t of graphResult.triples) {
+        for (const eid of [t.sourceEntityId, t.targetEntityId]) {
+          const existing = graphSignals.get(eid);
+          if (!existing) {
+            graphSignals.set(eid, { maxConfidence: t.confidence, minHop: t.hopCount });
+          } else {
+            existing.maxConfidence = Math.max(existing.maxConfidence, t.confidence);
+            existing.minHop = Math.min(existing.minHop, t.hopCount);
+          }
+        }
+      }
+
+      const graphChunks = await getChunksForEntities(
+        graphResult.entityIds,
+        20,
+        filterEntityIds,
+        graphSignals
+      );
+      return { graphResult, graphChunks, timedOut: Boolean(graphResult.timedOut) };
     })();
 
     const vectorBranchPromise = (async () => {
@@ -102,7 +138,7 @@ export class ChronoRagEngine implements IRagEngine {
       return hybridCandidates;
     })();
 
-    const [{ graphResult, graphChunks }, hybridCandidates] = await Promise.all([
+    const [{ graphResult, graphChunks, timedOut }, hybridCandidates] = await Promise.all([
       graphBranchPromise,
       vectorBranchPromise,
     ]);
@@ -114,17 +150,33 @@ export class ChronoRagEngine implements IRagEngine {
       candidateMap.set(cand.chunkId, { ...cand });
     }
 
-    for (const gCand of graphChunks) {
-      const existing = candidateMap.get(gCand.chunkId);
-      if (existing) {
-        // Co-retrieval boost: chunk is co-validated by both vector similarity and knowledge graph structure
-        existing.score += CO_RETRIEVAL_BOOST;
-      } else {
-        candidateMap.set(gCand.chunkId, { ...gCand });
+    if (!timedOut) {
+      for (const gCand of graphChunks) {
+        const existing = candidateMap.get(gCand.chunkId);
+        const graphBoost = GRAPH_BOOST_SCALE * (gCand.graphScore ?? 0.5);
+        if (existing) {
+          // Small graph-weighted co-retrieval boost; the chunk was also ranked by vector/FTS.
+          existing.score += graphBoost;
+          existing.isCoRetrieved = true;
+        } else if (graphChunks.indexOf(gCand) < GRAPH_ONLY_CHUNK_CAP) {
+          // Graph-only chunks enter the pool with a LOW score (below hybrid RRF scores) so
+          // they never crowd out better vector/FTS candidates; the cross-encoder can still
+          // promote them if genuinely relevant.
+          candidateMap.set(gCand.chunkId, {
+            ...gCand,
+            score: 0.001 + (gCand.hopCount ?? 2) * 0.0005,
+          });
+        }
       }
+    } else {
+      log.warn('rag.graph_branch_timeout', 'Graph branch timed out; skipping graph fusion', {
+        timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
+      });
     }
 
     const allCandidates = Array.from(candidateMap.values());
+    // Sort by pre-rerank score so graph-only chunks can actually enter the rerank pool.
+    allCandidates.sort((a, b) => b.score - a.score);
 
     // Step 5: Pure Model Cross-Encoder Reranker & Response Formatting
     const topChunks = await rerankCandidates(queryText, allCandidates, rerankTopK);
@@ -140,16 +192,34 @@ export class ChronoRagEngine implements IRagEngine {
       retrievalLatencyMs: Date.now() - startTime,
     });
 
-    // Map top chunks to Verified Context Entities
-    const verifiedContext: HistoricalContextEntity[] = topChunks.map((chunk, idx) => {
+    // Map top chunks to Verified Context Entities with maxTokens budget enforcement
+    const maxTokensBudget = request.maxTokens && request.maxTokens > 0 ? request.maxTokens : 2048;
+    const VIETNAMESE_CHARS_PER_TOKEN = 3.5;
+
+    const verifiedContext: HistoricalContextEntity[] = [];
+    const citations: string[] = [];
+    let accumulatedTokens = 0;
+
+    for (let idx = 0; idx < topChunks.length; idx++) {
+      const chunk = topChunks[idx];
+      const cleanSummary = truncateToSentenceBoundary(chunk.textContent || '', 800);
+      const estimatedChunkTokens = Math.ceil(
+        (cleanSummary.length + (chunk.title?.length || 0)) / VIETNAMESE_CHARS_PER_TOKEN
+      );
+
+      // Stop adding further entity chunks if budget exceeded, but guarantee at least top-1 entity is retained
+      if (verifiedContext.length > 0 && accumulatedTokens + estimatedChunkTokens > maxTokensBudget) {
+        break;
+      }
+
       let matchedCanonicalName = '';
       let matchedAliases: string[] = [];
 
       for (const [canonicalName, aliases] of Object.entries(graphResult.aliasTable)) {
         if (
           chunk.title.includes(canonicalName) ||
-          chunk.textContent.includes(canonicalName) ||
-          aliases.some((alias) => chunk.title.includes(alias) || chunk.textContent.includes(alias))
+          cleanSummary.includes(canonicalName) ||
+          aliases.some((alias) => chunk.title.includes(alias) || cleanSummary.includes(alias))
         ) {
           matchedCanonicalName = canonicalName;
           matchedAliases = aliases;
@@ -161,19 +231,23 @@ export class ChronoRagEngine implements IRagEngine {
       const canonicalName = matchedCanonicalName || canonical.canonicalName || chunk.title;
       const aliases = matchedAliases.length > 0 ? matchedAliases : canonical.aliases || [];
 
-      return {
+      verifiedContext.push({
         entityId: canonical.entityId,
         canonicalName,
         aliases,
-        summary: chunk.textContent,
+        summary: cleanSummary,
         citations: [`Tập sử liệu: ${chunk.title}`, `Mức độ tin cậy: ${chunk.sourceReliability || 'LEVEL_1'}`],
-        confidenceScore: Math.min(1.0, 0.85 + (topChunks.length - idx) * 0.03),
-      };
-    });
+        confidenceScore: typeof chunk.score === 'number' && !isNaN(chunk.score)
+          ? Math.min(1.0, Math.max(0.1, Number(chunk.score.toFixed(3))))
+          : Math.min(1.0, 0.85 + (topChunks.length - idx) * 0.03),
+        chunkId: chunk.chunkId,
+        title: chunk.title,
+        sourceReliability: chunk.sourceReliability as any,
+      });
 
-    const citations: string[] = topChunks.map(
-      (chunk) => `${chunk.title} [Nguồn: ${chunk.sourceReliability || 'LEVEL_1'}]`
-    );
+      citations.push(`${chunk.title} [Nguồn: ${chunk.sourceReliability || 'LEVEL_1'}]`);
+      accumulatedTokens += estimatedChunkTokens;
+    }
 
     const triples = graphResult.triples.map((t) => ({
       source: t.sourceEntityId,
@@ -194,13 +268,33 @@ export class ChronoRagEngine implements IRagEngine {
   }
 
   /**
+   * End-to-End Grounded Historical Answer Generation with Graph Reasoning & Claim Verification
+   */
+  async generateAnswer(
+    request: HistoricalAnswerGenerationRequest
+  ): Promise<HistoricalAnswerResponse> {
+    await ensureGlobalSchemaInitialized();
+    return AnswerGenerator.generate(this, request);
+  }
+
+  /**
+   * Streaming Grounded Historical Answer Generation
+   */
+  async *generateAnswerStream(
+    request: HistoricalAnswerGenerationRequest
+  ): AsyncGenerator<{ type: 'token' | 'triples' | 'citations' | 'done'; content?: string; triples?: any[]; citations?: string[] }> {
+    await ensureGlobalSchemaInitialized();
+    yield* AnswerGenerator.generateStream(this, request);
+  }
+
+  /**
    * Ingest historical document into RAG database
    */
   async ingestDocument(
     content: string,
     metadata: { title: string; source: string; dynasty?: string; sourceReliability?: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3' }
   ): Promise<void> {
-    await this.ensureInitialized();
+    await ensureGlobalSchemaInitialized();
     await ingestHistoricalDocument(content, metadata);
   }
 }

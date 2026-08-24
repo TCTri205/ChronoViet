@@ -1,14 +1,19 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "composite": false,
-    "incremental": false
+    "incremental": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "include": [
     "eval/**/*.ts",
     "scripts/**/*.ts",
-    "apps/web/eval/**/*.ts"
+    "apps/*/eval/**/*.ts",
+    "packages/*/eval/**/*.ts"
   ],
   "exclude": [
     "**/node_modules/**",

@@ -5,7 +5,8 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
-import { createLogger, SourceReliability, resolveCanonicalEntity, isKnownMasterEntity } from '@chronoviet/shared-spec';
+import { SourceReliability, resolveCanonicalEntity, isKnownMasterEntity } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 import { normalizeText } from '../text/text-normalizer.js';
 import { chunkDocumentHierarchical } from '../chunking/hierarchical-chunker.js';

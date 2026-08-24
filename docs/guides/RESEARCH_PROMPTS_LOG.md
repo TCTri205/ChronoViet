@@ -49,13 +49,13 @@ Dưới đây là bảng quản lý tiến độ kiểm định tài nguyên hì
 | **MYSTERY (Lệ Chi Viên)** | 19 Scenes | Fallback Pure Code | 19 Scenes | ⏳ Queued for VLM Agent |
 | **ARTIFACT (Trống Đồng)** | 19 Scenes | Fallback Pure Code | 19 Scenes | ⏳ Queued for VLM Agent |
 
-> **💡 Cơ chế Fallback An toàn:** Trong thời gian chờ VLM Agent crawl và verify đủ 100% tài nguyên ảnh cho các kịch bản Phase 2, Remotion Engine sẽ tự động áp dụng `layoutMode` thuộc nhóm **Pure Code** (`TITLE_CARD`, `STAT_CARD`, `QUOTE_CANVAS`, `VERSUS_CARD`, `MUSEUM_TAG`, `SPLIT_THEORY`, `ARTICLE_UI`, `OUTRO_CARD`) để đảm bảo video render hoàn thiện 0% lỗi vỡ ảnh.
+> **💡 Cơ chế Fallback An toàn:** Trong thời gian chờ Research Agent tìm ảnh và VLM Inspector verify đủ 100% tài nguyên ảnh cho các kịch bản Phase 2, Remotion Engine sẽ tự động áp dụng `layoutMode` thuộc nhóm **Pure Code** (`TITLE_CARD`, `STAT_CARD`, `QUOTE_CANVAS`, `VERSUS_CARD`, `MUSEUM_TAG`, `SPLIT_THEORY`, `ARTICLE_UI`, `OUTRO_CARD`) để đảm bảo video render hoàn thiện 0% lỗi vỡ ảnh.
 
 ---
 
 ## 3. KHUNG MẪU BẢNG AUDIT VLM CHO KỊCH BẢN MỚI (VLM AUDIT TEMPLATE)
 
-Khi VLM Inspector Agent crawl và thẩm định ảnh cho một kịch bản mới, dữ liệu sẽ được append vào nhật ký theo mẫu chuẩn dưới đây:
+Khi Research Agent tìm ảnh và VLM Inspector thẩm định cho một kịch bản mới, dữ liệu sẽ được append vào nhật ký theo mẫu chuẩn dưới đây:
 
 ```markdown
 ### Nhật ký Audit: [Tên Kịch Bản / Domain]

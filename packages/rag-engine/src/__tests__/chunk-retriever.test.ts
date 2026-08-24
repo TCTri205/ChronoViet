@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { inMemoryStore, envConfig } from '@chronoviet/shared-spec';
+import { inMemoryStore, envConfig } from '@chronoviet/infra';
 import { getChunksForEntities } from '../retrieval/chunk-retriever.js';
 
 describe('Graph-Guided Chunk Retriever', () => {
@@ -68,5 +68,38 @@ describe('Graph-Guided Chunk Retriever', () => {
     expect(res).toHaveLength(2);
     expect(res[0].score).toBeCloseTo(1 / 61, 5);
     expect(res[1].score).toBeCloseTo(1 / 62, 5);
+  });
+
+  it('should deterministically order retrieved chunks by source reliability (LEVEL_1 > LEVEL_2 > LEVEL_3)', async () => {
+    inMemoryStore.documentChunks.set('chunk_lev3', {
+      id: 'chunk_lev3',
+      title: 'Tài liệu cấp 3',
+      text_content: 'Nội dung cấp 3',
+      source_reliability: 'LEVEL_3',
+    });
+    inMemoryStore.documentChunks.set('chunk_lev1', {
+      id: 'chunk_lev1',
+      title: 'Tài liệu cấp 1',
+      text_content: 'Nội dung cấp 1',
+      source_reliability: 'LEVEL_1',
+    });
+    inMemoryStore.documentChunks.set('chunk_lev2', {
+      id: 'chunk_lev2',
+      title: 'Tài liệu cấp 2',
+      text_content: 'Nội dung cấp 2',
+      source_reliability: 'LEVEL_2',
+    });
+
+    inMemoryStore.entityChunks.push(
+      { entity_id: 'person_quang_trung', chunk_id: 'chunk_lev3' },
+      { entity_id: 'person_quang_trung', chunk_id: 'chunk_lev1' },
+      { entity_id: 'person_quang_trung', chunk_id: 'chunk_lev2' }
+    );
+
+    const res = await getChunksForEntities(['person_quang_trung'], 3);
+    expect(res).toHaveLength(3);
+    expect(res[0].chunkId).toBe('chunk_lev1');
+    expect(res[1].chunkId).toBe('chunk_lev2');
+    expect(res[2].chunkId).toBe('chunk_lev3');
   });
 });

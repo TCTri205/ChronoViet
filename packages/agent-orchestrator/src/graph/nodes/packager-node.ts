@@ -6,11 +6,13 @@
 import {
   CaptionWord,
   ChronoVideoProps,
-  envConfig,
-  saveProjectSchema,
   TimelineScene,
   VideoProjectSchema,
 } from '@chronoviet/shared-spec';
+import {
+  envConfig,
+  saveProjectSchema,
+} from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 
 export async function packagerNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
@@ -97,9 +99,10 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
 
   // Auto-enqueue to BullMQ remotion-render-queue
   const autoDispatch = envConfig.AUTO_DISPATCH_RENDER !== false && process.env.AUTO_DISPATCH_RENDER !== 'false';
-  if (autoDispatch && envConfig.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'test') {
+  const isTestEnv = process.env.NODE_ENV === 'test' || envConfig.NODE_ENV === 'test' || Boolean(process.env.VITEST);
+  if (autoDispatch && !isTestEnv) {
     try {
-      const { enqueueRenderJob, getProjectPaths } = await import('@chronoviet/shared-spec');
+      const { enqueueRenderJob, getProjectPaths } = await import('@chronoviet/infra');
       const { jobId } = await enqueueRenderJob(state.projectId, {
         correlationId: state.correlationId || state.projectId,
         outputFormat: 'mp4',

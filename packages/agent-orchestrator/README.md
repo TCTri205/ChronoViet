@@ -52,6 +52,9 @@ packages/agent-orchestrator/
 │   ├── guardrails/                    # Tầng Guardrails Bảo vệ Nội dung
 │   │   ├── folklore-validator.ts      # Automated Folklore Guardrail Validator Gate
 │   │   └── nli-hallucination-judge.ts # NLI Entailment Judge chống Hallucination
+│   ├── research/                      # Research Agent: Provider Chain Tìm kiếm Ảnh
+│   │   ├── index.ts                   # buildProviderChain, executeImageSearchTool, resolveImageCandidates
+│   │   └── providers/                 # Image Search Providers: image-search-provider.ts, serpapi, tavily, brave, wikimedia (gồm CuratedCatalog)
 │   └── index.ts                       # Entrypoint export public APIs
 │
 ├── eval/                              # Tầng Đánh Giá & Benchmark Module 2

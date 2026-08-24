@@ -8,6 +8,7 @@ RUN corepack enable && corepack prepare pnpm@10.6.2 --activate
 # Layer 1: Copy package manifests for optimal Docker layer caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/shared-spec/package.json ./packages/shared-spec/
+COPY packages/infra/package.json ./packages/infra/
 COPY packages/data-ingestion/package.json ./packages/data-ingestion/
 COPY packages/rag-engine/package.json ./packages/rag-engine/
 COPY packages/remotion-engine/package.json ./packages/remotion-engine/
@@ -15,7 +16,6 @@ COPY packages/vlm-inspector/package.json ./packages/vlm-inspector/
 COPY packages/agent-orchestrator/package.json ./packages/agent-orchestrator/
 COPY apps/web/package.json ./apps/web/
 COPY apps/render-worker/package.json ./apps/render-worker/
-COPY services/vieneu-tts/package.json ./services/vieneu-tts/
 
 # Install dependencies (cached when source files change)
 RUN pnpm install --frozen-lockfile
@@ -23,7 +23,6 @@ RUN pnpm install --frozen-lockfile
 # Layer 2: Copy source code
 COPY packages ./packages
 COPY apps ./apps
-COPY services ./services
 
 # Build monorepo packages
 RUN pnpm --recursive --workspace-concurrency=4 run build

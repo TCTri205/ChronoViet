@@ -7,7 +7,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { runOrchestratorPipeline, ChronoGraphState } from '../../packages/agent-orchestrator/src/index.js';
 import { processRenderJob } from '../../apps/render-worker/src/workers/render-worker.js';
-import { createLogger, VideoProjectSchema } from '../../packages/shared-spec/src/index.js';
+import { VideoProjectSchema } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 import { assertEvalPreflight } from '../utils/preflight.js';
 
 const log = createLogger({ service: 'eval-runner' });
@@ -164,7 +165,7 @@ export async function runOrchestratorRemotionChain(
   console.log('│ Metric Name                 │ Target    │ Actual     │ Verdict           │');
   console.log('├─────────────────────────────┼───────────┼────────────┼───────────────────┤');
   console.log(`│ Golden Cases Completed      │ 6/6 (100) │ ${String(completedCount).padStart(2)}/6 (${Math.round(completedCount/6*100)}%) │ ${completedCount === 6 ? '✅ PASS' : '❌ FAIL'}           │`);
-  console.log(`│ Schema v3.2 Validations     │ 6/6 (100) │ ${String(schemaValidCount).padStart(2)}/6 (${Math.round(schemaValidCount/6*100)}%) │ ${schemaValidCount === 6 ? '✅ PASS' : '❌ FAIL'}           │`);
+  console.log(`│ Schema v4.1 Validations     │ 6/6 (100) │ ${String(schemaValidCount).padStart(2)}/6 (${Math.round(schemaValidCount/6*100)}%) │ ${schemaValidCount === 6 ? '✅ PASS' : '❌ FAIL'}           │`);
   console.log(`│ MP4 Videos Generated        │ 6/6 (100) │ ${String(mp4RenderedCount).padStart(2)}/6 (${Math.round(mp4RenderedCount/6*100)}%) │ ${mp4RenderedCount === 6 ? '✅ PASS' : '❌ FAIL'}           │`);
   console.log(`│ Average Pacing Error        │ < 5.0%    │ ${avgPacingErrorPct.toFixed(2).padStart(8)}%  │ ${avgPacingErrorPct < 5.0 ? '✅ PASS' : '❌ FAIL'}           │`);
   console.log(`│ Max Peak RAM                │ < 3.80 GB │ ${maxRamPeakGb.toFixed(2).padStart(8)} GB │ ${maxRamPeakGb < 3.8 ? '✅ PASS' : '❌ FAIL'}           │`);

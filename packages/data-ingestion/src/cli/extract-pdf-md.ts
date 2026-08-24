@@ -5,7 +5,7 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
-import { createLogger } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 import { PdfExtractor } from '../pdf/pdf-extractor.js';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 

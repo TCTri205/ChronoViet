@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { rerankCandidates } from '../retrieval/reranker.js';
+import {
+  rerankCandidates,
+  truncateToSentenceBoundary,
+  getLastRerankerStatus,
+  resetRerankerStatusForTest,
+} from '../retrieval/reranker.js';
 import { VectorSearchResult } from '../retrieval/vector-search.js';
 
 describe('Pure Model Context Reranker', () => {
@@ -11,6 +16,7 @@ describe('Pure Model Context Reranker', () => {
       dynasty: 'Nhà Tây Sơn',
       sourceReliability: 'LEVEL_1',
       score: 0.5,
+      isCoRetrieved: true,
     },
     {
       chunkId: 'chunk_2',
@@ -19,6 +25,7 @@ describe('Pure Model Context Reranker', () => {
       dynasty: 'Nhà Đinh',
       sourceReliability: 'LEVEL_2',
       score: 0.5,
+      isCoRetrieved: false,
     },
     {
       chunkId: 'chunk_3',
@@ -26,10 +33,12 @@ describe('Pure Model Context Reranker', () => {
       textContent: 'Tác phẩm sử thi dân gian truyền miệng của người Mường.',
       sourceReliability: 'LEVEL_3',
       score: 0.5,
+      isCoRetrieved: false,
     },
   ];
 
   beforeEach(() => {
+    resetRerankerStatusForTest();
     // Mock global fetch for deterministic /v1/rerank response
     vi.stubGlobal(
       'fetch',
@@ -98,14 +107,73 @@ describe('Pure Model Context Reranker', () => {
     expect(distractor!.score).toBeLessThan(res[0].score);
   });
 
-  it('should apply Multi-Factor Fusion (75% AI + 15% Source Reliability + 10% Co-retrieval)', async () => {
+  it('should apply Multi-Factor Fusion with explicit isCoRetrieved boolean flag', async () => {
     const query = 'Xác minh sự thật về chiến thắng Ngọc Hồi Đống Đa có đúng hay sai?';
     const res = await rerankCandidates(query, sampleCandidates, 2);
 
     expect(res[0].chunkId).toBe('chunk_1');
     expect(res.length).toBe(2);
-    // Score calculation: 0.75 * 0.95 + 0.15 * 1.0 (LEVEL_1) + 0.10 (score >= 0.35) = 0.9625
+    // Score calculation: 0.75 * 0.95 + 0.15 * 1.0 (LEVEL_1) + 0.05 (isCoRetrieved = true) = 0.9125
     expect(res[0].score).toBeGreaterThan(0.9);
+  });
+
+  it('should not award co-retrieval bonus when isCoRetrieved is false even if initial score was high', async () => {
+    const customCandidates: VectorSearchResult[] = [
+      {
+        chunkId: 'chunk_a',
+        title: 'Chiến thắng Ngọc Hồi Đống Đa',
+        textContent: 'Vua Quang Trung lãnh đạo đại quân Tây Sơn tiến công thần tốc.',
+        dynasty: 'Nhà Tây Sơn',
+        sourceReliability: 'LEVEL_1',
+        score: 0.9,
+        isCoRetrieved: false,
+      },
+      {
+        chunkId: 'chunk_b',
+        title: 'Chiến thắng Ngọc Hồi Đống Đa',
+        textContent: 'Vua Quang Trung lãnh đạo đại quân Tây Sơn tiến công thần tốc.',
+        dynasty: 'Nhà Tây Sơn',
+        sourceReliability: 'LEVEL_1',
+        score: 0.1,
+        isCoRetrieved: true,
+      },
+    ];
+
+    const query = 'Quang Trung Ngọc Hồi';
+    const res = await rerankCandidates(query, customCandidates, 2);
+    // chunk_b has isCoRetrieved = true -> gets +0.05 bonus
+    // chunk_a has isCoRetrieved = false -> gets +0.00 bonus
+    expect(res[0].chunkId).toBe('chunk_b');
+    expect(res[0].score).toBeCloseTo(res[1].score + 0.05, 3);
+  });
+
+  it('should safely truncate text at sentence boundary without clipping mid-word', () => {
+    const text = 'Lê Lợi dựng cờ khởi nghĩa ở Lam Sơn. Năm 1427, quân Minh phải rút lui về nước. Đất nước thái bình thịnh trị.';
+    const truncated = truncateToSentenceBoundary(text, 50);
+
+    expect(truncated.length).toBeLessThanOrEqual(50);
+    expect(truncated.endsWith('.')).toBe(true);
+    expect(truncated).toBe('Lê Lợi dựng cờ khởi nghĩa ở Lam Sơn.');
+  });
+
+  it('should fallback to clause or word boundary if sentence boundary is not available in late window', () => {
+    const text = 'Đinh Bộ Lĩnh thống nhất đất nước, dẹp loạn 12 sứ quân rồi xưng đế lập nên triều Đinh';
+    const truncated = truncateToSentenceBoundary(text, 40);
+
+    expect(truncated.length).toBeLessThanOrEqual(40);
+    // Should end at clause terminator ','
+    expect(truncated).toBe('Đinh Bộ Lĩnh thống nhất đất nước,');
+  });
+
+  it('should gracefully handle reranker offline and record fallback status', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Connection refused (8096)')));
+
+    const res = await rerankCandidates('Quang Trung đại phá quân Thanh', sampleCandidates, 3);
+    expect(res.length).toBe(3);
+
+    const status = getLastRerankerStatus();
+    expect(status.active).toBe(false);
+    expect(status.fallbackReason).toContain('Connection refused');
   });
 
   it('should preserve and rank 2-character historical names via Cross-Encoder', async () => {

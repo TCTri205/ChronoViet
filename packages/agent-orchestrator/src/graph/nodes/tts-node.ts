@@ -6,8 +6,8 @@
 import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
 import * as path from 'path';
-import { envConfig, initProjectWorkspace, SceneGeneration, WordTimestamp } from '@chronoviet/shared-spec';
-import { VieNeuEngine, createSyntheticWavBuffer } from '@chronoviet/vieneu-tts';
+import { SceneGeneration, WordTimestamp } from '@chronoviet/shared-spec';
+import { envConfig, initProjectWorkspace, VieNeuEngine, createSyntheticWavBuffer } from '@chronoviet/infra';
 import { AudioAssetEntry, ChronoGraphState, getNodeLogger, TelemetryAuditEntry } from '../state.js';
 
 const ttsEngine = new VieNeuEngine();
@@ -74,7 +74,6 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
               path.resolve(envConfig.AUDIO_CACHE_DIR, base),
               envConfig.MEDIA_DIR ? path.resolve(envConfig.MEDIA_DIR, 'audio-cache', base) : '',
               path.resolve(process.cwd(), 'media/audio-cache', base),
-              path.resolve(process.cwd(), 'services/vieneu-tts/media/audio-cache', base),
               path.resolve('/media/audio-cache', base),
             ].filter(Boolean);
             for (const cand of candidates) {

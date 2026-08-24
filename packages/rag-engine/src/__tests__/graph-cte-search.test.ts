@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { inMemoryStore, envConfig } from '@chronoviet/shared-spec';
+import { inMemoryStore, envConfig } from '@chronoviet/infra';
 import { searchLocalGraphCTE } from '../retrieval/graph-cte-search.js';
 
 describe('Graph CTE Subgraph Search & Traversal', () => {

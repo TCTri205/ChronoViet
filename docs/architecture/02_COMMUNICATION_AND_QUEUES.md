@@ -39,9 +39,10 @@ Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài n
        ▼                                  ▼                                  ▼
 ┌─────────────────────────┐    ┌─────────────────────────┐    ┌───────────────────────────┐
 │   1. tts-gen-queue      │    │  2. vlm-inspect-queue   │    │ 3. remotion-render-queue  │
-│ - Tác vụ: VieNeu ONNX   │    │ - Gemini Cloud VLM API   │    │ - Remotion Local Render   │
-│ - Concurrency: 4 jobs   │    │ - Concurrency: 2 jobs   │    │ - Concurrency: 1 MAX      │
-│ - Priority: High        │    │ - Priority: Medium      │    │ - Priority: Normal        │
+│ - Tác vụ: VieNeu ONNX   │    │ - Local VLM (strict) /  │    │ - Remotion Local Render   │
+│ - Concurrency: 4 jobs   │    │   Gemini Cloud (dev)    │    │ - Concurrency: 1 MAX      │
+│ - Priority: High        │    │ - Concurrency: 2 jobs   │    │ - Priority: Normal        │
+│                         │    │ - Priority: Medium      │    │                           │
 └────────────┬────────────┘    └────────────┬────────────┘    └─────────────┬─────────────┘
              │                              │                              │
              ▼                              ▼                              ▼
@@ -56,9 +57,9 @@ Do quá trình tạo video bao gồm nhiều công đoạn xử lý tốn tài n
    * *Quy chuẩn Kỹ thuật:* Xem chi tiết tại [05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md](05_PRODUCTION_OPTIMIZATIONS_AND_VIENEU_TTS.md).
 
 2. **`vlm-inspect-queue` (Thẩm Định Thị Giác, License Snapshot & Circuit Breaker):**
-   * *Nhiệm vụ:* Đưa các đợt ảnh crawl qua Whitelisted License Filter (`Public Domain`, `CC0`, `CC-BY`), snapshot file ảnh + license metadata vào Host Volume `/media/license-snapshots/` và thực hiện chấm điểm qua **Gemini Cloud VLM API** (`VLM_PROVIDER=gemini|auto`, kèm **Circuit Breaker** trip khi 3x HTTP 429 trong 5m ➔ auto failover sang **Local CLIP ONNX Scorer**).
+   * *Nhiệm vụ:* Nhận **candidatePool do Research Agent (Micro-Step 1C) cung cấp** (provider chain SerpAPI/Tavily/Brave/Wikimedia/Catalog) — VLM Inspector **không tự crawl ảnh**. Thực hiện Whitelisted License Filter (`Public Domain`, `CC0`, `CC-BY`), snapshot file ảnh + license metadata vào Host Volume `/media/license-snapshots/` và chấm điểm qua **Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m` qua llama-server) khi `EVAL_STRICT=true`** (bắt buộc) hoặc **Gemini Cloud VLM API** (dev, kèm **Circuit Breaker** trip khi 3x HTTP 429 trong 5m ➔ auto failover sang **Local CLIP ONNX Scorer**).
    * *Caching:* Kiểm tra SHA-256 / pHash trong Unified Redis Cache (TTL 30 ngày). Nếu trùng ảnh cũ, trả về kết quả VLM Score trong 1ms mà không gọi API.
-   * *Strategy 3+3 & Fallback Handling:* Thực hiện thẩm định theo chiến lược 3+3 Candidates. Nếu cả 6 ảnh < 60 điểm, tự động chuyển sang PURE_CODE Layout Rotation Engine.
+   * *Strategy 3+3 & Fallback Handling:* Thẩm định theo chiến lược 3+3 Candidates (research đợt 1, nếu chưa đủ chuyển research đợt 2). Nếu cả 6 ảnh < 60 điểm, tự động chuyển sang PURE_CODE Layout Rotation Engine.
 
 3. **`remotion-render-queue` (Render Video MP4, Isolation & SSOT Verification):**
    * *Nhiệm vụ:* Nhận task từ Redis Queue mang `idempotency_key = md5(json_spec_v4)`, **query lại Postgres Checkpoint SSOT** để đảm bảo project chưa bị hủy, pre-download toàn bộ Audio (.wav) & Images về Host Volume `/media/raw-assets/`, chạy lệnh CLI `npx remotion render` với `CONCURRENCY=1` để xuất file `.mp4`.

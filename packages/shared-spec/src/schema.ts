@@ -409,6 +409,9 @@ export const HistoricalContextEntitySchema = z.object({
   summary: z.string(),
   citations: z.array(z.string()).default([]),
   confidenceScore: z.number().min(0).max(1).default(1.0),
+  chunkId: z.string().optional(),
+  title: z.string().optional(),
+  sourceReliability: z.enum(['LEVEL_1', 'LEVEL_2', 'LEVEL_3']).optional(),
 });
 
 export const GraphTripleItemSchema = z.object({
@@ -416,6 +419,37 @@ export const GraphTripleItemSchema = z.object({
   relation: z.string(),
   target: z.string(),
   confidence: z.number().min(0).max(1).default(1.0),
+});
+
+export const GroundedClaimItemSchema = z.object({
+  claimText: z.string(),
+  sourceChunkId: z.string(),
+  sourceTitle: z.string(),
+  reliability: z.enum(['LEVEL_1', 'LEVEL_2', 'LEVEL_3']).default('LEVEL_1'),
+  entailmentScore: z.number().min(0).max(1).default(1.0),
+});
+
+export const HistoricalAnswerGenerationRequestSchema = z.object({
+  query: z.string().min(1),
+  intent: z.union([z.enum(['EVENT_DETAILS', 'WHY_REASONING', 'COMPARATIVE', 'BIOGRAPHY', 'GENERAL']), z.string()]).optional(),
+  requiresMultiHop: z.boolean().optional(),
+  maxTokens: z.number().int().positive().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  stream: z.boolean().optional(),
+  entityFilter: z.array(z.string()).optional(),
+});
+
+export const HistoricalAnswerResponseSchema = z.object({
+  answerText: z.string(),
+  claims: z.array(GroundedClaimItemSchema).default([]),
+  citations: z.array(z.string()).default([]),
+  triplesUsed: z.array(GraphTripleItemSchema).default([]),
+  metrics: z.object({
+    retrievalLatencyMs: z.number().min(0),
+    generationLatencyMs: z.number().min(0),
+    ttftMs: z.number().min(0).optional(),
+    totalTokens: z.number().min(0).optional(),
+  }),
 });
 
 export const HistoricalCitationItemSchema = z.object({
@@ -518,6 +552,9 @@ export type RagSearchRequestInput = z.input<typeof RagSearchRequestSchema>;
 export type RagSearchRequest = z.output<typeof RagSearchRequestSchema>;
 export type HistoricalContextEntity = z.infer<typeof HistoricalContextEntitySchema>;
 export type RagSearchResponse = z.infer<typeof RagSearchResponseSchema>;
+export type GroundedClaimItem = z.infer<typeof GroundedClaimItemSchema>;
+export type HistoricalAnswerGenerationRequest = z.infer<typeof HistoricalAnswerGenerationRequestSchema>;
+export type HistoricalAnswerResponse = z.infer<typeof HistoricalAnswerResponseSchema>;
 
 // ==========================================
 // 6. DATA INGESTION & ETL SCHEMAS (MODULE 0)

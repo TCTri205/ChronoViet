@@ -7,7 +7,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { processTTSJob } from '../src/workers/tts-worker.js';
 import { processRenderJob } from '../src/workers/render-worker.js';
-import { initProjectWorkspace, saveProjectSchema, ChronoVideoProps } from '@chronoviet/shared-spec';
+import { ChronoVideoProps } from '@chronoviet/shared-spec';
+import { initProjectWorkspace, saveProjectSchema } from '@chronoviet/infra';
 import { assertEvalPreflight } from '../../../eval/utils/preflight.js';
 
 async function runRenderWorkerEvaluation() {

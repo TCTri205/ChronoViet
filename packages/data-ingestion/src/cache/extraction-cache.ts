@@ -3,7 +3,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 import { ExtractedTriple } from '../triple-extractor.js';
-import { createLogger } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'data-ingestion' });
 

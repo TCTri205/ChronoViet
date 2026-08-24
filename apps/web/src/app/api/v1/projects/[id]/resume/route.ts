@@ -3,7 +3,7 @@ import {
   createLogger,
   httpRequestsTotal,
   httpRequestDurationSeconds,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { resumeOrchestratorPipeline } from '@chronoviet/agent-orchestrator';
 
 const log = createLogger({ service: 'web-api-resume' });

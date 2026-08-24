@@ -5,9 +5,20 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { IIngestionPipeline, IngestionOptions, IngestionResult, SourceReliability, createLogger, envConfig, IngestionExecutionTelemetry } from '@chronoviet/shared-spec';
-import { IngestionMetricsCollector } from '../diagnostics/index.js';
 import {
+  IIngestionPipeline,
+  IngestionOptions,
+  IngestionResult,
+  SourceReliability,
+  IngestionExecutionTelemetry,
+  resolveHistoricalEpochs,
+  resolveCanonicalEntity,
+  resolveLocationMapping,
+  isKnownMasterEntity,
+} from '@chronoviet/shared-spec';
+import {
+  createLogger,
+  envConfig,
   isPgAvailable,
   query,
   withTransaction,
@@ -16,15 +27,12 @@ import {
   DbDocumentChunk,
   DbQuarantineTriple,
   DbUnmappedEntity,
-  resolveHistoricalEpochs,
-  resolveCanonicalEntity,
-  resolveLocationMapping,
-  isKnownMasterEntity,
   generateEmbedding,
   generateEmbeddingsBatch,
   hybridInferenceDispatcher,
   formatConciseError,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
+import { IngestionMetricsCollector } from '../diagnostics/index.js';
 import { normalizeText } from '../text/text-normalizer.js';
 import { chunkDocumentHierarchical, ProcessedHierarchicalChunk } from '../chunking/hierarchical-chunker.js';
 import {
@@ -484,7 +492,7 @@ export async function seedDualBranch(
   metricsCollector.startStage('dbInsert');
   if (pgConnected) {
     // 3. PostgreSQL Ingestion Mode (Transactional using dedicated pool client)
-    await withTransaction(async (execQuery) => {
+    await withTransaction(async (execQuery: any) => {
       // 3a. Batch Ingest Graph Entities (200 entities per batch)
       const allEntities = Array.from(entityMap.values());
       for (let i = 0; i < allEntities.length; i += 200) {

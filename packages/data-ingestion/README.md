@@ -1,7 +1,7 @@
 # `@chronoviet/data-ingestion`
 
 > **ChronoViet Data Preprocessing & Ingestion Engine (Mô-đun 0)**  
-> Gói mã nguồn chịu trách nhiệm cào tự động 15 thời kỳ lịch sử, làm sạch văn bản & khử nhập nhằng thực thể, phân đoạn văn bản đa cấp (Hierarchical Temporal Chunking), nạp dữ liệu tri thức song song (Dual-Branch Vector/Graph Seeder) vào PostgreSQL (pgvector & Knowledge Graph). Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](../../docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v1.5.
+> Gói mã nguồn chịu trách nhiệm cào tự động 15 thời kỳ lịch sử, làm sạch văn bản & khử nhập nhằng thực thể, phân đoạn văn bản đa cấp (Hierarchical Temporal Chunking), nạp dữ liệu tri thức song song (Dual-Branch Vector/Graph Seeder) vào PostgreSQL (pgvector & Knowledge Graph). Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](../../docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v1.6.
 
 ---
 
@@ -62,7 +62,7 @@ packages/data-ingestion/
 │   ├── diagnostics/                   # Diagnostic Types & Quality Analyzers
 │   ├── pdf/                           # PDF Text Extractor (TCVN3, Zlib Stream)
 │   ├── utils/                         # Text & Path Utilities (Frontmatter parser)
-│   ├── triple-extractor.ts            # 2-Stage Triples Extractor (Stage 1 NER + Stage 2 LLM/Rule)
+│   ├── triple-extractor.ts            # 2-Stage Triples Extractor (Stage 1 NER/Rule + Stage 2 LLM, Ensemble Merge)
 │   ├── ingest-pipeline.ts             # Orchestrator điều phối toàn trình Ingest Pipeline
 │   ├── types.ts                       # Ingestion Data Types & Interfaces
 │   └── index.ts                       # Entrypoint export public APIs

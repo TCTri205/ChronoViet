@@ -3,7 +3,7 @@
  * Alias Table Lookup, Folklore Tone Gate, NLI Entailment & 4-Tier Escalation Path
  */
 
-import { callLlm, envConfig } from '@chronoviet/shared-spec';
+import { callLlm, envConfig } from '@chronoviet/infra';
 import { ChronoGraphState, FactCheckAuditEntry, getNodeLogger } from '../state.js';
 import { validateFolkloreHypothesisTone } from '../../guardrails/folklore-validator.js';
 import { evaluateNliEntailmentScore } from '../../guardrails/nli-hallucination-judge.js';

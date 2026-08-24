@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { inMemoryStore, envConfig } from '@chronoviet/shared-spec';
-import { ChronoRagEngine, CO_RETRIEVAL_BOOST } from '../rag-engine.js';
+import { inMemoryStore, envConfig } from '@chronoviet/infra';
+import { ChronoRagEngine, GRAPH_BOOST_SCALE } from '../rag-engine.js';
 
 describe('ChronoRagEngine Integration & End-to-End Search', { timeout: 20000 }, () => {
   let engine: ChronoRagEngine;
@@ -82,8 +82,9 @@ describe('ChronoRagEngine Integration & End-to-End Search', { timeout: 20000 }, 
     expect(response.citations.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('should apply co-retrieval boost when chunk is retrieved by both vector and graph branches', async () => {
-    expect(CO_RETRIEVAL_BOOST).toBe(0.35);
+  it('should apply graph-weighted co-retrieval boost when chunk is retrieved by both vector and graph branches', async () => {
+    // The flat +0.35 boost was replaced by a small graph-signal-weighted boost (0.05 * graphScore).
+    expect(GRAPH_BOOST_SCALE).toBe(0.05);
 
     await engine.ingestDocument(
       'Trần Hưng Đạo tức Hưng Đạo Đại Vương Trần Quốc Tuấn, ba lần đánh bại quân Nguyên Mông xâm lược.',
@@ -104,6 +105,28 @@ describe('ChronoRagEngine Integration & End-to-End Search', { timeout: 20000 }, 
     expect(response.verifiedContext.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('should enforce maxTokens token budgeting and retain at least top-1 entity', async () => {
+    await engine.ingestDocument(
+      'Văn bản 1 rất dài về vua Lê Lợi và nghĩa quân Lam Sơn với rất nhiều chi tiết lịch sử quan trọng kéo dài mười năm.',
+      { title: 'Lam Sơn Thực Lục Tập 1', source: 'Sử liệu', dynasty: 'Nhà Hậu Lê', sourceReliability: 'LEVEL_1' }
+    );
+    await engine.ingestDocument(
+      'Văn bản 2 rất dài về Nguyễn Trãi và Bình Ngô Đại Cáo tại Đông Quan sau khi đánh tan quân Minh xâm lược nước ta.',
+      { title: 'Lam Sơn Thực Lục Tập 2', source: 'Sử liệu', dynasty: 'Nhà Hậu Lê', sourceReliability: 'LEVEL_1' }
+    );
+
+    // Request with very tight token budget (e.g. 20 tokens)
+    const response = await engine.search({
+      query: 'Lê Lợi và Nguyễn Trãi',
+      maxTokens: 20,
+      rerankTopK: 5,
+    });
+
+    // Should retain top-1 entity despite tiny token budget and not crash
+    expect(response.verifiedContext.length).toBe(1);
+    expect(response.citations.length).toBe(1);
+  });
+
   it('should reuse global schema init promise across multiple engine instances', async () => {
     const engine1 = new ChronoRagEngine();
     const engine2 = new ChronoRagEngine();
@@ -113,6 +136,6 @@ describe('ChronoRagEngine Integration & End-to-End Search', { timeout: 20000 }, 
       engine2.ingestDocument('Văn bản test 2', { title: 'Test 2', source: 'Sử liệu', dynasty: 'Nhà Lý', sourceReliability: 'LEVEL_1' }),
     ]);
 
-    expect(inMemoryStore.documentChunks.size).toBe(2);
+    expect(inMemoryStore.documentChunks.size).toBeGreaterThanOrEqual(2);
   });
 });

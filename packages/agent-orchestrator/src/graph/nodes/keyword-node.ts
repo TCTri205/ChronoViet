@@ -5,13 +5,15 @@
  */
 
 import {
+  SceneGeneration,
+} from '@chronoviet/shared-spec';
+import {
   callLlm,
   createLogger,
   ImageSearchToolInput,
   ImageSearchVisualType,
   parseLlmJson,
-  SceneGeneration,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });

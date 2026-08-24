@@ -8,7 +8,7 @@ import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import { MemorySaver } from '@langchain/langgraph';
 import { RunnableConfig } from '@langchain/core/runnables';
-import { createLogger, getDatabaseClient, initProjectWorkspace } from '@chronoviet/shared-spec';
+import { createLogger, getDatabaseClient, initProjectWorkspace } from '@chronoviet/infra';
 import { ChronoGraphState } from './state.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });

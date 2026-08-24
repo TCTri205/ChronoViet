@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { getDatabaseConfig, createLogger } from '../packages/shared-spec/src/index.js';
+import { getDatabaseConfig, createLogger } from '@chronoviet/infra';
 
 const ROOT_DIR = process.cwd();
 const BACKUPS_DIR = path.resolve(ROOT_DIR, 'backups');

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMetricsSnapshot, getMetricsContentType } from '@chronoviet/shared-spec';
+import { getMetricsSnapshot, getMetricsContentType } from '@chronoviet/infra';
 
 export const dynamic = 'force-dynamic';
 

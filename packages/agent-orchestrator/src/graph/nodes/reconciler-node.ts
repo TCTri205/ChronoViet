@@ -3,7 +3,8 @@
  * Reconciles audio duration with target pacing, calculates exact frame counts and time-stretch (+-10%)
  */
 
-import { orchestratorPacingErrorPercent, SceneGeneration } from '@chronoviet/shared-spec';
+import { SceneGeneration } from '@chronoviet/shared-spec';
+import { orchestratorPacingErrorPercent } from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 
 export async function durationReconciliationNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {

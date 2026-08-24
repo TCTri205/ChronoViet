@@ -3,6 +3,7 @@
  * Usage: pnpm --filter @chronoviet/data-ingestion rag:re-resolve
  */
 
+import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
 import {
   createLogger,
   initSchema,
@@ -10,9 +11,8 @@ import {
   inMemoryStore,
   isPgAvailable,
   logEntityAuditAction,
-  resolveCanonicalEntity,
   withTransaction,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 
 const log = createLogger({ service: 'data-ingestion' });
 
@@ -33,7 +33,7 @@ export async function runReResolve(): Promise<{ resolvedEntitiesCount: number; a
     for (const entity of dbEntities) {
       const canonical = resolveCanonicalEntity(entity.name);
       if (canonical.entityId !== entity.id || canonical.canonicalName !== entity.name) {
-        await withTransaction(async (execQuery) => {
+        await withTransaction(async (execQuery: any) => {
           // 1. Ensure Canonical Entity is in entities table with merged aliases
           const mergedAliases = Array.from(new Set([...(entity.aliases || []), ...(canonical.aliases || [])]));
           await execQuery(`
@@ -121,7 +121,7 @@ export async function runReResolve(): Promise<{ resolvedEntitiesCount: number; a
         }
 
         inMemoryStore.relationships = inMemoryStore.relationships.filter(
-          (r) => r.source_entity_id !== r.target_entity_id
+          (r: any) => r.source_entity_id !== r.target_entity_id
         );
 
         mergedEntitiesCount++;

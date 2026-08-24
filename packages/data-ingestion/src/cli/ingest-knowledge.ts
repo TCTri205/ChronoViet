@@ -16,7 +16,7 @@ import {
   isEmbeddingServiceHealthy,
   isLLMServiceHealthy,
   flushAllQuarantines,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { runReResolve } from './re-resolve-cli.js';
 import { extractionCache } from '../cache/extraction-cache.js';
 

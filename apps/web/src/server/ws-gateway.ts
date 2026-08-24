@@ -1,11 +1,13 @@
 import { Server as HttpServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import {
+  RenderEvent,
+} from '@chronoviet/shared-spec';
+import {
   RedisPubSubManager,
   createLogger,
-  RenderEvent,
   websocketActiveConnectionsGauge,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 
 const log = createLogger({ service: 'web-ws' });
 

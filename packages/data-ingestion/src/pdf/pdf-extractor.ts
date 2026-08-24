@@ -5,7 +5,8 @@
 
 import path from 'path';
 import zlib from 'zlib';
-import { SourceReliability, createLogger } from '@chronoviet/shared-spec';
+import { SourceReliability } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'data-ingestion' });
 

@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { createLogger } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'vlm-inspector' });
 

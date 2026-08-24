@@ -7,18 +7,26 @@
 import {
   IRagEngine,
   ChatStreamResponse,
+  GraphTripleItem,
+  HistoricalCitationItem,
+  isKnownMasterEntity,
+} from '@chronoviet/shared-spec';
+import {
   createLogger,
   generateLLMCompletionStream,
   ChatMessage,
-  GraphTripleItem,
-  HistoricalCitationItem,
   envConfig,
   ragTimeoutsTotal,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { ChronoRagEngine } from '@chronoviet/rag-engine';
 import { classifyChatIntent, ChatIntent } from './intent-classifier.js';
 import { rewriteMultiTurnQuery, ChatTurnContext } from './query-rewriter.js';
-import { pruneConversationHistory, pruneRagContext } from './context-pruner.js';
+import {
+  pruneConversationHistory,
+  pruneRagContext,
+  pruneGraphTriples,
+  clampTotalPromptMessages,
+} from './context-pruner.js';
 import { validateFolkloreHypothesisTone } from '../guardrails/folklore-validator.js';
 import { analyzePremiseAndLeadingIntent } from '../guardrails/anti-sycophancy.js';
 import { createStreamLoopDetector, deduplicateRepetitiveText } from '../guardrails/stream-dedup.js';
@@ -158,26 +166,42 @@ export async function* handleChatQueryStream(
 
   // 6. Build Context & Multi-turn Prompt
   const prunedHistory = pruneConversationHistory(history);
-  const triplesText =
-    graphTriples.length > 0
-      ? graphTriples.map((t) => `- ${t.source} [${t.relation}] -> ${t.target}`).join('\n')
-      : 'Không có quan hệ thực thể đặc thù.';
+  const triplesText = pruneGraphTriples(graphTriples, 15);
 
   const premiseAnalysis = analyzePremiseAndLeadingIntent(query);
-  const premiseDirectiveText = premiseAnalysis.suggestedDirective
-    ? `\n\nCHỈ DẪN KIỂM CHỨNG TIỀN ĐỀ ĐẶC THÙ:\n${premiseAnalysis.suggestedDirective}`
+  const unmappedEntities: string[] = [];
+  for (const ent of premiseAnalysis.detectedEntities) {
+    const isMaster = isKnownMasterEntity(ent);
+    const foundInContext = contextSnippets.toLowerCase().includes(ent.toLowerCase());
+    const foundInTriples = graphTriples.some(
+      (t) => t.source.toLowerCase().includes(ent.toLowerCase()) || t.target.toLowerCase().includes(ent.toLowerCase())
+    );
+    if (!isMaster && !foundInContext && !foundInTriples) {
+      unmappedEntities.push(ent);
+    }
+  }
+
+  const unmappedDirectiveText = unmappedEntities.length > 0
+    ? `\n\nCẢNH BÁO THỰC THỂ NGOÀI CHÍNH SỬ:\nCác tên/nhân vật sau xuất hiện trong câu hỏi nhưng KHÔNG TỒN TẠI trong cơ sở dữ liệu chính sử: "${unmappedEntities.join('", "')}". Bạn BẮT BUỘC phải nói rõ là trong chính sử không có ghi chép về nhân vật này, TUYỆT ĐỐI KHÔNG tự phong vương/vua/tướng hoặc suy đoán tiểu sử hư cấu.`
     : '';
+
+  const premiseDirectiveText = (premiseAnalysis.suggestedDirective
+    ? `\n\nCHỈ DẪN KIỂM CHỨNG TIỀN ĐỀ ĐẶC THÙ:\n${premiseAnalysis.suggestedDirective}`
+    : '') + unmappedDirectiveText;
 
   const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu Lịch sử Việt Nam chuẩn mực, thông thái và khách quan.
 
 NGUYÊN TẮC BẮT BUỘC:
 1. Trả lời chi tiết, sinh động, chuẩn xác tuyệt đối theo chính sử Việt Nam (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Lam Sơn Thực Lục...).
-2. KIỂM TRA TIỀN ĐỀ CÂU HỎI (ANTI-SYCOPHANCY):
+2. KIỂM TRA TIỀN ĐỀ CÂU HỎI & CHỐNG BỊA ĐẶT (ANTI-SYCOPHANCY & ZERO FABRICATION):
    - Nếu câu hỏi của người dùng chứa tiền đề sai lệch (ví dụ: gán sai quan hệ anh em/cha con/vợ chồng, gán sai triều đại, đảo lộn niên đại, gán chiến công cho sai nhân vật), bạn BẮT BUỘC phải bác bỏ và đính chính rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [A] và [B] không phải là anh em...", "Theo chính sử, thông tin này không chính xác...").
    - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng rồi tự bịa đặt câu chuyện để hợp thức hóa tiền đề đó.
-3. KHÔNG TỰ BỊA ĐẶT THÂN TỘC & SỰ KIỆN (ZERO KINSHIP HALLUCINATION):
-   - Tuyệt đối không tự suy diễn hoặc bịa đặt họ tên thân phụ, anh em, niên hiệu hoặc triều đại không có trong sử liệu.
-   - Nếu một nhân vật hoặc mối quan hệ không có ghi chép trong chính sử, hãy nêu rõ "Không có ghi chép chính sử" thay vì suy đoán.
+   - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.
+3. TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT THÂN TỘC, DANH TÍNH & CHIẾN TÍCH (ZERO HISTORICAL HALLUCINATION):
+   - Tuyệt đối không tự suy diễn hoặc bịa đặt tên khai sinh, năm sinh/mất, niên hiệu, thân phụ, anh em, hoặc vị thứ hoàng đế/vua chúa.
+   - NGUYÊN TẮC VỀ TÊN HÚY (TÊN KHAI SINH TRONG NGOẶC ĐƠN): CHỈ ĐƯỢC PHÉP ghi tên húy nếu tên đó XUẤT HIỆN TRỰC TIẾP trong "DỮ LIỆU SỬ LIỆU XÁC THỰC". Tuyệt đối không tự ghép họ tên (CẤM TỰ BỊA "Trần Thừa Thải", "Trần Thừa Bình" hay bất kỳ tên húy nào không có trong sử liệu). Nếu không có tên húy trong ngữ cảnh, CHỈ ĐƯỢC DÙNG MIẾU HIỆU/DANH XƯNG (Ví dụ: "Vua Trần Thái Tông", "Vua Trần Nhân Tông").
+   - Tuyệt đối không tự bịa đặt tên tướng lĩnh chỉ huy hư cấu hoặc gán sai địa danh/trận đánh (ví dụ: 3 lần chống Mông-Nguyên lần lượt do Vua Trần Thái Tông - Thái sư Trần Thủ Độ [lần 1 - Đông Bộ Đầu 1258], Vua Trần Nhân Tông - Thượng hoàng Trần Thánh Tông - Tiết chế Trần Quốc Tuấn [lần 2 - 1285 & lần 3 - Bạch Đằng 1288]. Trận Bạch Đằng lừng lẫy tiêu diệt Ô Mã Nhi là ở Lần 3 năm 1288, không phải Lần 2).
+   - Nếu một nhân vật hoặc mối quan hệ không có ghi chép trong chính sử, hãy nêu rõ "Không có ghi chép chính sử" thay vì tự suy diễn.
 4. Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả thuyết: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
 5. Nêu rõ niên đại, nhân vật, bối cảnh và ý nghĩa lịch sử.
 6. Trình bày đẹp mắt với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
@@ -189,18 +213,22 @@ ${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}
 QUAN HỆ THỰC THỂ (GRAPH TRIPLES):
 ${triplesText}`;
 
-  const messages: ChatMessage[] = [
+  const rawMessages: ChatMessage[] = [
     { role: 'system', content: systemPrompt },
     ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
     { role: 'user', content: query },
   ];
+  const messages = clampTotalPromptMessages(rawMessages, 5000);
 
   let fullResponse = '';
   const loopDetector = createStreamLoopDetector();
 
   try {
     for await (const chunk of generateLLMCompletionStream(messages, {
-      temperature: 0.2,
+      temperature: 0.15,
+      top_p: 0.85,
+      frequency_penalty: 0.4,
+      presence_penalty: 0.2,
       max_tokens: 1500,
     })) {
       if (signal?.aborted) {
@@ -222,7 +250,7 @@ ${triplesText}`;
   } catch (llmErr: any) {
     log.error('chat.llm_streaming_error', `LLM Stream error: ${llmErr.message}`);
     if (contextSnippets) {
-      const fallbackSummary = `Theo các tư liệu lịch sử được ghi nhận trong cơ sở dữ liệu ChronoViet:\n\n${contextSnippets.slice(0, 500)}`;
+      const fallbackSummary = `⚠️ Trợ lý AI đang tải cao hoặc gặp sự cố kết nối. Trích xuất sử liệu nhanh từ Chrono-RAG:\n\n${pruneRagContext(contextSnippets, 350)}`;
       fullResponse = fallbackSummary;
       yield { type: 'token', content: fallbackSummary };
     } else {

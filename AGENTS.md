@@ -15,7 +15,7 @@ Guidelines, operational constraints, and verification protocols for AI Agents an
    - Declare all cross-module data contracts, Zod schemas, and shared TypeScript interfaces centrally in [`packages/shared-spec`](packages/shared-spec). Never duplicate schemas across child packages. Encapsulate module-private types within their respective packages.
 3. **Production-Ready & Anti-Overfitting:**
    - Ensure generic, robust, and performant implementations.
-   - Do NOT hardcode logic, make narrow assumptions, or loosen test assertions to force fixtures to pass.
+   - Do NOT hardcode logic, make narrow assumptions, or loosen test/eval assertions and fixtures to artificially inflate benchmark scores or force tests to pass.
 4. **Stateless Runtime:**
    - Keep application state stateless. Persistent data resides in PostgreSQL (pgvector), Redis, and volume storage (`/media`).
 5. **Language Boundary:**

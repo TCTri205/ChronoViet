@@ -5,8 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "prebuild": "rm -rf .next",
-    "build": "next build && tsc --project tsconfig.server.json",
+    "clean": "rm -rf .next dist",
+    "prebuild": "rm -rf .next dist",
+    "build": "NODE_ENV=production next build && tsc --project tsconfig.server.json",
     "start": "NODE_ENV=production node dist/server.js",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
@@ -16,9 +17,9 @@
   },
   "dependencies": {
     "@chronoviet/shared-spec": "workspace:*",
+    "@chronoviet/infra": "workspace:*",
     "@chronoviet/rag-engine": "workspace:*",
     "@chronoviet/agent-orchestrator": "workspace:*",
-    "@chronoviet/vieneu-tts": "workspace:*",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-dropdown-menu": "^2.1.2",

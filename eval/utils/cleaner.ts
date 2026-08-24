@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
-import { envConfig } from '../../packages/shared-spec/src/index.js';
+import { envConfig } from '@chronoviet/infra';
 
 export interface CleanupOptions {
   cleanAudio?: boolean;

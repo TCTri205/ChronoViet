@@ -4,7 +4,7 @@ import { ChronoGraphState } from '../../src/graph/state.js';
 
 describe('Agent Orchestrator Pacing Metric Unit Tests', () => {
   it('computes script pacing error percentage correctly', async () => {
-    const state: ChronoGraphState = {
+    const state: any = {
       projectId: 'test_pacing_metric',
       userPrompt: 'Chiến dịch Điện Biên Phủ',
       targetDurationMinutes: 2,
@@ -31,7 +31,7 @@ describe('Agent Orchestrator Pacing Metric Unit Tests', () => {
           audioDurationSeconds: 28.5,
           targetDurationSeconds: 30,
           layoutMode: 'MAP_TACTICAL',
-          contentType: 'MAP',
+          contentType: 'PURE_CODE',
           searchKeywords: ['Điện Biên Phủ'],
           candidates: [],
           usePureCodeFallback: false,
@@ -42,7 +42,7 @@ describe('Agent Orchestrator Pacing Metric Unit Tests', () => {
           voiceoverText: 'Đoạn 2 diễn giải cứ điểm Him Lam.',
           audioDurationSeconds: 29.0,
           targetDurationSeconds: 30,
-          layoutMode: 'SPLIT_RIGHT',
+          layoutMode: 'SPLIT_COMPARE',
           contentType: 'IMAGE',
           searchKeywords: ['Him Lam'],
           candidates: [],
@@ -54,7 +54,7 @@ describe('Agent Orchestrator Pacing Metric Unit Tests', () => {
           voiceoverText: 'Đoạn 3 diễn giải đồi A1.',
           audioDurationSeconds: 28.0,
           targetDurationSeconds: 30,
-          layoutMode: 'FULL_BLEED',
+          layoutMode: 'FULL_COVER',
           contentType: 'IMAGE',
           searchKeywords: ['Đồi A1'],
           candidates: [],
@@ -66,8 +66,8 @@ describe('Agent Orchestrator Pacing Metric Unit Tests', () => {
           voiceoverText: 'Đoạn 4 chiến thắng vang dội.',
           audioDurationSeconds: 32.0,
           targetDurationSeconds: 30,
-          layoutMode: 'QUOTE_CARD',
-          contentType: 'TEXT_STORY',
+          layoutMode: 'QUOTE_CANVAS',
+          contentType: 'PURE_CODE',
           searchKeywords: ['Chiến thắng'],
           candidates: [],
           usePureCodeFallback: false,

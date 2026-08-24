@@ -5,7 +5,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p eval/tsconfig.json",
     "lint": "tsc --noEmit",
     "test": "vitest run --dir src/ --passWithNoTests",
     "test:eval": "vitest run --dir eval/ --passWithNoTests",
@@ -13,9 +13,9 @@
     "eval:research": "tsx eval/research-runner.ts"
   },
   "dependencies": {
+    "@chronoviet/infra": "workspace:*",
     "@chronoviet/rag-engine": "workspace:*",
     "@chronoviet/shared-spec": "workspace:*",
-    "@chronoviet/vieneu-tts": "workspace:*",
     "@chronoviet/vlm-inspector": "workspace:*",
     "@langchain/core": "^0.3.80",
     "@langchain/langgraph": "^0.2.74"

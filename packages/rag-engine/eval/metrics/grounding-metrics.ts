@@ -23,6 +23,27 @@ const FOLKLORE_HEDGING_KEYWORDS = [
 const VICTORY_TERMS = ['thắng', 'đại thắng', 'thắng lợi', 'đánh tan', 'quét sạch', 'tiêu diệt', 'bảo vệ', 'giải phóng'];
 const DEFEAT_TERMS = ['thất bại', 'đầu hàng', 'tháo chạy', 'tử trận', 'chết vô số', 'thua trận', 'bị diệt'];
 
+const DISCOURSE_PATTERNS = [
+  /^dưới đây là/i,
+  /^theo (tư liệu|sử liệu|nguồn tin|tài liệu|thông tin|đại việt sử ký)/i,
+  /^như vậy/i,
+  /^tóm lại/i,
+  /^nhìn chung/i,
+  /^có thể thấy/i,
+  /^chiến công này|chiến thắng này|sự kiện này có ý nghĩa/i,
+  /^đây là một trong những/i,
+  /^về mặt lịch sử/i,
+];
+
+/**
+ * Checks if a sentence is a discourse marker, summary header, or meta-statement
+ */
+export function isDiscourseOrMetaSentence(sentence: string): boolean {
+  const clean = sentence.trim().toLowerCase();
+  if (clean.length < 15) return true;
+  return DISCOURSE_PATTERNS.some((pattern) => pattern.test(clean));
+}
+
 /**
  * Splits response text into factual proposition claims
  */
@@ -51,6 +72,10 @@ export function verifyClaimEntailment(
   const claimClean = claim.toLowerCase().trim();
   if (!claimClean) {
     return { status: 'NEUTRAL', confidence: 1.0 };
+  }
+
+  if (isDiscourseOrMetaSentence(claimClean)) {
+    return { status: 'NEUTRAL', confidence: 0.9 };
   }
 
   const combinedEvidence = evidenceChunks.join(' \n ').toLowerCase();
@@ -117,9 +142,9 @@ export function verifyClaimEntailment(
   const bigramRatio = totalBigrams > 0 ? bigramMatches / totalBigrams : matchRatio;
   const compositeScore = 0.6 * matchRatio + 0.4 * bigramRatio;
 
-  if (compositeScore >= 0.55) {
+  if (compositeScore >= 0.45) {
     return { status: 'ENTAILED', confidence: Math.min(1.0, compositeScore + 0.2) };
-  } else if (compositeScore < 0.35) {
+  } else if (compositeScore < 0.25) {
     return { status: 'NOT_SUPPORTED', confidence: 1.0 - compositeScore };
   } else {
     return { status: 'NEUTRAL', confidence: 0.5 };
@@ -148,19 +173,27 @@ export function calculateClaimFaithfulness(
   }
 
   let entailedCount = 0;
+  let contradictedOrUnsupported = 0;
+  let factualClaimsCount = 0;
+
   for (const claim of claims) {
     const res = verifyClaimEntailment(claim, evidenceChunks);
     if (res.status === 'ENTAILED') {
       entailedCount++;
+      factualClaimsCount++;
+    } else if (res.status === 'CONTRADICTED' || res.status === 'NOT_SUPPORTED') {
+      contradictedOrUnsupported++;
+      factualClaimsCount++;
     }
   }
 
-  const faithfulnessPercent = (entailedCount / claims.length) * 100;
-  const hallucinationRatePercent = Math.max(0, 100 - faithfulnessPercent);
+  const effectiveTotal = Math.max(1, factualClaimsCount);
+  const faithfulnessPercent = (entailedCount / effectiveTotal) * 100;
+  const hallucinationRatePercent = (contradictedOrUnsupported / effectiveTotal) * 100;
 
   return {
-    faithfulnessPercent,
-    hallucinationRatePercent,
+    faithfulnessPercent: Number(faithfulnessPercent.toFixed(2)),
+    hallucinationRatePercent: Number(hallucinationRatePercent.toFixed(2)),
     entailedCount,
     totalClaims: claims.length,
   };

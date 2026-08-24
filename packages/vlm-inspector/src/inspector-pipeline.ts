@@ -4,12 +4,12 @@
  */
 
 import {
-  createLogger,
   LayoutMode,
   LicenseTypeSchema,
   SceneGeneration,
   VisualCandidate,
 } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 import { z } from 'zod';
 import { downloadCandidateBatch } from './asset-downloader.js';
 import { scoreImageWithGemini } from './vlm-scorer.js';
@@ -183,9 +183,33 @@ export async function inspectSceneVisuals(
 ): Promise<InspectSceneResult> {
   log.debug('vlm.inspecting_scene', `Inspecting visuals for scene ${scene.sceneId} (${scene.layoutMode})`, {
     sceneId: scene.sceneId,
-    candidateCount: candidatePool.length,
+    candidateCount: candidatePool?.length ?? 0,
     correlationId: options.correlationId,
   });
+
+  if (!candidatePool || candidatePool.length === 0) {
+    const rotationIndex = (scene.sceneIndex || 0) % PURE_CODE_LAYOUT_ROTATION.length;
+    const finalLayoutMode = PURE_CODE_LAYOUT_ROTATION[rotationIndex];
+    log.debug('vlm.empty_candidate_pool', `Empty candidate pool for scene ${scene.sceneId}; immediate PURE_CODE fallback: ${finalLayoutMode}`, {
+      sceneId: scene.sceneId,
+      finalLayoutMode,
+    });
+    const updatedScene: SceneGeneration = {
+      ...scene,
+      candidates: [],
+      selectedAsset: undefined,
+      layoutMode: finalLayoutMode,
+      contentType: 'PURE_CODE',
+      usePureCodeFallback: true,
+    };
+    return {
+      updatedScene,
+      inspectedCandidates: [],
+      selectedCandidate: undefined,
+      isPureCodeFallback: true,
+      selectedLayoutMode: finalLayoutMode,
+    };
+  }
 
   const qualityGate = new VisualQualityGate();
   const batch1 = candidatePool.slice(0, 3);

@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { ChronoVideoSchema, ChronoVideoProps, TimelineScene, LayoutModeSchema, TransitionTypeSchema } from '../src/types';
-import { envConfig } from '@chronoviet/shared-spec';
 import { cleanEvalArtifacts, isPortInUseSync, killPortProcessSync } from '../../../eval/utils/cleaner';
 
+const DEFAULT_REMOTION_PORT = 9876;
 const TOTAL_LAYOUT_MODES = LayoutModeSchema.options.length;
 const TOTAL_TRANSITIONS = TransitionTypeSchema.options.filter((t) => t !== 'NONE').length;
 
@@ -33,7 +33,7 @@ function parseEvalArgs(args: string[]) {
   let openStudio = true;
   let verbose = false;
   let forceNew = false;
-  let port = String(envConfig.REMOTION_PORT);
+  let port = String(process.env.REMOTION_PORT || DEFAULT_REMOTION_PORT);
   let cleanOnly = false;
   let fresh = false;
 
@@ -90,7 +90,7 @@ function findAvailablePortSync(startPort: number): number {
 function runEvaluation() {
   const { testCasesDir, reportsDir, outDir, openStudio, verbose, forceNew, port: requestedPortStr, cleanOnly, fresh } = parseEvalArgs(process.argv.slice(2));
 
-  const portNum = parseInt(requestedPortStr, 10) || envConfig.REMOTION_PORT;
+  const portNum = parseInt(requestedPortStr, 10) || DEFAULT_REMOTION_PORT;
 
   if (cleanOnly) {
     cleanEvalArtifacts({ verbose: true, port: portNum });
@@ -304,7 +304,7 @@ ${Array.from(globalTransitions).sort().map((t) => `- \`${t}\``).join('\n')}
     console.log(' 📌 PHASE 3: LAUNCHING REMOTION STUDIO FOR HUMAN EVALUATION');
     console.log('────────────────────────────────────────────────────────────────────────────\n');
 
-    const requestedPort = parseInt(requestedPortStr, 10) || envConfig.REMOTION_PORT;
+    const requestedPort = parseInt(requestedPortStr, 10) || DEFAULT_REMOTION_PORT;
     let targetPort = requestedPort;
     if (isPortInUseSync(targetPort)) {
       console.log(`ℹ️ Port ${requestedPort} đang bị chiếm giữ bởi một tiến trình cũ.`);
@@ -349,7 +349,7 @@ ${Array.from(globalTransitions).sort().map((t) => `- \`${t}\``).join('\n')}
         stdio: 'inherit',
         env: {
           ...process.env,
-          NODE_OPTIONS: envConfig.REMOTION_NODE_OPTIONS,
+          NODE_OPTIONS: process.env.NODE_OPTIONS || '--max-old-space-size=4096',
         },
       });
     } catch (e: any) {

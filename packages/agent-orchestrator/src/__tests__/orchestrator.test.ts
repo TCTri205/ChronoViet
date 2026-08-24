@@ -8,9 +8,9 @@ import { runOrchestratorPipeline, resumeOrchestratorPipeline, streamOrchestrator
 import { extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
 import { vlmInspectionNode } from '../graph/nodes/vlm-node.js';
 
-// Mock callLlm for deterministic unit testing
-vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@chronoviet/shared-spec')>();
+// Mock callLlm and VieNeuEngine for deterministic unit testing
+vi.mock('@chronoviet/infra', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@chronoviet/infra')>();
   return {
     ...original,
     callLlm: vi.fn().mockImplementation(async ({ messages, responseFormat }) => {
@@ -36,53 +36,6 @@ vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
           'Năm 938, trên dòng sông Bạch Đằng lịch sử, Tiền Ngô Vương Ngô Quyền đã lãnh đạo quân dân Đại Việt lập nên chiến công hiển hách. Trận đánh vang dội này đã vĩnh viễn chấm dứt hơn một nghìn năm Bắc thuộc, mở ra kỷ nguyên độc lập tự chủ lâu dài cho dân tộc ta.',
       };
     }),
-  };
-});
-
-// Mock VLM inspector so the E2E pipeline does not require a live VLM server
-vi.mock('@chronoviet/vlm-inspector', async () => {
-  const actual = await vi.importActual<any>('@chronoviet/vlm-inspector');
-  return {
-    ...actual,
-    resolveImageCandidates: vi.fn(async (keywords: string, sceneId: string, limit: number) => ({
-      candidates: [
-        {
-          candidateId: `cand_${sceneId}_01`,
-          imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg',
-          sourceUrl: 'https://commons.wikimedia.org/wiki/File:Hai_ba_trung_Dong_ho.jpg',
-          title: `Tư liệu cho ${keywords}`,
-          author: 'Wikimedia Commons Contributor',
-          license: 'PUBLIC_DOMAIN',
-          candidateBatch: 1,
-        },
-      ],
-      provenance: [{ provider: 'catalog', count: 1, latencyMs: 5 }],
-    })),
-    inspectSceneVisuals: vi.fn(async (_projectId: string, scene: any, candidates: any[]) => {
-      const top = candidates[0];
-      return {
-        updatedScene: {
-          ...scene,
-          candidates,
-          selectedAsset: top || undefined,
-          layoutMode: top ? 'HISTORICAL_FRAME' : 'STAT_CARD',
-          contentType: top ? 'IMAGE' : 'PURE_CODE',
-          usePureCodeFallback: !top,
-        },
-        inspectedCandidates: candidates,
-        selectedCandidate: top,
-        isPureCodeFallback: !top,
-        selectedLayoutMode: top ? 'HISTORICAL_FRAME' : 'STAT_CARD',
-      };
-    }),
-  };
-});
-
-// Mock VieNeu TTS so the E2E pipeline does not require the Python ONNX service
-vi.mock('@chronoviet/vieneu-tts', async () => {
-  const actual = await vi.importActual<any>('@chronoviet/vieneu-tts');
-  return {
-    ...actual,
     VieNeuEngine: class {
       async synthesize(opts: any) {
         const words = (opts.text || '').split(/\s+/).filter(Boolean);
@@ -102,6 +55,56 @@ vi.mock('@chronoviet/vieneu-tts', async () => {
       }
     },
     createSyntheticWavBuffer: () => Buffer.alloc(0),
+  };
+});
+
+// Mock research module so E2E pipeline does not hit real search APIs
+vi.mock('../research/index.js', async () => {
+  const actual = await vi.importActual<any>('../research/index.js');
+  return {
+    ...actual,
+    resolveImageCandidates: vi.fn(async (keywordsOrInput: any, sceneId: string, limit: number) => {
+      const kw = typeof keywordsOrInput === 'object' ? keywordsOrInput.primaryQuery : keywordsOrInput;
+      return {
+        candidates: [
+          {
+            candidateId: `cand_${sceneId}_01`,
+            imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg',
+            sourceUrl: 'https://commons.wikimedia.org/wiki/File:Hai_ba_trung_Dong_ho.jpg',
+            title: `Tư liệu cho ${kw}`,
+            author: 'Wikimedia Commons Contributor',
+            license: 'PUBLIC_DOMAIN',
+            candidateBatch: 1,
+          },
+        ],
+        provenance: [{ provider: 'catalog', count: 1, latencyMs: 5 }],
+      };
+    }),
+  };
+});
+
+// Mock VLM inspector so the E2E pipeline does not require a live VLM server
+vi.mock('@chronoviet/vlm-inspector', async () => {
+  const actual = await vi.importActual<any>('@chronoviet/vlm-inspector');
+  return {
+    ...actual,
+    inspectSceneVisuals: vi.fn(async (_projectId: string, scene: any, candidates: any[]) => {
+      const top = candidates[0];
+      return {
+        updatedScene: {
+          ...scene,
+          candidates,
+          selectedAsset: top || undefined,
+          layoutMode: top ? 'HISTORICAL_FRAME' : 'STAT_CARD',
+          contentType: top ? 'IMAGE' : 'PURE_CODE',
+          usePureCodeFallback: !top,
+        },
+        inspectedCandidates: candidates,
+        selectedCandidate: top,
+        isPureCodeFallback: !top,
+        selectedLayoutMode: top ? 'HISTORICAL_FRAME' : 'STAT_CARD',
+      };
+    }),
   };
 });
 
@@ -349,6 +352,22 @@ describe('Agent Orchestrator Unit Tests', () => {
         templateId: 'HISTORICAL_DOCUMENTARY',
         status: 'INIT',
         currentStep: 1,
+        ragContext: {
+          verifiedContext: [
+            {
+              entityId: 'e_ngo_quyen',
+              canonicalName: 'Ngô Quyền',
+              aliases: ['Tiền Ngô Vương'],
+              summary: 'Năm 938, trên dòng sông Bạch Đằng lịch sử, Tiền Ngô Vương Ngô Quyền đã lãnh đạo quân dân Đại Việt lập nên chiến công hiển hách. Trận đánh vang dội này đã vĩnh viễn chấm dứt hơn một nghìn năm Bắc thuộc, mở ra kỷ nguyên độc lập tự chủ lâu dài cho dân tộc ta.',
+              citations: ['Đại Việt Sử Ký Toàn Thư'],
+              confidenceScore: 0.98,
+            },
+          ],
+          aliasTable: {
+            'Ngô Quyền': ['Tiền Ngô Vương'],
+          },
+          citations: ['Đại Việt Sử Ký Toàn Thư'],
+        },
       };
 
       const emittedNodes: string[] = [];

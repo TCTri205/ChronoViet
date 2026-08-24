@@ -3,7 +3,7 @@
  * Generates compelling voiceover narration while preserving cross-chapter narrative flow
  */
 
-import { callLlm, envConfig } from '@chronoviet/shared-spec';
+import { callLlm, envConfig } from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger, RunningNarrativeState, TelemetryAuditEntry } from '../state.js';
 
 function generateProportionalNarration(

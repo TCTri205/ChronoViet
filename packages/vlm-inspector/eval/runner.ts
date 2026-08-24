@@ -5,8 +5,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import crypto from 'crypto';
 import { scoreImageWithGemini } from '../src/vlm-scorer.js';
-import { inspectSceneVisuals } from '../src/inspector-pipeline.js';
+import { inspectSceneVisuals, isWhitelistedLicense } from '../src/inspector-pipeline.js';
 import { SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
 import { assertEvalPreflight } from '../../../eval/utils/preflight.js';
 

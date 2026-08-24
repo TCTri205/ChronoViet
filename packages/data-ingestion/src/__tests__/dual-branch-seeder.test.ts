@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateEmbedding, generateEmbeddingsBatch, isPgAvailable } from '@chronoviet/shared-spec';
+import { generateEmbedding, generateEmbeddingsBatch, isPgAvailable } from '@chronoviet/infra';
 import { extractTriplesFromTextAsync } from '../triple-extractor.js';
 import { seedDualBranch } from '../seeder/dual-branch-seeder.js';
 import { extractionCache } from '../cache/extraction-cache.js';
 
-vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@chronoviet/shared-spec')>();
+vi.mock('@chronoviet/infra', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@chronoviet/infra')>();
   return {
     ...original,
     generateEmbedding: vi.fn().mockResolvedValue(new Array(1024).fill(0.01)),

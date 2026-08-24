@@ -1,7 +1,7 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { OcrPageStructure } from '../types.js';
-import { createLogger, formatConciseError } from '@chronoviet/shared-spec';
+import { createLogger, formatConciseError } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'data-ingestion' });
 const execFileAsync = promisify(execFile);

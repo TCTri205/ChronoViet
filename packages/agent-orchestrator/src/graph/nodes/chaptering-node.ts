@@ -3,7 +3,8 @@
  * Divides topic and RAG context into N Chapters (2-3 minutes each) and initializes runningNarrativeState
  */
 
-import { callLlm, ChapterPlan, envConfig, parseLlmJson } from '@chronoviet/shared-spec';
+import { ChapterPlan } from '@chronoviet/shared-spec';
+import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger, TelemetryAuditEntry } from '../state.js';
 
 export async function chapteringNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {

@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   Conversation,
   ConversationSchema,
+} from '@chronoviet/shared-spec';
+import {
   createLogger,
   query,
   isPgAvailable,
   inMemoryStore,
   httpRequestsTotal,
   httpRequestDurationSeconds,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 
 const log = createLogger({ service: 'web-api-conversations' });
 
@@ -38,7 +40,7 @@ export async function GET(req: NextRequest) {
       );
     } else {
       conversations = Array.from(inMemoryStore.conversations.values()).sort(
-        (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+        (a: any, b: any) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
       );
     }
 

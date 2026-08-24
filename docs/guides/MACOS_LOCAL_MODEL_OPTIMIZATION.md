@@ -204,7 +204,7 @@ Quốc ngữ Cổ Engine       Hán / Nôm Engine           Ấn triện / VLM
 
 ### 3.6. VieNeu TTS Engine & Heritage Speech Evaluation (`services/vieneu-tts`)
 
-Dịch vụ tổng hợp giọng đọc di sản đã được triển khai hoàn chỉnh tại [`services/vieneu-tts`](../../services/vieneu-tts) với kiến trúc 2 lớp phòng thủ **Dual-Layer Architecture (Zero-Downtime Fallback)**:
+Dịch vụ tổng hợp giọng đọc di sản gồm **microservice Python FastAPI thuần túy** tại [`services/vieneu-tts`](../../services/vieneu-tts) và **Node.js Client SDK (`VieNeuEngine` + `SyntheticTTSFallbackEngine`) tại [`packages/infra/src/tts/`](../../packages/infra/src/tts/)** — hợp nhất thành kiến trúc 2 lớp phòng thủ **Dual-Layer Architecture (Zero-Downtime Fallback)**:
 
 ```mermaid
 flowchart TD
@@ -314,7 +314,7 @@ ChronoViet hỗ trợ đa dạng cấu hình khởi động để tối ưu tài
 
 ```bash
 # 1. Khởi động trọn gói 1-Lệnh: Docker Infra + AI Supervisor + VieNeu TTS + Web UI + Worker
-pnpm dev:stack
+pnpm dev
 
 # 2. Khởi động theo Profile công việc tối ưu tài nguyên (Daily Dev Profiles):
 pnpm dev:hybrid      # Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local, tiết kiệm tối đa)

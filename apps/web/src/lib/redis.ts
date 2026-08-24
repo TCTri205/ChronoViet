@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { envConfig, createLogger, formatErrorMessage } from '@chronoviet/shared-spec';
+import { envConfig, createLogger, formatErrorMessage } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'web' });
 

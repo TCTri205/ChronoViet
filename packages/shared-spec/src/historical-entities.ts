@@ -4,8 +4,6 @@
 
 import { EntityAliasMapping, HistoricalLocationMapping } from './interfaces.js';
 import { getCanonicalEntityIdPrefix } from './schema.js';
-import { isPgAvailable, query, inMemoryStore } from './db/client.js';
-import { generateEmbedding } from './embeddings.js';
 
 
 export interface HistoricalEntityInfo {
@@ -13,6 +11,15 @@ export interface HistoricalEntityInfo {
   canonicalName: string;
   type: 'HISTORICAL_PERSON' | 'LOCATION' | 'EVENT_BATTLE' | 'DYNASTY_ERA' | 'ORGANIZATION' | 'ARTIFACT' | 'DOCUMENT_CULTURE' | string;
   aliases: string[];
+}
+
+export function removeVietnameseAccents(str: string): string {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
 }
 
 /**
@@ -323,26 +330,152 @@ export function resolveLocationMapping(locationName: string): HistoricalLocation
  */
 export function inferEntityTypeFromName(name: string): 'HISTORICAL_PERSON' | 'LOCATION' | 'EVENT_BATTLE' | 'DYNASTY_ERA' | 'ORGANIZATION' | 'ARTIFACT' | 'DOCUMENT_CULTURE' {
   const norm = name.toLowerCase().trim();
-  if (/\b(trận|chiến dịch|cuộc khởi nghĩa|khởi nghĩa|biến cố|hội nghị|hội thề)\b/.test(norm)) {
+  if (/\b(trận|chiến dịch|cuộc khởi nghĩa|khởi nghĩa|biến cố|hội nghị|hội thề|sáng lập|dựng nước|chiến thắng|đại thắng|dẹp loạn)\b/.test(norm)) {
     return 'EVENT_BATTLE';
   }
-  if (/\b(sông|núi|ải|thành|đô|trấn|phủ|huyện|tỉnh|làng|xã|đàng|đông kinh|đông quan|thăng long|hà nội)\b/.test(norm)) {
+  if (/\b(sông|núi|ải|thành|đô|trấn|phủ|huyện|tỉnh|làng|xã|đàng|đông kinh|đông quan|thăng long|hà nội|phong châu|mê linh|hát môn|luy lâu|phú xuân|mường thanh|ngọc hồi|đống đa|chi lăng|xương giang|bạch đằng|như nguyệt|cổ loa|tây đô|hoa lư|huế|sài gòn|gia định)\b/.test(norm)) {
     return 'LOCATION';
   }
-  if (/\b(triều|nhà|thời|kỷ|kỷ nguyên)\b/.test(norm)) {
+  if (/\b(triều|nhà|thời|kỷ|kỷ nguyên|hồng bàng|văn lang|âu lạc|vạn xuân|đại cồ việt|đông sơn)\b/.test(norm)) {
     return 'DYNASTY_ERA';
   }
-  if (/\b(quân|hội|viện|quán|đoàn|tập đoàn|triều đình)\b/.test(norm)) {
+  if (/\b(quân|hội|viện|quán|đoàn|tập đoàn|triều đình|tây sơn)\b/.test(norm)) {
     return 'ORGANIZATION';
   }
-  if (/\b(bia|sắc|ấn|trống|vũ khí|bảo vật|thần khí)\b/.test(norm)) {
+  if (/\b(bia|sắc|ấn|trống|vũ khí|bảo vật|thần khí|nỏ)\b/.test(norm)) {
     return 'ARTIFACT';
   }
-  if (/\b(sử|bình|hịch|chiếu|cáo|thư|quyển|bản kỷ|tập|tác phẩm)\b/.test(norm)) {
+  if (/\b(sử|bình|hịch|chiếu|cáo|thư|quyển|bản kỷ|tập|tác phẩm|luật|hiệp định)\b/.test(norm)) {
     return 'DOCUMENT_CULTURE';
   }
   return 'HISTORICAL_PERSON';
 }
+
+  const DYNASTY_DICTIONARY: Record<string, { entityId: string; canonicalName: string; aliases: string[] }> = {
+    'dynasty_nam_han': { entityId: 'dynasty_nam_han', canonicalName: 'Nam Hán', aliases: ['quân Nam Hán', 'Nam Hán'] },
+    'dynasty_tong': { entityId: 'dynasty_tong', canonicalName: 'Nhà Tống', aliases: ['quân Tống', 'nhà Tống', 'triều Tống'] },
+    'dynasty_minh': { entityId: 'dynasty_minh', canonicalName: 'Nhà Minh', aliases: ['quân Minh', 'nhà Minh', 'triều Minh'] },
+    'dynasty_thanh': { entityId: 'dynasty_thanh', canonicalName: 'Nhà Thanh', aliases: ['quân Mãn Thanh', 'quân Thanh', 'nhà Thanh', 'triều Thanh'] },
+    'dynasty_nguyen_mong': { entityId: 'dynasty_nguyen_mong', canonicalName: 'Quân Nguyên Mông', aliases: ['quân Nguyên Mông', 'quân Mông Cổ', 'quân Nguyên'] },
+    'dynasty_van_lang': { entityId: 'dynasty_van_lang', canonicalName: 'Văn Lang', aliases: ['nhà nước Văn Lang', 'Văn Lang'] },
+    'dynasty_au_lac': { entityId: 'dynasty_au_lac', canonicalName: 'Âu Lạc', aliases: ['nhà nước Âu Lạc', 'Âu Lạc'] },
+    'dynasty_van_xuan': { entityId: 'dynasty_van_xuan', canonicalName: 'Vạn Xuân', aliases: ['nhà nước Vạn Xuân', 'Vạn Xuân'] },
+    'dynasty_dai_co_viet': { entityId: 'dynasty_dai_co_viet', canonicalName: 'Đại Cồ Việt', aliases: ['nhà nước Đại Cồ Việt', 'Đại Cồ Việt'] },
+    'dynasty_dai_viet': { entityId: 'dynasty_dai_viet', canonicalName: 'Đại Việt', aliases: ['nước Đại Việt', 'Đại Việt'] },
+    'dynasty_dai_nam': { entityId: 'dynasty_dai_nam', canonicalName: 'Đại Nam', aliases: ['nước Đại Nam', 'Đại Nam'] },
+    'dynasty_tay_son': { entityId: 'dynasty_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn'] },
+  };
+
+// Pre-computed O(1) In-Memory Lookup Index for Entity Resolution
+const FAST_ENTITY_MAP = new Map<string, EntityAliasMapping>();
+
+function initFastEntityMap(): void {
+  function register(alias: string, canonicalId: string, canonicalName: string) {
+    const mapping: EntityAliasMapping = { alias, canonicalId, canonicalName };
+    const norm = normalizeKey(alias);
+    if (norm) {
+      FAST_ENTITY_MAP.set(norm, mapping);
+      const unaccented = norm.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd');
+      if (unaccented && unaccented.length >= 3) {
+        FAST_ENTITY_MAP.set(unaccented, mapping);
+      }
+    }
+  }
+
+  for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
+    register(person.canonicalName, person.entityId, person.canonicalName);
+    for (const alias of person.aliases) {
+      register(alias, person.entityId, person.canonicalName);
+    }
+  }
+
+  for (const dyn of Object.values(DYNASTY_DICTIONARY)) {
+    register(dyn.canonicalName, dyn.entityId, dyn.canonicalName);
+    for (const alias of dyn.aliases) {
+      register(alias, dyn.entityId, dyn.canonicalName);
+    }
+  }
+
+  for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
+    register(loc.canonicalName, loc.entityId, loc.canonicalName);
+    const stripped = loc.canonicalName.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh)\s+/i, '');
+    if (stripped !== loc.canonicalName) {
+      register(stripped, loc.entityId, loc.canonicalName);
+    }
+    for (const alias of loc.aliases) {
+      register(alias, loc.entityId, loc.canonicalName);
+      const strippedAlias = alias.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh)\s+/i, '');
+      if (strippedAlias !== alias) {
+        register(strippedAlias, loc.entityId, loc.canonicalName);
+      }
+    }
+  }
+
+  const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[] }> = [
+    { id: 'event_dung_nuoc_van_lang', name: 'Sáng lập nhà nước Văn Lang', aliases: ['Dựng nước Văn Lang', 'Sáng lập Văn Lang'] },
+    { id: 'event_khoi_nghia_hai_ba_trung', name: 'Khởi nghĩa Hai Bà Trưng', aliases: ['Khởi nghĩa Mê Linh'] },
+    { id: 'event_khoi_nghia_ba_trieu', name: 'Khởi nghĩa Bà Triệu', aliases: [] },
+    { id: 'event_khoi_nghia_ly_bi', name: 'Khởi nghĩa Lý Bí', aliases: ['Khởi nghĩa Vạn Xuân'] },
+    { id: 'event_bach_dang_938', name: 'Chiến thắng Bạch Đằng năm 938', aliases: ['Trận Bạch Đằng (938)', 'Trận Bạch Đằng năm 938', 'Chiến thắng Bạch Đằng 938', 'Trận Bạch Đằng 938'] },
+    { id: 'event_bach_dang_981', name: 'Trận Bạch Đằng năm 981', aliases: ['Trận Bạch Đằng (981)', 'Chiến thắng Bạch Đằng 981', 'Trận Bạch Đằng 981'] },
+    { id: 'event_bach_dang_1288', name: 'Trận Bạch Đằng năm 1288', aliases: ['Trận Bạch Đằng (1288)', 'Chiến thắng Bạch Đằng 1288', 'Đại thắng Bạch Đằng 1288', 'Trận Bạch Đằng 1288'] },
+    { id: 'event_dep_loan_12_su_quan', name: 'Dẹp loạn 12 sứ quân', aliases: [] },
+    { id: 'event_khoi_nghia_lam_son', name: 'Khởi nghĩa Lam Sơn', aliases: [] },
+    { id: 'event_chi_lang_xuong_giang', name: 'Chiến dịch Chi Lăng - Xương Giang', aliases: ['Trận Chi Lăng - Xương Giang', 'Chi Lăng - Xương Giang'] },
+    { id: 'event_hoi_the_dong_quan', name: 'Hội thề Đông Quan', aliases: [] },
+    { id: 'event_ngoc_hoi_dong_da', name: 'Trận Ngọc Hồi - Đống Đa', aliases: ['Chiến thắng Ngọc Hồi - Đống Đa', 'Đại thắng Ngọc Hồi - Đống Đa', 'Ngọc Hồi - Đống Đa'] },
+    { id: 'event_dien_bien_phu', name: 'Chiến dịch Điện Biên Phủ', aliases: ['Trận Điện Biên Phủ', 'Điện Biên Phủ'] },
+    { id: 'event_bien_gioi_1950', name: 'Chiến dịch Biên giới Thu Đông 1950', aliases: ['Chiến dịch Biên giới 1950', 'Chiến dịch Biên giới'] },
+    { id: 'event_ho_chi_minh', name: 'Chiến dịch Hồ Chí Minh', aliases: [] },
+    { id: 'event_dien_hong', name: 'Hội nghị Diên Hồng', aliases: [] },
+    { id: 'event_binh_than', name: 'Hội nghị Bình Than', aliases: [] },
+  ];
+
+  for (const ev of CORE_EVENTS) {
+    register(ev.name, ev.id, ev.name);
+    for (const al of ev.aliases) {
+      register(al, ev.id, ev.name);
+    }
+  }
+
+  const CORE_ARTIFACTS: Array<{ id: string; name: string; aliases: string[] }> = [
+    { id: 'artifact_trong_dong_dong_son', name: 'Trống đồng Đông Sơn', aliases: ['Trống đồng Ngọc Lũ', 'Trống đồng Sông Đà', 'Trống đồng Hoàng Hạ'] },
+    { id: 'artifact_no_lien_chau', name: 'Nỏ Liên Châu', aliases: ['Nỏ thần', 'Nỏ thần Liên Châu'] },
+    { id: 'artifact_thong_bao_hoi_sao', name: 'Thông Bảo Hội Sao', aliases: [] },
+    { id: 'artifact_xe_tang_390', name: 'Xe tăng 390', aliases: [] },
+  ];
+
+  for (const art of CORE_ARTIFACTS) {
+    register(art.name, art.id, art.name);
+    for (const al of art.aliases) {
+      register(al, art.id, art.name);
+    }
+  }
+
+  const CORE_DOCS: Array<{ id: string; name: string; aliases: string[] }> = [
+    { id: 'doc_chieu_doi_do', name: 'Chiếu dời đô', aliases: [] },
+    { id: 'doc_hich_tuong_si', name: 'Hịch tướng sĩ', aliases: [] },
+    { id: 'doc_binh_ngo_dai_cao', name: 'Bình Ngô đại cáo', aliases: [] },
+    { id: 'doc_tuyen_ngon_doc_lap', name: 'Tuyên ngôn Độc lập', aliases: [] },
+    { id: 'doc_nam_quoc_son_ha', name: 'Nam quốc sơn hà', aliases: [] },
+    { id: 'doc_luat_hong_duc', name: 'Luật Hồng Đức', aliases: ['Quốc triều hình luật'] },
+    { id: 'doc_dai_viet_su_ky_toan_thu', name: 'Đại Việt sử ký toàn thư', aliases: ['Toàn Thư', 'Đại Việt Sử Ký'] },
+    { id: 'doc_dai_nam_thuc_luc', name: 'Đại Nam thực lục', aliases: [] },
+  ];
+
+  for (const d of CORE_DOCS) {
+    register(d.name, d.id, d.name);
+    for (const al of d.aliases) {
+      register(al, d.id, d.name);
+    }
+  }
+
+  // Explicit Special Guards
+  register('Tây Sơn Vương', 'person_nguyen_nhac', 'Nguyễn Nhạc');
+  register('Tay Son Vuong', 'person_nguyen_nhac', 'Nguyễn Nhạc');
+}
+
+initFastEntityMap();
 
 /**
  * Resolves any person or entity alias to an EntityAliasMapping
@@ -350,57 +483,35 @@ export function inferEntityTypeFromName(name: string): 'HISTORICAL_PERSON' | 'LO
 export function resolveEntityAlias(aliasOrName: string, entityType?: string): EntityAliasMapping {
   const effectiveType = entityType || inferEntityTypeFromName(aliasOrName);
   const normInput = normalizeKey(aliasOrName);
+  const unaccentedNormInput = normInput
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd');
 
-  // Explicit Safeguard: "Tây Sơn Vương" maps strictly to Nguyễn Nhạc (person_nguyen_nhac)
-  if (normInput === 'tay son vuong' || normInput === 'tây sơn vương') {
-    return {
-      alias: 'Tây Sơn Vương',
-      canonicalId: 'person_nguyen_nhac',
-      canonicalName: 'Nguyễn Nhạc',
-    };
+  // 1. O(1) Fast Map Lookup
+  const directMatch = FAST_ENTITY_MAP.get(normInput) || FAST_ENTITY_MAP.get(unaccentedNormInput);
+  if (directMatch) {
+    return directMatch;
   }
 
-  for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
-    if (normalizeKey(person.canonicalName) === normInput) {
-      return {
-        alias: person.canonicalName,
-        canonicalId: person.entityId,
-        canonicalName: person.canonicalName,
-      };
-    }
-    for (const alias of person.aliases) {
-      if (normalizeKey(alias) === normInput) {
-        return {
-          alias,
-          canonicalId: person.entityId,
-          canonicalName: person.canonicalName,
-        };
-      }
-    }
+  const strippedNorm = normInput.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh)\s+/, '');
+  const unaccentedStrippedNorm = strippedNorm.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd');
+  const strippedMatch = FAST_ENTITY_MAP.get(strippedNorm) || FAST_ENTITY_MAP.get(unaccentedStrippedNorm);
+  if (strippedMatch) {
+    return strippedMatch;
   }
 
-  for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
-    if (normalizeKey(loc.canonicalName) === normInput) {
-      return {
-        alias: loc.canonicalName,
-        canonicalId: loc.entityId,
-        canonicalName: loc.canonicalName,
-      };
-    }
-    for (const alias of loc.aliases) {
-      if (normalizeKey(alias) === normInput) {
-        return {
-          alias,
-          canonicalId: loc.entityId,
-          canonicalName: loc.canonicalName,
-        };
-      }
-    }
-  }
-
-  // Fallback for unknown entity with canonical prefix
-  const rawSlug = normInput.replace(/\s+/g, '_');
-  const slug = rawSlug.length > 100 ? rawSlug.slice(0, 100) : rawSlug;
+  // Fallback for unknown entity with canonical prefix & ASCII slug
+  const slug = aliasOrName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
   const prefix = getCanonicalEntityIdPrefix(effectiveType as any);
   return {
     alias: aliasOrName.trim(),
@@ -473,8 +584,13 @@ export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo 
 export function isKnownMasterEntity(nameOrId: string): boolean {
   if (!nameOrId || typeof nameOrId !== 'string') return false;
   const norm = normalizeKey(nameOrId);
+  const unaccented = norm.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd');
+
+  if (FAST_ENTITY_MAP.has(norm) || (unaccented.length >= 3 && FAST_ENTITY_MAP.has(unaccented))) {
+    return true;
+  }
+
   const aliasMapping = resolveEntityAlias(nameOrId);
-  
   if (HISTORICAL_PERSON_DICTIONARY[aliasMapping.canonicalId] || HISTORICAL_LOCATION_DICTIONARY[aliasMapping.canonicalId]) {
     return true;
   }
@@ -486,18 +602,9 @@ export function isKnownMasterEntity(nameOrId: string): boolean {
   const loc = resolveLocationMapping(nameOrId);
   if (loc) return true;
 
-  // Check aliases in person dictionary
-  for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
-    if (normalizeKey(person.canonicalName) === norm || person.aliases.some((a) => normalizeKey(a) === norm)) {
-      return true;
-    }
-  }
-
-  // Check aliases in location dictionary
-  for (const location of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
-    if (normalizeKey(location.canonicalName) === norm || location.aliases.some((a) => normalizeKey(a) === norm)) {
-      return true;
-    }
+  // Check valid canonical ontology entity IDs
+  if (/^(person_|loc_|event_|dynasty_|org_|artifact_|doc_|epoch_)[a-z0-9_]+$/.test(nameOrId)) {
+    return true;
   }
 
   return false;
@@ -575,183 +682,5 @@ export function buildAliasTable(entityIds: string[]): Record<string, string[]> {
   }
 
   return aliasTable;
-}
-
-function hashString(str: string): number {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 33) ^ str.charCodeAt(i);
-  }
-  return hash >>> 0;
-}
-
-/**
- * Ingests a historical document into the database/store (pure shared implementation)
- */
-export async function ingestHistoricalDocument(
-  content: string,
-  metadata: { title: string; source: string; dynasty?: string; sourceReliability?: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3' }
-): Promise<void> {
-  const chunkId = `chunk_${hashString(metadata.title + content.slice(0, 50))}`;
-  const embedding = await generateEmbedding(content);
-
-  // Extract entities mentioned in content
-  const entityMap = new Map<string, HistoricalEntityInfo>();
-
-  for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
-    if (content.includes(person.canonicalName) || person.aliases.some((a) => content.includes(a))) {
-      entityMap.set(person.entityId, person);
-    }
-  }
-
-  for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
-    if (content.includes(loc.canonicalName) || loc.aliases.some((a) => content.includes(a))) {
-      entityMap.set(loc.entityId, loc);
-    }
-  }
-
-  const pgConnected = await isPgAvailable();
-
-  if (pgConnected) {
-    await query(
-      `INSERT INTO document_chunks (id, title, text_content, dynasty, source_reliability, embedding)
-       VALUES ($1, $2, $3, $4, $5, $6::vector)
-       ON CONFLICT (id) DO UPDATE SET text_content = EXCLUDED.text_content;`,
-      [chunkId, metadata.title, content, metadata.dynasty || null, metadata.sourceReliability || 'LEVEL_1', JSON.stringify(embedding)]
-    );
-
-    for (const entity of entityMap.values()) {
-      await query(
-        `INSERT INTO entities (id, name, type, aliases, metadata)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (id) DO UPDATE SET aliases = EXCLUDED.aliases;`,
-        [entity.entityId, entity.canonicalName, entity.type, entity.aliases, JSON.stringify({})]
-      );
-
-      await query(
-        `INSERT INTO entity_chunks (entity_id, chunk_id)
-         VALUES ($1, $2)
-         ON CONFLICT DO NOTHING;`,
-        [entity.entityId, chunkId]
-      );
-    }
-
-    const sameAsRels = formatSameAsLocationRelations();
-    for (const rel of sameAsRels) {
-      const srcEntity = resolveCanonicalEntity(rel.source);
-      const tgtEntity = resolveCanonicalEntity(rel.target);
-      if (srcEntity.entityId === tgtEntity.entityId) continue;
-
-      await query(
-        `INSERT INTO entities (id, name, type, aliases, metadata)
-         VALUES ($1, $2, $3, $4, '{}'::jsonb)
-         ON CONFLICT (id) DO NOTHING;`,
-        [srcEntity.entityId, srcEntity.canonicalName, srcEntity.type, srcEntity.aliases]
-      );
-      await query(
-        `INSERT INTO entities (id, name, type, aliases, metadata)
-         VALUES ($1, $2, $3, $4, '{}'::jsonb)
-         ON CONFLICT (id) DO NOTHING;`,
-        [tgtEntity.entityId, tgtEntity.canonicalName, tgtEntity.type, tgtEntity.aliases]
-      );
-      await query(
-        `INSERT INTO relationships (source_entity_id, target_entity_id, relation_type, confidence)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT DO NOTHING;`,
-        [srcEntity.entityId, tgtEntity.entityId, rel.relationType, rel.confidence]
-      );
-    }
-
-    const aliasRels = formatAliasOfRelations();
-    for (const rel of aliasRels) {
-      const srcEntity = resolveCanonicalEntity(rel.source);
-      const tgtEntity = resolveCanonicalEntity(rel.target);
-      if (srcEntity.entityId === tgtEntity.entityId) continue;
-
-      await query(
-        `INSERT INTO entities (id, name, type, aliases, metadata)
-         VALUES ($1, $2, $3, $4, '{}'::jsonb)
-         ON CONFLICT (id) DO NOTHING;`,
-        [srcEntity.entityId, srcEntity.canonicalName, srcEntity.type, srcEntity.aliases]
-      );
-      await query(
-        `INSERT INTO entities (id, name, type, aliases, metadata)
-         VALUES ($1, $2, $3, $4, '{}'::jsonb)
-         ON CONFLICT (id) DO NOTHING;`,
-        [tgtEntity.entityId, tgtEntity.canonicalName, tgtEntity.type, tgtEntity.aliases]
-      );
-      await query(
-        `INSERT INTO relationships (source_entity_id, target_entity_id, relation_type, confidence)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT DO NOTHING;`,
-        [srcEntity.entityId, tgtEntity.entityId, rel.relationType, rel.confidence]
-      );
-    }
-  } else {
-    // In-memory fallback
-    inMemoryStore.documentChunks.set(chunkId, {
-      id: chunkId,
-      title: metadata.title,
-      text_content: content,
-      dynasty: metadata.dynasty,
-      source_reliability: metadata.sourceReliability || 'LEVEL_1',
-      embedding,
-    });
-
-    for (const entity of entityMap.values()) {
-      inMemoryStore.entities.set(entity.entityId, {
-        id: entity.entityId,
-        name: entity.canonicalName,
-        type: entity.type,
-        aliases: entity.aliases,
-        metadata: {},
-      });
-
-      inMemoryStore.entityChunks.push({
-        entity_id: entity.entityId,
-        chunk_id: chunkId,
-      });
-    }
-
-    const sameAsRels = formatSameAsLocationRelations();
-    for (const rel of sameAsRels) {
-      const srcEntity = resolveCanonicalEntity(rel.source);
-      const tgtEntity = resolveCanonicalEntity(rel.target);
-      if (srcEntity.entityId === tgtEntity.entityId) continue;
-
-      const exists = inMemoryStore.relationships.some(
-        (r) => r.source_entity_id === srcEntity.entityId && r.target_entity_id === tgtEntity.entityId && r.relation_type === rel.relationType
-      );
-      if (!exists) {
-        inMemoryStore.relationships.push({
-          id: inMemoryStore.nextRelId++,
-          source_entity_id: srcEntity.entityId,
-          target_entity_id: tgtEntity.entityId,
-          relation_type: rel.relationType,
-          confidence: rel.confidence,
-        });
-      }
-    }
-
-    const aliasRels = formatAliasOfRelations();
-    for (const rel of aliasRels) {
-      const srcEntity = resolveCanonicalEntity(rel.source);
-      const tgtEntity = resolveCanonicalEntity(rel.target);
-      if (srcEntity.entityId === tgtEntity.entityId) continue;
-
-      const exists = inMemoryStore.relationships.some(
-        (r) => r.source_entity_id === srcEntity.entityId && r.target_entity_id === tgtEntity.entityId && r.relation_type === rel.relationType
-      );
-      if (!exists) {
-        inMemoryStore.relationships.push({
-          id: inMemoryStore.nextRelId++,
-          source_entity_id: srcEntity.entityId,
-          target_entity_id: tgtEntity.entityId,
-          relation_type: rel.relationType,
-          confidence: rel.confidence,
-        });
-      }
-    }
-  }
 }
 

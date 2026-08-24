@@ -7,15 +7,17 @@
 import fs from 'fs';
 import path from 'path';
 import {
+  CHUNK_PARENT_MAX_WORDS,
+  CHUNK_CHILD_MAX_WORDS,
+} from '@chronoviet/shared-spec';
+import {
   isPgAvailable,
   query,
   inMemoryStore,
-  CHUNK_PARENT_MAX_WORDS,
-  CHUNK_CHILD_MAX_WORDS,
   generateEmbedding,
   cosineSimilarity,
   isEmbeddingServiceHealthy,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
 
 process.env.EVAL_STRICT = 'true';
@@ -192,7 +194,7 @@ export async function runVectorEval(): Promise<VectorChunkEvalReport> {
     const entityChunkCountRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM entity_chunks;');
     entityLinksCount = parseInt(entityChunkCountRes[0]?.count || '0', 10);
   } else {
-    const chunks = Array.from(inMemoryStore.documentChunks.values());
+    const chunks = Array.from(inMemoryStore.documentChunks.values()) as any[];
     totalChunks = chunks.length;
 
     for (const c of chunks) {
@@ -352,7 +354,7 @@ export async function runVectorEval(): Promise<VectorChunkEvalReport> {
           `,
           [queryEmbJson]
         );
-        topChunks = (rows || []).map((r) => ({
+        topChunks = (rows || []).map((r: any) => ({
           id: r.id,
           title: r.title,
           text_content: r.text_content,
@@ -360,8 +362,8 @@ export async function runVectorEval(): Promise<VectorChunkEvalReport> {
           similarity: Number((1.0 / (1.0 + (Number(r.dist) || 0))).toFixed(3)),
         }));
       } else {
-        const chunks = Array.from(inMemoryStore.documentChunks.values()).filter((c) => !!c.embedding);
-        const scored = chunks.map((c) => ({
+        const chunks = (Array.from(inMemoryStore.documentChunks.values()) as any[]).filter((c) => !!c.embedding);
+        const scored = chunks.map((c: any) => ({
           id: c.id,
           title: c.title,
           text_content: c.text_content,

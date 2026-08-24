@@ -20,6 +20,7 @@ import { runC10Benchmark } from './c10-robustness-reasoning.bench.js';
 import { runSystemAblation } from './sys-ablation-regression.bench.js';
 import { evaluateRegressionGates } from './regression-gate.js';
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
+import { closePool } from '@chronoviet/infra';
 import { assertEvalPreflight } from '../../../../eval/utils/preflight.js';
 import { ensureBenchmarkDatabaseSeeded } from '../datasets/seeder.js';
 
@@ -109,18 +110,18 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
   }
 
   // Evaluate Regression Quality Gates dynamically against standard baseline
-  const getMetric = (bId: string, metricKey: string, fallback: number): number => {
+  const getMetric = (bId: string, metricKey: string): number | undefined => {
     const rep = reports.find((r) => r.benchmark_id === bId);
-    if (!rep || rep.metrics[metricKey] === undefined) return fallback;
+    if (!rep || rep.metrics[metricKey] === undefined) return undefined;
     const val = rep.metrics[metricKey];
-    return typeof val === 'number' ? val : parseFloat(String(val)) || fallback;
+    return typeof val === 'number' ? val : parseFloat(String(val)) || undefined;
   };
 
-  const currentFactPrecision = getMetric('C8', 'C8-M1_HistoricalFactPrecision', 99.5);
-  const currentHallucination = getMetric('C9', 'C9-M2_HallucinationRate', 0.0);
-  const currentRecall10 = getMetric('C4', 'C4-M4_HybridFusionRecallAt10', 88.0);
-  const currentNdcg5 = getMetric('C6', 'C6-M1_nDCGAt5', 0.90);
-  const currentLatencyP95 = ablationResult?.report.latency_summary?.p95_ms ?? 10.0;
+  const currentFactPrecision = getMetric('C8', 'C8-M1_HistoricalFactPrecision');
+  const currentHallucination = getMetric('C9', 'C9-M2_HallucinationRate');
+  const currentRecall10 = getMetric('C4', 'C4-M4_HybridFusionRecallAt10');
+  const currentNdcg5 = getMetric('C6', 'C6-M1_nDCGAt5');
+  const currentLatencyP95 = ablationResult?.report.latency_summary?.p95_ms;
 
   const regressionCheck = evaluateRegressionGates({
     baseline: {
@@ -181,24 +182,53 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
     regressionCheck.gates.map((g) => ({
       'Quality Gate': g.gate_id,
       'Metric Name': g.metric_name,
-      'Delta': g.delta,
-      'Status': g.passed ? '✅ PASS' : '🛑 BLOCK',
+      'Delta': g.is_blocking ? g.delta : '-',
+      'Status': !g.is_blocking ? '⏭️ SKIPPED' : g.passed ? '✅ PASS' : '🛑 BLOCK',
       'Verdict': g.message,
     }))
   );
 
   const allComponentsPassed = reports.every((r) => r.kpis_passed);
-  if (allComponentsPassed && regressionCheck.allPassed) {
-    console.log('\n🎉 ALL 11 COMPONENT BENCHMARKS & REGRESSION GATES PASSED 100%!');
+  const blockingGates = regressionCheck.gates.filter((g) => g.is_blocking);
+  const allBlockingGatesPassed = blockingGates.every((g) => g.passed);
+
+  try {
+    await closePool();
+  } catch {
+    // Ignore teardown error
+  }
+
+  if (isAll) {
+    if (allComponentsPassed && regressionCheck.allPassed) {
+      console.log('\n🎉 ALL 11 COMPONENT BENCHMARKS & REGRESSION GATES PASSED 100%!');
+      process.exit(0);
+    } else {
+      console.error('\n⚠️ SOME BENCHMARK TIERS OR GATES FAILED. CHECK REPORTS FOR DETAILS.');
+      process.exit(1);
+    }
   } else {
-    console.error('\n⚠️ SOME BENCHMARK TIERS OR GATES FAILED. CHECK REPORTS FOR DETAILS.');
-    process.exit(1);
+    if (allComponentsPassed && allBlockingGatesPassed) {
+      console.log(`\n🎉 All executed benchmarks (${reports.length} component(s): ${reports.map((r) => r.benchmark_id).join(', ')}) passed successfully!`);
+      const skippedCount = regressionCheck.gates.length - blockingGates.length;
+      if (skippedCount > 0) {
+        console.log(`ℹ️ Note: ${skippedCount} quality gate(s) skipped (run '--all' to evaluate full system regression gates).`);
+      }
+      process.exit(0);
+    } else {
+      console.error('\n⚠️ SOME EXECUTED BENCHMARK TIERS OR GATES FAILED. CHECK REPORTS FOR DETAILS.');
+      process.exit(1);
+    }
   }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  runMasterBenchmarkSuite().catch((err) => {
+  runMasterBenchmarkSuite().catch(async (err) => {
     console.error('Benchmark execution failed:', err);
+    try {
+      await closePool();
+    } catch {
+      // Ignore
+    }
     process.exit(1);
   });
 }

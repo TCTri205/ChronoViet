@@ -3,7 +3,7 @@
  * Computes semantic similarity between scene historical context and image tags/metadata
  */
 
-import { createLogger } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 import { VLMScoreResult } from './redis-cache.js';
 
 const log = createLogger({ service: 'vlm-inspector' });

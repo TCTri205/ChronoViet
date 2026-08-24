@@ -7,11 +7,13 @@
 import {
   VideoBrief,
   VideoBriefSchema,
+} from '@chronoviet/shared-spec';
+import {
   createLogger,
   query,
   isPgAvailable,
   inMemoryStore,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { ChatTurnContext } from '../chat/query-rewriter.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });

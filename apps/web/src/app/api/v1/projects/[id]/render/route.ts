@@ -5,7 +5,7 @@ import {
   createLogger,
   httpRequestsTotal,
   httpRequestDurationSeconds,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { enqueueRenderJob } from '../../../../../../lib/queues';
 
 const log = createLogger({ service: 'web-api-render' });

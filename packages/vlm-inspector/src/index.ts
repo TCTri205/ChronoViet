@@ -4,6 +4,3 @@ export * from './clip-scorer.js';
 export * from './asset-downloader.js';
 export * from './inspector-pipeline.js';
 export * from './visual-quality-gate.js';
-export * from './wikimedia-search.js';
-export * from './search/index.js';
-export * from './search/image-search-provider.js';

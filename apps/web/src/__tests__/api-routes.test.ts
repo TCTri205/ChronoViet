@@ -32,8 +32,8 @@ vi.mock('@chronoviet/rag-engine', () => {
   };
 });
 
-// Mock LLM streaming and Redis PubSub in shared-spec
-vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
+// Mock LLM streaming and Redis PubSub in @chronoviet/infra
+vi.mock('@chronoviet/infra', async (importOriginal) => {
   const original = await importOriginal<any>();
   return {
     ...original,
@@ -77,7 +77,7 @@ vi.mock('@chronoviet/agent-orchestrator', async (importOriginal) => {
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { initProjectWorkspace, cleanProjectWorkspace } from '@chronoviet/shared-spec';
+import { initProjectWorkspace, cleanProjectWorkspace } from '@chronoviet/infra';
 
 import { GET as getProjects, POST as createProject } from '../app/api/v1/projects/route';
 import { GET as getProjectDetail } from '../app/api/v1/projects/[id]/route';
@@ -86,6 +86,7 @@ import { POST as triggerRender } from '../app/api/v1/projects/[id]/render/route'
 import { POST as handleAbort } from '../app/api/v1/projects/[id]/abort/route';
 import { POST as handleResume } from '../app/api/v1/projects/[id]/resume/route';
 import { GET as getConversations, POST as createConversation } from '../app/api/v1/conversations/route';
+import { GET as getConversationDetail, DELETE as deleteConversation } from '../app/api/v1/conversations/[id]/route';
 import { GET as getMessages, POST as createMessage } from '../app/api/v1/conversations/[id]/messages/route';
 import { GET as getStream } from '../app/api/v1/projects/[id]/stream/route';
 import { GET as getVideo } from '../app/api/v1/projects/[id]/video/route';
@@ -124,7 +125,7 @@ describe('Web RESTful API Routes', () => {
     });
 
     it('emits error chunk and fallback when LLM stream encounters an error', async () => {
-      const { generateLLMCompletionStream } = await import('@chronoviet/shared-spec');
+      const { generateLLMCompletionStream } = await import('@chronoviet/infra');
       vi.mocked(generateLLMCompletionStream).mockImplementationOnce(async function* () {
         throw new Error('Mô hình AI đang bận hoặc quá tải');
       });
@@ -199,7 +200,7 @@ describe('Web RESTful API Routes', () => {
     });
 
     it('filters out non-project directories lacking metadata.json from project list', async () => {
-      const { getDefaultProjectsBaseDir } = await import('@chronoviet/shared-spec');
+      const { getDefaultProjectsBaseDir } = await import('@chronoviet/infra');
       const baseDir = getDefaultProjectsBaseDir();
       const dummyTestDir = path.join(baseDir, 'dummy_empty_folder_without_metadata');
       
@@ -416,6 +417,25 @@ describe('Web RESTful API Routes', () => {
       const data = await getRes.json();
       expect(Array.isArray(data.messages)).toBe(true);
       expect(data.messages.length).toBeGreaterThan(0);
+    });
+
+    it('retrieves conversation detail and deletes conversation', async () => {
+      const getReq = new NextRequest(`http://localhost:3000/api/v1/conversations/${convId}`, {
+        method: 'GET',
+      });
+      const getRes = await getConversationDetail(getReq, { params: { id: convId } });
+      expect(getRes.status).toBe(200);
+      const data = await getRes.json();
+      expect(data.conversation.id).toBe(convId);
+
+      const delReq = new NextRequest(`http://localhost:3000/api/v1/conversations/${convId}`, {
+        method: 'DELETE',
+      });
+      const delRes = await deleteConversation(delReq, { params: { id: convId } });
+      expect(delRes.status).toBe(200);
+
+      const getAfterDel = await getConversationDetail(getReq, { params: { id: convId } });
+      expect(getAfterDel.status).toBe(404);
     });
   });
 

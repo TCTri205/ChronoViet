@@ -10,3 +10,5 @@ export * from './chat/query-rewriter.js';
 export * from './chat/context-pruner.js';
 export * from './chat/chat-supervisor.js';
 export * from './brief/chat-to-brief-compiler.js';
+export * from './research/index.js';
+

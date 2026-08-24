@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { seedDualBranch, DualBranchSeedResult } from '../../packages/data-ingestion/src';
 import { ChronoRagEngine, extractQueryEntities, searchLocalGraphCTE } from '../../packages/rag-engine/src';
-import { query, inMemoryStore, envConfig } from '../../packages/shared-spec/src';
+import { query, inMemoryStore, envConfig } from '@chronoviet/infra';
 import { assertEvalPreflight } from '../utils/preflight';
 
 export interface ProductionBenchmarkTestCase {
@@ -181,7 +181,7 @@ export async function runIngestRagChain(options: {
 
         // For unanswerable/false-premise queries, the system MUST NOT find confidence-boosted entity matches
         const queryNer = extractQueryEntities(tc.question);
-        const graphResult = await searchLocalGraphCTE(queryNer.entityIds, 2);
+        const graphResult = await searchLocalGraphCTE(queryNer.entityIds, { maxHops: 2, maxNodes: 50, timeoutMs: 40 });
 
         // Adversarial rejection is passed if confidence scores are low or context flags unverified fact
         const hasFalseFactAccused = tc.requiredFacts.length === 0;

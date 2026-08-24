@@ -3,7 +3,8 @@
  */
 
 import Redis from 'ioredis';
-import { createLogger, envConfig, formatErrorMessage, VlmScoringResult } from '@chronoviet/shared-spec';
+import { VlmScoringResult } from '@chronoviet/shared-spec';
+import { createLogger, envConfig, formatErrorMessage } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'vlm-inspector' });
 

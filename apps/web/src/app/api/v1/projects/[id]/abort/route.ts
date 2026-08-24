@@ -8,7 +8,7 @@ import {
   httpRequestsTotal,
   httpRequestDurationSeconds,
   cancelRenderJob,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 
 const log = createLogger({ service: 'web-api-abort' });
 const pubsub = new RedisPubSubManager();

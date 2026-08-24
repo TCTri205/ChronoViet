@@ -177,14 +177,18 @@ export function ChatContainer({
                 if (parsed.type === "error" || parsed.error) {
                   const errorDesc = parsed.content || `⚠️ Không thể kết nối với mô hình AI (${parsed.error || 'Lỗi xử lý'}).`;
                   fullText = fullText ? `${fullText}\n\n${errorDesc}` : errorDesc;
-                } else {
+                } else if (parsed.type === "token") {
                   const tokenText = parsed.content ?? parsed.token;
                   if (tokenText) {
                     fullText += tokenText;
                   }
+                } else if (parsed.type === "done") {
+                  if (!fullText && parsed.content) {
+                    fullText = parsed.content;
+                  }
                 }
 
-                if (parsed.citations && Array.isArray(parsed.citations)) {
+                if (parsed.citations && Array.isArray(parsed.citations) && parsed.citations.length > 0) {
                   citations = parsed.citations.map((c: any, idx: number) => ({
                     id: idx + 1,
                     sourceTitle: typeof c === 'string' ? c : c.sourceTitle || c.title || "Đại Việt Sử Ký Toàn Thư",
@@ -196,7 +200,7 @@ export function ChatContainer({
                   }));
                 }
               } catch {
-                fullText += dataStr;
+                // Ignore unparseable raw fragments
               }
             }
           }

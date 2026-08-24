@@ -1,7 +1,7 @@
 # CHI TIẾT MÔ-ĐUN 3: VLM INSPECTOR SUB-AGENT
-## (Visual Quality Control, Whitelisted Licensing & Hybrid Fallback Sub-Agent Specification v3.3)
+## (Visual Quality Control, Whitelisted Licensing & Hybrid Fallback Sub-Agent Specification v4.1)
 
-> **Trạng thái:** `[✅ IMPLEMENTED — Visual Quality Control, Local Unified VLM & Cloud Gemini Scorers v3.4]`
+> **Trạng thái:** `[✅ IMPLEMENTED — Visual Quality Control, Local Unified VLM & Cloud Gemini Scorers v4.1]`
 > **Cập nhật:** Eval Integrity & Telemetry Gates — tích hợp **Correlation ID propagation**, **Failure latency metrics**, **Resource Payload Guards (5MB)**, **Binary Header Dimension Inspection (Layer 2)** và **Resilient JSON Parser**. Khi `EVAL_STRICT=true`, VLM Inspector dùng **Local Unified Multimodal VLM (`qwen3.5-9b-instruct-q4_k_m` qua llama-server)** làm scorer bắt buộc.
 
 ---
@@ -29,12 +29,14 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
 
 ---
 
-## 2. Quy Trình Kiểm Định 4 Lớp & Chiến Lược 3+3 Crawl Candidates (v4.1)
+## 2. Quy Trình Kiểm Định 4 Lớp & Chiến Lược 3+3 Candidates (v4.1)
 
 ```
                        ┌───────────────────────────────┐
-                       │   Crawl Batch 1 (3 Ảnh thô)   │
-                       │   (Nguồn Crawl 100% Internet) │
+                       │   Research Agent cung cấp      │
+                       │   Candidate Pool (3 ảnh đợt 1) │
+                       │   (Nguồn ảnh 100% Crawl Internet│
+                       │    qua provider chain)          │
                        └───────────────┬───────────────┘
                                        │
                                        ▼
@@ -79,8 +81,8 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
        [Có ảnh điểm Max >= 60]                  [Tất cả 3 ảnh đợt 1 < 60]
                    │                                       │
                    ▼                                       ▼
-       Duyệt ảnh tốt nhất Đợt 1               CRAWL BATCH 2 (3 ẢNH TỪ KHÓA MỞ RỘNG)
-       (Lưu License & Attribution)            - Thử từ khóa Bản đồ/Sơ đồ/Di tích
+       Duyệt ảnh tốt nhất Đợt 1               RESEARCH BATCH 2 (3 ẢNH TỪ KHÓA MỞ RỘNG)
+       (Lưu License & Attribution)            - Research Agent thử từ khóa Bản đồ/Sơ đồ/Di tích
                                               - VLM chấm điểm 3 ảnh Đợt 2
                                                            │
                                        ┌───────────────────┴───────────────────┐
@@ -140,12 +142,12 @@ VLM Inspector Sub-Agent phối hợp cùng Orchestrator theo chiến lược 3+3
 
 | Trường Hợp Thất Bại | Chiến Lược Xử Lý (Strategy 3+3 & Fallback) | Cập Nhật JSON Kịch Bản |
 | :--- | :--- | :--- |
-| **Ảnh không thuộc Whitelisted License** | Loại bỏ ngay ở Lớp 0, không gọi VLM | Chuyển sang candidate tiếp theo hoặc Crawl Batch 2 |
+| **Ảnh không thuộc Whitelisted License** | Loại bỏ ngay ở Lớp 0, không gọi VLM | Chuyển sang candidate tiếp theo hoặc Research Batch 2 |
 | **Local VLM (strict) lỗi / server down** | **FAIL eval ngay** (`[EVAL_STRICT] Local VLM failed`) — không dùng Gemini/CLIP | Không xuất report PASS |
 | **Dev: Cloud VLM API bị Rate Limit (HTTP 429/500)** | Tự động chuyển sang **Local CLIP Cosine Scorer** (Offline, chỉ khi `EVAL_STRICT=false`) | Gắn cờ `vlmScorerType: "LOCAL_CLIP"` vào Scene Props |
-| **Ảnh đợt 1 dính watermark / vỡ nét / điểm < 60** | Kích hoạt Crawl Batch 2 (3 ảnh mở rộng về **Sơ đồ trận đánh / Bản đồ cổ / Di tích**) | VLM so sánh toàn bộ 6 ảnh ứng viên để chọn ảnh đạt score cao nhất |
+| **Ảnh đợt 1 dính watermark / vỡ nét / điểm < 60** | Kích hoạt Research Batch 2 (3 ảnh mở rộng về **Sơ đồ trận đánh / Bản đồ cổ / Di tích** do Research Agent thực hiện) | VLM so sánh toàn bộ 6 ảnh ứng viên để chọn ảnh đạt score cao nhất |
 | **Cả 6 ảnh ứng viên đều < 60 điểm (hoặc nhầm bối cảnh văn hóa)** | Loại bỏ hoàn toàn hình ảnh, kích hoạt **PURE_CODE Layout Rotation Engine** | Xóa `assetUrl`, Code Rules Engine tự chọn layout xoay vòng (`STAT_CARD`, `QUOTE_SLIDE`, `TIMELINE_CHRONO`...) |
-| **Crawl 404 / Không có dữ liệu mạng** | Ép chuyển thẳng sang **Pure Code LayoutMode** (Render 100% bằng Code) | Xóa `assetUrl`, chọn trong 20 Pure Code LayoutModes mà KHÔNG cần tốn token gọi lại LLM |
+| **Research 404 / Không có dữ liệu mạng** | Ép chuyển thẳng sang **Pure Code LayoutMode** (Render 100% bằng Code) | Xóa `assetUrl`, chọn trong 20 Pure Code LayoutModes mà KHÔNG cần tốn token gọi lại LLM |
 
 ### 4.1. Cơ Chế Hoạt Động & Cơ Sở Kỹ Thuật Của Pure Code Fallback Engine
 Khi cả 6 ảnh ứng viên đợt 1 & đợt 2 đều không đạt ngưỡng 60 điểm, hệ thống **không nhắm mắt sử dụng ảnh kém chất lượng** (để tránh rủi ro vi phạm bản quyền, dính watermark VTV/K+, nhầm trang phục phim cổ trang Trung Quốc/Hàn Quốc). 
@@ -194,6 +196,6 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
 
 ---
 
-## 6. Ý Nghĩa Kỹ Thuật Của VLM Inspector Sub-Agent (v3.3)
+## 6. Ý Nghĩa Kỹ Thuật Của VLM Inspector Sub-Agent (v4.1)
 
 Nhờ Sub-Agent VLM Inspector (Local Unified Multimodal VLM `qwen3.5-9b-instruct-q4_k_m` cho eval strict, Hybrid Gemini + Local CLIP cho dev, License Whitelist Filter và Redis Caching) và cơ chế Fallback Pure Code, ChronoViet giải quyết triệt để rủi ro lớn nhất của các hệ thống tự động hóa video: **Hệ thống luôn luôn render xuất ra được video hoàn chỉnh, đẹp mắt, an toàn về mặt văn hóa/lịch sử và tuân thủ bản quyền thương mại 100% ngay cả khi nguồn dữ liệu crawl trên internet bị thiếu sót hoặc cloud API gặp sự cố.**

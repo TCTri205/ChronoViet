@@ -1,10 +1,10 @@
-# CHRONOVIET - SYSTEM ARCHITECTURE DIAGRAMS &amp; TECHNICAL SPECIFICATION (OPERATIONAL HARDENED v3.3)
+# CHRONOVIET - SYSTEM ARCHITECTURE DIAGRAMS &amp; TECHNICAL SPECIFICATION (OPERATIONAL HARDENED v4.0)
 
 Document tổng hợp và đối chiếu toàn bộ Sơ đồ Kiến trúc Hệ thống, Quy trình xử lý dữ liệu Multi-Agent (Full GraphRAG từ Day 1), Hạ tầng Polyglot Persistence, Message Queues Tách Lập, State Machine Engine Kèm Nhánh Sửa Lỗi, VieNeu TTS Sync Engine, Topology Triển Khai Docker Compose Kèm Resource Limits Cứng, và Tầng Observability/Tracing cho dự án **ChronoViet**.
 
 ---
 
-## 1. 🏗️ Sơ Đồ Kiến Trúc Hệ Thống Tổng Thể (Streamlined VPS Topology v3.4)
+## 1. 🏗️ Sơ Đồ Kiến Trúc Hệ Thống Tổng Thể (Streamlined VPS Topology v4.0)
 
 Sơ đồ thể hiện các tầng kiến trúc của **ChronoViet** triển khai trên **1 VPS duy nhất + Domain cá nhân** (Caddy Proxy + Postgres/pgvector + Unified Redis + Monolith API App + Worker Pool):
 
@@ -28,7 +28,7 @@ flowchart TB
         UnifiedRedis["Unified Redis Container (redis:7-alpine)\n- BullMQ Task Queues (AOF Persistence)\n- Multi-Layer Cache (Prompt Cache & VLM Scores)\n- Real-time WebSocket PubSub Channel"]
         
         TTSQueue["Queue: tts-gen-queue\n(Priority: High | Concurrency: 4)"]
-        VLMQueue["Queue: vlm-inspect-queue\n(Priority: Medium | Concurrency: 2 | Gemini Cloud VLM Dispatch)"]
+        VLMQueue["Queue: vlm-inspect-queue\n(Priority: Medium | Concurrency: 2 | Local VLM (strict) / Gemini Cloud (dev))"]
         RenderQueue["Queue: remotion-render-queue\n(Priority: Normal | Concurrency: 1 MAX on Single VPS)"]
     end
 
@@ -64,7 +64,7 @@ flowchart TB
 
 ---
 
-## 2. 🔄 Quy Trình Multi-Agent &amp; RAG Pipeline (Sequence Flow v3.3 Operational)
+## 2. 🔄 Quy Trình Multi-Agent &amp; RAG Pipeline (Sequence Flow v4.0 Operational)
 
 Sơ đồ quy trình chi tiết từ khi Khởi tạo Prompt, truy vấn **Full GraphRAG**, kiểm duyệt License có Snapshot, Xử lý Circuit Breaker Gemini, đến Reconcile Thời lượng audio/video:
 
@@ -76,7 +76,8 @@ sequenceDiagram
     participant Orch as App Monolith (LangGraph + Postgres SSOT)
     participant RAG as Chrono-RAG Engine (Postgres pgvector + Relational Graph)
     participant TTS as VieNeu TTS Engine (ONNX)
-    participant Gem as Hybrid VLM Inspector (Gemini Cloud / Local CLIP)
+    participant Research as Research Agent (Provider Chain SerpAPI/Tavily/Brave/Wikimedia)
+    participant Gem as Hybrid VLM Inspector (Local VLM (strict) / Gemini Cloud / Local CLIP)
     participant Worker as Remotion Render Worker (Isolated Chromium)
     participant Vol as Host Volume Storage (/media)
     participant PG as PostgreSQL (Checkpoints & pgvector SSOT)
@@ -94,10 +95,12 @@ sequenceDiagram
         Orch->>TTS: POST /api/v1/synthesize (Text + VoiceId)
         TTS-->>Vol: Lưu file audio `.wav` vào `/media/raw-assets/`
         TTS-->>Orch: Trả về audioUrl, audioDurationMs & wordTimestamps
-    and Async Step 2: Whitelisted License Filter, Audit Trail & Hybrid VLM (Circuit Breaker Managed)
-        Orch->>Gem: License Whitelist Filter (PD, CC0, CC-BY) & Crawl Batch 1
+    and Async Step 2: Research Agent (Micro-Step 1C) + Whitelisted License Filter, Audit Trail & Hybrid VLM (Circuit Breaker Managed)
+        Orch->>Research: Research Agent tìm candidatePool (Provider Chain SerpAPI/Tavily/Brave/Wikimedia/Catalog)
+        Research-->>Gem: Candidate Pool (3 ảnh đợt 1) đã qua domain whitelist
+        Orch->>Gem: License Whitelist Filter (PD, CC0, CC-BY)
         Gem->>Vol: Lưu License Snapshot vào `/media/license-snapshots/`
-        alt Gemini Circuit Breaker = CLOSED (Normal Operation)
+        alt Gemini Circuit Breaker = CLOSED (Normal Operation - Dev only)
             Gem->>Gem: Gemini Cloud VLM Inspection
             alt HTTP 429 Triggered >= 3 times in 5m
                 Gem->>Gem: Trip Circuit Breaker ➔ State: OPEN (Cooldown 5m)
@@ -110,7 +113,7 @@ sequenceDiagram
         alt VLM Score Max Batch 1 >= 60
             Gem-->>Orch: Phê duyệt ảnh + Verified License & Snapshot URL
         else VLM Score Max Batch 1 < 60
-            Orch->>Gem: Crawl Batch 2 (Từ khóa mở rộng) & VLM Score 6 ảnh
+            Orch->>Research: Research Batch 2 (Từ khóa mở rộng) & VLM Score 6 ảnh
             alt VLM Score Max 6 ảnh >= 60
                 Gem-->>Orch: Phê duyệt ảnh tốt nhất + Verified License
             else Cả 6 ảnh < 60
@@ -186,7 +189,7 @@ flowchart TD
 
 ---
 
-## 4. ⚙️ Quản Lý Trạng Thái Máy (State Machine &amp; Retry Engine v3.4)
+## 4. ⚙️ Quản Lý Trạng Thái Máy (State Machine &amp; Retry Engine v4.0)
 
 Trạng thái dự án trải qua các bước quản lý nghiêm ngặt thông qua LangGraph Engine với **Postgres Checkpointer làm Single Source of Truth**, gồm nhánh xử lý **Pacing Mismatch** (trong `DURATION_RECONCILED`) và **Gemini Circuit Breaker Handling**:
 
@@ -286,7 +289,7 @@ Sơ đồ thể hiện mô hình triển khai Docker Compose Single-Host cho **C
 
 ```mermaid
 flowchart TB
-    subgraph SingleHostDev["SINGLE-HOST VPS DOCKER COMPOSE TOPOLOGY (OPERATIONAL HARDENED v3.4)"]
+    subgraph SingleHostDev["SINGLE-HOST VPS DOCKER COMPOSE TOPOLOGY (OPERATIONAL HARDENED v4.0)"]
         
         subgraph GatewayContainer["Gateway, Security & Observability"]
             CaddyCont["Caddy Reverse Proxy Container\n- Port 80/443 (Auto SSL Let's Encrypt)\n- Serve Static /media & Forward WebSockets"]
@@ -551,10 +554,10 @@ volumes:
 
 ---
 
-## 7. 📊 Bảng Xác Nhận Sẵn Sàng Vận Hành Thực Tế (Operational Hardening Verification Matrix v3.4)
+## 7. 📊 Bảng Xác Nhận Sẵn Sàng Vận Hành Thực Tế (Operational Hardening Verification Matrix v4.0)
 
 
-| STT   | Rủi Ro Vận Hành Thực Tế                                        | Trạng Thái Đã Xử Lý | Giải Pháp &amp; Cơ Chế Khắc Phục Trong Spec v3.4                                                                                                                                                     |
+| STT   | Rủi Ro Vận Hành Thực Tế                                        | Trạng Thái Đã Xử Lý | Giải Pháp &amp; Cơ Chế Khắc Phục Trong Spec v4.0                                                                                                                                                     |
 | :-----: | :-------------------------------------------------------------- | :-------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1** | **Resource Contention (Chromium render kéo sập DB/Redis)**     | **✅ ĐÃ KHẮC PHỤC**  | Áp dụng `deploy.resources.limits` cứng trong Compose (Worker max 2 CPU/4GB RAM). Khóa `CONCURRENCY=1` cho `remotion-render-queue`.                                                                   |
 | **2** | **Dual Source of Truth (Postgres Checkpoint vs BullMQ Redis)** | **✅ ĐÃ KHẮC PHỤC**  | Quy định Postgres Checkpointer là **Single Source of Truth** duy nhất. Redis bật AOF (`appendonly yes`). Worker query lại Postgres SSOT trước khi render.                                            |

@@ -6,7 +6,7 @@
  */
 
 import { VisualCandidate } from '@chronoviet/shared-spec';
-import { resolveImageCandidates } from '@chronoviet/vlm-inspector';
+import { resolveImageCandidates } from '../../research/index.js';
 import { ChronoGraphState, getNodeLogger, ResearchSceneResult } from '../state.js';
 
 const RESEARCH_CANDIDATE_LIMIT = 3;

@@ -5,7 +5,7 @@ import {
   formatErrorMessage,
   envConfig,
   hasAvailableApiKeys,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { getRedisClient } from '../../../lib/redis';
 
 const log = createLogger({ service: 'web-api-readyz' });
@@ -48,7 +48,7 @@ export async function GET() {
   // 2. Check PostgreSQL
   const pgStart = Date.now();
   try {
-    const available = await isPgAvailable();
+    const available = await isPgAvailable(true);
     if (available) {
       checks.postgres = {
         status: 'healthy',

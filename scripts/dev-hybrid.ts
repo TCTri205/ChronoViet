@@ -6,7 +6,7 @@
 
 import { spawn, execSync, ChildProcess } from 'child_process';
 import * as path from 'path';
-import { isPgAvailable, envConfig, createLogger } from '../packages/shared-spec/src/index.js';
+import { isPgAvailable, envConfig, createLogger } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'dev-hybrid' });
 const ROOT_DIR = path.resolve(__dirname, '..');

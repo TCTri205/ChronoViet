@@ -7,12 +7,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import {
-  createLogger,
-  envConfig,
-  initProjectWorkspace,
   VisualCandidate,
   VisualCandidateSchema,
 } from '@chronoviet/shared-spec';
+import {
+  createLogger,
+  envConfig,
+  initProjectWorkspace,
+} from '@chronoviet/infra';
 
 const log = createLogger({ service: 'vlm-inspector' });
 

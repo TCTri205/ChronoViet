@@ -1,7 +1,8 @@
 import path from 'path';
 import { promises as fs } from 'fs';
 import { QualityGateValidator } from './quality-gate.js';
-import { CorpusCrawlItemResult, createLogger } from '@chronoviet/shared-spec';
+import { CorpusCrawlItemResult } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 
 const log = createLogger({ service: 'data-ingestion' });

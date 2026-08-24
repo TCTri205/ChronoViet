@@ -1,4 +1,4 @@
-import { query, isPgAvailable, createLogger, closePool } from '../packages/shared-spec/src/index.js';
+import { query, isPgAvailable, createLogger, closePool } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'ops', correlationId: 'db-health-audit' });
 
@@ -33,7 +33,7 @@ async function verifyDbHealth() {
     `SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND indexname = ANY($1::text[])`,
     [requiredIndexes]
   );
-  const foundIndexNames = new Set(foundIndexes.map((i) => i.indexname));
+  const foundIndexNames = new Set(foundIndexes.map((i: any) => i.indexname));
   const missingIndexes = requiredIndexes.filter((idx) => !foundIndexNames.has(idx));
 
   console.log('\n--- [2. INDEXES AUDIT] ---');

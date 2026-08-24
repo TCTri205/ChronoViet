@@ -2,9 +2,9 @@
 const nextConfig = {
   transpilePackages: [
     '@chronoviet/shared-spec',
+    '@chronoviet/infra',
     '@chronoviet/rag-engine',
     '@chronoviet/agent-orchestrator',
-    '@chronoviet/vieneu-tts',
   ],
   experimental: {
     serverComponentsExternalPackages: ['bullmq', 'ioredis', 'sharp', '@chronoviet/vlm-inspector'],

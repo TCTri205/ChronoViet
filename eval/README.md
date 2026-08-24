@@ -12,8 +12,8 @@ Thư mục này hỗ trợ 3 chế độ đánh giá linh hoạt từ cấp đ�
    - Script: [`eval/chains/vieneu-remotion.ts`](chains/vieneu-remotion.ts)
 
 2. **Chế độ Mô-đun Đơn (Isolated Module Evaluation):**
-   - Thực thi runner eval độc lập của một gói cụ thể trong `packages/*/eval` hoặc `services/*/eval`.
-   - Ví dụ: `--module vieneu-tts` hoặc `--module remotion-engine`.
+   - Thực thi runner eval độc lập của một gói cụ thể trong `packages/*/eval`.
+   - Ví dụ: `--module rag-engine` hoặc `--module remotion-engine`.
 
 3. **Chế độ Toàn Hệ Thống (Global Master Evaluation):**
    - Chạy đồng loạt toàn bộ các bộ eval đơn lập (8 Modules) và 3 chuỗi tích hợp, tổng hợp báo cáo KPI kỹ thuật chung của toàn bộ Monorepo.
@@ -50,7 +50,7 @@ npx tsx eval/runner.ts --all --fresh         # Dọn dẹp sạch trước khi e
 npx tsx eval/runner.ts --chain vieneu-remotion
 npx tsx eval/runner.ts --chain ingest-rag
 npx tsx eval/runner.ts --module remotion-engine --fresh
-npx tsx eval/runner.ts --module vieneu-tts --fresh
+npx tsx eval/runner.ts --module rag-engine --fresh
 ```
 
 ### 📋 Bảng Tham Số & Cờ Tùy Chọn CLI (`eval/runner.ts`):
@@ -59,7 +59,7 @@ npx tsx eval/runner.ts --module vieneu-tts --fresh
 | :--- | :---: | :--- | :--- |
 | `--all` | - | Chạy toàn bộ 8 mô-đun và 3 chuỗi tích hợp E2E | `true` |
 | `--chain <name>` | - | Chạy riêng 1 chuỗi tích hợp: `vieneu-remotion`, `ingest-rag`, `orchestrator-remotion` | - |
-| `--module <name>`| - | Chạy riêng 1 mô-đun: `data-ingestion`, `rag-engine`, `agent-orchestrator`, `vlm-inspector`, `remotion-engine`, `vieneu-tts`, `render-worker`, `web` | - |
+| `--module <name>`| - | Chạy riêng 1 mô-đun: `data-ingestion`, `rag-engine`, `agent-orchestrator`, `vlm-inspector`, `remotion-engine` | - |
 | `--fresh` | - | Tự động dọn dẹp audio rác, port treo và báo cáo cũ trước khi chạy | `false` |
 | `--clean` | - | Chỉ thực thi dọn dẹp rồi thoát (không chạy benchmark) | `false` |
 | `--testCase <file>` | `-t` | Chỉ định test case kịch bản cụ thể | - |

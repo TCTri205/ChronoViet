@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   ConversationMessage,
   ConversationMessageSchema,
+} from '@chronoviet/shared-spec';
+import {
   createLogger,
   query,
   isPgAvailable,
   inMemoryStore,
   httpRequestsTotal,
   httpRequestDurationSeconds,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { getVideoBriefsByConversationId } from '@chronoviet/agent-orchestrator';
 
 const log = createLogger({ service: 'web-api-conversation-messages' });

@@ -15,7 +15,7 @@ import { spawn, execSync, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
-import { envConfig, createLogger, getAiExecutionSummary } from '../packages/shared-spec/src/index.js';
+import { envConfig, createLogger, getAiExecutionSummary } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'ai-cli' });
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -456,6 +456,23 @@ export function getExtractionLlamaConfig() {
   return { extCtxSize, extExtraArgs };
 }
 
+export function getRerankLlamaConfig() {
+  const rerankCtxSize = 8192;
+  const rerankExtraArgs: string[] = [
+    '--batch-size',
+    '8192',
+    '--ubatch-size',
+    '8192',
+    '--cont-batching',
+    '--parallel',
+    String(envConfig.LOCAL_RERANK_PARALLEL || 4),
+    '--threads',
+    String(envConfig.LOCAL_RERANK_THREADS || 6),
+    ...(envConfig.LOCAL_RERANK_EXTRA_ARGS ? envConfig.LOCAL_RERANK_EXTRA_ARGS.split(' ').filter(Boolean) : []),
+  ];
+  return { rerankCtxSize, rerankExtraArgs };
+}
+
 export async function launchExtractionOnly() {
   const weights = resolveWeights();
   if (!weights.extPath) {
@@ -756,10 +773,12 @@ export async function launchAll() {
 
   // 4. Reranker Server
   if (weights.rerankPath) {
+    const { rerankCtxSize, rerankExtraArgs } = getRerankLlamaConfig();
     procs.push(
       spawnLlamaService('Reranker Engine', RERANK_PORT, weights.rerankPath, {
-        ctxSize: 8192,
+        ctxSize: rerankCtxSize,
         isReranking: true,
+        extraArgs: rerankExtraArgs,
         tag: 'RERANK-8096',
         tagColor: colors.yellow,
       })
@@ -805,9 +824,11 @@ export async function launchRerankOnly() {
   console.log(`\n${colors.bright}${colors.yellow}=== Starting Reranker Server (Port ${RERANK_PORT}) ===${colors.reset}`);
   console.log(`${colors.dim}Press Ctrl+C to terminate.${colors.reset}\n`);
 
+  const { rerankCtxSize, rerankExtraArgs } = getRerankLlamaConfig();
   const proc = spawnLlamaService('Reranker Engine', RERANK_PORT, weights.rerankPath, {
-    ctxSize: 8192,
+    ctxSize: rerankCtxSize,
     isReranking: true,
+    extraArgs: rerankExtraArgs,
     tag: 'RERANK-8096',
     tagColor: colors.yellow,
   });

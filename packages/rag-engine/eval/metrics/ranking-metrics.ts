@@ -167,6 +167,91 @@ export function calculateRecallAtK(
 }
 
 /**
+ * Calculates Evidence-Level Recall@K agnostic of chunk IDs:
+ * Checks whether the top-K retrieved chunk texts contain the essential gold evidence claims.
+ */
+export function calculateEvidenceRecallAtK(
+  retrievedChunks: Array<{ id?: string; chunkId?: string; title?: string; textContent?: string }>,
+  goldEvidenceClaims: string[],
+  k: number = 10
+): number {
+  if (!goldEvidenceClaims || goldEvidenceClaims.length === 0) return 1.0;
+  const topK = retrievedChunks.slice(0, k);
+  if (topK.length === 0) return 0.0;
+
+  const combinedRetrievedText = topK
+    .map((c) => `${c.title || ''} ${c.textContent || ''}`.toLowerCase())
+    .join(' ');
+
+  let satisfiedClaims = 0;
+  for (const claim of goldEvidenceClaims) {
+    const claimTokens = claim
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 2);
+    if (claimTokens.length === 0) continue;
+
+    let matchedTokens = 0;
+    for (const t of claimTokens) {
+      if (combinedRetrievedText.includes(t)) matchedTokens++;
+    }
+    if (matchedTokens >= Math.ceil(claimTokens.length * 0.55)) {
+      satisfiedClaims++;
+    }
+  }
+
+  return satisfiedClaims / Math.max(1, goldEvidenceClaims.length);
+}
+
+/**
+ * Calculates Dynamic Graded Relevance Map for retrieved chunks:
+ * Prioritizes exact ID match, but falls back gracefully to content/evidence overlap.
+ */
+export function calculateContentAwareGrades(
+  retrievedChunks: Array<{ id?: string; chunkId?: string; title?: string; textContent?: string }>,
+  goldChunks: Array<{ chunk_id: string; relevance_grade: number; key_evidence_claims?: string[]; text_content?: string }>
+): Map<string, number> {
+  const gradeMap = new Map<string, number>();
+  const idToGoldGrade = new Map<string, number>();
+  goldChunks.forEach((g) => idToGoldGrade.set(g.chunk_id, g.relevance_grade));
+
+  for (const chunk of retrievedChunks) {
+    const cid = chunk.chunkId || chunk.id || '';
+    if (idToGoldGrade.has(cid)) {
+      gradeMap.set(cid, idToGoldGrade.get(cid)!);
+      continue;
+    }
+
+    // Content overlap fallback
+    const chunkText = `${chunk.title || ''} ${chunk.textContent || ''}`.toLowerCase();
+    let maxAssignedGrade = 0;
+
+    for (const gold of goldChunks) {
+      const claims = gold.key_evidence_claims || [];
+      if (claims.length > 0) {
+        let claimsMatched = 0;
+        for (const claim of claims) {
+          const tokens = claim.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+          const hitCount = tokens.filter((t) => chunkText.includes(t)).length;
+          if (hitCount >= Math.ceil(tokens.length * 0.55)) {
+            claimsMatched++;
+          }
+        }
+        if (claimsMatched >= Math.ceil(claims.length * 0.6)) {
+          maxAssignedGrade = Math.max(maxAssignedGrade, gold.relevance_grade);
+        } else if (claimsMatched >= 1) {
+          maxAssignedGrade = Math.max(maxAssignedGrade, 1);
+        }
+      }
+    }
+
+    gradeMap.set(cid, maxAssignedGrade);
+  }
+
+  return gradeMap;
+}
+
+/**
  * Calculates Precision@K against a gold set of document IDs
  */
 export function calculatePrecisionAtK(
@@ -183,3 +268,4 @@ export function calculatePrecisionAtK(
   }
   return hits / topK.length;
 }
+

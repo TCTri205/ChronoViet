@@ -5,7 +5,7 @@ import {
   getMetricsContentType,
   getMetricsSnapshot,
   formatErrorMessage,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { startTTSWorker } from './workers/tts-worker.js';
 import { startVLMWorker } from './workers/vlm-worker.js';
 import { startRenderWorker } from './workers/render-worker.js';

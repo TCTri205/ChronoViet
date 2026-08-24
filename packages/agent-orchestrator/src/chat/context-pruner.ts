@@ -97,3 +97,50 @@ export function pruneRagContext(
   const maxChars = Math.floor(maxTokens * 3.5);
   return contextText.slice(0, maxChars) + '\n[...nội dung được rút gọn theo giới hạn ngữ cảnh...]';
 }
+
+/**
+ * Prunes knowledge graph triples to avoid unbounded graph expansion
+ */
+export function pruneGraphTriples(
+  triples: Array<{ source?: string; relation?: string; target?: string }>,
+  maxTriples: number = 15
+): string {
+  if (!triples || triples.length === 0) {
+    return 'Không có quan hệ thực thể đặc thù.';
+  }
+  const sliced = triples.slice(0, maxTriples);
+  return sliced.map((t) => `- ${t.source} [${t.relation}] -> ${t.target}`).join('\n');
+}
+
+/**
+ * Hard safety clamp on total prompt messages to strictly avoid exceeding LLM context limits (e.g. 32k or 4k-8k safe zone)
+ */
+export function clampTotalPromptMessages<T extends { role: string; content: string }>(
+  messages: T[],
+  maxTotalTokens: number = 5000
+): T[] {
+  if (!messages || messages.length === 0) return [];
+
+  let totalTokens = messages.reduce((sum, m) => sum + estimateTokens(m.content), 0);
+  if (totalTokens <= maxTotalTokens) {
+    return messages;
+  }
+
+  // If prompt exceeds budget, clone and prune from system / history
+  return messages.map((m, idx) => {
+    // Preserve user turn (usually last) intact if possible
+    if (idx === messages.length - 1 && m.role === 'user') {
+      return m;
+    }
+    // Cap system prompt or history if oversized
+    const tokenCap = m.role === 'system' ? 2500 : 400;
+    const est = estimateTokens(m.content);
+    if (est > tokenCap) {
+      return {
+        ...m,
+        content: clampTurnContent(m.content, tokenCap),
+      };
+    }
+    return m;
+  });
+}

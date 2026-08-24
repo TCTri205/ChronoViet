@@ -197,8 +197,12 @@ Mô-đun 0 vận hành **Kiến trúc Trích Xuất Phân Tầng 2-Stage Tiên T
 * **Stage 2 (Lightweight Local LLM Extraction - Port 8094):**
   * Truyền Candidate Spans từ Stage 1 vào Prompt của mô hình ngôn ngữ nhẹ **Qwen3.5-4B-Instruct Q4_K_M** (chạy chuyên biệt trên Port 8094, cấu hình mặc định `--ctx-size 32768`, `--parallel 4`, `--threads 6`, `--cont-batching`, cấp phát $32,768 / 4 = 8,192$ tokens/slot) qua `generateLLMCompletion` với option `{ task: 'extraction' }`.
   * **Giới hạn trần ứng viên (Candidate Spans Capping):** Cắt trần tối đa `MAX_CANDIDATE_SPANS_IN_PROMPT = 30` thực thể ứng viên có độ ưu tiên cao nhất trong prompt nhằm triệt tiêu nguy cơ bùng nổ token (context overflow).
-  * Ép kiểu đầu ra JSON strictly tuân thủ **8 Quan Hệ Chuẩn Hóa**: `LED_BY`, `PART_OF`, `HAPPENED_IN`, `HAPPENED_AT`, `SAME_AS_LOCATION`, `ALIAS_OF`, `ROYAL_LINEAGE`, `MENTIONED_IN`.
+  * Ép kiểu đầu ra JSON strictly tuân thủ **8 Quan Hệ Chuẩn Hóa**: `LED_BY`, `PART_OF`, `HAPPENED_IN`, `HAPPENED_AT`, `SAME_AS_LOCATION`, `ALIAS_OF`, `ROYAL_LINEAGE`, `MENTIONED_IN`; ngân sách sinh `max_tokens = 800` (tăng từ 500 để giảm mất triple đuôi khi JSON bị cắt).
   * **Ma trận định hướng quan hệ (Directionality Validation Matrix):** Kiểm soát nghiêm ngặt chiều mũi tên $S \xrightarrow{R} O$ (ví dụ: `Event -[LED_BY]-> Person`, `Event -[HAPPENED_AT]-> Location`, `Event -[HAPPENED_IN]-> Dynasty`).
+  * **Retry 1 lần khi JSON vỡ:** Nếu phản hồi đầu không parse được JSON và regex cứu hộ cũng không lấy được triple nào, gọi lại LLM với `temperature=0.3` (thay vì `0.1`); nếu JSON hợp lệ (dù thiếu relation) thì không retry để tránh tăng latency.
+  * **ID fallback theo relation type:** Khi LLM bỏ sót `sourceEntityId`/`targetEntityId`, hệ thống suy luận loại thực thể đích theo quan hệ (`LED_BY → HISTORICAL_PERSON`, `HAPPENED_AT → LOCATION`, `HAPPENED_IN/PART_OF → DYNASTY_ERA`, `ALIAS_OF → HISTORICAL_PERSON`) thay vì cứng `LOCATION` như cũ — tránh sinh `loc_*` sai.
+* **Ensemble Merge (True Two-Tier Ensemble):**
+  * Kết quả cuối là **hợp nhất** giữa Stage 1 Rule-Based và Stage 2 LLM: rule engine bù các quan hệ mà model 4B under-generate (đặc biệt `ALIAS_OF` với mẫu "tức"/"tức là" đã được mở rộng regex, và `PART_OF`), LLM bù các quan hệ phức tạp rule không phủ; trùng khớp giữ lại bản có confidence cao hơn. Nhờ đó C0-M5 RelationRecall tăng từ 58% → 84%.
 * **Cơ chế Fallback & Cách Ly (Quarantine Store):**
   * Khi LLM offline, hệ thống tự động fallback sang Stage 1 Candidate-Guided Rule Matcher.
   * Các cạnh có confidence $< 0.85$ hoặc chứa thực thể chưa định danh được đưa vào phân vùng cách ly (Quarantine Store) để thẩm định qua CLI `pnpm db:audit-quarantine`.
@@ -221,7 +225,7 @@ Mô-đun 0 vận hành **Kiến trúc Trích Xuất Phân Tầng 2-Stage Tiên T
     ]
   }
   ```
-* **Lưu trữ SQL**: Nạp vào bảng `entities` và `relationships` tương thích với Schema tại [packages/shared-spec/src/db/schema.ts](../../packages/shared-spec/src/db/schema.ts).
+* **Lưu trữ SQL**: Nạp vào bảng `entities` và `relationships` tương thích với Schema tại [packages/infra/src/db/schema.ts](../../packages/infra/src/db/schema.ts).
 
 ### 4.4. Cơ Chế Xoay Vòng Phân Cấp 2 Tầng & Xử Lý Song Song (Hierarchical 2-Level Interleaved Rotation & Concurrency Pool)
 
@@ -394,7 +398,7 @@ pnpm --filter @chronoviet/data-ingestion rag:re-resolve         # Chuẩn hoá e
 
 # Bước 5.4: Quality Diagnostics & Benchmarking
 pnpm eval:ingest:diagnostic                     # Chẩn đoán độ phủ, mật độ graph, unmapped entities trên kho văn bản
-pnpm eval:seed                                  # Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
+pnpm --filter @chronoviet/data-ingestion eval:seed  # Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
 pnpm eval:ingest                                # Master Benchmark Module 0: Đo lường toàn diện trên DB thật
 pnpm eval:ingest:vector                         # Benchmark 100 câu hỏi Vector Retrieval trên pgvector HNSW
 pnpm eval:ingest:graph                          # Đánh giá 82,849 quan hệ, ma trận hướng (99.5%) & độ kết nối

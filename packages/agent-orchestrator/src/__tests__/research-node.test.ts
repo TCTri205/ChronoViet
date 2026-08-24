@@ -6,19 +6,20 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock the vlm-inspector search modules so tests never hit real network
-vi.mock('@chronoviet/vlm-inspector', async () => {
-  const actual = await vi.importActual<any>('@chronoviet/vlm-inspector');
+// Mock the research module so tests never hit real network
+vi.mock('../research/index.js', async () => {
+  const actual = await vi.importActual<any>('../research/index.js');
   return {
     ...actual,
-    resolveImageCandidates: vi.fn(async (keywords: string, sceneId: string, limit: number) => {
+    resolveImageCandidates: vi.fn(async (keywordsOrInput: any, sceneId: string, limit: number) => {
+      const kw = typeof keywordsOrInput === 'object' ? keywordsOrInput.primaryQuery : keywordsOrInput;
       return {
         candidates: [
           {
             candidateId: `cand_${sceneId}_01`,
             imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Hai_ba_trung_Dong_ho.jpg',
             sourceUrl: 'https://commons.wikimedia.org/wiki/File:Hai_ba_trung_Dong_ho.jpg',
-            title: `Tư liệu cho ${keywords}`,
+            title: `Tư liệu cho ${kw}`,
             author: 'Wikimedia Commons Contributor',
             license: 'PUBLIC_DOMAIN',
             candidateBatch: 1,
@@ -30,16 +31,21 @@ vi.mock('@chronoviet/vlm-inspector', async () => {
   };
 });
 
-vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
+vi.mock('@chronoviet/infra', async (importOriginal) => {
   const actual = await importOriginal<any>();
   return {
     ...actual,
     callLlm: vi.fn().mockResolvedValue({
       content: JSON.stringify({
-        primaryQuery: 'Trận Bạch Đằng Ngô Quyền',
-        englishQuery: 'Battle of Bach Dang Ngo Quyen',
-        visualType: 'BATTLE_MAP',
-        historicalPeriod: 'Ngo Dynasty',
+        queries: [
+          {
+            sceneId: 'scene_001',
+            primaryQuery: 'Trận Bạch Đằng Ngô Quyền',
+            englishQuery: 'Battle of Bach Dang Ngo Quyen',
+            visualType: 'BATTLE_MAP',
+            historicalPeriod: 'Ngo Dynasty',
+          },
+        ],
       }),
     }),
   };
@@ -48,7 +54,7 @@ vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
 import { researchNode } from '../graph/nodes/research-node.js';
 import { keywordNode, extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
 import { ChronoGraphState } from '../graph/state.js';
-import { resolveImageCandidates } from '@chronoviet/vlm-inspector';
+import { resolveImageCandidates } from '../research/index.js';
 
 const mockResolve = vi.mocked(resolveImageCandidates);
 

@@ -9,7 +9,7 @@
 
 import { spawn, execSync } from 'child_process';
 import * as path from 'path';
-import { isPgAvailable, envConfig, createLogger } from '../packages/shared-spec/src/index.js';
+import { isPgAvailable, envConfig, createLogger } from '@chronoviet/infra';
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const log = createLogger({ service: 'setup-data' });

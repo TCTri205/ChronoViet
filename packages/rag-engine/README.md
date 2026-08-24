@@ -1,6 +1,6 @@
 # `@chronoviet/rag-engine`
 
-> **ChronoViet Hybrid GraphRAG Retrieval Engine (Mô-đun 1) — [v2.2 Production Hardened]**  
+> **ChronoViet Hybrid GraphRAG Retrieval Engine (Mô-đun 1) — [v5.0 Production Hardened]**  
 > Gói mã nguồn chịu trách nhiệm cung cấp động cơ truy xuất tri thức thời gian thực Hybrid GraphRAG chuẩn xác (Mô-đun 1) cho hệ thống ChronoViet. Tuân thủ 100% Quy chuẩn [KNOWLEDGE_DATA_GOVERNANCE_SPEC.md](../../docs/specs/KNOWLEDGE_DATA_GOVERNANCE_SPEC.md) v2.0 & [01_CHRONO_RAG_ENGINE.md](../../docs/modules/01_CHRONO_RAG_ENGINE.md).
 
 ---
@@ -10,13 +10,17 @@
 Gói `@chronoviet/rag-engine` đảm nhận nhiệm vụ truy xuất dữ liệu tri thức trực tuyến (Online Knowledge Retrieval Engine):
 
 * **Global Singleton Schema Initialization:** Cơ chế Singleton Promise `ensureGlobalSchemaInitialized()` đảm bảo kịch bản DDL SQL chỉ khởi chạy 1 lần duy nhất trong toàn bộ vòng đời tiến trình, loại bỏ table lock và độ trễ dư thừa trên mỗi request.
-* **SQL Recursive CTE với Cycle Pruning:** Duyệt đồ thị tri thức $k=1, 2$ trên PostgreSQL qua Recursive CTE kèm mảng theo dõi `visited_path`, triệt tiêu hoàn toàn chu trình lặp ngược $A \to B \to A$.
-* **Lexical FTS Keyword Sanitization:** Tiền xử lý câu hỏi tự nhiên qua bộ lọc stopword tiếng Việt (`sanitizeFtsQuery`), ngăn chặn triệt để hiện tượng False Negative khi người dùng hỏi các câu tự nhiên như *"Ai là người...", "Tại sao..."*.
-* **Score Calibration & Fair Co-Retrieval Boost:** Chuẩn hóa điểm khởi tạo của Graph Chunks về thang RRF $1 / (60 + \text{rank})$ và cộng điểm thưởng `CO_RETRIEVAL_BOOST = 0.35` cho các đoạn trích được đồng xác thực bởi cả hai nhánh (Graph + Vector).
+* **Directed BFS Graph Traversal (thay Recursive CTE cũ):** Duyệt đồ thị tri thức $k=1, 2$ với Global Visited-Set (chống nhân bản path), Node Budget (mặc định 50) + Timeout (mặc định 40ms) chống Hub Explosion, lọc edge nhiễu (`MENTIONED_IN`/`SAME_AS_LOCATION` bị loại trừ; duyệt ngược chỉ cho `LED_BY`/`PART_OF`/`ALIAS_OF`), lọc `confidence >= 0.5` — giảm C3-M6 HubNodeExpansion từ 4,792 → 14 nodes và CTE latency từ 119ms → 2ms.
+* **Lexical FTS Keyword Sanitization & Unaccent Normalization:** Tiền xử lý câu hỏi tự nhiên qua bộ lọc stopword tiếng Việt (`sanitizeFtsQuery`) kết hợp chuẩn hóa không dấu (`removeVietnameseAccents`), mở rộng khả năng khớp danh xưng lịch sử và triều đại.
+* **Deterministic Graph Chunk Ordering + Seed-Priority:** Truy vấn `getChunksForEntities` ưu tiên chunk gắn seed entity từ Question NER trước, sau đó sắp xếp tất định theo độ tin cậy nguồn (`LEVEL_1` > `LEVEL_2` > `LEVEL_3`) và ID (`LIMIT 20`), gán `graphScore = confidence * 0.6^(hop-1)` cho fusion.
+* **Explicit Co-Retrieval State Contract (`isCoRetrieved`):** Khai báo tường minh cờ kiểu `isCoRetrieved: boolean` trong `VectorSearchResult` và cộng điểm thưởng nhỏ theo tín hiệu đồ thị `GRAPH_BOOST_SCALE * graphScore = 0.05 * (confidence * 0.6^(hop-1))` (thay boost flat `+0.35` cũ gây nhiễu ranking); graph-only chunks vào pool với score rất thấp để không chiếm chỗ candidate vector/FTS tốt hơn.
 * **In-Memory LRU Embedding Cache:** Bộ nhớ đệm LRU Cache (`SimpleLRUCache`, 500 mục) lưu trữ vector embedding của các câu hỏi phổ biến, đạt độ trễ truy xuất sub-millisecond ($< 0.1\text{ms}$).
-* **Pure Local Cross-Encoder Reranker & Multi-Factor Historical Fusion:** Xếp hạng ngữ nghĩa chuyên sâu bằng mô hình Cross-Encoder cục bộ (`Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0 qua `POST /v1/rerank` trên `llama-server` Metal Engine, Port 8096), kết hợp Multi-Factor Fusion (75% AI Score + 15% Cấp sử liệu LEVEL_1/2/3 + 10% Co-retrieval Boost) và bảo toàn danh xưng lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô, Võ*).
+* **Pure Local Cross-Encoder Reranker & Sentence-Boundary Truncation:** Xếp hạng ngữ nghĩa chuyên sâu bằng mô hình Cross-Encoder cục bộ (`Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0 qua `POST /v1/rerank` trên `llama-server` Metal Engine, Port 8096), pool tối đa 5 candidates (`RERANK_CANDIDATE_POOL`), cắt ngắn an toàn theo ranh giới câu (`truncateToSentenceBoundary`) $\le 700\text{ ký tự}$ (đạt SLA p95 $\le 300\text{ms}$), kết hợp Multi-Factor Fusion (75% AI Score + 15% Cấp sử liệu LEVEL_1/2/3 + 5% Co-retrieval Boost) và bảo toàn danh xưng lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô, Võ*).
+* **Token-Budgeted Context Assembly (`maxTokens`):** Bộ đóng gói context tính toán ngân sách token động (~3.5 ký tự/token tiếng Việt), tuân thủ nghiêm ngặt `request.maxTokens` (mặc định 2048) và luôn đảm bảo giữ lại tối thiểu Top-1 thực thể.
+* **High-Recall HNSW & Database Reverse Index:** Bổ sung reverse B-Tree index `idx_entity_chunks_chunk_id`, `idx_chunks_reliability` và nâng cấp cấu hình HNSW ($m=32, \text{ef\_construction}=128, \text{ef\_search}=100$).
+* **Fail-Fast Preflight Probes in Evaluation:** Các bộ đo chẩn đoán (C4, C5, C6) tích hợp kiểm tra sức khỏe hạ tầng (DB & Cross-Encoder Port) trước khi chạy benchmark, chặn đứng hiện tượng báo cáo điểm 0 và độ trễ giả lập.
 * **Citation Traceability & Accuracy:** Đảm bảo tính chính xác lịch sử 100%, truy xuất nguồn gốc trích dẫn đầy đủ và loại bỏ suy đoán sai (Hallucination Rate 0%).
-* **Shared Database Layer:** Tận dụng Lớp Cơ sở dữ liệu PostgreSQL & In-Memory Store trung tâm từ [`@chronoviet/shared-spec`](../shared-spec) quản lý các bảng tri thức `document_chunks`, `entities`, `relationships`, `entity_chunks` và `entity_audit_logs`.
+* **Shared Database Layer:** Tận dụng Lớp Cơ sở dữ liệu PostgreSQL & In-Memory Store trung tâm từ [`@chronoviet/infra`](../infra) (connection pool `pg`, transaction helper `withTransaction`) quản lý các bảng tri thức `document_chunks`, `entities`, `relationships`, `entity_chunks` và `entity_audit_logs`.
 
 *(Lưu ý: Mô-đun 0 Offline Data Preprocessing & Ingestion Pipeline bao gồm crawler, làm sạch văn bản, hierarchical chunking, dual-branch seeder và media ETL hiện đã được tách độc lập sang gói [`@chronoviet/data-ingestion`](../data-ingestion)).*
 
@@ -29,7 +33,7 @@ packages/rag-engine/
 ├── src/
 │   ├── retrieval/                     # Động Cơ Truy Xuất Tri Thức (Mô-đun 1)
 │   │   ├── vector-search.ts           # pgvector HNSW Dense, BM25 FTS Sanitization & LRU Cache
-│   │   ├── graph-cte-search.ts        # PostgreSQL Relational Graph Recursive CTE Cycle Pruning
+│   │   ├── graph-cte-search.ts        # Directed BFS Graph Traversal (Visited-Set, Budget, Timeout)
 │   │   ├── question-ner.ts            # Phân tích câu hỏi & nhận dạng thực thể NER (< 1ms)
 │   │   ├── chunk-retriever.ts         # Graph-Guided Chunk Retrieval với Calibrated Score
 │   │   └── reranker.ts                # Pure Local Cross-Encoder Reranker & Multi-Factor Fusion

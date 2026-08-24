@@ -5,16 +5,16 @@
 import { Worker, Job } from 'bullmq';
 import * as fs from 'fs';
 import * as path from 'path';
+import { WordTimestamp } from '@chronoviet/shared-spec';
 import {
   createLogger,
   envConfig,
   formatErrorMessage,
   initProjectWorkspace,
-  WordTimestamp,
   ttsRequestsTotal,
   ttsSynthesisDurationSeconds,
-} from '@chronoviet/shared-spec';
-import { VieNeuEngine } from '@chronoviet/vieneu-tts';
+  VieNeuEngine,
+} from '@chronoviet/infra';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 
 const log = createLogger({ service: 'render-worker' });
@@ -75,10 +75,20 @@ export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult>
     ttsSynthesisDurationSeconds.observe({ engine: 'local_vieneu' }, ttsDurationSec);
 
     if (ttsResult.audioUrl && ttsResult.audioUrl.startsWith('/static/audio/')) {
-      const cachedFile = path.resolve(process.cwd(), 'services/vieneu-tts/media/audio-cache', path.basename(ttsResult.audioUrl));
-      try {
-        await fs.promises.copyFile(cachedFile, audioFilePath);
-      } catch {}
+      const base = path.basename(ttsResult.audioUrl);
+      const candidates = [
+        path.resolve(envConfig.AUDIO_CACHE_DIR, base),
+        path.resolve(process.cwd(), 'media/audio-cache', base),
+        path.resolve('/media/audio-cache', base),
+      ];
+      for (const cand of candidates) {
+        if (fs.existsSync(cand)) {
+          try {
+            await fs.promises.copyFile(cand, audioFilePath);
+            break;
+          } catch {}
+        }
+      }
     }
   } catch (err: any) {
     const ttsDurationSec = (Date.now() - startTime) / 1000;

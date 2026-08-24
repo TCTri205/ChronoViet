@@ -6,11 +6,12 @@ import {
   createLogger,
   isPgAvailable,
   query,
+  withTransaction,
   inMemoryStore,
   DbDocumentChunk,
   cosineSimilarity,
   generateEmbedding,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 
 import { QUESTION_STOPWORDS } from './question-ner.js';
 
@@ -25,54 +26,39 @@ export interface VectorSearchResult {
   score: number;
   rankVector?: number;
   rankFts?: number;
+  isCoRetrieved?: boolean;
+  /** Graph-derived relevance signal: confidence-weighted hop decay in [0, 1]. */
+  graphScore?: number;
+  /** Minimum hop distance from a seed entity to this chunk's linked entity. */
+  hopCount?: number;
 }
 
 export const RRF_K = 60;
 
-/**
- * LRU Cache for Query Embeddings to avoid repeated HTTP calls
- */
-export class SimpleLRUCache<K, V> {
-  private maxEntries: number;
-  private cache: Map<K, V>;
+import { removeVietnameseAccents } from '@chronoviet/shared-spec';
+export { removeVietnameseAccents };
 
-  constructor(maxEntries: number = 500) {
-    this.maxEntries = maxEntries;
-    this.cache = new Map<K, V>();
-  }
+export class SimpleLRUCache<K, V> {
+  private readonly map = new Map<K, V>();
+  constructor(private readonly maxEntries: number = 500) {}
 
   get(key: K): V | undefined {
-    if (!this.cache.has(key)) return undefined;
-    const val = this.cache.get(key)!;
-    // Re-insert to mark as recently used
-    this.cache.delete(key);
-    this.cache.set(key, val);
+    const val = this.map.get(key);
+    if (val === undefined) return undefined;
+    this.map.delete(key);
+    this.map.set(key, val);
     return val;
   }
 
   set(key: K, value: V): void {
-    if (this.cache.has(key)) {
-      this.cache.delete(key);
-    } else if (this.cache.size >= this.maxEntries) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey !== undefined) {
-        this.cache.delete(firstKey);
-      }
-    }
-    this.cache.set(key, value);
+    this.map.delete(key);
+    if (this.map.size >= this.maxEntries) this.map.delete(this.map.keys().next().value!);
+    this.map.set(key, value);
   }
 
-  has(key: K): boolean {
-    return this.cache.has(key);
-  }
-
-  size(): number {
-    return this.cache.size;
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
+  has(key: K): boolean { return this.map.has(key); }
+  size(): number { return this.map.size; }
+  clear(): void { this.map.clear(); }
 }
 
 export const queryEmbeddingCache = new SimpleLRUCache<string, number[]>(500);
@@ -188,23 +174,27 @@ export async function searchDenseVector(
         ? queryEmbedding.slice(0, 1024)
         : [...queryEmbedding, ...new Array(1024 - queryEmbedding.length).fill(0)];
 
-    const vecRows = await query<{
-      id: string;
-      title: string;
-      text_content: string;
-      dynasty?: string;
-      source_reliability?: string;
-      dist: number;
-    }>(
-      `SELECT id, title, text_content, dynasty, source_reliability, embedding <=> $1::vector AS dist
-       FROM document_chunks
-       WHERE embedding IS NOT NULL
-       ORDER BY dist ASC
-       LIMIT $2;`,
-      [JSON.stringify(adaptedEmbedding), topK]
-    );
+    const vecRows = await withTransaction(async (execQuery) => {
+      await execQuery('SET LOCAL hnsw.ef_search = 100;');
+      return execQuery<{
+        id: string;
+        title: string;
+        text_content: string;
+        dynasty?: string;
+        source_reliability?: string;
+        dist: number;
+      }>(
+        `SELECT id, title, text_content, dynasty, source_reliability, embedding <=> $1::vector AS dist
+         FROM document_chunks
+         WHERE embedding IS NOT NULL
+         ORDER BY dist ASC
+         LIMIT $2;`,
+        [JSON.stringify(adaptedEmbedding), topK]
+      );
+    });
+
     if (vecRows && vecRows.length > 0) {
-      return vecRows.map((r, idx) => ({
+      return vecRows.map((r: any, idx: number) => ({
         chunkId: r.id,
         title: r.title,
         textContent: r.text_content,
@@ -237,6 +227,26 @@ export async function searchDenseVector(
   }));
 }
 
+/**
+ * Builds resilient PostgreSQL tsquery string combining multi-word AND and disjunctive OR
+ */
+export function buildDisjunctiveFtsTsQuery(queryText: string): string {
+  const sanitized = sanitizeFtsQuery(queryText);
+  if (!sanitized) return '';
+
+  const tokens = sanitized
+    .split(/\s+/)
+    .map((t) => t.replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/g, ''))
+    .filter((t) => t.length >= 2);
+
+  if (tokens.length === 0) return '';
+  if (tokens.length <= 2) return tokens.join(' & ');
+
+  const andClause = tokens.join(' & ');
+  const orClause = tokens.join(' | ');
+  return `(${andClause}) | (${orClause})`;
+}
+
 export async function searchLexicalFTS(
   queryText: string,
   topK: number = 20
@@ -246,23 +256,44 @@ export async function searchLexicalFTS(
 
   const pgConnected = await isPgAvailable();
   if (pgConnected) {
-    const ftsRows = await query<{
-      id: string;
-      title: string;
-      text_content: string;
-      dynasty?: string;
-      source_reliability?: string;
-      rank: number;
-    }>(
-      `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
-       FROM document_chunks
-       WHERE tsv @@ plainto_tsquery('simple', $1)
-       ORDER BY rank DESC
-       LIMIT $2;`,
-      [sanitizedQuery, topK]
-    );
+    const tsQueryStr = buildDisjunctiveFtsTsQuery(queryText);
+    let ftsRows: any[] = [];
+    try {
+      ftsRows = await query<{
+        id: string;
+        title: string;
+        text_content: string;
+        dynasty?: string;
+        source_reliability?: string;
+        rank: number;
+      }>(
+        `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, to_tsquery('simple', $1)) AS rank
+         FROM document_chunks
+         WHERE tsv @@ to_tsquery('simple', $1)
+         ORDER BY rank DESC
+         LIMIT $2;`,
+        [tsQueryStr, topK]
+      );
+    } catch {
+      ftsRows = await query<{
+        id: string;
+        title: string;
+        text_content: string;
+        dynasty?: string;
+        source_reliability?: string;
+        rank: number;
+      }>(
+        `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
+         FROM document_chunks
+         WHERE tsv @@ plainto_tsquery('simple', $1)
+         ORDER BY rank DESC
+         LIMIT $2;`,
+        [sanitizedQuery, topK]
+      );
+    }
+
     if (ftsRows && ftsRows.length > 0) {
-      return ftsRows.map((r, idx) => ({
+      return ftsRows.map((r: any, idx: number) => ({
         chunkId: r.id,
         title: r.title,
         textContent: r.text_content,
@@ -278,14 +309,26 @@ export async function searchLexicalFTS(
   if (chunks.length === 0) return [];
 
   const queryTerms = sanitizedQuery.split(/\s+/).filter((t) => t.length >= 2);
+  const unaccentedQueryTerms = queryTerms.map(removeVietnameseAccents);
+
   const scoredByBM25 = chunks
     .map((c) => {
       const contentLower = c.text_content.toLowerCase();
       const titleLower = c.title.toLowerCase();
+      const unaccentedContent = removeVietnameseAccents(contentLower);
+      const unaccentedTitle = removeVietnameseAccents(titleLower);
+
       let matchCount = 0;
-      for (const term of queryTerms) {
-        if (contentLower.includes(term)) matchCount += 1;
-        if (titleLower.includes(term)) matchCount += 2;
+      for (let i = 0; i < queryTerms.length; i++) {
+        const term = queryTerms[i];
+        const unaccentedTerm = unaccentedQueryTerms[i];
+
+        if (contentLower.includes(term) || unaccentedContent.includes(unaccentedTerm)) {
+          matchCount += 1;
+        }
+        if (titleLower.includes(term) || unaccentedTitle.includes(unaccentedTerm)) {
+          matchCount += 2;
+        }
       }
       return { chunk: c, matchCount };
     })

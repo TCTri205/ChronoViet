@@ -7,11 +7,13 @@
 import fs from 'fs';
 import path from 'path';
 import {
+  HistoricalRelationType,
+} from '@chronoviet/shared-spec';
+import {
   isPgAvailable,
   query,
   inMemoryStore,
-  HistoricalRelationType,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
 
 process.env.EVAL_STRICT = 'true';

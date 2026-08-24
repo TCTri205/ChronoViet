@@ -3,4 +3,8 @@ export * from './retrieval/graph-cte-search.js';
 export * from './retrieval/question-ner.js';
 export * from './retrieval/chunk-retriever.js';
 export * from './retrieval/reranker.js';
+export * from './generation/context-synthesizer.js';
+export * from './generation/prompt-engine.js';
+export * from './generation/claim-grounder.js';
+export * from './generation/answer-generator.js';
 export * from './rag-engine.js';

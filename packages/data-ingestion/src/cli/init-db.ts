@@ -3,7 +3,7 @@
  * Usage: pnpm --filter @chronoviet/data-ingestion db:init
  */
 
-import { createLogger, closePool } from '@chronoviet/shared-spec';
+import { createLogger, closePool } from '@chronoviet/infra';
 import { initializeDatabaseSchema } from '../seeder/db-initializer.js';
 
 const log = createLogger({ service: 'data-ingestion' });

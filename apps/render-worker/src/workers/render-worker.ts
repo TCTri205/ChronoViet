@@ -8,6 +8,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import {
+  RenderJobPayload,
+  RenderJobResult as BaseRenderJobResult,
+} from '@chronoviet/shared-spec';
+import {
   cleanProjectWorkspace,
   createLogger,
   ensureProjectAssetsReady,
@@ -19,9 +23,7 @@ import {
   saveProjectSchema,
   renderDurationSeconds,
   ResourceSentinel,
-  RenderJobPayload,
-  RenderJobResult as BaseRenderJobResult,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 import { parseRemotionStdoutLine } from '../lib/remotion-progress-parser.js';
 
@@ -63,7 +65,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
   projectSchema = await ensureProjectAssetsReady(projectId, projectSchema);
 
   const totalFrames = projectSchema.timeline.reduce(
-    (acc, scene) => acc + (scene.durationInFrames || 90),
+    (acc: number, scene: any) => acc + (scene.durationInFrames || 90),
     0
   );
 

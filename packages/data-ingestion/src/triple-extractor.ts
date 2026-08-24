@@ -12,15 +12,17 @@
 
 import {
   resolveCanonicalEntity,
+  HistoricalRelationType,
+  CandidateEntitySpan,
+  getCanonicalEntityIdPrefix,
+} from '@chronoviet/shared-spec';
+import {
   envConfig,
   generateLLMCompletion,
   logFallbackAlert,
   createLogger,
   formatConciseError,
-  HistoricalRelationType,
-  CandidateEntitySpan,
-  getCanonicalEntityIdPrefix,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { extractHistoricalCandidateSpans, slugify, buildCanonicalId, isValidCandidateSpan } from './text/vietnamese-ner.js';
 
 export function isValidEntityName(name: string): boolean {
@@ -279,8 +281,10 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
     }
   }
 
-  // 7. ALIAS_OF (e.g. "Quang Trung tức là Nguyễn Huệ", "còn gọi là", "hiệu là")
-  const aliasRegex = /(?:tức\s+là|còn\s+gọi\s+là|tên\s+khác\s+là|hiệu\s+là|tên\s+thật\s+là|niên\s+hiệu\s+là)/i;
+  // 7. ALIAS_OF (e.g. "Quang Trung tức Nguyễn Huệ", "còn gọi là", "hiệu là")
+  // Supports both "tức" and "tức là" — the canonical corpus uses bare "tức" ("Quang Trung tức Nguyễn Huệ").
+  // NOTE: the tested substring is trimmed, so "tức" can appear at the end without trailing whitespace.
+  const aliasRegex = /(?:tức\s*(?:là\s*)?|còn\s+gọi\s+(?:là\s+)?|tên\s+khác\s+là|hiệu\s+là|tên\s+thật\s+là|niên\s+hiệu\s+là)/i;
   const MAX_RELATION_WINDOW_CHARS = 100;
 
   if (aliasRegex.test(text)) {
@@ -352,6 +356,48 @@ export function extractTriplesFromText(text: string): ExtractedTriple[] {
 export const MAX_CANDIDATE_SPANS_IN_PROMPT = 30;
 
 /**
+ * Infer the canonical entity type for a target whose ID was omitted by the LLM.
+ * The previous fallback hardcoded LOCATION, corrupting LED_BY/ALIAS_OF targets into loc_* ids.
+ */
+function inferTargetEntityType(relation: HistoricalRelationType): 'HISTORICAL_PERSON' | 'LOCATION' | 'DYNASTY_ERA' | 'DOCUMENT_CULTURE' | 'ORGANIZATION' {
+  switch (relation) {
+    case 'LED_BY':
+      return 'HISTORICAL_PERSON';
+    case 'HAPPENED_AT':
+      return 'LOCATION';
+    case 'HAPPENED_IN':
+    case 'PART_OF':
+      return 'DYNASTY_ERA';
+    case 'MENTIONED_IN':
+      return 'DOCUMENT_CULTURE';
+    case 'ROYAL_LINEAGE':
+    case 'ALIAS_OF':
+      return 'HISTORICAL_PERSON';
+    default:
+      return 'ORGANIZATION';
+  }
+}
+
+/**
+ * Builds an entity id for a raw name, preferring the canonical master entity when the
+ * alias/entity is known, otherwise falling back to a type-correct slug id.
+ *
+ * ALIAS_OF is special: resolving BOTH endpoints to their canonical master creates a
+ * self-loop ("Nguyễn Huệ" -> person_quang_trung and "Quang Trung" -> person_quang_trung),
+ * which drops the triple. Alias edges keep distinct slug ids so the edge survives.
+ */
+function buildEntityId(name: string, relation: HistoricalRelationType): { id: string; canonicalName: string } {
+  if (relation === 'ALIAS_OF') {
+    return { id: buildCanonicalId(name, inferTargetEntityType(relation)), canonicalName: name };
+  }
+  const canonical = resolveCanonicalEntity(name);
+  if (canonical && canonical.entityId) {
+    return { id: canonical.entityId, canonicalName: canonical.canonicalName || name };
+  }
+  return { id: buildCanonicalId(name, inferTargetEntityType(relation)), canonicalName: name };
+}
+
+/**
  * Stage 2 Lightweight LLM Extraction (Port 8094 / Qwen3.5-4B-Instruct)
  */
 export async function extractTriplesWithLLMDetailed(
@@ -409,79 +455,105 @@ HÃY TRÍCH XUẤT CÁC BỘ BA QUAN HỆ (KNOWLEDGE TRIPLES) THEO CÁC QUY TẮ
   ]
 }`;
 
-    const res = await generateLLMCompletion(
-      [
+    const callLlm = (temperature: number, maxTokens: number) =>
+      generateLLMCompletion(
+        [
+          {
+            role: 'system',
+            content: 'You are a Vietnamese History Knowledge Graph Extractor. Output strictly valid JSON matching the schema.',
+          },
+          { role: 'user', content: prompt },
+        ],
         {
-          role: 'system',
-          content: 'You are a Vietnamese History Knowledge Graph Extractor. Output strictly valid JSON matching the schema.',
-        },
-        { role: 'user', content: prompt },
-      ],
-      {
-        task: 'extraction', // Routes to Port 8094 (Qwen3.5-4B-Instruct)
-        temperature: 0.1,
-        max_tokens: 500,
-        response_format: { type: 'json_object' },
-        timeoutMs:
-          options?.timeoutMs ??
-          (envConfig.USE_LOCAL_LLM ? (envConfig.LOCAL_LLM_TIMEOUT_MS || 120000) : envConfig.REMOTE_FALLBACK_TIMEOUT_MS),
-      }
-    );
-
-    let jsonStr = res.content.trim();
-    if (jsonStr.includes('```json')) {
-      jsonStr = jsonStr.replace(/^[\s\S]*?```json\s*/i, '').replace(/\s*```[\s\S]*$/, '');
-    } else if (jsonStr.includes('```')) {
-      jsonStr = jsonStr.replace(/^[\s\S]*?```\s*/, '').replace(/\s*```[\s\S]*$/, '');
-    }
-
-    let rawTriples: any[] = [];
-    try {
-      const parsed = JSON.parse(jsonStr);
-      if (parsed && Array.isArray(parsed.triples)) {
-        rawTriples = parsed.triples;
-      }
-    } catch {
-      // Regex extraction fallback from JSON string
-      const objectRegex = /\{\s*"sourceEntity"\s*:\s*"([^"]+)"\s*,\s*(?:"sourceEntityId"\s*:\s*"([^"]+)"\s*,\s*)?"relationType"\s*:\s*"([^"]+)"\s*,\s*"targetEntity"\s*:\s*"([^"]+)"\s*(?:,\s*"targetEntityId"\s*:\s*"([^"]+)"\s*)?(?:,\s*"confidence"\s*:\s*([0-9.]+))?\s*\}/g;
-      let match;
-      while ((match = objectRegex.exec(jsonStr)) !== null) {
-        rawTriples.push({
-          sourceEntity: match[1],
-          sourceEntityId: match[2],
-          relationType: match[3],
-          targetEntity: match[4],
-          targetEntityId: match[5],
-          confidence: match[6] ? parseFloat(match[6]) : 0.95,
-        });
-      }
-    }
-
-    const validatedTriples: ExtractedTriple[] = [];
-
-    for (const raw of rawTriples) {
-      if (!raw.sourceEntity || !raw.targetEntity || !raw.relationType) continue;
-      if (!VALID_RELATIONS.has(raw.relationType as HistoricalRelationType)) continue;
-
-      const sName = String(raw.sourceEntity).trim();
-      const tName = String(raw.targetEntity).trim();
-      const sId = raw.sourceEntityId || buildCanonicalId(sName, 'HISTORICAL_PERSON');
-      const tId = raw.targetEntityId || buildCanonicalId(tName, 'LOCATION');
-
-      const validated = validateAndCanonicalizeTriple(
-        { id: sId, name: sName },
-        raw.relationType as HistoricalRelationType,
-        { id: tId, name: tName },
-        raw.confidence ?? 0.95
+          task: 'extraction', // Routes to Port 8094 (Qwen3.5-4B-Instruct)
+          temperature,
+          max_tokens: maxTokens,
+          response_format: { type: 'json_object' },
+          timeoutMs:
+            options?.timeoutMs ??
+            (envConfig.USE_LOCAL_LLM ? (envConfig.LOCAL_LLM_TIMEOUT_MS || 120000) : envConfig.REMOTE_FALLBACK_TIMEOUT_MS),
+        }
       );
 
-      if (validated) {
-        validatedTriples.push(validated);
+    const parseAndValidate = (content: string): { triples: ExtractedTriple[]; parseFailed: boolean } => {
+      let jsonStr = content.trim();
+      if (jsonStr.includes('```json')) {
+        jsonStr = jsonStr.replace(/^[\s\S]*?```json\s*/i, '').replace(/\s*```[\s\S]*$/, '');
+      } else if (jsonStr.includes('```')) {
+        jsonStr = jsonStr.replace(/^[\s\S]*?```\s*/, '').replace(/\s*```[\s\S]*$/, '');
       }
+
+      let rawTriples: any[] = [];
+      let parseFailed = false;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        if (parsed && Array.isArray(parsed.triples)) {
+          rawTriples = parsed.triples;
+        }
+      } catch {
+        parseFailed = true;
+        // Regex extraction fallback from JSON string
+        const objectRegex = /\{\s*"sourceEntity"\s*:\s*"([^"]+)"\s*,\s*(?:"sourceEntityId"\s*:\s*"([^"]+)"\s*,\s*)?"relationType"\s*:\s*"([^"]+)"\s*,\s*"targetEntity"\s*:\s*"([^"]+)"\s*(?:,\s*"targetEntityId"\s*:\s*"([^"]+)"\s*)?(?:,\s*"confidence"\s*:\s*([0-9.]+))?\s*\}/g;
+        let match;
+        while ((match = objectRegex.exec(jsonStr)) !== null) {
+          rawTriples.push({
+            sourceEntity: match[1],
+            sourceEntityId: match[2],
+            relationType: match[3],
+            targetEntity: match[4],
+            targetEntityId: match[5],
+            confidence: match[6] ? parseFloat(match[6]) : 0.95,
+          });
+        }
+      }
+
+      const validatedTriples: ExtractedTriple[] = [];
+      const seenKeys = new Set<string>();
+
+      for (const raw of rawTriples) {
+        if (!raw.sourceEntity || !raw.targetEntity || !raw.relationType) continue;
+        const relationType = raw.relationType as HistoricalRelationType;
+        if (!VALID_RELATIONS.has(relationType)) continue;
+
+        const sName = String(raw.sourceEntity).trim();
+        const tName = String(raw.targetEntity).trim();
+        const sourceBuilt = buildEntityId(sName, relationType);
+        const targetBuilt = buildEntityId(tName, relationType);
+        const sId = raw.sourceEntityId || sourceBuilt.id;
+        const tId = raw.targetEntityId || targetBuilt.id;
+
+        const validated = validateAndCanonicalizeTriple(
+          { id: sId, name: sName },
+          relationType,
+          { id: tId, name: tName },
+          raw.confidence ?? 0.95
+        );
+
+        if (validated) {
+          const key = `${validated.sourceEntityId}:${validated.relationType}:${validated.targetEntityId}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            validatedTriples.push(validated);
+          }
+        }
+      }
+      return { triples: validatedTriples, parseFailed };
+    };
+
+    // First pass: deterministic temperature, larger budget to avoid truncated JSON tail loss.
+    let res = await callLlm(0.1, 800);
+    let parsedFirst = parseAndValidate(res.content || '');
+
+    // Retry once with higher temperature only when the first response was malformed JSON
+    // AND the regex salvage could not recover any triple from it. A valid-but-empty set
+    // or a regex-recoverable truncated set does not trigger a second LLM call.
+    if (parsedFirst.parseFailed && parsedFirst.triples.length === 0) {
+      res = await callLlm(0.3, 800);
+      parsedFirst = parseAndValidate(res.content || '');
     }
 
     return {
-      triples: validatedTriples,
+      triples: parsedFirst.triples,
       candidateSpans,
       res,
     };
@@ -532,13 +604,32 @@ export async function extractTriplesFromTextDetailedAsync(
     };
   }
 
-  const { triples, candidateSpans, res, error } = await extractTriplesWithLLMDetailed(text, options);
+  const { triples: llmTriples, candidateSpans, res, error } = await extractTriplesWithLLMDetailed(text, options);
+
+  // True ensemble: merge deterministic Stage-1 rule triples with LLM triples.
+  // The 4B extraction model under-generates ALIAS_OF / PART_OF / event relations;
+  // the rule engine covers those patterns (e.g. "tức", "tức là", explicit subordination),
+  // so merging both sources raises relation recall without sacrificing precision.
+  const ruleTriples = extractTriplesFromText(text);
+  const mergedTriples: ExtractedTriple[] = [];
+  const mergedKeys = new Map<string, number>(); // key -> index into mergedTriples
+
+  for (const t of [...ruleTriples, ...llmTriples]) {
+    const key = `${t.sourceEntityId}:${t.relationType}:${t.targetEntityId}`;
+    const existingIdx = mergedKeys.get(key);
+    if (existingIdx === undefined) {
+      mergedKeys.set(key, mergedTriples.length);
+      mergedTriples.push(t);
+    } else if (t.confidence > mergedTriples[existingIdx].confidence) {
+      mergedTriples[existingIdx] = t;
+    }
+  }
 
   const durationMs = Date.now() - startTime;
   const strategy: DetailedExtractionResult['strategy'] = error ? 'rule_based_fallback' : 'ensemble_ai';
 
   return {
-    triples,
+    triples: mergedTriples,
     candidateSpans,
     provider: res?.provider,
     targetProvider: res?.targetProvider,

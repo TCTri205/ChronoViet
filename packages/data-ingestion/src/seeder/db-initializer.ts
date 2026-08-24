@@ -2,7 +2,7 @@
  * Database Initializer for PostgreSQL + pgvector & Knowledge Graph Schema
  */
 
-import { createLogger, initSchema, isPgAvailable, query } from '@chronoviet/shared-spec';
+import { createLogger, initSchema, isPgAvailable, query } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'data-ingestion' });
 
@@ -46,7 +46,7 @@ export async function initializeDatabaseSchema(maxRetries = 5, retryIntervalMs =
       const tableCheck = await query<{ tablename: string }>(
         `SELECT tablename FROM pg_tables WHERE schemaname = 'public';`
       );
-      const tableNames = new Set(tableCheck.map((t) => t.tablename));
+      const tableNames = new Set(tableCheck.map((t: any) => t.tablename));
       const requiredTables = [
         'entities',
         'relationships',

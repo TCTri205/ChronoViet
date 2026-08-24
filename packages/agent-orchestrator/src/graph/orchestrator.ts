@@ -11,7 +11,7 @@ import {
   initProjectWorkspace,
   orchestratorNodeDurationSeconds,
   truncateSnippet,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import {
   ChronoGraphAnnotation,
   ChronoGraphState,

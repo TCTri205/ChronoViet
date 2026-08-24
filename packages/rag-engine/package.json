@@ -13,7 +13,7 @@
     "clean": "rm -rf dist",
     "prebuild": "pnpm clean",
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p eval/tsconfig.json",
     "lint": "tsc --noEmit",
     "eval": "tsx eval/benchmarks/index.ts",
     "test": "vitest run --dir src/ --passWithNoTests",
@@ -22,11 +22,10 @@
   },
   "dependencies": {
     "@chronoviet/shared-spec": "workspace:*",
-    "@chronoviet/data-ingestion": "workspace:*",
-    "pg": "^8.11.3"
+    "@chronoviet/infra": "workspace:*",
+    "@chronoviet/data-ingestion": "workspace:*"
   },
   "devDependencies": {
-    "@types/pg": "^8.11.0",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"
   }

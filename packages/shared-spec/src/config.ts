@@ -1,32 +1,6 @@
 import { z } from 'zod';
-import dotenv from 'dotenv';
 
-import path from 'path';
-import fs from 'fs';
-
-if (typeof process !== 'undefined' && process?.versions?.node) {
-  try {
-    // 1. Attempt to load .env from current working directory
-    dotenv.config();
-
-    // 2. Search up directory hierarchy up to 4 levels to locate root monorepo .env
-    let dir = process.cwd();
-    for (let i = 0; i < 4; i++) {
-      const envPath = path.join(dir, '.env');
-      if (fs.existsSync(envPath)) {
-        dotenv.config({ path: envPath });
-        break;
-      }
-      const parent = path.dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
-    }
-  } catch {
-    // Ignore in non-Node environments
-  }
-}
-
-const EnvSchema = z.object({
+export const EnvSchema = z.object({
   // ==========================================
   // Deployment & Core Infrastructure
   // ==========================================
@@ -149,7 +123,13 @@ const EnvSchema = z.object({
   AGNES_API_KEYS: z.string().optional(),
   REMOTE_FALLBACK_TIMEOUT_MS: z.coerce.number().int().positive().default(35000),
 
+  // Multi-Key Load Balancing & Rotation
+  LLM_KEY_ROTATION_STRATEGY: z.enum(['round_robin', 'least_errors', 'priority']).default('round_robin'),
+  LLM_KEY_COOLDOWN_MS: z.coerce.number().int().positive().default(60000),
+  LLM_MAX_RETRIES_PER_CALL: z.coerce.number().int().positive().default(3),
+
   // Embedding, Rerank & Vision Stack (SSOT 1024-dim Vector Space)
+  EMBEDDING_PROVIDER: z.enum(['local', 'gemini', 'openai', 'agnes', 'bge']).default('local'),
   LOCAL_EMBEDDING_MODEL: z.string().default('bge-m3'),
   LOCAL_EMBEDDING_DEFAULT: z.string().optional(),
   EMBEDDING_TIMEOUT_MS: z.coerce.number().int().positive().default(60000),
@@ -159,17 +139,27 @@ const EnvSchema = z.object({
   ALLOW_SYNTHETIC_EMBEDDINGS: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(false),
+  RERANKER_PROVIDER: z.enum(['local', 'jina', 'cohere', 'none']).default('local'),
   LOCAL_RERANK_MODEL: z.string().default('qwen3-reranker-0.6b'),
   LOCAL_RERANK_URL: z.string().default('http://localhost:8096/v1/rerank'),
   RERANK_PORT: z.coerce.number().int().positive().default(8096),
+  LOCAL_RERANK_PORT: z.coerce.number().int().positive().default(8096),
+  LOCAL_RERANK_PARALLEL: z.coerce.number().int().positive().default(4),
+  LOCAL_RERANK_THREADS: z.coerce.number().int().positive().default(6),
+  LOCAL_RERANK_EXTRA_ARGS: z.string().optional(),
+  RERANKER_API_KEY: z.string().optional(),
+  RERANK_TOP_K: z.coerce.number().int().positive().default(10),
   RERANK_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
-  RAG_SEARCH_TIMEOUT_MS: z.coerce.number().int().positive().default(4500),
+  RAG_SEARCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
   LOCAL_VISION_FILTER: z.string().default('siglip-2-multilingual-onnx'),
   LOCAL_VLM_INSPECTOR: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
   HISTORICAL_OCR_ENGINE: z.string().default('paddleocr_v5_hannom'),
 
   // Vision Language Model (VLM) Inspector Configuration
   VLM_PROVIDER: z.enum(['auto', 'local', 'openai', 'gemini', 'clip']).default('auto'),
+  LOCAL_VLM_URL: z.string().default('http://localhost:8094/v1'),
+  LOCAL_VLM_MODEL: z.string().default('qwen2.5-vl-7b-instruct-q4_k_m'),
+  VLM_SCORE_THRESHOLD: z.coerce.number().min(0).max(100).default(60),
   VLM_BASE_URL: z.string().optional(),
   VLM_MODEL: z.string().optional(),
   VLM_API_KEY: z.string().optional(),
@@ -181,7 +171,9 @@ const EnvSchema = z.object({
   // ==========================================
   // TTS Service
   // ==========================================
+  TTS_PROVIDER: z.enum(['vieneu', 'piper', 'cloud', 'synthetic']).default('vieneu'),
   VIENEU_PYTHON_URL: z.string().default('http://localhost:8080'),
+  VIENEU_VOICE: z.string().default('vi_vietnam'),
   TTS_SERVICE_PORT: z.coerce.number().int().positive().default(8080),
   TTS_HTTP_TIMEOUT_MS: z.coerce.number().int().positive().default(60000),
 
@@ -193,6 +185,13 @@ const EnvSchema = z.object({
     .default(true),
   REMOTION_PORT: z.coerce.number().int().positive().default(9876),
   REMOTION_NODE_OPTIONS: z.string().default('--max-old-space-size=4096'),
+  REMOTION_CONCURRENCY: z.coerce.number().int().positive().default(2),
+  REMOTION_PIXEL_FORMAT: z.enum(['yuv420p', 'yuva420p']).default('yuv420p'),
+  REMOTION_CODEC: z.enum(['h264', 'h265', 'vp8', 'vp9', 'prores']).default('h264'),
+  REMOTION_CRF: z.coerce.number().int().min(0).max(51).default(18),
+  REMOTION_AUDIO_BITRATE: z.string().default('192k'),
+  OUTPUT_DIR: z.string().default('./media/rendered-videos'),
+  WORKSPACE_ROOT: z.string().default('./media/workspace'),
 
   // ==========================================
   // Render Worker
@@ -237,200 +236,4 @@ const EnvSchema = z.object({
   EVAL_VLM_MODEL: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
 });
 
-const isNode = typeof process !== 'undefined' && !!process?.versions?.node;
-const rawProcessEnv: Record<string, string | undefined> = typeof process !== 'undefined' && process?.env ? process.env : {};
-
-// Resolve AI_EXECUTION_MODE and apply presets for subordinate flags
-const rawMode = rawProcessEnv.AI_EXECUTION_MODE;
-let resolvedMode: 'local_only' | 'fallback' | 'hybrid' | 'cloud_only';
-
-if (rawMode && ['local_only', 'fallback', 'hybrid', 'cloud_only'].includes(rawMode)) {
-  resolvedMode = rawMode as any;
-} else {
-  // Deduce mode from subordinate flags for backward compatibility
-  const explicitRouting = rawProcessEnv.INFERENCE_ROUTING_MODE;
-  const explicitLocal = rawProcessEnv.USE_LOCAL_LLM;
-  const explicitCloud = rawProcessEnv.ENABLE_CLOUD_FALLBACK;
-
-  if (explicitRouting === 'local_only' || explicitCloud === 'false') {
-    resolvedMode = 'local_only';
-  } else if (explicitLocal === 'false') {
-    resolvedMode = 'cloud_only';
-  } else if (explicitRouting === 'hybrid_round_robin') {
-    resolvedMode = 'hybrid';
-  } else {
-    // Default safe mode: local-first with cloud fallback
-    resolvedMode = 'fallback';
-  }
-}
-
-// Preset mappings based on resolvedMode
-let presetUseLocalLlm: string;
-let presetEnableCloudFallback: string;
-let presetInferenceRoutingMode: string;
-let presetStandbyOnRender: string;
-let presetVlmProvider: string | undefined;
-
-switch (resolvedMode) {
-  case 'local_only':
-    presetUseLocalLlm = 'true';
-    presetEnableCloudFallback = 'false';
-    presetInferenceRoutingMode = 'local_only';
-    presetStandbyOnRender = 'false';
-    presetVlmProvider = 'local';
-    break;
-  case 'fallback':
-    presetUseLocalLlm = 'true';
-    presetEnableCloudFallback = 'true';
-    presetInferenceRoutingMode = 'priority_fallback';
-    presetStandbyOnRender = 'true';
-    presetVlmProvider = 'auto';
-    break;
-  case 'hybrid':
-    presetUseLocalLlm = 'true';
-    presetEnableCloudFallback = 'true';
-    presetInferenceRoutingMode = 'hybrid_round_robin';
-    presetStandbyOnRender = 'true';
-    presetVlmProvider = 'auto';
-    break;
-  case 'cloud_only':
-    presetUseLocalLlm = 'false';
-    presetEnableCloudFallback = 'true';
-    presetInferenceRoutingMode = 'priority_fallback';
-    presetStandbyOnRender = 'false';
-    presetVlmProvider = 'auto';
-    break;
-}
-
-// Normalization & Backward-Compatibility aliases
-const processEnv: Record<string, string | undefined> = {
-  ...rawProcessEnv,
-  AI_EXECUTION_MODE: resolvedMode,
-  USE_LOCAL_LLM: rawProcessEnv.USE_LOCAL_LLM ?? presetUseLocalLlm,
-  ENABLE_CLOUD_FALLBACK: rawProcessEnv.ENABLE_CLOUD_FALLBACK ?? presetEnableCloudFallback,
-  INFERENCE_ROUTING_MODE: rawProcessEnv.INFERENCE_ROUTING_MODE ?? presetInferenceRoutingMode,
-  AI_STANDBY_ON_RENDER: rawProcessEnv.AI_STANDBY_ON_RENDER ?? presetStandbyOnRender,
-  VLM_PROVIDER: rawProcessEnv.VLM_PROVIDER ?? presetVlmProvider,
-  REMOTE_LLM_BASE_URL: rawProcessEnv.REMOTE_LLM_BASE_URL || rawProcessEnv.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
-  AGNES_BASE_URL: rawProcessEnv.AGNES_BASE_URL || rawProcessEnv.REMOTE_LLM_BASE_URL || 'https://apihub.agnes-ai.com/v1',
-  AGNES_API_KEY: rawProcessEnv.AGNES_API_KEY || (rawProcessEnv.AGNES_API_KEYS ? rawProcessEnv.AGNES_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
-  GEMINI_API_KEY: rawProcessEnv.GEMINI_API_KEY || (rawProcessEnv.GEMINI_API_KEYS ? rawProcessEnv.GEMINI_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
-  TAVILY_API_KEY: rawProcessEnv.TAVILY_API_KEY || (rawProcessEnv.TAVILY_API_KEYS ? rawProcessEnv.TAVILY_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
-  SERPAPI_API_KEY: rawProcessEnv.SERPAPI_API_KEY || (rawProcessEnv.SERPAPI_API_KEYS ? rawProcessEnv.SERPAPI_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
-  BRAVE_API_KEY: rawProcessEnv.BRAVE_API_KEY || (rawProcessEnv.BRAVE_API_KEYS ? rawProcessEnv.BRAVE_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
-  OPENAI_API_KEY: rawProcessEnv.OPENAI_API_KEY || (rawProcessEnv.OPENAI_API_KEYS ? rawProcessEnv.OPENAI_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
-  OPENAI_MODEL: rawProcessEnv.OPENAI_MODEL || 'gpt-4o-mini',
-  OPENROUTER_API_KEY: rawProcessEnv.OPENROUTER_API_KEY || (rawProcessEnv.OPENROUTER_API_KEYS ? rawProcessEnv.OPENROUTER_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),
-  OPENROUTER_BASE_URL: rawProcessEnv.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
-  OPENROUTER_MODEL: rawProcessEnv.OPENROUTER_MODEL || 'deepseek/deepseek-chat',
-};
-
-const parsed = EnvSchema.safeParse(processEnv);
-if (!parsed.success) {
-  if (isNode && processEnv.NODE_ENV !== 'test') {
-    console.error('❌ Invalid environment configuration:', JSON.stringify(parsed.error.format(), null, 2));
-  }
-  if (processEnv.NODE_ENV === 'production') {
-    throw new Error(`[CRITICAL_CONFIG_ERROR] Invalid environment variables in production: ${parsed.error.message}`);
-  }
-}
-
-export const envConfig = parsed.success
-  ? parsed.data
-  : (() => {
-      // In dev/test, merge defaults with valid parsed keys to avoid dropping entire config
-      const defaults = EnvSchema.parse({});
-      const sanitized: Record<string, any> = { ...defaults };
-      for (const [key, value] of Object.entries(processEnv)) {
-        if (value !== undefined && key in EnvSchema.shape) {
-          const fieldSchema = (EnvSchema.shape as any)[key];
-          if (fieldSchema) {
-            const fieldRes = fieldSchema.safeParse(value);
-            if (fieldRes.success) {
-              sanitized[key] = fieldRes.data;
-            }
-          }
-        }
-      }
-      return sanitized as z.infer<typeof EnvSchema>;
-    })();
-
 export type EnvConfig = z.infer<typeof EnvSchema>;
-
-export interface AiExecutionSummary {
-  mode: 'local_only' | 'fallback' | 'hybrid' | 'cloud_only';
-  useLocalLlm: boolean;
-  enableCloudFallback: boolean;
-  routingMode: 'hybrid_round_robin' | 'priority_fallback' | 'local_only';
-  vlmProvider: string;
-  localEndpoints: {
-    llm: string;
-    extraction: string;
-    embedding: string;
-    rerank: string;
-  };
-  cloudProvidersConfigured: string[];
-}
-
-/**
- * Returns a structured snapshot of active AI execution mode and routing parameters.
- */
-export function getAiExecutionSummary(): AiExecutionSummary {
-  const configuredClouds: string[] = [];
-  if (envConfig.AGNES_API_KEY || envConfig.AGNES_API_KEYS) configuredClouds.push('Agnes');
-  if (envConfig.GEMINI_API_KEY || envConfig.GEMINI_API_KEYS) configuredClouds.push('Gemini');
-  if (envConfig.OPENROUTER_API_KEY || envConfig.OPENROUTER_API_KEYS) configuredClouds.push('OpenRouter');
-  if (envConfig.OPENAI_API_KEY || envConfig.OPENAI_API_KEYS) configuredClouds.push('OpenAI');
-
-  return {
-    mode: envConfig.AI_EXECUTION_MODE,
-    useLocalLlm: envConfig.USE_LOCAL_LLM,
-    enableCloudFallback: envConfig.ENABLE_CLOUD_FALLBACK,
-    routingMode: envConfig.INFERENCE_ROUTING_MODE,
-    vlmProvider: envConfig.VLM_PROVIDER,
-    localEndpoints: {
-      llm: envConfig.LLM_BASE_URL,
-      extraction: envConfig.LOCAL_LLM_EXTRACTION_BASE_URL,
-      embedding: `http://localhost:${envConfig.EMBEDDING_PORT}`,
-      rerank: envConfig.LOCAL_RERANK_URL,
-    },
-    cloudProvidersConfigured: configuredClouds,
-  };
-}
-
-/**
- * Parse a PostgreSQL connection URL into individual components.
- * Used as a higher-priority alternative to individual POSTGRES_* env vars.
- */
-export function parseDatabaseUrl(url: string): {
-  host: string;
-  port: number;
-  database: string;
-  user: string;
-  password: string;
-} {
-  const parsed = new URL(url);
-  return {
-    host: parsed.hostname,
-    port: parseInt(parsed.port || '5432', 10),
-    database: parsed.pathname.replace(/^\//, ''),
-    user: decodeURIComponent(parsed.username),
-    password: decodeURIComponent(parsed.password),
-  };
-}
-
-/**
- * Get database connection config, preferring DATABASE_URL over POSTGRES_* vars.
- */
-export function getDatabaseConfig() {
-  if (envConfig.DATABASE_URL) {
-    return parseDatabaseUrl(envConfig.DATABASE_URL);
-  }
-  return {
-    host: envConfig.POSTGRES_HOST,
-    port: envConfig.POSTGRES_PORT,
-    database: envConfig.POSTGRES_DB,
-    user: envConfig.POSTGRES_USER,
-    password: envConfig.POSTGRES_PASSWORD || envConfig.DB_PASSWORD || 'chronoviet_secret',
-  };
-}

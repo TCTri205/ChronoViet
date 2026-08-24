@@ -15,7 +15,7 @@ import {
   executeWithKeyRotation,
   hasAvailableApiKeys,
   hybridInferenceDispatcher,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { getCachedVLMScore, setCachedVLMScore, VLMScoreResult } from './redis-cache.js';
 import { scoreImageWithLocalCLIP } from './clip-scorer.js';
 
@@ -341,7 +341,7 @@ export async function scoreImageWithVLM(
     const vlmTargets = hybridInferenceDispatcher.getInferenceTargets('vlm');
     if (vlmTargets.length > 0) {
       try {
-        const result = await hybridInferenceDispatcher.executeWithHybridRotation('vlm', async (target) => {
+        const result = await hybridInferenceDispatcher.executeWithHybridRotation('vlm', async (target: any) => {
           if (target.type === 'local') {
             return await scoreImageWithLocalVLM(imageUrl, eventDescription, {
               ...options,

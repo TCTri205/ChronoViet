@@ -60,7 +60,7 @@ async function runOrchestratorEvaluation() {
     const tc = TEST_CASES_20[i];
     console.log(`[${i + 1}/20] Running pipeline for: "${tc.topic}" (${tc.targetDurationMinutes} min)...`);
 
-    const initialState: ChronoGraphState = {
+    const initialState: any = {
       projectId: tc.id,
       userPrompt: tc.topic,
       targetDurationMinutes: tc.targetDurationMinutes,

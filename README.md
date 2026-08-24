@@ -46,62 +46,57 @@ flowchart LR
 
 - 👑 **Master Historical Corpus Crawler**: Cào tự động 100% tài liệu tri thức phủ rộng qua **15 Thời Kỳ Lịch Sử Việt Nam** chuẩn hóa trong 1 câu lệnh (`pnpm crawl:all`).
 - 🎬 **100% Data-Driven Remotion Video Engine**: Render video chất lượng cao từ file JSON mà không cần sửa code React.
-- 📐 **31 LayoutModes &amp; 19 TransitionTypes**: Hỗ trợ 11 bố cục hình ảnh tư liệu &amp; 20 bố cục lập trình đồ họa (Pure Code), 4 hiệu ứng bộ lọc màu (*Historical, Sepia, Monochrome, Vivid*) và hiệu ứng camera Ken Burns.
+- 📐 **31 LayoutModes & 19 TransitionTypes**: Hỗ trợ 11 bố cục hình ảnh tư liệu & 20 bố cục lập trình đồ họa (Pure Code), 4 hiệu ứng bộ lọc màu (*Historical, Sepia, Monochrome, Vivid*) và hiệu ứng camera Ken Burns.
 - 🏛️ **5 Miền Nội Dung Lịch Sử (Domains)**: Quy chuẩn kịch bản chuẩn cho *BIOGRAPHY* (Nhân vật), *BATTLE* (Chiến dịch), *DYNASTY* (Triều đại), *MYSTERY* (Bí ẩn/Vụ án) và *ARTIFACT* (Bảo vật quốc gia).
 - 🛡️ **Tự Động Bảo Đảm Giọng Văn Dã Sử (Folklore Guardrail Gate)**: Tự động bắt lỗi Regex Pattern Matching và yêu cầu LLM dùng giọng văn giả thuyết cho nguồn tin Level 3/Dã sử.
 - 🎙️ **Self-Hosted VieNeu Neural TTS**: Giọng đọc thuyết minh truyền cảm với word-level timestamps cho hiệu ứng chữ Karaoke.
-- 🔒 **Type-Safe Monorepo System**: Định nghĩa hợp đồng dữ liệu chuẩn hóa qua `@chronoviet/shared-spec` bằng Zod runtime validation.
+- 🔒 **Type-Safe Monorepo System**: Định nghĩa hợp đồng dữ liệu chuẩn hóa qua `@chronoviet/shared-spec` (Zod runtime validation) và tầng runtime hạ tầng tập trung qua `@chronoviet/infra` (DB, Redis, LLM, TTS SDK).
 
 ---
 
-## 🏗️ 3. Cấu Trúc Dự Án (Monorepo Architecture)
+## 🏗️ 3. Cấu Trúc Dự Án (Monorepo Architecture v4.0)
 
 Dự án được tổ chức dạng **pnpm Workspace Monorepo**:
 
 ```text
 ChronoViet/
 ├── apps/
-│   ├── render-worker/           # Background Job Worker (BullMQ + Redis) (+ eval/)
-│   └── web/                     # Frontend Dashboard & REST/WebSocket API Server
+│   ├── render-worker/           # Background Job Worker (BullMQ + Redis + Remotion CLI) (+ eval/)
+│   └── web/                     # Next.js 14 Frontend Heritage Hub & REST/WebSocket API Server
 │
 ├── packages/
-│   ├── agent-orchestrator/      # [✅ READY] LangGraph.js Multi-Agent Pipeline & Guardrails (+ eval/)
+│   ├── shared-spec/             # [✅ READY] Pure Zod Schemas & Data Contracts (SSOT, Zero Node/Backend Runtime Deps)
+│   ├── infra/                   # [✅ READY] Unified Node.js Infrastructure (Postgres Pool, Redis, Logger, LLM, TTS SDK)
+│   ├── agent-orchestrator/      # [✅ READY] LangGraph.js Multi-Agent Pipeline + Research Provider Chain (+ eval/)
 │   ├── data-ingestion/          # [✅ READY] Data Preprocessing & Ingestion Engine (Mô-đun 0) (+ eval/)
 │   ├── rag-engine/              # [✅ READY] Chrono-RAG Retrieval Engine (Mô-đun 1) (+ eval/)
 │   ├── remotion-engine/         # [✅ READY] Remotion Render Engine & Studio (+ eval/ test suite)
-│   ├── shared-spec/             # [✅ READY] Zod Schemas & Data Contracts (SSOT)
-│   └── vlm-inspector/           # [✅ READY] Gemini 3.6 / Agnes / CLIP VLM Inspector (+ eval/)
+│   └── vlm-inspector/           # [✅ READY] Deterministic Visual Quality Gate (+ eval/)
 │
 ├── services/
-│   └── vieneu-tts/              # [✅ READY] VieNeu ONNX Neural TTS Service (+ eval/)
+│   └── vieneu-tts/              # [✅ READY] Standalone Python FastAPI VieNeu ONNX Neural TTS Microservice (+ eval/)
 │
 ├── eval/                        # Tầng Đánh Giá Tập Trung (E2E Integration Benchmark & Golden Datasets)
 ├── docs/                        # Trung tâm Tài liệu Kỹ thuật & Kiến trúc (Documentation Portal)
-│   ├── architecture/            # Tài liệu Kiến trúc Hệ thống, Data Storage & Caching
-│   ├── modules/                 # Tài liệu Chi tiết 5 Mô-đun Xử lý
-│   ├── specs/                   # Quy chuẩn Kỹ thuật, Format Nội dung & Quản trị Dữ liệu (SSOT)
-│   ├── guides/                  # Hướng dẫn Tối ưu & Audit Nhật ký
-│   └── script_examples/         # Kịch bản Mẫu 5 Domain & Legacy
-├── media/                       # Local Mount Volume cho media assets (/raw-assets, /rendered-videos, /license-snapshots)
+├── media/                       # Local Mount Volume cho media assets (/raw-assets, /rendered-videos)
 ├── docker-compose.yml           # Cấu hình Hạ tầng Docker (Postgres pgvector, Redis, Caddy Proxy)
 └── Caddyfile                    # Cấu hình Reverse Proxy & Serving Static Media Assets
 ```
 
-### Chi Tiết Phân Nhóm Mô-đun (Packages &amp; Apps):
+### Chi Tiết Phân Nhóm Mô-đun (Packages & Apps):
 
-
-| Package / App                                                   | Vai Trò                                                                                         | Trạng Thái  | Thư Mục Eval                        |
-| :--------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- | :-----------: | :-----------------------------------: |
-| [`@chronoviet/shared-spec`](packages/shared-spec)               | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas, Realtime Events &amp; Data Contracts             | **✅ Ready** | N/A (Shared Spec)                   |
-| [`@chronoviet/data-ingestion`](packages/data-ingestion)         | Data Preprocessing &amp; Ingestion Engine (Mô-đun 0) Crawler, Normalizer, Chunking &amp; Seeder | **✅ Ready** | `packages/data-ingestion/eval/`     |
-| [`@chronoviet/rag-engine`](packages/rag-engine)                 | Chrono-RAG Retrieval Engine (Mô-đun 1) PostgreSQL pgvector + Graph CTEs + BM25                  | **✅ Ready** | `packages/rag-engine/eval/`         |
-| [`@chronoviet/agent-orchestrator`](packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh, NLI Judge &amp; Folklore Guardrail Gate        | **✅ Ready** | `packages/agent-orchestrator/eval/` |
-| [`@chronoviet/remotion-engine`](packages/remotion-engine)       | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions                 | **✅ Ready** | `packages/remotion-engine/eval/`    |
-| [`@chronoviet/vieneu-tts`](services/vieneu-tts)                 | Dịch vụ tổng hợp giọng nói thuyết minh Neural TTS (VieNeu ONNX)                                 | **✅ Ready** | `services/vieneu-tts/eval/`         |
-| [`@chronoviet/vlm-inspector`](packages/vlm-inspector)           | Thẩm định hình ảnh tư liệu &amp; lọc bản quyền (PD, CC0, CC-BY)                                 | **✅ Ready** | `packages/vlm-inspector/eval/`      |
-| [`@chronoviet/render-worker`](apps/render-worker)               | Tiến trình xử lý hàng đợi render video bất đồng bộ (BullMQ + Redis PubSub)                      | **✅ Ready** | `apps/render-worker/eval/`          |
-| [`@chronoviet/web`](apps/web)                                   | Giao diện NotebookLM Heritage Workspace, REST API, SSE &amp; WebSocket Gateway                  | **✅ Ready** | `apps/web/`                         |
-
+| Package / App | Vai Trò | Trạng Thái | Thư Mục Eval / Test |
+| :--- | :--- | :---: | :---: |
+| [`@chronoviet/shared-spec`](packages/shared-spec) | Nguồn sự thật duy nhất (SSOT) cho Zod Schemas & TypeScript Data Contracts (Pure) | **✅ Ready** | N/A (Pure Contracts) |
+| [`@chronoviet/infra`](packages/infra) | Gói hạ tầng runtime hợp nhất: DB Pool, Redis BullMQ, Logger, Telemetry, LLM, TTS SDK | **✅ Ready** | `src/__tests__/` |
+| [`@chronoviet/data-ingestion`](packages/data-ingestion) | Data Preprocessing & Ingestion Engine (Mô-đun 0) Crawler, Normalizer, Chunking & Seeder | **✅ Ready** | `packages/data-ingestion/eval/` |
+| [`@chronoviet/rag-engine`](packages/rag-engine) | Chrono-RAG Retrieval Engine (Mô-đun 1) PostgreSQL pgvector + Graph CTEs + BM25 | **✅ Ready** | `packages/rag-engine/eval/` |
+| [`@chronoviet/agent-orchestrator`](packages/agent-orchestrator) | Đội ngũ Multi-Agent LangGraph.js chia phân cảnh, Research Provider Chain, NLI Judge | **✅ Ready** | `packages/agent-orchestrator/eval/` |
+| [`@chronoviet/remotion-engine`](packages/remotion-engine) | Engine render video Remotion v4, 31 LayoutModes, 19 Components, 11 Compositions | **✅ Ready** | `packages/remotion-engine/eval/` |
+| [`@chronoviet/vlm-inspector`](packages/vlm-inspector) | Offline Deterministic Visual Quality Gate, Whitelisted License Filter | **✅ Ready** | `packages/vlm-inspector/eval/` |
+| [`services/vieneu-tts`](services/vieneu-tts) | Python FastAPI Standalone Microservice tổng hợp giọng nói thuyết minh Neural TTS (Port 8080) | **✅ Ready** | `services/vieneu-tts/eval/` |
+| [`apps/web`](apps/web) | Next.js 14 Heritage Research Hub, REST APIs, SSE Stream & WebSocket Gateway | **✅ Ready** | `src/__tests__/` |
+| [`apps/render-worker`](apps/render-worker) | BullMQ Render Worker, Process Isolation, Remotion Headless Chrome Rendering | **✅ Ready** | `apps/render-worker/eval/` |
 
 ---
 
@@ -399,7 +394,7 @@ Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật n�
 - ⚙️ [**Remotion Technical Spec (`docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 31 LayoutModes, 19 Transitions, Zod Schema &amp; Compositions.
 - 📜 [**Content Formats Spec (`docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử &amp; Schema Production v4.1.
 - 📊 [**RAG Component Benchmark Spec (`docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md`)**](docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md): Benchmark từng component RAG (C0-C10), datasets, metrics &amp; regression gate.
-- 🩺 [**Observability &amp; Logging (`docs/architecture/06_OBSERVABILITY_AND_LOGGING.md`)**](docs/architecture/06_OBSERVABILITY_AND_LOGGING.md): Unified structured logger (`@chronoviet/shared-spec`), correlation ID, event names &amp; hướng dẫn truy vết log bằng `jq`.
+- 🩺 [**Observability &amp; Logging (`docs/architecture/06_OBSERVABILITY_AND_LOGGING.md`)**](docs/architecture/06_OBSERVABILITY_AND_LOGGING.md): Unified structured logger (`@chronoviet/infra`), correlation ID, event names &amp; hướng dẫn truy vết log bằng `jq`.
 - 💻 [**macOS Local Model Optimization (`docs/guides/MACOS_LOCAL_MODEL_OPTIMIZATION.md`)**](docs/guides/MACOS_LOCAL_MODEL_OPTIMIZATION.md): Tối ưu mô hình local trên Apple Silicon.
 
 ---

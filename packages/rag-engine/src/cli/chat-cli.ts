@@ -3,10 +3,8 @@
  */
 
 import readline from 'readline';
-import path from 'path';
-import fs from 'fs';
 import { ChronoRagEngine } from '../rag-engine.js';
-import { createLogger, inMemoryStore, generateLLMCompletion } from '@chronoviet/shared-spec';
+import { createLogger, inMemoryStore } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'rag-engine', correlationId: `cli-${Date.now()}` });
 
@@ -148,93 +146,42 @@ async function startTerminalChatbot() {
 
     // Process RAG Query
     log.info('chat.query_received', 'Processing RAG query', { query: input });
-    console.log('\n\x1b[90m🔍 [1/2] Đang thực thi Hybrid RAG Search (Graph CTE + Dense Vector + Reranker)...\x1b[0m');
+    console.log('\n\x1b[90m🔍 Đang thực thi Hybrid RAG Search & Grounded Reasoning...\x1b[0m');
     const startTime = Date.now();
     try {
-      const searchResult = await ragEngine.search({
+      const res = await ragEngine.generateAnswer({
         query: input,
-        maxTokens: 500,
-        rerankTopK: 5,
       });
 
-      console.log(`\x1b[32m[✓] Truy xuất hoàn tất trong ${searchResult.retrievalLatencyMs}ms!\x1b[0m\n`);
+      console.log(`\x1b[32m[✓] Truy xuất hoàn tất trong ${res.metrics.retrievalLatencyMs}ms!\x1b[0m\n`);
 
-      // Display RAG Retrieval Evidence
       console.log('\x1b[34m--------------------------------------------------\x1b[0m');
-      console.log('\x1b[1m📚 NGUỒN TRI THỨC VÀ BẰNG CHỨNG TRUY XUẤT (RETRIEVED CITATIONS):\x1b[0m');
-      if (searchResult.citations.length === 0) {
+      console.log('\x1b[1m📚 NGUỒN TRI THỨC VÀ BẰNG CHỨNG TRUY XUẤT (CITATIONS):\x1b[0m');
+      if (res.citations.length === 0) {
         console.log('  (Không tìm thấy đoạn trích dẫn phù hợp)');
       } else {
-        searchResult.citations.forEach((cit, idx) => {
+        res.citations.forEach((cit, idx) => {
           console.log(`  [${idx + 1}] \x1b[33m${cit}\x1b[0m`);
         });
       }
 
-      console.log('\n\x1b[1m🏛️ THỰC THỂ LỊCH SỬ LIÊN QUAN (VERIFIED ENTITIES):\x1b[0m');
-      if (searchResult.verifiedContext.length === 0) {
-        console.log('  (Chưa nhận dạng được thực thể chính xác)');
-      } else {
-        searchResult.verifiedContext.forEach((ctx) => {
-          console.log(`  • \x1b[32m${ctx.canonicalName}\x1b[0m (Tên khác/Bí danh: ${ctx.aliases.join(', ') || 'N/A'}) - Độ tin cậy: ${(ctx.confidenceScore * 100).toFixed(1)}%`);
+      if (res.triplesUsed && res.triplesUsed.length > 0) {
+        console.log('\n\x1b[1m🏛️ QUAN HỆ THỰC THỂ (GRAPH TRIPLES):\x1b[0m');
+        res.triplesUsed.slice(0, 5).forEach((t) => {
+          console.log(`  • [${t.source}] --(${t.relation})--> [${t.target}]`);
         });
       }
       console.log('\x1b[34m--------------------------------------------------\x1b[0m\n');
 
-      // Process LLM Synthesis
-      console.log('\x1b[90m🧠 [2/2] Đang tổng hợp câu trả lời từ LLM (Dựa trên tri thức truy xuất)... \x1b[0m');
-
-      const contextText = searchResult.verifiedContext
-        .map((c, i) => `[Tài liệu ${i + 1} - ${c.canonicalName}]:\n${c.summary}`)
-        .join('\n\n');
-
-      const promptMessages = [
-        {
-          role: 'system' as const,
-          content: `Bạn là ChronoViet AI - Trợ lý Lịch sử Việt Nam chuẩn xác và khách quan.
-Nhiệm vụ của bạn: Dựa VÀO ĐÚNG ngữ cảnh lịch sử được cung cấp dưới đây để trả lời câu hỏi của người dùng.
-Quy tắc:
-1. Trả lời chính xác, rõ ràng, giàu thông tin lịch sử.
-2. Dẫn nguồn cụ thể dựa vào các tài liệu trích dẫn.
-3. Không tự suy đoán hoặc đưa ra thông tin không có trong ngữ cảnh.
-
-[NGỮ CẢNH TRUY XUẤT RAG]:
-${contextText || 'Chưa có ngữ cảnh phù hợp'}`,
-        },
-        {
-          role: 'user' as const,
-          content: input,
-        },
-      ];
-
-      let finalAnswer = '';
-      let llmProviderName = '';
-
-      try {
-        const llmRes = await generateLLMCompletion(promptMessages, {
-          temperature: 0.2,
-          max_tokens: 1024,
-        });
-        finalAnswer = llmRes.content;
-        llmProviderName = `${llmRes.provider} (${llmRes.model})`;
-      } catch (_llmErr) {
-        // Fallback rule-based summary if local LLM server / cloud fallback is not running
-        finalAnswer = searchResult.verifiedContext.length > 0
-          ? `[Chế độ RAG Direct Summary]: Dựa vào các tài liệu lịch sử truy xuất được:\n\n` +
-            searchResult.verifiedContext.map((c) => `📌 **${c.canonicalName}**: ${c.summary}`).join('\n\n')
-          : `Rất tiếc, hệ thống chưa tìm thấy thông tin lịch sử phù hợp cho câu hỏi của bạn.`;
-        llmProviderName = 'RAG Knowledge Synthesis (Direct Context Fallback)';
-      }
-
-      console.log('\n\x1b[1m🤖 CHRONOVIET AI RESPONSE:\x1b[0m');
-      console.log('\x1b[36m' + finalAnswer + '\x1b[0m');
+      console.log('\x1b[1m🤖 CHRONOVIET AI RESPONSE:\x1b[0m');
+      console.log('\x1b[36m' + res.answerText + '\x1b[0m');
       log.info('chat.query_completed', 'RAG query processed', {
         query: input,
-        retrievalLatencyMs: searchResult.retrievalLatencyMs,
-        citations: searchResult.citations.length,
-        entities: searchResult.verifiedContext.length,
+        retrievalLatencyMs: res.metrics.retrievalLatencyMs,
+        generationLatencyMs: res.metrics.generationLatencyMs,
         totalTimeMs: Date.now() - startTime,
       });
-      console.log(`\n\x1b[90m[Model/Provider: ${llmProviderName} | Latency RAG: ${searchResult.retrievalLatencyMs}ms | Total Time: ${Date.now() - startTime}ms]\x1b[0m\n`);
+      console.log(`\n\x1b[90m[RAG: ${res.metrics.retrievalLatencyMs}ms | LLM: ${res.metrics.generationLatencyMs}ms | Total: ${Date.now() - startTime}ms]\x1b[0m\n`);
     } catch (err) {
       log.error('chat.query_failed', 'Error while processing question', { query: input, error: err });
       console.error('\x1b[31m[!] Lỗi khi xử lý câu hỏi:\x1b[0m', err);

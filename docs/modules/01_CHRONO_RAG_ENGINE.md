@@ -2,7 +2,7 @@
 ## (Hybrid GraphRAG: Knowledge Graph + Vector Database + Local Search)
 
 > **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED 100% — COMPLIANT WITH DUAL-BRANCH PARALLELISM & CO-RETRIEVAL FUSION SPEC v2.2 PRODUCTION HARDENED]`
-> **Cập nhật:** Tích hợp Global Singleton Schema Init (ngăn DDL SQL chạy lặp lại trên mỗi request), PostgreSQL Recursive CTE với Cycle Pruning (`visited_path`), Tiền xử lý Lexical FTS lọc Stopwords tiếng Việt (`sanitizeFtsQuery`), Chuẩn hóa thang điểm khởi tạo Graph Chunks ($1 / (60 + \text{rank})$) kết hợp Co-Retrieval Boost ($+0.35$), Bộ đệm In-Memory LRU Cache cho Query Embeddings, Bảo tồn danh xưng/triều đại lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô*) trong Reranker, Dual-Branch Parallel Execution (`Promise.all`), và 100% Bộ Unit Test Suite độc lập cho CI/CD Gate.
+> **Cập nhật:** Tích hợp Global Singleton Schema Init (ngăn DDL SQL chạy lặp lại trên mỗi request), **Directed BFS Graph Traversal** với Global Visited-Set + Node Budget (50 nodes) + Timeout (40ms) + Edge-Type Filter (`MENTIONED_IN`/`SAME_AS_LOCATION` bị loại trừ; duyệt ngược chỉ cho `LED_BY`/`PART_OF`/`ALIAS_OF`) — thay thế Recursive CTE bùng nổ cũ, Tiền xử lý Lexical FTS lọc Stopwords tiếng Việt (`sanitizeFtsQuery`), Graph Score theo `confidence * 0.6^(hop-1)` + Co-Retrieval Boost nhỏ ($+0.05 \times \text{graphScore}$, bỏ boost flat $+0.35$ cũ), Reranker Pool = 5 & Truncation = 700 ký tự (đạt SLA p95 $\le 300\text{ms}$), Bộ đệm In-Memory LRU Cache cho Query Embeddings, Bảo tồn danh xưng/triều đại lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô*) trong Reranker, Dual-Branch Parallel Execution (`Promise.all`), và 100% Bộ Unit Test Suite độc lập cho CI/CD Gate.
 
 ---
 
@@ -15,7 +15,7 @@ RAG truyền thống (chỉ dùng Vector Search) thường gặp phải tình tr
 Chrono-RAG giải quyết triệt để bài toán này bằng kiến trúc **GraphRAG (Knowledge Graph + Vector Search + Local Search)** được triển khai tinh gọn trên **PostgreSQL (`pgvector` + Relational Graph Schema)**:
 * **Knowledge Graph (Đồ thị Tri thức):** Đảm bảo tính chính xác tuyệt đối về mốc thời gian, nhân vật, triều đại, quan hệ dòng tộc và sự đổi tên địa danh qua các bảng `entities` & `relationships`.
 * **Vector Search (`pgvector`):** Bảo tồn trọn vẹn sắc thái miêu tả chi tiết, văn phong nguyên văn và bối cảnh lịch sử từ các tài liệu gốc qua HNSW Vector Index (1024d BGE-M3).
-* **Local Search ($k$-Hop Expansion):** Truy vấn khu vực tri thức xung quanh các thực thể được nhắc tới trong câu hỏi qua thuật toán **PostgreSQL Recursive CTEs** ($k=1$ hoặc $k=2$) với tốc độ sub-millisecond mà không ngốn tài nguyên RAM.
+* **Local Search ($k$-Hop Expansion):** Truy vấn khu vực tri thức xung quanh các thực thể được nhắc tới trong câu hỏi qua thuật toán **Directed BFS theo hop** ($k=1$ hoặc $k=2$, Global Visited-Set, Node Budget 50, Timeout 40ms) chạy trực tiếp trên PostgreSQL `relationships` — tốc độ vài ms mà không ngốn tài nguyên RAM.
 
 ---
 
@@ -125,9 +125,9 @@ Hệ thống Chrono-RAG vận hành qua 2 chu trình riêng biệt: **Offline In
          ┌───────┴─────────────────────────┐
          ▼                                 ▼
  ┌───────────────────────────────┐ ┌───────────────────────────────┐
- │ 2. LOCAL GRAPH SEARCH (CTEs)  │ │ 3. DENSE + SPARSE VECTOR SEARCH│
+ │ 2. LOCAL GRAPH SEARCH (BFS)    │ │ 3. DENSE + SPARSE VECTOR SEARCH│
  │ - Query 1-hop / 2-hop Subgraph│ │ - bge-m3 Semantic Similarity  │
- │ - PostgreSQL Recursive CTEs   │ │ - BM25 Keyword Matching       │
+ │ - Directed BFS (Budget 50/40ms)│ │ - BM25 Keyword Matching       │
  └───────────────┬───────────────┘ └───────────────┬───────────────┘
                  │                                 │
                  └────────────────┬────────────────┘
@@ -179,18 +179,18 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 1. **Step 1 - Trích xuất thực thể câu hỏi (Question NER & Multi-Taxonomy Canonical Resolution):** 
    - Pure TS NER Engine (< 1ms) nhận diện thực thể trung tâm: `[Trận Tốt Động - Chúc Động]` và `[Nguyễn Chích]`, đồng thời tự động chuẩn hóa địa danh cổ (*Đông Quan, Phú Xuân, Gia Định*) sang Canonical Entity ID chuẩn.
 2. **Steps 2, 3, 4 - Dual-Branch Parallel Execution (Thực thi Song Song 2 Nhánh via `Promise.all`):**
-   - **Nhánh Graph (Structural Knowledge):** Chạy `searchLocalGraphCTE` (PostgreSQL Recursive CTEs $k=1, 2$ kèm `visited_path` Cycle Pruning) $\to$ `getChunksForEntities` (kèm `LIMIT 30` bảo vệ bộ nhớ và gán điểm khởi tạo chuẩn hóa $1 / (60 + \text{rank})$).
-   - **Nhánh Vector (Semantic Similarity):** Chạy `getCachedQueryEmbedding` (1024d) $\to$ `searchHybridVectorAndBM25` (pgvector HNSW Cosine + BM25 Lexical FTS với bộ lọc Stopword tiếng Việt `sanitizeFtsQuery` qua RRF Fusion).
-   - *Hiệu năng:* Giảm 30–50% tổng thời gian truy vấn so với thực thi tuần tự.
-3. **Step 4b - Co-Retrieval Fusion Boost (+0.35):**
-   - Khi một đoạn trích được tìm thấy và đồng xác thực bởi cả 2 nhánh (vừa tương đồng ngữ nghĩa vừa nằm trên đường dẫn tri thức đồ thị), hệ thống cộng điểm thưởng `CO_RETRIEVAL_BOOST = 0.35` và bảo toàn thứ hạng `rankVector`, `rankFts`, đảm bảo các tài liệu này có thứ hạng ưu tiên cao nhất trước khi Reranking.
-4. **Step 5 - Pure Model Cross-Encoder Reranking & Multi-Factor Historical Fusion:**
+   - **Nhánh Graph (Structural Knowledge):** Chạy `searchLocalGraphCTE` (Directed BFS theo hop với Global Visited-Set, ngân sách `maxNodes=50` và timeout `40ms`, lọc relation type nhiễu `MENTIONED_IN`/`SAME_AS_LOCATION`, duyệt ngược chỉ cho `LED_BY`/`PART_OF`/`ALIAS_OF`, lọc `confidence >= 0.5`) $\to$ `getChunksForEntities` (ưu tiên chunk gắn seed entity trước, kèm sắp xếp tất định theo `source_reliability` rồi `id`, `LIMIT 20`, gán `graphScore = confidence * 0.6^(hop-1)` và `hopCount`).
+   - **Nhánh Vector (Semantic Similarity):** Chạy `getCachedQueryEmbedding` (1024d) $\to$ `searchHybridVectorAndBM25` (pgvector HNSW Cosine `m=32, ef_construction=128, ef_search=100` + BM25 Lexical FTS với bộ lọc Stopword tiếng Việt `sanitizeFtsQuery` kết hợp `removeVietnameseAccents` unaccent matching qua RRF Fusion).
+   - *Hiệu năng:* Giảm 30–50% tổng thời gian truy vấn so với thực thi tuần tự; graph branch có ngân sách cứng 50ms.
+3. **Step 4b - Co-Retrieval Fusion Boost (theo graphScore) & Explicit Contract (`isCoRetrieved: true`):**
+   - Khi một đoạn trích được tìm thấy và đồng xác thực bởi cả 2 nhánh (vừa tương đồng ngữ nghĩa vừa nằm trên đường dẫn tri thức đồ thị), hệ thống cộng điểm thưởng nhỏ theo tín hiệu đồ thị `GRAPH_BOOST_SCALE * graphScore = 0.05 * (confidence * 0.6^(hop-1))` và gán cờ kiểu rõ ràng `isCoRetrieved = true`. Graph-only chunks chỉ được đưa vào pool khi nằm trong top-10 (đã ưu tiên seed entity) và được gán **score rất thấp** `0.001 + hopCount * 0.0005` (thấp hơn mọi hybrid RRF score) — chúng không bao giờ chiếm chỗ của candidate vector/FTS tốt hơn ở bước chọn pool, cross-encoder vẫn có thể đẩy lên nếu thực sự liên quan.
+4. **Step 5 - Pure Model Cross-Encoder Reranking & Token-Budgeted Context Assembly:**
    - Thực thi trực tiếp mô hình Cross-Encoder cục bộ (**`Qwen3-Reranker-0.6B`** hoặc **`bge-reranker-v2-m3`** GGUF Q8_0 qua endpoint `POST /v1/rerank` trên `llama-server` Metal Engine).
-   - Tiếp nhận tối đa 12 candidates từ hai nhánh Vector và Graph, cắt ngắn 512 tokens (~1.500 ký tự)/chunk để giới hạn độ trễ $\le 40\text{ ms}$.
+   - Tiếp nhận tối đa 5 candidates (`MAX_RERANK_CANDIDATE_POOL=5`, cấu hình được qua env `RERANK_CANDIDATE_POOL`), cắt ngắn an toàn theo ranh giới câu/mệnh đề (`truncateToSentenceBoundary`) $\le 700\text{ ký tự}$/chunk để tránh cắt ngang âm tiết/từ tiếng Việt và giữ p95 latency của full pipeline $\le 300\text{ms}$ (SLA gate SYS).
    - Áp dụng công thức tính điểm kết hợp đa yếu tố:
-     $$\text{Score}_{\text{final}} = 0.75 \times \text{Score}_{\text{AI}} + 0.15 \times \text{Weight}_{\text{Source}} + 0.10 \times \text{Boost}_{\text{CoRetrieval}}$$
-     (Trong đó `LEVEL_1` = 1.0, `LEVEL_2` = 0.8, `LEVEL_3` = 0.5; `Boost` = 0.10 cho các chunk được đồng xác thực từ đồ thị).
-   - Định dạng `verifiedContext` có trích dẫn nguồn rõ ràng phục vụ thẩm định nội dung cho Multi-Agent Orchestrator.
+     $$\text{Score}_{\text{final}} = 0.75 \times \text{Score}_{\text{AI}} + 0.15 \times \text{Weight}_{\text{Source}} + 0.05 \times \text{Boost}_{\text{CoRetrieval}}$$
+     (Trong đó `LEVEL_1` = 1.0, `LEVEL_2` = 0.8, `LEVEL_3` = 0.5; `Boost` = 0.05 khi `cand.isCoRetrieved === true`).
+   - Định dạng `verifiedContext` tuân thủ ngân sách `maxTokens` (ước tính ~3.5 ký tự/token tiếng Việt, đảm bảo tối thiểu Top-1 thực thể luôn được giữ lại).
 
 ---
 
@@ -219,11 +219,11 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
   * **RRF (Reciprocal Rank Fusion):** Thuật toán kết hợp kết quả xếp hạng giữa **Sparse Search (BM25)** (tìm từ khóa chính xác tên tướng/địa danh) và **Dense Search (Vector Embedding)** (tìm ngữ nghĩa câu hỏi).
 
 ### 5.3. Công đoạn Duyệt Đồ thị & Gom nhóm (Graph Traversal & Community Detection)
-*Các thuật toán chạy trực tiếp trên PostgreSQL Relational Graph Schema qua Recursive CTEs (hoặc Neo4j khi Scale-Out).*
+*Các thuật toán chạy trực tiếp trên PostgreSQL Relational Graph Schema qua Directed BFS theo hop (hoặc Neo4j khi Scale-Out).*
 
 * **Thuật toán Duyệt Đồ thị (Traversal & Reasoning):**
-  * **k-Hop Neighborhood / Subgraph Expansion:** Từ thực thể được nhận diện trong câu hỏi, mở rộng bán kính $k$ bước (thường $k=1$ hoặc $k=2$) để lấy toàn bộ mạng lưới ngữ cảnh xung quanh.
-  * **Shortest Path (Dijkstra / A*):** Tìm đường đi ngắn nhất giữa 2 thực thể. *(Ví dụ: "Mối quan hệ dòng họ giữa Vua Lê Thánh Tông và Vua Lê Thái Tổ là gì?" $\rightarrow$ Duyệt qua quan hệ `FATHER_OF`, `GRANDFATHER_OF` để tìm đường nối ngắn nhất).*
+  * **k-Hop Neighborhood / Subgraph Expansion:** Từ thực thể được nhận diện trong câu hỏi, mở rộng bán kính $k$ bước (thường $k=1$ hoặc $k=2$) theo hướng có chọn lọc: **đi xuôi** mọi relation type, **đi ngược** chỉ cho `LED_BY`/`PART_OF`/`ALIAS_OF`; loại trừ edge nhiễu `MENTIONED_IN`/`SAME_AS_LOCATION`; Global Visited-Set chống nhân bản; Node Budget (mặc định 50) + Timeout (mặc định 40ms) chống Hub Explosion.
+  * **Shortest Path (Dijkstra / A\*):** Tìm đường đi ngắn nhất giữa 2 thực thể. *(Ví dụ: "Mối quan hệ dòng họ giữa Vua Lê Thánh Tông và Vua Lê Thái Tổ là gì?" $\rightarrow$ Duyệt qua quan hệ `FATHER_OF`, `GRANDFATHER_OF` để tìm đường nối ngắn nhất).*
   * **Node Similarity / Jaccard Index:** Tìm các nhân vật hoặc sự kiện có tính chất tương đồng dựa trên các cạnh chung.
 * **Thuật toán Gom nhóm (Community Detection - cho Global Search khi cần):**
   * **Leiden Algorithm / Louvain Algorithm:** Phân cụm các nút trên đồ thị thành từng "cộng đồng" có liên kết chặt chẽ (ví dụ: Gom toàn bộ dữ liệu trận Chi Lăng, Xương Giang vào cụm `[Kháng chiến chống Minh]`).

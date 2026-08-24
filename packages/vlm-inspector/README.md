@@ -1,21 +1,27 @@
 # `@chronoviet/vlm-inspector`
 
-> **ChronoViet VLM Inspector Agent & Visual Quality Gate (Mô-đun 3)**  
-> Gói mã nguồn chịu trách nhiệm tìm kiếm, kiểm định chất lượng bối cảnh lịch sử, loại bỏ nhiễu thị giác (watermark, logo, chữ đè) và thẩm định bản quyền tư liệu hình ảnh lịch sử (Whitelisted License Filter).
+> **ChronoViet VLM Inspector Agent & Pure Visual Quality Gate (Mô-đun 3)**
+> Gói mã nguồn chịu trách nhiệm **kiểm định chất lượng bối cảnh lịch sử** của các `candidatePool` hình ảnh đã được tìm về, loại bỏ nhiễu thị giác (watermark, logo, chữ đè) và thẩm định bản quyền tư liệu (Whitelisted License Filter).
 
 ---
 
 ## 📌 1. Tổng Quan Chức Năng (Package Overview)
 
-Gói `@chronoviet/vlm-inspector` đóng vai trò là Tầng Kiểm Định Chất Lượng Thị Giác của hệ thống ChronoViet:
+Gói `@chronoviet/vlm-inspector` đóng vai trò là **Tầng Kiểm Định Chất Lượng Thị Giác thuần túy (Deterministic Visual Quality Gate)** của hệ thống ChronoViet. **Gói này không thực hiện web search / crawl ảnh** — toàn bộ việc tìm kiếm và thu thập ứng viên ảnh (image candidates) được xử lý bởi **Research Agent** trong `@chronoviet/agent-orchestrator` (provider chain SerpAPI / Tavily / Brave / Wikimedia / Curated Catalog tại `packages/agent-orchestrator/src/research/`).
 
-1. **Multi-Provider Image Search Chain (`search/`):** Tự động tìm kiếm ảnh tư liệu lịch sử qua chuỗi nhà cung cấp ưu tiên: SerpAPI $\rightarrow$ Tavily $\rightarrow$ Brave $\rightarrow$ Wikimedia Commons $\rightarrow$ Curated Catalog, kết hợp bộ lọc Domain Whitelist.
+VLM Inspector nhận vào `candidatePool` đã research sẵn và thực hiện tuyến kiểm định khép kín:
+
+1. **Pure Visual Inspection (`inspectSceneVisuals` / `inspectCandidatePool` / `inspectImageCandidate`):**
+   - Nhận `(projectId, scene, candidatePool, options)` và chấm điểm từng ứng viên theo 3 trục: `historical_context_score` (0–40), `visual_noise_score` (0–30), `artistic_fit_score` (0–30).
+   - Nếu `candidatePool` **rỗng** → trả về ngay `PURE_CODE` layout fallback **mà không thực hiện bất kỳ network request nào** (deterministic, không phụ thuộc mạng).
+   - Không còn logic crawl inline — mọi ứng viên đến từ Research Agent state `researchResults[sceneId]`.
 2. **Dual-Layer Scoring & Visual Quality Gate:**
-   - **Lớp 1 (Local Unified Multimodal VLM / Gemini Flash):** Đánh giá độ phù hợp trang phục, niên đại, bối cảnh lịch sử và phát hiện nhiễu thị giác (watermark, text overlay).
-   - **Lớp 2 (Local CLIP ONNX Scorer):** Chấm điểm độ tương đồng ngữ nghĩa giữa văn bản phân cảnh và ảnh ứng viên (Vector Cosine Similarity).
-3. **Whitelisted License Filter (`license-filter.ts`):** Chỉ chấp nhận các tư liệu có giấy phép bản quyền hợp lệ: `PUBLIC_DOMAIN`, `CC0`, `CC_BY_4_0`, `CC_BY_SA_4_0`.
-4. **Redis Cache Layer (`redis-cache.ts`):** Bộ nhớ đệm 2 tầng lưu kết quả chấm điểm ảnh đã thẩm định, giảm độ trễ và tiết kiệm quota API.
-5. **Asset Downloader & Local Storage (`asset-downloader.ts`):** Tải và xác thực ảnh đáp ứng kích thước tối thiểu ($\ge 600 \times 600\text{ px}$) lưu vào `/media/raw-assets/`.
+   - **Lớp 1 (Local Unified Multimodal VLM / Gemini Flash):** Đánh giá độ phù hợp trang phục, niên đại, bối cảnh lịch sử và phát hiện nhiễu thị giác (`vlm-scorer.ts`).
+   - **Lớp 2 (Local CLIP ONNX Scorer):** Chấm điểm độ tương đồng ngữ nghĩa giữa văn bản phân cảnh và ảnh ứng viên (Vector Cosine Similarity) — `clip-scorer.ts`.
+3. **Whitelisted License Filter:** Chỉ chấp nhận tư liệu có giấy phép hợp lệ `PUBLIC_DOMAIN`, `CC0`, `CC_BY_4_0`, `CC_BY_SA_4_0` (ánh xạ qua `@chronoviet/shared-spec` LicenseType).
+4. **Redis Cache Layer (`redis-cache.ts`):** Bộ nhớ đệm 2 tầng (SHA-256 + pHash) lưu kết quả chấm điểm, giảm độ trễ và tiết kiệm quota API.
+5. **Asset Downloader (`asset-downloader.ts`):** Tải và xác thực ảnh đáp ứng kích thước tối thiểu lưu vào `/media/` khi cần sử dụng.
+6. **Technical Visual Quality Gate (`visual-quality-gate.ts`):** Binary Header Dimension Reader (PNG/JPEG/WEBP) + Resolution / Aspect Ratio / Payload Guard trước khi encode Base64.
 
 ---
 
@@ -24,29 +30,24 @@ Gói `@chronoviet/vlm-inspector` đóng vai trò là Tầng Kiểm Định Chấ
 ```text
 packages/vlm-inspector/
 ├── src/
-│   ├── search/                        # Multi-Provider Search Chain (SerpAPI, Tavily, Brave...)
-│   │   ├── image-search-provider.ts   # Base Provider Interface, Whitelist & Telemetry
-│   │   ├── serpapi-search.ts          # SerpAPI Google Images Provider
-│   │   ├── tavily-search.ts           # Tavily Image Provider
-│   │   ├── brave-search.ts            # Brave Search Provider
-│   │   └── index.ts                   # Provider Chain Coordinator & Fallback
-│   ├── wikimedia-search.ts            # Wikimedia Commons API Scraper & Attribution
-│   ├── visual-quality-gate.ts         # Binary Header Dimension Reader (PNG/JPEG/WEBP) & Resolution Gate
-│   ├── vlm-scorer.ts                  # Local Unified VLM / Gemini Flash Scorer with Resilient JSON Parser
-│   ├── clip-scorer.ts                 # Local CLIP ONNX Cosine Similarity Scorer
-│   ├── asset-downloader.ts            # Asset Downloader, Metadata (.metadata.json) & Latency Tracking
-│   ├── redis-cache.ts                 # Redis Dual-Layer Cache (SHA-256 + pHash)
 │   ├── inspector-pipeline.ts          # End-to-End VLM Inspection Pipeline & Pure Code Fallback
+│   ├── vlm-scorer.ts                  # Local Unified VLM / Gemini Flash Scorer (Resilient JSON Parser)
+│   ├── clip-scorer.ts                 # Local CLIP ONNX Cosine Similarity Scorer
+│   ├── visual-quality-gate.ts         # Binary Header Dimension Reader & Technical Resolution Gate
+│   ├── asset-downloader.ts            # Asset Downloader, Metadata & Latency Tracking
+│   ├── redis-cache.ts                 # Redis Dual-Layer Cache (SHA-256 + pHash)
 │   └── index.ts                       # Entrypoint export public APIs
 │
 ├── eval/                              # Tầng Đánh Giá & Benchmark Module 3
 │   ├── README.md                      # Hướng dẫn đánh giá VLM Inspector
-│   ├── runner.ts                      # Benchmark Runner (200 ảnh benchmark)
+│   ├── runner.ts                      # Benchmark Runner (offline image scoring)
 │   └── datasets/                      # Dataset ảnh kiểm thử & Ground Truth annotations
 │
 ├── package.json
 └── tsconfig.json
 ```
+
+> **Lưu ý kiến trúc v4.0:** Search providers (SerpAPI/Tavily/Brave/Wikimedia/CuratedCatalog) và provider chain factory (`buildProviderChain`, `executeImageSearchTool`, `resolveImageCandidates`) **không còn nằm trong gói này** — chúng đã được chuyển sang `packages/agent-orchestrator/src/research/`.
 
 ---
 
@@ -57,7 +58,7 @@ packages/vlm-inspector/
 ```typescript
 import { inspectImageCandidate, inspectCandidatePool } from '@chronoviet/vlm-inspector';
 
-// Kiểm định một ảnh ứng viên
+// Kiểm định một ảnh ứng viên (candidate đã được Research Agent tìm về)
 const result = await inspectImageCandidate({
   imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/example.jpg',
   promptContext: 'Tượng đài Trần Hưng Đạo tại Nam Định',
@@ -73,10 +74,10 @@ console.log('License Type:', result.license);
 ### 3.2. Bộ Lệnh CLI (Thực thi từ Root Monorepo)
 
 ```bash
-# 1. Chạy bộ kiểm thử Benchmark đo lường KPI Mô-đun 3 (200 ảnh benchmark)
+# 1. Chạy benchmark offline đo lường KPI Mô-đun 3 (dùng candidate pool mock, không phụ thuộc mạng)
 pnpm --filter @chronoviet/vlm-inspector eval
 
-# 2. Chạy Unit Tests (Bao gồm Image Search Providers & License Filter)
+# 2. Chạy Unit Tests (License Filter, Clip Scorer, Visual Quality Gate,...)
 pnpm --filter @chronoviet/vlm-inspector test
 
 # 3. Kiểm tra kiểu dữ liệu TypeScript (0 lỗi)

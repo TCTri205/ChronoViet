@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { query, isPgAvailable, createLogger, closePool } from '../packages/shared-spec/src/index.js';
+import { query, isPgAvailable, createLogger, closePool } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'ops', correlationId: 'reset-projects-data' });
 const ROOT_DIR = process.cwd();

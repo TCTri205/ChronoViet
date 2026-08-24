@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { IRagEngine, RagSearchResponse } from '@chronoviet/shared-spec';
 
-vi.mock('@chronoviet/shared-spec', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@chronoviet/shared-spec')>();
+vi.mock('@chronoviet/infra', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@chronoviet/infra')>();
   return {
     ...original,
     generateLLMCompletionStream: vi.fn().mockImplementation(async function* () {

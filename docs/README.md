@@ -67,7 +67,7 @@ docs/
 - **Mục đích:** Cung cấp cái nhìn toàn cảnh về dự án ChronoViet.
 - **Trạng thái:** 
   - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation v4.1, 19 Components, 31 LayoutModes, 11 Compositions trong `Root.tsx`.
-  - **[✅ IMPLEMENTED]:** VieNeu TTS Dual-Layer Microservice + Eval Suite (`services/vieneu-tts/`).
+  - **[✅ IMPLEMENTED]:** VieNeu TTS Microservice (Python FastAPI ONNX + Node.js Client SDK tại `@chronoviet/infra/tts`) & Eval Suite (`services/vieneu-tts/eval/eval.py`).
   - **[✅ IMPLEMENTED]:** Data Preprocessing & Ingestion Engine (`packages/data-ingestion/`) & Chrono-RAG Engine (`packages/rag-engine/`).
   - **[✅ IMPLEMENTED]:** Multi-Agent Orchestrator LangGraph.js (`packages/agent-orchestrator/`) & VLM Inspector (`packages/vlm-inspector/`).
   - **[✅ IMPLEMENTED]:** App Monolith Web UI/UX NotebookLM Workspace, REST API, WebSocket & Render Worker (`apps/web` & `apps/render-worker`).
@@ -104,7 +104,7 @@ docs/
 - **Trạng thái:** **[🟡 PHASE 1 VERIFIED AUDIT]** Chứa bảng kiểm định 15 ảnh tư liệu cốt lõi cho kịch bản Quang Trung.
 
 ### 2.9. [architecture/06_OBSERVABILITY_AND_LOGGING.md](architecture/06_OBSERVABILITY_AND_LOGGING.md) — Unified Structured Logging
-- **Mục đích:** Mô tả logger dùng chung đặt tại `@chronoviet/shared-spec/src/logger.ts` (JSON Lines, level filter, correlation ID, redaction secrets) và cách truy vết log toàn monorepo bằng `jq`.
+- **Mục đích:** Mô tả logger dùng chung đặt tại `@chronoviet/infra/src/logger.ts` (JSON Lines, level filter, correlation ID, redaction secrets) và cách truy vết log toàn monorepo bằng `jq`.
 
 ---
 
@@ -242,11 +242,13 @@ pnpm remotion:render:mongolviet2                # Render video mẫu: Kháng chi
 pnpm eval:clean                                 # Dọn dẹp artifact rác, file tạm & port treo
 pnpm eval:all --fresh                           # Đánh giá toàn diện Monorepo với lifecycle sạch
 pnpm eval:chain                                 # Đánh giá chuỗi TTS -> Remotion Engine
-pnpm eval:seed                                  # Tạo dữ liệu mẫu cho benchmark
+pnpm --filter @chronoviet/data-ingestion eval:seed  # Nạp Golden Datasets chuẩn bị cho benchmark
 pnpm eval:ingest                                # Đánh giá chất lượng trích xuất RAG chunks
 pnpm eval:orchestrator                          # Đánh giá Agent Orchestrator Pipeline
 pnpm eval:research                              # Đánh giá Agent nghiên cứu hình ảnh
-pnpm eval:tts                                   # Đánh giá VieNeu TTS Engine
+pnpm eval:rag                                   # Đánh giá Chrono-RAG Engine (C0-C10 benchmarks)
+pnpm eval:vlm                                   # Đánh giá VLM Inspector offline image scoring
+pnpm eval:tts                                   # Đánh giá VieNeu TTS Engine (Python eval.py)
 pnpm eval:remotion                              # Đánh giá Remotion Video Engine
 
 # ===============================================================

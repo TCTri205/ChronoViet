@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import {
   ChatStreamResponse,
+} from '@chronoviet/shared-spec';
+import {
   createLogger,
   truncateSnippet,
   httpRequestsTotal,
@@ -8,7 +10,7 @@ import {
   query as dbQuery,
   isPgAvailable,
   inMemoryStore,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { handleChatQueryStream } from '@chronoviet/agent-orchestrator';
 
 const log = createLogger({ service: 'web-api-chat' });

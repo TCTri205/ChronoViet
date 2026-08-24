@@ -8,7 +8,7 @@
  */
 
 import path from 'path';
-import { createLogger } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 import { WikiScraper } from '../crawler/wiki-scraper.js';
 import { WebScraper } from '../crawler/web-scraper.js';
 import {

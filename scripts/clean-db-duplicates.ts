@@ -1,4 +1,4 @@
-import { query, isPgAvailable, logEntityAuditAction, createLogger, withTransaction, closePool } from '../packages/shared-spec/src/index.js';
+import { query, isPgAvailable, logEntityAuditAction, createLogger, withTransaction, closePool } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'ops', correlationId: 'db-cleanup' });
 
@@ -11,7 +11,7 @@ async function main() {
     return;
   }
 
-  await withTransaction(async (execQuery) => {
+  await withTransaction(async (execQuery: <T = any>(sql: string, params?: unknown[]) => Promise<T[]>) => {
     // 1. Check & Delete Self-Loop Relationships in graph
     const selfLoops = await execQuery<{ count: string }>(
       `SELECT COUNT(*) as count FROM relationships WHERE source_entity_id = target_entity_id;`

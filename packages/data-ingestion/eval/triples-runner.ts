@@ -6,7 +6,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { GoldenTripleBenchmarkItem, isLLMServiceHealthy } from '@chronoviet/shared-spec';
+import { GoldenTripleBenchmarkItem } from '@chronoviet/shared-spec';
+import { isLLMServiceHealthy } from '@chronoviet/infra';
 import { extractTriplesFromTextAsync, ExtractedTriple } from '../src/triple-extractor.js';
 import { computeStrictTripleMetrics, StrictTripleMetrics } from './metrics.js';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';

@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
+  ProjectSummary,
+} from '@chronoviet/shared-spec';
+import {
   initProjectWorkspace,
   getDefaultProjectsBaseDir,
-  ProjectSummary,
   createLogger,
   truncateSnippet,
   httpRequestsTotal,
   httpRequestDurationSeconds,
   getStatusClass,
-} from '@chronoviet/shared-spec';
+} from '@chronoviet/infra';
 import { runOrchestratorPipeline, ChronoGraphState } from '@chronoviet/agent-orchestrator';
 
 const log = createLogger({ service: 'web-api-projects' });
@@ -65,14 +67,14 @@ export async function POST(req: NextRequest) {
     if (conversationId && !videoBriefId) {
       try {
         let historyTurns: { role: 'user' | 'assistant' | 'system'; content: string }[] = [];
-        const { query: dbQuery, isPgAvailable, inMemoryStore } = await import('@chronoviet/shared-spec');
+        const { query: dbQuery, isPgAvailable, inMemoryStore } = await import('@chronoviet/infra');
         const pgUp = await isPgAvailable();
         if (pgUp) {
           const rows = await dbQuery<any>(
             `SELECT role, content FROM conversation_messages WHERE conversation_id = $1 ORDER BY created_at ASC`,
             [conversationId]
           );
-          historyTurns = rows.map((r) => ({
+          historyTurns = rows.map((r: any) => ({
             role: (r.role === 'assistant' || r.role === 'system' ? r.role : 'user') as 'user' | 'assistant' | 'system',
             content: r.content,
           }));

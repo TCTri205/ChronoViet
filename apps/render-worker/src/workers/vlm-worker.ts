@@ -3,7 +3,8 @@
  */
 
 import { Worker, Job } from 'bullmq';
-import { createLogger, formatErrorMessage, SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
+import { SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
+import { createLogger, formatErrorMessage } from '@chronoviet/infra';
 import { inspectSceneVisuals, InspectSceneResult } from '@chronoviet/vlm-inspector';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
 

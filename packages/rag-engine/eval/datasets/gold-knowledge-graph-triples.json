@@ -12,6 +12,18 @@
     "confidence": 1
   },
   {
+    "subject": "person_hung_vuong",
+    "relation": "ALIAS_OF",
+    "object": "Hùng Quốc Vương",
+    "confidence": 1
+  },
+  {
+    "subject": "person_hung_vuong",
+    "relation": "ALIAS_OF",
+    "object": "Hùng Duệ Vương",
+    "confidence": 1
+  },
+  {
     "subject": "artifact_trong_dong_dong_son",
     "relation": "PART_OF",
     "object": "EPOCH_01_HONG_BANG",
@@ -26,7 +38,13 @@
   {
     "subject": "artifact_trong_dong_dong_son",
     "relation": "ALIAS_OF",
-    "object": "Trống đồng thời Hùng Vương",
+    "object": "Trống đồng Sông Đà",
+    "confidence": 1
+  },
+  {
+    "subject": "artifact_trong_dong_dong_son",
+    "relation": "ALIAS_OF",
+    "object": "Trống đồng Hoàng Hạ",
     "confidence": 1
   },
   {
@@ -54,12 +72,6 @@
     "confidence": 1
   },
   {
-    "subject": "event_dung_nuoc_van_lang",
-    "relation": "LED_BY",
-    "object": "artifact_trong_dong_dong_son",
-    "confidence": 1
-  },
-  {
     "subject": "person_an_duong_vuong",
     "relation": "PART_OF",
     "object": "EPOCH_02_AU_LAC",
@@ -72,6 +84,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_an_duong_vuong",
+    "relation": "ALIAS_OF",
+    "object": "Thục An Dương Vương",
+    "confidence": 1
+  },
+  {
     "subject": "person_cao_lo",
     "relation": "PART_OF",
     "object": "EPOCH_02_AU_LAC",
@@ -81,6 +99,18 @@
     "subject": "person_cao_lo",
     "relation": "ALIAS_OF",
     "object": "Tướng quân Cao Lỗ",
+    "confidence": 1
+  },
+  {
+    "subject": "person_cao_lo",
+    "relation": "ALIAS_OF",
+    "object": "Đô Lỗ",
+    "confidence": 1
+  },
+  {
+    "subject": "person_cao_lo",
+    "relation": "ALIAS_OF",
+    "object": "Đại tướng quân Cao Lỗ",
     "confidence": 1
   },
   {
@@ -128,7 +158,13 @@
   {
     "subject": "person_trung_trac",
     "relation": "ALIAS_OF",
-    "object": "Bà Trưng",
+    "object": "Bà Trưng Trắc",
+    "confidence": 1
+  },
+  {
+    "subject": "person_trung_trac",
+    "relation": "ALIAS_OF",
+    "object": "Trưng Hoàng Đế",
     "confidence": 1
   },
   {
@@ -141,6 +177,12 @@
     "subject": "person_trung_nhi",
     "relation": "ALIAS_OF",
     "object": "Bà Trưng Nhị",
+    "confidence": 1
+  },
+  {
+    "subject": "person_trung_nhi",
+    "relation": "ALIAS_OF",
+    "object": "Phó tướng Trưng Nhị",
     "confidence": 1
   },
   {
@@ -158,7 +200,7 @@
   {
     "subject": "event_khoi_nghia_hai_ba_trung",
     "relation": "HAPPENED_AT",
-    "object": "Mê Linh (Hà Nội)",
+    "object": "Mê Linh, Hát Môn (Hà Nội) và Luy Lâu (Bắc Ninh)",
     "confidence": 1
   },
   {
@@ -188,6 +230,18 @@
   {
     "subject": "person_ba_trieu",
     "relation": "ALIAS_OF",
+    "object": "Triệu Trinh Nương",
+    "confidence": 1
+  },
+  {
+    "subject": "person_ba_trieu",
+    "relation": "ALIAS_OF",
+    "object": "Lệ Hải Bà Vương",
+    "confidence": 1
+  },
+  {
+    "subject": "person_ba_trieu",
+    "relation": "ALIAS_OF",
     "object": "Triệu Ẩu",
     "confidence": 1
   },
@@ -210,6 +264,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_ly_bi",
+    "relation": "ALIAS_OF",
+    "object": "Tiền Lý Nam Đế",
+    "confidence": 1
+  },
+  {
     "subject": "person_trieu_quang_phuc",
     "relation": "PART_OF",
     "object": "EPOCH_04_TIEN_LY_BA_TRIEU",
@@ -219,6 +279,12 @@
     "subject": "person_trieu_quang_phuc",
     "relation": "ALIAS_OF",
     "object": "Dạ Trạch Vương",
+    "confidence": 1
+  },
+  {
+    "subject": "person_trieu_quang_phuc",
+    "relation": "ALIAS_OF",
+    "object": "Triệu Việt Vương",
     "confidence": 1
   },
   {
@@ -236,25 +302,13 @@
   {
     "subject": "event_lap_nuoc_van_xuan",
     "relation": "HAPPENED_AT",
-    "object": "Long Biên",
-    "confidence": 1
-  },
-  {
-    "subject": "event_lap_nuoc_van_xuan",
-    "relation": "LED_BY",
-    "object": "person_ba_trieu",
+    "object": "Long Biên (Hà Nội)",
     "confidence": 1
   },
   {
     "subject": "event_lap_nuoc_van_xuan",
     "relation": "LED_BY",
     "object": "person_ly_bi",
-    "confidence": 1
-  },
-  {
-    "subject": "event_lap_nuoc_van_xuan",
-    "relation": "LED_BY",
-    "object": "person_trieu_quang_phuc",
     "confidence": 1
   },
   {
@@ -270,6 +324,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_ngo_quyen",
+    "relation": "ALIAS_OF",
+    "object": "Ngô Tiên Chúa",
+    "confidence": 1
+  },
+  {
     "subject": "person_luu_hoang_thao",
     "relation": "PART_OF",
     "object": "EPOCH_05_NGO_QUYEN_938",
@@ -279,6 +339,12 @@
     "subject": "person_luu_hoang_thao",
     "relation": "ALIAS_OF",
     "object": "Hoằng Tháo",
+    "confidence": 1
+  },
+  {
+    "subject": "person_luu_hoang_thao",
+    "relation": "ALIAS_OF",
+    "object": "Vạn Vương Hoằng Tháo",
     "confidence": 1
   },
   {
@@ -296,19 +362,13 @@
   {
     "subject": "event_bach_dang_938",
     "relation": "HAPPENED_AT",
-    "object": "Sông Bạch Đằng (Quảng Ninh/Hải Phòng)",
+    "object": "Sông Bạch Đằng (vùng Quảng Ninh - Hải Phòng)",
     "confidence": 1
   },
   {
     "subject": "event_bach_dang_938",
     "relation": "LED_BY",
     "object": "person_ngo_quyen",
-    "confidence": 1
-  },
-  {
-    "subject": "event_bach_dang_938",
-    "relation": "LED_BY",
-    "object": "person_luu_hoang_thao",
     "confidence": 1
   },
   {
@@ -330,6 +390,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_dinh_bo_linh",
+    "relation": "ALIAS_OF",
+    "object": "Đinh Tiên Hoàng Đế",
+    "confidence": 1
+  },
+  {
     "subject": "person_le_hoan",
     "relation": "PART_OF",
     "object": "EPOCH_06_DINH_TIEN_LE",
@@ -348,6 +414,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_le_hoan",
+    "relation": "ALIAS_OF",
+    "object": "Lê Đại Hành Hoàng Đế",
+    "confidence": 1
+  },
+  {
     "subject": "event_bach_dang_981",
     "relation": "PART_OF",
     "object": "EPOCH_06_DINH_TIEN_LE",
@@ -362,13 +434,7 @@
   {
     "subject": "event_bach_dang_981",
     "relation": "HAPPENED_AT",
-    "object": "Sông Bạch Đằng",
-    "confidence": 1
-  },
-  {
-    "subject": "event_bach_dang_981",
-    "relation": "LED_BY",
-    "object": "person_dinh_bo_linh",
+    "object": "Sông Bạch Đằng và sông Lục Đầu",
     "confidence": 1
   },
   {
@@ -390,6 +456,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_ly_thai_to",
+    "relation": "ALIAS_OF",
+    "object": "Thái Tổ Hoàng Đế",
+    "confidence": 1
+  },
+  {
     "subject": "person_ly_thuong_kiet",
     "relation": "PART_OF",
     "object": "EPOCH_07_LY_DYNASTY",
@@ -408,6 +480,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_ly_thuong_kiet",
+    "relation": "ALIAS_OF",
+    "object": "Việt Quốc Công",
+    "confidence": 1
+  },
+  {
     "subject": "event_phong_tuyen_nhu_nguyet_1077",
     "relation": "PART_OF",
     "object": "EPOCH_07_LY_DYNASTY",
@@ -422,13 +500,7 @@
   {
     "subject": "event_phong_tuyen_nhu_nguyet_1077",
     "relation": "HAPPENED_AT",
-    "object": "Sông Như Nguyệt (Sông Cầu)",
-    "confidence": 1
-  },
-  {
-    "subject": "event_phong_tuyen_nhu_nguyet_1077",
-    "relation": "LED_BY",
-    "object": "person_ly_thai_to",
+    "object": "Sông Như Nguyệt (Sông Cầu, Bắc Ninh)",
     "confidence": 1
   },
   {
@@ -462,6 +534,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_tran_hung_dao",
+    "relation": "ALIAS_OF",
+    "object": "Quốc công Tiết chế",
+    "confidence": 1
+  },
+  {
     "subject": "person_tran_nhan_tong",
     "relation": "PART_OF",
     "object": "EPOCH_08_TRAN_DYNASTY",
@@ -470,13 +548,19 @@
   {
     "subject": "person_tran_nhan_tong",
     "relation": "ALIAS_OF",
-    "object": "Trúc Lâm Đại Đầu Đà",
+    "object": "Trần Khâm",
     "confidence": 1
   },
   {
     "subject": "person_tran_nhan_tong",
     "relation": "ALIAS_OF",
     "object": "Phật hoàng Trần Nhân Tông",
+    "confidence": 1
+  },
+  {
+    "subject": "person_tran_nhan_tong",
+    "relation": "ALIAS_OF",
+    "object": "Trúc Lâm Đại Đầu Đà",
     "confidence": 1
   },
   {
@@ -489,6 +573,12 @@
     "subject": "person_tran_quang_khai",
     "relation": "ALIAS_OF",
     "object": "Thượng tướng Thái sư Trần Quang Khải",
+    "confidence": 1
+  },
+  {
+    "subject": "person_tran_quang_khai",
+    "relation": "ALIAS_OF",
+    "object": "Chiêu Minh Đại Vương",
     "confidence": 1
   },
   {
@@ -506,7 +596,7 @@
   {
     "subject": "event_bach_dang_1288",
     "relation": "HAPPENED_AT",
-    "object": "Sông Bạch Đằng",
+    "object": "Sông Bạch Đằng (Quảng Ninh - Hải Phòng)",
     "confidence": 1
   },
   {
@@ -522,12 +612,6 @@
     "confidence": 1
   },
   {
-    "subject": "event_bach_dang_1288",
-    "relation": "LED_BY",
-    "object": "person_tran_quang_khai",
-    "confidence": 1
-  },
-  {
     "subject": "person_ho_quy_ly",
     "relation": "PART_OF",
     "object": "EPOCH_09_HO_DYNASTY",
@@ -540,6 +624,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_ho_quy_ly",
+    "relation": "ALIAS_OF",
+    "object": "Lê Quý Ly",
+    "confidence": 1
+  },
+  {
     "subject": "person_ho_nguyen_trung",
     "relation": "PART_OF",
     "object": "EPOCH_09_HO_DYNASTY",
@@ -549,6 +639,12 @@
     "subject": "person_ho_nguyen_trung",
     "relation": "ALIAS_OF",
     "object": "Lê Trừng",
+    "confidence": 1
+  },
+  {
+    "subject": "person_ho_nguyen_trung",
+    "relation": "ALIAS_OF",
+    "object": "Tả Tướng quốc Hồ Nguyên Trừng",
     "confidence": 1
   },
   {
@@ -576,12 +672,6 @@
     "confidence": 1
   },
   {
-    "subject": "event_xay_thanh_tay_do",
-    "relation": "LED_BY",
-    "object": "person_ho_nguyen_trung",
-    "confidence": 1
-  },
-  {
     "subject": "person_le_loi",
     "relation": "PART_OF",
     "object": "EPOCH_10_LE_SO_LAM_SON",
@@ -600,6 +690,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_le_loi",
+    "relation": "ALIAS_OF",
+    "object": "Lê Lợi Hoàng Đế",
+    "confidence": 1
+  },
+  {
     "subject": "person_nguyen_trai",
     "relation": "PART_OF",
     "object": "EPOCH_10_LE_SO_LAM_SON",
@@ -612,6 +708,18 @@
     "confidence": 1
   },
   {
+    "subject": "person_nguyen_trai",
+    "relation": "ALIAS_OF",
+    "object": "Quan Phục hầu",
+    "confidence": 1
+  },
+  {
+    "subject": "person_nguyen_trai",
+    "relation": "ALIAS_OF",
+    "object": "Nguyễn Ức Trai",
+    "confidence": 1
+  },
+  {
     "subject": "person_le_thanh_tong",
     "relation": "PART_OF",
     "object": "EPOCH_10_LE_SO_LAM_SON",
@@ -621,6 +729,12 @@
     "subject": "person_le_thanh_tong",
     "relation": "ALIAS_OF",
     "object": "Lê Tư Thành",
+    "confidence": 1
+  },
+  {
+    "subject": "person_le_thanh_tong",
+    "relation": "ALIAS_OF",
+    "object": "Thánh Tông Thuần Hoàng Đế",
     "confidence": 1
   },
   {
@@ -638,7 +752,7 @@
   {
     "subject": "event_chi_lang_xuong_giang_1427",
     "relation": "HAPPENED_AT",
-    "object": "Chi Lăng (Lạng Sơn) & Xương Giang (Bắc Giang)",
+    "object": "Ải Chi Lăng (Lạng Sơn) và thành Xương Giang (Bắc Giang)",
     "confidence": 1
   },
   {
@@ -654,12 +768,6 @@
     "confidence": 1
   },
   {
-    "subject": "event_chi_lang_xuong_giang_1427",
-    "relation": "LED_BY",
-    "object": "person_le_thanh_tong",
-    "confidence": 1
-  },
-  {
     "subject": "person_mac_dang_dung",
     "relation": "PART_OF",
     "object": "EPOCH_11_NAM_BAC_TRIEU_MAC",
@@ -672,6 +780,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_mac_dang_dung",
+    "relation": "ALIAS_OF",
+    "object": "Nhân Minh Hoàng Đế",
+    "confidence": 1
+  },
+  {
     "subject": "person_nguyen_kim",
     "relation": "PART_OF",
     "object": "EPOCH_11_NAM_BAC_TRIEU_MAC",
@@ -681,6 +795,36 @@
     "subject": "person_nguyen_kim",
     "relation": "ALIAS_OF",
     "object": "Thượng phụ Thái sư",
+    "confidence": 1
+  },
+  {
+    "subject": "person_nguyen_kim",
+    "relation": "ALIAS_OF",
+    "object": "Trừng Quốc Công",
+    "confidence": 1
+  },
+  {
+    "subject": "person_nguyen_binh_khiem",
+    "relation": "PART_OF",
+    "object": "EPOCH_11_NAM_BAC_TRIEU_MAC",
+    "confidence": 1
+  },
+  {
+    "subject": "person_nguyen_binh_khiem",
+    "relation": "ALIAS_OF",
+    "object": "Trạng Trình",
+    "confidence": 1
+  },
+  {
+    "subject": "person_nguyen_binh_khiem",
+    "relation": "ALIAS_OF",
+    "object": "Tuyết Giang Phu Tử",
+    "confidence": 1
+  },
+  {
+    "subject": "person_nguyen_binh_khiem",
+    "relation": "ALIAS_OF",
+    "object": "Bạch Vân Cư Sĩ",
     "confidence": 1
   },
   {
@@ -698,19 +842,13 @@
   {
     "subject": "event_mac_lap_trieu_1527",
     "relation": "HAPPENED_AT",
-    "object": "Thăng Long",
+    "object": "Kinh đô Thăng Long",
     "confidence": 1
   },
   {
     "subject": "event_mac_lap_trieu_1527",
     "relation": "LED_BY",
     "object": "person_mac_dang_dung",
-    "confidence": 1
-  },
-  {
-    "subject": "event_mac_lap_trieu_1527",
-    "relation": "LED_BY",
-    "object": "person_nguyen_kim",
     "confidence": 1
   },
   {
@@ -726,6 +864,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_trinh_kiem",
+    "relation": "ALIAS_OF",
+    "object": "Lạng Quốc Công Trịnh Kiểm",
+    "confidence": 1
+  },
+  {
     "subject": "person_nguyen_hoang",
     "relation": "PART_OF",
     "object": "EPOCH_12_TRINH_NGUYEN_PHAN_TRANH",
@@ -738,6 +882,18 @@
     "confidence": 1
   },
   {
+    "subject": "person_nguyen_hoang",
+    "relation": "ALIAS_OF",
+    "object": "Thái Tổ Gia Dụ Hoàng Đế",
+    "confidence": 1
+  },
+  {
+    "subject": "person_nguyen_hoang",
+    "relation": "ALIAS_OF",
+    "object": "Nguyễn Thái Tổ",
+    "confidence": 1
+  },
+  {
     "subject": "person_dao_duy_tu",
     "relation": "PART_OF",
     "object": "EPOCH_12_TRINH_NGUYEN_PHAN_TRANH",
@@ -747,6 +903,12 @@
     "subject": "person_dao_duy_tu",
     "relation": "ALIAS_OF",
     "object": "Lộc Khê hầu",
+    "confidence": 1
+  },
+  {
+    "subject": "person_dao_duy_tu",
+    "relation": "ALIAS_OF",
+    "object": "Hoằng Quốc Công Đào Duy Từ",
     "confidence": 1
   },
   {
@@ -764,19 +926,7 @@
   {
     "subject": "event_dap_luy_thay_1631",
     "relation": "HAPPENED_AT",
-    "object": "Quảng Bình",
-    "confidence": 1
-  },
-  {
-    "subject": "event_dap_luy_thay_1631",
-    "relation": "LED_BY",
-    "object": "person_trinh_kiem",
-    "confidence": 1
-  },
-  {
-    "subject": "event_dap_luy_thay_1631",
-    "relation": "LED_BY",
-    "object": "person_nguyen_hoang",
+    "object": "Quảng Bình (cửa Nhật Lệ, sông Gianh)",
     "confidence": 1
   },
   {
@@ -810,6 +960,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_quang_trung",
+    "relation": "ALIAS_OF",
+    "object": "Quang Trung Hoàng Đế",
+    "confidence": 1
+  },
+  {
     "subject": "person_nguyen_nhac",
     "relation": "PART_OF",
     "object": "EPOCH_13_TAY_SON",
@@ -822,15 +978,27 @@
     "confidence": 1
   },
   {
-    "subject": "person_nguyen_lu",
+    "subject": "person_nguyen_nhac",
+    "relation": "ALIAS_OF",
+    "object": "Trung Ương Hoàng Đế",
+    "confidence": 1
+  },
+  {
+    "subject": "person_ngo_thi_nham",
     "relation": "PART_OF",
     "object": "EPOCH_13_TAY_SON",
     "confidence": 1
   },
   {
-    "subject": "person_nguyen_lu",
+    "subject": "person_ngo_thi_nham",
     "relation": "ALIAS_OF",
-    "object": "Đông Định Vương",
+    "object": "Hải Thượng Vãn Ca",
+    "confidence": 1
+  },
+  {
+    "subject": "person_ngo_thi_nham",
+    "relation": "ALIAS_OF",
+    "object": "Ngô Thì Nhậm đại thần",
     "confidence": 1
   },
   {
@@ -848,25 +1016,13 @@
   {
     "subject": "event_ngoc_hoi_dong_da_1789",
     "relation": "HAPPENED_AT",
-    "object": "Hà Nội (Ngọc Hồi, Đống Đa, Thăng Long)",
+    "object": "Hà Nội (Ngọc Hồi, Khương Thượng - Đống Đa, Thăng Long)",
     "confidence": 1
   },
   {
     "subject": "event_ngoc_hoi_dong_da_1789",
     "relation": "LED_BY",
     "object": "person_quang_trung",
-    "confidence": 1
-  },
-  {
-    "subject": "event_ngoc_hoi_dong_da_1789",
-    "relation": "LED_BY",
-    "object": "person_nguyen_nhac",
-    "confidence": 1
-  },
-  {
-    "subject": "event_ngoc_hoi_dong_da_1789",
-    "relation": "LED_BY",
-    "object": "person_nguyen_lu",
     "confidence": 1
   },
   {
@@ -884,25 +1040,13 @@
   {
     "subject": "event_rach_gam_xoai_mut_1785",
     "relation": "HAPPENED_AT",
-    "object": "Tiền Giang (Sông Tiền)",
+    "object": "Tiền Giang (Sông Tiền đoạn Rạch Gầm đến Xoài Mút)",
     "confidence": 1
   },
   {
     "subject": "event_rach_gam_xoai_mut_1785",
     "relation": "LED_BY",
     "object": "person_quang_trung",
-    "confidence": 1
-  },
-  {
-    "subject": "event_rach_gam_xoai_mut_1785",
-    "relation": "LED_BY",
-    "object": "person_nguyen_nhac",
-    "confidence": 1
-  },
-  {
-    "subject": "event_rach_gam_xoai_mut_1785",
-    "relation": "LED_BY",
-    "object": "person_nguyen_lu",
     "confidence": 1
   },
   {
@@ -924,6 +1068,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_gia_long",
+    "relation": "ALIAS_OF",
+    "object": "Thế Tổ Cao Hoàng Đế",
+    "confidence": 1
+  },
+  {
     "subject": "person_minh_mang",
     "relation": "PART_OF",
     "object": "EPOCH_14_NGUYEN_DYNASTY",
@@ -938,7 +1088,25 @@
   {
     "subject": "person_minh_mang",
     "relation": "ALIAS_OF",
-    "object": "Thánh Tổ",
+    "object": "Thánh Tổ Nhân Hoàng Đế",
+    "confidence": 1
+  },
+  {
+    "subject": "person_hoang_dieu",
+    "relation": "PART_OF",
+    "object": "EPOCH_14_NGUYEN_DYNASTY",
+    "confidence": 1
+  },
+  {
+    "subject": "person_hoang_dieu",
+    "relation": "ALIAS_OF",
+    "object": "Tổng đốc Hoàng Diệu",
+    "confidence": 1
+  },
+  {
+    "subject": "person_hoang_dieu",
+    "relation": "ALIAS_OF",
+    "object": "Hoàng Kim Tích",
     "confidence": 1
   },
   {
@@ -956,19 +1124,13 @@
   {
     "subject": "event_thong_nhat_1802",
     "relation": "HAPPENED_AT",
-    "object": "Phú Xuân (Huế)",
+    "object": "Kinh đô Phú Xuân (Huế)",
     "confidence": 1
   },
   {
     "subject": "event_thong_nhat_1802",
     "relation": "LED_BY",
     "object": "person_gia_long",
-    "confidence": 1
-  },
-  {
-    "subject": "event_thong_nhat_1802",
-    "relation": "LED_BY",
-    "object": "person_minh_mang",
     "confidence": 1
   },
   {
@@ -990,6 +1152,12 @@
     "confidence": 1
   },
   {
+    "subject": "person_vo_nguyen_giap",
+    "relation": "ALIAS_OF",
+    "object": "Tổng tư lệnh Võ Nguyên Giáp",
+    "confidence": 1
+  },
+  {
     "subject": "person_pham_van_dong",
     "relation": "PART_OF",
     "object": "EPOCH_15_HIEN_DAI_1954",
@@ -999,6 +1167,12 @@
     "subject": "person_pham_van_dong",
     "relation": "ALIAS_OF",
     "object": "Anh Tô",
+    "confidence": 1
+  },
+  {
+    "subject": "person_pham_van_dong",
+    "relation": "ALIAS_OF",
+    "object": "Thủ tướng Phạm Văn Đồng",
     "confidence": 1
   },
   {
@@ -1016,19 +1190,13 @@
   {
     "subject": "event_dien_bien_phu_1954",
     "relation": "HAPPENED_AT",
-    "object": "Điện Biên",
+    "object": "Thung lũng Mường Thanh (tỉnh Điện Biên)",
     "confidence": 1
   },
   {
     "subject": "event_dien_bien_phu_1954",
     "relation": "LED_BY",
     "object": "person_vo_nguyen_giap",
-    "confidence": 1
-  },
-  {
-    "subject": "event_dien_bien_phu_1954",
-    "relation": "LED_BY",
-    "object": "person_pham_van_dong",
     "confidence": 1
   }
 ]

@@ -8,6 +8,12 @@ importers:
 
   .:
     devDependencies:
+      '@chronoviet/infra':
+        specifier: workspace:*
+        version: link:packages/infra
+      '@chronoviet/shared-spec':
+        specifier: workspace:*
+        version: link:packages/shared-spec
       tsx:
         specifier: ^4.19.2
         version: 4.23.11
@@ -17,15 +23,15 @@ importers:
 
   apps/render-worker:
     dependencies:
+      '@chronoviet/infra':
+        specifier: workspace:*
+        version: link:../../packages/infra
       '@chronoviet/remotion-engine':
         specifier: workspace:*
         version: link:../../packages/remotion-engine
       '@chronoviet/shared-spec':
         specifier: workspace:*
         version: link:../../packages/shared-spec
-      '@chronoviet/vieneu-tts':
-        specifier: workspace:*
-        version: link:../../services/vieneu-tts
       '@chronoviet/vlm-inspector':
         specifier: workspace:*
         version: link:../../packages/vlm-inspector
@@ -54,15 +60,15 @@ importers:
       '@chronoviet/agent-orchestrator':
         specifier: workspace:*
         version: link:../../packages/agent-orchestrator
+      '@chronoviet/infra':
+        specifier: workspace:*
+        version: link:../../packages/infra
       '@chronoviet/rag-engine':
         specifier: workspace:*
         version: link:../../packages/rag-engine
       '@chronoviet/shared-spec':
         specifier: workspace:*
         version: link:../../packages/shared-spec
-      '@chronoviet/vieneu-tts':
-        specifier: workspace:*
-        version: link:../../services/vieneu-tts
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.2
         version: 1.1.23(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -166,15 +172,15 @@ importers:
 
   packages/agent-orchestrator:
     dependencies:
+      '@chronoviet/infra':
+        specifier: workspace:*
+        version: link:../infra
       '@chronoviet/rag-engine':
         specifier: workspace:*
         version: link:../rag-engine
       '@chronoviet/shared-spec':
         specifier: workspace:*
         version: link:../shared-spec
-      '@chronoviet/vieneu-tts':
-        specifier: workspace:*
-        version: link:../../services/vieneu-tts
       '@chronoviet/vlm-inspector':
         specifier: workspace:*
         version: link:../vlm-inspector
@@ -197,6 +203,9 @@ importers:
 
   packages/data-ingestion:
     dependencies:
+      '@chronoviet/infra':
+        specifier: workspace:*
+        version: link:../infra
       '@chronoviet/shared-spec':
         specifier: workspace:*
         version: link:../shared-spec
@@ -223,11 +232,51 @@ importers:
         specifier: ^1.2.0
         version: 1.6.1(@types/node@20.19.43)(terser@5.49.2)
 
+  packages/infra:
+    dependencies:
+      '@chronoviet/shared-spec':
+        specifier: workspace:*
+        version: link:../shared-spec
+      bullmq:
+        specifier: ^5.1.0
+        version: 5.81.3
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
+      ioredis:
+        specifier: ^5.3.2
+        version: 5.11.1
+      pg:
+        specifier: ^8.11.3
+        version: 8.23.0
+      prom-client:
+        specifier: ^15.1.3
+        version: 15.1.3
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.43
+      '@types/pg':
+        specifier: ^8.11.0
+        version: 8.21.0
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.43)(terser@5.49.2)
+
   packages/rag-engine:
     dependencies:
       '@chronoviet/data-ingestion':
         specifier: workspace:*
         version: link:../data-ingestion
+      '@chronoviet/infra':
+        specifier: workspace:*
+        version: link:../infra
       '@chronoviet/shared-spec':
         specifier: workspace:*
         version: link:../shared-spec
@@ -293,31 +342,10 @@ importers:
 
   packages/shared-spec:
     dependencies:
-      bullmq:
-        specifier: ^5.1.0
-        version: 5.81.3
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.6.1
-      ioredis:
-        specifier: ^5.3.2
-        version: 5.11.1
-      pg:
-        specifier: ^8.11.3
-        version: 8.23.0
-      prom-client:
-        specifier: ^15.1.3
-        version: 15.1.3
       zod:
         specifier: 4.4.3
         version: 4.4.3
     devDependencies:
-      '@types/node':
-        specifier: ^20.11.0
-        version: 20.19.43
-      '@types/pg':
-        specifier: ^8.11.0
-        version: 8.21.0
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
@@ -327,6 +355,9 @@ importers:
 
   packages/vlm-inspector:
     dependencies:
+      '@chronoviet/infra':
+        specifier: workspace:*
+        version: link:../infra
       '@chronoviet/shared-spec':
         specifier: workspace:*
         version: link:../shared-spec
@@ -346,22 +377,6 @@ importers:
       '@types/sharp':
         specifier: ^0.32.0
         version: 0.32.0(@types/node@20.19.43)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-      vitest:
-        specifier: ^1.2.0
-        version: 1.6.1(@types/node@20.19.43)(terser@5.49.2)
-
-  services/vieneu-tts:
-    dependencies:
-      '@chronoviet/shared-spec':
-        specifier: workspace:*
-        version: link:../../packages/shared-spec
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.0
-        version: 20.19.43
       typescript:
         specifier: ^5.3.3
         version: 5.9.3

@@ -5,7 +5,7 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
-import { createLogger } from '@chronoviet/shared-spec';
+import { createLogger } from '@chronoviet/infra';
 import { seedDualBranch } from '../seeder/dual-branch-seeder.js';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 

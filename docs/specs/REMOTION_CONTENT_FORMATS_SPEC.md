@@ -443,7 +443,7 @@ AI Agent tự động xếp loại prompt của người dùng theo các tín hi
 │              3. AI DIRECTOR AGENT                       │
 │   - Gọi TTS API → tạo mảng word-level "captions"       │
 │   - Nhận diện domain → BIOGRAPHY/BATTLE/...             │
-│   - Crawl/Kiểm định ảnh bằng VLM Inspector (Score ≥ 60)│
+│   - Research Agent tìm ảnh + VLM Inspector kiểm định (Score ≥ 60)│
 │   - Fallback 404/thiếu ảnh → dùng Pure Code layoutMode │
 │   - Đóng gói JSON chuẩn ChronoVideoSchema (v4.1)       │
 └────────────────────────────┬────────────────────────────┘

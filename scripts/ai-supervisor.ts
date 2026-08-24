@@ -8,7 +8,7 @@ import { spawn, execSync, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
-import { envConfig, createLogger } from '../packages/shared-spec/src/index.js';
+import { envConfig, createLogger } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'ai-supervisor' });
 
@@ -319,6 +319,25 @@ export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank')
           String(envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 4),
           '--threads',
           String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 6),
+        ]
+      : []),
+    ...(key === 'rerank' || key === 'emb'
+      ? [
+          '--batch-size',
+          String(ctxSize),
+          '--ubatch-size',
+          String(ctxSize),
+          '--cont-batching',
+          '--parallel',
+          String(key === 'rerank' ? envConfig.LOCAL_RERANK_PARALLEL || 4 : envConfig.LOCAL_EMBEDDING_PARALLEL || 4),
+          '--threads',
+          String(key === 'rerank' ? envConfig.LOCAL_RERANK_THREADS || 6 : envConfig.LOCAL_EMBEDDING_THREADS || 6),
+          ...(key === 'rerank' && envConfig.LOCAL_RERANK_EXTRA_ARGS
+            ? envConfig.LOCAL_RERANK_EXTRA_ARGS.split(' ').filter(Boolean)
+            : []),
+          ...(key === 'emb' && envConfig.LOCAL_EMBEDDING_EXTRA_ARGS
+            ? envConfig.LOCAL_EMBEDDING_EXTRA_ARGS.split(' ').filter(Boolean)
+            : []),
         ]
       : []),
     ...(svc.extraArgs || []),
