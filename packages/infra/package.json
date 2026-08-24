@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@chronoviet/shared-spec": "workspace:*",
-    "bullmq": "^5.1.0",
+    "bullmq": "^6.1.2",
     "dotenv": "^16.4.7",
     "ioredis": "^5.3.2",
     "pg": "^8.11.3",
