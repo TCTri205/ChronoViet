@@ -94,7 +94,7 @@
     "@chronoviet/infra": "workspace:*",
     "@chronoviet/shared-spec": "workspace:*",
     "tsx": "^4.19.2",
-    "typescript": "^5.3.3"
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=20.0.0"
