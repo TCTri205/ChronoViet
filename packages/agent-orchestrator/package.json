@@ -18,7 +18,7 @@
     "@chronoviet/shared-spec": "workspace:*",
     "@chronoviet/vlm-inspector": "workspace:*",
     "@langchain/core": "^0.3.80",
-    "@langchain/langgraph": "^0.2.74"
+    "@langchain/langgraph": "^1.4.12"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
