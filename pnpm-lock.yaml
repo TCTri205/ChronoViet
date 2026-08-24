@@ -280,13 +280,7 @@ importers:
       '@chronoviet/shared-spec':
         specifier: workspace:*
         version: link:../shared-spec
-      pg:
-        specifier: ^8.11.3
-        version: 8.23.0
     devDependencies:
-      '@types/pg':
-        specifier: ^8.11.0
-        version: 8.21.0
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
@@ -303,8 +297,8 @@ importers:
         specifier: 4.0.507
         version: 4.0.507(@swc/helpers@0.5.5)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       '@remotion/google-fonts':
-        specifier: 4.0.507
-        version: 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 4.0.514
+        version: 4.0.514(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remotion/media-utils':
         specifier: 4.0.507
         version: 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1584,8 +1578,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@remotion/google-fonts@4.0.507':
-    resolution: {integrity: sha512-PuNm8skWh8haY8YLpD6WZm34O8ElQ9llt+lgAniF49tIaYWDUvdBPQYZEuAeVbGBtZaiRjcpwEDIb9rQgj2/TQ==}
+  '@remotion/google-fonts@4.0.514':
+    resolution: {integrity: sha512-dx3MTWpQMcpGlyJh6barVbsaVi0Y3ODmO18aHdznM01OqrYej+D2cpifeq929xbD0esQsTvMAf2El8/cYeRFYw==}
 
   '@remotion/licensing@4.0.507':
     resolution: {integrity: sha512-fdods4YD9c8Ww69wHdnmXpjx7W0rvct6B7gLb92cWsd+ITSUG3hKoh+NqSWXF0GK5bk8IFRmTtBAwJObxow9wA==}
@@ -3350,6 +3344,12 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
+  remotion@4.0.514:
+    resolution: {integrity: sha512-uhfvNqzs0v0Sg6+lI2bGpWHZd7fEmMpfJC6r4jR+EZXIPpWwH3VldEeO9BeoSrAEVsrt8l7TKwXxy6/duDO/9g==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
@@ -4875,13 +4875,13 @@ snapshots:
       '@remotion/timeline-utils': 4.0.507
       '@rspack/core': 1.7.11(@swc/helpers@0.5.5)
       '@rspack/plugin-react-refresh': 1.6.1(react-refresh@0.18.0)
-      css-loader: 7.1.4(@rspack/core@1.7.11(@swc/helpers@0.5.5))(webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.26))
+      css-loader: 7.1.4(@rspack/core@1.7.11(@swc/helpers@0.5.5))(webpack@5.105.0(postcss@8.5.26))
       esbuild: 0.28.1
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       react-refresh: 0.18.0
       remotion: 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      style-loader: 4.0.0(webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.26))
+      style-loader: 4.0.0(webpack@5.105.0(postcss@8.5.26))
       webpack: 5.105.0(esbuild@0.28.1)(postcss@8.5.26)
     transitivePeerDependencies:
       - '@minify-html/node'
@@ -4961,9 +4961,9 @@ snapshots:
   '@remotion/compositor-win32-x64-msvc@4.0.507':
     optional: true
 
-  '@remotion/google-fonts@4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@remotion/google-fonts@4.0.514(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      remotion: 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      remotion: 4.0.514(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     transitivePeerDependencies:
       - react
       - react-dom
@@ -5775,7 +5775,7 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  css-loader@7.1.4(@rspack/core@1.7.11(@swc/helpers@0.5.5))(webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.26)):
+  css-loader@7.1.4(@rspack/core@1.7.11(@swc/helpers@0.5.5))(webpack@5.105.0(postcss@8.5.26)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.26)
       postcss: 8.5.26
@@ -6948,6 +6948,11 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
+  remotion@4.0.514(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   require-from-string@2.0.2: {}
 
   resolve-from@4.0.0: {}
@@ -7117,7 +7122,7 @@ snapshots:
     dependencies:
       js-tokens: 9.0.1
 
-  style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.26)):
+  style-loader@4.0.0(webpack@5.105.0(postcss@8.5.26)):
     dependencies:
       webpack: 5.105.0(esbuild@0.28.1)(postcss@8.5.26)
 
