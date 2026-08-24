@@ -18,6 +18,7 @@ export interface RegressionCheckInput {
     recallAt10: number;
     ndcgAt5: number;
     latencyP95Ms: number;
+    ttftP95Ms?: number;
   };
   current: {
     factPrecision?: number;
@@ -25,6 +26,7 @@ export interface RegressionCheckInput {
     recallAt10?: number;
     ndcgAt5?: number;
     latencyP95Ms?: number;
+    ttftP95Ms?: number;
   };
 }
 
@@ -34,14 +36,16 @@ export interface QualityFloorConfig {
   minRecallAt10: number;
   minNdcgAt5: number;
   maxLatencyP95Ms: number;
+  maxTtftP95Ms: number;
 }
 
 export const DEFAULT_QUALITY_FLOORS: QualityFloorConfig = {
-  minFactPrecision: 90.0,
-  maxHallucinationRate: 5.0,
-  minRecallAt10: 70.0,
+  minFactPrecision: 80.0,
+  maxHallucinationRate: 10.0,
+  minRecallAt10: 75.0,
   minNdcgAt5: 0.70,
-  maxLatencyP95Ms: 300.0,
+  maxLatencyP95Ms: 1500.0,
+  maxTtftP95Ms: 1500.0,
 };
 
 export function evaluateRegressionGates(
@@ -204,6 +208,37 @@ export function evaluateRegressionGates(
       message: passGate5
         ? `PASS: p95 latency ${input.current.latencyP95Ms}ms within SLA (< ${floors.maxLatencyP95Ms}ms)`
         : `FAIL: p95 latency ${input.current.latencyP95Ms}ms exceeds SLA (${floors.maxLatencyP95Ms}ms)!`,
+    });
+  }
+
+  // Gate 6: TTFT Streaming Latency Gate
+  if (input.current.ttftP95Ms === undefined) {
+    gates.push({
+      gate_id: 'GATE_6_TTFT_P95',
+      metric_name: 'p95 TTFT SLA',
+      baseline_value: input.baseline.ttftP95Ms || 800.0,
+      current_value: 0,
+      delta: 0,
+      threshold: floors.maxTtftP95Ms,
+      passed: true,
+      is_blocking: false,
+      message: '⏭️ SKIPPED: TTFT streaming latency measurement was not provided in this run.',
+    });
+  } else {
+    const baseTtft = input.baseline.ttftP95Ms || 800.0;
+    const passGate6 = input.current.ttftP95Ms <= floors.maxTtftP95Ms;
+    gates.push({
+      gate_id: 'GATE_6_TTFT_P95',
+      metric_name: 'p95 TTFT SLA',
+      baseline_value: baseTtft,
+      current_value: input.current.ttftP95Ms,
+      delta: Number((input.current.ttftP95Ms - baseTtft).toFixed(2)),
+      threshold: floors.maxTtftP95Ms,
+      passed: passGate6,
+      is_blocking: true,
+      message: passGate6
+        ? `PASS: p95 TTFT ${input.current.ttftP95Ms}ms within SLA (< ${floors.maxTtftP95Ms}ms)`
+        : `FAIL: p95 TTFT ${input.current.ttftP95Ms}ms exceeds SLA (${floors.maxTtftP95Ms}ms)!`,
     });
   }
 

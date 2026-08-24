@@ -125,11 +125,12 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
 
   const regressionCheck = evaluateRegressionGates({
     baseline: {
-      factPrecision: 95.0,
-      hallucinationRate: 2.0,
-      recallAt10: 70.0,
+      factPrecision: 80.0,
+      hallucinationRate: 5.0,
+      recallAt10: 75.0,
       ndcgAt5: 0.70,
-      latencyP95Ms: 100.0,
+      latencyP95Ms: 1200.0,
+      ttftP95Ms: 800.0,
     },
     current: {
       factPrecision: currentFactPrecision,

@@ -1,17 +1,16 @@
-/**
- * Information Retrieval & Ranking Metrics Engine for ChronoEval v2.0
- * Pure mathematical implementations for Graded Relevance nDCG@K, MRR@K, MAP@K, Pairwise Ranking Accuracy
- */
+import { VIETNAMESE_STOPWORDS } from './grounding-metrics.js';
 
 /**
  * Calculates Discounted Cumulative Gain at rank K
  * Formula: DCG@K = sum_{i=1}^K (2^{rel_i} - 1) / log_2(i + 1)
  */
 export function calculateDCG(relevanceGrades: number[], k: number): number {
+  if (!relevanceGrades || relevanceGrades.length === 0 || k <= 0) return 0;
   const topKGrades = relevanceGrades.slice(0, k);
   let dcg = 0;
   for (let i = 0; i < topKGrades.length; i++) {
-    const grade = topKGrades[i];
+    const grade = Math.max(0, topKGrades[i] || 0);
+    if (grade === 0) continue;
     const gain = Math.pow(2, grade) - 1;
     const discount = Math.log2(i + 2); // i=0 -> rank 1 -> log2(2)=1
     dcg += gain / discount;
@@ -23,6 +22,7 @@ export function calculateDCG(relevanceGrades: number[], k: number): number {
  * Calculates Ideal Discounted Cumulative Gain at rank K
  */
 export function calculateIDCG(allGoldGrades: number[], k: number): number {
+  if (!allGoldGrades || allGoldGrades.length === 0 || k <= 0) return 0;
   const sortedGrades = [...allGoldGrades].sort((a, b) => b - a);
   return calculateDCG(sortedGrades, k);
 }
@@ -35,16 +35,20 @@ export function calculateNDCGAtK(
   groundTruthGrades: Map<string, number>,
   k: number = 5
 ): number {
-  if (groundTruthGrades.size === 0 || k <= 0) return 1.0;
+  if (!groundTruthGrades || groundTruthGrades.size === 0 || k <= 0) return 1.0;
+  if (!retrievedIds || retrievedIds.length === 0) return 0.0;
 
   const actualGrades = retrievedIds.slice(0, k).map((id) => groundTruthGrades.get(id) || 0);
   const dcg = calculateDCG(actualGrades, k);
 
-  const allGrades = Array.from(groundTruthGrades.values());
-  const idcg = calculateIDCG(allGrades, k);
+  const allGrades = Array.from(groundTruthGrades.values()).filter((g) => g > 0);
+  if (allGrades.length === 0) {
+    // If no relevant documents exist in ground truth
+    return dcg === 0 ? 1.0 : 0.0;
+  }
 
+  const idcg = calculateIDCG(allGrades, k);
   if (idcg === 0) {
-    // If there is no relevant document in gold truth, empty retrieval is perfect (1.0) else 0.0
     return dcg === 0 ? 1.0 : 0.0;
   }
 
@@ -61,13 +65,14 @@ export function calculateMRRAtK(
   k: number = 5,
   minRelevantGrade: number = 2
 ): number {
+  if (!retrievedIds || retrievedIds.length === 0 || k <= 0) return 0.0;
   const topK = retrievedIds.slice(0, k);
   for (let i = 0; i < topK.length; i++) {
     const id = topK[i];
     let isHit = false;
     if (groundTruthGrades instanceof Set) {
       isHit = groundTruthGrades.has(id);
-    } else {
+    } else if (groundTruthGrades instanceof Map) {
       const grade = groundTruthGrades.get(id) || 0;
       isHit = grade >= minRelevantGrade;
     }
@@ -87,7 +92,8 @@ export function calculateMAPAtK(
   goldIds: Set<string>,
   k: number = 10
 ): number {
-  if (goldIds.size === 0) return 1.0;
+  if (!goldIds || goldIds.size === 0) return 1.0;
+  if (!retrievedIds || retrievedIds.length === 0 || k <= 0) return 0.0;
 
   const topK = retrievedIds.slice(0, k);
   let relevantCount = 0;
@@ -100,7 +106,9 @@ export function calculateMAPAtK(
     }
   }
 
-  return runningPrecisionSum / Math.min(goldIds.size, k);
+  const denominator = Math.min(goldIds.size, k);
+  if (denominator === 0) return 0.0;
+  return runningPrecisionSum / denominator;
 }
 
 /**
@@ -111,21 +119,17 @@ export function calculatePairwiseRankingAccuracy(
   retrievedIds: string[],
   groundTruthGrades: Map<string, number>
 ): number {
-  const rankMap = new Map<string, number>();
-  retrievedIds.forEach((id, idx) => rankMap.set(id, idx + 1));
-
-  // Collect all evaluated candidates that are present in both or graded
-  const evaluatedIds = Array.from(
-    new Set([...retrievedIds, ...Array.from(groundTruthGrades.keys())])
-  );
+  if (!retrievedIds || retrievedIds.length < 2 || !groundTruthGrades || groundTruthGrades.size === 0) {
+    return 1.0;
+  }
 
   let totalValidPairs = 0;
   let correctRankedPairs = 0;
 
-  for (let i = 0; i < evaluatedIds.length; i++) {
-    for (let j = i + 1; j < evaluatedIds.length; j++) {
-      const idA = evaluatedIds[i];
-      const idB = evaluatedIds[j];
+  for (let i = 0; i < retrievedIds.length; i++) {
+    for (let j = i + 1; j < retrievedIds.length; j++) {
+      const idA = retrievedIds[i];
+      const idB = retrievedIds[j];
 
       const gradeA = groundTruthGrades.get(idA) || 0;
       const gradeB = groundTruthGrades.get(idB) || 0;
@@ -133,13 +137,7 @@ export function calculatePairwiseRankingAccuracy(
       if (gradeA === gradeB) continue; // Only evaluate strictly ordered pairs
 
       totalValidPairs++;
-
-      const rankA = rankMap.has(idA) ? rankMap.get(idA)! : Infinity;
-      const rankB = rankMap.has(idB) ? rankMap.get(idB)! : Infinity;
-
-      if (gradeA > gradeB && rankA < rankB) {
-        correctRankedPairs++;
-      } else if (gradeB > gradeA && rankB < rankA) {
+      if (gradeA > gradeB) {
         correctRankedPairs++;
       }
     }
@@ -157,7 +155,8 @@ export function calculateRecallAtK(
   goldIds: Set<string>,
   k: number = 10
 ): number {
-  if (goldIds.size === 0) return 1.0;
+  if (!goldIds || goldIds.size === 0) return 1.0;
+  if (!retrievedIds || retrievedIds.length === 0 || k <= 0) return 0.0;
   const topK = new Set(retrievedIds.slice(0, k));
   let hits = 0;
   for (const id of goldIds) {
@@ -168,7 +167,8 @@ export function calculateRecallAtK(
 
 /**
  * Calculates Evidence-Level Recall@K agnostic of chunk IDs:
- * Checks whether the top-K retrieved chunk texts contain the essential gold evidence claims.
+ * Checks whether the top-K retrieved chunk texts contain the essential gold evidence claims
+ * using strict multi-word proposition and keyword containment.
  */
 export function calculateEvidenceRecallAtK(
   retrievedChunks: Array<{ id?: string; chunkId?: string; title?: string; textContent?: string }>,
@@ -176,6 +176,7 @@ export function calculateEvidenceRecallAtK(
   k: number = 10
 ): number {
   if (!goldEvidenceClaims || goldEvidenceClaims.length === 0) return 1.0;
+  if (!retrievedChunks || retrievedChunks.length === 0 || k <= 0) return 0.0;
   const topK = retrievedChunks.slice(0, k);
   if (topK.length === 0) return 0.0;
 
@@ -185,17 +186,19 @@ export function calculateEvidenceRecallAtK(
 
   let satisfiedClaims = 0;
   for (const claim of goldEvidenceClaims) {
-    const claimTokens = claim
-      .toLowerCase()
+    const claimClean = claim.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()"“”]/g, ' ');
+    const claimTokens = claimClean
       .split(/\s+/)
-      .filter((w) => w.length > 2);
+      .filter((w) => w.trim().length > 0 && !VIETNAMESE_STOPWORDS.has(w));
     if (claimTokens.length === 0) continue;
 
     let matchedTokens = 0;
     for (const t of claimTokens) {
       if (combinedRetrievedText.includes(t)) matchedTokens++;
     }
-    if (matchedTokens >= Math.ceil(claimTokens.length * 0.55)) {
+
+    // Require high proposition token coverage (>= 75%)
+    if (matchedTokens >= Math.ceil(claimTokens.length * 0.75)) {
       satisfiedClaims++;
     }
   }
@@ -205,7 +208,8 @@ export function calculateEvidenceRecallAtK(
 
 /**
  * Calculates Dynamic Graded Relevance Map for retrieved chunks:
- * Prioritizes exact ID match, but falls back gracefully to content/evidence overlap.
+ * Prioritizes exact ID match, but supports rigorous semantic evidence entailment.
+ * Strict anti-overfitting: Reject single-token and superficial entity name overlap.
  */
 export function calculateContentAwareGrades(
   retrievedChunks: Array<{ id?: string; chunkId?: string; title?: string; textContent?: string }>,
@@ -217,27 +221,37 @@ export function calculateContentAwareGrades(
 
   for (const chunk of retrievedChunks) {
     const cid = chunk.chunkId || chunk.id || '';
+    if (!cid) continue;
+
     if (idToGoldGrade.has(cid)) {
       gradeMap.set(cid, idToGoldGrade.get(cid)!);
       continue;
     }
 
-    // Content overlap fallback
+    // Content overlap evaluation strictly against gold chunks
     const chunkText = `${chunk.title || ''} ${chunk.textContent || ''}`.toLowerCase();
     let maxAssignedGrade = 0;
 
     for (const gold of goldChunks) {
+      // If gold chunk itself is an explicit distractor negative (grade 0), do not assign positive grade
+      if (gold.relevance_grade <= 0) continue;
+
       const claims = gold.key_evidence_claims || [];
       if (claims.length > 0) {
         let claimsMatched = 0;
         for (const claim of claims) {
-          const tokens = claim.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+          const claimClean = claim.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()"“”]/g, ' ');
+          const tokens = claimClean
+            .split(/\s+/)
+            .filter((w) => w.trim().length > 0 && !VIETNAMESE_STOPWORDS.has(w));
+          if (tokens.length === 0) continue;
           const hitCount = tokens.filter((t) => chunkText.includes(t)).length;
-          if (hitCount >= Math.ceil(tokens.length * 0.55)) {
+          // Strict threshold: at least 75% of tokens in the claim
+          if (hitCount >= Math.ceil(tokens.length * 0.75)) {
             claimsMatched++;
           }
         }
-        if (claimsMatched >= Math.ceil(claims.length * 0.6)) {
+        if (claimsMatched >= Math.ceil(claims.length * 0.5)) {
           maxAssignedGrade = Math.max(maxAssignedGrade, gold.relevance_grade);
         } else if (claimsMatched >= 1) {
           maxAssignedGrade = Math.max(maxAssignedGrade, 1);
@@ -259,7 +273,9 @@ export function calculatePrecisionAtK(
   goldIds: Set<string>,
   k: number = 10
 ): number {
-  if (k <= 0) return 0.0;
+  if (!goldIds || goldIds.size === 0 || !retrievedIds || retrievedIds.length === 0 || k <= 0) {
+    return 0.0;
+  }
   const topK = retrievedIds.slice(0, k);
   if (topK.length === 0) return 0.0;
   let hits = 0;
@@ -268,4 +284,5 @@ export function calculatePrecisionAtK(
   }
   return hits / topK.length;
 }
+
 

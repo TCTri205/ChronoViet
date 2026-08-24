@@ -94,8 +94,12 @@ export async function runC3Benchmark(): Promise<ComponentBenchmarkReport> {
     }
 
     // 1-hop & 2-hop node recall
+    const directGoldNeighbors = goldGraphTriples
+      .filter((t) => t.subject === seedEntityId || t.object === seedEntityId)
+      .map((t) => (t.subject === seedEntityId ? t.object : t.subject));
+
     oneHopTotal++;
-    if (graphResult.entityIds.includes(seedEntityId)) {
+    if (directGoldNeighbors.length === 0 || directGoldNeighbors.some((n) => graphResult.entityIds.includes(n))) {
       oneHopHits++;
     }
 

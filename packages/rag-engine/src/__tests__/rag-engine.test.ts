@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { inMemoryStore, envConfig } from '@chronoviet/infra';
+import * as graphModule from '../retrieval/graph-cte-search.js';
 import { ChronoRagEngine, GRAPH_BOOST_SCALE } from '../rag-engine.js';
 
 describe('ChronoRagEngine Integration & End-to-End Search', { timeout: 20000 }, () => {
@@ -125,6 +126,33 @@ describe('ChronoRagEngine Integration & End-to-End Search', { timeout: 20000 }, 
     // Should retain top-1 entity despite tiny token budget and not crash
     expect(response.verifiedContext.length).toBe(1);
     expect(response.citations.length).toBe(1);
+  });
+
+  it('should degrade gracefully when graph branch throws an error during search', async () => {
+    await engine.ingestDocument(
+      'Quang Trung Nguyễn Huệ đại phá 29 vạn quân Thanh vào dịp Tết Kỷ Dậu 1789.',
+      {
+        title: 'Chiến thắng Kỷ Dậu 1789',
+        source: 'Đại Việt Sử Ký',
+        dynasty: 'Nhà Tây Sơn',
+        sourceReliability: 'LEVEL_1',
+      }
+    );
+
+    vi.spyOn(graphModule, 'searchLocalGraphCTE').mockRejectedValueOnce(
+      new Error('Simulated transient graph query timeout')
+    );
+
+    const response = await engine.search({
+      query: 'Quang Trung đánh quân Thanh năm nào?',
+      rerankTopK: 3,
+    });
+
+    expect(response).toBeDefined();
+    expect(response.verifiedContext.length).toBeGreaterThanOrEqual(1);
+    expect(response.verifiedContext[0].title).toBe('Chiến thắng Kỷ Dậu 1789');
+    expect(response.triples).toEqual([]);
+    expect(response.aliasTable).toEqual({});
   });
 
   it('should reuse global schema init promise across multiple engine instances', async () => {

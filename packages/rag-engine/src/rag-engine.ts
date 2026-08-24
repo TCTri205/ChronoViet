@@ -41,7 +41,7 @@ const log = createLogger({ service: 'rag-engine' });
 export const GRAPH_BOOST_SCALE = 0.05;
 export const GRAPH_BRANCH_TIMEOUT_MS = process.env.GRAPH_BRANCH_TIMEOUT_MS
   ? parseInt(process.env.GRAPH_BRANCH_TIMEOUT_MS, 10)
-  : 150;
+  : 350;
 export const GRAPH_BRANCH_MAX_NODES = 50;
 export const GRAPH_ONLY_CHUNK_CAP = 10;
 
@@ -99,40 +99,52 @@ export class ChronoRagEngine implements IRagEngine {
 
     // Steps 2, 3, 4: Dual-Branch Parallel Execution (Graph Branch & Vector Branch)
     const graphBranchPromise = (async () => {
-      const graphResult = await searchLocalGraphCTE(filterEntityIds, {
-        maxHops: 2,
-        maxNodes: GRAPH_BRANCH_MAX_NODES,
-        timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
-      });
+      try {
+        const graphResult = await searchLocalGraphCTE(filterEntityIds, {
+          maxHops: 2,
+          maxNodes: GRAPH_BRANCH_MAX_NODES,
+          timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
+        });
 
-      // Entity -> (maxConfidence, minHop) signals for weighting graph chunks by relevance.
-      const graphSignals = new Map<string, ChunkGraphSignal>();
-      for (const t of graphResult.triples) {
-        for (const eid of [t.sourceEntityId, t.targetEntityId]) {
-          const existing = graphSignals.get(eid);
-          if (!existing) {
-            graphSignals.set(eid, { maxConfidence: t.confidence, minHop: t.hopCount });
-          } else {
-            existing.maxConfidence = Math.max(existing.maxConfidence, t.confidence);
-            existing.minHop = Math.min(existing.minHop, t.hopCount);
+        // Entity -> (maxConfidence, minHop) signals for weighting graph chunks by relevance.
+        const graphSignals = new Map<string, ChunkGraphSignal>();
+        for (const t of graphResult.triples) {
+          for (const eid of [t.sourceEntityId, t.targetEntityId]) {
+            const existing = graphSignals.get(eid);
+            if (!existing) {
+              graphSignals.set(eid, { maxConfidence: t.confidence, minHop: t.hopCount });
+            } else {
+              existing.maxConfidence = Math.max(existing.maxConfidence, t.confidence);
+              existing.minHop = Math.min(existing.minHop, t.hopCount);
+            }
           }
         }
-      }
 
-      const graphChunks = await getChunksForEntities(
-        graphResult.entityIds,
-        20,
-        filterEntityIds,
-        graphSignals
-      );
-      return { graphResult, graphChunks, timedOut: Boolean(graphResult.timedOut) };
+        const graphChunks = await getChunksForEntities(
+          graphResult.entityIds,
+          20,
+          filterEntityIds,
+          graphSignals
+        );
+        return { graphResult, graphChunks, timedOut: Boolean(graphResult.timedOut) };
+      } catch (err) {
+        log.warn('rag.graph_branch_error', 'Graph branch failed; falling back gracefully to vector/FTS retrieval only', {
+          error: err,
+          query: queryText,
+        });
+        return {
+          graphResult: { triples: [], aliasTable: {}, entityIds: [] },
+          graphChunks: [],
+          timedOut: true,
+        };
+      }
     })();
 
     const vectorBranchPromise = (async () => {
-      const queryEmbedding = await getCachedQueryEmbedding(queryText);
+      const embeddingPromise = getCachedQueryEmbedding(queryText);
       const hybridCandidates = await searchHybridVectorAndBM25(
         queryText,
-        queryEmbedding,
+        embeddingPromise,
         Math.max(15, rerankTopK * 3)
       );
       return hybridCandidates;

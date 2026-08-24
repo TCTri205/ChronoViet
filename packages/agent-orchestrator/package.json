@@ -9,8 +9,16 @@
     "lint": "tsc --noEmit",
     "test": "vitest run --dir src/ --passWithNoTests",
     "test:eval": "vitest run --dir eval/ --passWithNoTests",
-    "eval": "tsx eval/runner.ts",
-    "eval:research": "tsx eval/research-runner.ts"
+    "eval": "tsx eval/benchmarks/index.ts",
+    "eval:all": "tsx eval/benchmarks/index.ts --all",
+    "eval:quick": "tsx eval/benchmarks/index.ts --quick",
+    "eval:a0": "tsx eval/benchmarks/index.ts --a0",
+    "eval:a1": "tsx eval/benchmarks/index.ts --a1",
+    "eval:a2": "tsx eval/benchmarks/index.ts --a2",
+    "eval:a3": "tsx eval/benchmarks/index.ts --a3",
+    "eval:a4": "tsx eval/benchmarks/index.ts --a4",
+    "eval:a5": "tsx eval/benchmarks/index.ts --a5",
+    "eval:sys": "tsx eval/benchmarks/index.ts --sys"
   },
   "dependencies": {
     "@chronoviet/infra": "workspace:*",

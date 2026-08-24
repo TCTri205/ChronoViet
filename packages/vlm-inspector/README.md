@@ -11,8 +11,8 @@ Gói `@chronoviet/vlm-inspector` đóng vai trò là **Tầng Kiểm Định Ch�
 
 VLM Inspector nhận vào `candidatePool` đã research sẵn và thực hiện tuyến kiểm định khép kín:
 
-1. **Pure Visual Inspection (`inspectSceneVisuals` / `inspectCandidatePool` / `inspectImageCandidate`):**
-   - Nhận `(projectId, scene, candidatePool, options)` và chấm điểm từng ứng viên theo 3 trục: `historical_context_score` (0–40), `visual_noise_score` (0–30), `artistic_fit_score` (0–30).
+1. **Pure Visual Inspection (`inspectSceneVisuals`):**
+   - Nhận `(projectId, scene, candidatePool, options)` và chấm điểm từng ứng viên theo 3 trục: `historicalContextScore` (0–40), `visualNoiseScore` (0–30), `artisticFitScore` (0–30).
    - Nếu `candidatePool` **rỗng** → trả về ngay `PURE_CODE` layout fallback **mà không thực hiện bất kỳ network request nào** (deterministic, không phụ thuộc mạng).
    - Không còn logic crawl inline — mọi ứng viên đến từ Research Agent state `researchResults[sceneId]`.
 2. **Dual-Layer Scoring & Visual Quality Gate:**
@@ -56,19 +56,20 @@ packages/vlm-inspector/
 ### 3.1. Sử dụng trong mã nguồn TypeScript
 
 ```typescript
-import { inspectImageCandidate, inspectCandidatePool } from '@chronoviet/vlm-inspector';
+import { inspectSceneVisuals } from '@chronoviet/vlm-inspector';
+import type { SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
 
-// Kiểm định một ảnh ứng viên (candidate đã được Research Agent tìm về)
-const result = await inspectImageCandidate({
-  imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/example.jpg',
-  promptContext: 'Tượng đài Trần Hưng Đạo tại Nam Định',
-  historicalDynasty: 'Nhà Trần',
-  sceneLayoutMode: 'HISTORICAL_FRAME',
-});
+// Kiểm định danh sách ứng viên ảnh cho phân cảnh
+const result = await inspectSceneVisuals(
+  projectId,
+  scene,
+  candidatePool,
+  { correlationId: 'corr_123' }
+);
 
-console.log('Passed Quality Gate:', result.passed);
-console.log('Historical Match Score:', result.historicalMatchScore);
-console.log('License Type:', result.license);
+console.log('Selected Layout:', result.selectedLayoutMode);
+console.log('Pure Code Fallback:', result.isPureCodeFallback);
+console.log('Selected Candidate:', result.selectedCandidate?.title);
 ```
 
 ### 3.2. Bộ Lệnh CLI (Thực thi từ Root Monorepo)

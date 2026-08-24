@@ -874,6 +874,14 @@ export function buildChronoEvalDatasets(): {
               `Thời kỳ ${epoch.name} kéo dài từ năm ${epoch.timeRange[0]} đến ${epoch.timeRange[1]}`,
             ],
           },
+          {
+            chunk_id: `chunk_distractor_${epoch.epochId}_${activeTargetEnt.id}`,
+            relevance_grade: 0,
+            source_reliability: 'LEVEL_2',
+            title: `Khảo luận ngoài lề: Nhân vật và giai thoại triều ${epoch.dynasty}`,
+            text_content: `Các tài liệu khảo cứu khác có nhắc tới danh xưng ${activeTargetEnt.name} hoặc các sự kiện thời ${epoch.dynasty}, tuy nhiên đây là ghi chép tổng quát về phong tục và hành chính, không chứa bằng chứng trực tiếp cho chiến dịch hoặc niên đại cụ thể này.`,
+            key_evidence_claims: [],
+          },
         ],
         unanswerable_or_false_premise: false,
         expected_aliases: activeTargetEnt.aliases,
@@ -1075,6 +1083,44 @@ export function buildChronoEvalDatasets(): {
     adversarial200,
     goldTriples,
   };
+}
+
+/**
+ * Selects a balanced, stratified subset of dataset items evenly distributed across all 15 historical epochs.
+ */
+export function getStratifiedHistoricalSample(
+  items: ChronoevalDatasetItem[],
+  sampleSize: number = 30
+): ChronoevalDatasetItem[] {
+  if (!items || items.length <= sampleSize) return items;
+
+  // Group items by epoch
+  const epochBuckets = new Map<string, ChronoevalDatasetItem[]>();
+  for (const item of items) {
+    const ep = item.epoch || 'UNKNOWN_EPOCH';
+    if (!epochBuckets.has(ep)) epochBuckets.set(ep, []);
+    epochBuckets.get(ep)!.push(item);
+  }
+
+  const selected: ChronoevalDatasetItem[] = [];
+  const epochKeys = Array.from(epochBuckets.keys());
+  let itemIndex = 0;
+
+  while (selected.length < sampleSize) {
+    let addedAny = false;
+    for (const ep of epochKeys) {
+      if (selected.length >= sampleSize) break;
+      const bucket = epochBuckets.get(ep)!;
+      if (itemIndex < bucket.length) {
+        selected.push(bucket[itemIndex]);
+        addedAny = true;
+      }
+    }
+    if (!addedAny) break;
+    itemIndex++;
+  }
+
+  return selected;
 }
 
 export function saveAndValidateDatasets(): void {

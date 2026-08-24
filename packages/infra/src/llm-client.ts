@@ -133,7 +133,7 @@ async function executeTargetCompletion(
 ): Promise<LLMCompletionResponse> {
   const temperature = options.temperature ?? 0.2;
   const maxTokens = options.max_tokens ?? (target.type === 'local' || target.provider === 'openrouter' ? 2048 : 4096);
-  const timeoutMs = options.timeoutMs ?? (target.type === 'local' ? 45000 : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
+  const timeoutMs = options.timeoutMs ?? (target.type === 'local' ? (envConfig.LOCAL_LLM_TIMEOUT_MS || 120000) : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -836,7 +836,7 @@ async function* streamTargetCompletion(
 ): AsyncGenerator<string> {
   const temperature = options.temperature ?? 0.2;
   const maxTokens = options.max_tokens ?? (target.type === 'local' || target.provider === 'openrouter' ? 2048 : 4096);
-  const timeoutMs = options.timeoutMs ?? (target.type === 'local' ? 45000 : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
+  const timeoutMs = options.timeoutMs ?? (target.type === 'local' ? (envConfig.LOCAL_LLM_TIMEOUT_MS || 120000) : envConfig.REMOTE_FALLBACK_TIMEOUT_MS);
 
   if (target.type === 'local') {
     const endpoint = `${target.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
@@ -911,7 +911,7 @@ export async function* generateLLMCompletionStream(
   const localModel = options.model || envConfig.LOCAL_LLM_PRIMARY_MODEL;
   const temperature = options.temperature ?? 0.2;
   const maxTokens = options.max_tokens ?? 2048;
-  const timeoutMs = options.timeoutMs ?? 45000;
+  const timeoutMs = options.timeoutMs ?? (envConfig.LOCAL_LLM_TIMEOUT_MS || 120000);
 
   // Eval Integrity: strict mode requires the local LLM server (no cloud fallback)
   if (envConfig.EVAL_STRICT && !envConfig.USE_LOCAL_LLM) {

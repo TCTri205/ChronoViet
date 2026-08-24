@@ -34,7 +34,7 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
       const params = new URLSearchParams({
         q: keywords,
         count: String(Math.min(50, Math.max(1, limit * 3))),
-        safesearch: 'moderate',
+        safesearch: 'strict',
       });
 
       const controller = new AbortController();
@@ -52,13 +52,15 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
 
         const latencyMs = Date.now() - startTime;
         if (!res.ok) {
-          const err = new Error(`Brave HTTP ${res.status}: ${res.statusText}`);
+          const errBody = await res.text().catch(() => '');
+          const err = new Error(`Brave HTTP ${res.status}: ${res.statusText} ${errBody}`.trim());
           (err as any).status = res.status;
           (err as any).latencyMs = latencyMs;
-          log.warn('research.brave_http_error', `HTTP ${res.status} from Brave for "${keywords}"`, {
+          log.warn('research.brave_http_error', `HTTP ${res.status} from Brave for "${keywords}": ${errBody}`, {
             keywords,
             status: res.status,
             statusText: res.statusText,
+            errBody,
             latencyMs,
           });
           throw err;

@@ -48,7 +48,8 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
                                        │ (Pass License)
                                        ▼
   ┌────────────────────────────────────────────────────────────────────────────┐
-  │ LỚP 1: REDIS DUAL-LAYER CACHE CHECK (Exact Hash SHA-256 & pHash < 5)       │
+  │ LỚP 1: REDIS DUAL-LAYER CACHE CHECK (Exact Hash SHA-256 & pHash)           │
+  │ - Tra cứu theo key `vlm:sha256:${sha256}` và `vlm:phash:${phash}`        │
   │ - Hit ➔ Trả ngay VLM Score & Verdict trong 1ms (Bỏ qua gọi VLM Engine)    │
   └────────────────────────────────────┬───────────────────────────────────────┘
                                        │ (Miss)
@@ -59,8 +60,9 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
   │ - Nén tối ưu (MozJPEG / WebP quality 85), kiểm soát dung lượng file <= 2MB │
   │ - Chuẩn hóa hướng chụp theo EXIF orientation                               │
   │ - Trích xuất kích thước nhị phân siêu nhẹ (PNG/JPEG/WEBP header decoder)   │
-  │ - Kiểm tra độ phân giải tối thiểu: Resolution >= 720p (1280x720 hoặc 720p) │
-  │ - Kiểm tra tỉ lệ khung hình (Aspect Ratio check sai số <= 15%)             │
+  │ - Kiểm tra kích thước tối thiểu (Sanity check): minWidth >= 200, minHeight >= 200│
+  │ - Hỗ trợ mọi tỉ lệ khung hình (16:9, 9:16, 1:1, 4:3, panorama) thông qua   │
+  │   các layout thích ứng của Remotion (BLUR_BG, HISTORICAL_FRAME, FULL_CONTAIN)│
   │ - Ngăn ngừa triệt để cảnh báo quá tải bộ nhớ (>5MB) và lỗi OOM khi render  │
   └────────────────────────────────────┬───────────────────────────────────────┘
                                        │ (Pass Technical)
@@ -99,33 +101,32 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
 
 ## 3. Chi Tiết Thuật Toán Chấm Điểm Hybrid VLM (Scoring Algorithm)
 
-### 3.1. Primary Scorer: System Prompt Template Cho Gemini 3.6 Flash
+### 3.1. Primary Scorer: System Prompt Template Cho Gemini 3.6 Flash / Local Unified VLM
 ```text
 Bạn là chuyên gia thẩm định mỹ thuật và lịch sử Việt Nam thuộc hệ thống ChronoViet.
 Hãy phân tích bức ảnh crawl này dựa trên ngữ cảnh sự kiện lịch sử: "{event_description}".
 
-Hãy chấm điểm bức ảnh theo thang điểm 100 dựa trên 3 tiêu chí sau và trả về JSON:
+Hãy chấm điểm bức ảnh theo thang điểm 100 dựa trên 3 tiêu chí sau và trả về JSON thuần túy (camelCase):
 
-1. historical_context_score (0-40): 
+1. historicalContextScore (0-40): 
    - Ảnh có đúng bối cảnh lịch sử Việt Nam không? 
    - Có bị nhầm sang phim cổ trang Trung Quốc/Hàn Quốc (kiểm tra trang phục, mũ mão, cờ hiệu, kiến trúc)?
-2. visual_noise_score (0-30):
+2. visualNoiseScore (0-30):
    - 30 điểm nếu ảnh sạch hoàn toàn.
    - Trừ điểm nặng nếu dính watermark, logo kênh TV, chữ đè quá lớn.
-3. artistic_fit_score (0-30):
+3. artisticFitScore (0-30):
    - Ảnh có bị vỡ nét, mờ câm không? Tỉ lệ thẩm mỹ có tốt cho video không?
 
 JSON Output format:
 {
-  "historical_context_score": number,
-  "visual_noise_score": number,
-  "artistic_fit_score": number,
-  "total_score": number,
-  "verdict": "APPROVED" | "REJECTED",
-  "reason": "string",
-  "recommended_fallback": "RE_CRAWL_BATCH_2" | "PURE_CODE"
+  "historicalContextScore": number,
+  "visualNoiseScore": number,
+  "artisticFitScore": number,
+  "reasons": ["string"]
 }
 ```
+
+> **Lưu ý tính toán chuẩn xác:** Điểm tổng hợp `totalScore` ($historicalContextScore + visualNoiseScore + artisticFitScore$) và kết luận `verdict` (`PASS` khi $totalScore \ge 60$, ngược lại `REJECT`) được tính toán **thuần túy tất định trong TypeScript** tại `vlm-scorer.ts` để đảm bảo độ tin cậy và không phụ thuộc vào khả năng số học của mô hình.
 
 ### 3.2. Offline Fallback Scorer: Local CLIP/SigLIP Cosine Similarity Model
 Khi Gemini Cloud API ngắt kết nối hoặc vượt ngưỡng rate-limit:
@@ -164,33 +165,36 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
 **Đầu vào candidate:** VLM Inspector **nhận candidate pool từ Research Agent (Micro-Step 1C)** qua state `researchResults[sceneId]`. Research Agent gọi công cụ **`executeImageSearchTool`** với đầu vào **`ImageSearchToolInput`** chuẩn (`primaryQuery`, `englishQuery`, `visualType`, `historicalPeriod`, `aspectRatio`, `minResolution`), kích hoạt provider chain online (SerpAPI / Tavily / Brave Search API → Wikimedia Commons Live → Curated Catalog 14 assets verified) và chỉ chấp nhận ảnh từ domain whitelist, bảo đảm ảnh tải về được tự động tối ưu qua **Sharp Resizer (1080p, <=2MB)** trước khi VLM Inspector tiến hành chấm điểm bối cảnh lịch sử, nhiễu thị giác và thẩm mỹ.
 
 ```json
-// Output trả về từ VLM Sub-Agent gửi đến Master Orchestrator:
+// Output trả về từ VLM Sub-Agent gửi đến Master Orchestrator (InspectSceneResult):
 {
-  "scene_id": "scene-03-battle",
-  "asset_url": "https://upload.wikimedia.org/.../tran-bach-dang.jpg",
-  "license_info": {
-    "license": "CC_BY_SA_4_0",
-    "author": "Bảo tàng Lịch sử Quốc gia",
-    "source_url": "https://commons.wikimedia.org/wiki/File:Tran_Bach_Dang.jpg"
-  },
-  "vlm_inspection": {
-    "total_score": 85,
-    "verdict": "APPROVED",
-    "scorer_type": "LOCAL_VLM", // hoặc GEMINI_CLOUD khi EVAL_STRICT=false
-    "reason": "Ảnh sắc nét, chuẩn bối cảnh trận Bạch Đằng 1288, thuộc giấy phép CC-BY-SA-4.0 hợp lệ."
-  },
-  "action_taken": "USE_IMAGE",
-  "updated_scene_props": {
+  "updatedScene": {
+    "sceneId": "scene-03-battle",
     "layoutMode": "BLUR_BG",
-    "assetUrl": "https://upload.wikimedia.org/.../tran-bach-dang.jpg",
-    "license": "CC_BY_SA_4_0",
-    "attribution": {
+    "contentType": "IMAGE",
+    "selectedAsset": {
+      "candidateId": "cand_scene-03-battle_01",
+      "imageUrl": "https://upload.wikimedia.org/.../tran-bach-dang.jpg",
+      "license": "CC_BY_SA_4_0",
       "author": "Bảo tàng Lịch sử Quốc gia",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tran_Bach_Dang.jpg",
-      "license": "CC_BY_SA_4_0"
-    },
-    "requiresAttribution": true
-  }
+      "score": {
+        "historicalContextScore": 35,
+        "visualNoiseScore": 25,
+        "artisticFitScore": 25,
+        "overallScore": 85
+      },
+      "verdict": "PASS"
+    }
+  },
+  "selectedCandidate": {
+    "candidateId": "cand_scene-03-battle_01",
+    "imageUrl": "https://upload.wikimedia.org/.../tran-bach-dang.jpg",
+    "license": "CC_BY_SA_4_0",
+    "author": "Bảo tàng Lịch sử Quốc gia",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tran_Bach_Dang.jpg"
+  },
+  "isPureCodeFallback": false,
+  "selectedLayoutMode": "BLUR_BG"
 }
 ```
 

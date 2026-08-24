@@ -11,20 +11,17 @@ Vòng đời từ khi người dùng nhập yêu cầu cho đến khi nhận vid
  [INIT] ──► [RAG_RETRIEVED] ──► [OUTLINE_CHAPTERED] ──► [CHAPTER_SCRIPT_GENERATED]
                                                                │
                                                                ▼
- [RESEARCH_COMPLETED] ◄─── [SCENES_SEGMENTED] ◄─── [CHAPTER_FACT_CHECKED]
+ [RESEARCH_COMPLETED] ◄─── [KEYWORDS_EXTRACTED] ◄─── [SCENES_SEGMENTED] ◄─── [CHAPTER_FACT_CHECKED]
        │
        ▼
- [TTS_SYNTHESIZED] ──► [DURATION_RECONCILED] ──► [KEYWORDS_EXTRACTED]
-                                                        │
-                                                        ▼
- [COMPLETED] ◄─── [PACKAGED] ◄─── [ASSETS_AUDITED] ◄────┘
-      │               │                  │
-   [FAILED] ◄─────────┴──────────────────┴── (Max Retry Exceeded)
-      ▲
-      └───────────────────────────────────── [NEEDS_HUMAN_REVIEW]
+ [ASSETS_AUDITED] ──► [TTS_SYNTHESIZED] ──► [DURATION_RECONCILED] ──► [PACKAGED] ──► [RENDERING] ──► [COMPLETED]
+       │                    │                      │                     │              │
+    [FAILED] ◄──────────────┴──────────────────────┴─────────────────────┴──────────────┴── (Max Retry Exceeded)
+       ▲
+       └─────────────────────────────────────────────────────────────────── [NEEDS_HUMAN_REVIEW]
 ```
 
-### Chi tiết các trạng thái (15 Canonical Operational States):
+### Chi tiết các trạng thái (17 Canonical Operational States):
 
 | State | Mô tả trạng thái | Xử lý Idempotency & Compensation (Phục hồi lỗi) |
 | :--- | :--- | :--- |
@@ -34,15 +31,17 @@ Vòng đời từ khi người dùng nhập yêu cầu cho đến khi nhận vid
 | `CHAPTER_SCRIPT_GENERATED` | Micro-Step 1A sinh lời thoại voiceover truyền `narrativeContext`. | Checkpoint voiceover text của từng Chapter. |
 | `CHAPTER_FACT_CHECKED` | Micro-Step 1B Dual Guardrails (Folklore Regex + NLI Entailment Judge $\ge 0.80$). | Thang Escalation: Safe Auto-Fix ➔ Retry $\le 2$ ➔ Flag `NEEDS_HUMAN_REVIEW` (Resume trực tiếp `segmenter` không lặp node). |
 | `SCENES_SEGMENTED` | Phân đoạn kịch bản thành các scene chi tiết theo timing và visual cue. | Checkpoint danh sách các scene cần tìm tài nguyên. |
-| `RESEARCH_COMPLETED` | Micro-Step 1C Research Agent tìm kiếm tư liệu lịch sử tương ứng. | Thu thập provenance, license candidates cho từng scene. |
-| `TTS_SYNTHESIZED` | VieNeu TTS sinh file audio và word-level timestamps cho từng scene. | Lưu audio vào Host Volume `/media/audio-cache/`, fallback `SyntheticTTSFallbackEngine` (sine 480Hz) khi service Python chưa sẵn sàng (dev). |
-| `DURATION_RECONCILED` | Micro-Step 2 Pacing Reconcile cân bằng thời lượng thoại và hình ảnh. | Time-Stretch ±10%, reconcile frame timings. |
-| `KEYWORDS_EXTRACTED` | Micro-Step 3 Trích xuất từ khóa, thực thể & typography tags. | Checkpoint overlay metadata cho Remotion rendering. |
+| `KEYWORDS_EXTRACTED` | Micro-Step 1C Visual Query Planning & Keyword Extractor Agent chuẩn hóa truy vấn. | Checkpoint search keywords và `ImageSearchToolInput` cho từng scene. |
+| `RESEARCH_COMPLETED` | Research Agent tìm kiếm tư liệu lịch sử qua provider chain. | Thu thập provenance, license candidates cho từng scene. |
 | `ASSETS_AUDITED` | VLM Inspector kiểm định bản quyền & chất lượng ảnh (`PD`, `CC0`, `CC-BY`). | Tự động fallback Pure Code Layout nếu ảnh < 60 điểm. |
-| `PACKAGED` | Micro-Step 4 Đóng gói toàn diện thành `ChronoVideoScriptSchema` v4.1. | Validate 100% Zod Schema v4.1 trước khi đưa vào Render Queue. |
+| `TTS_SYNTHESIZED` | VieNeu TTS sinh file audio và word-level timestamps cho từng scene. | Lưu audio vào Host Volume `/media/audio-cache/`, fallback `SyntheticTTSFallbackEngine` (sine 480Hz) khi service Python chưa sẵn sàng (dev). |
+| `DURATION_RECONCILED` | Pacing Reconcile Engine cân bằng thời lượng thoại và hình ảnh. | Time-Stretch ±10%, reconcile frame timings. |
+| `PACKAGED` | Đóng gói toàn diện thành `ChronoVideoScriptSchema` v4.1. | Validate 100% Zod Schema v4.1 trước khi đưa vào Render Queue. |
+| `RENDERING` | Render Worker tiếp nhận job render video MP4 qua Remotion Headless Chrome. | BullMQ concurrency control, process isolation. |
 | `COMPLETED` | Video MP4 đã render xuất xưởng thành công vào `/media/projects/:projectId/output/video.mp4`. | Trả link phát/tải MP4 (`/api/v1/projects/:id/video`), dọn dẹp temp files & Chrome processes. |
 | `NEEDS_HUMAN_REVIEW` | Fact-Check hoặc Asset Audit không thể tự giải quyết sau retry. | Gửi Alert Webhook/UI để biên tập viên duyệt/sửa tay, không sập pipeline. |
 | `FAILED` | Dự án bị lỗi nghiêm trọng không thể khắc phục sau toàn bộ escalation. | Ghi lại traceback log, giải phóng job queue và hoàn token. |
+| `ABORTED` | Người dùng hoặc quản trị viên chủ động hủy bỏ tiến trình sinh video. | Hủy tác vụ BullMQ và giải phóng tài nguyên. |
 
 ---
 

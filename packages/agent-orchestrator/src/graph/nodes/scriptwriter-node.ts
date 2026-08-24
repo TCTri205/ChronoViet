@@ -103,7 +103,7 @@ QUY TẮC BẮT BUỘC DÀNH CHO TTS:
 
     const userMessage = `Hãy viết lời dẫn chuyện cho Chương ${i + 1}: "${chapter.title}".
 Tóm tắt nội dung chương: ${chapter.summary}
-Thời lượng mục tiêu: ${chapter.targetDurationSeconds} giây (~${targetWords} từ tiếng Việt).
+Thời lượng mục tiêu: ${chapter.targetDurationSeconds} giây (bắt buộc viết đầy đủ từ ${Math.round(targetWords * 0.85)} đến ${Math.round(targetWords * 1.15)} từ tiếng Việt để đọc vừa vặn trong ${chapter.targetDurationSeconds} giây, tuyệt đối không viết tóm tắt quá ngắn).
 
 TƯ LIỆU LỊCH SỬ XÁC THỰC TỪ CHRONO-RAG:
 ${ragGroundingText}
@@ -125,6 +125,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi lời bình để đọc TTS trực tiếp
         ],
         temperature: 0.3,
         maxTokens: estimatedMaxTokens,
+        timeoutMs: envConfig.LOCAL_LLM_TIMEOUT_MS || 60000,
       });
 
       // Sanitize any remaining stage markers or markdown noise

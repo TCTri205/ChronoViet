@@ -118,18 +118,17 @@ export function resolveWeights() {
   }
 
   // Multimodal projector
-  const isVl = Boolean(llmPath && (/[-_]vl[-_.]/i.test(llmPath) || /qwen.*vl/i.test(llmPath)));
   let mmprojPath: string | null = null;
-  if (isVl) {
-    const mmprojCandidates = [
-      path.join(MODEL_DIR, 'qwen3.5-9b-mmproj.gguf'),
-      path.join(MODEL_DIR, 'mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf'),
-    ];
-    for (const m of mmprojCandidates) {
-      if (fs.existsSync(m)) {
-        mmprojPath = m;
-        break;
-      }
+  const mmprojCandidates = [
+    path.join(MODEL_DIR, 'qwen3.5-9b-mmproj.gguf'),
+    path.join(MODEL_DIR, 'mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf'),
+    path.join(MODEL_DIR, 'mmproj-Qwen2.5-VL-7B-Instruct-Q8_0.gguf'),
+    path.join(MODEL_DIR, 'mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf'),
+  ];
+  for (const m of mmprojCandidates) {
+    if (fs.existsSync(m)) {
+      mmprojPath = m;
+      break;
     }
   }
 

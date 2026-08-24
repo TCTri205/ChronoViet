@@ -13,10 +13,14 @@ export interface LatencySummary {
   max_ms: number;
   stdDev_ms: number;
   count: number;
+  ttft_p95_ms?: number;
+  avg_tokens_per_sec?: number;
 }
 
 export class HighResolutionLatencyProfiler {
   private measurements: number[] = [];
+  private ttftMeasurements: number[] = [];
+  private tokenVelocities: number[] = [];
 
   /**
    * Starts a high-resolution timer and returns a stop function returning elapsed milliseconds
@@ -40,11 +44,30 @@ export class HighResolutionLatencyProfiler {
   }
 
   /**
-   * Calculates specific percentile (0..100)
+   * Records Time To First Token (TTFT) in milliseconds
    */
-  getPercentile(percentile: number): number {
-    if (this.measurements.length === 0) return 0;
-    const sorted = [...this.measurements].sort((a, b) => a - b);
+  recordTTFT(ttftMs: number): void {
+    if (Number.isFinite(ttftMs) && ttftMs >= 0) {
+      this.ttftMeasurements.push(ttftMs);
+    }
+  }
+
+  /**
+   * Records token generation rate (tokens per second)
+   */
+  recordGeneration(durationMs: number, tokenCount: number): void {
+    if (durationMs > 0 && tokenCount > 0) {
+      const tokensPerSec = (tokenCount / durationMs) * 1000;
+      this.tokenVelocities.push(tokensPerSec);
+    }
+  }
+
+  /**
+   * Calculates specific percentile (0..100) for a given array
+   */
+  getPercentile(percentile: number, values: number[] = this.measurements): number {
+    if (values.length === 0) return 0;
+    const sorted = [...values].sort((a, b) => a - b);
     const index = (percentile / 100) * (sorted.length - 1);
     const lower = Math.floor(index);
     const upper = Math.ceil(index);
@@ -88,7 +111,7 @@ export class HighResolutionLatencyProfiler {
     );
     const stdDev_ms = Math.sqrt(sqDiffSum / count);
 
-    return {
+    const summary: LatencySummary = {
       p50_ms: Number(this.getPercentile(50).toFixed(2)),
       p90_ms: Number(this.getPercentile(90).toFixed(2)),
       p95_ms: Number(this.getPercentile(95).toFixed(2)),
@@ -99,6 +122,16 @@ export class HighResolutionLatencyProfiler {
       stdDev_ms: Number(stdDev_ms.toFixed(2)),
       count,
     };
+
+    if (this.ttftMeasurements.length > 0) {
+      summary.ttft_p95_ms = Number(this.getPercentile(95, this.ttftMeasurements).toFixed(2));
+    }
+    if (this.tokenVelocities.length > 0) {
+      const avgVel = this.tokenVelocities.reduce((a, b) => a + b, 0) / this.tokenVelocities.length;
+      summary.avg_tokens_per_sec = Number(avgVel.toFixed(1));
+    }
+
+    return summary;
   }
 
   /**
@@ -106,5 +139,7 @@ export class HighResolutionLatencyProfiler {
    */
   reset(): void {
     this.measurements = [];
+    this.ttftMeasurements = [];
+    this.tokenVelocities = [];
   }
 }

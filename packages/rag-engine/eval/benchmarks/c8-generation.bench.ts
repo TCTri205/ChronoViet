@@ -6,12 +6,13 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { ComponentBenchmarkReport, ChronoevalDatasetItem } from '@chronoviet/shared-spec';
+import { ComponentBenchmarkReport, ChronoevalDatasetItem, removeVietnameseAccents } from '@chronoviet/shared-spec';
 import { callLLM, ChatMessage } from '@chronoviet/infra';
 import { ChronoRagEngine } from '../../src/rag-engine.js';
 import { HighResolutionLatencyProfiler } from '../metrics/latency-profiler.js';
 import { verifyClaimEntailment } from '../metrics/grounding-metrics.js';
 import { ensureBenchmarkDatabaseSeeded } from '../datasets/seeder.js';
+import { getStratifiedHistoricalSample } from '../datasets/builder.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,10 +34,13 @@ export async function runC8Benchmark(): Promise<ComponentBenchmarkReport> {
   let causalScoreSum = 0;
   let causalTotal = 0;
 
-  // Evaluate across representative historical epochs (45 queries)
-  const evalSubset = canonicalItems.filter((_, idx) => idx % 6 === 0).slice(0, 45);
+  // Evaluate across representative historical epochs (15 queries in fast mode, all in full mode)
+  const isFull = process.argv.includes('--full');
+  const evalSubset = isFull ? canonicalItems : getStratifiedHistoricalSample(canonicalItems, 15);
 
-  for (const item of evalSubset) {
+  for (let idx = 0; idx < evalSubset.length; idx++) {
+    const item = evalSubset[idx];
+    console.log(`  [C8 Benchmark] (${idx + 1}/${evalSubset.length}) Query: "${item.query.slice(0, 55)}..."`);
     const timer = profiler.startTimer();
 
     // Generate Real LLM Answer through ChronoRagEngine
@@ -46,6 +50,7 @@ export async function runC8Benchmark(): Promise<ComponentBenchmarkReport> {
         query: item.query,
         intent: item.intent,
         requiresMultiHop: item.requires_multihop,
+        maxTokens: 400,
       });
       generatedAnswer = answerRes.answerText;
     } catch (err) {
@@ -58,47 +63,74 @@ export async function runC8Benchmark(): Promise<ComponentBenchmarkReport> {
     timer();
 
     const requiredClaims = item.ground_truth_chunks
-      .filter((c) => c.relevance_grade === 3)
-      .flatMap((c) => c.key_evidence_claims || []);
+      .filter((c) => c.relevance_grade >= 2)
+      .flatMap((c) => c.key_evidence_claims || [])
+      .filter(Boolean);
 
     let claimsMet = 0;
-    for (const claim of requiredClaims) {
-      factsChecked++;
-      const entailment = verifyClaimEntailment(claim, [generatedAnswer]);
-      if (entailment.status === 'ENTAILED') {
-        factsCorrect++;
-        claimsMet++;
-      } else {
-        const claimWords = claim.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
-        const matchedWords = claimWords.filter((w) => generatedAnswer.toLowerCase().includes(w));
-        if (claimWords.length > 0 && matchedWords.length >= Math.ceil(claimWords.length * 0.5)) {
+    if (requiredClaims.length > 0) {
+      for (const claim of requiredClaims) {
+        factsChecked++;
+        const entailment = verifyClaimEntailment(claim, [generatedAnswer]);
+        if (entailment.status === 'ENTAILED') {
           factsCorrect++;
           claimsMet++;
         }
       }
+    } else {
+      // If no explicit claims, verify canonical entity / topic mention in meaningful context
+      const expectedEntity = (item.canonical_entity_id || '')
+        .replace(/^person_|^event_|^artifact_|^dynasty_/, '')
+        .replace(/_/g, ' ')
+        .toLowerCase();
+      const aliases = (item.expected_aliases || []).map((a) => a.toLowerCase());
+      const ansLower = generatedAnswer.toLowerCase();
+      const ansUnaccented = removeVietnameseAccents(ansLower);
+
+      factsChecked++;
+      const hasEntity =
+        (expectedEntity && (ansLower.includes(expectedEntity) || ansUnaccented.includes(removeVietnameseAccents(expectedEntity)))) ||
+        aliases.some((a) => ansLower.includes(a) || ansUnaccented.includes(removeVietnameseAccents(a)));
+
+      if (hasEntity && generatedAnswer.trim().length >= 30) {
+        factsCorrect++;
+        claimsMet++;
+      }
     }
 
-    const completeness = requiredClaims.length > 0 ? (claimsMet / requiredClaims.length) * 100 : (generatedAnswer.length > 50 ? 85 : 0);
+    const completeness = requiredClaims.length > 0
+      ? (claimsMet / requiredClaims.length) * 100
+      : (claimsMet > 0 ? 100 : 0);
     completenessScoreSum += completeness;
 
-    // Temporal correctness check
+    // Temporal correctness check: verify exact year or dynasty alignment
+    let isTemporalCorrectForQuery = false;
     if (item.temporal_bounds?.time_start) {
       const year = String(item.temporal_bounds.time_start);
-      if (generatedAnswer.includes(year) || item.temporal_bounds.time_start < 0) {
+      const dynasty = (item.temporal_bounds.dynasty || '').toLowerCase();
+      if (
+        generatedAnswer.includes(year) ||
+        (dynasty && generatedAnswer.toLowerCase().includes(dynasty)) ||
+        item.temporal_bounds.time_start < 0
+      ) {
+        isTemporalCorrectForQuery = true;
         temporalCorrectCount++;
       }
     } else {
+      isTemporalCorrectForQuery = true;
       temporalCorrectCount++;
     }
 
     // Causal / Comparative Reasoning Quality (1.0 to 5.0)
     if (item.intent === 'WHY_REASONING' || item.intent === 'CAUSAL_ANALYSIS' || item.domain === 'COMPARATIVE') {
       causalTotal++;
-      let score = 2.0;
-      if (generatedAnswer.includes('do') || generatedAnswer.includes('kết quả') || generatedAnswer.includes('chiến lược')) {
-        score += 1.5;
-      }
+      let score = 2.5;
       if (completeness >= 80) {
+        score += 1.5;
+      } else if (completeness >= 50) {
+        score += 1.0;
+      }
+      if (isTemporalCorrectForQuery) {
         score += 1.0;
       }
       causalScoreSum += Math.min(5.0, score);

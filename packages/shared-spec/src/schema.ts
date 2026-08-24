@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export { z };
 
 // ==========================================
 // 1. CORE CONFIG & THEME SCHEMAS

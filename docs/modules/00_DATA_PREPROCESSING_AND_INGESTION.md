@@ -79,7 +79,7 @@ Nguồn dữ liệu đầu vào của ChronoViet được thu thập từ 3 cấ
                ▼
  ┌───────────────────────────┐
  │ 4. Entity Disambiguation  │ ──► Đồng nhất nhân vật: Nguyễn Huệ = Quang Trung (ALIAS_OF)
- └───────────────────────────┘
+ └─────────────┬─────────────┘
 ```
 
 #### Xử Lý Ánh Xạ Địa Danh Qua Các Thời Kỳ (`SAME_AS_LOCATION`):
@@ -97,7 +97,7 @@ Lịch sử Việt Nam chứng kiến sự thay đổi tên gọi địa danh li
 ```
 
 #### Giải Quyết Đồng Tham Chiếu & Đồng Nhất Nhân Vật (`ALIAS_OF`):
-Khi nạp văn bản cổ, các đại từ hoặc tên hiệu như *"Bắc Bình Vương"*, *"Quang Trung"*, *"Nguyễn Huệ"*, *"Hồ Thơm"* đều được ánh xạ về một **Canonical Entity ID** (`person_nguyen_hue`) với thuộc tính `aliases = ["Quang Trung", "Nguyễn Huệ", "Hồ Thơm", "Bắc Bình Vương", "Long Nhượng Tướng Quân"]` (lưu ý danh xưng *"Tây Sơn Vương"* được ánh xạ riêng về **Nguyễn Nhạc** — `person_nguyen_nhac`).
+Khi nạp văn bản cổ, các đại từ hoặc tên hiệu như *"Bắc Bình Vương"*, *"Quang Trung"*, *"Nguyễn Huệ"*, *"Hồ Thơm"* đều được ánh xạ về một **Canonical Entity ID** (`person_quang_trung`) với thuộc tính `aliases = ["Quang Trung", "Nguyễn Huệ", "Hồ Thơm", "Bắc Bình Vương", "Long Nhượng Tướng Quân"]` (lưu ý danh xưng *"Tây Sơn Vương"* được ánh xạ riêng về **Nguyễn Nhạc** — `person_nguyen_nhac`).
 
 ---
 
@@ -181,7 +181,7 @@ DUAL-BRANCH INDEXING PIPELINE
   ```sql
   CREATE INDEX IF NOT EXISTS idx_chunks_embedding_hnsw 
   ON document_chunks USING hnsw (embedding vector_cosine_ops) 
-  WITH (m = 16, ef_construction = 64);
+  WITH (m = 32, ef_construction = 128);
   ```
 
 ### 4.2. Nhánh 2: Graph Branch (Structured Knowledge Layer & Hierarchical 2-Stage Extraction Engine)
@@ -258,7 +258,7 @@ Mô-đun 0 vận hành **Kiến trúc Trích Xuất Phân Tầng 2-Stage Tiên T
    * **Lỗi Quá Tải Tạm Thời / Timeout / Mạng (HTTP 502, 503, 504, AbortError):** Cách ly tạm thời trong **30 Giây (30,000 ms)** và tự động kích hoạt **Fast Failover Retry** sang target tiếp theo trong chu kỳ mà không làm gián đoạn pipeline.
 
 3. **Adaptive Timeouts & Controlled Concurrency Pool:**
-   * **Local LLM Timeout:** Ngưỡng tối đa **45 giây** cho các yêu cầu trích xuất cục bộ trên `llama-server`.
+   * **Local LLM Timeout:** Ngưỡng tối đa **120 giây** (`LOCAL_LLM_TIMEOUT_MS=120000`) cho các yêu cầu trích xuất cục bộ trên `llama-server`.
    * **Cloud Target Timeout:** Ngưỡng mặc định **35 giây** (`REMOTE_FALLBACK_TIMEOUT_MS=35000`) nhằm phát hiện sớm và chuyển vùng ngay lập tức khi mạng chậm.
    * **Controlled Concurrency Worker Pool:** Trong `DualBranchSeeder`, các đoạn văn bản (chunks) được xử lý đồng thời thông qua worker pool với số lượng luồng linh hoạt $N = \min(8, \max(2, \text{số active targets}))$. Kết quả trích xuất được gom về và tổng hợp tất định (deterministic) trong Single Thread của Node.js event loop trước khi thực hiện batch transaction vào PostgreSQL.
 
@@ -329,11 +329,11 @@ Theo kiến trúc chuẩn phân tách trách nhiệm (Separation of Concerns):
 
 ---
 
-## 6. Quy Chuẩn 7 Bảng CSDL, CLI Commands & Nạp Golden Datasets Cho `eval/`
+## 6. Quy Chuẩn 11 Bảng CSDL, CLI Commands & Nạp Golden Datasets Cho `eval/`
 
-Để tự động hóa hoàn toàn công đoạn nạp dữ liệu cho cả môi trường Dev, Staging và Production, Mô-đun 0 quản lý 7 bảng lưu trữ trên PostgreSQL và cung cấp bộ công cụ **CLI Commands** chạy từ root monorepo:
+Để tự động hóa hoàn toàn công đoạn nạp dữ liệu cho cả môi trường Dev, Staging và Production, Mô-đun 0 quản lý 11 bảng lưu trữ trên PostgreSQL và cung cấp bộ công cụ **CLI Commands** chạy từ root monorepo:
 
-### 6.1. Cấu Trúc 7 Bảng CSDL Chuẩn Hóa Trên PostgreSQL
+### 6.1. Cấu Trúc 11 Bảng CSDL Chuẩn Hóa Trên PostgreSQL
 
 | Bảng CSDL | Loại Dữ Liệu | Mục Đích Lưu Trữ |
 | :--- | :--- | :--- |
@@ -342,14 +342,18 @@ Theo kiến trúc chuẩn phân tách trách nhiệm (Separation of Concerns):
 | `relationships` | Knowledge Graph Edges | Lưu trữ quan hệ thực thể $(S \rightarrow P \rightarrow O)$ có độ tin cậy $\ge 0.85$ |
 | `entity_chunks` | Junction Table | Bảng liên kết chéo $N - N$ giữa thực thể và các văn bản chunk chứa thực thể |
 | `entity_audit_logs` | Audit Trail | Ghi nhật ký thay đổi append-only khi hợp giải, sáp nhập hoặc cập nhật thực thể |
+| `orchestrator_checkpoints` | Orchestration Persistence | Lưu trữ state checkpoints theo dự án cho LangGraph Orchestrator phục vụ resume mượt mà |
 | `quarantine_triples` | Quarantine Buffer | Lưu trữ tạm các bộ ba quan hệ nghi vấn (confidence < 0.85, dangling context) chờ rà soát |
 | `unmapped_entities` | Triage Buffer | Lưu trữ các thực thể mới xuất hiện trong văn bản chưa có trong Master Ontology |
+| `conversations` | Chat Conversations | Quản lý phiên hội thoại lịch sử đa lượt của Web Chatbot Supervisor |
+| `conversation_messages` | Chat Messages & Citations | Lưu trữ chi tiết từng tin nhắn chat, intent classification và trích dẫn citations |
+| `video_briefs` | Compiled Video Briefs | Lưu trữ hồ sơ brief làm video đã biên soạn từ chat hội thoại phục vụ 1-Click Studio Handover |
 
 ### 6.2. Bộ Lệnh CLI Seeders & Kiểm Định Dữ Liệu Thật
 
 ```bash
 # [1-CLICK KHUYẾN NGHỊ] Thiết lập và nạp trọn gói toàn bộ dữ liệu & kiểm tra sức khỏe CSDL:
-pnpm data:setup               # Tự động: Bật Infra -> Init 8 Bảng -> Nạp Tri thức -> Kiểm tra Health DB
+pnpm data:setup               # Tự động: Bật Infra -> Init 11 Bảng -> Nạp Tri thức -> Kiểm tra Health DB
 
 # Hoặc thực thi từng bước thủ công:
 # 0. Tải trọng số mô hình AI GGUF (BGE-M3 1024d & Qwen3.5-4B cho 2-Stage Triples Extraction)

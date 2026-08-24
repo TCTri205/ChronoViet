@@ -63,6 +63,7 @@ Hãy trả về JSON Object theo cấu trúc:
       ],
       temperature: 0.2,
       responseFormat: 'json_object',
+      timeoutMs: envConfig.LOCAL_LLM_TIMEOUT_MS || 60000,
     });
 
     const parsed = parseLlmJson(res.content);
@@ -77,6 +78,19 @@ Hãy trả về JSON Object theo cấu trúc:
       transitionHook: c.transitionHook || '',
       establishedTone: c.establishedTone || 'Hùng tráng',
     }));
+
+    if (chapters.length > 0) {
+      const allocatedTotal = chapters.reduce((sum, c) => sum + (c.targetDurationSeconds || 0), 0);
+      if (allocatedTotal === 0 || Math.abs(allocatedTotal - totalTargetSec) / totalTargetSec > 0.05) {
+        const perChapSec = Math.round(totalTargetSec / chapters.length);
+        chapters.forEach((c, idx) => {
+          c.targetDurationSeconds =
+            idx === chapters.length - 1
+              ? totalTargetSec - perChapSec * (chapters.length - 1)
+              : perChapSec;
+        });
+      }
+    }
   } catch (err: any) {
     // Eval Integrity: strict mode must not substitute deterministic template chapters
     if (envConfig.EVAL_STRICT) {

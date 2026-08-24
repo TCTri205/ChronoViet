@@ -53,55 +53,60 @@ Mô-đun chịu trách nhiệm:
                                                    ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                               CHAPTER-BASED SCRIPT PIPELINE (Vòng lặp từng Chapter kèm Narrative Context)            │
-├───────────────────────┬───────────────────────────────┬─────────────────────────┬───────────────────┬──────────────────┤
-│ (Micro-Step 1A)       │ (Micro-Step 1A-Audit)         │ (Micro-Step 1B)         │ (Step 1B-Reconcile│ (Micro-Step 1C)  │
-│ ▼                     │ ▼                             │ ▼                       │ ▼                 │ ▼                │
-│ ┌───────────────────┐ │ ┌───────────────────────────┐ │ ┌─────────────────────┐ │ ┌───────────────┐ │ ┌──────────────────────────────┐ │
-│ │ 1A. SCRIPTWRITER  │─┼─► 1A-AUDIT. FACT-CHECKER    │─┼─► 1B. SCENE SEGMENTER │─┼─► RECONCILIATION│─┼─► 1C. KEYWORD EXT. + RESEARCH │ │
-│ │ - Nhận            │ │ │ - Alias Table & Fuzzy Match│ │ │ - Chia Scene (5s-25s)│ │ │ - Đối soát    │ │ │ - Crawl Query (Entity/Alias) │ │
-│ │   narrativeContext│ │ │ - Cross-Model / Heuristic │ │ │ - Max 5-8 scenes     │ │ │   thời lượng    │ │ │ - Research Agent: SerpAPI /  │ │
-│ │ - Giữ tone liền   │ │ │ - 4-Tier Escalation Path  │ │ │                       │ │ │   (deviation<15%) │ Tavily / Brave / Wikimedia   │ │
-│ │ └───────────────────┘ │ └───────────────────────────┘ │ └─────────────────────┘ │ └───────────────┘ │ - Domain Whitelist (License)  │ │
-│ └───────────────────┘ │ └───────────────────────────┘ │ └─────────────────────┘ │ └───────────────┘ │ └──────────────────────────────┘ │
-└───────────────────────┴───────────────────────────────┴────────────┬────────────────────────────────┴──────────────────┘
+├───────────────────────┬───────────────────────────────┬─────────────────────────┬──────────────────────────────────────┤
+│ (Micro-Step 1A)       │ (Micro-Step 1A-Audit)         │ (Micro-Step 1B)         │ (Micro-Step 1C)                      │
+│ ▼                     │ ▼                             │ ▼                       │ ▼                                    │
+│ ┌───────────────────┐ │ ┌───────────────────────────┐ │ ┌─────────────────────┐ │ ┌──────────────────────────────────┐ │
+│ │ 1A. SCRIPTWRITER  │─┼─► 1A-AUDIT. FACT-CHECKER    │─┼─► 1B. SCENE SEGMENTER │─┼─► 1C. KEYWORD EXTRACTOR            │ │
+│ │ - Nhận            │ │ │ - Alias Table & Fuzzy Match│ │ │ - Chia Scene (5s-25s)│ │ │ - Crawl Query (Entity/Alias)     │ │
+│ │   narrativeContext│ │ │ - Cross-Model / Heuristic │ │ │ - Max 5-8 scenes     │ │ │ - Structured ImageSearchToolInput│ │
+│ │ - Giữ tone liền   │ │ │ - 4-Tier Escalation Path  │ │ │                       │ │ │ - Bilingual Query Generation     │ │
+│ └───────────────────┘ │ └───────────────────────────┘ │ └─────────────────────┘ │ └──────────────────────────────────┘ │
+└───────────────────────┴───────────────────────────────┴────────────┬────────────┴──────────────────────────────────────┘
                                                                      │ (Scenes List Output)
                                                                      ▼
                                                      ┌───────────────────────────────────────────────┐
-                                                     │    SCENE-LEVEL PARALLEL WORKERS EXECUTION     │
-                                                     │    (Fine-Grained Task Idempotency Check)     │
-                                                     └───────────────┬───────────────┴───────────────┘
-                                                                     │                               │
-                             ┌───────────────────────────────────────┘                               └───────────────────────────────────────┐
-                             ▼                                                                                                               ▼
-              ┌─────────────────────────────┐                                                                                 ┌─────────────────────────────┐
-              │   PARALLEL WORKER A: TTS    │                                                                                 │ PARALLEL WORKER B: RESEARCH │
-              │ - Hash Key Idempotency Check│                                                                                 │ AGENT (1C) -> VLM INSPECTOR  │
-              │ - VieNeu ONNX TTS Engine    │                                                                                 │ - Provider Chain Online      │
-              │ - Xuất WAV + Word Timestamps│                                                                                 │ - Multi-Provider VLM         │
-              └──────────────┬──────────────┘                                                                                 │ - Strategy 3+3 Candidates    │
-                             │                                                                                                │ - Dual VLM (Gemini / CLIP)   │
-                             │                                                                                                └──────────────┬──────────────┘
-                             │                                                                                                               │
-                             └───────────────────────────────────────────────┬───────────────────────────────────────────────────────────────┘
-                                                                             │
-                                                                             ▼
-                                                             ┌───────────────────────────────┐
-                                                             │    CODE RULES ENGINE (TS)     │
-                                                             │ - Auto-Sync durationInFrames  │
-                                                             │ - Layout Rotation PURE_CODE   │
-                                                             └───────────────┬───────────────┘
-                                                                             │
-                                                                             ▼
-                                                             ┌───────────────────────────────┐
-                                                             │     JSON PACKAGER AGENT       │
-                                                             │  (Zod v4.1 Schema Validation) │
-                                                             └───────────────┬───────────────┘
-                                                                             │ (JSON Schema v4.1 Validated)
-                                                                             ▼
-                                                             ┌───────────────────────────────┐
-                                                             │    REMOTION RENDER TOOL       │
-                                                             │ (Pre-download + Chrome Pool)  │
-                                                             └───────────────┬───────────────┘
+                                                     │    DETERMINISTIC SEQUENTIAL NODE PIPELINE     │
+                                                     │    (In-Node Batch Parallelism via Promise.all)│
+                                                     └───────────────┬───────────────────────────────┘
+                                                                     │
+                                                                     ▼
+                                                     ┌───────────────────────────────────────────────┐
+                                                     │       RESEARCH AGENT (Provider Chain)         │
+                                                     │ - SerpAPI / Tavily / Brave / Wikimedia / Cat. │
+                                                     │ - Domain Whitelist + License Pre-filtering    │
+                                                     └───────────────┬───────────────────────────────┘
+                                                                     │
+                                                                     ▼
+                                                     ┌───────────────────────────────────────────────┐
+                                                     │       VLM INSPECTOR (3+3 Inspection)          │
+                                                     │ - Visual Quality Gate + Gemini / Local CLIP   │
+                                                     │ - PURE_CODE Layout Mode Auto-Fallback         │
+                                                     └───────────────┬───────────────────────────────┘
+                                                                     │
+                                                                     ▼
+                                                     ┌───────────────────────────────────────────────┐
+                                                     │       VIE NEU TTS SYNTHESIS ENGINE            │
+                                                     │ - Idempotent Audio Cache + Word Timestamps    │
+                                                     └───────────────┬───────────────────────────────┘
+                                                                     │
+                                                                     ▼
+                                                     ┌───────────────────────────────────────────────┐
+                                                     │     DURATION RECONCILIATION ENGINE            │
+                                                     │ - Auto-Sync durationInFrames (Pacing Err < 3%)│
+                                                     └───────────────┬───────────────────────────────┘
+                                                                     │
+                                                                     ▼
+                                                     ┌───────────────────────────────────────────────┐
+                                                     │     JSON PACKAGER AGENT (shared-spec v4.1)    │
+                                                     │ - Zod Validation -> project_schema.json       │
+                                                     └───────────────┬───────────────────────────────┘
+                                                                     │ (project_schema.json Validated)
+                                                                     ▼
+                                                     ┌───────────────────────────────────────────────┐
+                                                     │    REMOTION RENDER ENGINE (render-worker)     │
+                                                     │ (Pre-download + Chrome Headless Pool)         │
+                                                     └───────────────────────────────────────────────┘
 ```
 
 ---
@@ -111,7 +116,7 @@ Mô-đun chịu trách nhiệm:
 ### 3.1. Master Orchestrator (LangGraph.js Supervisor & Postgres Checkpointer)
 * **Nhiệm vụ:** Quản lý vòng đời workflow, duy trì state liên chương (`runningNarrativeState`), lưu trữ Checkpoint State vào PostgreSQL qua LangGraph.js Postgres Checkpointer, điều phối các Micro-Agents và các Task thực thi song song, quản lý Thang Escalation Retry và khôi phục idempotent khi container rớt.
 * **Quy tắc điều phối & State Schema:**
-  * Quản lý chuyển thể trạng thái qua các bước: `DRAFT` ➔ `OUTLINE_CHAPTERED` ➔ `CHAPTER_SCRIPT_GENERATED` ➔ `CHAPTER_FACT_CHECKED` ➔ `SCENES_SEGMENTED` ➔ `RECONCILED` ➔ `ASSETS_AUDITED` ➔ `RENDERING` ➔ `COMPLETED` / `NEEDS_HUMAN_REVIEW` / `FAILED`.
+  * Quản lý chuyển thể trạng thái theo vòng đời đầy đủ: `INIT` ➔ `RAG_RETRIEVED` ➔ `OUTLINE_CHAPTERED` ➔ `CHAPTER_SCRIPT_GENERATED` ➔ `CHAPTER_FACT_CHECKED` ➔ `SCENES_SEGMENTED` ➔ `KEYWORDS_EXTRACTED` ➔ `RESEARCH_COMPLETED` ➔ `TTS_SYNTHESIZED` ➔ `DURATION_RECONCILED` ➔ `ASSETS_AUDITED` ➔ `PACKAGED` ➔ `RENDERING` ➔ `COMPLETED` / `NEEDS_HUMAN_REVIEW` / `FAILED` / `ABORTED`.
   * **Narrative Context Flow**: Lưu giữ và cập nhật `runningNarrativeState` sau mỗi Chapter gồm:
     ```typescript
     interface RunningNarrativeState {
@@ -180,7 +185,7 @@ Mô-đun chịu trách nhiệm:
 
 #### 3.2.6. Research Agent (Micro-Step 1C — Agentic Tool Image Search)
 * **Input:** `searchParams` (`ImageSearchToolInput`) của từng Scene từ Keyword Planning Agent.
-* **Nhiệm vụ:** Thực thi Tool **`executeImageSearchTool`** qua **Provider Chain**: `SerpAPI (Google Images)` → `Tavily` → `Brave Search API` → `Wikimedia Commons Live` → `Curated Catalog` (13 tư liệu lịch sử verified).
+* **Nhiệm vụ:** Thực thi Tool **`executeImageSearchTool`** qua **Provider Chain**: `SerpAPI (Google Images)` → `Tavily` → `Brave Search API` → `Wikimedia Commons Live` → `Curated Catalog` (14 tư liệu lịch sử verified).
 * **Bilingual Multi-Query Strategy:** Tìm kiếm đồng thời với `englishQuery` và `primaryQuery` để tối đa hóa khả năng tìm được tư liệu lịch sử chính thống từ Wikimedia Commons và các bảo tàng thế giới.
 * **Concurrency Pool & License Safety:** Xử lý theo batch (concurrency pool = 4), chỉ chấp nhận ảnh từ **domain whitelist** (`upload.wikimedia.org`, `commons.wikimedia.org`, `flickr.com`, bảo tàng) với giấy phép bản quyền hợp lệ (`Public Domain`, `CC0`, `CC-BY`, `CC-BY-SA`).
 * **Output:** Lưu vào state `researchResults[sceneId]` gồm `candidates` (gắn mã `cand_${sceneId}_XX`), `provenance` và `resolvedAt` cho VLM Inspector.
@@ -209,7 +214,7 @@ Mô-đun chịu trách nhiệm:
 * **Nhiệm vụ:**
   1. Tính toán `durationInFrames` theo chuẩn 30 FPS:
      $$\text{durationInFrames} = \left\lceil \frac{\text{audioDurationMs} + 300}{1000} \times 30 \right\rceil$$
-  2. **PURE_CODE Layout Rotation Engine**: Luân phiên tự động chọn giữa `STAT_CARD`, `VERSUS_CARD`, `TIMELINE_CHRONO`, `QUOTE_SLIDE`, `MUSEUM_TAG` khi nhiều cảnh liên tiếp không có ảnh tư liệu.
+  2. **PURE_CODE Layout Rotation Engine**: Luân phiên tự động chọn giữa `STAT_CARD`, `VERSUS_CARD`, `TIMELINE_CHRONO`, `QUOTE_SLIDE`, `POEM_RECITING`, `CHAPTER_CARD` khi nhiều cảnh liên tiếp không có ảnh tư liệu.
 
 ---
 
@@ -223,6 +228,26 @@ Mô-đun chịu trách nhiệm:
 
 ### 3.7. Remotion Render Engine Tool (Mô-đun 4)
 * **Nhiệm vụ:** Nhận JSON Schema v4.1 đã qua Zod validation hoàn chỉnh (bao gồm cả dữ liệu `license` & `attribution`), thực hiện pre-download asset và render video MP4.
+
+---
+
+### 3.8. Web Chatbot Supervisor & Video Brief Compiler (`src/chat/` & `src/brief/`)
+* **Web Chatbot Supervisor (`chat/chat-supervisor.ts`):**
+  - Trợ lý hội thoại lịch sử đa lượt hỗ trợ Server-Sent Events (SSE) Streaming.
+  - Tích hợp bộ phân loại ý định **`IntentClassifier`** (`DIRECT_QUESTION`, `VIDEO_CREATION_INTENT`, `CHIT_CHAT`, `OUT_OF_SCOPE`).
+  - **`QueryRewriter`**: Tự động bổ sung ngữ cảnh lịch sử từ các lượt chat trước vào câu hỏi mơ hồ của người dùng trước khi truy vấn RAG.
+  - **`ContextPruner`**: Cắt tỉa lịch sử hội thoại thông minh bảo đảm token context luôn nằm trong ngưỡng an toàn của Small LLMs.
+* **Video Brief Compiler (`brief/chat-to-brief-compiler.ts`):**
+  - Trích xuất và tổng hợp ý định làm video từ luồng hội thoại thành cấu trúc **`VideoBrief`** chuẩn (`briefId`, `conversationId`, `topic`, `title`, `historicalPeriod`, `keyEntities`, `targetDurationSec`, `aspectRatio`, `narrativeTone`).
+  - Lưu trữ trực tiếp vào bảng `video_briefs` trong PostgreSQL phục vụ khởi tạo pipeline video tự động.
+
+---
+
+### 3.9. Historical Guardrails & Quality Assurance (`src/guardrails/`)
+* **Anti-Sycophancy Guardrail (`anti-sycophancy.ts`):** Ngăn chặn mô hình đồng thuận mù quáng với các khẳng định sai lệch hoặc câu hỏi gài bẫy lịch sử từ người dùng.
+* **Folklore Tone Guardrail (`folklore-validator.ts`):** Quét phát hiện các câu chuyện truyền thuyết / dã sử (Level 3) và bắt buộc chèn prefix giả thuyết (*"Theo truyền thuyết dân gian..."*, *"Tương truyền rằng..."*).
+* **NLI Hallucination Judge (`nli-hallucination-judge.ts`):** Sử dụng mô hình Natural Language Inference chấm điểm Entailment Score giữa kịch bản sinh ra và trích đoạn RAG gốc (ngưỡng $\ge 0.80$). Trả về trạng thái `NEUTRAL` và điểm `0.0` (unverified) khi không có ground truth từ RAG, ngăn chặn silent false-passes.
+* **Stream De-duplicator (`stream-dedup.ts`):** Loại bỏ hiện tượng lặp từ và câu trong token stream thời gian thực.
 
 ---
 
@@ -299,13 +324,40 @@ graph TD
 
 ## 5. Giao Tiếp Với Remotion Tool & JSON Schema v4.1 (TypeScript Zod Specs)
 
-Master Orchestrator truyền dữ liệu chuẩn hóa cho Remotion Tool qua Zod Schema v4.1:
+Master Orchestrator truyền dữ liệu chuẩn hóa cho Remotion Tool và các gói con thông qua Single Source of Truth tại `@chronoviet/shared-spec`:
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 
-export const ContentTypeSchema = z.enum(["IMAGE", "PURE_CODE"]);
+// 1. License & Attribution Schemas
+export const LicenseTypeSchema = z.enum([
+  'PUBLIC_DOMAIN',
+  'CC0',
+  'CC_BY_4_0',
+  'CC_BY_SA_4_0',
+  'UNKNOWN',
+]);
 
+export const AttributionSchema = z.object({
+  author: z.string(),
+  sourceUrl: z.string().optional(),
+  license: z.string().optional(),
+});
+
+// 2. Audio Timestamps & Karaoke Captions Schemas
+export const CaptionWordSchema = z.object({
+  word: z.string(),
+  startFrame: z.number().int().min(0),
+  endFrame: z.number().int().min(0),
+});
+
+export const WordTimestampSchema = z.object({
+  word: z.string(),
+  startMs: z.number().min(0),
+  endMs: z.number().min(0),
+});
+
+// 3. Layout Modes & Classification Sets
 export const LayoutModeSchema = z.enum([
   'BLUR_BG',
   'HISTORICAL_FRAME',
@@ -340,7 +392,6 @@ export const LayoutModeSchema = z.enum([
   'POEM_RECITING',
 ]);
 
-// 11 Pure Image Layouts (xử lý qua SlideImage.tsx) & 20 Pure Code Layouts
 export const PURE_IMAGE_LAYOUTS = new Set([
   'BLUR_BG',
   'HISTORICAL_FRAME',
@@ -355,73 +406,141 @@ export const PURE_IMAGE_LAYOUTS = new Set([
   'GALLERY_3D',
 ]);
 
-export const LicenseTypeSchema = z.enum([
-  "PUBLIC_DOMAIN",
-  "CC0",
-  "CC_BY_4_0",
-  "CC_BY_SA_4_0",
-  "UNKNOWN"
+// 4. Orchestrator Internal Scene Generation (Graph State)
+export const VisualCandidateSchema = z.object({
+  candidateId: z.string(),
+  imageUrl: z.string().min(1),
+  sourceUrl: z.string().optional(),
+  title: z.string().optional(),
+  author: z.string().optional(),
+  license: LicenseTypeSchema,
+  localPath: z.string().optional(),
+  sha256: z.string().optional(),
+  pHash: z.string().optional(),
+  score: z
+    .object({
+      historicalContextScore: z.number().min(0).max(100),
+      visualNoiseScore: z.number().min(0).max(100),
+      artisticFitScore: z.number().min(0).max(100),
+      overallScore: z.number().min(0).max(100),
+    })
+    .optional(),
+  verdict: z.enum(['PASS', 'REJECT']).optional(),
+  candidateBatch: z.union([z.literal(1), z.literal(2)]).default(1),
+});
+
+export const SceneGenerationSchema = z.object({
+  sceneId: z.string(),
+  sceneIndex: z.number().int().min(0),
+  voiceoverText: z.string().min(1),
+  layoutMode: LayoutModeSchema,
+  contentType: z.enum(['IMAGE', 'PURE_CODE']).default('IMAGE'),
+  targetDurationSeconds: z.number().positive(),
+  searchKeywords: z.array(z.string()).default([]),
+  searchParams: z
+    .object({
+      sceneId: z.string().optional(),
+      primaryQuery: z.string().min(1),
+      englishQuery: z.string().optional(),
+      visualType: z.string().optional(),
+      historicalPeriod: z.string().optional(),
+      limit: z.number().optional(),
+    })
+    .optional(),
+  candidates: z.array(VisualCandidateSchema).default([]),
+  selectedAsset: VisualCandidateSchema.optional(),
+  audioPath: z.string().optional(),
+  audioDurationSeconds: z.number().optional(),
+  wordTimestamps: z.array(WordTimestampSchema).optional(),
+  usePureCodeFallback: z.boolean().default(false),
+});
+
+// 5. Remotion Render Engine Output Scene (TimelineSceneSchema)
+export const TimelineSceneSchema = z.object({
+  id: z.string(),
+  type: z.enum(['PURE_CODE', 'PURE_IMAGE']).optional(),
+  durationInFrames: z.number().optional(),
+  durationInSeconds: z.number().optional(),
+  startTime: z.number().optional(),
+  endTime: z.number().optional(),
+  layoutMode: LayoutModeSchema.optional(),
+  overlayType: z.string().optional(),
+  component: z.string().optional(),
+  text: z.string().optional(),
+  captions: z.array(CaptionWordSchema).optional(),
+  assetUrl: z.string().optional(),
+  assetMetadata: AssetMetadataSchema.optional(),
+  secondaryAssetUrl: z.string().optional(),
+  secondaryAssetMetadata: AssetMetadataSchema.optional(),
+  effect: KenBurnsEffectSchema.optional(),
+  customKenBurns: CustomKenBurnsSchema.optional(),
+  filterStyle: FilterStyleSchema.optional(),
+  rotateDeg: z.number().optional(),
+  fallbackLayoutMode: LayoutModeSchema.optional(),
+  fallbackOverlayData: OverlayDataSchema.optional(),
+  transition: TransitionTypeSchema.optional(),
+  transitionDurationFrames: z.number().optional(),
+  sceneAudioUrl: z.string().optional(),
+  sfxUrl: z.string().optional(),
+  soundEffects: z.array(SoundEffectSchema).optional(),
+  attribution: AttributionSchema.optional(),
+  license: LicenseTypeSchema.optional(),
+  overlayData: OverlayDataSchema.optional(),
+  hideSubtitle: z.boolean().optional(),
+  hideHeader: z.boolean().optional(),
+  layoutProps: z.record(z.string(), z.unknown()).optional(),
+});
+
+// 6. Complete Video Project Schema (ChronoVideoScriptSchema / VideoProjectSchema)
+export const ChronoVideoScriptSchema = z.object({
+  title: z.string(),
+  subtitle: z.string().optional(),
+  videoType: VideoDomainSchema.optional(),
+  templateId: TemplateIdSchema.optional(),
+  theme: ThemeConfigSchema.optional(),
+  aspectRatio: AspectRatioSchema.default('16:9'),
+  audioUrl: z.string().optional(),
+  captionsUrl: z.string().optional(),
+  bgmUrl: z.string().optional(),
+  bgmVolume: z.number().optional(),
+  defaultLayoutMode: LayoutModeSchema.optional(),
+  defaultFilterStyle: FilterStyleSchema.optional(),
+  defaultTransition: TransitionTypeSchema.optional(),
+  enableTransitions: z.boolean().optional(),
+  timeline: z.array(TimelineSceneSchema),
+  captions: z.array(CaptionWordSchema).optional(),
+  fps: z.number().optional(),
+});
+
+export const VideoProjectSchema = ChronoVideoScriptSchema;
+
+// 7. Orchestrator Lifecycle Statuses & Checkpointing
+export const OrchestratorStatusSchema = z.enum([
+  'INIT',
+  'RAG_RETRIEVED',
+  'OUTLINE_CHAPTERED',
+  'CHAPTER_SCRIPT_GENERATED',
+  'CHAPTER_FACT_CHECKED',
+  'SCENES_SEGMENTED',
+  'RESEARCH_COMPLETED',
+  'TTS_SYNTHESIZED',
+  'DURATION_RECONCILED',
+  'KEYWORDS_EXTRACTED',
+  'ASSETS_AUDITED',
+  'PACKAGED',
+  'RENDERING',
+  'COMPLETED',
+  'NEEDS_HUMAN_REVIEW',
+  'FAILED',
+  'ABORTED',
 ]);
 
-export const AttributionSchema = z.object({
-  author: z.string().optional(),
-  sourceUrl: z.string().url().optional(),
-  license: LicenseTypeSchema,
-  licenseUrl: z.string().url().optional()
-});
-
-export const CaptionWordSchema = z.object({
-  word: z.string(),
-  startMs: z.number(),
-  endMs: z.number(),
-  confidence: z.number().optional()
-});
-
-export const SceneSchema = z.object({
-  id: z.string(),
-  chapterId: z.string().optional(),
-  contentType: ContentTypeSchema,
-  layoutMode: LayoutModeSchema,
-  voiceoverText: z.string(),
-  text: z.string().optional(), // Alias cho Remotion timeline text
-  audioUrl: z.string().url().optional(),
-  sceneAudioUrl: z.string().url().optional(), // Alias cho Remotion sceneAudioUrl
-  durationInFrames: z.number().int().positive(),
-  captions: z.array(CaptionWordSchema).optional(),
-  imageUrl: z.string().url().optional(),
-  assetUrl: z.string().url().optional(), // Alias cho Remotion assetUrl
-  imageSource: z.string().optional(),
-  license: LicenseTypeSchema.optional(),
-  attribution: AttributionSchema.optional(),
-  requiresAttribution: z.boolean().default(false),
-  vlmScore: z.number().min(0).max(100).optional(),
-  vlmScorerType: z.enum(["LOCAL_VLM", "GEMINI_CLOUD", "CLIP_LOCAL_FALLBACK", "REDIS_CACHE"]).optional(),
-  overlayData: z.record(z.unknown()).optional(), // Direct Remotion UI Props
-  customProps: z.record(z.unknown()).optional()
-});
-
-export const RunningNarrativeStateSchema = z.object({
-  previousChapterSummary: z.string(),
-  establishedTone: z.string(),
-  introducedEntities: z.array(z.string()),
-  transitionHook: z.string()
-});
-
-export const VideoPayloadSchema = z.object({
-  compositionId: z.enum(["BattleVideoDoc", "ShortsVideoDoc", "BiographyVideoDoc", "DynastyVideoDoc", "MysteryVideoDoc", "ArtifactVideoDoc"]).optional(),
-  fps: z.literal(30).default(30),
-  width: z.number().int().optional(),
-  height: z.number().int().optional(),
-  title: z.string(),
-  scenes: z.array(SceneSchema).min(1).optional(),
-  timeline: z.array(SceneSchema).min(1).optional(), // Direct Remotion timeline alias
-  narrativeState: RunningNarrativeStateSchema.optional(),
-  bgmUrl: z.string().url().optional(),
-  bgmVolume: z.number().min(0).max(1).optional().default(0.25)
-});
-
-export type VideoPayload = z.infer<typeof VideoPayloadSchema>;
-export type Scene = z.infer<typeof SceneSchema>;
+export type ChronoVideoScript = z.infer<typeof ChronoVideoScriptSchema>;
+export type VideoProject = ChronoVideoScript;
+export type TimelineScene = z.output<typeof TimelineSceneSchema>;
+export type SceneGeneration = z.infer<typeof SceneGenerationSchema>;
+export type VisualCandidate = z.infer<typeof VisualCandidateSchema>;
+export type OrchestratorStatus = z.infer<typeof OrchestratorStatusSchema>;
 export type Attribution = z.infer<typeof AttributionSchema>;
 ```
 

@@ -1,0 +1,1963 @@
+[
+  {
+    "id": "chat_dlg_001",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hãy lập kế hoạch sản xuất video tài liệu 3 phút về Chiến thắng Bạch Đằng năm 938 của Ngô Quyền."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Chiến thắng Bạch Đằng năm 938 của Ngô Quyền",
+    "extractedSlots": {
+      "topic": "Chiến thắng Bạch Đằng năm 938 của Ngô Quyền",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Chiến thắng Bạch Đằng năm 938 của Ngô Quyền thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_002",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo dự án video 4 phút phân tích cuộc đời và tài thao lược của Trần Hưng Đạo."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Hưng Đạo Đại Vương Trần Quốc Tuấn và ba lần kháng chiến chống quân Nguyên Mông",
+    "extractedSlots": {
+      "topic": "Hưng Đạo Đại Vương Trần Quốc Tuấn và ba lần kháng chiến chống quân Nguyên Mông",
+      "targetDurationMinutes": 4,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BIOGRAPHY"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Hưng Đạo Đại Vương Trần Quốc Tuấn và ba lần kháng chiến chống quân Nguyên Mông thời lượng 4 phút"
+  },
+  {
+    "id": "chat_dlg_003",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Xin tạo video lịch sử 5 phút tái hiện cuộc hành quân thần tốc của Vua Quang Trung năm 1789."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Hoàng đế Quang Trung Nguyễn Huệ và đại thắng Kỷ Dậu 1789",
+    "extractedSlots": {
+      "topic": "Hoàng đế Quang Trung Nguyễn Huệ và đại thắng Kỷ Dậu 1789",
+      "targetDurationMinutes": 5,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Hoàng đế Quang Trung Nguyễn Huệ và đại thắng Kỷ Dậu 1789 thời lượng 5 phút"
+  },
+  {
+    "id": "chat_dlg_004",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hãy dựng video 2 phút về cuộc khởi nghĩa của Hai Bà Trưng năm 40."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Khởi nghĩa Hai Bà Trưng và lời thề Hát Môn năm 40",
+    "extractedSlots": {
+      "topic": "Khởi nghĩa Hai Bà Trưng và lời thề Hát Môn năm 40",
+      "targetDurationMinutes": 2,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Khởi nghĩa Hai Bà Trưng và lời thề Hát Môn năm 40 thời lượng 2 phút"
+  },
+  {
+    "id": "chat_dlg_005",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video thời lượng 3 phút về chiến dịch phòng thủ Như Nguyệt của Lý Thường Kiệt."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Lý Thường Kiệt và phòng tuyến sông Như Nguyệt năm 1077",
+    "extractedSlots": {
+      "topic": "Lý Thường Kiệt và phòng tuyến sông Như Nguyệt năm 1077",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Lý Thường Kiệt và phòng tuyến sông Như Nguyệt năm 1077 thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_006",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video tài liệu 5 phút tổng kết cuộc Khởi nghĩa Lam Sơn từ Hội thề Lũng Nhai đến ngày toàn thắng."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Lê Lợi và Khởi nghĩa Lam Sơn 10 năm gian khổ",
+    "extractedSlots": {
+      "topic": "Lê Lợi và Khởi nghĩa Lam Sơn 10 năm gian khổ",
+      "targetDurationMinutes": 5,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Lê Lợi và Khởi nghĩa Lam Sơn 10 năm gian khổ thời lượng 5 phút"
+  },
+  {
+    "id": "chat_dlg_007",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hãy tạo video 4 phút nghiên cứu quá trình Đinh Tiên Hoàng dẹp loạn 12 sứ quân."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân thống nhất giang sơn năm 968",
+    "extractedSlots": {
+      "topic": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân thống nhất giang sơn năm 968",
+      "targetDurationMinutes": 4,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "DYNASTY"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Đinh Bộ Lĩnh dẹp loạn 12 sứ quân thống nhất giang sơn năm 968 thời lượng 4 phút"
+  },
+  {
+    "id": "chat_dlg_008",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video 3 phút phân tích kiến trúc thành Cổ Loa và huyền thoại nỏ thần."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Thành Cổ Loa và công trình nỏ thần An Dương Vương",
+    "extractedSlots": {
+      "topic": "Thành Cổ Loa và công trình nỏ thần An Dương Vương",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "ARTIFACT"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Thành Cổ Loa và công trình nỏ thần An Dương Vương thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_009",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hãy lập video 4 phút giải mã vụ án oan Lệ Chi Viên năm 1442."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Vụ án Lệ Chi Viên và nỗi oan khuất của Đại thi hào Nguyễn Trãi",
+    "extractedSlots": {
+      "topic": "Vụ án Lệ Chi Viên và nỗi oan khuất của Đại thi hào Nguyễn Trãi",
+      "targetDurationMinutes": 4,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "MYSTERY"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Vụ án Lệ Chi Viên và nỗi oan khuất của Đại thi hào Nguyễn Trãi thời lượng 4 phút"
+  },
+  {
+    "id": "chat_dlg_010",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Dựng video tài liệu 5 phút về diễn biến 56 ngày đêm Chiến dịch Điện Biên Phủ."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Chiến dịch Điện Biên Phủ năm 1954 lừng lẫy năm châu",
+    "extractedSlots": {
+      "topic": "Chiến dịch Điện Biên Phủ năm 1954 lừng lẫy năm châu",
+      "targetDurationMinutes": 5,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Chiến dịch Điện Biên Phủ năm 1954 lừng lẫy năm châu thời lượng 5 phút"
+  },
+  {
+    "id": "chat_dlg_011",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video 3 phút giới thiệu các cải cách kinh tế, luật pháp thời Vua Lê Thánh Tông."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Triều đại Vua Lê Thánh Tông và thời kỳ Hồng Đức thịnh trị",
+    "extractedSlots": {
+      "topic": "Triều đại Vua Lê Thánh Tông và thời kỳ Hồng Đức thịnh trị",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "DYNASTY"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Triều đại Vua Lê Thánh Tông và thời kỳ Hồng Đức thịnh trị thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_012",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hãy dựng video 3 phút đánh giá công và tội trong các cuộc cải cách của Hồ Quý Ly."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Hồ Quý Ly và cuộc cải cách tiền tệ, văn hóa đầu thế kỷ XV",
+    "extractedSlots": {
+      "topic": "Hồ Quý Ly và cuộc cải cách tiền tệ, văn hóa đầu thế kỷ XV",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BIOGRAPHY"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Hồ Quý Ly và cuộc cải cách tiền tệ, văn hóa đầu thế kỷ XV thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_013",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video 5 phút ghi lại các mốc son lịch sử của Đại thắng Mùa Xuân 1975."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Chiến dịch Hồ Chí Minh mùa xuân năm 1975 thống nhất đất nước",
+    "extractedSlots": {
+      "topic": "Chiến dịch Hồ Chí Minh mùa xuân năm 1975 thống nhất đất nước",
+      "targetDurationMinutes": 5,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Chiến dịch Hồ Chí Minh mùa xuân năm 1975 thống nhất đất nước thời lượng 5 phút"
+  },
+  {
+    "id": "chat_dlg_014",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Dựng video 2 phút về khí phách anh hùng của Nữ tướng Triệu Thị Trinh năm 248."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Bà Triệu và cuộc khởi nghĩa chống quân Đông Ngô năm 248",
+    "extractedSlots": {
+      "topic": "Bà Triệu và cuộc khởi nghĩa chống quân Đông Ngô năm 248",
+      "targetDurationMinutes": 2,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BIOGRAPHY"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Bà Triệu và cuộc khởi nghĩa chống quân Đông Ngô năm 248 thời lượng 2 phút"
+  },
+  {
+    "id": "chat_dlg_015",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hãy tạo video 2 phút thuyết minh về hoa văn và giá trị khảo cổ của Trống đồng Ngọc Lũ."
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Trống đồng Ngọc Lũ và đỉnh cao văn hóa Đông Sơn thời Hùng Vương",
+    "extractedSlots": {
+      "topic": "Trống đồng Ngọc Lũ và đỉnh cao văn hóa Đông Sơn thời Hùng Vương",
+      "targetDurationMinutes": 2,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "ARTIFACT"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Trống đồng Ngọc Lũ và đỉnh cao văn hóa Đông Sơn thời Hùng Vương thời lượng 2 phút"
+  },
+  {
+    "id": "chat_dlg_016",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm clip 3 phút trận Đông Bộ Đầu thời vua Trần Thái Tông"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Trần Thái Tông và Chiến thắng Đông Bộ Đầu năm 1258",
+    "extractedSlots": {
+      "topic": "Trần Thái Tông và Chiến thắng Đông Bộ Đầu năm 1258",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Trần Thái Tông và Chiến thắng Đông Bộ Đầu năm 1258 thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_017",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bot làm video 3p Minh Mạng chia cả nước làm 30 tỉnh và 1 phủ Thừa Thiên"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Vua Minh Mạng và cải cách hành chính 30 tỉnh năm 1831",
+    "extractedSlots": {
+      "topic": "Vua Minh Mạng và cải cách hành chính 30 tỉnh năm 1831",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "DYNASTY"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Vua Minh Mạng và cải cách hành chính 30 tỉnh năm 1831 thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_018",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video 3 phút phân tích câu sấm Hoành Sơn nhất đái của Trạng Trình"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Nguyễn Bỉnh Khiêm và những lời sấm truyền thế kỷ XVI",
+    "extractedSlots": {
+      "topic": "Nguyễn Bỉnh Khiêm và những lời sấm truyền thế kỷ XVI",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "MYSTERY"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Nguyễn Bỉnh Khiêm và những lời sấm truyền thế kỷ XVI thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_019",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bot dựng video 4p Nguyễn Hoàng vào Nam dựng nghiệp chúa Nguyễn"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Chúa Nguyễn Hoàng và công cuộc mở cõi phương Nam năm 1558",
+    "extractedSlots": {
+      "topic": "Chúa Nguyễn Hoàng và công cuộc mở cõi phương Nam năm 1558",
+      "targetDurationMinutes": 4,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "DYNASTY"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Chúa Nguyễn Hoàng và công cuộc mở cõi phương Nam năm 1558 thời lượng 4 phút"
+  },
+  {
+    "id": "chat_dlg_020",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm video 3 phút súng Thần Cơ của Hồ Nguyên Trừng"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Hồ Nguyên Trừng và phát minh súng Thần Cơ đầu thế kỷ XV",
+    "extractedSlots": {
+      "topic": "Hồ Nguyên Trừng và phát minh súng Thần Cơ đầu thế kỷ XV",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "ARTIFACT"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Hồ Nguyên Trừng và phát minh súng Thần Cơ đầu thế kỷ XV thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_021",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bot làm video 4p trận Rạch Gầm Xoài Mút nhấn chìm hạm đội Xiêm La"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Chiến thắng Rạch Gầm Xoài Mút năm 1785 tiêu diệt 5 vạn quân Xiêm",
+    "extractedSlots": {
+      "topic": "Chiến thắng Rạch Gầm Xoài Mút năm 1785 tiêu diệt 5 vạn quân Xiêm",
+      "targetDurationMinutes": 4,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Chiến thắng Rạch Gầm Xoài Mút năm 1785 tiêu diệt 5 vạn quân Xiêm thời lượng 4 phút"
+  },
+  {
+    "id": "chat_dlg_022",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm clip 3p cụ Phan Đình Phùng đúc súng trường đánh Pháp"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Phan Đình Phùng và cuộc Khởi nghĩa Hương Khê 1885-1895",
+    "extractedSlots": {
+      "topic": "Phan Đình Phùng và cuộc Khởi nghĩa Hương Khê 1885-1895",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Phan Đình Phùng và cuộc Khởi nghĩa Hương Khê 1885-1895 thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_023",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bot làm video 4p Khởi nghĩa Yên Thế 30 năm ròng rã"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Hoàng Hoa Thám và Khởi nghĩa Yên Thế 30 năm bất khuất",
+    "extractedSlots": {
+      "topic": "Hoàng Hoa Thám và Khởi nghĩa Yên Thế 30 năm bất khuất",
+      "targetDurationMinutes": 4,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BIOGRAPHY"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Hoàng Hoa Thám và Khởi nghĩa Yên Thế 30 năm bất khuất thời lượng 4 phút"
+  },
+  {
+    "id": "chat_dlg_024",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm video 3 phút phong trào Đông Du sang Nhật học tập"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Cụ Phan Bội Châu và Phong trào Đông Du xuất dương cứu nước",
+    "extractedSlots": {
+      "topic": "Cụ Phan Bội Châu và Phong trào Đông Du xuất dương cứu nước",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BIOGRAPHY"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Cụ Phan Bội Châu và Phong trào Đông Du xuất dương cứu nước thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_025",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm clip 4p Bác Hồ ra đi tìm đường cứu nước năm 1911"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Nguyễn Ái Quốc và Hành trình tìm đường cứu nước từ Bến Nhà Rồng 1911",
+    "extractedSlots": {
+      "topic": "Nguyễn Ái Quốc và Hành trình tìm đường cứu nước từ Bến Nhà Rồng 1911",
+      "targetDurationMinutes": 4,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BIOGRAPHY"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Nguyễn Ái Quốc và Hành trình tìm đường cứu nước từ Bến Nhà Rồng 1911 thời lượng 4 phút"
+  },
+  {
+    "id": "chat_dlg_026",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bot làm clip 3p trận Tốt Động Chúc Động tiêu diệt tướng giặc Vương Thông"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Trận Tốt Động Chúc Động năm 1426 đè bẹp mười vạn quân Minh",
+    "extractedSlots": {
+      "topic": "Trận Tốt Động Chúc Động năm 1426 đè bẹp mười vạn quân Minh",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Trận Tốt Động Chúc Động năm 1426 đè bẹp mười vạn quân Minh thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_027",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm video 3p Vua Hàm Nghi ban Chiếu Cần Vương tại Tân Sở"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Chiếu Cần Vương năm 1885 và phong trào kháng Pháp của sĩ phu yêu nước",
+    "extractedSlots": {
+      "topic": "Chiếu Cần Vương năm 1885 và phong trào kháng Pháp của sĩ phu yêu nước",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "DYNASTY"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Chiếu Cần Vương năm 1885 và phong trào kháng Pháp của sĩ phu yêu nước thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_028",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bot làm clip 3p Chiến dịch Biên Giới 1950 bắt sống tướng Đác-tăng"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Chiến dịch Biên Giới Thu Đông năm 1950",
+    "extractedSlots": {
+      "topic": "Chiến dịch Biên Giới Thu Đông năm 1950",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Chiến dịch Biên Giới Thu Đông năm 1950 thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_029",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm video 4p nghĩa quân Lam Sơn chém đầu Liễu Thăng tại ải Chi Lăng"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Trận Chi Lăng Xương Giang năm 1427 chém Liễu Thăng",
+    "extractedSlots": {
+      "topic": "Trận Chi Lăng Xương Giang năm 1427 chém Liễu Thăng",
+      "targetDurationMinutes": 4,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "BATTLE"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Trận Chi Lăng Xương Giang năm 1427 chém Liễu Thăng thời lượng 4 phút"
+  },
+  {
+    "id": "chat_dlg_030",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm video 3p đàm phán Hiệp định Genève chấm dứt chiến tranh năm 1954"
+      }
+    ],
+    "targetIntent": "CREATE_VIDEO_PROJECT",
+    "targetTopic": "Hiệp định Genève 1954 và cuộc đấu tranh thống nhất đất nước",
+    "extractedSlots": {
+      "topic": "Hiệp định Genève 1954 và cuộc đấu tranh thống nhất đất nước",
+      "targetDurationMinutes": 3,
+      "templateId": "HISTORICAL_DOCUMENTARY",
+      "videoType": "DYNASTY"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tạo video tài liệu lịch sử về Hiệp định Genève 1954 và cuộc đấu tranh thống nhất đất nước thời lượng 3 phút"
+  },
+  {
+    "id": "chat_dlg_031",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Vui lòng chỉnh sửa phân cảnh 1: đổi bố cục sang MAP_TACTICAL và tăng thêm 5 giây."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 0,
+      "layoutMode": "MAP_TACTICAL",
+      "durationAdjustmentSeconds": 5
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_032",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Rút ngắn phân cảnh 2 bớt 3 giây và thêm hiệu ứng zoom bản đồ"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 1,
+      "durationAdjustmentSeconds": -3
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_033",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Hãy cập nhật hình ảnh tư liệu cho phân cảnh số 3 bằng tác phẩm hội họa phục dựng trận thủy chiến Bạch Đằng."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 2,
+      "visualType": "IMAGE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_034",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Thay đổi giọng đọc đoạn 4 cho hào hùng hơn và tăng volume nhạc nền"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 3,
+      "establishedTone": "Hào hùng"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_035",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Xin chia tách phân cảnh số 5 thành hai cảnh độc lập để diễn giải chi tiết kỹ thuật đóng cọc gỗ lim."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 4,
+      "splitScene": true
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_036",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Đổi layout cảnh mở đầu sang SPLIT_COMPARE so sánh tương quan lực lượng"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 0,
+      "layoutMode": "SPLIT_COMPARE"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_037",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Hãy bổ sung hộp văn bản trích dẫn toàn văn Lời thề Hát Môn vào phân cảnh 2 với kiểu chữ thư pháp."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 1,
+      "layoutMode": "QUOTE_CANVAS"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_038",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Kéo dài phân cảnh kết thúc thêm 4 giây để phát trọn vẹn nhạc hào hùng"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 5,
+      "durationAdjustmentSeconds": 4
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_039",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Cập nhật tài nguyên hình ảnh ở cảnh 3 sang bức chân dung phục dựng màu chất lượng cao của Hoàng đế Quang Trung."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 2,
+      "visualType": "IMAGE"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_040",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Chỉnh sửa phụ đề cảnh 4: sửa năm 1285 thành 1288"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 3,
+      "textCorrection": true
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_041",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Thiết lập bố cục cảnh 1 sang FULL_COVER bao quát toàn cảnh sông Như Nguyệt."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 0,
+      "layoutMode": "FULL_COVER"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_042",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Bớt 2 giây ở cảnh 2 và chuyển sang cảnh 3 nhanh hơn"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 1,
+      "durationAdjustmentSeconds": -2
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_043",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Bổ sung sơ đồ đồ họa động thể hiện 5 đạo quân thần tốc tiến về Thăng Long ở phân cảnh 4."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 3,
+      "layoutMode": "MAP_TACTICAL"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_044",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Thay đổi nhạc nền cảnh 5 từ u buồn sang bi tráng"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 4,
+      "audioTone": "Bi tráng"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_045",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Tăng thời lượng cảnh thuyết minh cơ chế nỏ liên châu thêm 6 giây."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 2,
+      "durationAdjustmentSeconds": 6
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_046",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Đổi font chữ tiêu đề sang phong cách cổ phong ở cảnh 1"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 0,
+      "fontStyle": "Ancient"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_047",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Bổ sung sơ đồ thiết diện cắt ngang hệ thống Địa đạo Củ Chi vào phân cảnh số 3."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 2,
+      "layoutMode": "MAP_TACTICAL"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_048",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Giảm âm lượng nhạc nền ở cảnh 4 để nghe rõ lời dẫn chuyện"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 3,
+      "duckingAudio": true
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_049",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Phân tách cảnh 6 thành hai đoạn riêng biệt phản ánh trận Chi Lăng và trận Cần Trạm."
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 5,
+      "splitScene": true
+    },
+    "isColloquial": false,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_050",
+    "dialogue": [
+      {
+        "role": "assistant",
+        "text": "Dự án video đang có 6 phân cảnh. Bạn muốn tinh chỉnh nội dung hay bố cục phân cảnh nào?"
+      },
+      {
+        "role": "user",
+        "text": "Đặt layout trích dẫn lời hịch Tướng Sĩ ở cảnh 2"
+      }
+    ],
+    "targetIntent": "EDIT_VIDEO_SCENE",
+    "extractedSlots": {
+      "sceneIndex": 1,
+      "layoutMode": "QUOTE_CANVAS"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_051",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Trận Bạch Đằng năm 938 do ai chỉ huy và chiến thuật then chốt là gì?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Trận Bạch Đằng 938",
+    "extractedSlots": {
+      "querySubject": "Trận Bạch Đằng 938"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Trận Bạch Đằng 938"
+  },
+  {
+    "id": "chat_dlg_052",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, hội nghị diên hồng diễn ra vào năm nào và có ý nghĩa gì trong lịch sử?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Hội nghị Diên Hồng 1284",
+    "extractedSlots": {
+      "querySubject": "Hội nghị Diên Hồng 1284"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Hội nghị Diên Hồng 1284"
+  },
+  {
+    "id": "chat_dlg_053",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Vua Quang Trung mất năm bao nhiêu và thọ bao nhiêu tuổi?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Năm mất Vua Quang Trung",
+    "extractedSlots": {
+      "querySubject": "Năm mất Vua Quang Trung"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Năm mất Vua Quang Trung"
+  },
+  {
+    "id": "chat_dlg_054",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, lý thường kiệt đọc bài thơ nam quốc sơn hà trong trận đánh nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Nam Quốc Sơn Hà và sông Như Nguyệt",
+    "extractedSlots": {
+      "querySubject": "Nam Quốc Sơn Hà và sông Như Nguyệt"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Nam Quốc Sơn Hà và sông Như Nguyệt"
+  },
+  {
+    "id": "chat_dlg_055",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Khởi nghĩa Lam Sơn kéo dài bao nhiêu năm và kết thúc vào năm nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Thời gian Khởi nghĩa Lam Sơn",
+    "extractedSlots": {
+      "querySubject": "Thời gian Khởi nghĩa Lam Sơn"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Thời gian Khởi nghĩa Lam Sơn"
+  },
+  {
+    "id": "chat_dlg_056",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, ai là người sáng chế ra súng thần cơ thời nhà hồ?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Hồ Nguyên Trừng súng thần cơ",
+    "extractedSlots": {
+      "querySubject": "Hồ Nguyên Trừng súng thần cơ"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Hồ Nguyên Trừng súng thần cơ"
+  },
+  {
+    "id": "chat_dlg_057",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Đinh Bộ Lĩnh đặt tên nước ta là gì và đóng đô ở đâu?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Đại Cồ Việt và kinh đô Hoa Lư",
+    "extractedSlots": {
+      "querySubject": "Đại Cồ Việt và kinh đô Hoa Lư"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Đại Cồ Việt và kinh đô Hoa Lư"
+  },
+  {
+    "id": "chat_dlg_058",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, thành cổ loa được xây dựng dưới triều đại nào và có hình dáng gì?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Thành Cổ Loa thời An Dương Vương",
+    "extractedSlots": {
+      "querySubject": "Thành Cổ Loa thời An Dương Vương"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Thành Cổ Loa thời An Dương Vương"
+  },
+  {
+    "id": "chat_dlg_059",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Vụ án Lệ Chi Viên xảy ra vào năm nào dưới triều vua nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Vụ án Lệ Chi Viên năm 1442",
+    "extractedSlots": {
+      "querySubject": "Vụ án Lệ Chi Viên năm 1442"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Vụ án Lệ Chi Viên năm 1442"
+  },
+  {
+    "id": "chat_dlg_060",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, chiến dịch điện biên phủ kết thúc vào ngày tháng năm nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Chiến dịch Điện Biên Phủ 1954",
+    "extractedSlots": {
+      "querySubject": "Chiến dịch Điện Biên Phủ 1954"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Chiến dịch Điện Biên Phủ 1954"
+  },
+  {
+    "id": "chat_dlg_061",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bộ luật Hồng Đức được ban hành dưới thời vị vua nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Luật Hồng Đức thời Lê Thánh Tông",
+    "extractedSlots": {
+      "querySubject": "Luật Hồng Đức thời Lê Thánh Tông"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Luật Hồng Đức thời Lê Thánh Tông"
+  },
+  {
+    "id": "chat_dlg_062",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, trận rạch gầm xoài mút năm 1785 diễn ra trên khúc sông nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Trận Rạch Gầm Xoài Mút 1785",
+    "extractedSlots": {
+      "querySubject": "Trận Rạch Gầm Xoài Mút 1785"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Trận Rạch Gầm Xoài Mút 1785"
+  },
+  {
+    "id": "chat_dlg_063",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Ai là tác giả của áng thiên cổ hùng văn Bình Ngô Đại Cáo?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Nguyễn Trãi Bình Ngô Đại Cáo",
+    "extractedSlots": {
+      "querySubject": "Nguyễn Trãi Bình Ngô Đại Cáo"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Nguyễn Trãi Bình Ngô Đại Cáo"
+  },
+  {
+    "id": "chat_dlg_064",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, phong trào cần vương do ai phát động và kéo dài trong bao lâu?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Phong trào Cần Vương 1885",
+    "extractedSlots": {
+      "querySubject": "Phong trào Cần Vương 1885"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Phong trào Cần Vương 1885"
+  },
+  {
+    "id": "chat_dlg_065",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Nữ tướng Bùi Thị Xuân đã đóng góp gì cho quân đội Tây Sơn?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Bùi Thị Xuân và đội tượng binh",
+    "extractedSlots": {
+      "querySubject": "Bùi Thị Xuân và đội tượng binh"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Bùi Thị Xuân và đội tượng binh"
+  },
+  {
+    "id": "chat_dlg_066",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, chiếu dời đô được vua lý thái tổ ban hành vào năm nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Chiếu Dời Đô năm 1010",
+    "extractedSlots": {
+      "querySubject": "Chiếu Dời Đô năm 1010"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Chiếu Dời Đô năm 1010"
+  },
+  {
+    "id": "chat_dlg_067",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Trận Chi Lăng Xương Giang năm 1427 tiêu diệt tướng giặc nào của nhà Minh?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Liễu Thăng Chi Lăng Xương Giang",
+    "extractedSlots": {
+      "querySubject": "Liễu Thăng Chi Lăng Xương Giang"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Liễu Thăng Chi Lăng Xương Giang"
+  },
+  {
+    "id": "chat_dlg_068",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, trống đồng đông sơn cổ nhất được phát hiện tại địa điểm nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Khảo cổ trống đồng Đông Sơn",
+    "extractedSlots": {
+      "querySubject": "Khảo cổ trống đồng Đông Sơn"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Khảo cổ trống đồng Đông Sơn"
+  },
+  {
+    "id": "chat_dlg_069",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Triều đại phong kiến cuối cùng trong lịch sử Việt Nam là triều đại nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Nhà Nguyễn 1802-1945",
+    "extractedSlots": {
+      "querySubject": "Nhà Nguyễn 1802-1945"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Nhà Nguyễn 1802-1945"
+  },
+  {
+    "id": "chat_dlg_070",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, hiệp định genève về chấm dứt chiến tranh ở đông dương được ký năm nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Hiệp định Genève 1954",
+    "extractedSlots": {
+      "querySubject": "Hiệp định Genève 1954"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Hiệp định Genève 1954"
+  },
+  {
+    "id": "chat_dlg_071",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Thành Nhà Hồ được xây dựng bằng chất liệu gì và ở tỉnh nào hiện nay?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Kiến trúc Thành Nhà Hồ Thanh Hóa",
+    "extractedSlots": {
+      "querySubject": "Kiến trúc Thành Nhà Hồ Thanh Hóa"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Kiến trúc Thành Nhà Hồ Thanh Hóa"
+  },
+  {
+    "id": "chat_dlg_072",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, khởi nghĩa ba tơ và khởi nghĩa bắc sơn diễn ra trong giai đoạn nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Khởi nghĩa Bắc Sơn và Ba Tơ",
+    "extractedSlots": {
+      "querySubject": "Khởi nghĩa Bắc Sơn và Ba Tơ"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Khởi nghĩa Bắc Sơn và Ba Tơ"
+  },
+  {
+    "id": "chat_dlg_073",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tại sao Trần Hưng Đạo được tôn phong danh hiệu Đức Thánh Trần?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Tôn vinh Đức Thánh Trần",
+    "extractedSlots": {
+      "querySubject": "Tôn vinh Đức Thánh Trần"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Tôn vinh Đức Thánh Trần"
+  },
+  {
+    "id": "chat_dlg_074",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hỏi xíu nè bot, địa đạo vịnh mốc và địa đạo củ chi được đào trong cuộc kháng chiến nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Địa đạo lịch sử Việt Nam",
+    "extractedSlots": {
+      "querySubject": "Địa đạo lịch sử Việt Nam"
+    },
+    "isColloquial": true,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Địa đạo lịch sử Việt Nam"
+  },
+  {
+    "id": "chat_dlg_075",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bác Hồ đọc Tuyên ngôn Độc lập tại Quảng trường Ba Đình vào ngày nào?"
+      }
+    ],
+    "targetIntent": "HISTORICAL_QUERY",
+    "targetTopic": "Tuyên ngôn Độc lập 2/9/1945",
+    "extractedSlots": {
+      "querySubject": "Tuyên ngôn Độc lập 2/9/1945"
+    },
+    "isColloquial": false,
+    "hasContextDrift": false,
+    "rewrittenQuery": "Tra cứu thông tin lịch sử về Tuyên ngôn Độc lập 2/9/1945"
+  },
+  {
+    "id": "chat_dlg_076",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video lịch sử giúp tôi"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn tạo video về thời kỳ nào và thời lượng bao nhiêu?"
+      },
+      {
+        "role": "user",
+        "text": "Thời nhà Trần, làm ngắn chừng 3 phút nhé"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Thời nhà Trần",
+    "extractedSlots": {
+      "epoch": "Trần",
+      "topic": "Thời nhà Trần",
+      "targetDurationMinutes": 3
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 3 phút về Thời nhà Trần"
+  },
+  {
+    "id": "chat_dlg_077",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm clip về chiến tranh Việt Nam"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn nói về kháng chiến chống Pháp 1954 hay chống Mỹ 1975?"
+      },
+      {
+        "role": "user",
+        "text": "Kháng chiến chống Pháp giai đoạn Điện Biên Phủ 1954, thời lượng 4 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Chiến dịch Điện Biên Phủ 1954",
+    "extractedSlots": {
+      "epoch": "Hiện đại",
+      "topic": "Chiến dịch Điện Biên Phủ 1954",
+      "targetDurationMinutes": 4
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 4 phút về Chiến dịch Điện Biên Phủ 1954"
+  },
+  {
+    "id": "chat_dlg_078",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Muốn làm video về danh nhân"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn tìm hiểu về vị tướng lĩnh, vua chúa hay đại thi hào nào?"
+      },
+      {
+        "role": "user",
+        "text": "Quốc Công Tiết Chế Trần Hưng Đạo, làm phong cách tài liệu 5 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Trần Hưng Đạo",
+    "extractedSlots": {
+      "epoch": "Trần",
+      "topic": "Trần Hưng Đạo",
+      "targetDurationMinutes": 5
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 5 phút về Trần Hưng Đạo"
+  },
+  {
+    "id": "chat_dlg_079",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo dự án video tài liệu"
+      },
+      {
+        "role": "assistant",
+        "text": "Vui lòng cung cấp chủ đề lịch sử cụ thể và thời lượng mong muốn."
+      },
+      {
+        "role": "user",
+        "text": "Làm về Vua Quang Trung đại phá quân Thanh 3 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Quang Trung Nguyễn Huệ",
+    "extractedSlots": {
+      "epoch": "Tây Sơn",
+      "topic": "Quang Trung Nguyễn Huệ",
+      "targetDurationMinutes": 3
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 3 phút về Quang Trung Nguyễn Huệ"
+  },
+  {
+    "id": "chat_dlg_080",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tôi muốn làm video về đồ cổ lịch sử"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn hướng tới bảo vật Trống đồng Đông Sơn, Nỏ thần Cổ Loa hay Thạp gốm hoa nâu?"
+      },
+      {
+        "role": "user",
+        "text": "Trống đồng Ngọc Lũ thời Hùng Vương khoảng 2 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Trống đồng Ngọc Lũ",
+    "extractedSlots": {
+      "epoch": "Hồng Bàng",
+      "topic": "Trống đồng Ngọc Lũ",
+      "targetDurationMinutes": 2
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 2 phút về Trống đồng Ngọc Lũ"
+  },
+  {
+    "id": "chat_dlg_081",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Dựng video về trận thủy chiến"
+      },
+      {
+        "role": "assistant",
+        "text": "Lịch sử có 3 trận Bạch Đằng (938, 981, 1288). Bạn chọn trận nào?"
+      },
+      {
+        "role": "user",
+        "text": "Trận Bạch Đằng năm 938 của Ngô Quyền, làm 3 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Trận Bạch Đằng 938",
+    "extractedSlots": {
+      "epoch": "Ngô",
+      "topic": "Trận Bạch Đằng 938",
+      "targetDurationMinutes": 3
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 3 phút về Trận Bạch Đằng 938"
+  },
+  {
+    "id": "chat_dlg_082",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm video về các nữ tướng"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn làm về Hai Bà Trưng, Bà Triệu hay Nữ tướng Bùi Thị Xuân?"
+      },
+      {
+        "role": "user",
+        "text": "Hai Bà Trưng cưỡi voi ra trận năm 40, làm 3 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Hai Bà Trưng",
+    "extractedSlots": {
+      "epoch": "Hai Bà Trưng",
+      "topic": "Hai Bà Trưng",
+      "targetDurationMinutes": 3
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 3 phút về Hai Bà Trưng"
+  },
+  {
+    "id": "chat_dlg_083",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video về kinh đô xưa"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn tái hiện Cổ Loa, Hoa Lư, Thăng Long hay Cố đô Huế?"
+      },
+      {
+        "role": "user",
+        "text": "Chiếu dời đô về Thăng Long năm 1010 của Lý Thái Tổ tầm 4 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Chiếu Dời Đô 1010",
+    "extractedSlots": {
+      "epoch": "Lý",
+      "topic": "Chiếu Dời Đô 1010",
+      "targetDurationMinutes": 4
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 4 phút về Chiếu Dời Đô 1010"
+  },
+  {
+    "id": "chat_dlg_084",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm video về cuộc khởi nghĩa nông dân"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn chọn phong trào Tây Sơn 1771 hay khởi nghĩa Lam Sơn 1418?"
+      },
+      {
+        "role": "user",
+        "text": "Phong trào Tây Sơn Tam Kiệt thời lượng 5 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Khởi nghĩa Tây Sơn",
+    "extractedSlots": {
+      "epoch": "Tây Sơn",
+      "topic": "Khởi nghĩa Tây Sơn",
+      "targetDurationMinutes": 5
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 5 phút về Khởi nghĩa Tây Sơn"
+  },
+  {
+    "id": "chat_dlg_085",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Dựng clip về văn hóa thời Lý"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn nhấn mạnh vào Phật giáo Trúc Lâm, chùa Một Cột hay Quốc Tử Giám?"
+      },
+      {
+        "role": "user",
+        "text": "Chùa Một Cột và kiến trúc thời Lý 2 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Kiến trúc thời Lý",
+    "extractedSlots": {
+      "epoch": "Lý",
+      "topic": "Kiến trúc thời Lý",
+      "targetDurationMinutes": 2
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 2 phút về Kiến trúc thời Lý"
+  },
+  {
+    "id": "chat_dlg_086",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video khảo cứu về vụ án sử học"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn quan tâm vụ án Lệ Chi Viên hay cái chết của Vua Đinh Tiên Hoàng?"
+      },
+      {
+        "role": "user",
+        "text": "Vụ án Lệ Chi Viên Nguyễn Trãi làm 4 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Vụ án Lệ Chi Viên",
+    "extractedSlots": {
+      "epoch": "Hậu Lê",
+      "topic": "Vụ án Lệ Chi Viên",
+      "targetDurationMinutes": 4
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 4 phút về Vụ án Lệ Chi Viên"
+  },
+  {
+    "id": "chat_dlg_087",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Muốn làm video về vũ khí cổ"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn phân tích nỏ liên châu Cổ Loa hay súng thần cơ Hồ Nguyên Trừng?"
+      },
+      {
+        "role": "user",
+        "text": "Súng thần cơ Hồ Nguyên Trừng thời nhà Hồ 3 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Súng thần cơ Hồ Nguyên Trừng",
+    "extractedSlots": {
+      "epoch": "Hồ",
+      "topic": "Súng thần cơ Hồ Nguyên Trừng",
+      "targetDurationMinutes": 3
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 3 phút về Súng thần cơ Hồ Nguyên Trừng"
+  },
+  {
+    "id": "chat_dlg_088",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm clip về phong trào yêu nước đầu thế kỷ XX"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn chọn phong trào Đông Du của Phan Bội Châu hay Đông Kinh Nghĩa Thục?"
+      },
+      {
+        "role": "user",
+        "text": "Phong trào Đông Du sang Nhật Bản thời lượng 3 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Phong trào Đông Du",
+    "extractedSlots": {
+      "epoch": "Cận đại",
+      "topic": "Phong trào Đông Du",
+      "targetDurationMinutes": 3
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 3 phút về Phong trào Đông Du"
+  },
+  {
+    "id": "chat_dlg_089",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạo video tóm tắt một triều đại"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn tóm tắt Triều Lý, Triều Trần hay Triều Hậu Lê?"
+      },
+      {
+        "role": "user",
+        "text": "Tóm lược 175 năm Triều đại Nhà Trần trong 5 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Triều đại Nhà Trần",
+    "extractedSlots": {
+      "epoch": "Trần",
+      "topic": "Triều đại Nhà Trần",
+      "targetDurationMinutes": 5
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 5 phút về Triều đại Nhà Trần"
+  },
+  {
+    "id": "chat_dlg_090",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Làm video về danh tác văn học chữ Nôm"
+      },
+      {
+        "role": "assistant",
+        "text": "Bạn muốn làm về Truyện Kiều Nguyễn Du hay Quốc Âm Thi Tập?"
+      },
+      {
+        "role": "user",
+        "text": "Truyện Kiều và sự nghiệp Nguyễn Du thời lượng 4 phút"
+      }
+    ],
+    "targetIntent": "CLARIFY_REQUIREMENT",
+    "targetTopic": "Đại thi hào Nguyễn Du",
+    "extractedSlots": {
+      "epoch": "Nguyễn",
+      "topic": "Đại thi hào Nguyễn Du",
+      "targetDurationMinutes": 4
+    },
+    "isColloquial": true,
+    "hasContextDrift": true,
+    "rewrittenQuery": "Tạo video 4 phút về Đại thi hào Nguyễn Du"
+  },
+  {
+    "id": "chat_dlg_091",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Chào bạn bot, hôm nay bạn có khỏe không?"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_092",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bot có biết làm thơ lục bát về lịch sử không?"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_093",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Alo ChronoViet bot ơi, bạn có thể làm được những gì?"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_094",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Cảm ơn bạn đã giải thích rất chi tiết nhé!"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_095",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Hello ChronoViet AI assistant, nice to meet you"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_096",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Tạm biệt bot nhé, hẹn gặp lại trong dự án tiếp theo!"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_097",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Bạn là mô hình ngôn ngữ do ai sáng lập ra thế?"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_098",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Khen bạn hôm nay thông minh và hiểu sử Việt ghê"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_099",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Haha vui tính quá bot ơi, đùa tí thôi"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  },
+  {
+    "id": "chat_dlg_100",
+    "dialogue": [
+      {
+        "role": "user",
+        "text": "Chúc bạn một ngày làm việc hiệu quả và tràn đầy năng lượng nha"
+      }
+    ],
+    "targetIntent": "CHITCHAT",
+    "extractedSlots": {},
+    "isColloquial": true,
+    "hasContextDrift": false
+  }
+]

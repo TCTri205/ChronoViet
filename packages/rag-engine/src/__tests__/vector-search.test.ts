@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import * as infra from '@chronoviet/infra';
 import { inMemoryStore, envConfig } from '@chronoviet/infra';
 import {
   searchDenseVector,
@@ -7,6 +8,8 @@ import {
   SimpleLRUCache,
   sanitizeFtsQuery,
   removeVietnameseAccents,
+  getCachedQueryEmbedding,
+  resetQueryEmbeddingCacheForTest,
 } from '../retrieval/vector-search.js';
 
 describe('Vector Search & Lexical FTS Retrieval', () => {
@@ -14,6 +17,12 @@ describe('Vector Search & Lexical FTS Retrieval', () => {
     envConfig.FORCE_OFFLINE = true;
     envConfig.SKIP_PG = true;
     inMemoryStore.clear();
+    resetQueryEmbeddingCacheForTest();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    resetQueryEmbeddingCacheForTest();
   });
 
   it('should return empty results when store is empty', async () => {
@@ -99,6 +108,130 @@ describe('Vector Search & Lexical FTS Retrieval', () => {
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0].score).toBeGreaterThan(0);
     expect(results[0].title).toBeDefined();
+  });
+
+  it('should support Promise<number[]> in searchHybridVectorAndBM25 and searchDenseVector seamlessly', async () => {
+    inMemoryStore.documentChunks.set('chunk_async_test', {
+      id: 'chunk_async_test',
+      title: 'Hịch Tướng Sĩ',
+      text_content: 'Trần Quốc Tuấn viết Hịch Tướng Sĩ khích lệ quân sĩ đánh giặc Nguyên Mông.',
+      source_reliability: 'LEVEL_1',
+      embedding: [0.8, 0.6, 0],
+    });
+
+    const embeddingPromise = Promise.resolve([0.8, 0.6, 0]);
+
+    const denseResults = await searchDenseVector(embeddingPromise, 1);
+    expect(denseResults).toHaveLength(1);
+    expect(denseResults[0].chunkId).toBe('chunk_async_test');
+    expect(denseResults[0].score).toBeCloseTo(1.0);
+
+    const hybridResults = await searchHybridVectorAndBM25(
+      'Trần Quốc Tuấn Hịch Tướng Sĩ',
+      Promise.resolve([0.8, 0.6, 0]),
+      1
+    );
+    expect(hybridResults).toHaveLength(1);
+    expect(hybridResults[0].chunkId).toBe('chunk_async_test');
+  });
+
+  it('should deduplicate concurrent in-flight embedding requests (anti-thundering herd)', async () => {
+    let fetchCalls = 0;
+    envConfig.EMBEDDING_API_URL = 'http://localhost:8090/v1/embeddings';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/embeddings')) {
+          fetchCalls++;
+          await new Promise((resolve) => setTimeout(resolve, 25));
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ data: [{ embedding: new Array(1024).fill(0.5) }] }),
+          } as any;
+        }
+        return { ok: false, status: 404 } as any;
+      })
+    );
+
+    // Launch 10 concurrent requests for the exact same query
+    const promises = Array.from({ length: 10 }, () =>
+      getCachedQueryEmbedding('Trần Hưng Đạo đại phá quân Nguyên 1288')
+    );
+
+    const results = await Promise.all(promises);
+
+    expect(results).toHaveLength(10);
+    expect(results[0]).toHaveLength(1024);
+    // Only 1 underlying fetch call should have been made
+    expect(fetchCalls).toBe(1);
+  });
+
+  it('should clean up in-flight map on rejection so subsequent retries can succeed', async () => {
+    let fetchCalls = 0;
+    envConfig.EMBEDDING_API_URL = 'http://localhost:8090/v1/embeddings';
+    envConfig.EVAL_STRICT = true;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/embeddings')) {
+          fetchCalls++;
+          if (fetchCalls === 1) {
+            return { ok: false, status: 500, statusText: 'Internal Server Error' } as any;
+          }
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ data: [{ embedding: new Array(1024).fill(0.7) }] }),
+          } as any;
+        }
+        return { ok: false, status: 404 } as any;
+      })
+    );
+
+    // First call rejects
+    await expect(getCachedQueryEmbedding('Lê Lợi Lam Sơn Hậu Lê')).rejects.toThrow();
+
+    // Second call should NOT return a rejected promise; it should invoke fetch again and succeed
+    const res = await getCachedQueryEmbedding('Lê Lợi Lam Sơn Hậu Lê');
+    expect(res).toHaveLength(1024);
+    expect(fetchCalls).toBe(2);
+    envConfig.EVAL_STRICT = false;
+  });
+
+  it('should clear cached embeddings and in-flight map when resetQueryEmbeddingCacheForTest is called', async () => {
+    let fetchCalls = 0;
+    infra.embeddingCache.clear();
+    envConfig.EMBEDDING_API_URL = 'http://localhost:8090/v1/embeddings';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/embeddings')) {
+          fetchCalls++;
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ data: [{ embedding: new Array(1024).fill(0.1) }] }),
+          } as any;
+        }
+        return { ok: false, status: 404 } as any;
+      })
+    );
+
+    await getCachedQueryEmbedding('Quang Trung Nguyễn Huệ Đống Đa');
+    expect(fetchCalls).toBe(1);
+
+    // Cache hit in rag-engine queryEmbeddingCache
+    await getCachedQueryEmbedding('Quang Trung Nguyễn Huệ Đống Đa');
+    expect(fetchCalls).toBe(1);
+
+    // Clear both caches
+    resetQueryEmbeddingCacheForTest();
+    infra.embeddingCache.clear();
+
+    // Cache miss
+    await getCachedQueryEmbedding('Quang Trung Nguyễn Huệ Đống Đa');
+    expect(fetchCalls).toBe(2);
   });
 
   it('should sanitize natural language question query by removing Vietnamese stopwords for FTS', async () => {

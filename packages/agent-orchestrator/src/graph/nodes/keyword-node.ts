@@ -10,6 +10,7 @@ import {
 import {
   callLlm,
   createLogger,
+  envConfig,
   ImageSearchToolInput,
   ImageSearchVisualType,
   parseLlmJson,
@@ -136,6 +137,7 @@ ${scenesSummary}`;
         ],
         temperature: 0.1,
         responseFormat: 'json_object',
+        timeoutMs: envConfig.LOCAL_LLM_TIMEOUT_MS || 60000,
       });
 
       const parsed = parseLlmJson(res.content);

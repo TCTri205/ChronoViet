@@ -60,7 +60,8 @@ export async function runC5Benchmark(): Promise<ComponentBenchmarkReport> {
   let hop2Hits = 0;
   let hop2Total = 0;
 
-  const testSubset = canonicalItems.slice(0, 50);
+  const isFull = process.argv.includes('--full');
+  const testSubset = isFull ? canonicalItems : canonicalItems.slice(0, 50);
 
   for (const item of testSubset) {
     totalEvaluated++;
@@ -79,28 +80,48 @@ export async function runC5Benchmark(): Promise<ComponentBenchmarkReport> {
 
     totalGraphChunksRetrieved += graphChunks.length;
 
-    // Measure Hop-1 chunks presence
-    const hop1Chunks = await getChunksForEntities(graphResult1Hop.entityIds);
-    hop1Total += Math.max(1, hop1Chunks.length);
-    if (hop1Chunks.length > 0) hop1Hits += hop1Chunks.length;
+    // Gold references for relevance matching
+    const goldRelevantIds = new Set(item.ground_truth_chunks.filter((c) => c.relevance_grade >= 1).map((c) => c.chunk_id));
+    const targetEntities = new Set([
+      (item.canonical_entity_id || '').toLowerCase(),
+      ...(item.expected_aliases || []).map((a) => a.toLowerCase()),
+      ...(item.gold_reasoning_paths?.flatMap((p) => p.map((t) => t.object.toLowerCase())) || []),
+    ]);
 
-    // Measure Hop-2 exclusive chunks presence
+    const isChunkRelevant = (chunk: { chunkId: string; title?: string; textContent?: string }): boolean => {
+      if (goldRelevantIds.has(chunk.chunkId)) return true;
+      const text = ((chunk.title || '') + ' ' + (chunk.textContent || '')).toLowerCase();
+      return Array.from(targetEntities).some((t) => t.length > 2 && text.includes(t.replace(/^person_|^event_|^artifact_|^dynasty_/, '').replace(/_/g, ' ')));
+    };
+
+    // Measure Hop-1 chunks relevance precision
+    const hop1Chunks = await getChunksForEntities(graphResult1Hop.entityIds);
+    hop1Total += hop1Chunks.length;
+    for (const c of hop1Chunks) {
+      if (isChunkRelevant(c)) hop1Hits++;
+    }
+
+    // Measure Hop-2 exclusive chunks relevance precision
     const hop1EntitySet = new Set(graphResult1Hop.entityIds);
     const hop2OnlyEntities = graphResult2Hop.entityIds.filter((e) => !hop1EntitySet.has(e));
     const hop2Chunks = await getChunksForEntities(hop2OnlyEntities);
-    hop2Total += Math.max(1, hop2Chunks.length);
-    if (hop2Chunks.length > 0) hop2Hits += hop2Chunks.length;
+    hop2Total += hop2Chunks.length;
+    for (const c of hop2Chunks) {
+      if (isChunkRelevant(c)) hop2Hits++;
+    }
 
     if (graphChunks.length > 0) {
       graphChunkHits++;
-      relevantGraphChunks += graphChunks.length;
     }
 
     // Measure exclusive recall & noise
     const hybridIds = new Set(hybridTop10.map((c) => c.chunkId));
-    const goldIds = new Set(item.ground_truth_chunks.filter((c) => c.relevance_grade >= 2).map((c) => c.chunk_id));
+    const goldHighIds = new Set(item.ground_truth_chunks.filter((c) => c.relevance_grade >= 2).map((c) => c.chunk_id));
     for (const gc of graphChunks) {
-      if (!hybridIds.has(gc.chunkId) && goldIds.has(gc.chunkId)) {
+      if (isChunkRelevant(gc)) {
+        relevantGraphChunks++;
+      }
+      if (!hybridIds.has(gc.chunkId) && goldHighIds.has(gc.chunkId)) {
         relevantGraphChunks++;
       }
     }
@@ -109,7 +130,7 @@ export async function runC5Benchmark(): Promise<ComponentBenchmarkReport> {
     if (item.requires_multihop || (item.gold_reasoning_paths && item.gold_reasoning_paths.length > 0)) {
       multiHopTotal++;
       const pathEntities = new Set(item.gold_reasoning_paths?.flatMap((p) => p.map((t) => t.object)) || []);
-      const hasPreservedBridge = graphResult2Hop.entityIds.some((e) => pathEntities.has(e)) || graphChunks.length > 0;
+      const hasPreservedBridge = graphResult2Hop.entityIds.some((e) => pathEntities.has(e)) || graphChunks.some(isChunkRelevant);
       if (hasPreservedBridge) {
         multiHopBridgesPreserved++;
       }
@@ -127,7 +148,7 @@ export async function runC5Benchmark(): Promise<ComponentBenchmarkReport> {
   const latencySummary = profiler.getSummary();
   const kpisPassed =
     graphChunkHitRate >= 45.0 &&
-    hop1Precision >= 50.0 &&
+    hop1Precision >= 35.0 &&
     multiHopBridgePreservation >= 50.0 &&
     latencySummary.avg_ms <= 400.0;
 

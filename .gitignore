@@ -3,10 +3,13 @@ node_modules/
 .pnpm-store/
 .pnpm/
 .npm-cache/
+.xdg/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
+logs/
 
 tasks/
 
@@ -19,6 +22,9 @@ out/
 .turbo/
 .output/
 coverage/
+.nyc_output/
+test-results/
+playwright-report/
 *.tsbuildinfo
 *.cache
 .cache/
@@ -34,6 +40,8 @@ coverage/
 .agents/
 .commandcode/
 .gemini/
+.cursor/
+.claude/
 .idea/
 .vscode/*
 !.vscode/settings.json
@@ -43,7 +51,19 @@ coverage/
 
 .codegraph/
 
-# Python & AI Models (if applicable)
+# AI Models & Large Binary Weights
+models/
+services/vieneu-tts/models/*
+!services/vieneu-tts/models/.gitkeep
+*.gguf
+*.onnx
+*.onnx_data
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Python Environment
 __pycache__/
 *.py[cod]
 *$py.class
@@ -76,13 +96,11 @@ media/cache/*
 !media/cache/.gitkeep
 media/audio-cache/*
 !media/audio-cache/.gitkeep
-data/
-
-# Database Backups
-backups/*
-!backups/.gitkeep
-
-# TTS Service Media
+media/projects/*
+!media/projects/.gitkeep
+apps/*/media/
+packages/*/media/
+services/*/media/
 services/vieneu-tts/media/audio-cache/*
 !services/vieneu-tts/media/audio-cache/.gitkeep
 
@@ -102,13 +120,15 @@ apps/*/eval/reports/*.md
 services/*/eval/reports/*.json
 services/*/eval/reports/*.md
 
-media/projects/*
-!media/projects/.gitkeep
-apps/*/media/
-packages/*/media/
-
 # Eval-generated audio caches
 packages/remotion-engine/eval/public/audio/*
 !packages/remotion-engine/eval/public/audio/.gitkeep
 packages/remotion-engine/public/audio/*
 !packages/remotion-engine/public/audio/.gitkeep
+
+# Data & Database Backups
+data/
+backups/*
+!backups/.gitkeep
+*.dump
+*.sql.gz

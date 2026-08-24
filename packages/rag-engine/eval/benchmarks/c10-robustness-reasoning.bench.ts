@@ -39,10 +39,13 @@ export async function runC10Benchmark(): Promise<ComponentBenchmarkReport> {
   const confidences: number[] = [];
   const correctness: number[] = [];
 
-  // Evaluate across distinct trap categories (50 queries)
-  const evalSubset = adversarialItems.filter((_, idx) => idx % 4 === 0).slice(0, 50);
+  // Evaluate across distinct trap categories (20 queries in fast mode, all in full mode)
+  const isFull = process.argv.includes('--full');
+  const evalSubset = isFull ? adversarialItems : adversarialItems.filter((_, idx) => idx % 10 === 0).slice(0, 20);
 
-  for (const item of evalSubset) {
+  for (let idx = 0; idx < evalSubset.length; idx++) {
+    const item = evalSubset[idx];
+    console.log(`  [C10 Benchmark] (${idx + 1}/${evalSubset.length}) Adversarial Query: "${item.query.slice(0, 55)}..."`);
     const timer = profiler.startTimer();
 
     // 1. Retrieve RAG Context
@@ -72,7 +75,12 @@ export async function runC10Benchmark(): Promise<ComponentBenchmarkReport> {
         },
       ];
 
-      const res = await callLLM({ messages, temperature: 0.0, maxTokens: 250 });
+      const res = await callLLM({
+        messages,
+        temperature: 0.0,
+        maxTokens: 200,
+        timeoutMs: 120000,
+      });
       const ansLower = res.content.toLowerCase();
       const abstainKeywords = [
         'không có thật',
@@ -116,15 +124,16 @@ export async function runC10Benchmark(): Promise<ComponentBenchmarkReport> {
       }
     }
 
-    // Temporal Slice Validation
-    if (detectedAbstain || !isUnanswerable) {
+    // Temporal Slice & Conflict Validation based on ground truth alignment
+    const isCorrectClassification = (isUnanswerable && detectedAbstain) || (!isUnanswerable && !detectedAbstain);
+    if (isCorrectClassification) {
       temporalCorrectCount++;
     }
 
     // Historical Conflict Handling
     if (item.adversarial_trap_type?.includes('CONFUSION') || qLower.includes('tranh cãi') || qLower.includes('đúng hay sai')) {
       conflictTotal++;
-      if (detectedAbstain || !isUnanswerable) {
+      if (isCorrectClassification) {
         conflictCorrect++;
       }
     }

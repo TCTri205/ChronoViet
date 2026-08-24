@@ -4,6 +4,10 @@ import http from 'http';
 import { VieNeuTTSRequest, VieNeuTTSResponse, WordTimestamp, CaptionWord } from '@chronoviet/shared-spec';
 import { envConfig } from '../config.js';
 import { createLogger, logFallbackAlert } from '../logger.js';
+import {
+  ttsRequestsTotal,
+  ttsSynthesisDurationSeconds,
+} from '../telemetry/metrics.js';
 
 const log = createLogger({ service: 'vieneu-tts' });
 
@@ -161,6 +165,10 @@ export class SyntheticTTSFallbackEngine implements IVieNeuEngine {
       fs.writeFileSync(filePath, wavBuffer);
     }
 
+    const durationSec = audioDurationMs / 1000;
+    ttsRequestsTotal.inc({ engine: 'synthetic_fallback', status: 'success' });
+    ttsSynthesisDurationSeconds.observe({ engine: 'synthetic_fallback' }, durationSec);
+
     return {
       status: 'SUCCESS',
       audioUrl: `/static/audio/${fileName}`,
@@ -228,6 +236,10 @@ export class VieNeuEngine implements IVieNeuEngine {
       });
 
       const elapsedMs = Date.now() - startTime;
+      const durationSec = elapsedMs / 1000;
+      ttsRequestsTotal.inc({ engine: 'vieneu_python', status: 'success' });
+      ttsSynthesisDurationSeconds.observe({ engine: 'vieneu_python' }, durationSec);
+
       log.debug('tts.python_engine_success', 'Synthesized audio via VieNeu Python engine', {
         latencyMs: elapsedMs,
         audioDurationMs: response.audioDurationMs,
@@ -236,6 +248,10 @@ export class VieNeuEngine implements IVieNeuEngine {
 
       return response;
     } catch (err: any) {
+      const elapsedMs = Date.now() - startTime;
+      ttsRequestsTotal.inc({ engine: 'vieneu_python', status: 'fallback' });
+      ttsSynthesisDurationSeconds.observe({ engine: 'vieneu_python' }, elapsedMs / 1000);
+
       // If Python ONNX microservice is offline, seamlessly switch to Fallback Engine with warning log
       const reason = err?.message || 'Connection refused or offline';
       // Eval Integrity: strict mode must not substitute synthetic sine-wave audio

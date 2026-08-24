@@ -1,0 +1,2076 @@
+[
+  {
+    "id": "hist_top_001",
+    "topic": "Thời kỳ Hùng Vương và Nhà nước Văn Lang",
+    "epoch": "Thời kỳ Hồng Bàng",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Truyền thuyết Lạc Long Quân - Âu Cơ và nguồn gốc giống nòi năm 2000 TCN",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Con Rồng Cháu Tiên",
+          "50 con lên núi 50 con xuống biển"
+        ]
+      },
+      {
+        "title": "Chương 2: 18 đời Vua Hùng dựng nước Văn Lang đóng đô tại Phong Châu",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Tổ chức bộ máy Văn Lang sơ khai",
+          "Luyện kim đồ đồng và văn hóa lúa nước"
+        ]
+      },
+      {
+        "title": "Chương 3: Di sản Trống đồng Đông Sơn và bảo vật quốc gia",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Trống đồng Ngọc Lũ, Hoàng Hạ",
+          "Họa tiết chim Lạc và tín ngưỡng cổ xưa"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Vua Hùng",
+      "Lạc Long Quân",
+      "Âu Cơ",
+      "Văn Lang",
+      "Phong Châu"
+    ]
+  },
+  {
+    "id": "hist_top_002",
+    "topic": "Thành Cổ Loa và Nhà nước Âu Lạc năm 257 TCN",
+    "epoch": "Âu Lạc & An Dương Vương",
+    "targetDurationMinutes": 3,
+    "videoType": "ARTIFACT",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Thục Phán An Dương Vương thống nhất Âu Việt và Lạc Việt năm 257 TCN",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Thành lập nước Âu Lạc",
+          "Dời đô về đồng bằng Cổ Loa"
+        ]
+      },
+      {
+        "title": "Chương 2: Kỳ quan quân sự Thành Cổ Loa 9 vòng xoáy ốc",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Kiến trúc thành lũy kiên cố",
+          "Công nghệ nỏ liên châu bắn nhiều mũi tên đồng"
+        ]
+      },
+      {
+        "title": "Chương 3: Khảo cứu mũi tên đồng Cầu Vực và bài học lịch sử năm 179 TCN",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Hàng vạn mũi tên đồng phát hiện tại Cầu Vực",
+          "Bi kịch mất cảnh giác trước mưu đồ Triệu Đà"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "An Dương Vương",
+      "Thục Phán",
+      "Cao Lỗ",
+      "Thành Cổ Loa",
+      "Nỏ Thần"
+    ]
+  },
+  {
+    "id": "hist_top_003",
+    "topic": "Khởi nghĩa Hai Bà Trưng năm 40",
+    "epoch": "Hai Bà Trưng",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Ách đô hộ tàn bạo của Thái thú Tô Định nhà Đông Hán năm 39",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Chính sách đồng hóa và sưu thuế hà khắc",
+          "Thi Sách bị sát hại"
+        ]
+      },
+      {
+        "title": "Chương 2: Lời thề Hát Môn và cuộc khởi nghĩa quật khởi mùa xuân năm 40",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Dựng cờ tụ nghĩa tại Mê Linh",
+          "Hưởng ứng của nữ tướng khắp các quận"
+        ]
+      },
+      {
+        "title": "Chương 3: 65 thành trì quy phục và 3 năm độc lập tự chủ năm 42",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Trưng Trắc xưng vương đóng đô ở Mê Linh",
+          "Trận quyết chiến Lãng Bạc"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Trưng Trắc",
+      "Trưng Nhị",
+      "Thi Sách",
+      "Tô Định",
+      "Mê Linh",
+      "Hát Môn"
+    ]
+  },
+  {
+    "id": "hist_top_004",
+    "topic": "Khởi nghĩa Bà Triệu năm 248",
+    "epoch": "Bà Triệu",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Nữ anh hùng Triệu Thị Trinh và tuyên ngôn cưỡi cơn gió mạnh năm 245",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Khí phách hiên ngang không chịu làm tì thiếp",
+          "Căn cứ khởi nghĩa Núi Nưa"
+        ]
+      },
+      {
+        "title": "Chương 2: Cuộc khởi nghĩa năm 248 rung chuyển quân Đông Ngô",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Bà Triệu cưỡi voi trắng đánh tan quân giặc",
+          "Tấm gương kiên cường bất khuất"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Bà Triệu",
+      "Triệu Thị Trinh",
+      "Triệu Quốc Đạt",
+      "Núi Nưa",
+      "Đông Ngô"
+    ]
+  },
+  {
+    "id": "hist_top_005",
+    "topic": "Lý Nam Đế và Nước Vạn Xuân năm 544",
+    "epoch": "Tiền Lý & Vạn Xuân",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Lý Bí dựng cờ khởi nghĩa lật đổ ách đô hộ nhà Lương năm 542",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Đánh đuổi Thứ sử Tiêu Tư",
+          "Giải phóng Long Biên và Giao Châu"
+        ]
+      },
+      {
+        "title": "Chương 2: Thành lập Nhà nước Vạn Xuân và xưng Hoàng đế năm 544",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Lên ngôi xưng Lý Nam Đế đặt niên hiệu Thiên Đức",
+          "Dựng chùa Khai Quốc"
+        ]
+      },
+      {
+        "title": "Chương 3: Cuộc kháng chiến chống quân Trần Bá Tiên và Dạ Trạch Vương năm 548",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Triệu Quang Phục dùng chiến thuật du kích đầm Dạ Trạch",
+          "Giữ vững nền tự chủ"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Lý Nam Đế",
+      "Lý Bí",
+      "Triệu Quang Phục",
+      "Dạ Trạch Vương",
+      "Nước Vạn Xuân"
+    ]
+  },
+  {
+    "id": "hist_top_006",
+    "topic": "Khúc Thừa Dụ và Cuộc Vận Động Tự Chủ năm 905",
+    "epoch": "Thời kỳ Tự Chủ",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Nhà Đường suy vong và hào trưởng Khúc Thừa Dụ dấy nghiệp năm 905",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Tự xưng Tiết độ sứ cai quản phủ Tống Bình",
+          "Chính sách khoan dung nhân ái"
+        ]
+      },
+      {
+        "title": "Chương 2: Khúc Hạo cải cách hành chính và đặt nền móng tự chủ năm 907",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Chia đặt các lộ, phủ, châu, giáp, xã",
+          "Bình quân thuế ruộng"
+        ]
+      },
+      {
+        "title": "Chương 3: Dương Đình Nghệ đánh tan quân Nam Hán chiếm lại thành Đại La năm 931",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Chiêu mộ 3000 nghĩa tử",
+          "Củng cố chủ quyền đất nước"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Khúc Thừa Dụ",
+      "Khúc Hạo",
+      "Dương Đình Nghệ",
+      "Thành Đại La",
+      "Tự Chủ"
+    ]
+  },
+  {
+    "id": "hist_top_007",
+    "topic": "Trận Bạch Đằng năm 938 của Ngô Quyền",
+    "epoch": "Ngô Quyền & Bạch Đằng",
+    "targetDurationMinutes": 4,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Trừng trị phản tặc Kiều Công Tiễn và chuẩn bị đối đầu Nam Hán năm 938",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Kéo quân từ Ái Châu ra Bắc diệt nội phản",
+          "Kế sách cọc ngầm độc đáo trên sông Bạch Đằng"
+        ]
+      },
+      {
+        "title": "Chương 2: Trận địa cọc nhọn và chiến thắng vùi dập chiến thuyền Lưu Hoằng Tháo năm 938",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Lợi dụng thủy triều lên nhử địch vào bãi cọc",
+          "Phản công tiêu diệt hoàn toàn quân Nam Hán"
+        ]
+      },
+      {
+        "title": "Chương 3: Xưng Vương đóng đô tại Cổ Loa mở ra kỷ nguyên độc lập muôn đời năm 939",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Chấm dứt hơn một nghìn năm Bắc thuộc",
+          "Xây dựng thể chế độc lập"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Ngô Quyền",
+      "Lưu Hoằng Tháo",
+      "Kiều Công Tiễn",
+      "Sông Bạch Đằng",
+      "Cổ Loa"
+    ]
+  },
+  {
+    "id": "hist_top_008",
+    "topic": "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân năm 968",
+    "epoch": "Đinh & Tiền Lê",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Nạn phân tranh 12 sứ quân làm giang sơn chia cắt năm 965",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Nhà Ngô tan rã sau khi Ngô Quyền mất",
+          "Các sứ quân chiếm cứ các vùng đất"
+        ]
+      },
+      {
+        "title": "Chương 2: Đinh Bộ Lĩnh thống nhất đất nước và lập nước Đại Cồ Việt năm 968",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Tài thao lược dẹp yên các lộ quân",
+          "Lên ngôi Hoàng đế xưng Đinh Tiên Hoàng đóng đô tại Hoa Lư"
+        ]
+      },
+      {
+        "title": "Chương 3: Định đô Hoa Lư đúc tiền Thái Bình đắp luỹ dựng thành năm 970",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Đồng tiền Thái Bình Hưng Bảo đầu tiên",
+          "Kinh đô Hoa Lư non nước hiểm trở"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Đinh Bộ Lĩnh",
+      "Đinh Tiên Hoàng",
+      "Hoa Lư",
+      "Đại Cồ Việt",
+      "12 Sứ Quân"
+    ]
+  },
+  {
+    "id": "hist_top_009",
+    "topic": "Lê Hoàn và Chiến thắng Bạch Đằng năm 981",
+    "epoch": "Đinh & Tiền Lê",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Nguy cơ xâm lược từ nhà Tống và sự suy tôn Thập đạo tướng quân năm 980",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Vua Đinh Toàn còn nhỏ tuổi",
+          "Thái hậu Dương Vân Nga trao áo long bào"
+        ]
+      },
+      {
+        "title": "Chương 2: Đại phá quân Tống trên sông Bạch Đằng và ải Chi Lăng năm 981",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Tiêu diệt tướng Hầu Nhân Bảo",
+          "Đánh tan thủy bộ quân giặc"
+        ]
+      },
+      {
+        "title": "Chương 3: Ngoại giao mềm dẻo và lễ hội Tịch điền khuyến nông năm 987",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Chính sách bang giao bình đẳng",
+          "Vua đích thân cày ruộng khuyến nông"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Lê Hoàn",
+      "Lê Đại Hành",
+      "Dương Vân Nga",
+      "Hầu Nhân Bảo",
+      "Bạch Đằng 981"
+    ]
+  },
+  {
+    "id": "hist_top_010",
+    "topic": "Lý Thái Tổ và Chiếu Dời Đô năm 1010",
+    "epoch": "Nhà Lý",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Sự ra đời của Triều đại Nhà Lý năm 1009",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Lý Công Uẩn được triều thần suy tôn lên ngôi Hoàng đế",
+          "Mở ra triều đại hưng thịnh kéo dài 216 năm"
+        ]
+      },
+      {
+        "title": "Chương 2: Chiếu Dời Đô và tầm nhìn thiên niên kỷ tại Thăng Long năm 1010",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Thế đất rồng cuộn hổ ngồi tại Đại La",
+          "Dời kinh đô từ Hoa Lư về Thăng Long"
+        ]
+      },
+      {
+        "title": "Chương 3: Quy hoạch Hoàng thành Thăng Long và văn hóa Thăng Long năm 1020",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Xây dựng Hoàng thành, Cấm thành",
+          "Phát triển Phật giáo Đại Việt"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Lý Thái Tổ",
+      "Lý Công Uẩn",
+      "Chiếu Dời Đô",
+      "Thăng Long",
+      "Hoa Lư"
+    ]
+  },
+  {
+    "id": "hist_top_011",
+    "topic": "Lý Thường Kiệt và Phòng tuyến Như Nguyệt năm 1077",
+    "epoch": "Nhà Lý",
+    "targetDurationMinutes": 4,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Tiên phát chế nhân - Đánh đòn phủ đầu sang đất Tống năm 1075",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Tấn công Ung Châu, Khâm Châu triệt hạ hậu cần",
+          "Rút quân chuẩn bị phòng thủ"
+        ]
+      },
+      {
+        "title": "Chương 2: Xây dựng chiến tuyến sông Như Nguyệt năm 1076",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Phòng tuyến tre cọc hiểm yếu dài hơn 100km",
+          "Chặn đứng đại quân Quách Quỳ"
+        ]
+      },
+      {
+        "title": "Chương 3: Bài thơ thần Nam Quốc Sơn Hà và đại thắng năm 1077",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Tuyên ngôn Độc lập đầu tiên vang vọng trong đêm",
+          "Tập kích ban đêm đánh tan quân giặc"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Lý Thường Kiệt",
+      "Quách Quỳ",
+      "Sông Như Nguyệt",
+      "Nam Quốc Sơn Hà",
+      "Ung Châu"
+    ]
+  },
+  {
+    "id": "hist_top_012",
+    "topic": "Trần Hưng Đạo và Ba Lần Đại Phá Quân Nguyên Mông",
+    "epoch": "Nhà Trần",
+    "targetDurationMinutes": 5,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Kháng chiến lần thứ nhất năm 1258 - Trận Đông Bộ Đầu",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Kế sách Vườn không nhà trống",
+          "Trần Thái Tông và Trần Thủ Độ kiên định chống giặc"
+        ]
+      },
+      {
+        "title": "Chương 2: Hội nghị Bình Than, Diên Hồng và Hịch Tướng Sĩ năm 1284-1285",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Trần Quốc Tuấn viết Hịch Tướng Sĩ",
+          "Ý chí Quyết đánh tại Diên Hồng"
+        ]
+      },
+      {
+        "title": "Chương 3: Đại thắng Bạch Đằng năm 1288 bắt sống tướng Ô Mã Nhi",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Kế sách cọc ngầm Bạch Đằng",
+          "Tiêu diệt hoàn toàn thủy quân giặc"
+        ]
+      },
+      {
+        "title": "Chương 4: Bài học khoan thư sức dân và đạo làm tướng thời Trần năm 1300",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 4,
+        "keyPoints": [
+          "Khoan thư sức dân làm kế sâu rễ bền gốc",
+          "Tôn vinh Đức Thánh Trần"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Trần Hưng Đạo",
+      "Trần Quốc Tuấn",
+      "Trần Thủ Độ",
+      "Hội Nghị Diên Hồng",
+      "Bạch Đằng 1288",
+      "Ô Mã Nhi"
+    ]
+  },
+  {
+    "id": "hist_top_013",
+    "topic": "Hồ Quý Ly và Cải cách Nhà Hồ năm 1400",
+    "epoch": "Nhà Hồ",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Hồ Quý Ly lên ngôi lập ra triều đại Nhà Hồ năm 1400",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Đổi quốc hiệu thành Đại Ngu đóng đô ở Tây Đô",
+          "Bối cảnh suy tàn cuối triều Trần"
+        ]
+      },
+      {
+        "title": "Chương 2: Các chính sách cải cách táo bạo về tiền tệ, thi cử năm 1402",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Phát hành tiền giấy Thông Bảo Hội Sao",
+          "Đề cao chữ Nôm và hạn điền"
+        ]
+      },
+      {
+        "title": "Chương 3: Súng Thần Cơ và Thành Nhà Hồ - Những di sản trường tồn năm 1405",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Hồ Nguyên Trừng sáng chế vũ khí hiện đại",
+          "Kiến trúc thành đá nguyên khối"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Hồ Quý Ly",
+      "Hồ Nguyên Trừng",
+      "Thành Nhà Hồ",
+      "Tiền Giấy",
+      "Súng Thần Cơ"
+    ]
+  },
+  {
+    "id": "hist_top_014",
+    "topic": "Khởi nghĩa Lam Sơn và Hội thề Lũng Nhai năm 1418",
+    "epoch": "Khởi Nghĩa Lam Sơn & Hậu Lê",
+    "targetDurationMinutes": 4,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Ách đô hộ tàn bạo của nhà Minh và Hội thề Lũng Nhai năm 1418",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Lê Lợi xưng Bình Định Vương tụ nghĩa tại Lam Sơn",
+          "19 tướng lĩnh anh kiệt cắt máu tuyên thề"
+        ]
+      },
+      {
+        "title": "Chương 2: Tấm gương Lê Lai liều mình cứu chúa năm 1419",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Lê Lai mặc áo ngự bào đánh lạc hướng giặc",
+          "Nếm mật nằm gai tại núi Chí Linh"
+        ]
+      },
+      {
+        "title": "Chương 3: Bước ngoặt chiến lược tiến quân vào Nghệ An năm 1424",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Kế sách Nguyễn Chích giải phóng vùng đất rộng lớn",
+          "Xây dựng bàn đạp giải phóng toàn quốc"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Lê Lợi",
+      "Lê Lai",
+      "Nguyễn Chích",
+      "Hội Thề Lũng Nhai",
+      "Khởi Nghĩa Lam Sơn"
+    ]
+  },
+  {
+    "id": "hist_top_015",
+    "topic": "Trận Chi Lăng Xương Giang và Toàn Thắng Lam Sơn 1427",
+    "epoch": "Khởi Nghĩa Lam Sơn & Hậu Lê",
+    "targetDurationMinutes": 4,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Trận Tốt Động Chúc Động năm 1426 đè bẹp mười vạn quân Minh",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Chiến thuật phục kích đầm lầy của Đinh Lễ, Lý Triện",
+          "Vây hãm Vương Thông trong thành Đông Quan"
+        ]
+      },
+      {
+        "title": "Chương 2: Trận Chi Lăng chém đầu Liễu Thăng năm 1427",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Trần Lựu giả thua nhử Liễu Thăng vào đầm lầy",
+          "Chém đầu tướng giặc làm tan rã 10 vạn viện binh"
+        ]
+      },
+      {
+        "title": "Chương 3: Hội thề Đông Quan và Bình Ngô Đại Cáo tuyên cáo độc lập năm 1428",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Cấp thuyền ngựa lương thảo cho quân Minh rút về",
+          "Nguyễn Trãi viết Bình Ngô Đại Cáo"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Lê Lợi",
+      "Nguyễn Trãi",
+      "Liễu Thăng",
+      "Vương Thông",
+      "Chi Lăng Xương Giang",
+      "Bình Ngô Đại Cáo"
+    ]
+  },
+  {
+    "id": "hist_top_016",
+    "topic": "Vua Lê Thánh Tông và Thời kỳ Hồng Đức Thịnh Trị",
+    "epoch": "Khởi Nghĩa Lam Sơn & Hậu Lê",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Đăng cơ và công cuộc cải cách bộ máy hành chính năm 1460",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Chia cả nước thành 13 đạo thừa tuyên",
+          "Chế độ quan chế khoa cử nghiêm ngặt"
+        ]
+      },
+      {
+        "title": "Chương 2: Bộ luật Hồng Đức (Quốc triều hình luật) năm 1483",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Bảo vệ quyền lợi phụ nữ và kỷ cương quốc gia",
+          "Khuyến khích canh nông"
+        ]
+      },
+      {
+        "title": "Chương 3: Hội Tao Đàn và bản đồ Hồng Đức đầu tiên năm 1490",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Tao Đàn Nhị Thập Bát Tú",
+          "Vẽ bản đồ địa lý toàn vẹn lãnh thổ"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Lê Thánh Tông",
+      "Luật Hồng Đức",
+      "Hội Tao Đàn",
+      "Đại Việt Sử Ký Toàn Thư"
+    ]
+  },
+  {
+    "id": "hist_top_017",
+    "topic": "Vụ án Lệ Chi Viên và Nỗi Oan Khuất Nguyễn Trãi năm 1442",
+    "epoch": "Khởi Nghĩa Lam Sơn & Hậu Lê",
+    "targetDurationMinutes": 3,
+    "videoType": "MYSTERY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Nguyễn Trãi lui về ở ẩn tại Côn Sơn năm 1440",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Vua Lê Thái Tông tuần du miền Đông ghé thăm Côn Sơn",
+          "Tài đức và lòng trung trinh của Nguyễn Trãi"
+        ]
+      },
+      {
+        "title": "Chương 2: Cái chết bất ngờ của Vua Lê Thái Tông tại Lệ Chi Viên năm 1442",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Vua đột ngột qua đời trong đêm",
+          "Âm mưu thanh trừng của phe cánh gian thần"
+        ]
+      },
+      {
+        "title": "Chương 3: Án oan tru di tam tộc và công lý lịch sử thời Lê Thánh Tông năm 1464",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Lê Thánh Tông minh oan Ức Trai tâm thượng quang Khuê Tảo",
+          "Khẳng định nhân cách sáng ngời"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Nguyễn Trãi",
+      "Nguyễn Thị Lộ",
+      "Lê Thái Tông",
+      "Lê Thánh Tông",
+      "Lệ Chi Viên",
+      "Côn Sơn"
+    ]
+  },
+  {
+    "id": "hist_top_018",
+    "topic": "Quang Trung Nguyễn Huệ và Trận Rạch Gầm Xoài Mút năm 1785",
+    "epoch": "Tây Sơn & Quang Trung",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Chúa Nguyễn Ánh cầu viện quân Xiêm xâm chiếm Nam Bộ năm 1784",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "5 vạn quân Xiêm cướp phá nhân dân miền Tây",
+          "Nguyễn Huệ mang quân vào Nam"
+        ]
+      },
+      {
+        "title": "Chương 2: Bố trí trận địa mai phục trên sông Tiền khúc Rạch Gầm - Xoài Mút năm 1785",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Địa hình cù lao hiểm trở thuận lợi cho hỏa công",
+          "Dụ chiến thuyền giặc vào phục kích"
+        ]
+      },
+      {
+        "title": "Chương 3: Trận hỏa công sấm sét tiêu diệt 5 vạn quân Xiêm năm 1785",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Đại bác và pháo hỏa hổ nhấn chìm hạm đội giặc",
+          "Khẳng định chủ quyền Nam Bộ"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Nguyễn Huệ",
+      "Quang Trung",
+      "Nguyễn Ánh",
+      "Xiêm La",
+      "Rạch Gầm Xoài Mút"
+    ]
+  },
+  {
+    "id": "hist_top_019",
+    "topic": "Đại Thắng Kỷ Dậu 1789 của Hoàng Đế Quang Trung",
+    "epoch": "Tây Sơn & Quang Trung",
+    "targetDurationMinutes": 4,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: 29 vạn quân Mãn Thanh chiếm Thăng Long và Lễ lên ngôi tại Phú Xuân năm 1788",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Tôn Sĩ Nghị chiếm đóng kinh thành",
+          "Nguyễn Huệ lên ngôi Hoàng đế tại núi Bân"
+        ]
+      },
+      {
+        "title": "Chương 2: Cuộc hành quân thần tốc ra Bắc và lời hịch hào sảng năm 1789",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Hành quân vừa đi vừa tuyển quân trong 5 ngày",
+          "Lời hịch Đánh cho để dài tóc đánh cho để đen răng"
+        ]
+      },
+      {
+        "title": "Chương 3: Công phá đồn Ngọc Hồi - Đống Đa mùng 5 Tết Kỷ Dậu năm 1789",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Dùng ván bọc rơm ướt phá pháo địch",
+          "Tôn Sĩ Nghị bỏ chạy tháo thân"
+        ]
+      },
+      {
+        "title": "Chương 4: Chiếc áo bào sạm màu khói súng và khát vọng canh tân năm 1792",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 4,
+        "keyPoints": [
+          "Vua Quang Trung tiến vào Thăng Long ăn Tết",
+          "Chiếu khuyến nông và Chiếu cầu hiền"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Quang Trung",
+      "Nguyễn Huệ",
+      "Tôn Sĩ Nghị",
+      "Ngọc Hồi Đống Đa",
+      "Phú Xuân",
+      "Thăng Long 1789"
+    ]
+  },
+  {
+    "id": "hist_top_020",
+    "topic": "Vua Gia Long và Thống Nhất Đất Nước năm 1802",
+    "epoch": "Nhà Nguyễn",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Cuộc chiến trường kỳ và sự thống nhất sơn hà năm 1802",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Nguyễn Ánh lên ngôi đặt niên hiệu Gia Long",
+          "Đổi quốc hiệu thành Việt Nam định đô tại Huế"
+        ]
+      },
+      {
+        "title": "Chương 2: Xây dựng Kinh thành Huế và củng cố chủ quyền biển đảo năm 1815",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Hoàng thành Huế kết hợp phong thủy và thành lũy Vauban",
+          "Đội Hoàng Sa cắm mốc chủ quyền"
+        ]
+      },
+      {
+        "title": "Chương 3: Bộ Hoàng Việt luật lệ (Luật Gia Long) năm 1812",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Quy định luật pháp thống nhất",
+          "Phát triển đường Thiên Lý Bắc Nam"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Gia Long",
+      "Nguyễn Ánh",
+      "Kinh Thành Huế",
+      "Hoàng Sa",
+      "Trường Sa",
+      "Việt Nam 1802"
+    ]
+  },
+  {
+    "id": "hist_top_021",
+    "topic": "Bảo vật Quốc gia Trống đồng Ngọc Lũ",
+    "epoch": "Thời kỳ Hồng Bàng",
+    "targetDurationMinutes": 2,
+    "videoType": "ARTIFACT",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Khảo cổ Đông Sơn",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Phát hiện trống đồng",
+          "Hoa văn mặt trời"
+        ]
+      },
+      {
+        "title": "Chương 2: Nghệ thuật đúc đồng",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Chim lạc",
+          "Đời sống tâm linh"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Trống đồng",
+      "Đông Sơn"
+    ]
+  },
+  {
+    "id": "hist_top_022",
+    "topic": "Mai Thúc Loan và Khởi nghĩa Hoan Châu năm 713",
+    "epoch": "Thời kỳ Bắc thuộc",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Mai Hắc Đế khởi binh năm 713",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Chống ách đô hộ nhà Đường",
+          "Chiếm thành Tống Bình"
+        ]
+      },
+      {
+        "title": "Chương 2: Xây dựng thành Vạn An",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Căn cứ Sa Nam",
+          "Tấm gương oanh liệt"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Mai Thúc Loan",
+      "Mai Hắc Đế"
+    ]
+  },
+  {
+    "id": "hist_top_023",
+    "topic": "Phùng Hưng và Khởi nghĩa Bố Cái Đại Vương năm 791",
+    "epoch": "Thời kỳ Bắc thuộc",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Khởi nghĩa Đường Lâm năm 791",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Đánh tan đô hộ Cao Chính Bình",
+          "Làm chủ phủ Tống Bình"
+        ]
+      },
+      {
+        "title": "Chương 2: Tôn xưng Bố Cái Đại Vương",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Tưởng nhớ công ơn",
+          "Di tích Đường Lâm"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Phùng Hưng",
+      "Bố Cái Đại Vương"
+    ]
+  },
+  {
+    "id": "hist_top_024",
+    "topic": "Dương Đình Nghệ và Trận Đánh Chiếm Đại La năm 931",
+    "epoch": "Thời kỳ Tự Chủ",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Nuôi 3000 nghĩa tử",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Chuẩn bị lực lượng",
+          "Hào kiệt tụ hội"
+        ]
+      },
+      {
+        "title": "Chương 2: Trận đánh chiếm thành Đại La năm 931",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Tiêu diệt Trần Bảo",
+          "Giữ vững quyền tự chủ"
+        ]
+      },
+      {
+        "title": "Chương 3: Bài học xây dựng lực lượng",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Đoàn kết nhân tâm",
+          "Kế thừa họ Khúc"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Dương Đình Nghệ",
+      "Thành Đại La"
+    ]
+  },
+  {
+    "id": "hist_top_025",
+    "topic": "Hội Thề Đền Đồng Cổ Thời Nhà Lý năm 1028",
+    "epoch": "Nhà Lý",
+    "targetDurationMinutes": 2,
+    "videoType": "MYSTERY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Loạn Tam vương năm 1028",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Lý Thái Tông dẹp loạn",
+          "Thần Đồng Cổ báo mộng"
+        ]
+      },
+      {
+        "title": "Chương 2: Lễ hội thề trung hiếu",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Làm con bất hiếu làm tôi bất trung thần linh tru diệt",
+          "Kỷ cương xã tắc"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Đền Đồng Cổ",
+      "Lý Thái Tông"
+    ]
+  },
+  {
+    "id": "hist_top_026",
+    "topic": "Trần Thái Tông và Chiến Thắng Đông Bộ Đầu năm 1258",
+    "epoch": "Nhà Trần",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Quân Mông Cổ xâm lược năm 1258",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Ngột Lương Hợp Thai kéo quân vào",
+          "Rút lui chiến thuật"
+        ]
+      },
+      {
+        "title": "Chương 2: Phản công tại Đông Bộ Đầu",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Đánh tan quân giặc",
+          "Giải phóng Thăng Long"
+        ]
+      },
+      {
+        "title": "Chương 3: Bài học vườn không nhà trống",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Triệt phá hậu cần địch",
+          "Đoàn kết quân dân"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Trần Thái Tông",
+      "Đông Bộ Đầu"
+    ]
+  },
+  {
+    "id": "hist_top_027",
+    "topic": "Hội Nghị Bình Than và Tinh Thần Trần Quốc Toản năm 1282",
+    "epoch": "Nhà Trần",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Hội nghị vương hầu tại Bình Than năm 1282",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Bàn kế sách đánh giặc",
+          "Trần Quốc Toản tuổi trẻ chí lớn"
+        ]
+      },
+      {
+        "title": "Chương 2: Bóp nát quả cam và lá cờ thêu sáu chữ",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Phá cường địch báo hoàng ân",
+          "Tự chiêu mộ nghĩa binh"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Trần Quốc Toản",
+      "Hội Nghị Bình Than"
+    ]
+  },
+  {
+    "id": "hist_top_028",
+    "topic": "Trần Nhân Tông và Thiền Phái Trúc Lâm Yên Tử",
+    "epoch": "Nhà Trần",
+    "targetDurationMinutes": 3,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Vị vua hai lần đại thắng quân Nguyên",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Lãnh đạo toàn dân kháng chiến",
+          "Nhường ngôi đi tu"
+        ]
+      },
+      {
+        "title": "Chương 2: Khai sáng Thiền phái Trúc Lâm năm 1299",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Non thiêng Yên Tử",
+          "Phật giáo nhập thế Đại Việt"
+        ]
+      },
+      {
+        "title": "Chương 3: Tư tưởng hòa quang đồng trần",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Đạo gắn với đời",
+          "Di sản văn hóa tinh thần"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Trần Nhân Tông",
+      "Trúc Lâm Yên Tử"
+    ]
+  },
+  {
+    "id": "hist_top_029",
+    "topic": "Danh Tướng Yết Kiêu và Dã Tượng Thời Trần",
+    "epoch": "Nhà Trần",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Tài thủy chiến của tướng Yết Kiêu",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Lặn sâu đục thủng thuyền giặc",
+          "Bắt sống tướng giặc"
+        ]
+      },
+      {
+        "title": "Chương 2: Dã Tượng và lòng trung dũng",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Thuần dưỡng voi chiến",
+          "Tuyệt đối trung thành với chủ tướng"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Yết Kiêu",
+      "Dã Tượng"
+    ]
+  },
+  {
+    "id": "hist_top_030",
+    "topic": "Hồ Nguyên Trừng và Kỳ Tích Đúc Súng Thần Cơ năm 1400",
+    "epoch": "Nhà Hồ",
+    "targetDurationMinutes": 2,
+    "videoType": "ARTIFACT",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Phát minh súng thần cơ pháo binh đầu tiên",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Kỹ thuật đúc gang đồng",
+          "Hỏa khí uy lực"
+        ]
+      },
+      {
+        "title": "Chương 2: Số phận lưu lạc và di sản",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Tướng tài đất Việt",
+          "Ghi danh trong sử sách"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Hồ Nguyên Trừng",
+      "Súng Thần Cơ"
+    ]
+  },
+  {
+    "id": "hist_top_031",
+    "topic": "Trận Tốt Động Chúc Động Đại Phá Quân Minh năm 1426",
+    "epoch": "Khởi Nghĩa Lam Sơn & Hậu Lê",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Tương quan lực lượng năm 1426",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Vương Thông mang 10 vạn viện binh",
+          "Nghĩa quân Lam Sơn bố trí mai phục"
+        ]
+      },
+      {
+        "title": "Chương 2: Quyết chiến tại đầm lầy Tốt Động Chúc Động",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Chém chết tướng giặc Trần Hiệp",
+          "Bắt sống hàng vạn quân Minh"
+        ]
+      },
+      {
+        "title": "Chương 3: Ý nghĩa mở đường toàn thắng",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Làm xoay chuyển cục diện chiến tranh",
+          "Dồn địch vào thế cố thủ"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Tốt Động Chúc Động",
+      "Đinh Lễ",
+      "Lý Triện"
+    ]
+  },
+  {
+    "id": "hist_top_032",
+    "topic": "Bình Ngô Đại Cáo - Bản Tuyên Ngôn Độc Lập năm 1428",
+    "epoch": "Khởi Nghĩa Lam Sơn & Hậu Lê",
+    "targetDurationMinutes": 3,
+    "videoType": "ARTIFACT",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Bối cảnh ra đời sau ngày toàn thắng năm 1428",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Nguyễn Trãi thừa lệnh Lê Lợi soạn thảo",
+          "Tuyên bố độc lập giang sơn"
+        ]
+      },
+      {
+        "title": "Chương 2: Tư tưởng nhân nghĩa sáng ngời",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Đem đại nghĩa để thắng hung tàn",
+          "Lấy chí nhân để thay cường bạo"
+        ]
+      },
+      {
+        "title": "Chương 3: Giá trị thiên cổ hùng văn",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Khẳng định chủ quyền quốc gia",
+          "Bản tuyên ngôn muôn đời"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Bình Ngô Đại Cáo",
+      "Nguyễn Trãi"
+    ]
+  },
+  {
+    "id": "hist_top_033",
+    "topic": "Nguyễn Bỉnh Khiêm và Những Lời Sấm Truyền Thế Kỷ XVI",
+    "epoch": "Mạc - Lê Trung Hưng",
+    "targetDurationMinutes": 3,
+    "videoType": "MYSTERY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Cuộc đời Trạng Trình uyên bác",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Đỗ Trạng nguyên năm 1535",
+          "Lui về dạy học tại am Bạch Vân"
+        ]
+      },
+      {
+        "title": "Chương 2: Sấm ký và những lời khuyên chiến lược",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Hoành Sơn nhất đái vạn đại dung thân",
+          "Giữ chùa thờ Phật thì ăn oản"
+        ]
+      },
+      {
+        "title": "Chương 3: Tầm vóc nhà tư tưởng lỗi lạc",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Dự báo biến thiên lịch sử",
+          "Nhân cách cao thượng"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Nguyễn Bỉnh Khiêm",
+      "Trạng Trình"
+    ]
+  },
+  {
+    "id": "hist_top_034",
+    "topic": "Mạc Đăng Dung và Vương Triều Nhà Mạc năm 1527",
+    "epoch": "Mạc - Lê Trung Hưng",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Mạc Đăng Dung lên ngôi lập triều Mạc năm 1527",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Bối cảnh suy đồi thời Lê mạt",
+          "Ổn định kinh tế xã hội"
+        ]
+      },
+      {
+        "title": "Chương 2: Thành tựu văn hóa nghệ thuật thời Mạc",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Gốm hoa lam tinh xảo",
+          "Phát triển kinh tế hàng hóa"
+        ]
+      },
+      {
+        "title": "Chương 3: Cục diện Nam Bắc triều",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Chiến tranh Lê Mạc kéo dài",
+          "Đánh giá công bằng lịch sử"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Mạc Đăng Dung",
+      "Nhà Mạc"
+    ]
+  },
+  {
+    "id": "hist_top_035",
+    "topic": "Chúa Nguyễn Hoàng và Công Cuộc Mở Cõi Phương Nam năm 1558",
+    "epoch": "Mạc - Lê Trung Hưng",
+    "targetDurationMinutes": 4,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Rời đất Bắc vào Thuận Hóa năm 1558",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Vượt qua hiểm nguy",
+          "Dựng đặt cơ nghiệp tại Ái Tử"
+        ]
+      },
+      {
+        "title": "Chương 2: Chính sách khoan hòa thu phục nhân tâm",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Khai hoang lập ấp",
+          "Phát triển thương mại ngoại thương Cù Lao Chàm"
+        ]
+      },
+      {
+        "title": "Chương 3: Đặt nền móng vương triều Đàng Trong",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Chúa Tiên khai quốc",
+          "Mở rộng bờ cõi về phương Nam"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Nguyễn Hoàng",
+      "Chúa Tiên",
+      "Thuận Hóa"
+    ]
+  },
+  {
+    "id": "hist_top_036",
+    "topic": "Trịnh Nguyễn Phân Tranh và Chiến Lũy Thầy năm 1627",
+    "epoch": "Mạc - Lê Trung Hưng",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Bùng nổ cuộc chiến tranh Trịnh Nguyễn năm 1627",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Sông Gianh chia cắt hai miền",
+          "Bảy lần giao tranh lớn"
+        ]
+      },
+      {
+        "title": "Chương 2: Đào Duy Từ và kiệt tác chiến lũy Lũy Thầy",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Phòng tuyến quân sự kiên cố",
+          "Chặn đứng các đợt tấn công của quân Trịnh"
+        ]
+      },
+      {
+        "title": "Chương 3: Hậu quả chia cắt Đàng Trong Đàng Ngoài",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Cảnh nồi da nấu thịt hơn 100 năm",
+          "Thúc đẩy mở mang bờ cõi phía Nam"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Trịnh Nguyễn",
+      "Lũy Thầy",
+      "Đào Duy Từ"
+    ]
+  },
+  {
+    "id": "hist_top_037",
+    "topic": "Nữ Tướng Bùi Thị Xuân và Đội Tượng Binh Tây Sơn",
+    "epoch": "Tây Sơn & Quang Trung",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Nữ kiệt đất Bình Định",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Huấn luyện đàn voi chiến thuần thục",
+          "Tài năng võ nghệ phi thường"
+        ]
+      },
+      {
+        "title": "Chương 2: Khí phách kiên cường trong trận chiến Trấn Ninh",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Chỉ huy tượng binh xông pha",
+          "Tấm gương tiết liệt lưu danh sử sách"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Bùi Thị Xuân",
+      "Tây Sơn"
+    ]
+  },
+  {
+    "id": "hist_top_038",
+    "topic": "Vua Minh Mạng và Cải Cách Hành Chính Các Tỉnh năm 1831",
+    "epoch": "Nhà Nguyễn",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Bãi bỏ các Bắc Thành và Gia Định Thành năm 1831",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Thống nhất quyền lực trung ương",
+          "Thành lập 30 tỉnh và phủ Thừa Thiên"
+        ]
+      },
+      {
+        "title": "Chương 2: Hoàn thiện bộ máy Lục Bộ và Nội Các",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Chế độ văn thư lưu trữ nghiêm ngặt",
+          "Tổ chức thi Hội thi Đình chặt chẽ"
+        ]
+      },
+      {
+        "title": "Chương 3: Di sản quản lý nhà nước thời Nguyễn",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Bộ máy hành chính quy củ",
+          "Đánh giá cải cách hành chính"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Minh Mạng",
+      "Cải cách 1831"
+    ]
+  },
+  {
+    "id": "hist_top_039",
+    "topic": "Trận Đại Đồn Chí Hòa Kháng Pháp Năm 1861",
+    "epoch": "Cận đại kháng Pháp",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Nguyễn Tri Phương xây dựng Đại đồn Chí Hòa",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Công trình phòng thủ quy mô lớn",
+          "Ngăn chặn bước tiến quân Pháp"
+        ]
+      },
+      {
+        "title": "Chương 2: Trận quyết chiến ác liệt tháng 2 năm 1861",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Pháp dùng hỏa lực pháo hạm tấn công",
+          "Nghĩa quân chiến đấu anh dũng hy sinh"
+        ]
+      },
+      {
+        "title": "Chương 3: Bài học về chiến thuật quân sự",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Lòng yêu nước kiên cường",
+          "Hạn chế của phòng ngự bị động"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Nguyễn Tri Phương",
+      "Đại Đồn Chí Hòa"
+    ]
+  },
+  {
+    "id": "hist_top_040",
+    "topic": "Thủ Khoa Huân và Khởi Nghĩa Nam Kỳ Kháng Pháp",
+    "epoch": "Cận đại kháng Pháp",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Sĩ phu Nam Bộ dấy binh chống giặc năm 1862",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Thủ khoa Nguyễn Hữu Huân khởi nghĩa tại Tân An",
+          "Ba lần bị bắt không khuất phục"
+        ]
+      },
+      {
+        "title": "Chương 2: Khí tiết kiên trinh trước pháp trường năm 1875",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Đọc thơ tuyệt mệnh",
+          "Biểu tượng bất khuất của nhân dân miền Nam"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Thủ Khoa Huân",
+      "Nguyễn Hữu Huân"
+    ]
+  },
+  {
+    "id": "hist_top_041",
+    "topic": "Phong Trào Cần Vương và Vua Hàm Nghi năm 1885",
+    "epoch": "Cận đại kháng Pháp",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Cuộc phản công tại kinh thành Huế và xuất bôn năm 1885",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Tôn Thất Thuyết phò vua ra Tân Sở",
+          "Ban hành Chiếu Cần Vương kêu gọi cứu nước"
+        ]
+      },
+      {
+        "title": "Chương 2: Các cuộc khởi nghĩa Cần Vương bùng nổ khắp Bắc Trung Kỳ",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Ba Đình, Bãi Sậy, Hương Khê hưởng ứng",
+          "Khí thế diệt giặc cứu nước sục sôi"
+        ]
+      },
+      {
+        "title": "Chương 3: Vua Hàm Nghi bị bắt và khí phách bất khuất",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Không chịu khuất phục trước người Pháp",
+          "Bị đày sang Algérie giữ trọn khí tiết"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Vua Hàm Nghi",
+      "Chiếu Cần Vương",
+      "Tôn Thất Thuyết"
+    ]
+  },
+  {
+    "id": "hist_top_042",
+    "topic": "Phan Đình Phùng và Khởi Nghĩa Hương Khê năm 1895",
+    "epoch": "Cận đại kháng Pháp",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Căn cứ Vụ Quang hiểm trở",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Tổ chức nghĩa quân thành 15 thứ quân",
+          "Cao Thắng chế tạo súng trường theo mẫu Pháp"
+        ]
+      },
+      {
+        "title": "Chương 2: Những trận đánh vang dội trên đất Hà Tĩnh",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Chiến thuật du kích dựa vào địa hình",
+          "Đánh bại nhiều cuộc càn quét lớn"
+        ]
+      },
+      {
+        "title": "Chương 3: Đỉnh cao và kết thúc của phong trào Cần Vương năm 1895",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Cụ Phan Đình Phùng hy sinh vì bệnh nặng",
+          "Bài học về tổ chức và vũ khí"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Phan Đình Phùng",
+      "Cao Thắng",
+      "Khởi nghĩa Hương Khê"
+    ]
+  },
+  {
+    "id": "hist_top_043",
+    "topic": "Hoàng Hoa Thám và Khởi Nghĩa Yên Thế 30 Năm",
+    "epoch": "Cận đại kháng Pháp",
+    "targetDurationMinutes": 3,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Hùm xám Yên Thế dựng cờ khởi nghĩa năm 1884",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Căn cứ rừng thiêng nước độc Phồn Xương",
+          "Tài năng chiến tranh du kích tài tình"
+        ]
+      },
+      {
+        "title": "Chương 2: Hai lần buộc thực dân Pháp phải giảng hòa",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Bảo vệ quyền lợi nông dân",
+          "Liên kết với các sĩ phu yêu nước"
+        ]
+      },
+      {
+        "title": "Chương 3: Cuộc chiến đấu trường kỳ và tấm gương bất tử",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Kiên cường kháng chiến suốt 30 năm",
+          "Biểu tượng tinh thần quật khởi"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Hoàng Hoa Thám",
+      "Khởi nghĩa Yên Thế"
+    ]
+  },
+  {
+    "id": "hist_top_044",
+    "topic": "Cụ Phan Bội Châu và Phong Trào Đông Du năm 1905",
+    "epoch": "Cận đại kháng Pháp",
+    "targetDurationMinutes": 3,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Thành lập Hội Duy Tân và phát động Đông Du năm 1905",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Đưa hàng trăm thanh niên sang Nhật học tập",
+          "Khát vọng canh tân cứu nước"
+        ]
+      },
+      {
+        "title": "Chương 2: Tác phẩm Hải Ngoại Huyết Thư thức tỉnh quốc dân",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Kêu gọi đoàn kết toàn dân tộc",
+          "Ảnh hưởng sâu rộng trong phong trào yêu nước"
+        ]
+      },
+      {
+        "title": "Chương 3: Bài học tìm đường cứu nước đầu thế kỷ XX",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Hạn chế của con đường bạo động cầu viện",
+          "Tấm gương cống hiến trọn đời"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Phan Bội Châu",
+      "Phong trào Đông Du"
+    ]
+  },
+  {
+    "id": "hist_top_045",
+    "topic": "Nguyễn Ái Quốc và Hành Trình Tìm Đường Cứu Nước năm 1911",
+    "epoch": "Hiện đại 1945-1975",
+    "targetDurationMinutes": 4,
+    "videoType": "BIOGRAPHY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Người thanh niên Nguyễn Tất Thành rời bến Nhà Rồng năm 1911",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Khát vọng tự do cho đồng bào",
+          "Lao động bôn ba qua nhiều châu lục"
+        ]
+      },
+      {
+        "title": "Chương 2: Bản Yêu sách của nhân dân An Nam tại Hội nghị Versailles năm 1919",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Đưa tiếng nói dân tộc ra thế giới",
+          "Bắt gặp Luận cương của Lênin năm 1920"
+        ]
+      },
+      {
+        "title": "Chương 3: Thành lập Đảng Cộng sản Việt Nam năm 1930",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Hợp nhất các tổ chức cộng sản tại Hương Cảng",
+          "Soạn thảo Cương lĩnh chính trị đầu tiên"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Nguyễn Ái Quốc",
+      "Hồ Chí Minh",
+      "Bến Nhà Rồng"
+    ]
+  },
+  {
+    "id": "hist_top_046",
+    "topic": "Cách Mạng Tháng Tám và Tuyên Ngôn Độc Lập năm 1945",
+    "epoch": "Hiện đại 1945-1975",
+    "targetDurationMinutes": 4,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Thời cơ ngàn năm có một mùa thu năm 1945",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Nhật Bản đầu hàng đồng minh",
+          "Toàn quốc tổng khởi nghĩa giành chính quyền"
+        ]
+      },
+      {
+        "title": "Chương 2: Giành chính quyền tại Hà Nội, Huế, Sài Gòn",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Khởi nghĩa thắng lợi nhanh chóng trong 15 ngày",
+          "Vua Bảo Đại thoái vị"
+        ]
+      },
+      {
+        "title": "Chương 3: Bản Tuyên ngôn Độc lập tại Quảng trường Ba Đình ngày 2/9/1945",
+        "targetDurationSeconds": 80,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Khai sinh nước Việt Nam Dân chủ Cộng hòa",
+          "Nước Việt Nam có quyền hưởng tự do và độc lập"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Cách Mạng Tháng Tám",
+      "Tuyên Ngôn Độc Lập",
+      "Quảng trường Ba Đình"
+    ]
+  },
+  {
+    "id": "hist_top_047",
+    "topic": "Chiến Dịch Biên Giới Thu Đông Năm 1950",
+    "epoch": "Hiện đại 1945-1975",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Quyết định mở chiến dịch Biên Giới năm 1950",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Bác Hồ trực tiếp ra mặt trận quan sát",
+          "Đại tướng Võ Nguyên Giáp chỉ huy"
+        ]
+      },
+      {
+        "title": "Chương 2: Trận Đông Khê mở màn và giải phóng hoàn toàn đường số 4",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Tiêu diệt binh đoàn Lơ-pa-giơ và Sác-tông",
+          "Khai thông biên giới Việt Trung"
+        ]
+      },
+      {
+        "title": "Chương 3: Bước ngoặt giành thế chủ động chiến lược",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Chuyển từ phòng ngự sang tiến công",
+          "Củng cố căn cứ địa Việt Bắc"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Chiến Dịch Biên Giới",
+      "Võ Nguyên Giáp",
+      "Đông Khê"
+    ]
+  },
+  {
+    "id": "hist_top_048",
+    "topic": "Chiến Dịch Điện Biên Phủ 1954 Lừng Lẫy Năm Châu",
+    "epoch": "Hiện đại 1945-1975",
+    "targetDurationMinutes": 5,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Tập đoàn cứ điểm Điện Biên Phủ - Pháo đài bất khả xâm phạm của Pháp",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Đờ Cát chỉ huy 16200 quân tinh nhuệ",
+          "Hạ quyết tâm tiêu diệt tập đoàn cứ điểm"
+        ]
+      },
+      {
+        "title": "Chương 2: Kéo pháo vào và quyết định lịch sử chuyển phương châm tác chiến",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Chuyển từ Đánh nhanh thắng nhanh sang Đánh chắc tiến chắc",
+          "Đào hào bao vây siết chặt phân khu"
+        ]
+      },
+      {
+        "title": "Chương 3: Ba đợt tiến công tiêu diệt cứ điểm Đồi A1, C1, Him Lam",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "56 ngày đêm khoét núi ngủ hầm mưa dầm cơm vắt",
+          "Bắt sống tướng Đờ Cát chiều 7/5/1954"
+        ]
+      },
+      {
+        "title": "Chương 4: Ý nghĩa lịch sử và chấm dứt ách thống trị thực dân",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 4,
+        "keyPoints": [
+          "Lừng lẫy năm châu chấn động địa cầu",
+          "Ký kết Hiệp định Genève chấm dứt chiến tranh"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Điện Biên Phủ",
+      "Võ Nguyên Giáp",
+      "Đờ Cát",
+      "Đồi A1"
+    ]
+  },
+  {
+    "id": "hist_top_049",
+    "topic": "Địa Đạo Củ Chi - Thành Đồng Đất Thép Nam Bộ",
+    "epoch": "Hiện đại 1945-1975",
+    "targetDurationMinutes": 3,
+    "videoType": "ARTIFACT",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Khởi nguồn hệ thống địa đạo trong lòng đất",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Bắt đầu đào từ kháng chiến chống Pháp",
+          "Phát triển mạnh mẽ trong kháng chiến chống Mỹ"
+        ]
+      },
+      {
+        "title": "Chương 2: Cấu trúc địa đạo kỳ vĩ hơn 200km",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "Hệ thống hầm chiến đấu, bệnh viện, bếp Hoàng Cầm",
+          "Chống chọi bom đạn khốc liệt"
+        ]
+      },
+      {
+        "title": "Chương 3: Biểu tượng ý chí kiên cường của quân dân miền Nam",
+        "targetDurationSeconds": 60,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Thành đồng đất thép Củ Chi",
+          "Di tích lịch sử quốc gia đặc biệt"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Địa Đạo Củ Chi",
+      "Bếp Hoàng Cầm",
+      "Đất Thép"
+    ]
+  },
+  {
+    "id": "hist_top_050",
+    "topic": "Đại Thắng Mùa Xuân 1975 - Chiến Dịch Hồ Chí Minh",
+    "epoch": "Hiện đại 1945-1975",
+    "targetDurationMinutes": 5,
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "expectedChapters": [
+      {
+        "title": "Chương 1: Chiến dịch Tây Nguyên và bước ngoặt giải phóng Buôn Ma Thuột tháng 3/1975",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 1,
+        "keyPoints": [
+          "Đòn điểm huyệt chiến lược",
+          "Giải phóng Huế Đà Nẵng"
+        ]
+      },
+      {
+        "title": "Chương 2: Mệnh lệnh thần tốc thần tốc hơn nữa táo bạo táo bạo hơn nữa",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 2,
+        "keyPoints": [
+          "5 cánh quân tiến về Sài Gòn",
+          "Phá vỡ tuyến phòng thủ Xuân Lộc"
+        ]
+      },
+      {
+        "title": "Chương 3: Chiến dịch Hồ Chí Minh toàn thắng ngày 30 tháng 4 năm 1975",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 3,
+        "keyPoints": [
+          "Xe tăng húc đổ cổng Dinh Độc Lập",
+          "Lá cờ Mặt trận Dân tộc Giải phóng tung bay"
+        ]
+      },
+      {
+        "title": "Chương 4: Giang sơn thu về một mối và kỷ nguyên độc lập thống nhất",
+        "targetDurationSeconds": 75,
+        "chronologicalOrder": 4,
+        "keyPoints": [
+          "Chấm dứt 30 năm chiến tranh",
+          "Non sông liền một dải"
+        ]
+      }
+    ],
+    "expectedEntities": [
+      "Chiến Dịch Hồ Chí Minh",
+      "Dinh Độc Lập",
+      "30 tháng 4",
+      "Tây Nguyên"
+    ]
+  }
+]

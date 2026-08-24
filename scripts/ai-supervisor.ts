@@ -104,19 +104,18 @@ export function resolveModelPaths() {
     }
   }
 
-  // Only attach multimodal projector if the primary model is an actual Vision-Language (VL) model
-  const isVlModel = Boolean(llmModelPath && (/[-_]vl[-_.]/i.test(llmModelPath) || /qwen.*vl/i.test(llmModelPath)));
+  // Multimodal projector for Vision-Language tasks
   let mmprojPath: string | null = null;
-  if (isVlModel) {
-    const mmprojCandidates = [
-      path.join(MODEL_DIR, 'qwen3.5-9b-mmproj.gguf'),
-      path.join(MODEL_DIR, 'mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf'),
-    ];
-    for (const m of mmprojCandidates) {
-      if (fs.existsSync(m)) {
-        mmprojPath = m;
-        break;
-      }
+  const mmprojCandidates = [
+    path.join(MODEL_DIR, 'qwen3.5-9b-mmproj.gguf'),
+    path.join(MODEL_DIR, 'mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf'),
+    path.join(MODEL_DIR, 'mmproj-Qwen2.5-VL-7B-Instruct-Q8_0.gguf'),
+    path.join(MODEL_DIR, 'mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf'),
+  ];
+  for (const m of mmprojCandidates) {
+    if (fs.existsSync(m)) {
+      mmprojPath = m;
+      break;
     }
   }
 

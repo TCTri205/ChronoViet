@@ -1157,9 +1157,9 @@ export class HybridInferenceDispatcher {
         hasAvailableApiKeys('openrouter') ||
         hasAvailableApiKeys('openai');
 
-      // If cloud fallback is available, cooldown for 20s to allow Cloud failover.
-      // If pure local (no cloud fallback), use short 3s cooldown to re-probe without long lockouts.
-      const cooldownMs = hasCloudTargets ? 20000 : 3000;
+      // If cloud fallback is available and not in EVAL_STRICT, cooldown for 20s to allow Cloud failover.
+      // If pure local or EVAL_STRICT (no cloud fallback), use short 2s cooldown to re-probe without long lockouts.
+      const cooldownMs = (hasCloudTargets && !envConfig.EVAL_STRICT) ? 20000 : 2000;
       this.targetCooldowns.set(target.id, Date.now() + cooldownMs);
       persistQuarantineToRedis('target', target.id, cooldownMs, {
         provider: 'local',

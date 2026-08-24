@@ -68,16 +68,23 @@ Mỗi phần tử trong mảng `timeline` định nghĩa chính xác 1 phân c�
 | :--- | :--- | :---: | :--- |
 | `id` | `string` | **Bắt buộc** | Mã định danh scene duy nhất (e.g. `"scene-01-intro"`, `"scene-02-stat"`). |
 | `durationInFrames` | `number` | Khuyên dùng | Độ dài scene tính theo số khung hình (ở 30 FPS: 5 giây = 150 frames). Ưu tiên cao nhất. |
+| `durationInSeconds` | `number` | Tùy chọn | Độ dài scene tính theo số giây thực tế (VD: `5.0`). |
 | `startTime` | `number` | Tùy chọn | Thời điểm bắt đầu scene tính bằng giây (VD: `0`). |
 | `endTime` | `number` | Tùy chọn | Thời điểm kết thúc scene tính bằng giây (VD: `15`). |
 | `type` | `enum` | Tùy chọn | Phân loại phân cảnh: `'PURE_CODE'` (render bằng code UI) hoặc `'PURE_IMAGE'` (dùng ảnh tư liệu). |
 | `component` | `string` | Tùy chọn | Gợi ý tên Component cho Agent (dùng cho thông tin debug/metadata). |
 | `text` | `string` | Tùy chọn | Lời thuyết minh hiển thị tại thanh phụ đề Karaoke phía dưới màn hình. |
+| `captions` | `array` | Tùy chọn | Danh sách từ khóa và timestamp khung hình Karaoke (`CaptionWord[]`). |
 | `assetUrl` | `string` | Tùy chọn | Đường dẫn ảnh/video tư liệu chính (đã qua VLM Inspector duyệt). |
+| `assetMetadata` | `object` | Tùy chọn | Metadata kích thước & tỉ lệ ảnh chính (`AssetMetadata`: `{ width, height, aspectRatio, durationSec, mimeType }`). |
 | `secondaryAssetUrl`| `string` | Tùy chọn | Đường dẫn ảnh phụ thứ hai (dùng cho layout `SPLIT_COMPARE`). |
+| `secondaryAssetMetadata` | `object` | Tùy chọn | Metadata kích thước & tỉ lệ ảnh phụ thứ hai (`AssetMetadata`). |
 | `sceneAudioUrl` | `string` | Tùy chọn | File voiceover riêng lẻ từng scene (nếu không dùng file `audioUrl` tổng). |
 | `sfxUrl` | `string` | Tùy chọn | File hiệu ứng âm thanh SFX (tiếng gươm đao, tiếng trống trận, tiếng lật sách cổ). |
+| `soundEffects` | `array` | Tùy chọn | Danh sách hiệu ứng âm thanh phối ghép đa kênh (`SoundEffect[]`). |
 | `layoutMode` | `enum` | **Quan trọng** | 1 trong **31 LayoutMode** điều khiển Component UI render scene. |
+| `fallbackLayoutMode` | `enum` | Tùy chọn | Layout mode dự phòng khi ảnh chính bị lỗi hoặc không tải được (`LayoutMode`). |
+| `fallbackOverlayData` | `object` | Tùy chọn | Dữ liệu overlay dự phòng áp dụng cùng fallback layout mode (`OverlayData`). |
 | `overlayType` | `string` | Tùy chọn | Gắn nhãn overlay (VD: `"QUOTE"`, `"ARTICLE_INTRO"`, `"BIO_CARD"`). |
 | `effect` | `enum` | Tùy chọn | Hiệu ứng Ken Burns chuyển động ảnh (xem 6 kiểu tại section 2.5). |
 | `customKenBurns` | `object` | Tùy chọn | Tùy chỉnh tọa độ & tỉ lệ Ken Burns (`CustomKenBurns`). |
@@ -91,6 +98,7 @@ Mỗi phần tử trong mảng `timeline` định nghĩa chính xác 1 phân c�
 | `attribution` | `object` | Tùy chọn | Metadata tác giả & nguồn ảnh (`{ author, sourceUrl, license }`). |
 | `requiresAttribution` | `boolean` | Tùy chọn | `true` nếu cần hiển thị credit tác giả góc dưới màn hình. |
 | `overlayData` | `object` | **Quan trọng** | Chứa các thuộc tính dữ liệu chuyên biệt truyền trực tiếp cho Component UI. |
+| `layoutProps` | `object` | Tùy chọn | Thuộc tính mở rộng dynamic dạng key-value truyền cho Layout (`Record<string, unknown>`). |
 
 ---
 

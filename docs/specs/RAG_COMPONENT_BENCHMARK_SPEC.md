@@ -25,7 +25,7 @@ Bộ benchmark v1.0 đóng vai trò chẩn đoán độc lập các thành phầ
      ├─────────────────────┼─────────────────────┐
      ▼                     ▼                     ▼
 [Vector Retrieval]  [Lexical FTS]        [Graph Traversal & Paths]
- (Dense BGE-M3)      (PostgreSQL FTS)      (Recursive CTEs)
+ (Dense BGE-M3)      (PostgreSQL FTS)      (Directed BFS Traversal)
      │                     │                     │
      └──────────┬──────────┘                     ▼
                 ▼                       [Graph→Chunk Linking] (C5)
@@ -167,7 +167,7 @@ Query: "Tại sao nhà Tây Sơn lại thất bại trước Nguyễn Ánh vào 
 
 ### 3.3. Tầng C3: Graph Traversal & Path Reasoning Benchmark
 
-Đánh giá GraphRAG không đơn thuần là kiểm tra cú pháp SQL Recursive CTEs chạy được bao nhiêu hops, mà phải đo lường: **Hệ thống có truy xuất đúng chuỗi đường dẫn suy luận (Reasoning Paths) hỗ trợ trả lời câu hỏi hay không?**
+Đánh giá GraphRAG không đơn thuần là kiểm tra cú pháp traversal chạy được bao nhiêu hops, mà phải đo lường: **Hệ thống có truy xuất đúng chuỗi đường dẫn suy luận (Reasoning Paths) hỗ trợ trả lời câu hỏi hay không?**
 
 ```
 Query: "Người nào đóng vai trò quan trọng trong việc chống quân Nguyên dưới thời vua Trần Nhân Tông?"
@@ -187,7 +187,7 @@ Query: "Người nào đóng vai trò quan trọng trong việc chống quân Ng
 | `C3-M5` | **Edge Semantics & Direction Accuracy** | Tỷ lệ cạnh duyệt qua bảo toàn đúng ngữ nghĩa và chiều quan hệ | $\ge 98.0\%$ | $100\%$ |
 | `C3-M6` | **Hub Node Expansion Guard** | Số nodes tối đa sinh ra khi mở rộng qua Hub Node (ví dụ: `person_quang_trung`) | $\le 50\text{ nodes}$ | $\le 30\text{ nodes}$ |
 | `C3-M7` | **1-Hop / 2-Hop Node Recall** | Khả năng thu thập đủ các thực thể lân cận có ý nghĩa trong phạm vi 1–2 hops | $\text{1-hop} \ge 99\%$ | $\text{2-hop} \ge 92\%$ |
-| `C3-M8` | **Online CTE Latency** | Thời gian thực thi Recursive CTE trên PostgreSQL | $\le 10\text{ms}$ | $\le 3\text{ms}$ |
+| `C3-M8` | **Online BFS Graph Latency** | Thời gian thực thi Directed BFS Graph Traversal trên PostgreSQL | $\le 10\text{ms}$ | $\le 3\text{ms}$ |
 
 ---
 
@@ -557,7 +557,7 @@ ChronoEval v2.0 đã được thực thi và xác thực trực tiếp trên cơ
 | **C0** | **Knowledge Graph Construction** | Trích xuất triples & đối chiếu thực thể chuẩn hóa | 15 | 1.28 ms | ✅ **PASS** |
 | **C1** | **Hierarchical Chunking** | Phân mảnh văn bản Parent-Child | 14 | 0.79 ms | ✅ **PASS** |
 | **C2** | **Query Understanding & NER** | Nhận diện thực thể, triều đại & ý đồ câu hỏi | 800 | 0.14 ms | ✅ **PASS** |
-| **C3** | **Graph Traversal & Path Reasoning** | SQL Recursive CTEs trên 82,849 quan hệ | 100 | 61.71 ms | ✅ **PASS** |
+| **C3** | **Graph Traversal & Path Reasoning** | Directed BFS Graph Traversal trên 82,849 quan hệ | 100 | 61.71 ms | ✅ **PASS** |
 | **C4** | **Dense + Lexical Hybrid Retrieval** | pgvector HNSW + BM25 FTS trên 9,258 chunks | **100** | **4.82 ms** | ✅ **PASS** |
 | **C5** | **Graph-Guided Chunk Linking** | Mở rộng liên kết Entity $\rightarrow$ Chunks | 50 | 182.55 ms | ✅ **PASS** |
 | **C6** | **Reranker & Relevance Ordering** | Pure Local Cross-Encoder & Multi-Factor Fusion | 300 | 25.40 ms | ✅ **PASS** |

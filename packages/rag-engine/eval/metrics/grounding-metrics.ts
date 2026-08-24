@@ -1,10 +1,12 @@
 /**
  * Grounding, Faithfulness & Citation Verification Metrics Engine for ChronoEval v2.0
- * Measures Claim-level Entailment, Citation Coverage/Correctness, and Folklore Guardrails
+ * Measures Proposition-level Entailment, Contradiction Detection, Citation Coverage/Correctness, and Folklore Guardrails
  */
 
 const VIETNAMESE_STOP_WORDS = new Set([
-  'là', 'và', 'của', 'tại', 'cho', 'vào', 'ra', 'bị', 'bởi', 'thời', 'các', 'những', 'đã', 'trong', 'với', 'theo', 'như', 'được', 'năm', 'tháng', 'ngày', 'đến', 'từ', 'có', 'thì', 'ở', 'đó', 'này'
+  'là', 'và', 'của', 'tại', 'cho', 'vào', 'ra', 'bị', 'bởi', 'thời', 'các', 'những', 'đã', 'trong',
+  'với', 'theo', 'như', 'được', 'tháng', 'ngày', 'đến', 'từ', 'có', 'thì', 'ở', 'đó', 'này',
+  'rằng', 'vì', 'do', 'đang', 'sẽ', 'lại', 'qua', 'lên', 'xuống', 'về', 'nơi', 'khi', 'sau', 'trước'
 ]);
 
 const FOLKLORE_HEDGING_KEYWORDS = [
@@ -18,10 +20,38 @@ const FOLKLORE_HEDGING_KEYWORDS = [
   'theo lời kể',
   'dã sử ghi',
   'giả thuyết',
+  'người xưa kể lại',
+  'chuyện kể rằng',
 ];
 
-const VICTORY_TERMS = ['thắng', 'đại thắng', 'thắng lợi', 'đánh tan', 'quét sạch', 'tiêu diệt', 'bảo vệ', 'giải phóng'];
-const DEFEAT_TERMS = ['thất bại', 'đầu hàng', 'tháo chạy', 'tử trận', 'chết vô số', 'thua trận', 'bị diệt'];
+const VICTORY_TERMS = [
+  'thắng', 'đại thắng', 'thắng lợi', 'đánh tan', 'quét sạch', 'tiêu diệt', 'bảo vệ',
+  'giải phóng', 'đập tan', 'khởi nghĩa thành công', 'chém chết', 'bắt sống', 'chiến thắng', 'đại phá'
+];
+
+const DEFEAT_TERMS = [
+  'thất bại', 'đầu hàng', 'tháo chạy', 'tử trận', 'chết vô số', 'thua trận',
+  'bị diệt', 'bị bắt', 'tuẫn tiết', 'thất thủ', 'bị chém', 'vỡ trận'
+];
+
+const NEGATION_PATTERNS = [
+  /\bkhông\s+phải\b/i,
+  /\bkhông\s+có\s+thật\b/i,
+  /\bchưa\s+bao\s+giờ\b/i,
+  /\bkhông\s+hề\b/i,
+  /\bchẳng\s+phải\b/i,
+  /\bhoàn\s+toàn\s+sai\b/i,
+  /\bsai\s+lệch\b/i,
+  /\bhư\s+cấu\b/i,
+];
+
+const KINSHIP_TERMS = ['cha của', 'mẹ của', 'anh của', 'em của', 'chị của', 'chồng của', 'vợ của', 'con của', 'ông của', 'cháu của'];
+
+export const VIETNAMESE_STOPWORDS = new Set([
+  'và', 'là', 'của', 'ở', 'tại', 'với', 'trong', 'được', 'các', 'những',
+  'cho', 'về', 'này', 'đó', 'thì', 'mà', 'ra', 'vào', 'khi', 'đến', 'từ',
+  'như', 'có', 'đã', 'sẽ', 'đang', 'rất', 'lại', 'nên', 'cũng', 'bởi', 'để'
+]);
 
 const DISCOURSE_PATTERNS = [
   /^dưới đây là/i,
@@ -33,6 +63,7 @@ const DISCOURSE_PATTERNS = [
   /^chiến công này|chiến thắng này|sự kiện này có ý nghĩa/i,
   /^đây là một trong những/i,
   /^về mặt lịch sử/i,
+  /^câu trả lời là/i,
 ];
 
 /**
@@ -53,14 +84,21 @@ export function extractFactualClaims(answerText: string): string[] {
   // Split by sentence terminators or bullet points
   const rawSentences = answerText
     .split(/(?<=[.!?\n])\s+|;\s+|\n+/)
-    .map((s) => s.replace(/^[-*•\d.)\s]+/, '').trim())
-    .filter((s) => s.length > 8);
+    .map((s) =>
+      s
+        .replace(/^[-*•\d.)\s]+/, '')
+        .replace(/^(dạ|vâng|xin chào|kính chào)[,.\s]+/i, '')
+        .replace(/^theo (tôi|chúng tôi|em) được biết\s+(thì\s+)?/i, '')
+        .trim()
+    )
+    .filter((s) => s.length > 8 && !isDiscourseOrMetaSentence(s));
 
   return rawSentences;
 }
 
 /**
  * Verifies if a historical claim is entailed by context chunks
+ * Implements proposition structure matching, contradiction detection, and temporal verification.
  */
 export function verifyClaimEntailment(
   claim: string,
@@ -75,15 +113,15 @@ export function verifyClaimEntailment(
   }
 
   if (isDiscourseOrMetaSentence(claimClean)) {
-    return { status: 'NEUTRAL', confidence: 0.9 };
+    return { status: 'NEUTRAL', confidence: 0.95 };
   }
 
   const combinedEvidence = evidenceChunks.join(' \n ').toLowerCase();
   if (!combinedEvidence.trim()) {
-    return { status: 'NOT_SUPPORTED', confidence: 0.95 };
+    return { status: 'NOT_SUPPORTED', confidence: 1.0 };
   }
 
-  // 1. Conflict / Contradiction Check (Negation / Polarity Inversion)
+  // 1. Conflict / Contradiction Check: Polarity Inversion (Victory vs Defeat)
   const claimHasVictory = VICTORY_TERMS.some((t) => claimClean.includes(t));
   const claimHasDefeat = DEFEAT_TERMS.some((t) => claimClean.includes(t));
   const evHasVictory = VICTORY_TERMS.some((t) => combinedEvidence.includes(t));
@@ -95,25 +133,37 @@ export function verifyClaimEntailment(
   if (claimHasDefeat && evHasVictory && !evHasDefeat) {
     return { status: 'CONTRADICTED', confidence: 0.95 };
   }
-  if ((claimClean.includes('không') || claimClean.includes('chưa bao giờ')) && (claimHasVictory && evHasVictory)) {
-    if (!claimClean.includes('không thể cản') && !claimClean.includes('không ai sánh bằng')) {
-      return { status: 'CONTRADICTED', confidence: 0.9 };
+
+  // Explicit Negation Contradiction
+  const claimHasExplicitNegation = NEGATION_PATTERNS.some((pattern) => pattern.test(claimClean));
+  if (claimHasExplicitNegation && evHasVictory) {
+    return { status: 'CONTRADICTED', confidence: 0.95 };
+  }
+
+  // Kinship / Relation Conflict Check
+  const claimKinship = KINSHIP_TERMS.find((k) => claimClean.includes(k));
+  if (claimKinship) {
+    const evKinship = KINSHIP_TERMS.find((k) => combinedEvidence.includes(k));
+    if (evKinship && evKinship !== claimKinship) {
+      return { status: 'CONTRADICTED', confidence: 0.95 };
     }
   }
 
-  // 2. Check Numeric / Temporal consistency
+  // 2. Numeric / Temporal consistency verification
   const numbersInClaim = claimClean.match(/\b\d+\b/g) || [];
-  const numbersMissing = numbersInClaim.filter((num) => !combinedEvidence.includes(num));
+  if (numbersInClaim.length > 0) {
+    const numbersInEvidence = new Set(combinedEvidence.match(/\b\d+\b/g) || []);
+    const missingNumbers = numbersInClaim.filter((num) => !numbersInEvidence.has(num));
 
-  if (numbersInClaim.length > 0 && numbersMissing.length === numbersInClaim.length) {
-    // If all numbers/years mentioned in claim are missing from evidence
-    return { status: 'NOT_SUPPORTED', confidence: 0.9 };
+    // If key temporal years/counts in claim are completely missing from evidence
+    if (missingNumbers.length === numbersInClaim.length) {
+      return { status: 'NOT_SUPPORTED', confidence: 0.92 };
+    }
   }
 
-  // 3. Extract tokens
+  // 3. Proposition Token Extraction (keeping numbers and key entities)
   const tokens = claimClean
-    .split(/\s+/)
-    .map((w) => w.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ''))
+    .split(/[\s.,/#!$%^&*;:{}=\-_`~()"“”]+/)
     .filter((w) => w.length >= 2 && !VIETNAMESE_STOP_WORDS.has(w));
 
   if (tokens.length === 0) {
@@ -124,12 +174,15 @@ export function verifyClaimEntailment(
   for (const token of tokens) {
     if (combinedEvidence.includes(token)) {
       matchedTokenCount++;
+    } else if (VICTORY_TERMS.includes(token) && evHasVictory) {
+      // Semantic synonym match for victory/campaign predicates
+      matchedTokenCount++;
     }
   }
 
-  const matchRatio = matchedTokenCount / tokens.length;
+  const unigramRatio = matchedTokenCount / tokens.length;
 
-  // 4. Bi-gram containment for key phrases
+  // 4. Bi-gram containment for key historical propositions & entities
   let bigramMatches = 0;
   let totalBigrams = 0;
   for (let i = 0; i < tokens.length - 1; i++) {
@@ -137,19 +190,28 @@ export function verifyClaimEntailment(
     totalBigrams++;
     if (combinedEvidence.includes(bigram)) {
       bigramMatches++;
+    } else if (
+      (VICTORY_TERMS.some((v) => bigram.includes(v)) || bigram.includes('chiến thắng') || bigram.includes('đại phá')) &&
+      evHasVictory
+    ) {
+      bigramMatches++;
     }
   }
-  const bigramRatio = totalBigrams > 0 ? bigramMatches / totalBigrams : matchRatio;
-  const compositeScore = 0.6 * matchRatio + 0.4 * bigramRatio;
+  const bigramRatio = totalBigrams > 0 ? bigramMatches / totalBigrams : unigramRatio;
 
-  if (compositeScore >= 0.45) {
-    return { status: 'ENTAILED', confidence: Math.min(1.0, compositeScore + 0.2) };
-  } else if (compositeScore < 0.25) {
-    return { status: 'NOT_SUPPORTED', confidence: 1.0 - compositeScore };
+  // Composite Proposition Entailment Score
+  const compositeScore = 0.5 * unigramRatio + 0.5 * bigramRatio;
+
+  // Strict Thresholds: Require strong proposition alignment without loose 35% fallbacks
+  if (compositeScore >= 0.60 || (unigramRatio >= 0.70 && (bigramRatio >= 0.40 || numbersInClaim.length > 0))) {
+    return { status: 'ENTAILED', confidence: Math.min(1.0, compositeScore + 0.15) };
+  } else if (compositeScore < 0.35) {
+    return { status: 'NOT_SUPPORTED', confidence: Math.min(1.0, 1.0 - compositeScore) };
   } else {
     return { status: 'NEUTRAL', confidence: 0.5 };
   }
 }
+
 
 /**
  * Calculates Claim-Level Faithfulness and Hallucination Rate
@@ -163,7 +225,7 @@ export function calculateClaimFaithfulness(
   entailedCount: number;
   totalClaims: number;
 } {
-  if (claims.length === 0) {
+  if (!claims || claims.length === 0) {
     return {
       faithfulnessPercent: 100,
       hallucinationRatePercent: 0,
@@ -200,28 +262,29 @@ export function calculateClaimFaithfulness(
 }
 
 /**
- * Calculates Citation Coverage (percentage of claims having at least 1 citation source)
+ * Calculates Citation Coverage (percentage of claims having at least 1 valid citation source)
  */
 export function calculateCitationCoverage(
   claims: string[],
   citationsPerClaim: string[][]
 ): number {
-  if (claims.length === 0) return 100.0;
+  if (!claims || claims.length === 0) return 100.0;
 
   let citedClaims = 0;
   for (let i = 0; i < claims.length; i++) {
-    const citations = citationsPerClaim[i] || [];
-    if (citations.length > 0) {
+    const citations = (citationsPerClaim && citationsPerClaim[i]) || [];
+    if (citations.length > 0 && citations.some((c) => Boolean(c && c.trim()))) {
       citedClaims++;
     }
   }
 
-  return (citedClaims / claims.length) * 100.0;
+  return Number(((citedClaims / claims.length) * 100.0).toFixed(2));
 }
 
 /**
  * Verifies Citation Entailment Correctness:
- * Checks if the specific cited chunk actually contains proof for the claim
+ * Strictly checks if the specific cited chunk actually contains proof for the claim.
+ * Ungrounded claims with invalid or fabricated citations are penalized.
  */
 export function verifyCitationCorrectness(
   claims: string[],
@@ -230,9 +293,16 @@ export function verifyCitationCorrectness(
 ): {
   citationCorrectnessPercent: number;
   granularityScorePercent: number;
+  totalCitations: number;
+  correctCitations: number;
 } {
-  if (claims.length === 0) {
-    return { citationCorrectnessPercent: 100, granularityScorePercent: 100 };
+  if (!claims || claims.length === 0) {
+    return {
+      citationCorrectnessPercent: 100,
+      granularityScorePercent: 100,
+      totalCitations: 0,
+      correctCitations: 0,
+    };
   }
 
   let totalCitations = 0;
@@ -240,30 +310,37 @@ export function verifyCitationCorrectness(
 
   for (let i = 0; i < claims.length; i++) {
     const claim = claims[i];
-    const chunkIds = citedChunkIdsPerClaim[i] || [];
+    const chunkIds = (citedChunkIdsPerClaim && citedChunkIdsPerClaim[i]) || [];
 
     for (const chunkId of chunkIds) {
+      if (!chunkId || !chunkId.trim()) continue;
       totalCitations++;
       const chunkText = chunkMap.get(chunkId) || '';
+      if (!chunkText.trim()) {
+        // Cited chunk does not exist in context map
+        continue;
+      }
       const entailment = verifyClaimEntailment(claim, [chunkText]);
-      if (entailment.status === 'ENTAILED') {
+      if (entailment.status === 'ENTAILED' && entailment.confidence >= 0.60) {
         correctCitations++;
       }
     }
   }
 
   const citationCorrectnessPercent =
-    totalCitations === 0 ? 100 : (correctCitations / totalCitations) * 100;
+    totalCitations === 0 ? 0.0 : Number(((correctCitations / totalCitations) * 100).toFixed(2));
 
-  // Granularity score: sentence-level citations vs chunk-dumping
+  // Granularity score: 1 to 3 citations per claim is optimal; dumping > 4 or having 0 is penalized
   const avgCitationsPerClaim =
     claims.length === 0 ? 0 : totalCitations / claims.length;
   const granularityScorePercent =
-    avgCitationsPerClaim >= 1.0 && avgCitationsPerClaim <= 3.0 ? 100 : 85;
+    avgCitationsPerClaim >= 0.8 && avgCitationsPerClaim <= 3.0 ? 100 : avgCitationsPerClaim === 0 ? 0 : 75;
 
   return {
     citationCorrectnessPercent,
     granularityScorePercent,
+    totalCitations,
+    correctCitations,
   };
 }
 
@@ -276,13 +353,26 @@ export function checkFolkloreGuardrailCompliance(
   isFolkloreSource: boolean
 ): boolean {
   if (!isFolkloreSource) return true;
+  if (!text || !text.trim()) return false;
 
   const textLower = text.toLowerCase();
-  for (const keyword of FOLKLORE_HEDGING_KEYWORDS) {
-    if (textLower.includes(keyword)) {
-      return true;
+  return FOLKLORE_HEDGING_KEYWORDS.some((keyword) => textLower.includes(keyword));
+}
+
+/**
+ * Validates Source Reliability Tiering Compliance
+ * Enforces: LEVEL_1 (Primary Annals) > LEVEL_2 (Modern Scholarly) > LEVEL_3 (Folklore / Legends)
+ */
+export function validateSourceReliabilityTiering(
+  sources: Array<{ reliability: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3'; confidence: number }>
+): boolean {
+  if (!sources || sources.length === 0) return true;
+  for (const src of sources) {
+    if (src.reliability === 'LEVEL_3' && src.confidence > 0.85) {
+      // Folklore cannot be asserted with absolute confidence without hedging
+      return false;
     }
   }
-
-  return false;
+  return true;
 }
+

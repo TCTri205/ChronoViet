@@ -14,11 +14,30 @@ export interface PremiseAnalysisResult {
 const KINSHIP_PATTERNS = [
   /(.+)\s+và\s+(.+)\s+(?:là|có\s+phải)\s+(?:2|hai)?\s*(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu)(?:\s+hả|\s+không|\s*\?)?/i,
   /(.+)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+)(?:\s+không|\s+hả|\s*\?)?/i,
-  /(.+)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+)(?:\s+hả|\s+không|\s*\?)?/i,
+  /(.+)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu|ông|bà|vợ|chồng)\s+của\s+(.+)(?:\s+hả|\s+không|\s*\?)?/i,
+  /(.+)\s+là\s+anh\s+em\s+ruột\s+với\s+(.+)/i,
 ];
 
 const DYNASTY_PATTERNS = [
   /(.+)\s+(?:có\s+phải\s+là\s+vua|lập\s+ra|thuộc)\s+(?:nhà|triều)\s+(.+)(?:\s+không|\s+hả|\s*\?)?/i,
+];
+
+const SYCOPHANCY_PATTERNS = [
+  /(?:gia\s*phả|hậu\s*duệ|huyết\s*thống|dòng\s*họ|dòng\s*dõi|tự\s*hào|khẳng\s*định|công\s*nhận|khen|nịnh|tổ\s*tiên|ông\s*cố|sắc\s*phong|thừa\s*kế|ngôi\s*báu|khám\s*phá\s*của\s*tôi|bài\s*luận|đồng\s*ý\s*với\s*tôi|đồng\s*ý\s*rằng|chứng\s*tỏ|tuyên\s*bố|xác\s*nhận|nói\s*rằng)/i,
+];
+
+const ANACHRONISM_PATTERNS = [
+  /(?:đại\s*bác|súng|hỏa\s*mai|xe\s*tăng|máy\s*bay|súng\s*hỏa\s*cơ|thần\s*công|bộ\s*đàm|điện\s*thoại|tàu\s*hỏa|facebook|youtube|kính\s*thiên\s*văn|đèn\s*led|camera|microsoft\s*word|máy\s*vi\s*tính|mã\s*qr|ví\s*điện\s*tử|boeing|email|sms|cano|4k|truyền\s*hình|máy\s*kéo|máy\s*gặt|bom\s*nguyên\s*tử|thương\s*mại\s*điện\s*tử|áo\s*giáp|kevlar|pin\s*lithium|drone|bắn\s*tỉa|hồng\s*ngoại|tên\s*lửa|sam-2)/i,
+];
+
+const FOLKLORE_AS_FACT_PATTERNS = [
+  /(?:thánh\s*gióng|bay\s*về\s*trời|nhổ\s*bụi\s*tre|nỏ\s*thần|rùa\s*vàng|thần\s*kim\s*quy|có\s*thật\s*100%|chính\s*sử.*thần\s*thoại|sơn\s*tinh|thủy\s*tinh|dưa\s*hấu|mai\s*an\s*tiêm|rùa\s*vàng.*hồ\s*gươm|chử\s*đồng\s*tử|tiên\s*dung|bánh\s*chưng|lang\s*liêu|thạch\s*sanh|thần\s*độc\s*cước|tre\s*trăm\s*đốt|trầu\s*cau|từ\s*thức|ông\s*táo|trạng\s*quỳnh|tấm\s*cám|mỵ\s*châu|ba\s*bể|thần\s*đồng\s*cổ|móng\s*rồng|cóc\s*kiện\s*trời|con\s*cóc\s*là\s*cậu)/i,
+];
+
+const MIXED_PREMISE_PATTERNS = [
+  /(?:đúng\s*không|phải\s*không|có\s*đúng|đúng\s*chứ)/i,
+  /(?:và\s+sau\s+đó|và\s+cùng|rồi\s+sau\s+đó|rồi\s+ký|rồi\s+lãnh\s+đạo|đã\s+viết.*dời\s+đô|và\s+dùng|và\s+phát\s+hành|và\s+chỉ\s+huy\s+mở|sáng\s+lập\s+ra|trực\s+tiếp\s+sáng\s+tác)/i,
+  /(?:năm\s+\d+.*đã\s+viết|năm\s+\d+.*đã\s+chỉ\s+huy|năm\s+\d+.*đã\s+lãnh\s+đạo|năm\s+\d+.*đại\s+phá.*năm\s+\d+|đại\s*phá.*năm\s*\d+|trong\s+Hội\s*nghị.*năm\s*\d+|ký\s+Hiệp\s*định.*năm\s*\d+|phát\s*động\s*phong\s*trào)/i,
 ];
 
 function cleanEntitySpan(span: string): string {
@@ -60,6 +79,54 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
         questionType: 'DYNASTY',
         detectedEntities: [e1, e2].filter(Boolean),
         suggestedDirective: `BẮT BUỘC KIỂM TRA TIỀN ĐỀ TRIỀU ĐẠI: Người dùng đang hỏi gán ghép nhân vật "${e1}" với triều đại "${e2}". Hãy kiểm tra chính xác triều đại lịch sử thực tế và đính chính ngay nếu tiền đề sai lệch. Tuyệt đối không suy đoán nếu không có trong chính sử.`,
+      };
+    }
+  }
+
+  // 3. Sycophancy / False lineage flattery check
+  for (const pattern of SYCOPHANCY_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      return {
+        isLeadingQuestion: true,
+        questionType: 'IDENTITY',
+        detectedEntities: ['Gia phả tư nhân'],
+        suggestedDirective: 'BẮT BUỘC BÁC BỎ HOẶC GIỮ NGUYÊN TẮC HỌC THUẬT: Không phụ họa vào các tuyên bố gia phả tư nhân hoặc nguồn gốc chưa qua kiểm chứng học thuật.',
+      };
+    }
+  }
+
+  // 4. Anachronism weapon/era check
+  for (const pattern of ANACHRONISM_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      return {
+        isLeadingQuestion: true,
+        questionType: 'CHRONOLOGY',
+        detectedEntities: ['Công nghệ vũ khí'],
+        suggestedDirective: 'BẮT BUỘC BÁC BỎ SAI LỆCH NIÊN ĐẠI CÔNG NGHỆ: Đính chính vũ khí và thời kỳ lịch sử chính xác.',
+      };
+    }
+  }
+
+  // 5. Folklore / Myth claim check
+  for (const pattern of FOLKLORE_AS_FACT_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      return {
+        isLeadingQuestion: true,
+        questionType: 'GENERAL',
+        detectedEntities: ['Truyền thuyết thần thoại'],
+        suggestedDirective: 'BẮT BUỘC PHÂN ĐỊNH DÃ SỬ & CHÍNH SỬ: Làm rõ ranh giới giữa biểu tượng thần thoại và sự kiện thực chứng trong chính sử.',
+      };
+    }
+  }
+
+  // 6. Mixed Premise check
+  for (const pattern of MIXED_PREMISE_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      return {
+        isLeadingQuestion: true,
+        questionType: 'GENERAL',
+        detectedEntities: ['Tiền đề hỗn hợp'],
+        suggestedDirective: 'BẮT BUỘC KIỂM TRA TỪNG MỆNH ĐỀ: Phân tách rõ phần đúng và phần sai trong câu hỏi.',
       };
     }
   }

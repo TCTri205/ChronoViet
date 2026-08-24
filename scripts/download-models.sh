@@ -97,7 +97,8 @@ case "${DOWNLOAD_CHOICE}" in
   1|standard)
     echo ">>> Provisioning Standard Production Stack..."
     download_file "bge-m3.gguf" "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-Q8_0.gguf"
-    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
+    download_file "qwen3.5-9b-mmproj.gguf" "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf"
+    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf"
     download_file "qwen3.5-4b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
     download_file "qwen3-reranker-0.6b.gguf" "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-Q8_0.gguf"
     ;;
@@ -105,7 +106,8 @@ case "${DOWNLOAD_CHOICE}" in
   2|dev|lightweight)
     echo ">>> Provisioning Lightweight Dev Stack..."
     download_file "bge-m3.gguf" "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-Q8_0.gguf"
-    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
+    download_file "qwen3.5-9b-mmproj.gguf" "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf"
+    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf"
     ;;
 
   3|emb|embedding)
@@ -125,8 +127,9 @@ case "${DOWNLOAD_CHOICE}" in
     ;;
 
   6|llm)
-    echo ">>> Provisioning Primary LLM (Qwen 3.5 9B)..."
-    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
+    echo ">>> Provisioning Primary LLM / VLM (Qwen 2.5/3.5 VL 7B/9B)..."
+    download_file "qwen3.5-9b-mmproj.gguf" "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf"
+    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf"
     ;;
 
   7|rerank|reranker)
@@ -137,8 +140,8 @@ case "${DOWNLOAD_CHOICE}" in
   8|all)
     echo ">>> Provisioning All Available Models..."
     download_file "bge-m3.gguf" "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-Q8_0.gguf"
-    download_file "qwen3.5-9b-mmproj.gguf" "https://huggingface.co/bartowski/Qwen_Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/mmproj-Qwen_Qwen2.5-VL-7B-Instruct-f16.gguf"
-    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf"
+    download_file "qwen3.5-9b-mmproj.gguf" "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf"
+    download_file "qwen3.5-9b-instruct-q4_k_m.gguf" "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf"
     download_file "qwen3.5-4b-instruct-q4_k_m.gguf" "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
     download_file "qwen3-reranker-0.6b.gguf" "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-Q8_0.gguf"
     download_file "vi_VN-vivos-medium.onnx" "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/medium/vi_VN-vivos-medium.onnx"

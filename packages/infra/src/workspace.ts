@@ -7,6 +7,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ChronoVideoProps, VideoProjectSchema } from '@chronoviet/shared-spec';
 import { envConfig } from './config.js';
+import { createLogger } from './logger.js';
+
+const log = createLogger({ service: 'infra-workspace' });
 
 export interface ProjectWorkspacePaths {
   projectId: string;
@@ -262,7 +265,10 @@ export async function ensureProjectAssetsReady(
         return localPath;
       }
     } catch (err: any) {
-      console.warn(`[workspace] Failed to pre-download remote asset "${remoteUrl}": ${err.message}`);
+      log.warn('workspace.asset_download_failed', `Failed to pre-download remote asset "${remoteUrl}"`, {
+        remoteUrl,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
     return null;
   };

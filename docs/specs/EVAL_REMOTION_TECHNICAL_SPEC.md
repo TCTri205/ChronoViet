@@ -165,14 +165,14 @@ Engine bóc tách từng khung cảnh (Scene) trong `timeline` thành 3 lớp ri
 | `OUTRO_CARD` | Pure Code | `OutroSlide.tsx` | Màn hình tổng kết, lời thơ tri ân, thương hiệu kết thúc. |
 | `ARTICLE_UI` | Pure Code | `ChronoIntro.tsx` | Màn hình mở đầu dạng báo chí / phim tài liệu chuyên sâu. |
 | `SPONSOR_UI` | Pure Code | `SponsorSlide.tsx` | Màn hình giới thiệu đơn vị tài trợ / đồng hành sản xuất. |
-| `HERO_SPOTLIGHT` | Pure Code | Extended Layout | Màn hình tiêu điểm anh hùng dân tộc. |
-| `TIMELINE_CHRONO` | Pure Code | Extended Layout | Trục thời gian diễn biến sự kiện lịch sử. |
-| `MAP_TACTICAL` | Pure Code | Extended Layout | Sơ đồ bản đồ tác chiến / hành quân. |
-| `ARMY_STRENGTH` | Pure Code | Extended Layout | Biểu đồ quân số & tương quan lực lượng. |
-| `CHARACTER_PROFILE` | Pure Code | Extended Layout | Hồ sơ chi tiết nhân vật lịch sử. |
-| `ROYAL_DECREE` | Pure Code | Extended Layout | Khung văn bản chiếu dời đô / hịch / chiếu thư. |
-| `ARTIFACT_INSPECT` | Pure Code | Extended Layout | Giao diện soi chi tiết hoa văn cổ vật. |
-| `POEM_RECITING` | Pure Code | Extended Layout | Giao diện ngâm thơ / văn thơ cổ truyền. |
+| `HERO_SPOTLIGHT` | Pure Code | `HeroSpotlight.tsx` | Màn hình tiêu điểm anh hùng dân tộc. |
+| `TIMELINE_CHRONO` | Pure Code | `TimelineChrono.tsx` | Trục thời gian diễn biến sự kiện lịch sử. |
+| `MAP_TACTICAL` | Pure Code | `MapTactical.tsx` | Sơ đồ bản đồ tác chiến / hành quân. |
+| `ARMY_STRENGTH` | Pure Code | `ArmyStrength.tsx` | Biểu đồ quân số & tương quan lực lượng. |
+| `CHARACTER_PROFILE` | Pure Code | `CharacterProfile.tsx` | Hồ sơ chi tiết nhân vật lịch sử. |
+| `ROYAL_DECREE` | Pure Code | `RoyalDecree.tsx` | Khung văn bản chiếu dời đô / hịch / chiếu thư. |
+| `ARTIFACT_INSPECT` | Pure Code | `ArtifactInspect.tsx` | Giao diện soi chi tiết hoa văn cổ vật. |
+| `POEM_RECITING` | Pure Code | `PoemReciting.tsx` | Giao diện ngâm thơ / văn thơ cổ truyền. |
 
 ### 4.2. `FilterStyle` — 4 Kiểu Lọc Màu
 
@@ -382,7 +382,7 @@ packages/remotion-engine/src/
 │   ├── layoutUtils.ts              # Layout helper functions
 │   └── index.ts                    # Re-exports
 │
-├── components/                     # ★ 19 UI Components
+├── components/                     # ★ 21 UI Components
 │   ├── SlideImage.tsx              # All Pure Image modes (BLUR_BG, HISTORICAL_FRAME, FULL_COVER...)
 │   ├── ChapterTitle.tsx            # layoutMode: TITLE_CARD, CHAPTER_CARD
 │   ├── StatCard.tsx                # layoutMode: STAT_CARD
@@ -396,7 +396,9 @@ packages/remotion-engine/src/
 │   ├── SponsorSlide.tsx            # layoutMode: SPONSOR_UI
 │   ├── DocumentaryHeader.tsx       # Persistent top header (ẩn bằng hideHeader: true)
 │   ├── DocumentarySubtitle.tsx     # Persistent bottom subtitle (ẩn bằng hideSubtitle: true)
+│   ├── HeroSpotlight.tsx           # layoutMode: HERO_SPOTLIGHT
 │   ├── TimelineChrono.tsx          # layoutMode: TIMELINE_CHRONO
+│   ├── ArmyStrength.tsx            # layoutMode: ARMY_STRENGTH
 │   ├── RoyalDecree.tsx             # layoutMode: ROYAL_DECREE
 │   ├── MapTactical.tsx             # layoutMode: MAP_TACTICAL
 │   ├── CharacterProfile.tsx        # layoutMode: CHARACTER_PROFILE

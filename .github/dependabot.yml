@@ -11,6 +11,50 @@ updates:
     versioning-strategy: increase
     labels:
       - dependencies
+    groups:
+      dev-dependencies:
+        patterns:
+          - '@types/*'
+          - 'eslint*'
+          - 'prettier*'
+          - 'typescript*'
+          - 'vitest*'
+
+  - package-ecosystem: pip
+    directory: /services/vieneu-tts
+    schedule:
+      interval: weekly
+      day: monday
+      time: '08:00'
+      timezone: 'Asia/Ho_Chi_Minh'
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '08:00'
+      timezone: 'Asia/Ho_Chi_Minh'
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: docker
+    directory: /services/vieneu-tts
+    schedule:
+      interval: weekly
+      day: monday
+      time: '08:00'
+      timezone: 'Asia/Ho_Chi_Minh'
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docker
 
   - package-ecosystem: github-actions
     directory: /

@@ -143,20 +143,24 @@ export async function searchLocalGraphCTE(
     let forwardRows: RelationshipRow[] = [];
     let reverseRows: RelationshipRow[] = [];
     if (pgConnected) {
-      forwardRows = await query<RelationshipRow>(
-        `SELECT source_entity_id, target_entity_id, relation_type, confidence
-         FROM relationships
-         WHERE source_entity_id = ANY($1)
-         ORDER BY confidence DESC;`,
-        [frontierArr]
-      );
-      reverseRows = await query<RelationshipRow>(
-        `SELECT source_entity_id, target_entity_id, relation_type, confidence
-         FROM relationships
-         WHERE target_entity_id = ANY($1)
-         ORDER BY confidence DESC;`,
-        [frontierArr]
-      );
+      const [fRows, rRows] = await Promise.all([
+        query<RelationshipRow>(
+          `SELECT source_entity_id, target_entity_id, relation_type, confidence
+           FROM relationships
+           WHERE source_entity_id = ANY($1)
+           ORDER BY confidence DESC;`,
+          [frontierArr]
+        ),
+        query<RelationshipRow>(
+          `SELECT source_entity_id, target_entity_id, relation_type, confidence
+           FROM relationships
+           WHERE target_entity_id = ANY($1)
+           ORDER BY confidence DESC;`,
+          [frontierArr]
+        ),
+      ]);
+      forwardRows = fRows;
+      reverseRows = rRows;
     } else {
       for (const rel of inMemoryStore.relationships) {
         if (frontierArr.includes(rel.source_entity_id)) forwardRows.push(rel);

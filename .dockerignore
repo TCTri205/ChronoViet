@@ -1,9 +1,16 @@
-# Dependencies and local caches
+# Dependencies, caches and package manager internals
 node_modules
 .pnpm-store
+.pnpm
 .npm-cache
 .venv
 .xdg
+.cache
+**/.cache
+.turbo
+**/.turbo
+.remotion
+**/.remotion
 
 # Git and OS metadata
 .git
@@ -12,18 +19,29 @@ node_modules
 .DS_Store
 
 # IDE and Agent metadata
+.agent
 .agents
 .commandcode
+.gemini
+.cursor
+.claude
 .codegraph
 .vscode
 .idea
 .github
+tasks
 
-# Build outputs and artifacts
+# Build outputs and temporary artifacts
 dist
+build
+out
 .next
+.output
 *.tsbuildinfo
 coverage
+.nyc_output
+test-results
+playwright-report
 
 # Testing, Eval suites, and Benchmark data
 eval
@@ -31,16 +49,30 @@ eval
 **/__tests__
 **/*.test.ts
 **/*.spec.ts
-eval/artifacts
+
+# Heavy data, dumps and model weights (mounted via volume instead)
+data
+backups
+models
+**/models
+*.dump
+*.gguf
+*.onnx
+*.safetensors
+*.bin
 
 # Media and logs
 media/*
 !media/.gitkeep
+**/media/*
+!**/media/.gitkeep
 *.log
+logs
 
 # Documentation and environment files
 docs
 README.md
+AGENTS.md
 .env
 .env.local
 .env.*.local

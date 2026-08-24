@@ -62,6 +62,7 @@ export class SimpleLRUCache<K, V> {
 }
 
 export const queryEmbeddingCache = new SimpleLRUCache<string, number[]>(500);
+const inFlightEmbeddings = new Map<string, Promise<number[]>>();
 
 export async function getCachedQueryEmbedding(queryText: string): Promise<number[]> {
   const normalizedKey = queryText.trim().toLowerCase();
@@ -69,9 +70,26 @@ export async function getCachedQueryEmbedding(queryText: string): Promise<number
   if (cached) {
     return cached;
   }
-  const emb = await generateEmbedding(queryText);
-  queryEmbeddingCache.set(normalizedKey, emb);
-  return emb;
+  const inFlight = inFlightEmbeddings.get(normalizedKey);
+  if (inFlight) {
+    return inFlight;
+  }
+  const promise = (async () => {
+    try {
+      const emb = await generateEmbedding(queryText);
+      queryEmbeddingCache.set(normalizedKey, emb);
+      return emb;
+    } finally {
+      inFlightEmbeddings.delete(normalizedKey);
+    }
+  })();
+  inFlightEmbeddings.set(normalizedKey, promise);
+  return promise;
+}
+
+export function resetQueryEmbeddingCacheForTest(): void {
+  queryEmbeddingCache.clear();
+  inFlightEmbeddings.clear();
 }
 
 /**
@@ -102,7 +120,7 @@ export function sanitizeFtsQuery(queryText: string): string {
  */
 export async function searchHybridVectorAndBM25(
   queryText: string,
-  queryEmbedding: number[],
+  queryEmbedding: number[] | Promise<number[]>,
   topK: number = 5,
   rrfK: number = RRF_K
 ): Promise<VectorSearchResult[]> {
@@ -162,17 +180,18 @@ export async function searchHybridVectorAndBM25(
 }
 
 export async function searchDenseVector(
-  queryEmbedding: number[],
+  queryEmbedding: number[] | Promise<number[]>,
   topK: number = 20
 ): Promise<VectorSearchResult[]> {
+  const resolvedEmbedding = await queryEmbedding;
   const pgConnected = await isPgAvailable();
   if (pgConnected) {
     const adaptedEmbedding =
-      queryEmbedding.length === 1024
-        ? queryEmbedding
-        : queryEmbedding.length > 1024
-        ? queryEmbedding.slice(0, 1024)
-        : [...queryEmbedding, ...new Array(1024 - queryEmbedding.length).fill(0)];
+      resolvedEmbedding.length === 1024
+        ? resolvedEmbedding
+        : resolvedEmbedding.length > 1024
+        ? resolvedEmbedding.slice(0, 1024)
+        : [...resolvedEmbedding, ...new Array(1024 - resolvedEmbedding.length).fill(0)];
 
     const vecRows = await withTransaction(async (execQuery) => {
       await execQuery('SET LOCAL hnsw.ef_search = 100;');
@@ -212,7 +231,7 @@ export async function searchDenseVector(
   const scoredByVector = chunks
     .map((c) => ({
       chunk: c,
-      sim: c.embedding ? cosineSimilarity(queryEmbedding, c.embedding) : 0,
+      sim: c.embedding ? cosineSimilarity(resolvedEmbedding, c.embedding) : 0,
     }))
     .sort((a, b) => b.sim - a.sim);
 

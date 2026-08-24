@@ -1,0 +1,2852 @@
+[
+  {
+    "id": "vis_dir_001",
+    "topic": "Trận Bạch Đằng 938 (Tập 1)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Trận Bạch Đằng 938 gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Ngô",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 1",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 2",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 3",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 4",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_002",
+    "topic": "Chiến thắng Ngọc Hồi Đống Đa (Tập 2)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến thắng Ngọc Hồi Đống Đa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Tây Sơn",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 1",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 2",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 3",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 4",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_003",
+    "topic": "Bảo vật Quốc gia Nỏ Thần (Tập 3)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Bảo vật Quốc gia Nỏ Thần gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_004",
+    "topic": "Phòng tuyến Sông Như Nguyệt (Tập 4)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Phòng tuyến Sông Như Nguyệt gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Lý",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 1",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 2",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 3",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 4",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_005",
+    "topic": "Hội nghị Diên Hồng (Tập 5)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Hội nghị Diên Hồng gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Trần",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 1",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 2",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 3",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 4",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_006",
+    "topic": "Khởi nghĩa Lam Sơn (Tập 6)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Khởi nghĩa Lam Sơn gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_007",
+    "topic": "Chiến dịch Điện Biên Phủ (Tập 7)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến dịch Điện Biên Phủ gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hiện đại",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 1",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 2",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 3",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 4",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_008",
+    "topic": "Đinh Bộ Lĩnh Hoa Lư (Tập 8)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Đinh Bộ Lĩnh Hoa Lư gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Đinh",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 1",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 2",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 3",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 4",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_009",
+    "topic": "Thành Cổ Loa (Tập 9)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Thành Cổ Loa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_010",
+    "topic": "Vụ án Lệ Chi Viên (Tập 10)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Vụ án Lệ Chi Viên gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_011",
+    "topic": "Trận Bạch Đằng 938 (Tập 11)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Trận Bạch Đằng 938 gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Ngô",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 1",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 2",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 3",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 4",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_012",
+    "topic": "Chiến thắng Ngọc Hồi Đống Đa (Tập 12)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến thắng Ngọc Hồi Đống Đa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Tây Sơn",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 1",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 2",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 3",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 4",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_013",
+    "topic": "Bảo vật Quốc gia Nỏ Thần (Tập 13)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Bảo vật Quốc gia Nỏ Thần gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_014",
+    "topic": "Phòng tuyến Sông Như Nguyệt (Tập 14)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Phòng tuyến Sông Như Nguyệt gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Lý",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 1",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 2",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 3",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 4",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_015",
+    "topic": "Hội nghị Diên Hồng (Tập 15)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Hội nghị Diên Hồng gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Trần",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 1",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 2",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 3",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 4",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_016",
+    "topic": "Khởi nghĩa Lam Sơn (Tập 16)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Khởi nghĩa Lam Sơn gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_017",
+    "topic": "Chiến dịch Điện Biên Phủ (Tập 17)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến dịch Điện Biên Phủ gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hiện đại",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 1",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 2",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 3",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 4",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_018",
+    "topic": "Đinh Bộ Lĩnh Hoa Lư (Tập 18)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Đinh Bộ Lĩnh Hoa Lư gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Đinh",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 1",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 2",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 3",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 4",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_019",
+    "topic": "Thành Cổ Loa (Tập 19)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Thành Cổ Loa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_020",
+    "topic": "Vụ án Lệ Chi Viên (Tập 20)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Vụ án Lệ Chi Viên gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_021",
+    "topic": "Trận Bạch Đằng 938 (Tập 21)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Trận Bạch Đằng 938 gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Ngô",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 1",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 2",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 3",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 4",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_022",
+    "topic": "Chiến thắng Ngọc Hồi Đống Đa (Tập 22)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến thắng Ngọc Hồi Đống Đa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Tây Sơn",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 1",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 2",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 3",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 4",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_023",
+    "topic": "Bảo vật Quốc gia Nỏ Thần (Tập 23)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Bảo vật Quốc gia Nỏ Thần gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_024",
+    "topic": "Phòng tuyến Sông Như Nguyệt (Tập 24)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Phòng tuyến Sông Như Nguyệt gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Lý",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 1",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 2",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 3",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 4",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_025",
+    "topic": "Hội nghị Diên Hồng (Tập 25)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Hội nghị Diên Hồng gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Trần",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 1",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 2",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 3",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 4",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_026",
+    "topic": "Khởi nghĩa Lam Sơn (Tập 26)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Khởi nghĩa Lam Sơn gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_027",
+    "topic": "Chiến dịch Điện Biên Phủ (Tập 27)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến dịch Điện Biên Phủ gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hiện đại",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 1",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 2",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 3",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 4",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_028",
+    "topic": "Đinh Bộ Lĩnh Hoa Lư (Tập 28)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Đinh Bộ Lĩnh Hoa Lư gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Đinh",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 1",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 2",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 3",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 4",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_029",
+    "topic": "Thành Cổ Loa (Tập 29)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Thành Cổ Loa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_030",
+    "topic": "Vụ án Lệ Chi Viên (Tập 30)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Vụ án Lệ Chi Viên gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_031",
+    "topic": "Trận Bạch Đằng 938 (Tập 31)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Trận Bạch Đằng 938 gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Ngô",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 1",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 2",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 3",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 4",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_032",
+    "topic": "Chiến thắng Ngọc Hồi Đống Đa (Tập 32)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến thắng Ngọc Hồi Đống Đa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Tây Sơn",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 1",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 2",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 3",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 4",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_033",
+    "topic": "Bảo vật Quốc gia Nỏ Thần (Tập 33)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Bảo vật Quốc gia Nỏ Thần gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_034",
+    "topic": "Phòng tuyến Sông Như Nguyệt (Tập 34)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Phòng tuyến Sông Như Nguyệt gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Lý",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 1",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 2",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 3",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 4",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_035",
+    "topic": "Hội nghị Diên Hồng (Tập 35)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Hội nghị Diên Hồng gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Trần",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 1",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 2",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 3",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 4",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_036",
+    "topic": "Khởi nghĩa Lam Sơn (Tập 36)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Khởi nghĩa Lam Sơn gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_037",
+    "topic": "Chiến dịch Điện Biên Phủ (Tập 37)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến dịch Điện Biên Phủ gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hiện đại",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 1",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 2",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 3",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 4",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_038",
+    "topic": "Đinh Bộ Lĩnh Hoa Lư (Tập 38)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Đinh Bộ Lĩnh Hoa Lư gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Đinh",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 1",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 2",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 3",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 4",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_039",
+    "topic": "Thành Cổ Loa (Tập 39)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Thành Cổ Loa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_040",
+    "topic": "Vụ án Lệ Chi Viên (Tập 40)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Vụ án Lệ Chi Viên gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_041",
+    "topic": "Trận Bạch Đằng 938 (Tập 41)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Trận Bạch Đằng 938 gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Ngô",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 1",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 2",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 3",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Trận Bạch Đằng 938.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Trận Bạch Đằng 938 phân đoạn 4",
+          "Ngô"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Trận Bạch Đằng 938, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_042",
+    "topic": "Chiến thắng Ngọc Hồi Đống Đa (Tập 42)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến thắng Ngọc Hồi Đống Đa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Tây Sơn",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 1",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 2",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 3",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến thắng Ngọc Hồi Đống Đa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến thắng Ngọc Hồi Đống Đa phân đoạn 4",
+          "Tây Sơn"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến thắng Ngọc Hồi Đống Đa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_043",
+    "topic": "Bảo vật Quốc gia Nỏ Thần (Tập 43)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Bảo vật Quốc gia Nỏ Thần gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Bảo vật Quốc gia Nỏ Thần.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Bảo vật Quốc gia Nỏ Thần phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Bảo vật Quốc gia Nỏ Thần, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_044",
+    "topic": "Phòng tuyến Sông Như Nguyệt (Tập 44)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Phòng tuyến Sông Như Nguyệt gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Lý",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 1",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 2",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 3",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Phòng tuyến Sông Như Nguyệt.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Phòng tuyến Sông Như Nguyệt phân đoạn 4",
+          "Lý"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Phòng tuyến Sông Như Nguyệt, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_045",
+    "topic": "Hội nghị Diên Hồng (Tập 45)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Hội nghị Diên Hồng gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Trần",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 1",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 2",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 3",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Hội nghị Diên Hồng.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Hội nghị Diên Hồng phân đoạn 4",
+          "Trần"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Hội nghị Diên Hồng, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_046",
+    "topic": "Khởi nghĩa Lam Sơn (Tập 46)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Khởi nghĩa Lam Sơn gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Khởi nghĩa Lam Sơn.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Khởi nghĩa Lam Sơn phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Khởi nghĩa Lam Sơn, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_047",
+    "topic": "Chiến dịch Điện Biên Phủ (Tập 47)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Chiến dịch Điện Biên Phủ gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hiện đại",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 1",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 2",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 3",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Chiến dịch Điện Biên Phủ.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Chiến dịch Điện Biên Phủ phân đoạn 4",
+          "Hiện đại"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Chiến dịch Điện Biên Phủ, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_048",
+    "topic": "Đinh Bộ Lĩnh Hoa Lư (Tập 48)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Đinh Bộ Lĩnh Hoa Lư gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Đinh",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 1",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 2",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 3",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Đinh Bộ Lĩnh Hoa Lư.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Đinh Bộ Lĩnh Hoa Lư phân đoạn 4",
+          "Đinh"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Đinh Bộ Lĩnh Hoa Lư, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_049",
+    "topic": "Thành Cổ Loa (Tập 49)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Thành Cổ Loa gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Âu Lạc",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 1",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 2",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 3",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Thành Cổ Loa.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Thành Cổ Loa phân đoạn 4",
+          "Âu Lạc"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Thành Cổ Loa, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  },
+  {
+    "id": "vis_dir_050",
+    "topic": "Vụ án Lệ Chi Viên (Tập 50)",
+    "voiceoverText": "Toàn bộ kịch bản dẫn chuyện cho Vụ án Lệ Chi Viên gồm 4 phân cảnh nối tiếp nhau.",
+    "epoch": "Hậu Lê",
+    "expectedSceneCount": 4,
+    "expectedScenes": [
+      {
+        "sceneIndex": 0,
+        "textSegment": "Phân đoạn diễn giải cảnh số 1 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 1",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 1,
+        "textSegment": "Phân đoạn diễn giải cảnh số 2 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "SPLIT_COMPARE",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 2",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 2,
+        "textSegment": "Phân đoạn diễn giải cảnh số 3 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "PURE_CODE",
+        "layoutMode": "FULL_COVER",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 3",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      },
+      {
+        "sceneIndex": 3,
+        "textSegment": "Phân đoạn diễn giải cảnh số 4 của Vụ án Lệ Chi Viên.",
+        "targetDurationSeconds": 5,
+        "visualType": "IMAGE",
+        "layoutMode": "QUOTE_CANVAS",
+        "searchKeywords": [
+          "Vụ án Lệ Chi Viên phân đoạn 4",
+          "Hậu Lê"
+        ],
+        "imagePromptGuidance": "Cinematic historical wide shot representing Vụ án Lệ Chi Viên, ancient Vietnamese architecture and war boats, photorealistic 8k."
+      }
+    ]
+  }
+]

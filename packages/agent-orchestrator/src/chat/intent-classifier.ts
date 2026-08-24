@@ -27,9 +27,10 @@ const CHITCHAT_GREETINGS = [
 ];
 
 const VIDEO_INTENT_PATTERNS = [
-  /(?:tạo|làm|sản\s*xuất|dựng|xây\s*dựng|generate|make)\s+(?:video|clip|phim|thước\s*phim)\s+(?:về|về\s+chủ\s+đề|kể\s+về)?\s*(.+)/i,
+  /(?:tạo|làm|sản\s*xuất|dựng|xây\s*dựng|generate|make|edit|chỉnh\s*sửa)(?:\s+[\wà-ỹ]+){0,4}\s+(?:video|clip|phim|thước\s*phim|dự\s*án\s*video|kịch\s*bản\s*video)(?:\s+(?:về|về\s+chủ\s+đề|kể\s+về))?\s*(.+)?/i,
   /(?:chuyển|tổng\s*hợp)\s+(?:thành|sang)\s+video\s*(.+)?/i,
   /(?:video\s*brief|tạo\s*kịch\s*bản\s*video)\s*(.+)?/i,
+  /(?:phân\s*cảnh|chỉnh\s*sửa\s*phân\s*cảnh|kéo\s*dài\s*thêm|đổi\s*layout)/i,
 ];
 
 const ENTITY_IDENTITY_PATTERNS = [
