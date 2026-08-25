@@ -5,7 +5,12 @@
  * from producing a misleading PASS during evaluation.
  */
 
-import { envConfig, isLLMServiceHealthy, isEmbeddingServiceHealthy, createLogger, hasAvailableApiKeys, isPgAvailable, query, getDatabaseConfig } from '@chronoviet/infra';
+import { envConfig, getDatabaseConfig } from './config.js';
+import { isLLMServiceHealthy } from './llm-client.js';
+import { isEmbeddingServiceHealthy } from './embeddings.js';
+import { createLogger } from './logger.js';
+import { hasAvailableApiKeys } from './api-key-rotator.js';
+import { isPgAvailable, query } from './db/index.js';
 
 const log = createLogger({ service: 'eval-preflight' });
 
@@ -119,30 +124,20 @@ async function checkVlmHealth(): Promise<PreflightCheck> {
     }
   }
 
-  // 2. Fallback: Gemini cloud key
-  if (hasAvailableApiKeys('gemini') || envConfig.GEMINI_API_KEY) {
-    return {
-      service: 'vlm',
-      healthy: true,
-      provider: 'GEMINI_CLOUD',
-      required: true,
-    };
-  }
-
+  // 2. Gemini fallback
+  const geminiReady = hasAvailableApiKeys('gemini') || !!envConfig.GEMINI_API_KEY;
   return {
     service: 'vlm',
-    healthy: false,
-    provider: 'NONE',
+    healthy: geminiReady,
+    provider: geminiReady ? 'GEMINI_VLM_CLOUD' : 'SYNTHETIC_CANVAS_FALLBACK',
     required: true,
-    details: 'No VLM available: USE_LOCAL_LLM is off and GEMINI_API_KEYS is unset',
+    details: geminiReady ? undefined : 'No GEMINI_API_KEY available for cloud VLM eval',
   };
 }
 
 async function checkLlmHealth(): Promise<PreflightCheck> {
   if (envConfig.USE_LOCAL_LLM) {
     const result = await isLLMServiceHealthy();
-    // isLLMServiceHealthy falls through to cloud providers when local is down;
-    // in eval strict mode the local server is mandatory, so treat non-LOCAL_LLM as unhealthy.
     const healthy = result.healthy && result.provider.startsWith('LOCAL_LLM');
     return {
       service: 'llm',
@@ -154,7 +149,6 @@ async function checkLlmHealth(): Promise<PreflightCheck> {
       details: healthy ? undefined : `Local LLM server unreachable at ${envConfig.LLM_BASE_URL} (health reported: ${result.provider})`,
     };
   }
-  // USE_LOCAL_LLM=false: only allowed in eval when cloud fallback is explicitly enabled
   const cloudReady = envConfig.EVAL_ALLOW_CLOUD_FALLBACK && (hasAvailableApiKeys('agnes') || !!envConfig.AGNES_API_KEY);
   return {
     service: 'llm',
@@ -328,7 +322,6 @@ export async function runEvalPreflight(required: EvalService[]): Promise<Preflig
     checks,
   };
 
-  // Pretty-print summary
   console.log('\n──────────────────────────────────────────────');
   console.log(' EVAL PREFLIGHT CHECK');
   console.log('──────────────────────────────────────────────');

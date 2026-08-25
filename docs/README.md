@@ -37,6 +37,7 @@ docs/
 │   ├── KNOWLEDGE_DATA_GOVERNANCE_SPEC.md      [★ Source of Truth: Quản trị Số lượng, Chất lượng & Giải quyết Xung đột Sử liệu [✅]]
 │   ├── RAG_COMPONENT_BENCHMARK_SPEC.md        [★ Benchmark Chi tiết từng Component RAG: C0-C10, Dataset, Metrics & Regression Gate [✅]]
 │   ├── UI_UX_DESIGN_SPECIFICATION.md          [★ Đặc tả Thiết Kế UI/UX NotebookLM Workspace & 1-Click Studio [✅ Spec]]
+│   ├── USER_AUTH_AND_PERMISSIONS_SPEC.md      [★ Đặc tả Quản lý Người dùng, Xác thực Google OAuth & Phân quyền [📐 Spec]]
 │   └── TEMPLATE_GUIDE_VIDEO_ESSAY.md          [Bộ nhận diện thị giác Video Essay, Typography [📐 Design Spec]]
 │
 ├── 📖 guides/                                 [HƯỚNG DẪN KỸ THUẬT & AUDIT LOGS]
@@ -67,7 +68,7 @@ docs/
 - **Mục đích:** Cung cấp cái nhìn toàn cảnh về dự án ChronoViet.
 - **Trạng thái:** 
   - **[✅ IMPLEMENTED]:** Remotion Rendering Engine, Zod Data Schema Validation v4.1, 19 Components, 31 LayoutModes, 11 Compositions trong `Root.tsx`.
-  - **[✅ IMPLEMENTED]:** VieNeu TTS Microservice (Python FastAPI ONNX + Node.js Client SDK tại `@chronoviet/infra/tts`) & Eval Suite (`services/vieneu-tts/eval/eval.py`).
+  - **[✅ IMPLEMENTED]:** VieNeu TTS Microservice (Python FastAPI ONNX + Node.js Client SDK tại `@chronoviet/infra/tts`).
   - **[✅ IMPLEMENTED]:** Data Preprocessing & Ingestion Engine (`packages/data-ingestion/`) & Chrono-RAG Engine (`packages/rag-engine/`).
   - **[✅ IMPLEMENTED]:** Multi-Agent Orchestrator LangGraph.js (`packages/agent-orchestrator/`) & VLM Inspector (`packages/vlm-inspector/`).
   - **[✅ IMPLEMENTED]:** App Monolith Web UI/UX NotebookLM Workspace, REST API, WebSocket & Render Worker (`apps/web` & `apps/render-worker`).
@@ -215,17 +216,13 @@ pnpm remotion:studio # Mở Remotion Studio UI xem kịch bản (port 9876)
 pnpm remotion:render # Render video MP4 qua Remotion CLI
 
 # ===============================================================
-# 7. ĐÁNH GIÁ TỔNG THỂ & CHUỖI TÍCH HỢP (EVAL)
+# 7. ĐÁNH GIÁ CHẤT LƯỢNG TỪNG MODULE (EVAL)
 # ===============================================================
-pnpm eval:clean      # Dọn dẹp artifact rác, file tạm & port treo
-pnpm eval:all        # Đánh giá toàn diện Monorepo
-pnpm eval:chain      # Đánh giá chuỗi tích hợp E2E
-pnpm eval:ingest     # Đánh giá Data Ingestion
-pnpm eval:rag        # Đánh giá Chrono-RAG Engine (C0-C10 benchmarks)
-pnpm eval:orchestrator # Đánh giá Multi-Agent Orchestrator Pipeline
-pnpm eval:vlm        # Đánh giá VLM Inspector offline image scoring
-pnpm eval:tts        # Đánh giá VieNeu TTS Engine
-pnpm eval:remotion   # Đánh giá Remotion Video Engine
+pnpm eval:ingest        # Đánh giá Data Ingestion
+pnpm eval:rag           # Đánh giá Chrono-RAG Engine (C0-C10 benchmarks)
+pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator Pipeline
+pnpm eval:vlm           # Đánh giá VLM Inspector offline image scoring
+pnpm eval:remotion      # Đánh giá Remotion Video Engine
 ```
 
 ---

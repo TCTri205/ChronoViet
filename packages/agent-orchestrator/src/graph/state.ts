@@ -74,9 +74,7 @@ export interface ResearchSceneResult {
   resolvedAt: string;
 }
 
-function updateValue<T>(prev: T, next: T | undefined): T {
-  return next !== undefined ? next : prev;
-}
+const updateValue = <T>(prev: T, next: T | undefined): T => (next !== undefined ? next : prev);
 
 function mergeResearchResults(
   prev: Record<string, ResearchSceneResult> = {},

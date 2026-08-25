@@ -117,10 +117,8 @@ export async function searchLocalGraphCTE(
       const sourceVisited = visitedEntities.has(row.source_entity_id);
       const targetVisited = visitedEntities.has(row.target_entity_id);
 
-      // Both endpoints already visited -> edge is a duplicate; skip.
-      if (sourceVisited && targetVisited) continue;
       // Node budget exhausted and this edge would introduce a new node -> stop expanding.
-      if (visitedEntities.size >= maxNodes) continue;
+      if ((!sourceVisited || !targetVisited) && visitedEntities.size >= maxNodes) continue;
 
       if (addEdge(row, hop)) {
         if (!sourceVisited) {
@@ -191,11 +189,9 @@ export async function searchLocalGraphCTE(
 
   const allEntityIds = Array.from(visitedEntities);
   const rawAliasTable = buildAliasTable(allEntityIds);
-  const sortedKeys = Object.keys(rawAliasTable).sort((a, b) => b.length - a.length);
-  const aliasTable: Record<string, string[]> = {};
-  for (const key of sortedKeys) {
-    aliasTable[key] = rawAliasTable[key];
-  }
+  const aliasTable = Object.fromEntries(
+    Object.entries(rawAliasTable).sort(([a], [b]) => b.length - a.length)
+  );
 
   log.debug('rag.graph_search_done', 'Local subgraph BFS search completed', {
     seedEntityIds: entityIds.length,

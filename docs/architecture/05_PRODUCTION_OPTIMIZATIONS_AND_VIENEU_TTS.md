@@ -169,9 +169,7 @@ export function convertVieNeuTimestampsToCaptions(
 }
 ```
 
-Dữ liệu `captions` này được truyền trực tiếp vào `DocumentarySubtitle.tsx` của Remotion Engine để tự động làm sáng từ Karaoke màu vàng/đỏ cổ điển khi giọng đọc VieNeu vang lên. 
-
-Toàn bộ quy trình tổng hợp và chuyển đổi mốc từ đều được tự động thẩm định độc lập qua bộ benchmark Python `services/vieneu-tts/eval/eval.py` (chạy bằng `pnpm eval:tts`) với 3 tiêu chuẩn KPI bắt buộc: **RTF < 0.3x**, **Alignment Error < 50ms**, và **Frame Calculation Error < 1 frame**.
+Dữ liệu `captions` này được truyền trực tiếp vào `DocumentarySubtitle.tsx` của Remotion Engine để tự động làm sáng từ Karaoke màu vàng/đỏ cổ điển khi giọng đọc VieNeu vang lên.
 
 ---
 
@@ -182,7 +180,7 @@ Toàn bộ quy trình tổng hợp và chuyển đổi mốc từ đều đượ
 | **1. Quản lý RAM/CPU khi Render** | Pre-download Local Assets + Chromium Process Cleanup sau mỗi Job | Giảm 70% RAM tiêu thụ, tránh đơ/OOM server. |
 | **2. Độ trễ VLM Inspection** | Offload sang Gemini 3.6 Flash Cloud API + Dual-Layer Cache (Redis + pHash) | Giảm thời gian audit từ 30s xuống < 1s, tiết kiệm GPU. |
 | **3. Đồng bộ Audio - Visual** | Công thức $\lceil \frac{\text{DurationMs} + 300}{1000} \times 30 \rceil$ dựa trên file `.wav` thực tế | Tránh 100% rủi ro audio bị chèn hoặc hẫng nhịp. |
-| **4. Giọng đọc & Subtitle Karaoke** | Self-Hosted VieNeu TTS Microservice (Python ONNX + Node.js SDK tại `@chronoviet/infra/tts`) + Alignment Timestamps Converter + Benchmark Python (`eval/eval.py`) | Giọng đọc lịch sử truyền cảm, phụ đề Karaoke chạy chuẩn xác theo từ, có benchmark đánh giá độc lập. |
+| **4. Giọng đọc & Subtitle Karaoke** | Self-Hosted VieNeu TTS Microservice (Python ONNX + Node.js SDK tại `@chronoviet/infra/tts`) + Alignment Timestamps Converter | Giọng đọc lịch sử truyền cảm, phụ đề Karaoke chạy chuẩn xác theo từ. |
 | **5. Web Disk I/O & Core Web Vitals** | Async non-blocking Route Handlers + Lazy Pagination Metadata Cache (60s) + Next.js Dynamic Imports (`VideoPlayer`) + Package Import Optimization | Triệt tiêu Node.js Event Loop blocking, giảm First Load JS, LCP/INP tối ưu, CLS = 0. |
 | **6. Background Worker Memory & Disk Safety** | Async non-blocking file streaming (`fs.promises.*`), sao chép đệm bất đồng bộ trong TTS Worker, dọn dẹp thư mục `temp/` tự động | Giảm 33% áp lực RAM trong Chromium & GC, triệt tiêu blocking I/O trong Worker pool. |
 

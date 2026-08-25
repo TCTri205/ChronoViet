@@ -29,7 +29,10 @@ import {
 } from './retrieval/vector-search.js';
 import { getChunksForEntities, ChunkGraphSignal } from './retrieval/chunk-retriever.js';
 import { rerankCandidates, truncateToSentenceBoundary } from './retrieval/reranker.js';
-import { AnswerGenerator } from './generation/answer-generator.js';
+import {
+  generateHistoricalAnswer,
+  generateHistoricalAnswerStream,
+} from './generation/answer-generator.js';
 
 const log = createLogger({ service: 'rag-engine' });
 
@@ -286,7 +289,7 @@ export class ChronoRagEngine implements IRagEngine {
     request: HistoricalAnswerGenerationRequest
   ): Promise<HistoricalAnswerResponse> {
     await ensureGlobalSchemaInitialized();
-    return AnswerGenerator.generate(this, request);
+    return generateHistoricalAnswer(this, request);
   }
 
   /**
@@ -296,7 +299,7 @@ export class ChronoRagEngine implements IRagEngine {
     request: HistoricalAnswerGenerationRequest
   ): AsyncGenerator<{ type: 'token' | 'triples' | 'citations' | 'done'; content?: string; triples?: any[]; citations?: string[] }> {
     await ensureGlobalSchemaInitialized();
-    yield* AnswerGenerator.generateStream(this, request);
+    yield* generateHistoricalAnswerStream(this, request);
   }
 
   /**

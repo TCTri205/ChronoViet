@@ -29,11 +29,10 @@ export interface ConstructedPromptResult {
   temperature: number;
 }
 
-export class PromptEngine {
-  /**
-   * Detects intent from query if not explicitly provided
-   */
-  static detectQueryIntent(query: string, explicitIntent?: string): HistoricalIntentType {
+/**
+ * Detects intent from query if not explicitly provided
+ */
+export function detectQueryIntent(query: string, explicitIntent?: string): HistoricalIntentType {
     if (explicitIntent) {
       const upper = explicitIntent.toUpperCase();
       if (upper === 'WHY_REASONING' || upper === 'CAUSAL_ANALYSIS') return 'WHY_REASONING';
@@ -98,31 +97,31 @@ export class PromptEngine {
     return 'EVENT_DETAILS';
   }
 
-  /**
-   * Builds high-reasoning prompt messages and optimal token budgets
-   */
-  static buildPrompt(options: PromptConstructionOptions): ConstructedPromptResult {
-    const {
-      query,
-      contextText,
-      intent: rawIntent,
-      requiresMultiHop = false,
-      maxTokens: overrideMaxTokens,
-      temperature: overrideTemperature,
-    } = options;
+/**
+ * Builds high-reasoning prompt messages and optimal token budgets
+ */
+export function buildPrompt(options: PromptConstructionOptions): ConstructedPromptResult {
+  const {
+    query,
+    contextText,
+    intent: rawIntent,
+    requiresMultiHop = false,
+    maxTokens: overrideMaxTokens,
+    temperature: overrideTemperature,
+  } = options;
 
-    const intent = PromptEngine.detectQueryIntent(query, rawIntent);
+  const intent = detectQueryIntent(query, rawIntent);
 
-    let specificDirective = '';
-    let suggestedMaxTokens = 600;
-    let suggestedTemperature = 0.15;
+  let specificDirective = '';
+  let suggestedMaxTokens = 600;
+  let suggestedTemperature = 0.15;
 
-    switch (intent) {
-      case 'WHY_REASONING':
-      case 'CAUSAL_ANALYSIS':
-        suggestedMaxTokens = 850;
-        suggestedTemperature = 0.15;
-        specificDirective = `
+  switch (intent) {
+    case 'WHY_REASONING':
+    case 'CAUSAL_ANALYSIS':
+      suggestedMaxTokens = 850;
+      suggestedTemperature = 0.15;
+      specificDirective = `
 CHỈ DẪN LẬP LUẬN NHÂN QUẢ & BỐI CẢNH (CAUSAL REASONING):
 - Bắt buộc giải thích toàn diện 4 khía cạnh:
   1. Bối cảnh lịch sử & Tiền đề (Nguyên nhân sâu xa).
@@ -130,46 +129,46 @@ CHỈ DẪN LẬP LUẬN NHÂN QUẢ & BỐI CẢNH (CAUSAL REASONING):
   3. Diễn biến then chốt mang tính quyết định.
   4. Kết quả lịch sử & Ý nghĩa / Hệ quả lâu dài.
 - Luôn sử dụng các liên từ lập luận nhân quả rõ ràng: "do", "bởi vì", "nguyên nhân chính", "chiến lược", "kết quả", "dẫn đến".`;
-        break;
+      break;
 
-      case 'COMPARATIVE':
-        suggestedMaxTokens = 950;
-        suggestedTemperature = 0.15;
-        specificDirective = `
+    case 'COMPARATIVE':
+      suggestedMaxTokens = 950;
+      suggestedTemperature = 0.15;
+      specificDirective = `
 CHỈ DẪN LẬP LUẬN SO SÁNH LỊCH SỬ (COMPARATIVE ANALYSIS):
 - Bắt buộc phân tích đa chiều giữa các đối tượng / triều đại / trận đánh:
   1. Bối cảnh thời đại & Tương quan lực lượng.
   2. Sách lược quân sự / Đường lối trị quốc của từng bên.
   3. Những điểm tương đồng và khác biệt bản chất.
   4. Kết quả và bài học lịch sử rút ra.`;
-        break;
+      break;
 
-      case 'BIOGRAPHY':
-        suggestedMaxTokens = 650;
-        suggestedTemperature = 0.1;
-        specificDirective = `
+    case 'BIOGRAPHY':
+      suggestedMaxTokens = 650;
+      suggestedTemperature = 0.1;
+      specificDirective = `
 CHỈ DẪN TIỂU SỬ & HÀNH TRẠNG NHÂN VẬT:
 - Nêu rõ: Danh xưng/Tước hiệu/Miếu hiệu, Niên đại/Thời kỳ, Thân phụ/Mối quan hệ chính sử xác thực, Vai trò lịch sử và Công lao/Chiến tích tiêu biểu.
 - Cảnh báo: Tuyệt đối không tự suy đoán tên húy nếu không xuất hiện trực tiếp trong tư liệu xác thực.`;
-        break;
+      break;
 
-      default:
-        suggestedMaxTokens = 600;
-        suggestedTemperature = 0.1;
-        specificDirective = `
-CHỈ DẪN SỰ KIỆN LỊCH SỬ CHÍNH XÁC:
-- Trình bày đầy đủ: Niên đại cụ thể, Địa danh lịch sử, Nhân vật lãnh đạo, Diễn biến cốt lõi, Chiến lược và Kết quả.`;
-        break;
-    }
+    default:
+      suggestedMaxTokens = 750;
+      suggestedTemperature = 0.1;
+      specificDirective = `
+CHỈ DẪN SỰ KIỆN LỊCH SỬ CHÍNH XÁC & ĐẦY ĐỦ:
+- Trình bày đầy đủ và toàn diện các dữ kiện lịch sử: Niên đại cụ thể, Địa danh diễn ra, Nhân vật lãnh đạo/chỉ huy, Diễn biến cốt lõi, Kế sách/Chiến lược và Kết quả/Ý nghĩa lịch sử dựa trên các đoạn tư liệu đã cung cấp.`;
+      break;
+  }
 
-    if (requiresMultiHop) {
-      suggestedMaxTokens = Math.max(suggestedMaxTokens, 850);
-      specificDirective += `\n
+  if (requiresMultiHop) {
+    suggestedMaxTokens = Math.max(suggestedMaxTokens, 850);
+    specificDirective += `\n
 CHỈ DẪN LIÊN KẾT ĐA CHẶNG (MULTI-HOP LINKING):
 - Câu hỏi này liên kết nhiều thực thể/sự kiện qua nhiều chặng. Bắt buộc xâu chuỗi mạch lạc mối quan hệ giữa các nhân vật, sự kiện và triều đại từ phần Graph Triples và Evidence Chunks.`;
-    }
+  }
 
-    const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu & Lập Luận Lịch Sử Việt Nam. Nhiệm vụ của bạn là giải đáp câu hỏi của người dùng một cách chuẩn xác tuyệt đối, sâu sắc và đầy đủ cứ liệu lịch sử dựa trên các tư liệu chính thống được cung cấp.
+  const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu & Lập Luận Lịch Sử Việt Nam. Nhiệm vụ của bạn là giải đáp câu hỏi của người dùng một cách chuẩn xác tuyệt đối, sâu sắc và đầy đủ cứ liệu lịch sử dựa trên các tư liệu chính thống được cung cấp.
 
 NGUYÊN TẮC BẮT BUỘC:
 1. TÍNH CHÍNH XÁC LỊCH SỬ (ZERO FABRICATION):
@@ -186,15 +185,19 @@ ${specificDirective}
 NGỮ CẢNH TƯ LIỆU SỬ LIỆU:
 ${contextText}`;
 
-    const messages: ChatMessage[] = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: query },
-    ];
+  const messages: ChatMessage[] = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: query },
+  ];
 
-    return {
-      messages,
-      maxTokens: overrideMaxTokens || suggestedMaxTokens,
-      temperature: overrideTemperature ?? suggestedTemperature,
-    };
-  }
+  return {
+    messages,
+    maxTokens: overrideMaxTokens || suggestedMaxTokens,
+    temperature: overrideTemperature ?? suggestedTemperature,
+  };
 }
+
+export const PromptEngine = {
+  detectQueryIntent,
+  buildPrompt,
+};

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
-import { envConfig } from '@chronoviet/infra';
+import { envConfig } from './config.js';
 
 export interface CleanupOptions {
   cleanAudio?: boolean;
@@ -33,7 +33,6 @@ function purgeDirectory(dirPath: string, verbose = false): void {
   try {
     const entries = fs.readdirSync(dirPath);
     for (const entry of entries) {
-      // Do not delete source code files, documentation, or git placeholders within report/output directories
       if (entry.endsWith('.ts') || entry === 'README.md' || entry === '.gitkeep') {
         continue;
       }
@@ -146,9 +145,7 @@ export function cleanEvalArtifacts(opts: CleanupOptions = {}): void {
   // 2. Clean Report Artifacts
   if (options.cleanReports) {
     const reportDirs = [
-      path.resolve(rootDir, 'eval/reports'),
       path.resolve(rootDir, 'packages/remotion-engine/eval/reports'),
-      path.resolve(rootDir, 'services/vieneu-tts/eval/reports'),
     ];
     for (const dir of reportDirs) {
       purgeDirectory(dir, verbose);
@@ -158,7 +155,6 @@ export function cleanEvalArtifacts(opts: CleanupOptions = {}): void {
   // 3. Clean Out / Intermediate Data Artifacts
   if (options.cleanOut) {
     const outDirs = [
-      path.resolve(rootDir, 'eval/out'),
       path.resolve(rootDir, 'packages/remotion-engine/eval/out'),
     ];
     for (const dir of outDirs) {
@@ -193,9 +189,4 @@ export function cleanEvalArtifacts(opts: CleanupOptions = {}): void {
   if (verbose) {
     console.log('✅ [CLEANUP] Evaluation Suite Artifact Purge Completed.\n');
   }
-}
-
-// Allow CLI standalone execution: `npx tsx eval/utils/cleaner.ts`
-if (process.argv[1] && process.argv[1].includes('cleaner')) {
-  cleanEvalArtifacts({ verbose: true });
 }

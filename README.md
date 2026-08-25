@@ -76,7 +76,6 @@ ChronoViet/
 ├── services/
 │   └── vieneu-tts/              # [✅ READY] Standalone Python FastAPI VieNeu ONNX Neural TTS Microservice (+ eval/)
 │
-├── eval/                        # Tầng Đánh Giá Tập Trung (E2E Integration Benchmark & Golden Datasets)
 ├── docs/                        # Trung tâm Tài liệu Kỹ thuật & Kiến trúc (Documentation Portal)
 ├── media/                       # Local Mount Volume cho media assets (/raw-assets, /rendered-videos)
 ├── docker-compose.yml           # Cấu hình Hạ tầng Docker (Postgres pgvector, Redis, Caddy Proxy)
@@ -177,20 +176,12 @@ pnpm remotion:studio
 #### 2. Chạy Suite Kiểm Định & Đánh Giá Chất Lượng (Eval Runner):
 
 ```bash
-# Dọn dẹp sạch toàn bộ audio rác, báo cáo cũ & port bị chiếm giữ:
-pnpm eval:clean
-
-# Chạy toàn bộ Master Global Eval Monorepo (7 Modules & 3 Integration Chains):
-pnpm eval:all
-
-# Hoặc đánh giá từng module chuyên biệt:
+# Đánh giá từng module chuyên biệt:
 pnpm eval:rag           # Đánh giá RAG Engine (11 tầng C0-C10)
-pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator
-pnpm eval:ingest        # Đánh giá Data Ingestion
+pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator (A0-A5)
+pnpm eval:ingest        # Đánh giá Data Ingestion (Vector, Graph, Triples)
 pnpm eval:vlm           # Đánh giá VLM Inspector
-pnpm eval:tts           # Đánh giá VieNeu TTS
 pnpm eval:remotion      # Đánh giá Remotion Video Rendering
-pnpm eval:chain         # Đánh giá chuỗi tích hợp E2E
 ```
 
 ---
@@ -252,18 +243,13 @@ pnpm ingest:knowledge# Nạp trọn gói cả 2 Stage liên hoàn
 pnpm rag:chat        # Chatbot tra cứu RAG trực tiếp trên Terminal
 ```
 
-### 🧪 6. Đánh Giá Chất Lượng Toàn Diện (Evaluation & Benchmarks)
+### 🧪 6. Đánh Giá Chất Lượng Từng Module (Evaluation & Benchmarks)
 ```bash
-pnpm eval:clean      # Dọn dẹp artifact rác, file tạm & port treo
-pnpm eval            # Chạy Master Evaluation Runner
-pnpm eval:all        # Đánh giá toàn diện Monorepo
-pnpm eval:chain      # Đánh giá chuỗi tích hợp E2E
-pnpm eval:ingest     # Đánh giá Data Ingestion (Vector, Graph, Triples, NER)
-pnpm eval:rag        # Đánh giá RAG Engine (11 tầng C0-C10 + System Ablation)
-pnpm eval:orchestrator # Đánh giá Multi-Agent Orchestrator (A0-A5 + Ablation)
-pnpm eval:vlm        # Đánh giá VLM Inspector offline image scoring
-pnpm eval:tts        # Đánh giá VieNeu TTS Engine
-pnpm eval:remotion   # Đánh giá Remotion Video Engine
+pnpm eval:ingest        # Đánh giá Data Ingestion (Vector, Graph, Triples, NER)
+pnpm eval:rag           # Đánh giá RAG Engine (11 tầng C0-C10 + System Ablation)
+pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator (A0-A5 + Ablation)
+pnpm eval:vlm           # Đánh giá VLM Inspector offline image scoring
+pnpm eval:remotion      # Đánh giá Remotion Video Engine
 ```
 
 ---

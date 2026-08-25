@@ -76,7 +76,6 @@ export async function runC9Benchmark(): Promise<ComponentBenchmarkReport> {
         query: item.query,
         intent: item.intent,
         requiresMultiHop: item.requires_multihop,
-        maxTokens: 350,
       });
       answerText = answerRes.answerText;
       generatedClaims = answerRes.claims || [];

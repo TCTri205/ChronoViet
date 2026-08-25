@@ -16,15 +16,9 @@ import {
   parseLlmJson,
 } from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
+import { VIETNAMESE_STOP_WORDS } from '../../guardrails/nli-hallucination-judge.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
-
-const VIETNAMESE_STOP_WORDS = new Set([
-  'năm', 'thời', 'của', 'và', 'với', 'trong', 'cho', 'trên', 'dưới', 'tại',
-  'vào', 'ra', 'về', 'lại', 'các', 'những', 'một', 'đã', 'đang', 'sẽ',
-  'người', 'quân', 'cuộc', 'trận', 'nhà', 'vua', 'sau', 'trước', 'khi',
-  'không', 'có', 'là', 'được', 'bị', 'từ', 'đến', 'cùng', 'giữa', 'này',
-]);
 
 export function removeVietnameseTones(str: string): string {
   return str

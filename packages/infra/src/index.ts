@@ -15,3 +15,5 @@ export * from './tts/index.js';
 export * from './realtime.js';
 export * from './historical-ingest.js';
 export * from './config/concurrency-tuner.js';
+export * from './eval-preflight.js';
+export * from './eval-cleaner.js';

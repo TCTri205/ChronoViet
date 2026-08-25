@@ -8,9 +8,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { envConfig, hasAvailableApiKeys } from '@chronoviet/infra';
+import { envConfig, hasAvailableApiKeys, assertEvalPreflight } from '@chronoviet/infra';
 import { buildProviderChain, resolveImageCandidates } from '../src/research/index.js';
-import { assertEvalPreflight } from '../../../eval/utils/preflight.js';
 
 export interface ResearchEvalReport {
   timestamp: string;

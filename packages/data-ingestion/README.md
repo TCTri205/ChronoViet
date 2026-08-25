@@ -71,7 +71,7 @@ packages/data-ingestion/
 │   ├── datasets/                      # Tập dữ liệu mẫu chuẩn (Disambiguation Benchmark)
 │   ├── ner-runner.ts                  # Runner đánh giá Stage 1 Pure TS Historical NER (eval:ner)
 │   ├── triples-runner.ts              # Runner đánh giá Stage 2 Triples Extractor (eval:triples)
-│   ├── runner.ts                      # Master Benchmark Runner cho Mô-đun 0 (eval / eval:all)
+│   ├── runner.ts                      # Master Benchmark Runner cho Mô-đun 0 (eval)
 │   ├── metrics.ts                     # Đo lường Disambiguation, Extraction, Chunk Quality
 │   └── README.md                      # Tài liệu hướng dẫn đánh giá 2 Trụ Cột Thực Chiến
 │

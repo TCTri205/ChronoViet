@@ -20,8 +20,7 @@ import { runC10Benchmark } from './c10-robustness-reasoning.bench.js';
 import { runSystemAblation } from './sys-ablation-regression.bench.js';
 import { evaluateRegressionGates } from './regression-gate.js';
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
-import { closePool } from '@chronoviet/infra';
-import { assertEvalPreflight } from '../../../../eval/utils/preflight.js';
+import { closePool, assertEvalPreflight } from '@chronoviet/infra';
 import { ensureBenchmarkDatabaseSeeded } from '../datasets/seeder.js';
 
 const __filename = fileURLToPath(import.meta.url);

@@ -131,7 +131,6 @@ Trong môi trường phát triển (Development) và kiểm thử tự động (
 │  │ 1. Tầng Độc Lập / Unit Eval (Nằm tại từng mô-đun: packages/<module>/eval/)        │  │
 │  │ - rag-engine/eval/data/      : Ground-truth chunks & test query vectors          │  │
 │  │ - vlm-inspector/eval/        : Test images & ground-truth licenses               │  │
-│  │ - vieneu-tts/eval/           : Test prompts & reference WAV audio                │  │
 │  │ - remotion-engine/eval/      : Test JSON specs (v4.1) & sample assets            │  │
 │  └───────────────────────────────────────────────────────────────────────────────────┘  │
 │                                           │                                             │

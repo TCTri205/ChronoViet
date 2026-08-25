@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { runOrchestratorPipeline, ChronoGraphState } from '../src/index.js';
 import { VideoProjectSchema } from '@chronoviet/shared-spec';
-import { assertEvalPreflight } from '../../../eval/utils/preflight.js';
+import { assertEvalPreflight } from '@chronoviet/infra';
 
 interface OrchestratorTestCase {
   id: string;

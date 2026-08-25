@@ -9,7 +9,7 @@ import crypto from 'crypto';
 import { scoreImageWithGemini } from '../src/vlm-scorer.js';
 import { inspectSceneVisuals, isWhitelistedLicense } from '../src/inspector-pipeline.js';
 import { SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
-import { assertEvalPreflight } from '../../../eval/utils/preflight.js';
+import { assertEvalPreflight } from '@chronoviet/infra';
 
 interface BenchmarkItem {
   id: string;

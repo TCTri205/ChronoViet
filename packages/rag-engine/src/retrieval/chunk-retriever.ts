@@ -53,7 +53,7 @@ export async function getChunksForEntities(
          END ASC,
          c.id ASC
        LIMIT $3;`,
-      [entityIds, priorityEntityIds || [], limit]
+      [entityIds, priorityEntityIds || [], limit * 3]
     );
 
     if (rows && rows.length > 0) {
@@ -90,7 +90,7 @@ export async function getChunksForEntities(
           hopCount: agg.hop,
         });
       }
-      return result;
+      return result.slice(0, limit);
     }
   }
 

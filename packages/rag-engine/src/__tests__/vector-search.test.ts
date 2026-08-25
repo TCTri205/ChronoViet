@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as infra from '@chronoviet/infra';
 import { inMemoryStore, envConfig } from '@chronoviet/infra';
+import { removeVietnameseAccents } from '@chronoviet/shared-spec';
 import {
   searchDenseVector,
   searchLexicalFTS,
   searchHybridVectorAndBM25,
   SimpleLRUCache,
   sanitizeFtsQuery,
-  removeVietnameseAccents,
   getCachedQueryEmbedding,
   resetQueryEmbeddingCacheForTest,
 } from '../retrieval/vector-search.js';

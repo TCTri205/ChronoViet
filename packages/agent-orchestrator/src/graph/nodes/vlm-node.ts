@@ -12,11 +12,10 @@ import { ChronoGraphState, getNodeLogger } from '../state.js';
 const VLM_SCENE_TIMEOUT_MS = 10000;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutFallback: T): Promise<T> {
-  let timer: NodeJS.Timeout;
-  const timeoutPromise = new Promise<T>((resolve) => {
-    timer = setTimeout(() => resolve(timeoutFallback), timeoutMs);
-  });
-  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(resolve, timeoutMs, timeoutFallback)),
+  ]);
 }
 
 export async function vlmInspectionNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {

@@ -36,7 +36,6 @@ export interface VectorSearchResult {
 export const RRF_K = 60;
 
 import { removeVietnameseAccents } from '@chronoviet/shared-spec';
-export { removeVietnameseAccents };
 
 export class SimpleLRUCache<K, V> {
   private readonly map = new Map<K, V>();
@@ -44,9 +43,10 @@ export class SimpleLRUCache<K, V> {
 
   get(key: K): V | undefined {
     const val = this.map.get(key);
-    if (val === undefined) return undefined;
-    this.map.delete(key);
-    this.map.set(key, val);
+    if (val !== undefined) {
+      this.map.delete(key);
+      this.map.set(key, val);
+    }
     return val;
   }
 
@@ -186,12 +186,9 @@ export async function searchDenseVector(
   const resolvedEmbedding = await queryEmbedding;
   const pgConnected = await isPgAvailable();
   if (pgConnected) {
-    const adaptedEmbedding =
-      resolvedEmbedding.length === 1024
-        ? resolvedEmbedding
-        : resolvedEmbedding.length > 1024
-        ? resolvedEmbedding.slice(0, 1024)
-        : [...resolvedEmbedding, ...new Array(1024 - resolvedEmbedding.length).fill(0)];
+    const adaptedEmbedding = resolvedEmbedding
+      .slice(0, 1024)
+      .concat(new Array(Math.max(0, 1024 - resolvedEmbedding.length)).fill(0));
 
     const vecRows = await withTransaction(async (execQuery) => {
       await execQuery('SET LOCAL hnsw.ef_search = 100;');

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { ChronoVideoSchema, ChronoVideoProps, TimelineScene, LayoutModeSchema, TransitionTypeSchema } from '../src/types';
-import { cleanEvalArtifacts, isPortInUseSync, killPortProcessSync } from '../../../eval/utils/cleaner';
+import { cleanEvalArtifacts, isPortInUseSync, killPortProcessSync } from '@chronoviet/infra';
 
 const DEFAULT_REMOTION_PORT = 9876;
 const TOTAL_LAYOUT_MODES = LayoutModeSchema.options.length;

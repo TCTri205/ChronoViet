@@ -53,7 +53,7 @@ Guidelines, operational constraints, and verification protocols for AI Agents an
   2. **Tier 2 (Monorepo Typecheck):** `pnpm typecheck` (zero TypeScript errors monorepo-wide required).
   3. **Tier 3 (Linting):** `pnpm lint` (formatting and lint compliance).
   4. **Tier 4 (Deterministic Tests):** `pnpm test` (deterministic unit & integration tests across `src/`).
-  5. **Tier 5 (Local Benchmarks & Eval):** `pnpm eval:all` or `pnpm --filter <package> eval` (non-deterministic quality evaluation).
+  5. **Tier 5 (Local Benchmarks & Eval):** `pnpm --filter <package> eval` or granular package evals (non-deterministic quality evaluation).
 - **Test vs. Eval Separation:**
   - **Deterministic Tests (`pnpm test`):** Executes `vitest run --dir src/ --passWithNoTests`. Must yield strict binary Pass/Fail results. This is the **ONLY** test suite executed in CI/CD pipelines.
   - **Evaluation Benchmarks (`pnpm test:eval` & `pnpm eval:*`):** Located in `eval/` (retrieval metrics, chunking quality, pacing, render fidelity). Run manually in local/benchmark environments. **NEVER run in CI/CD**.
@@ -107,9 +107,7 @@ pnpm eval:rag:c0 .. :c10 # Discrete RAG Component Benchmarks (C0..C10)
 pnpm eval:orchestrator   # Multi-Agent Orchestrator Benchmark (A0 - A5 + SYS)
 pnpm eval:orchestrator:a0 .. :a5 # Discrete Agent Benchmarks (A0..A5)
 pnpm eval:vlm            # VLM Visual Quality Inspector
-pnpm eval:tts            # VieNeu TTS Voice Engine Evaluation
 pnpm eval:remotion       # Remotion Video Rendering Fidelity
-pnpm eval:chain          # Multi-Module Integration Chains
 ```
 
 ---

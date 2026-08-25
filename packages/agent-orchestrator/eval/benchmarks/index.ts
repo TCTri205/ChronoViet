@@ -25,7 +25,7 @@ import { runA4Benchmark } from './a4-scene-direction.bench.js';
 import { runA5Benchmark } from './a5-research-agent.bench.js';
 import { runSysBenchmark } from './sys-orchestration-ablation.bench.js';
 import { evaluateOrchestratorQualityGates } from './regression-gate.js';
-import { assertEvalPreflight } from '../../../../eval/utils/preflight.js';
+import { assertEvalPreflight } from '@chronoviet/infra';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -4,7 +4,7 @@ Dịch vụ Tổng hợp Giọng đọc Tiếng Việt AI (Text-to-Speech) chuy�
 
 > 💡 **Lưu ý Kiến trúc:**
 > - Toàn bộ Node.js Client Wrapper, Fallback Synthetic Audio Generator và hàm quy đổi timestamp sang Remotion frames nằm tập trung tại [`packages/infra/src/tts/`](../../packages/infra/src/tts/).
-> - Thư mục này (`services/vieneu-tts`) chứa thuần túy **Python FastAPI Microservice** (cổng `8080`) và script benchmark Python [`eval/eval.py`](eval/eval.py).
+> - Thư mục này (`services/vieneu-tts`) chứa thuần túy **Python FastAPI Microservice** (cổng `8080`).
 
 ---
 
@@ -84,18 +84,4 @@ Service mở cổng `8080`, lưu cache file WAV tại `./media/audio-cache/` và
 - `POST /api/v1/synthesize` — Tổng hợp giọng đọc và sinh word timestamps
 - `GET /static/audio/:filename` — Tải và stream file âm thanh WAV
 
----
-
-## 🧪 Benchmark & Evaluation (`eval/eval.py`)
-
-Chạy đánh giá độ trễ và khả năng sinh word timestamps bằng script Python:
-
-```bash
-pnpm eval:tts
-# hoặc trực tiếp:
-python3 services/vieneu-tts/eval/eval.py
-
-# Dừng service sau khi hoàn tất:
-pnpm ai:stop
-```
 

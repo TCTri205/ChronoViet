@@ -1454,31 +1454,6 @@ export function matchCuratedCatalog(
 }
 
 /**
- * Resolves visual candidates for a scene: tries live Wikimedia search, then curated catalog fallback
- */
-export async function resolveVisualCandidates(
-  keywords: string,
-  sceneId: string,
-  limit: number = 6
-): Promise<VisualCandidate[]> {
-  // 1. Try Live Wikimedia Search
-  const liveCandidates = await searchWikimediaCommons(keywords, limit);
-  if (liveCandidates.length > 0) {
-    return liveCandidates.map((cand, idx) => ({
-      ...cand,
-      candidateId: `cand_${sceneId}_${String(idx + 1).padStart(2, '0')}`,
-    }));
-  }
-
-  // 2. Strict Curated Matrix matching (with "Pure Code over Wrong Image" safe fallback)
-  const catalogMatches = matchCuratedCatalog(keywords, limit);
-  return catalogMatches.map((cand, idx) => ({
-    ...cand,
-    candidateId: `cand_${sceneId}_${String(idx + 1).padStart(2, '0')}`,
-  }));
-}
-
-/**
  * Wikimedia Commons provider implementing the ImageSearchProvider interface.
  */
 export class WikimediaSearchProvider implements ImageSearchProvider {
