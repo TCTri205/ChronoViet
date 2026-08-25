@@ -1,0 +1,18 @@
+{
+  "candidateId": "cand_scene_002_01",
+  "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a0/T%C6%B0%E1%BB%A3ng_Vua_H%C3%B9ng_%28L%E1%BA%A1c_Long_Qu%C3%A2n%29_s%C6%A1n_v%C3%A0ng_%E1%BB%9F_ch%C3%B9a_K%E1%BB%B3_Quang_n2022_%282%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:T%C6%B0%E1%BB%A3ng_Vua_H%C3%B9ng_(L%E1%BA%A1c_Long_Qu%C3%A2n)_s%C6%A1n_v%C3%A0ng_%E1%BB%9F_ch%C3%B9a_K%E1%BB%B3_Quang_n2022_(2).jpg",
+  "title": "File:Tượng Vua Hùng (Lạc Long Quân) sơn vàng ở chùa Kỳ Quang n2022 (2).jpg  - Wikimedia Commons",
+  "author": "Wikimedia Commons",
+  "license": "CC_BY_SA_4_0",
+  "sha256": "7b93ceae412dedc55672e1296bea366987fca8b60132a25317fab831492bd6dd",
+  "pHash": "d55dd5556a5b44ca",
+  "localPath": "/Users/congtri/IT/Personal_Projects/ChronoViet/eval/video-gen/outputs/eval_proj_vg_01_hong_bang_hung_vuong/assets/cand_scene_002_01.jpg",
+  "fileSizeBytes": 205248,
+  "width": 647,
+  "height": 1080,
+  "optimized": true,
+  "downloadedAt": "2026-08-25T16:13:25.001Z",
+  "sceneId": "scene_002",
+  "projectId": "eval_proj_vg_01_hong_bang_hung_vuong"
+}

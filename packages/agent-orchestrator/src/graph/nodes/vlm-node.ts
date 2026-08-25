@@ -9,7 +9,7 @@ import { envConfig, getAdaptiveConcurrency } from '@chronoviet/infra';
 import { inspectSceneVisuals } from '@chronoviet/vlm-inspector';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 
-const VLM_SCENE_TIMEOUT_MS = 10000;
+const VLM_SCENE_TIMEOUT_MS = (envConfig as any).VLM_SCENE_TIMEOUT_MS || 60000;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutFallback: T): Promise<T> {
   return Promise.race([
@@ -44,7 +44,9 @@ export async function vlmInspectionNode(state: ChronoGraphState): Promise<Partia
           const inspectionTask = (async (): Promise<SceneGeneration> => {
             // Use researchResults produced by the Research Agent (Micro-Step 1C) when available
             const candidatePool: VisualCandidate[] = state.researchResults?.[scene.sceneId]?.candidates || scene.candidates || [];
-            const result = await inspectSceneVisuals(state.projectId, scene, candidatePool);
+            const result = await inspectSceneVisuals(state.projectId, scene, candidatePool, {
+              customBaseDir: state.customBaseDir,
+            });
             return result.updatedScene;
           })();
 

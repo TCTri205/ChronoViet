@@ -3,7 +3,7 @@
  * Computes semantic similarity between scene historical context and image tags/metadata
  */
 
-import { createLogger } from '@chronoviet/infra';
+import { createLogger, envConfig } from '@chronoviet/infra';
 import { VLMScoreResult } from './redis-cache.js';
 
 const log = createLogger({ service: 'vlm-inspector' });
@@ -176,14 +176,15 @@ export function scoreImageWithLocalCLIP(
   artisticScore = Math.min(30, Math.max(10, artisticScore));
 
   const totalScore = contextScore + noiseScore + artisticScore;
-  const passed = totalScore >= 60;
+  const scoreThreshold = envConfig.VLM_SCORE_THRESHOLD ?? 60;
+  const passed = totalScore >= scoreThreshold;
 
   const reasons: string[] = [];
   if (passed) {
     reasons.push('Tương đồng ngữ cảnh cao qua bộ chấm điểm Local CLIP (Cosine Sim)');
     if (noiseScore >= 25) reasons.push('Không phát hiện watermark hoặc logo đè');
   } else {
-    reasons.push(`Điểm tổng (${totalScore}/100) chưa đạt ngưỡng chuẩn 60 điểm`);
+    reasons.push(`Điểm tổng (${totalScore}/100) chưa đạt ngưỡng chuẩn ${scoreThreshold} điểm`);
   }
 
   return {

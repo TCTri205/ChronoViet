@@ -102,9 +102,22 @@ export function extractAndParseJson(
     };
   }
 
-  const hScore = Math.min(40, Math.max(0, Number(parsedJson.historicalContextScore ?? parsedJson.historical_context_score) || 20));
-  const nScore = Math.min(30, Math.max(0, Number(parsedJson.visualNoiseScore ?? parsedJson.visual_noise_score) || 20));
-  const aScore = Math.min(30, Math.max(0, Number(parsedJson.artisticFitScore ?? parsedJson.artistic_fit_score) || 20));
+  let rawH = Number(parsedJson.historicalContextScore ?? parsedJson.historical_context_score);
+  let rawN = Number(parsedJson.visualNoiseScore ?? parsedJson.visual_noise_score);
+  let rawA = Number(parsedJson.artisticFitScore ?? parsedJson.artistic_fit_score);
+
+  if (isNaN(rawH)) rawH = 20;
+  if (isNaN(rawN)) rawN = 20;
+  if (isNaN(rawA)) rawA = 20;
+
+  // Scale 0..1 normalized scores to target bounds: [40, 30, 30]
+  if (rawH > 0 && rawH <= 1.0) rawH = Math.round(rawH * 40);
+  if (rawN > 0 && rawN <= 1.0) rawN = Math.round(rawN * 30);
+  if (rawA > 0 && rawA <= 1.0) rawA = Math.round(rawA * 30);
+
+  const hScore = Math.min(40, Math.max(0, rawH));
+  const nScore = Math.min(30, Math.max(0, rawN));
+  const aScore = Math.min(30, Math.max(0, rawA));
   const totalScore = hScore + nScore + aScore;
 
   let focalPoint: [number, number] | undefined;
@@ -135,7 +148,7 @@ export function extractAndParseJson(
     artisticFitScore: aScore,
     totalScore,
     overallScore: totalScore,
-    passed: totalScore >= 60,
+    passed: totalScore >= (envConfig.VLM_SCORE_THRESHOLD ?? 60),
     focalPoint,
     reasons: Array.isArray(parsedJson.reasons)
       ? parsedJson.reasons
@@ -144,6 +157,23 @@ export function extractAndParseJson(
       : [`Thẩm định bởi ${scorerType}`],
     scorerType,
   };
+}
+
+async function preprocessImageForVlm(
+  imageBuffer: Buffer,
+  _ext?: string
+): Promise<{ buffer: Buffer; mimeType: string }> {
+  try {
+    const sharpModule = await import('sharp');
+    const sharp = (sharpModule as any).default || sharpModule;
+    const buffer = await sharp(imageBuffer)
+      .resize(1024, 576, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+    return { buffer, mimeType: 'image/jpeg' };
+  } catch {
+    return { buffer: imageBuffer, mimeType: 'image/jpeg' };
+  }
 }
 
 export const parseScoreJson = extractAndParseJson;
@@ -161,11 +191,14 @@ export async function scoreImageWithLocalVLM(
   const modelName = options.model || envConfig.VLM_MODEL || envConfig.EVAL_VLM_MODEL || envConfig.LOCAL_VLM_INSPECTOR || envConfig.LOCAL_LLM_PRIMARY_MODEL || 'qwen3.5-9b-instruct-q4_k_m';
   const endpoint = `${baseUrl}/v1/chat/completions`;
 
-  let imagePart: { type: 'image_url'; image_url: { url: string } };
+  let imagePart: { type: 'image_url'; image_url: { url: string } } | null = null;
   const fs = await import('fs');
   if (fs.existsSync(imageUrl)) {
     try {
-      const imageBuffer = fs.readFileSync(imageUrl);
+      const rawBuffer = fs.readFileSync(imageUrl);
+      const ext = imageUrl.split('.').pop()?.toLowerCase();
+      const { buffer: imageBuffer, mimeType } = await preprocessImageForVlm(rawBuffer, ext);
+
       if (imageBuffer.length > MAX_IMAGE_PAYLOAD_BYTES) {
         log.warn('vlm.payload_size_warning', `Image ${imageUrl} size (${(imageBuffer.length / 1024 / 1024).toFixed(2)}MB) exceeds 5MB limit`, {
           imageUrl,
@@ -175,15 +208,25 @@ export async function scoreImageWithLocalVLM(
         });
       }
       const base64Data = imageBuffer.toString('base64');
-      const ext = imageUrl.split('.').pop()?.toLowerCase();
-      let mimeType = 'image/jpeg';
-      if (ext === 'png') mimeType = 'image/png';
-      else if (ext === 'webp') mimeType = 'image/webp';
       imagePart = { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64Data}` } };
     } catch {
-      imagePart = { type: 'image_url', image_url: { url: imageUrl } };
+      // fallback
     }
-  } else {
+  } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    try {
+      const fetchRes = await fetch(imageUrl, { signal: AbortSignal.timeout(10000) });
+      if (fetchRes.ok) {
+        const arrayBuf = await fetchRes.arrayBuffer();
+        const rawBuffer = Buffer.from(arrayBuf);
+        const { buffer, mimeType } = await preprocessImageForVlm(rawBuffer);
+        imagePart = { type: 'image_url', image_url: { url: `data:${mimeType};base64,${buffer.toString('base64')}` } };
+      }
+    } catch (fetchErr: any) {
+      log.warn('vlm.remote_fetch_failed', `Could not fetch remote image ${imageUrl} for local VLM: ${fetchErr.message}`);
+    }
+  }
+
+  if (!imagePart) {
     imagePart = { type: 'image_url', image_url: { url: imageUrl } };
   }
 
@@ -223,7 +266,19 @@ export async function scoreImageWithLocalVLM(
     throw new Error('Empty response from VLM Vision endpoint');
   }
 
-  return extractAndParseJson(rawText, effectiveApiKey ? 'OPENAI_VLM' : 'LOCAL_VLM');
+  const result = extractAndParseJson(rawText, effectiveApiKey ? 'OPENAI_VLM' : 'LOCAL_VLM');
+  log.info('vlm.vision_inspected', `Image ${imageUrl} inspected via ${result.scorerType} [${modelName}] (Score: ${result.totalScore}/100, Passed: ${result.passed})`, {
+    imageUrl,
+    model: modelName,
+    scorerType: result.scorerType,
+    totalScore: result.totalScore,
+    passed: result.passed,
+    isFallback: false,
+    correlationId: options.correlationId,
+    sceneId: options.sceneId,
+  });
+
+  return result;
 }
 
 /**
@@ -240,7 +295,10 @@ export async function scoreImageWithGeminiApi(
   const fs = await import('fs');
   if (fs.existsSync(imageUrl)) {
     try {
-      const imageBuffer = fs.readFileSync(imageUrl);
+      const rawBuffer = fs.readFileSync(imageUrl);
+      const ext = imageUrl.split('.').pop()?.toLowerCase();
+      const { buffer: imageBuffer, mimeType } = await preprocessImageForVlm(rawBuffer, ext);
+
       if (imageBuffer.length > MAX_IMAGE_PAYLOAD_BYTES) {
         log.warn('vlm.payload_size_warning', `Image ${imageUrl} size (${(imageBuffer.length / 1024 / 1024).toFixed(2)}MB) exceeds 5MB limit`, {
           imageUrl,
@@ -250,10 +308,6 @@ export async function scoreImageWithGeminiApi(
         });
       }
       const base64Data = imageBuffer.toString('base64');
-      const ext = imageUrl.split('.').pop()?.toLowerCase();
-      let mimeType = 'image/jpeg';
-      if (ext === 'png') mimeType = 'image/png';
-      else if (ext === 'webp') mimeType = 'image/webp';
 
       parts.push({
         inline_data: {
@@ -469,11 +523,20 @@ export async function scoreImageWithVLM(
     subsystem: 'VLM_INSPECTOR',
     primaryTarget: `VLM Inspector (${vlmBaseUrl}) [${vlmModel}]`,
     fallbackTarget: 'Local CLIP Cosine Similarity Scorer (Offline ONNX/Rule Engine)',
-    reason: `VLM endpoint (${vlmBaseUrl}) offline or unconfigured`,
+    reason: `Primary VLM endpoint (${vlmBaseUrl}) offline or unconfigured`,
     actionRequired: `Start VLM model (${vlmModel}) on ${vlmBaseUrl} or set VLM_BASE_URL in .env`,
   });
 
   const fallbackResult = scoreImageWithLocalCLIP(imageUrl, eventDescription, options.metadata);
+  log.warn('vlm.fallback_activated', `Image ${imageUrl} evaluated via FALLBACK Local CLIP Scorer (Score: ${fallbackResult.totalScore}/100, Passed: ${fallbackResult.passed})`, {
+    imageUrl,
+    scorerType: 'CLIP_LOCAL_FALLBACK',
+    totalScore: fallbackResult.totalScore,
+    passed: fallbackResult.passed,
+    isFallback: true,
+    correlationId: options.correlationId,
+    sceneId: options.sceneId,
+  });
   await setCachedVLMScore(fallbackResult, cacheOpts);
   return fallbackResult;
 }

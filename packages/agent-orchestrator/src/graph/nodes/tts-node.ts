@@ -20,7 +20,7 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
     batchSize,
   });
 
-  const paths = initProjectWorkspace(state.projectId);
+  const paths = initProjectWorkspace(state.projectId, state.customBaseDir);
   const results: {
     scene: SceneGeneration;
     asset: AudioAssetEntry;

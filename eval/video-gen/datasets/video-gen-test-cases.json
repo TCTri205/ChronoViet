@@ -1,0 +1,222 @@
+[
+  {
+    "id": "vg_01_hong_bang_hung_vuong",
+    "topic": "Thời đại Hùng Vương và Nhà nước Văn Lang",
+    "epoch": "HỒNG_BÀNG",
+    "targetDurationMinutes": 2,
+    "videoType": "DYNASTY",
+    "templateId": "dynasty_chronicle_default",
+    "expectedEntities": ["Hùng Vương", "Văn Lang", "Phong Châu", "Kinh Dương Vương", "Lạc Long Quân"],
+    "expectedChapters": ["Bình minh dựng nước", "Tổ chức nhà nước Văn Lang", "Di sản văn hóa trống đồng"],
+    "searchKeywordsCheck": ["Hùng Vương", "Văn Lang", "Trống đồng Đông Sơn"]
+  },
+  {
+    "id": "vg_02_au_lac_co_loa",
+    "topic": "An Dương Vương và Tòa thành Cổ Loa hình xoáy ốc",
+    "epoch": "ÂU_LẠC",
+    "targetDurationMinutes": 3,
+    "videoType": "ARTIFACT",
+    "templateId": "artifact_showcase_default",
+    "expectedEntities": ["An Dương Vương", "Thục Phán", "Cổ Loa", "Nỏ thần Kim Quy", "Âu Lạc"],
+    "expectedChapters": ["Sự thành lập nước Âu Lạc", "Kỳ công quân sự Thành Cổ Loa", "Nỏ thần và bài học lịch sử"],
+    "searchKeywordsCheck": ["Thành Cổ Loa", "An Dương Vương", "Nỏ thần"]
+  },
+  {
+    "id": "vg_03_hai_ba_trung_me_linh",
+    "topic": "Hai Bà Trưng và Tiếng trống Mê Linh khởi nghĩa",
+    "epoch": "BẮC_THUỘC",
+    "targetDurationMinutes": 2,
+    "videoType": "BATTLE",
+    "templateId": "battle_breakdown_default",
+    "expectedEntities": ["Hai Bà Trưng", "Trưng Trắc", "Trưng Nhị", "Thi Sách", "Tô Định", "Mê Linh"],
+    "expectedChapters": ["Ách thống trị bạo tàn của Tô Định", "Hội thề Hát Môn và khởi nghĩa Mê Linh", "Khẳng định chủ quyền nữ vương"],
+    "searchKeywordsCheck": ["Hai Bà Trưng", "Trưng Trắc", "Khởi nghĩa Hai Bà Trưng"]
+  },
+  {
+    "id": "vg_04_ba_trieu_nui_nua",
+    "topic": "Bà Triệu cưỡi voi đánh cồng chống quân Đông Ngô",
+    "epoch": "BẮC_THUỘC",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "biography_epic_default",
+    "expectedEntities": ["Bà Triệu", "Triệu Thị Trinh", "Núi Nưa", "Đông Ngô", "Lục Dận"],
+    "expectedChapters": ["Khí phách Triệu Thị Trinh", "Cuộc khởi nghĩa năm 248", "Khí tiết ngút trời"],
+    "searchKeywordsCheck": ["Bà Triệu", "Triệu Thị Trinh"]
+  },
+  {
+    "id": "vg_05_ly_nam_de_van_xuan",
+    "topic": "Lý Nam Đế lập nước Vạn Xuân độc lập",
+    "epoch": "TIỀN_LÝ",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "dynasty_chronicle_default",
+    "expectedEntities": ["Lý Nam Đế", "Lý Bí", "Vạn Xuân", "Chùa Khai Quốc", "Tiêu Tư"],
+    "expectedChapters": ["Lý Bí dấy binh khởi nghĩa", "Sự ra đời của quốc hiệu Vạn Xuân", "Ý nghĩa nền độc lập tự chủ"],
+    "searchKeywordsCheck": ["Lý Nam Đế", "Lý Bí", "Nước Vạn Xuân"]
+  },
+  {
+    "id": "vg_06_trieu_quang_phuc_da_trach",
+    "topic": "Triệu Quang Phục và chiến thuật du kích đầm Dạ Trạch",
+    "epoch": "TIỀN_LÝ",
+    "targetDurationMinutes": 2,
+    "videoType": "BATTLE",
+    "templateId": "battle_breakdown_default",
+    "expectedEntities": ["Triệu Quang Phục", "Dạ Trạch Vương", "Đầm Dạ Trạch", "Trần Bá Tiên", "Móng rồng Kim Quy"],
+    "expectedChapters": ["Rút quân về hiểm địa Dạ Trạch", "Nghệ thuật tác chiến du kích ban đêm", "Thắng lợi khôi phục kinh thành"],
+    "searchKeywordsCheck": ["Triệu Quang Phục", "Dạ Trạch Vương", "Đầm Dạ Trạch"]
+  },
+  {
+    "id": "vg_07_mai_thuc_loan_hac_de",
+    "topic": "Mai Thúc Loan và Khởi nghĩa Hoan Châu xưng Mai Hắc Đế",
+    "epoch": "BẮC_THUỘC",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "biography_epic_default",
+    "expectedEntities": ["Mai Thúc Loan", "Mai Hắc Đế", "Hoan Châu", "Thành Vạn An", "Nhà Đường"],
+    "expectedChapters": ["Gánh nặng cống nạp quả vải", "Dấy binh lập thành Vạn An", "Tiếng vang vương triều Hắc Đế"],
+    "searchKeywordsCheck": ["Mai Thúc Loan", "Mai Hắc Đế", "Hoan Châu"]
+  },
+  {
+    "id": "vg_08_phung_hung_bo_cai",
+    "topic": "Bố Cái Đại Vương Phùng Hưng đánh đổ quan đô hộ Đường",
+    "epoch": "BẮC_THUỘC",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "biography_epic_default",
+    "expectedEntities": ["Phùng Hưng", "Bố Cái Đại Vương", "Đường Lâm", "Tống Bình", "Chính Bình"],
+    "expectedChapters": ["Hào trưởng đất Đường Lâm", "Vây hãm thành Tống Bình", "Danh hiệu Bố Cái Đại Vương"],
+    "searchKeywordsCheck": ["Phùng Hưng", "Bố Cái Đại Vương", "Đường Lâm"]
+  },
+  {
+    "id": "vg_09_ngo_quyen_bach_dang_938",
+    "topic": "Ngô Quyền và Trận thủy chiến Bạch Đằng chấm dứt nghìn năm Bắc thuộc",
+    "epoch": "NGÔ",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "battle_breakdown_default",
+    "expectedEntities": ["Ngô Quyền", "Bạch Đằng", "Nam Hán", "Lưu Hoằng Thao", "Kiều Công Tiễn"],
+    "expectedChapters": ["Trừ phản thần Kiều Công Tiễn", "Trận địa cọc ngầm độc nhất vô nhị", "Chiến thắng mở ra kỷ nguyên độc lập"],
+    "searchKeywordsCheck": ["Ngô Quyền", "Trận Bạch Đằng 938", "Sông Bạch Đằng"]
+  },
+  {
+    "id": "vg_10_dinh_bo_linh_hoa_lu",
+    "topic": "Đinh Tiên Hoàng dẹp loạn 12 sứ quân thống nhất Đại Cồ Việt",
+    "epoch": "ĐINH",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "dynasty_chronicle_default",
+    "expectedEntities": ["Đinh Bộ Lĩnh", "Đinh Tiên Hoàng", "12 sứ quân", "Đại Cồ Việt", "Kinh đô Hoa Lư"],
+    "expectedChapters": ["Loạn 12 sứ quân và nguy cơ chia cắt", "Tài thao lược của Vạn Thắng Vương", "Xây dựng kinh đô đá Hoa Lư"],
+    "searchKeywordsCheck": ["Đinh Bộ Lĩnh", "Đinh Tiên Hoàng", "Cố đô Hoa Lư", "Đại Cồ Việt"]
+  },
+  {
+    "id": "vg_11_le_hoan_bach_dang_981",
+    "topic": "Lê Hoàn phá Tống bình Chiêm giữ yên bờ cõi",
+    "epoch": "TIỀN_LÊ",
+    "targetDurationMinutes": 2,
+    "videoType": "BATTLE",
+    "templateId": "battle_breakdown_default",
+    "expectedEntities": ["Lê Hoàn", "Lê Đại Hành", "Hầu Nhân Bảo", "Dương Vân Nga", "Bạch Đằng 981"],
+    "expectedChapters": ["Thập đạo tướng quân khoác long bào", "Đại phá giặc Tống trên sông Bạch Đằng", "Chính sách cày ruộng tịch điền"],
+    "searchKeywordsCheck": ["Lê Hoàn", "Lê Đại Hành", "Dương Vân Nga"]
+  },
+  {
+    "id": "vg_12_ly_thai_to_chieu_doi_do",
+    "topic": "Lý Thái Tổ và Tầm nhìn dời đô về Thăng Long nghìn năm",
+    "epoch": "LÝ",
+    "targetDurationMinutes": 3,
+    "videoType": "BIOGRAPHY",
+    "templateId": "biography_epic_default",
+    "expectedEntities": ["Lý Công Uẩn", "Lý Thái Tổ", "Chiếu dời đô", "Thành Đại La", "Thăng Long", "Sư Vạn Hạnh"],
+    "expectedChapters": ["Khởi đầu từ ngôi chùa Cổ Pháp", "Bản Chiếu dời đô lịch sử năm 1010", "Khát vọng Thăng Long rồng bay"],
+    "searchKeywordsCheck": ["Lý Thái Tổ", "Lý Công Uẩn", "Chiếu dời đô", "Hoàng thành Thăng Long"]
+  },
+  {
+    "id": "vg_13_ly_thuong_kiet_nhu_nguyet",
+    "topic": "Lý Thường Kiệt và Bản Tuyên ngôn độc lập đầu tiên trên sông Như Nguyệt",
+    "epoch": "LÝ",
+    "targetDurationMinutes": 3,
+    "videoType": "BATTLE",
+    "templateId": "battle_breakdown_default",
+    "expectedEntities": ["Lý Thường Kiệt", "Nam quốc sơn hà", "Sông Như Nguyệt", "Quách Quỳ", "Tiên phát chế nhân"],
+    "expectedChapters": ["Chiến lược tiên phát chế nhân", "Phòng tuyến kiên cố sông Như Nguyệt", "Bài thơ thần định đoạt cuộc chiến"],
+    "searchKeywordsCheck": ["Lý Thường Kiệt", "Nam quốc sơn hà", "Sông Như Nguyệt"]
+  },
+  {
+    "id": "vg_14_tran_hung_dao_bach_dang_1288",
+    "topic": "Hưng Đạo Đại Vương Trần Quốc Tuấn và Ba lần đại thắng Nguyên Mông",
+    "epoch": "TRẦN",
+    "targetDurationMinutes": 4,
+    "videoType": "BATTLE",
+    "templateId": "battle_breakdown_default",
+    "expectedEntities": ["Trần Hưng Đạo", "Trần Quốc Tuấn", "Hịch tướng sĩ", "Hội nghị Diên Hồng", "Bạch Đằng 1288", "Thoát Hoan"],
+    "expectedChapters": ["Lời thề Sát Thát và Hịch tướng sĩ", "Kế sách thanh dã vườn không nhà trống", "Tuyệt đỉnh thủy chiến Bạch Đằng 1288"],
+    "searchKeywordsCheck": ["Trần Hưng Đạo", "Trần Quốc Tuấn", "Bạch Đằng 1288", "Hịch tướng sĩ"]
+  },
+  {
+    "id": "vg_15_le_loi_nguyen_trai_lam_son",
+    "topic": "Lê Lợi, Nguyễn Trãi và Bản Hùng ca Khởi nghĩa Lam Sơn",
+    "epoch": "HẬU_LÊ",
+    "targetDurationMinutes": 4,
+    "videoType": "BIOGRAPHY",
+    "templateId": "biography_epic_default",
+    "expectedEntities": ["Lê Lợi", "Nguyễn Trãi", "Hội thề Lũng Nhai", "Bình Ngô Đại Cáo", "Trận Chi Lăng Xương Giang"],
+    "expectedChapters": ["Mười năm nếm mật nằm gai", "Nghệ thuật tâm công và đại phá Liễu Thăng", "Bình Ngô Đại Cáo áng thiên cổ hùng văn"],
+    "searchKeywordsCheck": ["Lê Lợi", "Nguyễn Trãi", "Khởi nghĩa Lam Sơn", "Bình Ngô Đại Cáo"]
+  },
+  {
+    "id": "vg_16_le_thanh_tong_hong_duc",
+    "topic": "Vua Lê Thánh Tông và Thời kỳ Thịnh trị Hoàng kim Hồng Đức",
+    "epoch": "HẬU_LÊ",
+    "targetDurationMinutes": 3,
+    "videoType": "DYNASTY",
+    "templateId": "dynasty_chronicle_default",
+    "expectedEntities": ["Lê Thánh Tông", "Luật Hồng Đức", "Hội Tao Đàn", "Bản đồ Hồng Đức", "Khoa cử"],
+    "expectedChapters": ["Cải cách hành chính quy mô toàn diện", "Bộ Luật Hồng Đức đỉnh cao pháp quyền", "Văn hóa giáo dục và Hội Tao Đàn"],
+    "searchKeywordsCheck": ["Lê Thánh Tông", "Luật Hồng Đức", "Bản đồ Hồng Đức"]
+  },
+  {
+    "id": "vg_17_quang_trung_ky_dau_1789",
+    "topic": "Vua Quang Trung và Cuộc hành quân thần tốc đánh tan 29 vạn quân Thanh",
+    "epoch": "TÂY_SƠN",
+    "targetDurationMinutes": 4,
+    "videoType": "BATTLE",
+    "templateId": "battle_breakdown_default",
+    "expectedEntities": ["Quang Trung", "Nguyễn Huệ", "Ngọc Hồi", "Đống Đa", "Tôn Sĩ Nghị", "Sầm Nghi Đống", "Voi chiến"],
+    "expectedChapters": ["Lên ngôi Hoàng đế tại núi Bân", "Hành quân thần tốc ngày đêm", "Mùng 5 Tết Kỷ Dậu giải phóng Thăng Long"],
+    "searchKeywordsCheck": ["Vua Quang Trung", "Nguyễn Huệ", "Trận Ngọc Hồi Đống Đa", "Tây Sơn"]
+  },
+  {
+    "id": "vg_18_truong_dinh_nam_ky",
+    "topic": "Bình Tây Đại Nguyên Soái Trương Định kiên cường chống Pháp",
+    "epoch": "NGUYỄN",
+    "targetDurationMinutes": 2,
+    "videoType": "BIOGRAPHY",
+    "templateId": "biography_epic_default",
+    "expectedEntities": ["Trương Định", "Bình Tây Đại Nguyên Soái", "Gò Công", "Tân Hòa", "Kháng chiến Nam Kỳ"],
+    "expectedChapters": ["Từ chối bãi binh nhận chức", "Căn cứ Gò Công kháng chiến", "Tấm gương kiên trung bất khuất"],
+    "searchKeywordsCheck": ["Trương Định", "Bình Tây Đại Nguyên Soái", "Gò Công"]
+  },
+  {
+    "id": "vg_19_phan_dinh_phung_huong_khe",
+    "topic": "Phan Đình Phùng và Khởi nghĩa Hương Khê đỉnh cao Cần Vương",
+    "epoch": "NGUYỄN",
+    "targetDurationMinutes": 3,
+    "videoType": "MYSTERY",
+    "templateId": "mystery_investigation_default",
+    "expectedEntities": ["Phan Đình Phùng", "Cao Thắng", "Hương Khê", "Vụ Quang", "Súng trường kiểu Pháp", "Cần Vương"],
+    "expectedChapters": ["Ngọn cờ Cần Vương cứu quốc", "Kỳ tích chế tạo súng của Cao Thắng", "Hương Khê bản anh hùng ca bất diệt"],
+    "searchKeywordsCheck": ["Phan Đình Phùng", "Khởi nghĩa Hương Khê", "Cao Thắng"]
+  },
+  {
+    "id": "vg_20_dien_bien_phu_1954",
+    "topic": "Chiến thắng Điện Biên Phủ 1954 lừng lẫy năm châu chấn động địa cầu",
+    "epoch": "HIỆN_ĐẠI",
+    "targetDurationMinutes": 5,
+    "videoType": "BATTLE",
+    "templateId": "battle_breakdown_default",
+    "expectedEntities": ["Võ Nguyên Giáp", "Điện Biên Phủ", "Đồi A1", "Tướng De Castries", "Kéo pháo vào kéo pháo ra", "Hiệp định Genève"],
+    "expectedChapters": ["Tập đoàn cứ điểm bất khả xâm phạm", "Quyết định chuyển từ đánh nhanh sang đánh chắc", "56 ngày đêm khoét núi ngủ hầm và toàn thắng"],
+    "searchKeywordsCheck": ["Chiến thắng Điện Biên Phủ", "Đại tướng Võ Nguyên Giáp", "Đồi A1 Điện Biên Phủ"]
+  }
+]

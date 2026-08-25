@@ -9,7 +9,7 @@ import {
   SceneGeneration,
   VisualCandidate,
 } from '@chronoviet/shared-spec';
-import { createLogger } from '@chronoviet/infra';
+import { createLogger, envConfig } from '@chronoviet/infra';
 import { z } from 'zod';
 import { downloadCandidateBatch } from './asset-downloader.js';
 import { scoreImageWithGemini } from './vlm-scorer.js';
@@ -213,8 +213,9 @@ export async function inspectSceneVisuals(
   }
 
   const qualityGate = new VisualQualityGate();
-  const batch1 = candidatePool.slice(0, 3);
-  const batch2 = candidatePool.slice(3, 6);
+  const midpoint = Math.max(1, Math.ceil(candidatePool.length / 2));
+  const batch1 = candidatePool.slice(0, midpoint);
+  const batch2 = candidatePool.slice(midpoint);
 
   const downloadOpts = {
     customBaseDir: options.customBaseDir,
@@ -245,9 +246,11 @@ export async function inspectSceneVisuals(
 
   const allEvaluated: VisualCandidate[] = [...evaluatedBatch1];
 
-  // 2. If Batch 1 top score < 60 and Batch 2 exists, process Batch 2
-  if ((!topCandidate || (topCandidate.score?.overallScore || 0) < 60) && batch2.length > 0) {
-    log.debug('vlm.batch_2_triggered', `Batch 1 top score below 60; triggering 3 supplementary candidates (Batch 2)`, {
+  const scoreThreshold = envConfig.VLM_SCORE_THRESHOLD ?? 60;
+
+  // 2. If Batch 1 top score < threshold and Batch 2 exists, process Batch 2
+  if ((!topCandidate || (topCandidate.score?.overallScore || 0) < scoreThreshold) && batch2.length > 0) {
+    log.debug('vlm.batch_2_triggered', `Batch 1 top score below ${scoreThreshold}; triggering 3 supplementary candidates (Batch 2)`, {
       sceneId: scene.sceneId,
       correlationId: options.correlationId,
     });
@@ -267,13 +270,13 @@ export async function inspectSceneVisuals(
   }
 
   // 3. Check if we have an acceptable candidate
-  const isPureCodeFallback = !topCandidate || (topCandidate.score?.overallScore || 0) < 60;
+  const isPureCodeFallback = !topCandidate || (topCandidate.score?.overallScore || 0) < scoreThreshold;
 
   let finalLayoutMode = scene.layoutMode;
   if (isPureCodeFallback) {
     const rotationIndex = scene.sceneIndex % PURE_CODE_LAYOUT_ROTATION.length;
     finalLayoutMode = PURE_CODE_LAYOUT_ROTATION[rotationIndex];
-    log.warn('vlm.pure_code_fallback', `All candidates failed (<60); falling back to PURE_CODE Layout: ${finalLayoutMode}`, {
+    log.warn('vlm.pure_code_fallback', `All candidates failed (<${scoreThreshold}); falling back to PURE_CODE Layout: ${finalLayoutMode}`, {
       sceneId: scene.sceneId,
       finalLayoutMode,
       correlationId: options.correlationId,

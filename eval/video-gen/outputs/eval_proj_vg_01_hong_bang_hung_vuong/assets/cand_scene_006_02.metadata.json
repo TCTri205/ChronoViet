@@ -1,0 +1,18 @@
+{
+  "candidateId": "cand_scene_006_02",
+  "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/A_portrait_painting_depicting_Annam_King%2C_Ruan_Guangping.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_portrait_painting_depicting_Annam_King,_Ruan_Guangping.jpg",
+  "title": "A portrait painting depicting Annam King, Ruan Guangping",
+  "author": "Mou Bingtai (繆炳泰, ? - ?). Qing Court's painters in the XVIII-century",
+  "license": "PUBLIC_DOMAIN",
+  "sha256": "a9e2de598027661527377cd23a712963c2ca60391dd75ebd088af69462980ed6",
+  "pHash": "bd56e45a6b672d6a",
+  "localPath": "/Users/congtri/IT/Personal_Projects/ChronoViet/eval/video-gen/outputs/eval_proj_vg_01_hong_bang_hung_vuong/assets/cand_scene_006_02.jpg",
+  "fileSizeBytes": 150348,
+  "width": 763,
+  "height": 1080,
+  "optimized": true,
+  "downloadedAt": "2026-08-25T16:14:24.079Z",
+  "sceneId": "scene_006",
+  "projectId": "eval_proj_vg_01_hong_bang_hung_vuong"
+}

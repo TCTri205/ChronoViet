@@ -1,0 +1,27 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": "..",
+    "paths": {
+      "@chronoviet/shared-spec": ["packages/shared-spec/src/index.ts"],
+      "@chronoviet/infra": ["packages/infra/src/index.ts"],
+      "@chronoviet/rag-engine": ["packages/rag-engine/src/index.ts"],
+      "@chronoviet/agent-orchestrator": ["packages/agent-orchestrator/src/index.ts"],
+      "@chronoviet/vlm-inspector": ["packages/vlm-inspector/src/index.ts"],
+      "@chronoviet/remotion-engine": ["packages/remotion-engine/src/index.ts"],
+      "@chronoviet/data-ingestion": ["packages/data-ingestion/src/index.ts"]
+    },
+    "noEmit": true,
+    "composite": false,
+    "incremental": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noImplicitAny": false
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.json"
+  ]
+}

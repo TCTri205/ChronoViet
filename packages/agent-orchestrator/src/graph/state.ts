@@ -132,6 +132,10 @@ export const ChronoGraphAnnotation = Annotation.Root({
     reducer: updateValue,
     default: () => '',
   }),
+  customBaseDir: Annotation<string | undefined>({
+    reducer: updateValue,
+    default: () => undefined,
+  }),
   correlationId: Annotation<string | undefined>({
     reducer: updateValue,
     default: () => undefined,

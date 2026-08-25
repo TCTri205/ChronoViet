@@ -1,0 +1,18 @@
+{
+  "candidateId": "cand_scene_005_03",
+  "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/0/02/UBND_x%C3%A3_%C4%90%E1%BA%A1i_Th%E1%BA%AFng.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:UBND_x%C3%A3_%C4%90%E1%BA%A1i_Th%E1%BA%AFng.jpg",
+  "title": "UBND xã Đại Thắng",
+  "author": "Taxigiadinh",
+  "license": "CC_BY_SA_4_0",
+  "sha256": "58199e6b9bd81a24d09d750dae8c8a738019825bbeff3558c1d9a4724b1d8aa7",
+  "pHash": "c495a91d5eb129ea",
+  "localPath": "/Users/congtri/IT/Personal_Projects/ChronoViet/eval/video-gen/outputs/eval_proj_vg_01_hong_bang_hung_vuong/assets/cand_scene_005_03.jpg",
+  "fileSizeBytes": 286705,
+  "width": 1280,
+  "height": 960,
+  "optimized": false,
+  "downloadedAt": "2026-08-25T16:14:23.493Z",
+  "sceneId": "scene_005",
+  "projectId": "eval_proj_vg_01_hong_bang_hung_vuong"
+}

@@ -1,0 +1,18 @@
+{
+  "candidateId": "cand_scene_003_03",
+  "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Candidate_for_President_of_the_Republic_of_Vietnam%2C_Tr%E1%BA%A7n_V%C4%83n_L%C3%BD_and_his_partner_Hu%E1%BB%B3nh_C%C3%B4ng_%C4%90%C6%B0%C6%A1ng.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Candidate_for_President_of_the_Republic_of_Vietnam,_Tr%E1%BA%A7n_V%C4%83n_L%C3%BD_and_his_partner_Hu%E1%BB%B3nh_C%C3%B4ng_%C4%90%C6%B0%C6%A1ng.jpg",
+  "title": "Candidate for President of the Republic of Vietnam, Trần Văn Lý and his partner Huỳnh Công Đương",
+  "author": "the Republic of Vietnam",
+  "license": "PUBLIC_DOMAIN",
+  "sha256": "e3d6e85db8e06d7f43764c02516132491982dafbc407a581c8fb3e557c185bf6",
+  "pHash": "d9cdb4ed3668351a",
+  "localPath": "/Users/congtri/IT/Personal_Projects/ChronoViet/eval/video-gen/outputs/eval_proj_vg_01_hong_bang_hung_vuong/assets/cand_scene_003_03.jpg",
+  "fileSizeBytes": 54907,
+  "width": 640,
+  "height": 425,
+  "optimized": false,
+  "downloadedAt": "2026-08-25T16:13:23.006Z",
+  "sceneId": "scene_003",
+  "projectId": "eval_proj_vg_01_hong_bang_hung_vuong"
+}

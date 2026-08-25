@@ -1,0 +1,228 @@
+{
+  "title": "Video Generation Pre-Render Pipeline Benchmark",
+  "suite": "VIDEO_GEN",
+  "timestamp": "2026-08-25T16:11:16.928Z",
+  "totalCases": 1,
+  "passedCases": 1,
+  "failedCases": 0,
+  "passRate": 1,
+  "allPassed": false,
+  "metrics": {
+    "scriptPacingDeviation": {
+      "name": "Script Pacing Deviation",
+      "value": 20,
+      "target": 8,
+      "pass": false,
+      "unit": "%",
+      "description": "Deviation of spoken narration WPM against target 130-160 WPM benchmark"
+    },
+    "factCheckPassRate": {
+      "name": "Historical Fact-Check Pass Rate",
+      "value": 100,
+      "target": 95,
+      "pass": true,
+      "unit": "%",
+      "description": "Percentage of video scripts passing multi-tier historical fact-check and guardrails"
+    },
+    "historicalEntityRecall": {
+      "name": "Historical Entity Recall Rate",
+      "value": 60,
+      "target": 80,
+      "pass": false,
+      "unit": "%",
+      "description": "Percentage of expected canonical historical entities covered in the generated voiceover script"
+    },
+    "assetDownloadSuccessRate": {
+      "name": "Image Asset Download Success Rate",
+      "value": 100,
+      "target": 80,
+      "pass": true,
+      "unit": "%",
+      "description": "Percentage of visual candidates successfully downloaded, decoded and saved to disk"
+    },
+    "licenseComplianceRate": {
+      "name": "License Whitelist Compliance Rate",
+      "value": 100,
+      "target": 100,
+      "pass": true,
+      "unit": "%",
+      "description": "Percentage of selected image assets matching CC0 / CC-BY / Public Domain licenses"
+    },
+    "vlmQualityScore": {
+      "name": "VLM Visual Quality Score",
+      "value": 8,
+      "target": 7.5,
+      "pass": true,
+      "unit": "/10",
+      "description": "Mean historical relevance and visual aesthetic score rated by VLM inspector"
+    }
+  },
+  "caseResults": [
+    {
+      "id": "vg_01_hong_bang_hung_vuong",
+      "title": "Thời đại Hùng Vương và Nhà nước Văn Lang",
+      "topic": "Thời đại Hùng Vương và Nhà nước Văn Lang",
+      "videoType": "DYNASTY",
+      "targetDurationSec": 120,
+      "actualDurationSec": 120.00000000000001,
+      "totalWordCount": 233,
+      "actualWpm": 116,
+      "pacingDeviationPct": 20,
+      "pacingPassed": false,
+      "factCheckPassed": true,
+      "factCheckFlags": [],
+      "entityRecallRate": 0.6,
+      "missingEntities": [
+        "Kinh Dương Vương",
+        "Lạc Long Quân"
+      ],
+      "totalScenes": 8,
+      "imageScenes": 0,
+      "pureCodeScenes": 8,
+      "downloadedAssetsCount": 0,
+      "downloadSuccessRate": 1,
+      "licenseComplianceRate": 1,
+      "meanVlmQualityScore": 0,
+      "durationMs": 245318,
+      "passed": true,
+      "scenes": [
+        {
+          "sceneId": "scene_001",
+          "contentType": "PURE_CODE",
+          "layoutMode": "HISTORICAL_FRAME",
+          "durationSec": 12.1,
+          "wordCount": 23,
+          "hasVisualAsset": false,
+          "assetFileExists": false,
+          "assetFileSizeBytes": 0,
+          "licenseWhitelisted": true
+        },
+        {
+          "sceneId": "scene_002",
+          "contentType": "PURE_CODE",
+          "layoutMode": "TIMELINE_CHRONO",
+          "durationSec": 19.9,
+          "wordCount": 38,
+          "hasVisualAsset": false,
+          "assetFileExists": false,
+          "assetFileSizeBytes": 0,
+          "licenseWhitelisted": true
+        },
+        {
+          "sceneId": "scene_003",
+          "contentType": "PURE_CODE",
+          "layoutMode": "QUOTE_SLIDE",
+          "durationSec": 14.6,
+          "wordCount": 29,
+          "hasVisualAsset": false,
+          "assetFileExists": false,
+          "assetFileSizeBytes": 0,
+          "licenseWhitelisted": true
+        },
+        {
+          "sceneId": "scene_004",
+          "contentType": "PURE_CODE",
+          "layoutMode": "STAT_CARD",
+          "durationSec": 23.7,
+          "wordCount": 46,
+          "hasVisualAsset": false,
+          "assetFileExists": false,
+          "assetFileSizeBytes": 0,
+          "licenseWhitelisted": true
+        },
+        {
+          "sceneId": "scene_005",
+          "contentType": "PURE_CODE",
+          "layoutMode": "CENTER_SCALE",
+          "durationSec": 10.4,
+          "wordCount": 21,
+          "hasVisualAsset": false,
+          "assetFileExists": false,
+          "assetFileSizeBytes": 0,
+          "licenseWhitelisted": true
+        },
+        {
+          "sceneId": "scene_006",
+          "contentType": "PURE_CODE",
+          "layoutMode": "FULL_COVER",
+          "durationSec": 13.2,
+          "wordCount": 25,
+          "hasVisualAsset": false,
+          "assetFileExists": false,
+          "assetFileSizeBytes": 0,
+          "licenseWhitelisted": true
+        },
+        {
+          "sceneId": "scene_007",
+          "contentType": "PURE_CODE",
+          "layoutMode": "HISTORICAL_FRAME",
+          "durationSec": 14.4,
+          "wordCount": 28,
+          "hasVisualAsset": false,
+          "assetFileExists": false,
+          "assetFileSizeBytes": 0,
+          "licenseWhitelisted": true
+        },
+        {
+          "sceneId": "scene_008",
+          "contentType": "PURE_CODE",
+          "layoutMode": "TIMELINE_CHRONO",
+          "durationSec": 11.7,
+          "wordCount": 23,
+          "hasVisualAsset": false,
+          "assetFileExists": false,
+          "assetFileSizeBytes": 0,
+          "licenseWhitelisted": true
+        }
+      ],
+      "warnings": [
+        "Pacing deviation is 20% (WPM=116, Target=145)"
+      ]
+    }
+  ],
+  "metadata": {
+    "suite": "VIDEO_GEN",
+    "startTime": "2026-08-25T16:11:16.928Z",
+    "endTime": "2026-08-25T16:15:22.788Z",
+    "durationMs": 245860,
+    "strict": false,
+    "preflight": {
+      "ok": true,
+      "timestamp": "2026-08-25T16:11:17.468Z",
+      "checks": [
+        {
+          "service": "postgres",
+          "healthy": true,
+          "provider": "REAL_POSTGRES_PGVECTOR (localhost:5432/chronoviet_db)",
+          "required": true
+        },
+        {
+          "service": "embedding",
+          "healthy": true,
+          "provider": "REAL_EMBEDDING_SERVER (http://localhost:8090/v1/embeddings)",
+          "required": true
+        },
+        {
+          "service": "llm",
+          "healthy": true,
+          "provider": "LOCAL_LLM (http://localhost:8092) [qwen3.5-9b-instruct-q4_k_m]",
+          "required": true
+        },
+        {
+          "service": "vlm",
+          "healthy": true,
+          "provider": "LOCAL_VLM (http://localhost:8092) [qwen3.5-9b-instruct-q4_k_m]",
+          "required": true
+        },
+        {
+          "service": "search",
+          "healthy": true,
+          "provider": "ONLINE_SEARCH (serpapi, tavily, brave)",
+          "required": false
+        }
+      ]
+    }
+  },
+  "outputArtifactsDir": "/Users/congtri/IT/Personal_Projects/ChronoViet/eval/video-gen/outputs",
+  "reportFilePath": "/Users/congtri/IT/Personal_Projects/ChronoViet/eval/video-gen/reports/video-gen-eval-report.json"
+}

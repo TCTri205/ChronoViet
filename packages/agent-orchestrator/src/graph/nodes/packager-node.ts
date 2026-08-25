@@ -89,7 +89,7 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
 
   // Save to project workspace disk
   try {
-    saveProjectSchema(state.projectId, validatedSchema);
+    saveProjectSchema(state.projectId, validatedSchema, state.customBaseDir);
     nodeLog.info('orchestrator.schema_saved', `Saved validated project_schema.json to workspace for ${state.projectId}`);
   } catch (err: any) {
     nodeLog.warn('orchestrator.save_schema_error', `Could not save to disk workspace: ${err.message}`);
@@ -111,7 +111,7 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
 
       // Persist active jobId in metadata.json for accurate abort and progress tracking
       try {
-        const paths = getProjectPaths(state.projectId);
+        const paths = getProjectPaths(state.projectId, state.customBaseDir);
         let metadata: Record<string, any> = { projectId: state.projectId };
         const fs = await import('fs');
         if (fs.existsSync(paths.metadataFile)) {

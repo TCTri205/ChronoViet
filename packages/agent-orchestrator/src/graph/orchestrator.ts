@@ -50,7 +50,7 @@ export function buildOrchestratorGraph() {
     // Node 1: RAG Context & Workspace Init
     .addNode('rag_init', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
       return timedNodeExecution('rag_init', async () => {
-        initProjectWorkspace(state.projectId);
+        initProjectWorkspace(state.projectId, state.customBaseDir);
         const nodeLog = getNodeLogger(state, 'rag_init');
         let ragContext = state.ragContext;
         const telemetryAudit: TelemetryAuditEntry[] = [];

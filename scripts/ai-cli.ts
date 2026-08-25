@@ -570,6 +570,10 @@ export async function launchLlmOnly() {
     '--cache-type-v',
     'q8_0',
     '--cont-batching',
+    '--batch-size',
+    '2048',
+    '--ubatch-size',
+    '512',
     '--parallel',
     String(envConfig.LOCAL_LLM_PARALLEL || 4),
   ];
@@ -578,7 +582,7 @@ export async function launchLlmOnly() {
   }
 
   const proc = spawnLlamaService('Primary LLM', LLM_PORT, weights.llmPath, {
-    ctxSize: envConfig.LLM_CTX_SIZE || 131072,
+    ctxSize: envConfig.LLM_CTX_SIZE || 32768,
     extraArgs,
     tag: 'LLM-8092',
     tagColor: colors.cyan,
@@ -752,6 +756,10 @@ export async function launchAll() {
       '--cache-type-v',
       'q8_0',
       '--cont-batching',
+      '--batch-size',
+      '2048',
+      '--ubatch-size',
+      '512',
       '--parallel',
       String(envConfig.LOCAL_LLM_PARALLEL || 4),
     ];
@@ -760,7 +768,7 @@ export async function launchAll() {
     }
     procs.push(
       spawnLlamaService('Primary LLM', LLM_PORT, weights.llmPath, {
-        ctxSize: envConfig.LLM_CTX_SIZE || 131072,
+        ctxSize: envConfig.LLM_CTX_SIZE || 32768,
         extraArgs,
         tag: 'LLM-8092',
         tagColor: colors.cyan,
