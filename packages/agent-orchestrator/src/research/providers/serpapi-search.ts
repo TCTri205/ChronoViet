@@ -50,6 +50,9 @@ export class SerpApiImageSearchProvider implements ImageSearchProvider {
         safe: 'active',
       });
 
+      // Lightweight non-blocking jitter (50–120ms) to throttle concurrent bursts
+      await new Promise((resolve) => setTimeout(resolve, 50 + Math.floor(Math.random() * 70)));
+
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 8000);
       const startTime = Date.now();
@@ -65,12 +68,21 @@ export class SerpApiImageSearchProvider implements ImageSearchProvider {
           const err = new Error(`SerpAPI HTTP ${res.status}: ${res.statusText}`);
           (err as any).status = res.status;
           (err as any).latencyMs = latencyMs;
-          log.warn('research.serpapi_http_error', `HTTP ${res.status} from SerpAPI for "${keywords}"`, {
-            keywords,
-            status: res.status,
-            statusText: res.statusText,
-            latencyMs,
-          });
+          if (res.status === 429) {
+            (err as any).isRateLimit = true;
+            log.warn('research.serpapi_rate_limit', `HTTP 429 Rate Limit from SerpAPI for "${keywords}". Fast-failing for key rotation/provider fallback.`, {
+              keywords,
+              status: res.status,
+              latencyMs,
+            });
+          } else {
+            log.warn('research.serpapi_http_error', `HTTP ${res.status} from SerpAPI for "${keywords}"`, {
+              keywords,
+              status: res.status,
+              statusText: res.statusText,
+              latencyMs,
+            });
+          }
           throw err;
         }
 

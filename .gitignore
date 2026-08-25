@@ -12,7 +12,6 @@ pnpm-debug.log*
 logs/
 
 tasks/
-
 # Build & Compilation Outputs
 dist/
 build/
@@ -105,20 +104,22 @@ services/vieneu-tts/media/audio-cache/*
 !services/vieneu-tts/media/audio-cache/.gitkeep
 
 # Evaluation Suite Artifacts (generated during test runs)
-eval/reports/*.json
-eval/reports/*.md
-eval/out/*
-!eval/out/.gitkeep
+eval/reports/
+eval/*/reports/
+eval/outputs/
+eval/*/outputs/
+eval/out/
+eval/*/out/
+!eval/**/.gitkeep
 
 # Per-module eval artifacts (generated JSON/MD reports)
-packages/*/eval/reports/*.json
-packages/*/eval/reports/*.md
-packages/*/eval/out/*
-!packages/*/eval/out/.gitkeep
-apps/*/eval/reports/*.json
-apps/*/eval/reports/*.md
-services/*/eval/reports/*.json
-services/*/eval/reports/*.md
+packages/*/eval/reports/
+packages/*/eval/out/
+!packages/*/eval/**/.gitkeep
+apps/*/eval/reports/
+apps/*/eval/out/
+services/*/eval/reports/
+services/*/eval/out/
 
 # Eval-generated audio caches
 packages/remotion-engine/eval/public/audio/*

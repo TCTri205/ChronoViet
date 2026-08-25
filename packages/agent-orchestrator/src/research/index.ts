@@ -88,6 +88,9 @@ export async function executeImageSearchTool(
   const chunkSize = 3;
   for (let i = 0; i < rawQueries.length; i += chunkSize) {
     if (candidates.length >= limit) break;
+    if (i > 0) {
+      await new Promise((r) => setTimeout(r, 60));
+    }
     const chunk = rawQueries.slice(i, i + chunkSize);
 
     const chunkResults = await Promise.allSettled(

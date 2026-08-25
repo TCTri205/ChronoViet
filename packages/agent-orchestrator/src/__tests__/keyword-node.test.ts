@@ -21,6 +21,9 @@ vi.mock('@chronoviet/infra', async (importOriginal) => {
 });
 
 import {
+  envConfig,
+} from '@chronoviet/infra';
+import {
   translateHistoricalQueryToEnglish,
   translateHistoricalQueryToFrench,
   generateFacetQueries,
@@ -193,7 +196,7 @@ describe('Trilingual Historical Glossary & Keyword Node', () => {
       const res = await keywordNode(mockState);
       expect(res.status).toBe('KEYWORDS_EXTRACTED');
       expect(res.scenes?.[0].searchParams).toBeDefined();
-      expect(res.scenes?.[0].searchParams?.limit).toBe(6);
+      expect(res.scenes?.[0].searchParams?.limit).toBe(envConfig.RESEARCH_CANDIDATES_PER_SCENE || 6);
       expect(res.scenes?.[0].searchParams?.englishQuery).toContain('Bach Dang');
       expect(res.scenes?.[0].searchParams?.frenchQuery).toBeDefined();
       expect(res.scenes?.[0].searchParams?.negativeQuery).toBe(DEFAULT_NEGATIVE_QUERY);

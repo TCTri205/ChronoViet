@@ -78,6 +78,40 @@ export interface VideoGenAggregatedMetrics {
   metricScores: Record<string, MetricScore>;
 }
 
+export const CANONICAL_HISTORICAL_ALIASES: Record<string, string[]> = {
+  'Hùng Vương': ['Vua Hùng', 'Hùng Vương', 'Hùng Quốc Vương', 'Lạc Long Quân', 'Thời đại Hùng Vương'],
+  'Vua Hùng': ['Hùng Vương', 'Vua Hùng', 'Hùng Quốc Vương', 'Lạc Long Quân'],
+  'Lý Bí': ['Lý Nam Đế', 'Lý Bí', 'Lý Bôn', 'Tiền Lý'],
+  'Lý Nam Đế': ['Lý Bí', 'Lý Nam Đế', 'Lý Bôn', 'Tiền Lý'],
+  'Triệu Thị Trinh': ['Bà Triệu', 'Triệu Thị Trinh', 'Triệu Ẩu', 'Triệu Trinh Nương', 'Nhụy Kiều Tướng quân'],
+  'Bà Triệu': ['Triệu Thị Trinh', 'Bà Triệu', 'Triệu Ẩu', 'Triệu Trinh Nương'],
+  'Nguyễn Huệ': ['Quang Trung', 'Nguyễn Huệ', 'Vua Quang Trung', 'Bắc Bình Vương'],
+  'Quang Trung': ['Nguyễn Huệ', 'Quang Trung', 'Vua Quang Trung', 'Bắc Bình Vương'],
+  'Ngô Quyền': ['Tiền Ngô Vương', 'Ngô Quyền', 'Ngô Chúa'],
+  'Đinh Bộ Lĩnh': ['Đinh Tiên Hoàng', 'Đinh Bộ Lĩnh', 'Vạn Thắng Vương', 'Đinh Hoàng Đế'],
+  'Đinh Tiên Hoàng': ['Đinh Bộ Lĩnh', 'Đinh Tiên Hoàng', 'Vạn Thắng Vương'],
+  'Lê Hoàn': ['Lê Đại Hành', 'Lê Hoàn', 'Vua Lê Đại Hành'],
+  'Lê Đại Hành': ['Lê Hoàn', 'Lê Đại Hành', 'Vua Lê Đại Hành'],
+  'Lý Công Uẩn': ['Lý Thái Tổ', 'Lý Công Uẩn', 'Vua Lý Thái Tổ'],
+  'Lý Thái Tổ': ['Lý Công Uẩn', 'Lý Thái Tổ', 'Vua Lý Thái Tổ'],
+  'Lê Lợi': ['Lê Thái Tổ', 'Lê Lợi', 'Bình Định Vương', 'Vua Lê Thái Tổ'],
+  'Lê Thái Tổ': ['Lê Lợi', 'Lê Thái Tổ', 'Bình Định Vương', 'Vua Lê Thái Tổ'],
+  'Trần Quốc Tuấn': ['Trần Hưng Đạo', 'Hưng Đạo Đại Vương', 'Trần Quốc Tuấn', 'Đức Thánh Trần', 'Hưng Đạo Vương'],
+  'Trần Hưng Đạo': ['Trần Quốc Tuấn', 'Hưng Đạo Đại Vương', 'Trần Hưng Đạo', 'Đức Thánh Trần', 'Hưng Đạo Vương'],
+  'Võ Nguyên Giáp': ['Đại tướng Võ Nguyên Giáp', 'Võ Nguyên Giáp', 'Tướng Giáp'],
+  'Hai Bà Trưng': ['Hai Bà Trưng', 'Trưng Vương', 'Trưng Nữ Vương'],
+  'Trưng Trắc': ['Trưng Trắc', 'Trưng Nữ Vương'],
+  'Trưng Nhị': ['Trưng Nhị'],
+  'Nguyễn Trãi': ['Ức Trai', 'Nguyễn Trãi', 'Quan phục hầu'],
+  'Hồ Chí Minh': ['Nguyễn Ái Quốc', 'Bác Hồ', 'Hồ Chí Minh', 'Nguyễn Sinh Cung', 'Nguyễn Tất Thành'],
+  'Gia Long': ['Nguyễn Ánh', 'Vua Gia Long', 'Gia Long', 'Thế Tổ Cao Hoàng Đế'],
+  'Nguyễn Ánh': ['Gia Long', 'Vua Gia Long', 'Nguyễn Ánh'],
+  'Minh Mạng': ['Minh Mệnh', 'Vua Minh Mạng', 'Minh Mạng', 'Thánh Tổ'],
+  'Tự Đức': ['Vua Tự Đức', 'Tự Đức', 'Dực Tông'],
+  'Hàm Nghi': ['Vua Hàm Nghi', 'Hàm Nghi'],
+  'Bảo Đại': ['Vua Bảo Đại', 'Bảo Đại', 'Nguyễn Phúc Vĩnh Thụy'],
+};
+
 export function evaluateVideoGenCase(
   testCase: VideoGenTestCase,
   projectState: {
@@ -86,6 +120,7 @@ export function evaluateVideoGenCase(
     scenes: SceneGeneration[];
     factCheckPassed: boolean;
     factCheckFlags?: string[];
+    aliasTable?: Record<string, string[]>;
     executionDurationMs: number;
   },
   sceneSummaries: VideoGenSceneSummary[]
@@ -117,15 +152,47 @@ export function evaluateVideoGenCase(
     errors.push(`Historical fact-check flag raised: ${(projectState.factCheckFlags || []).join(', ')}`);
   }
 
-  // Canonical Entity Recall Check
+  // Canonical & Alias-Aware Entity Recall Check
   const expectedEntities = testCase.expectedEntities || [];
   const scriptLower = projectState.scriptText.toLowerCase();
-  const matchedEntities = expectedEntities.filter((ent) =>
-    scriptLower.includes(ent.toLowerCase().trim())
-  );
-  const missingEntities = expectedEntities.filter(
-    (ent) => !scriptLower.includes(ent.toLowerCase().trim())
-  );
+
+  const matchedEntities: string[] = [];
+  const missingEntities: string[] = [];
+
+  for (const ent of expectedEntities) {
+    const entTrimmed = ent.trim();
+    if (!entTrimmed) continue;
+    const entLower = entTrimmed.toLowerCase();
+
+    // Collect all valid variants from RAG aliasTable and static historical dictionary
+    const ragAliases = (projectState.aliasTable?.[entTrimmed] || []).map((a) => a.trim());
+    const staticAliases = (CANONICAL_HISTORICAL_ALIASES[entTrimmed] || []).map((a) => a.trim());
+
+    // Single-level reverse alias lookup for canonical mapping
+    const reverseAliases: string[] = [];
+    for (const [canonicalKey, aliases] of Object.entries(CANONICAL_HISTORICAL_ALIASES)) {
+      if (aliases.some((a) => a.toLowerCase() === entLower) && canonicalKey.toLowerCase() !== entLower) {
+        reverseAliases.push(canonicalKey);
+      }
+    }
+
+    const allVariants = Array.from(
+      new Set([entTrimmed, ...ragAliases, ...staticAliases, ...reverseAliases])
+    );
+
+    const isMatched = allVariants.some((variant) => {
+      const vTrimmed = variant.trim();
+      if (!vTrimmed || vTrimmed.length < 2) return false;
+      return scriptLower.includes(vTrimmed.toLowerCase());
+    });
+
+    if (isMatched) {
+      matchedEntities.push(entTrimmed);
+    } else {
+      missingEntities.push(entTrimmed);
+    }
+  }
+
   const entityRecallRate = expectedEntities.length > 0 ? matchedEntities.length / expectedEntities.length : 1.0;
 
   if (entityRecallRate < 0.60 && missingEntities.length > 0) {
@@ -284,6 +351,7 @@ export function computeVideoGenAggregatedMetrics(
     passedProjects,
     meanPacingDeviationPct: Math.round(meanPacingDeviation * 10) / 10,
     factCheckPassRate,
+    meanEntityRecallRate: Math.round(meanEntityRecall * 1000) / 1000,
     assetDownloadSuccessRate,
     licenseComplianceRate: meanLicenseCompliance,
     meanVlmQualityScore: Math.round(meanVlmScore * 10) / 10,

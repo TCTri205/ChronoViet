@@ -197,6 +197,7 @@ export async function runVideoGenerationEvaluation(
           scenes: state.scenes,
           factCheckPassed,
           factCheckFlags,
+          aliasTable: ragContext.aliasTable,
           executionDurationMs: caseDuration,
         },
         sceneSummaries

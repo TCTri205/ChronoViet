@@ -14,7 +14,7 @@ export async function chapteringNode(state: ChronoGraphState): Promise<Partial<C
     durationMin: state.targetDurationMinutes,
   });
 
-  const totalTargetSec = state.targetDurationMinutes * 60;
+  const totalTargetSec = Math.max(60, Math.round((state.targetDurationMinutes || 2) * 60));
   // Calculate number of chapters (each chapter 120-180 seconds, minimum 1 chapter)
   const numChapters = Math.max(1, Math.round(totalTargetSec / 150));
   const secPerChapter = Math.round(totalTargetSec / numChapters);
@@ -32,7 +32,10 @@ QUY TẮC BẮT BUỘC:
      * Hồi mở đầu: Bối cảnh lịch sử, tiền đề & nguyên nhân sâu xa.
      * Hồi chuyển biến: Nguy cơ khủng hoảng, sách lược đối phó và chuẩn bị thế trận.
      * Hồi cao trào: Trận quyết chiến, bước ngoặt mang tính định đoạt non sông.
-     * Hồi kết: Kết cục lịch sử, ý nghĩa thời đại, bài học và di sản ngàn đời.`;
+     * Hồi kết: Kết cục lịch sử, ý nghĩa thời đại, bài học và di sản ngàn đời.
+5. PHÂN BỔ THỰC THỂ LỊCH SỬ KIỂM CHỨNG (CHRONOLOGICAL ENTITY DISTRIBUTION):
+   - Hãy phân bổ đều đặn và hợp lý toàn bộ danh sách các nhân vật, địa danh, hiện vật từ Chrono-RAG vào trường "introducedEntities" của tất cả ${numChapters} chương theo đúng diễn biến thời gian và nội dung từng hồi.
+   - TUYỆT ĐỐI KHÔNG dồn toàn bộ thực thể vào Chương 1; các chương sau cần tiếp tục giới thiệu các nhân vật, tướng lĩnh, địa bàn chiến sự hoặc di sản tương ứng.`;
 
   const userContent = `Chủ đề: "${state.userPrompt}"
 Thể loại: ${state.videoType}
@@ -51,7 +54,7 @@ Hãy trả về JSON Object theo cấu trúc:
       "summary": "Tóm tắt sự kiện trong chương",
       "targetDurationSeconds": ${secPerChapter},
       "keyEvents": ["Sự kiện trọng tâm 1", "Sự kiện trọng tâm 2"],
-      "introducedEntities": ["Nhân vật hoặc Địa danh"],
+      "introducedEntities": ["Nhân vật hoặc Địa danh xuất hiện chính trong chương này"],
       "transitionHook": "Mối nối chuyển cảnh mượt mà sang chương sau",
       "establishedTone": "Hào hùng, trang trọng"
     }
@@ -111,15 +114,18 @@ Hãy trả về JSON Object theo cấu trúc:
       message: `LLM call fallback for chaptering: ${err.message}`,
       metadata: { error: err.message },
     });
-    // Deterministic fallback chapters
+    // Deterministic fallback chapters with chronological entity distribution
+    const allVerified = state.ragContext?.verifiedContext?.map((e) => e.canonicalName) || [];
+    const entitiesPerChapter = Math.max(1, Math.ceil(allVerified.length / numChapters));
     for (let i = 0; i < numChapters; i++) {
+      const chapterEntities = allVerified.slice(i * entitiesPerChapter, (i + 1) * entitiesPerChapter);
       chapters.push({
         chapterIndex: i,
         title: `Hồi ${i + 1}: Khởi nguồn và Diễn biến (${state.userPrompt})`,
         summary: `Diễn biến chi tiết phần ${i + 1} của sự kiện lịch sử ${state.userPrompt}.`,
         targetDurationSeconds: secPerChapter,
         keyEvents: [`Giai đoạn ${i + 1} của ${state.userPrompt}`],
-        introducedEntities: state.ragContext?.verifiedContext?.map((e) => e.canonicalName).slice(0, 3) || [],
+        introducedEntities: chapterEntities.length > 0 ? chapterEntities : allVerified.slice(0, 3),
         transitionHook: `Tiếp theo là cao trào phần ${i + 2}...`,
         establishedTone: 'Hùng tráng và sâu lắng',
       });

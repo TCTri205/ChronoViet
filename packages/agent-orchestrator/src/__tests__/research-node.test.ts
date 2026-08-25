@@ -51,6 +51,7 @@ vi.mock('@chronoviet/infra', async (importOriginal) => {
   };
 });
 
+import { envConfig } from '@chronoviet/infra';
 import { researchNode } from '../graph/nodes/research-node.js';
 import { keywordNode, extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
 import { ChronoGraphState } from '../graph/state.js';
@@ -136,7 +137,7 @@ describe('Research Agent Node', () => {
         primaryQuery: 'Ngô Quyền Bạch Đằng',
       }),
       'scene_001',
-      6
+      envConfig.RESEARCH_CANDIDATES_PER_SCENE || 6
     );
   });
 
