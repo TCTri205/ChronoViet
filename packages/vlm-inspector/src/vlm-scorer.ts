@@ -41,16 +41,27 @@ Hãy thẩm định hình ảnh tư liệu sau cho bối cảnh lịch sử:
 "${eventDescription}"
 Tiêu đề ảnh/metadata: "${options.metadata?.title || 'Không rõ'}" | Bản quyền: "${options.metadata?.license || 'Không rõ'}"
 
-Hãy chấm điểm theo thang 100 với 3 tiêu chí:
-1. historicalContextScore (0 - 40 điểm): Độ phù hợp bối cảnh lịch sử, trang phục, triều đại Việt Nam (loại bỏ nếu là phim cổ trang Trung Quốc/Hàn Quốc).
-2. visualNoiseScore (0 - 30 điểm): Không dính watermark, logo, chữ đè, chất lượng sắc nét.
-3. artisticFitScore (0 - 30 điểm): Bố cục điện ảnh, thẩm mỹ, tỉ lệ hài hòa.
+QUY TẮC BẮT BUỘC CHỐNG LỆCH THỜI ĐẠI (ANTI-ANACHRONISM ADR-5):
+1. historicalContextScore (0 - 40 điểm):
+   - Đánh giá tính xác thực lịch sử Việt Nam và sự tương thích đúng triều đại/thời kỳ.
+   - PHẠT NẶNG (cho dưới 10 điểm) nếu:
+     * Dính trang phục / đầu tóc triều đại phong kiến ngoại quốc không đúng lịch sử Việt Nam (ví dụ: bím tóc đuôi sam nhà Mãn Thanh, trang phục Hanbok Triều Tiên, Kimono Nhật Bản).
+     * Là hình ảnh AI vẽ giả tạo dị dạng (plastic skin, ngón tay biến dạng, vũ khí kỳ ảo fantasy không có thật trong lịch sử).
+     * Chứa yếu tố kiến trúc / công trình hiện đại trong bối cảnh cổ đại.
+2. visualNoiseScore (0 - 30 điểm):
+   - Không dính watermark, logo đóng dấu thương mại (Getty Images, Shutterstock, Alamy, iStock, v.v.), không có chữ đè to làm hỏng khuôn hình.
+   - PHẠT NẶNG (dưới 10 điểm) nếu dính watermark hoặc chữ bản quyền đè dày đặc.
+3. artisticFitScore (0 - 30 điểm):
+   - Bố cục điện ảnh, thẩm mỹ, tỉ lệ hài hòa (16:9 / tư liệu), ánh sáng và độ sắc nét cao.
+4. focalPoint ([x, y]):
+   - Tọa độ số thực chuẩn hóa từ 0.0 đến 1.0 của chủ thể chính trong bức ảnh (mặc định [0.5, 0.4] với chân dung, [0.5, 0.5] với hiện vật/phong cảnh). TUYỆT ĐỐI KHÔNG dùng dạng phần trăm 0-100.
 
-Trả về DUY NHẤT một JSON object:
+Trả về DUY NHẤT một JSON object hợp lệ:
 {
   "historicalContextScore": number,
   "visualNoiseScore": number,
   "artisticFitScore": number,
+  "focalPoint": [number, number],
   "reasons": ["lý do 1", "lý do 2"]
 }`;
 }
@@ -96,6 +107,28 @@ export function extractAndParseJson(
   const aScore = Math.min(30, Math.max(0, Number(parsedJson.artisticFitScore ?? parsedJson.artistic_fit_score) || 20));
   const totalScore = hScore + nScore + aScore;
 
+  let focalPoint: [number, number] | undefined;
+  const rawFocal = Array.isArray(parsedJson.focalPoint)
+    ? parsedJson.focalPoint
+    : Array.isArray(parsedJson.focal_point)
+      ? parsedJson.focal_point
+      : undefined;
+
+  if (rawFocal && rawFocal.length === 2) {
+    let rawX = Number(rawFocal[0]);
+    let rawY = Number(rawFocal[1]);
+    if (isNaN(rawX)) rawX = 0.5;
+    if (isNaN(rawY)) rawY = 0.5;
+
+    // Normalize percentage values (e.g. 50 -> 0.5, 40 -> 0.4)
+    if (rawX > 1.0 && rawX <= 100.0) rawX /= 100.0;
+    if (rawY > 1.0 && rawY <= 100.0) rawY /= 100.0;
+
+    const fx = Math.min(1.0, Math.max(0.0, rawX));
+    const fy = Math.min(1.0, Math.max(0.0, rawY));
+    focalPoint = [fx, fy];
+  }
+
   return {
     historicalContextScore: hScore,
     visualNoiseScore: nScore,
@@ -103,6 +136,7 @@ export function extractAndParseJson(
     totalScore,
     overallScore: totalScore,
     passed: totalScore >= 60,
+    focalPoint,
     reasons: Array.isArray(parsedJson.reasons)
       ? parsedJson.reasons
       : parsedJson.reason

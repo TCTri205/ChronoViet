@@ -52,7 +52,7 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
 
         const latencyMs = Date.now() - startTime;
         if (!res.ok) {
-          const errBody = await res.text().catch(() => '');
+          const errBody = typeof res.text === 'function' ? await res.text().catch(() => '') : '';
           const err = new Error(`Brave HTTP ${res.status}: ${res.statusText} ${errBody}`.trim());
           (err as any).status = res.status;
           (err as any).latencyMs = latencyMs;

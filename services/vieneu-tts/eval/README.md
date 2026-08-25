@@ -32,7 +32,15 @@ eval/
 
 ## 🚀 How to Run Evaluation
 
-### 1. Chạy Benchmark (từ Root Monorepo)
+### 1. Preflight Khởi Động Service
+```bash
+# Khởi chạy nhanh microservice VieNeu TTS trong Docker (Port 8080):
+pnpm ai:tts
+# hoặc kiểm tra trạng thái:
+pnpm ai:status
+```
+
+### 2. Chạy Benchmark (từ Root Monorepo)
 ```bash
 # Chạy qua script chuẩn hóa của monorepo
 pnpm eval:tts
@@ -41,15 +49,16 @@ pnpm eval:tts
 python3 services/vieneu-tts/eval/eval.py
 ```
 
-### 2. Cấu hình endpoint
+### 3. Cấu hình endpoint tùy chọn
 Biến môi trường `VIENEU_TTS_API_URL` trỏ tới endpoint synthesize (mặc định `http://localhost:8080/api/v1/synthesize`):
 ```bash
 VIENEU_TTS_API_URL=http://localhost:8080/api/v1/synthesize python3 services/vieneu-tts/eval/eval.py
 ```
 
-### 3. Preflight bắt buộc (Eval Integrity)
-Khi chạy eval, microservice Python ONNX phải đang hoạt động tại `VIENEU_PYTHON_URL` (endpoint `GET /health`). Nếu service offline, benchmark sẽ báo `SKIPPED` cho từng mẫu — **không dùng sine-wave giả** để lấy điểm pass.
-
+### 4. Dừng Service sau khi đánh giá
+```bash
+pnpm ai:stop
+```
 ---
 
 ## 📈 Engine Detection & Mode

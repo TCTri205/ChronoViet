@@ -905,6 +905,7 @@ export const VisualCandidateSchema = z.object({
   localPath: z.string().optional(),
   sha256: z.string().optional(),
   pHash: z.string().optional(),
+  focalPoint: z.tuple([z.number(), z.number()]).optional(),
   score: z
     .object({
       historicalContextScore: z.number().min(0).max(100),
@@ -929,6 +930,14 @@ export const SceneGenerationSchema = z.object({
     sceneId: z.string().optional(),
     primaryQuery: z.string().min(1),
     englishQuery: z.string().optional(),
+    frenchQuery: z.string().optional(),
+    negativeQuery: z.string().optional(),
+    facetQueries: z.object({
+      portrait: z.string().optional(),
+      artifact: z.string().optional(),
+      map: z.string().optional(),
+      battleOrArt: z.string().optional(),
+    }).optional(),
     visualType: z.string().optional(),
     historicalPeriod: z.string().optional(),
     limit: z.number().optional(),

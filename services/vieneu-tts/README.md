@@ -94,5 +94,8 @@ Chạy đánh giá độ trễ và khả năng sinh word timestamps bằng scrip
 pnpm eval:tts
 # hoặc trực tiếp:
 python3 services/vieneu-tts/eval/eval.py
+
+# Dừng service sau khi hoàn tất:
+pnpm ai:stop
 ```
 

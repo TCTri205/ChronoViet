@@ -7,6 +7,7 @@ import { defaultCheckpointer } from '../graph/checkpointer.js';
 import { runOrchestratorPipeline, resumeOrchestratorPipeline, streamOrchestratorPipeline } from '../graph/orchestrator.js';
 import { extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
 import { vlmInspectionNode } from '../graph/nodes/vlm-node.js';
+import { assetGenerationForkJoinNode } from '../graph/nodes/asset-generation-node.js';
 
 // Mock callLlm and VieNeuEngine for deterministic unit testing
 vi.mock('@chronoviet/infra', async (importOriginal) => {
@@ -381,10 +382,7 @@ describe('Agent Orchestrator Unit Tests', () => {
         'scriptwriter',
         'fact_checker',
         'segmenter',
-        'keyword',
-        'research',
-        'vlm_inspection',
-        'tts_synthesis',
+        'asset_generation',
         'duration_reconciliation',
         'packager',
       ]);
@@ -449,6 +447,39 @@ describe('Agent Orchestrator Unit Tests', () => {
       expect(keywords).toContain('Trận Bạch Đằng');
       expect(keywords).toContain('Ngô Quyền');
       expect(keywords.some((k) => k.includes('“') || k.includes('”') || k.includes('—'))).toBe(false);
+    });
+
+    it('should execute assetGenerationForkJoinNode concurrently and merge audio and visual assets', async () => {
+      const sampleState: Partial<ChronoGraphState> = {
+        projectId: 'test_fork_join_node_001',
+        userPrompt: 'Chiến thắng Bạch Đằng năm 938',
+        status: 'SCENES_SEGMENTED',
+        currentStep: 5,
+        scenes: [
+          {
+            sceneId: 'sc_fj_001',
+            sceneIndex: 0,
+            voiceoverText: 'Ngô Quyền cắm cọc nhọn trên sông Bạch Đằng.',
+            layoutMode: 'HISTORICAL_FRAME',
+            contentType: 'IMAGE',
+            searchKeywords: ['ngô quyền'],
+            candidates: [],
+            usePureCodeFallback: false,
+            targetDurationSeconds: 10,
+          },
+        ],
+      };
+
+      const result = await assetGenerationForkJoinNode(sampleState as ChronoGraphState);
+      expect(result.status).toBe('ASSETS_AUDITED');
+      expect(result.scenes).toBeDefined();
+      expect(result.scenes!.length).toBe(1);
+      expect(result.scenes![0].audioPath).toBeDefined();
+      expect(result.scenes![0].audioDurationSeconds).toBeGreaterThan(0);
+      expect(result.scenes![0].selectedAsset).toBeDefined();
+      expect(result.audioAssets).toBeDefined();
+      expect(result.audioAssets!.length).toBe(1);
+      expect(result.researchResults).toBeDefined();
     });
 
     it('should fallback to PURE_CODE layout when VLM inspection fails', async () => {

@@ -215,13 +215,12 @@ export const EnvSchema = z.object({
   BRAVE_API_KEY: z.string().optional(),
   BRAVE_API_KEYS: z.string().optional(),
   // Comma-separated priority chain of image search providers.
-  // Supported: serpapi, tavily, brave, wikimedia, catalog
-  IMAGE_SEARCH_PROVIDER_CHAIN: z.string().default('serpapi,tavily,brave,wikimedia,catalog'),
-  IMAGE_DOMAIN_WHITELIST: z
-    .string()
-    .default(
-      'upload.wikimedia.org,commons.wikimedia.org,live.staticflickr.com,flickr.com'
-    ),
+  // Supported: serpapi, tavily, brave, wikimedia, gallica, catalog
+  IMAGE_SEARCH_PROVIDER_CHAIN: z.string().default('serpapi,tavily,brave,wikimedia,gallica,catalog'),
+  IMAGE_DOMAIN_WHITELIST: z.string().optional(),
+  IMAGE_LICENSE_POLICY: z.enum(['STRICT', 'EDITORIAL']).default('STRICT'),
+  RESEARCH_CANDIDATE_POOL_SIZE: z.coerce.number().int().positive().default(6),
+  RESEARCH_CANDIDATES_PER_SCENE: z.coerce.number().int().positive().default(6),
 
   // ==========================================
   // Evaluation Gates & Benchmark

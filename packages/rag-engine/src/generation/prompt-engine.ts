@@ -42,7 +42,7 @@ export class PromptEngine {
       if (upper === 'EVENT_DETAILS') return 'EVENT_DETAILS';
     }
 
-    const qLower = query.toLowerCase();
+    const qLower = query.toLowerCase().trim();
 
     // 1. Comparative Intent
     if (
@@ -50,6 +50,8 @@ export class PromptEngine {
       qLower.includes('khác nhau') ||
       qLower.includes('giống nhau') ||
       qLower.includes('đối chiếu') ||
+      qLower.includes('điểm chung') ||
+      qLower.includes('điểm khác') ||
       (qLower.includes('giữa') && qLower.includes('và'))
     ) {
       return 'COMPARATIVE';
@@ -65,7 +67,10 @@ export class PromptEngine {
       qLower.includes('vì cớ gì') ||
       qLower.includes('kết quả và ý nghĩa') ||
       qLower.includes('chiến lược') ||
-      qLower.includes('sách lược')
+      qLower.includes('sách lược') ||
+      qLower.includes('bối cảnh ra đời') ||
+      qLower.includes('dẫn đến việc') ||
+      qLower.includes('hệ quả lịch sử')
     ) {
       return 'WHY_REASONING';
     }
@@ -75,8 +80,17 @@ export class PromptEngine {
       qLower.includes('tiểu sử') ||
       qLower.includes('thân thế') ||
       qLower.includes('sự nghiệp của') ||
+      qLower.includes('cuộc đời của') ||
+      qLower.includes('tên thật của') ||
+      qLower.includes('quê quán của') ||
       qLower.startsWith('ai là') ||
-      qLower.includes('vua nào')
+      qLower.startsWith('ai đã') ||
+      qLower.startsWith('ai chỉ huy') ||
+      qLower.startsWith('ai đánh tan') ||
+      qLower.startsWith('ai lãnh đạo') ||
+      qLower.includes('vua nào') ||
+      qLower.includes('vị tướng nào') ||
+      qLower.includes('nhân vật nào')
     ) {
       return 'BIOGRAPHY';
     }
@@ -162,9 +176,11 @@ NGUYÊN TẮC BẮT BUỘC:
    - Cung cấp đầy đủ niên đại (năm cụ thể), địa danh, nhân vật chỉ huy, sách lược và kết quả lịch sử.
    - Tuyệt đối không tự bịa đặt niên hiệu, thân tộc, tên húy hay chiến công không có trong sử liệu.
 2. TRÍCH DẪN NGUỒN CHÍNH XÁC (CITATION GROUNDING):
-   - Mỗi nhận định hoặc dữ kiện quan trọng nên ghi kèm mã trích dẫn nguồn ở cuối câu theo định dạng: [Nguồn: chunk_id] hoặc [CHUNK_#].
+   - Mỗi nhận định hoặc dữ kiện lịch sử bắt buộc ghi kèm mã trích dẫn nguồn ở cuối câu theo định dạng chuẩn: [Nguồn: chunk_id] (hoặc [Nguồn: CHUNK_#]).
 3. NGUỒN DÃ SỬ & TRUYỀN THUYẾT (LEVEL_3):
    - Nếu thông tin lấy từ nguồn dã sử hoặc truyền thuyết, bắt buộc dùng từ dè dặt: "theo truyền thuyết", "tương truyền", "dân gian kể rằng".
+4. XỬ LÝ KHI THIẾU TƯ LIỆU (ZERO EVIDENCE REFUSAL):
+   - Nếu trong "NGỮ CẢNH TƯ LIỆU SỬ LIỆU" không có thông tin để giải đáp câu hỏi, BẮT BUỘC phải nói rõ là "Tư liệu sử liệu hiện có không ghi nhận thông tin này" hoặc "Chưa có đủ cứ liệu chính sử xác thực để khẳng định", TUYỆT ĐỐI KHÔNG tự suy đoán hay chắp vá chi tiết hư cấu.
 ${specificDirective}
 
 NGỮ CẢNH TƯ LIỆU SỬ LIỆU:

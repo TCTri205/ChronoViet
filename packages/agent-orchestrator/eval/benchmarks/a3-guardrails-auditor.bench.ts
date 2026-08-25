@@ -7,9 +7,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
+import { envConfig } from '@chronoviet/infra';
 import { analyzePremiseAndLeadingIntent } from '../../src/guardrails/anti-sycophancy.js';
 import { validateFolkloreHypothesisTone } from '../../src/guardrails/folklore-validator.js';
-import { evaluateNliEntailmentScore } from '../../src/guardrails/nli-hallucination-judge.js';
+import { evaluateNliEntailmentScore, evaluateNliWithLlmJudge } from '../../src/guardrails/nli-hallucination-judge.js';
 import {
   calculateAntiSycophancyScore,
   calculateEntityRelationGroundingScore,
@@ -69,11 +70,16 @@ export async function runA3Benchmark(options: { sample?: number; fresh?: boolean
       }
     }
 
-    // 4. Audit NLI Grounding
-    const nliRes = evaluateNliEntailmentScore({
-      scriptClaim: item.userInput,
-      groundTruthChunks: item.groundTruthFacts,
-    });
+    // 4. Audit NLI Grounding (Neural LLM Judge in strict mode)
+    const nliRes = (options.fresh || envConfig.EVAL_STRICT)
+      ? await evaluateNliWithLlmJudge({
+          scriptClaim: item.userInput,
+          groundTruthChunks: item.groundTruthFacts,
+        })
+      : evaluateNliEntailmentScore({
+          scriptClaim: item.userInput,
+          groundTruthChunks: item.groundTruthFacts,
+        });
 
     details.push({
       id: item.id,

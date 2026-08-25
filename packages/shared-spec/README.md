@@ -65,3 +65,28 @@ const prefix = getCanonicalEntityIdPrefix('HISTORICAL_PERSON'); // 'person_'
 const metadata = ChunkMetadataSchema.parse(rawData);
 ```
 
+---
+
+## ⚡ 4. Bộ Lệnh Kiểm Định & Phát Triển (CLI Commands)
+
+```bash
+# Kiểm tra TypeScript (Fast Contract Check)
+pnpm --filter @chronoviet/shared-spec typecheck
+# hoặc từ root monorepo:
+pnpm typecheck:spec
+
+# Chạy Unit Tests kiểm tra Zod Schemas & Contracts
+pnpm --filter @chronoviet/shared-spec test
+# hoặc từ root monorepo:
+pnpm test:spec
+
+# Build package
+pnpm --filter @chronoviet/shared-spec build
+```
+
+---
+
+## 📄 5. Giấy Phép (License)
+
+Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**.
+

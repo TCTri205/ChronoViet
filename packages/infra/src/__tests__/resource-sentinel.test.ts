@@ -120,10 +120,26 @@ describe('ResourceSentinel & Memory / Render Coordination Suite', () => {
       expect(correctRelease).toBe(true);
       expect(await ResourceSentinel.isRenderLocked()).toBe(false);
     });
+
+    it('should renew render lock TTL for matching holder and reject for wrong holder', async () => {
+      await ResourceSentinel.acquireRenderLock(60, 'holder_x');
+
+      // Renew with matching holder
+      const renewed = await ResourceSentinel.renewRenderLock(120, 'holder_x');
+      expect(renewed).toBe(true);
+      expect(await ResourceSentinel.isRenderLocked()).toBe(true);
+
+      // Renew with mismatched holder
+      const wrongRenew = await ResourceSentinel.renewRenderLock(120, 'holder_y');
+      expect(wrongRenew).toBe(false);
+
+      await ResourceSentinel.releaseRenderLock('holder_x');
+    });
   });
 
   describe('3. Dynamic Cloud Offload Decision', () => {
     it('should recommend cloud offload when render lock is active and standby is enabled', async () => {
+      ResourceSentinel.setStandbyOnRenderForTesting(true);
       await ResourceSentinel.acquireRenderLock(60, 'render_pipeline_1');
 
       const decision = await ResourceSentinel.shouldOffloadToCloud();

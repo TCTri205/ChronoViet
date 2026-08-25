@@ -285,6 +285,6 @@ Engine được kiểm thử định kỳ và liên tục qua bộ Benchmark n�
 * **Retrieval Latency SLA:** **186.77 ms (p95)** (Vượt chuẩn SLA $< 300\text{ ms}$).
 * **Source Citation Traceability:** 100% thông tin xuất ra đều gắn kèm Citation ID dẫn về tập/trang trong tài liệu gốc.
 
-> ⚠️ **Eval Integrity Gates:** Khi `EVAL_STRICT=true`, `ChronoRagEngine.search` và toàn bộ các bộ đo C3, C4, C5, C6, SYS yêu cầu **PostgreSQL pgvector thật** (`isPgAvailable`) — in-memory store / offline mock data hoàn toàn bị loại bỏ. Toàn bộ 11 Tiers kiểm chuẩn và 5 Automated Quality Gates đều đạt trạng thái `✅ PASS 100%`.
+> ⚠️ **Eval Integrity & Neural Judge Gates:** Khi `EVAL_STRICT=true`, `ChronoRagEngine.search` và toàn bộ các bộ đo C3, C4, C5, C6, SYS yêu cầu **PostgreSQL pgvector thật** (`isPgAvailable`) — in-memory store / offline mock data hoàn toàn bị loại bỏ. Đánh giá tính chuẩn xác của mệnh đề (Fact Precision & Grounding) được vận hành bằng cơ chế kép: Fast proposition overlap và **Neural Zero-Shot Chain-of-Thought LLM-as-a-Judge** (`verifyClaimEntailmentWithLlmJudge` trên mô hình Qwen 3.5 9B cục bộ). Toàn bộ 11 Tiers kiểm chuẩn và 6 Automated Quality Gates đều đạt trạng thái `✅ PASS 100%`.
 
 

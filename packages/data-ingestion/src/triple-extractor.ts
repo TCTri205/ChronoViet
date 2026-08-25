@@ -419,8 +419,22 @@ export async function extractTriplesWithLLMDetailed(
   const promptCandidateSpans = uniqueCandidateSpans.slice(0, MAX_CANDIDATE_SPANS_IN_PROMPT);
 
   try {
-    const prompt = `Bạn là chuyên gia trích xuất Đồ thị Tri thức Lịch sử Việt Nam (Vietnamese History Knowledge Graph).
-Dưới đây là đoạn văn bản lịch sử và danh sách thực thể ứng viên đã được nhận diện (Stage 1 Candidate Entities):
+    const systemPrompt = `Bạn là Chuyên gia Trích xuất Đồ thị Tri thức Lịch sử Việt Nam (Vietnamese History Knowledge Graph Extractor).
+Nhiệm vụ: Trích xuất các bộ ba quan hệ (Triples) chuẩn xác tuyệt đối từ văn bản sử liệu.
+QUY TẮC BẮT BUỘC:
+1. CHỈ ĐƯỢC PHÉP sử dụng 8 loại quan hệ chuẩn (relationType):
+   - LED_BY: [Sự kiện/Phong trào] -> [Nhân vật lãnh đạo] (Ví dụ: event_ngoc_hoi_dong_da -> LED_BY -> person_quang_trung)
+   - PART_OF: [Thực thể con/Di vật] -> [Triều đại/Tổ chức/Thực thể cha] (Ví dụ: artifact_trong_dong_dong_son -> PART_OF -> dynasty_van_lang)
+   - HAPPENED_IN: [Sự kiện/Thời kỳ] -> [Triều đại/Kỷ nguyên] (Ví dụ: event_ngoc_hoi_dong_da -> HAPPENED_IN -> dynasty_nha_tay_son)
+   - HAPPENED_AT: [Sự kiện] -> [Địa danh diễn ra] (Ví dụ: event_ngoc_hoi_dong_da -> HAPPENED_AT -> loc_thang_long)
+   - SAME_AS_LOCATION: [Địa danh cổ/lịch sử] -> [Địa danh hiện đại tương ứng] (Ví dụ: loc_thang_long -> SAME_AS_LOCATION -> loc_ha_noi)
+   - ALIAS_OF: [Tên khác/Tên húy/Biệt danh] -> [Tên chuẩn chính thức] (Ví dụ: person_nguyen_hue -> ALIAS_OF -> person_quang_trung)
+   - ROYAL_LINEAGE: [Hậu duệ/Vua kế vị] -> [Vua cha/Tiền nhân trực hệ] (Ví dụ: person_le_thai_tong -> ROYAL_LINEAGE -> person_le_thai_to)
+   - MENTIONED_IN: [Nhân vật/Sự kiện/Di vật] -> [Tác phẩm/Văn kiện lịch sử] (Ví dụ: person_ly_thai_to -> MENTIONED_IN -> doc_chieu_doi_do)
+2. Xuất DUY NHẤT một JSON object hợp lệ theo schema: { "triples": [ { "sourceEntity": "...", "sourceEntityId": "...", "relationType": "...", "targetEntity": "...", "targetEntityId": "...", "confidence": 0.95 } ] }.
+3. Tuyệt đối không bịa đặt quan hệ không có trong văn bản và không xuất bất kỳ văn bản giải thích nào ngoài JSON.`;
+
+    const userPrompt = `Dưới đây là đoạn văn bản lịch sử và danh sách thực thể ứng viên đã được nhận diện (Stage 1 Candidate Entities):
 
 THỰC THỂ ỨNG VIÊN (CANDIDATE ENTITIES):
 ${promptCandidateSpans.map((c) => `- [${c.type}] "${c.text}" (ID đề xuất: ${c.suggestedCanonicalId})`).join('\n')}
@@ -430,39 +444,16 @@ VĂN BẢN (TEXT):
 ${text}
 """
 
-HÃY TRÍCH XUẤT CÁC BỘ BA QUAN HỆ (KNOWLEDGE TRIPLES) THEO CÁC QUY TẮC SAU:
-1. Chỉ sử dụng 8 loại quan hệ chuẩn (relationType):
-   - LED_BY: [Event/Movement/Org] -> [Person] (Ví dụ: event_ngoc_hoi_dong_da -> LED_BY -> person_quang_trung)
-   - PART_OF: [Sub-entity/Artifact/Org] -> [Parent-entity/Dynasty/Org] (Ví dụ: artifact_trong_dong_dong_son -> PART_OF -> dynasty_van_lang)
-   - HAPPENED_IN: [Event/Rule] -> [Dynasty/Era] (Ví dụ: event_ngoc_hoi_dong_da -> HAPPENED_IN -> dynasty_nha_tay_son)
-   - HAPPENED_AT: [Event] -> [Location] (Ví dụ: event_ngoc_hoi_dong_da -> HAPPENED_AT -> loc_thang_long)
-   - SAME_AS_LOCATION: [Historical Loc] -> [Modern Loc] (Ví dụ: loc_thang_long -> SAME_AS_LOCATION -> loc_ha_noi)
-   - ALIAS_OF: [Alias/Variant] -> [Canonical Entity] (Ví dụ: person_nguyen_hue -> ALIAS_OF -> person_quang_trung)
-   - ROYAL_LINEAGE: [Child/Successor] -> [Royal Parent/Ancestor] (Ví dụ: person_le_thai_tong -> ROYAL_LINEAGE -> person_le_thai_to)
-   - MENTIONED_IN: [Entity] -> [Document/Book] (Ví dụ: person_ly_thai_to -> MENTIONED_IN -> doc_chieu_doi_do)
-
-2. Trả về đúng định dạng JSON:
-{
-  "triples": [
-    {
-      "sourceEntity": "Tên thực thể nguồn",
-      "sourceEntityId": "id_nguon",
-      "relationType": "LED_BY",
-      "targetEntity": "Tên thực thể đích",
-      "targetEntityId": "id_dich",
-      "confidence": 0.95
-    }
-  ]
-}`;
+Hãy trích xuất các bộ ba quan hệ (Knowledge Triples) và trả về JSON:`;
 
     const callLlm = (temperature: number, maxTokens: number) =>
       generateLLMCompletion(
         [
           {
             role: 'system',
-            content: 'You are a Vietnamese History Knowledge Graph Extractor. Output strictly valid JSON matching the schema.',
+            content: systemPrompt,
           },
-          { role: 'user', content: prompt },
+          { role: 'user', content: userPrompt },
         ],
         {
           task: 'extraction', // Routes to Port 8094 (Qwen3.5-4B-Instruct)

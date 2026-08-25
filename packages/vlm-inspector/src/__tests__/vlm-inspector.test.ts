@@ -97,6 +97,39 @@ Hy vọng kết quả này hữu ích cho pipeline ChronoViet!`;
       expect(res.artisticFitScore).toBe(30);
       expect(res.totalScore).toBe(100);
     });
+
+    it('should correctly parse normalized float focal points', () => {
+      const input = JSON.stringify({
+        historicalContextScore: 35,
+        visualNoiseScore: 25,
+        artisticFitScore: 25,
+        focalPoint: [0.65, 0.45],
+      });
+      const res = extractAndParseJson(input, 'LOCAL_VLM');
+      expect(res.focalPoint).toEqual([0.65, 0.45]);
+    });
+
+    it('should normalize percentage focal points (0-100) to float (0.0-1.0)', () => {
+      const input = JSON.stringify({
+        historicalContextScore: 35,
+        visualNoiseScore: 25,
+        artisticFitScore: 25,
+        focalPoint: [50, 40],
+      });
+      const res = extractAndParseJson(input, 'LOCAL_VLM');
+      expect(res.focalPoint).toEqual([0.5, 0.4]);
+    });
+
+    it('should parse snake_case focal_point and clamp out-of-bounds values', () => {
+      const input = JSON.stringify({
+        historicalContextScore: 30,
+        visualNoiseScore: 20,
+        artisticFitScore: 20,
+        focal_point: [150, -10],
+      });
+      const res = extractAndParseJson(input, 'OPENAI_VLM');
+      expect(res.focalPoint).toEqual([1.0, 0.0]);
+    });
   });
 
   describe('Local CLIP Scorer', () => {

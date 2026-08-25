@@ -58,26 +58,50 @@ packages/rag-engine/
 ## ⚡ 3. Hướng Dẫn Sử Dụng & Bộ Lệnh CLI (CLI Commands)
 
 ```bash
+# 0. Khởi động hạ tầng CSDL & Model AI cục bộ (Port 8090, 8096, 8092):
+pnpm stack:infra                                # Bật PostgreSQL (pgvector HNSW) & Redis
+pnpm ai:emb                                     # Bật Embedding Server Port 8090 (BGE-M3)
+pnpm ai:rerank                                  # Bật Cross-Encoder Reranker Port 8096 (Qwen-0.6B)
+pnpm ai:llm                                     # Bật Primary LLM Port 8092 (Qwen-9B)
+# Hoặc bật toàn bộ: pnpm ai:start | Kiểm tra: pnpm ai:status
+
 # 1. Trải nghiệm Chatbot RAG tương tác trực tiếp trên Terminal CLI
-pnpm --filter @chronoviet/rag-engine chat
-# hoặc từ root monorepo:
 pnpm rag:chat
+# hoặc trong package:
+pnpm --filter @chronoviet/rag-engine chat
 
 # 2. Chạy toàn bộ 11 Component Benchmarks + System Ablation Mô-đun 1
+pnpm eval:rag
+# hoặc trong package:
 pnpm --filter @chronoviet/rag-engine eval
 
 # 3. Chạy từng Component Benchmark riêng biệt:
-pnpm --filter @chronoviet/rag-engine eval -- --c0    # Knowledge Graph Construction
-pnpm --filter @chronoviet/rag-engine eval -- --c4    # Hybrid Dense+FTS Retrieval
-pnpm --filter @chronoviet/rag-engine eval -- --c6    # Reranker & nDCG@5
-pnpm --filter @chronoviet/rag-engine eval -- --c9    # Claim-level Grounding & Citation
-pnpm --filter @chronoviet/rag-engine eval -- --sys   # System Ablation Matrix
+pnpm --filter @chronoviet/rag-engine eval:c0        # C0: Knowledge Graph Construction
+pnpm --filter @chronoviet/rag-engine eval:c1        # C1: Hierarchical Chunking
+pnpm --filter @chronoviet/rag-engine eval:c2        # C2: Query Understanding
+pnpm --filter @chronoviet/rag-engine eval:c3        # C3: Graph Traversal
+pnpm --filter @chronoviet/rag-engine eval:c4        # C4: Hybrid Dense+FTS Retrieval
+pnpm --filter @chronoviet/rag-engine eval:c5        # C5: Graph-Guided Chunk Linking
+pnpm --filter @chronoviet/rag-engine eval:c6        # C6: Reranker & nDCG@5
+pnpm --filter @chronoviet/rag-engine eval:c7        # C7: Context Assembly
+pnpm --filter @chronoviet/rag-engine eval:c8        # C8: Answer Generation
+pnpm --filter @chronoviet/rag-engine eval:c9        # C9: Claim Grounding & Citation
+pnpm --filter @chronoviet/rag-engine eval:c10       # C10: Adversarial Traps & Abstention
+pnpm --filter @chronoviet/rag-engine eval:sys       # SYS: System Ablation Matrix
 
-# 4. Chạy Unit Tests toán học metrics xếp hạng & grounding
+# 4. Chạy Unit Tests toán học metrics xếp hạng & grounding (chạy trong CI)
+pnpm test:rag
+# hoặc trong package:
 pnpm --filter @chronoviet/rag-engine test
 
-# 5. Build gói mã nguồn
+# 5. Kiểm tra TypeScript
+pnpm typecheck:rag
+
+# 6. Build gói mã nguồn
 pnpm --filter @chronoviet/rag-engine build
+
+# 7. Dừng các model AI sau khi kiểm thử:
+pnpm ai:stop
 ```
 
 ### 💬 Các lệnh khả dụng trong Terminal Chatbot (`pnpm rag:chat`):

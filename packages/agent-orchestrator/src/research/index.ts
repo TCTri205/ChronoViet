@@ -20,6 +20,8 @@ import { TavilyImageSearchProvider } from './providers/tavily-search.js';
 import { BraveImageSearchProvider } from './providers/brave-search.js';
 import { CuratedCatalogProvider, WikimediaSearchProvider } from './providers/wikimedia-search.js';
 
+import { GallicaSearchProvider } from './providers/gallica-search.js';
+
 const log = createLogger({ service: 'agent-orchestrator' });
 
 const PROVIDER_FACTORIES: Record<string, () => ImageSearchProvider> = {
@@ -27,6 +29,7 @@ const PROVIDER_FACTORIES: Record<string, () => ImageSearchProvider> = {
   tavily: () => new TavilyImageSearchProvider(),
   brave: () => new BraveImageSearchProvider(),
   wikimedia: () => new WikimediaSearchProvider(),
+  gallica: () => new GallicaSearchProvider(),
   catalog: () => new CuratedCatalogProvider(),
 };
 
@@ -41,49 +44,86 @@ export function buildProviderChain(): ImageSearchProvider[] {
 
 /**
  * Execute structured Agentic Image Search Tool:
- * Accepts structured parameters (sceneId, primaryQuery, englishQuery, visualType, historicalPeriod, aspectRatio, minResolution, limit)
- * Performs bilingual multi-query search to maximize discovery of accurate historical assets.
+ * Accepts structured parameters (sceneId, primaryQuery, englishQuery, frenchQuery, visualType, historicalPeriod, facetQueries, aspectRatio, minResolution, limit)
+ * Performs trilingual and multi-facet concurrent search with URL deduplication.
  */
 export async function executeImageSearchTool(
   input: ImageSearchToolInput
 ): Promise<ImageSearchToolResult> {
   const validated = ImageSearchToolInputSchema.parse(input);
-  const { sceneId, primaryQuery, englishQuery, visualType, historicalPeriod, aspectRatio, minResolution, limit = 3 } = validated;
+  const {
+    sceneId,
+    primaryQuery,
+    englishQuery,
+    frenchQuery,
+    negativeQuery,
+    facetQueries,
+    visualType = 'GENERAL_HISTORICAL',
+    historicalPeriod,
+    aspectRatio,
+    minResolution,
+    limit = 6,
+  } = validated;
 
   const providers = buildProviderChain();
   const candidates: VisualCandidate[] = [];
   const provenance: Array<{ provider: string; count: number; latencyMs: number }> = [];
+  const seenUrls = new Set<string>();
 
-  // Build query sequence: prioritize englishQuery for online museum/wiki repositories, fallback to primaryQuery
-  const queriesToTry = Array.from(
-    new Set([englishQuery?.trim(), primaryQuery.trim()].filter((q): q is string => Boolean(q && q.length > 0)))
+  // Build query candidates list from primary, english, french, and facet queries
+  const facetList = facetQueries
+    ? Object.values(facetQueries).filter((q): q is string => Boolean(typeof q === 'string' && q.trim().length > 0))
+    : [];
+
+  const rawQueries = Array.from(
+    new Set([
+      englishQuery?.trim(),
+      primaryQuery.trim(),
+      frenchQuery?.trim(),
+      ...facetList,
+    ].filter((q): q is string => Boolean(q && q.length > 0)))
   );
 
-  let globalIndex = 0;
-  for (const query of queriesToTry) {
+  // Group queries to execute in bounded parallel chunks
+  const chunkSize = 3;
+  for (let i = 0; i < rawQueries.length; i += chunkSize) {
     if (candidates.length >= limit) break;
-    const needed = limit - candidates.length;
-    const chainResults = await searchWithProviderChain(providers, query, needed, {
-      aspectRatio,
-      minResolution,
-    });
+    const chunk = rawQueries.slice(i, i + chunkSize);
 
-    for (const result of chainResults) {
-      for (const cand of result.candidates) {
-        if (candidates.some((existing) => existing.imageUrl === cand.imageUrl)) continue;
-
-        globalIndex += 1;
-        candidates.push({
-          ...cand,
-          candidateId: `cand_${sceneId}_${String(globalIndex).padStart(2, '0')}`,
+    const chunkResults = await Promise.allSettled(
+      chunk.map(async (query) => {
+        const queryWithNeg = negativeQuery ? `${query} ${negativeQuery}`.trim() : query;
+        return searchWithProviderChain(providers, queryWithNeg, limit, {
+          aspectRatio,
+          minResolution,
         });
-        if (candidates.length >= limit) break;
+      })
+    );
+
+    for (const res of chunkResults) {
+      if (res.status === 'fulfilled') {
+        for (const chainResult of res.value) {
+          for (const cand of chainResult.candidates) {
+            const normalizedUrl = cand.imageUrl.trim().toLowerCase();
+            if (seenUrls.has(normalizedUrl)) continue;
+            seenUrls.add(normalizedUrl);
+
+            candidates.push({
+              ...cand,
+              candidateId: `cand_${sceneId}_${String(candidates.length + 1).padStart(2, '0')}`,
+            });
+            if (candidates.length >= limit) break;
+          }
+
+          provenance.push({
+            provider: chainResult.provider,
+            count: chainResult.candidates.length,
+            latencyMs: chainResult.latencyMs,
+          });
+
+          if (candidates.length >= limit) break;
+        }
       }
-      provenance.push({
-        provider: result.provider,
-        count: result.candidates.length,
-        latencyMs: result.latencyMs,
-      });
       if (candidates.length >= limit) break;
     }
   }
@@ -92,6 +132,7 @@ export async function executeImageSearchTool(
     sceneId,
     primaryQuery,
     englishQuery,
+    frenchQuery,
     visualType,
     historicalPeriod,
     candidateCount: candidates.length,
@@ -102,6 +143,7 @@ export async function executeImageSearchTool(
     sceneId,
     primaryQuery,
     englishQuery,
+    frenchQuery,
     visualType,
     candidates,
     provenance,
@@ -116,7 +158,7 @@ export async function executeImageSearchTool(
 export async function resolveImageCandidates(
   keywordsOrInput: string | ImageSearchToolInput,
   sceneId: string,
-  limit: number = 3
+  limit: number = 6
 ): Promise<{ candidates: VisualCandidate[]; provenance: Array<{ provider: string; count: number; latencyMs: number }> }> {
   if (typeof keywordsOrInput === 'object' && keywordsOrInput !== null) {
     const result = await executeImageSearchTool({

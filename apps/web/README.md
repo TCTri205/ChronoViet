@@ -101,12 +101,18 @@ apps/web/
 
 ```bash
 # Chạy Dev Server (Next.js + Custom WS Server)
+pnpm dev:web
+# hoặc trong app:
 pnpm --filter @chronoviet/web dev
 
 # Kiểm tra TypeScript (0 lỗi)
+pnpm typecheck:web
+# hoặc trong app:
 pnpm --filter @chronoviet/web typecheck
 
-# Chạy Unit & Integration Tests (18 tests)
+# Chạy Unit & Integration Tests (41 tests)
+pnpm test:web
+# hoặc trong app:
 pnpm --filter @chronoviet/web test
 
 # Chạy Eval Metric Tests

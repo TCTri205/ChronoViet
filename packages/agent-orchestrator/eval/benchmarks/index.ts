@@ -12,6 +12,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+// Enforce Eval Strict Mode for deterministic benchmarks
+process.env.EVAL_STRICT = 'true';
+
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
 import { runA0Benchmark } from './a0-chat-brief.bench.js';
 import { runA1Benchmark } from './a1-chaptering.bench.js';

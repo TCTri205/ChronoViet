@@ -135,7 +135,7 @@ describe('Research Agent Node', () => {
         primaryQuery: 'Ngô Quyền Bạch Đằng',
       }),
       'scene_001',
-      3
+      6
     );
   });
 

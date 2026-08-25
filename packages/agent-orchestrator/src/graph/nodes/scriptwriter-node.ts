@@ -99,7 +99,11 @@ QUY TẮC BẮT BUỘC DÀNH CHO TTS:
 3. TUYỆT ĐỐI KHÔNG dùng định dạng tiêu đề Markdown như: #, ##, **, * ở đầu đoạn.
 4. Chỉ xuất văn bản lời đọc thuần túy (Plain Text), liền mạch, giàu cảm xúc, chuẩn xác sử liệu.
 5. Đối với sự kiện dã sử/truyền thuyết, hãy tự nhiên sử dụng các cụm từ 'theo truyền thuyết', 'tương truyền'.
-6. CHUẨN XÁC SỬ LIỆU & THÂN TỘC: Tuyệt đối không tự suy diễn hoặc bịa đặt quan hệ thân tộc, năm sinh năm mất, chức tước hoặc sự kiện không có trong tư liệu sử liệu.`;
+6. CHUẨN XÁC SỬ LIỆU & THÂN TỘC: Tuyệt đối không tự suy diễn hoặc bịa đặt quan hệ thân tộc, năm sinh năm mất, chức tước hoặc sự kiện không có trong tư liệu sử liệu.
+7. QUY TẮC ĐỌC SỐ & NIÊN HIỆU CHO GIỌNG ĐỌC AI (TTS PHONETICS):
+   - Không dùng số La Mã viết tắt (ví dụ: viết "thế kỷ thứ mười" hoặc "thế kỷ mười" thay vì "thế kỷ X", "thế kỷ mười ba" thay vì "thế kỷ XIII").
+   - Hạn chế chèn các chuỗi niên đại trong ngoặc đơn rườm rà như "(trị vì 1428 - 1433)" gây vấp cho giọng đọc; hãy viết thành câu văn xuôi mượt mà (ví dụ: "trị vì từ năm 1428 đến năm 1433").
+   - Đảm bảo câu văn ngắt nghỉ tự nhiên, giàu âm hưởng hào hùng và trang trọng.`;
 
     const userMessage = `Hãy viết lời dẫn chuyện cho Chương ${i + 1}: "${chapter.title}".
 Tóm tắt nội dung chương: ${chapter.summary}

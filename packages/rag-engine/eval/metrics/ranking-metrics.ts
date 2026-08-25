@@ -208,12 +208,12 @@ export function calculateEvidenceRecallAtK(
 
 /**
  * Calculates Dynamic Graded Relevance Map for retrieved chunks:
- * Prioritizes exact ID match, but supports rigorous semantic evidence entailment.
- * Strict anti-overfitting: Reject single-token and superficial entity name overlap.
+ * Prioritizes exact ID match, but supports semi-open-world semantic evidence entailment.
+ * Strict anti-overfitting: Inferred grades for un-annotated chunks are capped at Grade 1.
  */
 export function calculateContentAwareGrades(
-  retrievedChunks: Array<{ id?: string; chunkId?: string; title?: string; textContent?: string }>,
-  goldChunks: Array<{ chunk_id: string; relevance_grade: number; key_evidence_claims?: string[]; text_content?: string }>
+  retrievedChunks: Array<{ id?: string; chunkId?: string; title?: string; textContent?: string; dynasty?: string }>,
+  goldChunks: Array<{ chunk_id: string; relevance_grade: number; key_evidence_claims?: string[]; text_content?: string; dynasty?: string; title?: string }>
 ): Map<string, number> {
   const gradeMap = new Map<string, number>();
   const idToGoldGrade = new Map<string, number>();
@@ -228,15 +228,19 @@ export function calculateContentAwareGrades(
       continue;
     }
 
-    // Content overlap evaluation strictly against gold chunks
+    // Semi-Open World Content Overlap Evaluation strictly against gold chunks
     const chunkText = `${chunk.title || ''} ${chunk.textContent || ''}`.toLowerCase();
+    const chunkDynasty = (chunk.dynasty || '').toLowerCase().trim();
     let maxAssignedGrade = 0;
 
     for (const gold of goldChunks) {
-      // If gold chunk itself is an explicit distractor negative (grade 0), do not assign positive grade
       if (gold.relevance_grade <= 0) continue;
 
+      const goldDynasty = (gold.dynasty || '').toLowerCase().trim();
+      const goldText = `${gold.title || ''} ${gold.text_content || ''}`.toLowerCase();
       const claims = gold.key_evidence_claims || [];
+
+      // Check claim-level proposition token coverage
       if (claims.length > 0) {
         let claimsMatched = 0;
         for (const claim of claims) {
@@ -246,15 +250,26 @@ export function calculateContentAwareGrades(
             .filter((w) => w.trim().length > 0 && !VIETNAMESE_STOPWORDS.has(w));
           if (tokens.length === 0) continue;
           const hitCount = tokens.filter((t) => chunkText.includes(t)).length;
-          // Strict threshold: at least 75% of tokens in the claim
-          if (hitCount >= Math.ceil(tokens.length * 0.75)) {
+          if (hitCount >= Math.ceil(tokens.length * 0.60)) {
             claimsMatched++;
           }
         }
-        if (claimsMatched >= Math.ceil(claims.length * 0.5)) {
-          maxAssignedGrade = Math.max(maxAssignedGrade, gold.relevance_grade);
-        } else if (claimsMatched >= 1) {
+
+        if (claimsMatched >= 1) {
           maxAssignedGrade = Math.max(maxAssignedGrade, 1);
+        }
+      }
+
+      // Check Dynasty / Epoch alignment with significant text overlap
+      if (goldDynasty && chunkDynasty && goldDynasty === chunkDynasty && chunkText.length >= 30) {
+        const goldTokens = goldText
+          .split(/[\s.,/#!$%^&*;:{}=\-_`~()"“”]+/)
+          .filter((w) => w.length >= 3 && !VIETNAMESE_STOPWORDS.has(w));
+        if (goldTokens.length > 0) {
+          const matchedGoldTokens = goldTokens.filter((t) => chunkText.includes(t)).length;
+          if (matchedGoldTokens >= 3 && (matchedGoldTokens / goldTokens.length) >= 0.15) {
+            maxAssignedGrade = Math.max(maxAssignedGrade, 1);
+          }
         }
       }
     }

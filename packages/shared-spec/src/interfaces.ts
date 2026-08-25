@@ -109,6 +109,7 @@ export interface VlmScoringResult {
   totalScore?: number;
   passed?: boolean;
   reasons?: string[];
+  focalPoint?: [number, number];
   scorerType?: 'GEMINI_CLOUD' | 'LOCAL_VLM' | 'OPENAI_VLM' | 'CLIP_LOCAL_FALLBACK' | 'REDIS_CACHE';
 }
 

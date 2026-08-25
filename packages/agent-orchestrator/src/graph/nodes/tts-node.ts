@@ -7,15 +7,17 @@ import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import { SceneGeneration, WordTimestamp } from '@chronoviet/shared-spec';
-import { envConfig, initProjectWorkspace, VieNeuEngine, createSyntheticWavBuffer } from '@chronoviet/infra';
+import { envConfig, initProjectWorkspace, VieNeuEngine, createSyntheticWavBuffer, getAdaptiveConcurrency } from '@chronoviet/infra';
 import { AudioAssetEntry, ChronoGraphState, getNodeLogger, TelemetryAuditEntry } from '../state.js';
 
 const ttsEngine = new VieNeuEngine();
 
 export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'tts_synthesis');
-  nodeLog.info('orchestrator.tts_started', `Synthesizing TTS audio for ${state.scenes.length} scenes`, {
+  const batchSize = getAdaptiveConcurrency('TTS');
+  nodeLog.info('orchestrator.tts_started', `Synthesizing TTS audio for ${state.scenes.length} scenes (batchSize=${batchSize})`, {
     projectId: state.projectId,
+    batchSize,
   });
 
   const paths = initProjectWorkspace(state.projectId);
@@ -24,7 +26,6 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
     asset: AudioAssetEntry;
   }[] = [];
   const telemetryAudit: TelemetryAuditEntry[] = [];
-  const batchSize = 4;
 
   for (let i = 0; i < state.scenes.length; i += batchSize) {
     const batch = state.scenes.slice(i, i + batchSize);

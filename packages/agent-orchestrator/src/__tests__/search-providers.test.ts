@@ -154,6 +154,62 @@ describe('BraveImageSearchProvider', () => {
   });
 });
 
+describe('GallicaSearchProvider', () => {
+  beforeEach(() => {
+    globalThis.fetch = originalFetch as any;
+  });
+
+  it('should return empty array for empty keywords', async () => {
+    const { GallicaSearchProvider } = await import('../research/providers/gallica-search.js');
+    const provider = new GallicaSearchProvider();
+    expect(await provider.search('', 3)).toEqual([]);
+  });
+
+  it('should parse Gallica SRU response and produce highres candidate URLs', async () => {
+    const { GallicaSearchProvider } = await import('../research/providers/gallica-search.js');
+    const mockSruXml = `
+      <srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/">
+        <srw:records>
+          <srw:record>
+            <srw:recordData>
+              <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+                <dc:identifier>https://gallica.bnf.fr/ark:/12148/btv1b8449691v</dc:identifier>
+                <dc:title>Plan de la ville et du port de Tourane</dc:title>
+                <dc:creator>Bibliothèque nationale de France</dc:creator>
+              </oai_dc:dc>
+            </srw:recordData>
+          </srw:record>
+        </srw:records>
+      </srw:searchRetrieveResponse>
+    `;
+
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => mockSruXml,
+    } as any));
+
+    const provider = new GallicaSearchProvider();
+    const results = await provider.search('Tourane', 3);
+    expect(results.length).toBe(1);
+    expect(results[0].candidateId).toBe('cand_gallica_btv1b8449691v');
+    expect(results[0].imageUrl).toBe('https://gallica.bnf.fr/ark:/12148/btv1b8449691v/f1.highres');
+    expect(results[0].license).toBe('PUBLIC_DOMAIN');
+  });
+
+  it('should handle HTTP error gracefully and return empty array', async () => {
+    const { GallicaSearchProvider } = await import('../research/providers/gallica-search.js');
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+    } as any));
+
+    const provider = new GallicaSearchProvider();
+    expect(await provider.search('Hanoi', 3)).toEqual([]);
+  });
+});
+
 describe('Domain whitelist & license inference', () => {
   it('should allow trusted Wikimedia / Flickr / museum hosts', () => {
     expect(isAllowedImageDomain('https://upload.wikimedia.org/wikipedia/commons/a/a.jpg')).toBe(true);
@@ -191,5 +247,35 @@ describe('Agentic Image Search Tool Execution', () => {
     expect(result.candidates.length).toBeGreaterThan(0);
     expect(result.candidates[0].candidateId).toMatch(/^cand_scene_battle_01_/);
     expect(result.provenance.length).toBeGreaterThan(0);
+  });
+});
+
+describe('10-Epoch Curated Historical Asset Matrix', () => {
+  it('strictly matches epoch keywords for historical events', async () => {
+    const { matchCuratedCatalog, HISTORICAL_FALLBACK_CATALOG } = await import('../research/providers/wikimedia-search.js');
+
+    expect(HISTORICAL_FALLBACK_CATALOG.length).toBeGreaterThanOrEqual(10);
+
+    const dienBienPhu = matchCuratedCatalog('Chiến dịch Điện Biên Phủ', 3);
+    expect(dienBienPhu.length).toBeGreaterThan(0);
+    expect(dienBienPhu[0].title).toContain('Điện Biên Phủ');
+
+    const quangTrung = matchCuratedCatalog('Quang Trung Nguyễn Huệ Gò Đống Đa', 3);
+    expect(quangTrung.length).toBeGreaterThan(0);
+    expect(quangTrung[0].title).toContain('Quang Trung');
+
+    const trongDong = matchCuratedCatalog('Trống đồng Đông Sơn thời Hùng Vương', 3);
+    expect(trongDong.length).toBeGreaterThan(0);
+    expect(trongDong[0].title).toContain('Đông Sơn');
+  });
+
+  it('returns empty array [] for unknown or out-of-catalog topics to enforce Pure Code over Wrong Image', async () => {
+    const { matchCuratedCatalog } = await import('../research/providers/wikimedia-search.js');
+
+    const unknown = matchCuratedCatalog('Vũ trụ tương lai robot lượng tử 2099', 3);
+    expect(unknown).toEqual([]);
+
+    const empty = matchCuratedCatalog('', 3);
+    expect(empty).toEqual([]);
   });
 });

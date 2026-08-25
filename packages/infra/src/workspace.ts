@@ -5,6 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { createHash } from 'crypto';
 import { ChronoVideoProps, VideoProjectSchema } from '@chronoviet/shared-spec';
 import { envConfig } from './config.js';
 import { createLogger } from './logger.js';
@@ -229,6 +230,7 @@ export function loadProjectSchema(projectId: string, customBaseDir?: string): Ch
 /**
  * Pre-downloads remote HTTP/HTTPS assets (audio, images) into the project workspace directory
  * before rendering, preventing network timeouts and flaky render runs.
+ * Local filesystem paths are verified with fast non-blocking checks and preserved without alteration.
  */
 export async function ensureProjectAssetsReady(
   projectId: string,
@@ -247,6 +249,19 @@ export async function ensureProjectAssetsReady(
 
   const downloadAsset = async (remoteUrl: string, destDir: string, prefix: string, defaultExt: string): Promise<string | null> => {
     try {
+      const cleanUrl = remoteUrl.split('?')[0].split('#')[0].toLowerCase();
+      const ext = path.extname(cleanUrl).slice(1) || defaultExt;
+      const urlHash = createHash('sha256').update(remoteUrl).digest('hex').slice(0, 16);
+      const localPath = path.join(destDir, `${prefix}_${urlHash}.${ext}`);
+
+      // Fast non-blocking check: if cached asset already exists and is valid on disk, reuse immediately
+      try {
+        const existingStat = await fs.promises.stat(localPath);
+        if (existingStat.isFile() && existingStat.size > 0) {
+          return localPath;
+        }
+      } catch {}
+
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       const res = await fetch(remoteUrl, { signal: controller.signal, cache: 'no-store' });
@@ -257,11 +272,7 @@ export async function ensureProjectAssetsReady(
         if (arrayBuf.byteLength > maxBytes) {
           throw new Error(`Remote asset exceeds size limit (${arrayBuf.byteLength} > ${maxBytes})`);
         }
-        const cleanUrl = remoteUrl.split('?')[0].split('#')[0].toLowerCase();
-        const ext = path.extname(cleanUrl).slice(1) || defaultExt;
-
-        const localPath = path.join(destDir, `${prefix}_${Date.now()}.${ext}`);
-        fs.writeFileSync(localPath, Buffer.from(arrayBuf));
+        await fs.promises.writeFile(localPath, Buffer.from(arrayBuf));
         return localPath;
       }
     } catch (err: any) {

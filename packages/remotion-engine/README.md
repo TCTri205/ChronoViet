@@ -123,18 +123,36 @@ pnpm --filter @chronoviet/remotion-engine eval -- --no-studio
 
 ---
 
-## 🚀 Lệnh Thường Dùng Cho Developer (Chạy tại Root Monorepo)
+## 🚀 Lệnh Thường Dùng Cho Developer
 
 ```bash
-# Kiểm tra TypeScript trên toàn monorepo (0 lỗi)
-pnpm typecheck
+# 1. Xem trực quan giao diện (Remotion Studio GUI Port 9876)
+pnpm remotion:studio
+# hoặc trong package:
+pnpm --filter @chronoviet/remotion-engine start
 
-# Chạy bộ unit tests xác định (Tier 4 Verification - 37 tests)
+# 2. Render video từ file JSON kịch bản
+pnpm remotion:render
+# hoặc render các kịch bản mẫu:
+pnpm --filter @chronoviet/remotion-engine render:quangtrung
+pnpm --filter @chronoviet/remotion-engine render:haibatrung
+pnpm --filter @chronoviet/remotion-engine render:mongolviet2
+
+# 3. Đánh giá Render Fidelity
+pnpm eval:remotion
+# hoặc trong package:
+pnpm --filter @chronoviet/remotion-engine eval
+
+# 4. Chạy bộ unit tests xác định (Tier 4 Verification - 37 tests)
+pnpm test:remotion
+# hoặc trong package:
 pnpm --filter @chronoviet/remotion-engine test
 
-# Xem trực quan giao diện (Remotion Studio GUI)
-pnpm remotion:studio
+# 5. Kiểm tra TypeScript
+pnpm typecheck:remotion
+# hoặc trong package:
+pnpm --filter @chronoviet/remotion-engine typecheck
 
-# Setup mock assets cho Remotion Engine
+# 6. Setup mock assets cho Remotion Engine
 pnpm --filter @chronoviet/remotion-engine setup-assets
 ```

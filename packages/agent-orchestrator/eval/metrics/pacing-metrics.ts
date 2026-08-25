@@ -355,3 +355,85 @@ export function evaluateHistoricalScriptTone(
     isPassingEntityContinuity,
   };
 }
+
+export interface AudioWaveformMetrics {
+  sampleRate: number;
+  channels: number;
+  bitsPerSample: number;
+  durationSeconds: number;
+  clippingRatio: number;
+  silenceRatio: number;
+  peakAmplitude: number;
+  rmsAmplitude: number;
+  isPcmValid: boolean;
+}
+
+/**
+ * 5. WAV Audio Waveform Analyzer
+ * Inspects binary PCM WAV samples from TTS Engine to verify real acoustic quality & zero-clipping
+ */
+export function analyzeWavAudioBuffer(buffer: Buffer): AudioWaveformMetrics {
+  if (
+    !buffer ||
+    buffer.length < 44 ||
+    buffer.toString('utf-8', 0, 4) !== 'RIFF' ||
+    buffer.toString('utf-8', 8, 12) !== 'WAVE'
+  ) {
+    return {
+      sampleRate: 0,
+      channels: 0,
+      bitsPerSample: 0,
+      durationSeconds: 0,
+      clippingRatio: 0,
+      silenceRatio: 0,
+      peakAmplitude: 0,
+      rmsAmplitude: 0,
+      isPcmValid: false,
+    };
+  }
+
+  const channels = buffer.readUInt16LE(22);
+  const sampleRate = buffer.readUInt32LE(24);
+  const bitsPerSample = buffer.readUInt16LE(34);
+  const dataSize = buffer.readUInt32LE(40);
+
+  const bytesPerSample = bitsPerSample / 8;
+  const totalSamples = bytesPerSample > 0 && channels > 0 ? dataSize / (bytesPerSample * channels) : 0;
+  const durationSeconds = sampleRate > 0 ? totalSamples / sampleRate : 0;
+
+  let peak = 0;
+  let sumSquares = 0;
+  let silentSamples = 0;
+  let clippedSamples = 0;
+  const sampleOffset = 44;
+  const count = Math.min(Math.floor((buffer.length - sampleOffset) / 2), Math.floor(totalSamples));
+
+  if (bitsPerSample === 16 && count > 0) {
+    for (let i = 0; i < count; i++) {
+      const sample = buffer.readInt16LE(sampleOffset + i * 2);
+      const abs = Math.abs(sample);
+      if (abs > peak) peak = abs;
+      sumSquares += sample * sample;
+      if (abs < 300) silentSamples++;
+      if (abs >= 32700) clippedSamples++;
+    }
+  }
+
+  const rmsAmplitude = count > 0 ? Math.sqrt(sumSquares / count) / 32768 : 0;
+  const peakAmplitude = peak / 32768;
+  const silenceRatio = count > 0 ? silentSamples / count : 0;
+  const clippingRatio = count > 0 ? clippedSamples / count : 0;
+
+  return {
+    sampleRate,
+    channels,
+    bitsPerSample,
+    durationSeconds: Number(durationSeconds.toFixed(3)),
+    clippingRatio: Number(clippingRatio.toFixed(4)),
+    silenceRatio: Number(silenceRatio.toFixed(4)),
+    peakAmplitude: Number(peakAmplitude.toFixed(4)),
+    rmsAmplitude: Number(rmsAmplitude.toFixed(4)),
+    isPcmValid: sampleRate >= 16000 && channels >= 1 && count > 0,
+  };
+}
+

@@ -32,6 +32,22 @@ Toàn bộ hệ thống Eval được trang bị công cụ dọn dẹp tập tr
 
 ---
 
+## ⚡ Yêu Cầu Hạ Tầng & Khởi Động AI Trước Khi Đánh Giá (Preflight Setup)
+
+> ⚠️ **Quy Chuẩn Đo Lường Thực Chiến (`EVAL_STRICT`):** Khi đánh giá chất lượng (IR, NLI Grounding, Reranking, Video Fidelity), hệ thống kết nối trực tiếp đến PostgreSQL và các mô hình AI thật để đảm bảo tính khách quan 100%.
+
+```bash
+# 1. Khởi động CSDL PostgreSQL (pgvector HNSW) & Redis:
+pnpm stack:infra
+
+# 2. Khởi động AI Models theo mục đích đánh giá:
+pnpm ai:start        # [Khuyến nghị] Bật toàn bộ Local AI Stack (8090, 8092, 8094, 8096, 8080)
+pnpm ai:lite         # Bật cặp nhẹ (8090 + 8094) khi chỉ eval Data Ingestion
+pnpm ai:status       # Kiểm tra trạng thái và port của các model
+```
+
+---
+
 ## 🚀 Hướng Dẫn Chạy (Quick Commands)
 
 ```bash
@@ -44,7 +60,18 @@ pnpm eval:all --fresh
 # 3. Chạy riêng Chuỗi Tích Hợp 2 Mô-đun (VieNeu TTS -> Remotion Engine)
 pnpm eval:chain
 
-# 4. Chạy trực tiếp runner với các tham số CLI:
+# 4. Chạy riêng rẽ từng Module Eval Suite:
+pnpm eval:ingest     # Data Ingestion (Vector, Graph, Triples, NER)
+pnpm eval:rag        # RAG Engine (C0 - C10 + SYS)
+pnpm eval:orchestrator # Multi-Agent Orchestrator (A0 - A5 + SYS)
+pnpm eval:vlm        # VLM Visual Quality Inspector
+pnpm eval:tts        # VieNeu TTS Voice Engine
+pnpm eval:remotion   # Remotion Render Engine
+
+# 5. Dừng & giải phóng RAM sau khi hoàn tất:
+pnpm ai:stop
+
+# 6. Chạy trực tiếp runner với các tham số CLI:
 npx tsx eval/runner.ts --clean               # Chỉ chạy dọn dẹp rồi thoát
 npx tsx eval/runner.ts --all --fresh         # Dọn dẹp sạch trước khi eval toàn dự án
 npx tsx eval/runner.ts --chain vieneu-remotion

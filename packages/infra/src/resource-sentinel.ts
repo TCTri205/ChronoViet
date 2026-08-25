@@ -1,9 +1,51 @@
 import * as os from 'os';
+import { execSync } from 'child_process';
 import Redis from 'ioredis';
 import { envConfig } from './config.js';
 import { createLogger } from './logger.js';
 
 const log = createLogger({ service: 'resource-sentinel' });
+
+/**
+ * Calculate system reclaimable and free bytes.
+ * On macOS (Darwin), Node's os.freemem() only counts unallocated raw pages and ignores
+ * inactive/purgeable/speculative memory pages (which macOS uses for cache and releases immediately on demand).
+ */
+function getSystemFreeBytes(): number {
+  if (typeof process !== 'undefined' && process.platform === 'darwin') {
+    try {
+      const out = execSync('vm_stat', { encoding: 'utf8', timeout: 500 });
+      const pageSizeMatch = out.match(/page size of (\d+) bytes/i);
+      const pageSize = pageSizeMatch ? parseInt(pageSizeMatch[1], 10) : 16384;
+
+      let freePages = 0;
+      let inactivePages = 0;
+      let purgeablePages = 0;
+      let speculativePages = 0;
+
+      for (const line of out.split('\n')) {
+        if (line.startsWith('Pages free:')) {
+          freePages = parseInt(line.split(':')[1].replace('.', '').trim(), 10) || 0;
+        } else if (line.startsWith('Pages inactive:')) {
+          inactivePages = parseInt(line.split(':')[1].replace('.', '').trim(), 10) || 0;
+        } else if (line.startsWith('Pages purgeable:')) {
+          purgeablePages = parseInt(line.split(':')[1].replace('.', '').trim(), 10) || 0;
+        } else if (line.startsWith('Pages speculative:')) {
+          speculativePages = parseInt(line.split(':')[1].replace('.', '').trim(), 10) || 0;
+        }
+      }
+
+      const totalAvailable = (freePages + inactivePages + purgeablePages + speculativePages) * pageSize;
+      if (totalAvailable > 0) {
+        return totalAvailable;
+      }
+    } catch {
+      // Fallback cleanly to os.freemem() if vm_stat fails or is blocked
+    }
+  }
+
+  return os.freemem();
+}
 
 export interface MemoryStatus {
   totalMemoryMb: number;
@@ -66,6 +108,7 @@ export class ResourceSentinel {
   private static inMemoryLocked = false;
   private static inMemoryLockHolder: string | null = null;
   private static inMemoryLockExpiresAt = 0;
+  private static customStandbyOnRender: boolean | null = null;
 
   /**
    * Reset internal caches and mock states (primarily for testing).
@@ -76,6 +119,14 @@ export class ResourceSentinel {
     this.inMemoryLocked = false;
     this.inMemoryLockHolder = null;
     this.inMemoryLockExpiresAt = 0;
+    this.customStandbyOnRender = null;
+  }
+
+  /**
+   * Set custom standby on render flag (primarily for testing).
+   */
+  public static setStandbyOnRenderForTesting(enabled: boolean | null): void {
+    this.customStandbyOnRender = enabled;
   }
 
   /**
@@ -114,7 +165,7 @@ export class ResourceSentinel {
       freeBytes = custom.freeBytes;
     } else {
       totalBytes = os.totalmem();
-      freeBytes = os.freemem();
+      freeBytes = getSystemFreeBytes();
     }
 
     const usedBytes = Math.max(0, totalBytes - freeBytes);
@@ -185,6 +236,46 @@ export class ResourceSentinel {
     this.inMemoryLockExpiresAt = now + ttlSeconds * 1000;
     log.info('resource_sentinel.render_lock_acquired_memory', `Render lock acquired in-memory for [${holderId}] (TTL: ${ttlSeconds}s)`);
     return true;
+  }
+
+  /**
+   * Renew the Distributed Render Lock TTL if currently held by holderId.
+   */
+  public static async renewRenderLock(
+    ttlSeconds = envConfig.RENDER_MUTEX_TTL_SECONDS ?? 900,
+    holderId = 'default_worker'
+  ): Promise<boolean> {
+    const client = getRedisClient();
+    const lockKey = envConfig.RENDER_MUTEX_LOCK_KEY || 'chronoviet:render_lock';
+
+    if (client) {
+      try {
+        if (client.status === 'wait') {
+          await client.connect().catch(() => {});
+        }
+        if (client.status === 'ready' || client.status === 'connect') {
+          const currentVal = await client.get(lockKey);
+          if (currentVal === holderId) {
+            const ttl = Math.max(1, Math.round(ttlSeconds));
+            await client.expire(lockKey, ttl);
+            log.debug('resource_sentinel.render_lock_renewed_redis', `Render lock renewed in Redis for [${holderId}] (+${ttl}s)`);
+            return true;
+          }
+          return false;
+        }
+      } catch (err: any) {
+        log.debug('resource_sentinel.redis_renew_error', `Redis lock renew fallback to in-memory: ${err.message}`);
+      }
+    }
+
+    // In-memory renew
+    if (this.inMemoryLocked && this.inMemoryLockHolder === holderId) {
+      this.inMemoryLockExpiresAt = Date.now() + ttlSeconds * 1000;
+      log.debug('resource_sentinel.render_lock_renewed_memory', `Render lock renewed in-memory for [${holderId}] (+${ttlSeconds}s)`);
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -281,7 +372,8 @@ export class ResourceSentinel {
    * based on active Render Mutex or Host RAM pressure.
    */
   public static async shouldOffloadToCloud(): Promise<OffloadDecision> {
-    if (envConfig.AI_STANDBY_ON_RENDER) {
+    const standbyEnabled = this.customStandbyOnRender ?? envConfig.AI_STANDBY_ON_RENDER;
+    if (standbyEnabled) {
       const locked = await this.isRenderLocked();
       if (locked) {
         return {

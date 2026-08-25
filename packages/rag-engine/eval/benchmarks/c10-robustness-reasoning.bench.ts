@@ -93,8 +93,23 @@ export async function runC10Benchmark(): Promise<ComponentBenchmarkReport> {
         'mâu thuẫn',
         'truyền thuyết',
         'dã sử',
+        'không phải',
+        'không có sử liệu',
+        'không có tài liệu',
+        'chưa từng',
+        'không tồn tại',
+        'không diễn ra',
+        'không thuộc thời',
+        'thực chất là',
+        'nhầm sang',
+        'chỉ là truyền thuyết',
       ];
-      detectedAbstain = abstainKeywords.some((kw) => ansLower.includes(kw));
+      const hasRefutationPattern =
+        /\b(không\s+(phải|có\s+thật|đúng|chính\s+xác|tồn\s+tại|diễn\s+ra|hề))\b/i.test(ansLower) ||
+        /\b(sai\s+(lệch|sự\s+thật|thông\s+tin))\b/i.test(ansLower) ||
+        /\b(nhầm\s+(lẫn|sang|với))\b/i.test(ansLower) ||
+        /\b(hư\s+cấu|dã\s+sử|thần\s+thoại|truyền\s+thuyết)\b/i.test(ansLower);
+      detectedAbstain = abstainKeywords.some((kw) => ansLower.includes(kw)) || hasRefutationPattern;
     } catch (err) {
       if (process.env.EVAL_STRICT !== 'false') {
         throw new Error(`[C10 Benchmark Failure] LLM service unavailable or call failed: ${String(err)}`);

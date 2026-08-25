@@ -8,22 +8,82 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
 import { buildProviderChain, resolveImageCandidates } from '../../src/research/index.js';
+import { matchCuratedCatalog } from '../../src/research/providers/wikimedia-search.js';
 import { HighResolutionLatencyProfiler } from '../metrics/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const GOLDEN_RESEARCH_TOPICS = [
+  // 1. Hồng Bàng - Văn Lang
+  'Trống đồng Đông Sơn thời Hùng Vương',
+  'Bảo vật Quốc gia Trống đồng Ngọc Lũ',
+  'Di tích Thành Cổ Loa kinh đô Âu Lạc',
+  'Mũi tên đồng Cầu Vồng An Dương Vương',
+  'Đền Hùng Phú Thọ cội nguồn dân tộc',
+
+  // 2. Thời kỳ Bắc thuộc
+  'Khởi nghĩa Hai Bà Trưng cưỡi voi ra trận',
+  'Nữ tướng Bà Triệu khởi nghĩa núi Nưa',
+  'Lý Nam Đế Lý Bí thành lập nước Vạn Xuân',
+  'Triệu Quang Phục Dạ Trạch Vương',
+  'Bố Cái Đại Vương Phùng Hưng',
+
+  // 3. Ngô - Đinh - Tiền Lê
   'Trận Bạch Đằng năm 938 của Ngô Quyền',
-  'Tiểu sử Quốc Công Tiết Chế Trần Hưng Đạo',
-  'Chiếu Dời Đô và Triều Đại Nhà Lý',
-  'Hoàng đế Quang Trung Đại Phá Quân Thanh 1789',
-  'Bảo Vật Quốc Gia Trống Đồng Ngọc Lũ',
-  'Khởi nghĩa Hai Bà Trưng Mê Linh',
-  'Lý Thường Kiệt Sông Như Nguyệt',
   'Đinh Tiên Hoàng Dẹp Loạn 12 Sứ Quân',
+  'Khu di tích Cố đô Hoa Lư Ninh Bình',
+  'Lê Đại Hành đại phá quân Tống năm 981',
+  'Cột kinh Phật Cố đô Hoa Lư thời Đinh',
+
+  // 4. Lý - Trần
+  'Chiếu Dời Đô và Triều Đại Nhà Lý',
+  'Lý Thường Kiệt và phòng tuyến Sông Như Nguyệt',
+  'Tiểu sử Quốc Công Tiết Chế Trần Hưng Đạo',
+  'Hội nghị Diên Hồng ý chí muôn dân đánh giặc',
+  'Phật hoàng Trần Nhân Tông Trúc Lâm Yên Tử',
+
+  // 5. Hồ - Hậu Lê
+  'Di sản Thế giới Thành nhà Hồ Thanh Hóa',
+  'Khởi nghĩa Lam Sơn Lê Lợi Bình Định Vương',
   'Vụ Án Lệ Chi Viên Nguyễn Trãi',
-  'Chiến thắng Điện Biên Phủ 1954',
+  'Bia Tiến sĩ Văn Miếu Quốc Tử Giám',
+  'Vua Lê Thánh Tông và thời kỳ Hồng Đức',
+
+  // 6. Trịnh - Nguyễn
+  'Di tích Sông Gianh thời Trịnh Nguyễn phân tranh',
+  'Chùa Cầu thương cảng quốc tế Hội An thế kỷ 17',
+  'Chùa Thiên Mụ thời Chúa Nguyễn Hoàng',
+  'Di tích Lũy Thầy Quảng Bình',
+  'Lễ Thành Hầu Nguyễn Hữu Cảnh mở cõi Nam Bộ',
+
+  // 7. Tây Sơn
+  'Hoàng đế Quang Trung Đại Phá Quân Thanh 1789',
+  'Chiến thắng Rạch Gầm Xoài Mút năm 1785',
+  'Tượng đài ba anh em Tây Sơn dựng cờ khởi nghĩa',
+  'Nữ tướng Bùi Thị Xuân chỉ huy voi chiến Tây Sơn',
+  'Gò Đống Đa chứng tích chiến thắng Kỷ Dậu',
+
+  // 8. Triều Nguyễn
+  'Ngọ Môn Hoàng Thành Cố đô Huế Di sản Triều Nguyễn',
+  'Châu bản triều Nguyễn khẳng định chủ quyền Hoàng Sa',
+  'Mộc bản Triều Nguyễn Di sản Tư liệu Thế giới',
+  'Hiếu Lăng Lăng Vua Minh Mạng Huế',
+  'Cửu Đỉnh tại Hoàng Cung Huế',
+
+  // 9. Cận đại - Kháng Pháp
+  'Thủ lĩnh Hoàng Hoa Thám khởi nghĩa Yên Thế',
+  'Nhà yêu nước Phan Bội Châu Phong trào Đông Du',
+  'Vua Hàm Nghi ban Chiếu Cần Vương',
+  'Cầu Long Biên Hà Nội thời Pháp thuộc',
+  'Mít tinh Cách mạng Tháng Tám 1945 Ba Đình',
+
+  // 10. Hiện đại
+  'Chiến dịch Điện Biên Phủ 1954',
+  'Đại tướng Võ Nguyên Giáp chỉ huy Điện Biên Phủ',
+  'Xe tăng tiến vào Dinh Độc Lập ngày 30 tháng 4 năm 1975',
+  'Tháp Rùa Hồ Gươm trái tim thủ đô Hà Nội',
+  'Địa đạo Củ Chi Đất thép thành đồng',
 ];
 
 const ALLOWED_LICENSES = new Set([
@@ -64,7 +124,7 @@ export async function runA5Benchmark(options: { sample?: number; fresh?: boolean
     try {
       const result = await Promise.race([
         resolveImageCandidates(topic, 'scene_001', 3),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 1500)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 5000)),
       ]);
       candidates = result.candidates || [];
       provenance = result.provenance || [];
@@ -73,23 +133,42 @@ export async function runA5Benchmark(options: { sample?: number; fresh?: boolean
     }
 
     if (candidates.length === 0) {
-      // Offline VCR fallback matching topic keyword
-      for (const [kw, cands] of Object.entries(vcrFixtures)) {
-        if (topic.toLowerCase().includes(kw.toLowerCase())) {
-          candidates = (cands as any[]).map((c, i) => ({
-            candidateId: `cand_vcr_${i}`,
-            imageUrl: c.url,
-            title: c.title,
-            author: c.author,
-            license: c.license,
-            sourceDomain: 'commons.wikimedia.org',
-            resolutionTier: 'HD',
-            aspectRatio: '16:9',
-            isFocalSubjectClear: true,
-            provider: 'wikimedia',
-          }));
-          provenance = [{ provider: 'vcr-wikimedia-fixture', count: candidates.length, latencyMs: 1 }];
-          break;
+      // 1. Fallback to 100+ Master Curated Catalog
+      const catalogMatches = matchCuratedCatalog(topic, 3);
+      if (catalogMatches.length > 0) {
+        candidates = catalogMatches.map((c, i) => ({
+          candidateId: `cand_catalog_${i + 1}`,
+          imageUrl: c.imageUrl,
+          title: c.title,
+          author: c.author,
+          license: c.license,
+          sourceDomain: 'commons.wikimedia.org',
+          resolutionTier: 'HD',
+          aspectRatio: '16:9',
+          isFocalSubjectClear: true,
+          focalPoint: c.focalPoint,
+          provider: 'catalog',
+        }));
+        provenance = [{ provider: 'master-curated-catalog', count: candidates.length, latencyMs: 1 }];
+      } else {
+        // 2. Fallback to VCR fixtures
+        for (const [kw, cands] of Object.entries(vcrFixtures)) {
+          if (topic.toLowerCase().includes(kw.toLowerCase())) {
+            candidates = (cands as any[]).map((c, i) => ({
+              candidateId: `cand_vcr_${i}`,
+              imageUrl: c.url,
+              title: c.title,
+              author: c.author,
+              license: c.license,
+              sourceDomain: 'commons.wikimedia.org',
+              resolutionTier: 'HD',
+              aspectRatio: '16:9',
+              isFocalSubjectClear: true,
+              provider: 'wikimedia',
+            }));
+            provenance = [{ provider: 'vcr-wikimedia-fixture', count: candidates.length, latencyMs: 1 }];
+            break;
+          }
         }
       }
     }

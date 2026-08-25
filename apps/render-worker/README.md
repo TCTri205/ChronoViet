@@ -107,12 +107,18 @@ apps/render-worker/
 
 ```bash
 # Khởi chạy Worker ở chế độ Development (Watch mode)
+pnpm dev:worker
+# hoặc trong app:
 pnpm --filter @chronoviet/render-worker dev
 
 # Kiểm tra TypeScript
+pnpm typecheck:worker
+# hoặc trong app:
 pnpm --filter @chronoviet/render-worker typecheck
 
 # Chạy Unit Tests
+pnpm test:worker
+# hoặc trong app:
 pnpm --filter @chronoviet/render-worker test
 
 # Chạy Eval Benchmark Suite

@@ -21,6 +21,7 @@ export interface OrchestratorQualityFloors {
   minFolkloreAccuracy: number; // 95%
   minSceneGranularityCompliance: number; // 90%
   minLicenseCompliance: number; // 100%
+  minCandidateResolutionRecall: number; // 80%
   minReconciliationRate: number; // 95%
   minCheckpointFidelity: number; // 95%
 }
@@ -35,6 +36,7 @@ export const DEFAULT_ORCHESTRATOR_FLOORS: OrchestratorQualityFloors = {
   minFolkloreAccuracy: 90.0,
   minSceneGranularityCompliance: 90.0,
   minLicenseCompliance: 100.0,
+  minCandidateResolutionRecall: 80.0,
   minReconciliationRate: 92.0,
   minCheckpointFidelity: 95.0,
 };
@@ -159,6 +161,24 @@ export function evaluateOrchestratorQualityGates(
       message: passed
         ? `PASS: License Compliance ${a5.license_compliance_rate}% >= ${floors.minLicenseCompliance}%`
         : `FAIL: License Compliance ${a5.license_compliance_rate}% < ${floors.minLicenseCompliance}%`,
+    });
+  }
+
+  // Gate A5: Candidate Resolution Recall Rate
+  if (a5?.candidate_resolution_recall_rate !== undefined) {
+    const passed = a5.candidate_resolution_recall_rate >= floors.minCandidateResolutionRecall;
+    gates.push({
+      gate_id: 'GATE_A5_CANDIDATE_RECALL',
+      metric_name: 'Candidate Resolution Recall Rate',
+      baseline_value: floors.minCandidateResolutionRecall,
+      current_value: a5.candidate_resolution_recall_rate,
+      delta: Number((a5.candidate_resolution_recall_rate - floors.minCandidateResolutionRecall).toFixed(2)),
+      threshold: floors.minCandidateResolutionRecall,
+      passed,
+      is_blocking: true,
+      message: passed
+        ? `PASS: Candidate Recall ${a5.candidate_resolution_recall_rate}% >= ${floors.minCandidateResolutionRecall}%`
+        : `FAIL: Candidate Recall ${a5.candidate_resolution_recall_rate}% < ${floors.minCandidateResolutionRecall}%`,
     });
   }
 

@@ -112,12 +112,40 @@ const resumedState = await resumeOrchestratorPipeline('proj_battle_bach_dang_938
 ### 3.4. Bộ Lệnh CLI Đánh Giá & Kiểm Thử (Benchmark & Testing)
 
 ```bash
+# 0. Khởi động hạ tầng CSDL & Model AI cục bộ (Port 8092, 8080):
+pnpm stack:infra                                # Bật PostgreSQL (Checkpoints) & Redis
+pnpm ai:llm                                     # Bật Primary LLM Port 8092 (Qwen-9B)
+pnpm ai:tts                                     # Bật VieNeu TTS Port 8080 (hoặc dùng synthetic fallback)
+# Hoặc bật toàn bộ: pnpm ai:start | Kiểm tra: pnpm ai:status
+
 # 1. Chạy đánh giá toàn diện Orchestrator (State machine completion, pacing & guardrails)
+pnpm eval:orchestrator
+# hoặc trong package:
 pnpm --filter @chronoviet/agent-orchestrator eval
 
-# 2. Chạy đánh giá riêng Research Agent (Độ phân giải & bản quyền hình ảnh tư liệu)
+# 2. Chạy đánh giá nhanh (sampling)
+pnpm --filter @chronoviet/agent-orchestrator eval:quick
+
+# 3. Chạy từng tầng benchmark con (A0 - A5 & SYS):
+pnpm --filter @chronoviet/agent-orchestrator eval:a0        # A0: Chat Understanding & Brief
+pnpm --filter @chronoviet/agent-orchestrator eval:a1        # A1: Chaptering & Outline
+pnpm --filter @chronoviet/agent-orchestrator eval:a2        # A2: Historical Scriptwriting & Tone
+pnpm --filter @chronoviet/agent-orchestrator eval:a3        # A3: Guardrails, Anti-Sycophancy & Auditing
+pnpm --filter @chronoviet/agent-orchestrator eval:a4        # A4: Scene Segmentation & Visual Direction
+pnpm --filter @chronoviet/agent-orchestrator eval:a5        # A5: Research Agent & Whitelist Licensing
+pnpm --filter @chronoviet/agent-orchestrator eval:sys       # SYS: StateGraph Orchestration
+
+# 4. Chạy đánh giá riêng Research Agent (Độ phân giải & bản quyền hình ảnh tư liệu)
 pnpm --filter @chronoviet/agent-orchestrator eval:research
 
-# 3. Chạy Unit Tests của module nguồn
+# 5. Chạy Unit Tests của module nguồn (chạy trong CI)
+pnpm test:orchestrator
+# hoặc trong package:
 pnpm --filter @chronoviet/agent-orchestrator test
+
+# 6. Kiểm tra TypeScript
+pnpm typecheck:orchestrator
+
+# 7. Dừng các model AI sau khi kiểm thử:
+pnpm ai:stop
 ```

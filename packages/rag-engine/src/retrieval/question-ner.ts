@@ -19,10 +19,13 @@ export interface ExtractedQueryInfo {
 
 export const QUESTION_STOPWORDS = new Set([
   'ai', 'gì', 'nào', 'đâu', 'khi', 'bao', 'năm', 'thế', 'sao', 'tại',
-  'là', 'của', 'và', 'trong', 'với', 'ở', 'được', 'vào', 'có', 'đã', 'sẽ',
+  'là', 'của', 'và', 'trong', 'với', 'ở', 'được', 'vào', 'có', 'đã', 'sẽ', 'đang',
   'như', 'thì', 'ra', 'lại', 'về', 'cho', 'này', 'đó', 'kia', 'hãy', 'kể',
   'biết', 'tóm', 'tắt', 'diễn', 'biến', 'nguyên', 'nhân', 'kết', 'quả',
-  'ý', 'nghĩa', 'lịch', 'sử', 'trận', 'đánh', 'chiến', 'thắng'
+  'ý', 'nghĩa', 'lịch', 'sử', 'trận', 'đánh', 'chiến', 'thắng',
+  'do', 'nhà', 'nước', 'thuộc', 'thời', 'kỳ', 'bởi', 'vì', 'nên', 'mà',
+  'các', 'những', 'rất', 'cũng', 'để', 'vẫn', 'từng', 'qua', 'lên', 'xuống',
+  'nơi', 'sau', 'trước', 'tháng', 'ngày'
 ]);
 
 export function extractQueryEntities(queryText: string): ExtractedQueryInfo {

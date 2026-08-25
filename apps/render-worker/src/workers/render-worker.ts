@@ -21,6 +21,7 @@ import {
   RedisPubSubManager,
   saveProjectSchema,
   renderDurationSeconds,
+  renderWorkerMemoryBytes,
   ResourceSentinel,
 } from '@chronoviet/infra';
 import { getBullMqRedis, QUEUE_NAMES } from '../queues/queue-manager.js';
@@ -48,7 +49,14 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
   });
 
   // 0. Acquire Distributed Render Lock to signal system of active video rendering
-  await ResourceSentinel.acquireRenderLock(envConfig.RENDER_MUTEX_TTL_SECONDS, projectId);
+  const ttlSec = envConfig.RENDER_MUTEX_TTL_SECONDS || 900;
+  await ResourceSentinel.acquireRenderLock(ttlSec, projectId);
+
+  // Mutex auto-renew heartbeat during long rendering operations
+  const heartbeatIntervalMs = Math.max(5000, Math.floor((ttlSec / 3) * 1000));
+  const heartbeatTimer = setInterval(() => {
+    ResourceSentinel.renewRenderLock(ttlSec, projectId).catch(() => {});
+  }, heartbeatIntervalMs);
 
   try {
     workerLog.info('worker.render_started', `Starting Remotion render for project ${projectId}`, {
@@ -56,136 +64,29 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       jobId: job.id,
     });
 
-  const paths = initProjectWorkspace(projectId);
-  const outputPath = path.join(paths.outputDir, 'video.mp4');
+    const paths = initProjectWorkspace(projectId);
+    const outputPath = path.join(paths.outputDir, 'video.mp4');
 
-  // 1. Load schema and pre-download any remote assets
-  let projectSchema = loadProjectSchema(projectId);
-  projectSchema = await ensureProjectAssetsReady(projectId, projectSchema);
+    // 1. Load schema and pre-download any remote assets
+    let projectSchema = loadProjectSchema(projectId);
+    projectSchema = await ensureProjectAssetsReady(projectId, projectSchema);
 
-  const totalFrames = projectSchema.timeline.reduce(
-    (acc: number, scene: any) => acc + (scene.durationInFrames || 90),
-    0
-  );
+    const totalFrames = projectSchema.timeline.reduce(
+      (acc: number, scene: any) => acc + (scene.durationInFrames || 90),
+      0
+    );
 
-  // Ensure local audio/image file paths in projectSchema are serialized as Data URIs if file exists on disk
-  let schemaMutated = false;
-
-  // 1.1 Top-level audioUrl & bgmUrl serialization
-  if (projectSchema.audioUrl && !projectSchema.audioUrl.startsWith('http') && !projectSchema.audioUrl.startsWith('data:')) {
-    const candidatePaths = [
-      projectSchema.audioUrl,
-      path.resolve(paths.audioDir, path.basename(projectSchema.audioUrl)),
-      path.resolve(paths.rootDir, projectSchema.audioUrl),
-      path.resolve(process.cwd(), projectSchema.audioUrl),
-    ];
-    for (const p of candidatePaths) {
-      try {
-        const stat = await fs.promises.stat(p);
-        if (stat.isFile()) {
-          const buf = await fs.promises.readFile(p);
-          const ext = path.extname(p).toLowerCase();
-          const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
-          projectSchema.audioUrl = `data:${mime};base64,${buf.toString('base64')}`;
-          schemaMutated = true;
-          break;
-        }
-      } catch {}
-    }
-  }
-
-  if (projectSchema.bgmUrl && !projectSchema.bgmUrl.startsWith('http') && !projectSchema.bgmUrl.startsWith('data:')) {
-    const candidatePaths = [
-      projectSchema.bgmUrl,
-      path.resolve(paths.audioDir, path.basename(projectSchema.bgmUrl)),
-      path.resolve(paths.rootDir, projectSchema.bgmUrl),
-      path.resolve(process.cwd(), projectSchema.bgmUrl),
-    ];
-    for (const p of candidatePaths) {
-      try {
-        const stat = await fs.promises.stat(p);
-        if (stat.isFile()) {
-          const buf = await fs.promises.readFile(p);
-          const ext = path.extname(p).toLowerCase();
-          const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
-          projectSchema.bgmUrl = `data:${mime};base64,${buf.toString('base64')}`;
-          schemaMutated = true;
-          break;
-        }
-      } catch {}
-    }
-  }
-
-  // 1.2 Timeline scene assets serialization
-  for (const scene of projectSchema.timeline) {
-    if (scene.sceneAudioUrl && !scene.sceneAudioUrl.startsWith('http') && !scene.sceneAudioUrl.startsWith('data:')) {
-      const candidatePaths = [
-        scene.sceneAudioUrl,
-        path.resolve(paths.audioDir, path.basename(scene.sceneAudioUrl)),
-        path.resolve(paths.rootDir, scene.sceneAudioUrl),
-      ];
-      for (const p of candidatePaths) {
-        try {
-          const stat = await fs.promises.stat(p);
-          if (stat.isFile()) {
-            const buf = await fs.promises.readFile(p);
-            const ext = path.extname(p).toLowerCase();
-            const mime = ext === '.mp3' ? 'audio/mp3' : ext === '.ogg' ? 'audio/ogg' : 'audio/wav';
-            scene.sceneAudioUrl = `data:${mime};base64,${buf.toString('base64')}`;
-            schemaMutated = true;
-            break;
-          }
-        } catch {}
+    // 1.1 Zero-Copy Media Streaming: Clean/sanitize timeline scene asset placeholders
+    let schemaMutated = false;
+    for (const scene of projectSchema.timeline) {
+      if (scene.assetUrl && scene.assetUrl.includes('RFVNTVlfSU1BR0VfREFUQV')) {
+        scene.assetUrl = undefined;
+        schemaMutated = true;
       }
     }
-    if (scene.sfxUrl && !scene.sfxUrl.startsWith('http') && !scene.sfxUrl.startsWith('data:')) {
-      const candidatePaths = [
-        scene.sfxUrl,
-        path.resolve(paths.audioDir, path.basename(scene.sfxUrl)),
-        path.resolve(paths.rootDir, scene.sfxUrl),
-      ];
-      for (const p of candidatePaths) {
-        try {
-          const stat = await fs.promises.stat(p);
-          if (stat.isFile()) {
-            const buf = await fs.promises.readFile(p);
-            const ext = path.extname(p).toLowerCase();
-            const mime = ext === '.mp3' ? 'audio/mp3' : 'audio/wav';
-            scene.sfxUrl = `data:${mime};base64,${buf.toString('base64')}`;
-            schemaMutated = true;
-            break;
-          }
-        } catch {}
-      }
+    if (schemaMutated) {
+      saveProjectSchema(projectId, projectSchema);
     }
-    if (scene.assetUrl && scene.assetUrl.includes('RFVNTVlfSU1BR0VfREFUQV')) {
-      scene.assetUrl = undefined;
-      schemaMutated = true;
-    }
-    if (scene.assetUrl && !scene.assetUrl.startsWith('http') && !scene.assetUrl.startsWith('data:')) {
-      const candidatePaths = [
-        scene.assetUrl,
-        path.resolve(paths.assetsDir, path.basename(scene.assetUrl)),
-        path.resolve(paths.rootDir, scene.assetUrl),
-      ];
-      for (const p of candidatePaths) {
-        try {
-          const stat = await fs.promises.stat(p);
-          if (stat.isFile()) {
-            const buf = await fs.promises.readFile(p);
-            const ext = path.extname(p).toLowerCase();
-            const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
-            scene.assetUrl = `data:${mime};base64,${buf.toString('base64')}`;
-            schemaMutated = true;
-            break;
-          }
-        } catch {}
-      }
-    }
-  }
-  if (schemaMutated) {
-    saveProjectSchema(projectId, projectSchema);
-  }
 
   // 2. Real Remotion Render via CLI / Renderer Engine
   const schemaPath = path.join(paths.rootDir, 'project_schema.json');
@@ -322,7 +223,10 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
   const durationMs = Date.now() - startTime;
   renderDurationSeconds.observe({ status: 'completed' }, durationMs / 1000);
   const fileSizeBytes = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 1024;
-  const peakMemoryMb = Math.round(process.memoryUsage().heapUsed / (1024 * 1024));
+  const mem = process.memoryUsage();
+  const peakMemoryMb = Math.round(mem.heapUsed / (1024 * 1024));
+  renderWorkerMemoryBytes.set({ type: 'heap' }, mem.heapUsed);
+  renderWorkerMemoryBytes.set({ type: 'rss' }, mem.rss);
 
   // 3. Chromium Process Isolation cleanup: Clean temporary directory after render
   cleanProjectWorkspace(projectId, { cleanTempOnly: true });
@@ -356,6 +260,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       totalFrames,
     };
   } finally {
+    clearInterval(heartbeatTimer);
     await ResourceSentinel.releaseRenderLock(projectId);
   }
 }

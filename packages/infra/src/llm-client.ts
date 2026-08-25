@@ -272,13 +272,15 @@ async function executeTargetCompletion(
       llmRequestDurationSeconds.observe({ provider: telemetryProvider, model: target.model }, durationSec);
 
       const displayProvider =
-        target.provider === 'openrouter'
-          ? 'OPENROUTER_CLOUD'
-          : target.provider === 'openai'
-            ? 'OPENAI_CLOUD'
-            : target.provider === 'gemini'
-              ? 'GEMINI_CLOUD_API'
-              : 'AGNES_FLASH_FALLBACK';
+        target.provider === 'local'
+          ? 'LOCAL_LLM'
+          : target.provider === 'openrouter'
+            ? 'OPENROUTER_CLOUD'
+            : target.provider === 'openai'
+              ? 'OPENAI_CLOUD'
+              : target.provider === 'gemini'
+                ? 'GEMINI_CLOUD_API'
+                : 'AGNES_FLASH_FALLBACK';
 
       return {
         content: choice.message?.content || '',

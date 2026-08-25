@@ -42,7 +42,7 @@ This package contains the automated component-level and end-to-end benchmark sui
 > 🛡️ **Anti-Overfitting & Anti-Cheating Directives:**
 > - **Zero Synthetic Shortcuts:** Benchmarks NEVER inject missing ground truth into candidate pools or fall back to arbitrary default citations when attribution fails.
 > - **Strict Information Retrieval Metrics:** Precision, Recall@K, MAP@K, and nDCG@K evaluate strictly against verified ground-truth chunk IDs or high-confidence evidence propositions.
-> - **Propositional Entailment over Word Matching:** Fact Precision and Grounding evaluate semantic entailment using bi-gram, polarity, and numeric checks rather than brittle string matching.
+> - **Neural LLM-as-a-Judge & Propositional Entailment:** Fact Precision and Grounding evaluate semantic entailment via dual-mode evaluation: (1) Fast deterministic proposition overlap, and (2) Neural Zero-Shot Chain-of-Thought LLM-as-a-Judge (`verifyClaimEntailmentWithLlmJudge` via local Qwen 3.5 9B on Port 8092) for deep historical semantic reasoning in `EVAL_STRICT` mode.
 > - **Stratified Epoch Sampling:** Fast smoke-testing selects balanced queries across all 15 Vietnamese historical epochs via `getStratifiedHistoricalSample` instead of naive modulo indexing.
 > - **Multi-Tier Automated Regression Quality Gates:**
 >   - Gate 1: Fact Precision $\ge 80\%$
@@ -52,27 +52,59 @@ This package contains the automated component-level and end-to-end benchmark sui
 >   - Gate 5: Retrieval Latency p95 $\le 1500\text{ms}$
 >   - Gate 6: TTFT Streaming Latency $\le 1500\text{ms}$
 
+## 4. Preflight Infrastructure & Model Requirements (Yêu Cầu Hạ Tầng AI & CSDL)
+
+> ⚠️ **Chế độ Strict Pre-flight (`EVAL_STRICT`):** Khi chạy các tầng benchmark RAG, hệ thống yêu cầu kết nối trực tiếp đến CSDL PostgreSQL (pgvector) và các mô hình AI cục bộ thật để đo lường trung thực 100%.
+
 ```bash
-# Run all 11 component benchmarks + System Ablation + CI/CD Quality Gates
-pnpm --filter @chronoviet/rag-engine eval
+# 0. Khởi động CSDL và các AI model tương ứng trước khi chạy benchmark:
+pnpm stack:infra                                    # Khởi động PostgreSQL (pgvector HNSW) & Redis
+pnpm ai:emb                                         # [Bắt buộc C4] Embedding Server Port 8090 (BGE-M3 1024d)
+pnpm ai:rerank                                      # [Bắt buộc C6] Cross-Encoder Port 8096 (Qwen-0.6B)
+pnpm ai:llm                                         # [Bắt buộc C8, C9, C10] Primary LLM Port 8092 (Qwen-9B)
 
-# Run individual component benchmarks
-pnpm --filter @chronoviet/rag-engine eval -- --c0    # Knowledge Graph Construction
-pnpm --filter @chronoviet/rag-engine eval -- --c2    # Query Understanding & Perturbations
-pnpm --filter @chronoviet/rag-engine eval -- --c4    # Hybrid Dense+FTS Retrieval
-pnpm --filter @chronoviet/rag-engine eval -- --c6    # Reranker & nDCG@5
-pnpm --filter @chronoviet/rag-engine eval -- --c9    # Claim-level Grounding
-pnpm --filter @chronoviet/rag-engine eval -- --c10   # Adversarial Traps & Abstention
-pnpm --filter @chronoviet/rag-engine eval -- --sys   # System Ablation Matrix
-
-# Run deterministic unit tests
-pnpm --filter @chronoviet/rag-engine test
-pnpm --filter @chronoviet/rag-engine test:eval
+# Hoặc khởi động nhanh toàn bộ AI stack:
+pnpm ai:start                                       # Bật toàn bộ các cổng 8090, 8092, 8094, 8096, 8080
+pnpm ai:status                                      # Kiểm tra trạng thái các cổng AI
 ```
 
 ---
 
-## 4. Reports & Artifacts (`eval/reports/`)
+## 5. Execution Commands (Hướng Dẫn Thực Thi)
+
+```bash
+# 1. Chạy toàn bộ 11 Component Benchmarks + System Ablation + Quality Gates
+pnpm eval:rag
+# hoặc trong package:
+pnpm --filter @chronoviet/rag-engine eval
+
+# 2. Chạy từng Component Benchmark riêng biệt:
+pnpm --filter @chronoviet/rag-engine eval:c0        # C0: Knowledge Graph Construction
+pnpm --filter @chronoviet/rag-engine eval:c1        # C1: Hierarchical Chunking
+pnpm --filter @chronoviet/rag-engine eval:c2        # C2: Query Understanding & Perturbations
+pnpm --filter @chronoviet/rag-engine eval:c3        # C3: Graph Traversal & Reasoning
+pnpm --filter @chronoviet/rag-engine eval:c4        # C4: Hybrid Dense+FTS Retrieval
+pnpm --filter @chronoviet/rag-engine eval:c5        # C5: Graph-Guided Chunk Linking
+pnpm --filter @chronoviet/rag-engine eval:c6        # C6: Cross-Encoder Reranker (nDCG@5)
+pnpm --filter @chronoviet/rag-engine eval:c7        # C7: Context Assembly & Budgeting
+pnpm --filter @chronoviet/rag-engine eval:c8        # C8: Answer Generation & Correctness
+pnpm --filter @chronoviet/rag-engine eval:c9        # C9: Claim-level Grounding & Citation
+pnpm --filter @chronoviet/rag-engine eval:c10       # C10: Adversarial Traps & Abstention
+pnpm --filter @chronoviet/rag-engine eval:sys       # SYS: 6-Config System Ablation Matrix
+
+# 3. Chạy Unit Tests toán học metrics & ranking (chạy trong CI)
+pnpm test:rag
+# hoặc trong package:
+pnpm --filter @chronoviet/rag-engine test
+pnpm --filter @chronoviet/rag-engine test:eval
+
+# 4. Tắt AI giải phóng RAM sau khi hoàn tất benchmark
+pnpm ai:stop
+```
+
+---
+
+## 6. Reports & Artifacts (`eval/reports/`)
 
 - `component-benchmark-report.json`: Aggregate JSON report for all component tiers C0–C10.
 - `ablation-study-report.json`: Comparative matrix of 6 RAG configurations with 95% Bootstrap CI.

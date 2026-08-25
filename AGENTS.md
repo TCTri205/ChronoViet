@@ -92,11 +92,31 @@ pnpm stack:down      # Stop all Docker containers
 pnpm db:health       # Audit DB health (relationships, embeddings, indexes)
 ```
 
+### 4. Granular Per-Package Commands (Dev, Test, Typecheck, Eval)
+```bash
+# Targeted Typecheck (Fast)
+pnpm typecheck:spec | :infra | :ingest | :rag | :orchestrator | :vlm | :remotion | :web | :worker
+
+# Targeted Deterministic Unit Tests
+pnpm test:spec | :infra | :ingest | :rag | :orchestrator | :vlm | :remotion | :web | :worker
+
+# Targeted Evaluation & Benchmarks
+pnpm eval:ingest         # Data Ingestion (Vector, Graph, Triples, NER)
+pnpm eval:rag            # RAG Engine Master Benchmark (C0 - C10 + SYS)
+pnpm eval:rag:c0 .. :c10 # Discrete RAG Component Benchmarks (C0..C10)
+pnpm eval:orchestrator   # Multi-Agent Orchestrator Benchmark (A0 - A5 + SYS)
+pnpm eval:orchestrator:a0 .. :a5 # Discrete Agent Benchmarks (A0..A5)
+pnpm eval:vlm            # VLM Visual Quality Inspector
+pnpm eval:tts            # VieNeu TTS Voice Engine Evaluation
+pnpm eval:remotion       # Remotion Video Rendering Fidelity
+pnpm eval:chain          # Multi-Module Integration Chains
+```
+
 ---
 
 ## 6. CI/CD Requirements (GitHub Actions)
 
 - **Mandatory Quality Gates:** `.github/workflows/ci.yml` executes `lint`, `typecheck`, `unit-tests` (`pnpm test`), `build`, `docker-build`, `audit`, and `integration` (`pnpm db:init` -> `verify-db-health.ts`).
 - **CI Scope:** CI executes ONLY deterministic checks. All evaluation commands (`pnpm eval:*`, `pnpm test:eval`) are strictly excluded.
-- **Pre-Push Requirement:** Run `pnpm check:all` (or `pnpm typecheck && pnpm lint && pnpm test && pnpm build`) locally and ensure 100% pass rate before pushing to `main` or opening PRs.
+- **Pre-Push Requirement:** Run `pnpm check` (or `pnpm typecheck && pnpm lint && pnpm test && pnpm build`) locally and ensure 100% pass rate before pushing to `main` or opening PRs.
 

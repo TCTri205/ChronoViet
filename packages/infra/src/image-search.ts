@@ -20,15 +20,25 @@ export const ImageSearchVisualTypeSchema = z.enum([
 ]);
 export type ImageSearchVisualType = z.infer<typeof ImageSearchVisualTypeSchema>;
 
+export const DEFAULT_NEGATIVE_SEARCH_TERMS = '-anime -cartoon -watermark -game -3d_render -stock -fictional';
+
 export const ImageSearchToolInputSchema = z.object({
   sceneId: z.string().describe("Mã định danh cảnh phim (ví dụ: 'scene_001')"),
   primaryQuery: z.string().min(1).describe("Từ khóa tìm kiếm tiếng Việt chi tiết có ngữ cảnh lịch sử"),
   englishQuery: z.string().optional().describe("Từ khóa tiếng Anh tương ứng để tối ưu tìm kiếm trên Wikimedia/Google"),
+  frenchQuery: z.string().optional().describe("Từ khóa tiếng Pháp tương ứng cho lưu trữ Gallica/BnF"),
+  negativeQuery: z.string().optional().describe("Từ khóa loại trừ (-anime, -watermark...)"),
+  facetQueries: z.object({
+    portrait: z.string().optional(),
+    artifact: z.string().optional(),
+    map: z.string().optional(),
+    battleOrArt: z.string().optional(),
+  }).optional().describe("Tập 4 facet query chuyên biệt"),
   visualType: ImageSearchVisualTypeSchema.optional().default('GENERAL_HISTORICAL').describe("Loại hình ảnh tư liệu mong muốn"),
   historicalPeriod: z.string().optional().describe("Thời kỳ / Triều đại lịch sử liên quan"),
   aspectRatio: z.enum(['16:9', '9:16', '1:1']).optional().describe("Tỷ lệ khung hình mong muốn cho Remotion video"),
   minResolution: z.enum(['HD', 'FHD', '4K', 'ANY']).optional().default('HD').describe("Độ phân giải tối thiểu"),
-  limit: z.number().int().min(1).max(10).optional().default(3).describe("Số lượng ứng viên ảnh cần tìm"),
+  limit: z.number().int().min(1).max(10).optional().default(6).describe("Số lượng ứng viên ảnh cần tìm"),
 });
 export type ImageSearchToolInput = z.input<typeof ImageSearchToolInputSchema>;
 
@@ -43,6 +53,7 @@ export const ImageSearchToolResultSchema = z.object({
   sceneId: z.string(),
   primaryQuery: z.string(),
   englishQuery: z.string().optional(),
+  frenchQuery: z.string().optional(),
   visualType: ImageSearchVisualTypeSchema,
   candidates: z.array(VisualCandidateSchema),
   provenance: z.array(ImageSearchProvenanceSchema),
@@ -55,6 +66,7 @@ export type ImageSearchProviderName =
   | 'tavily'
   | 'brave'
   | 'wikimedia'
+  | 'gallica'
   | 'catalog';
 
 export const IMAGE_SEARCH_PROVIDER_NAMES: ImageSearchProviderName[] = [
@@ -62,14 +74,17 @@ export const IMAGE_SEARCH_PROVIDER_NAMES: ImageSearchProviderName[] = [
   'tavily',
   'brave',
   'wikimedia',
+  'gallica',
   'catalog',
 ];
 
 /**
  * Default whitelist of image hosts trusted for copyright-safe crawl.
- * Wikimedia Commons (PD/CC), Flickr (CC filterable) and museum archives.
+ * Wikimedia Commons (PD/CC), Flickr (CC filterable), museum archives, and government archives.
  */
 export const DEFAULT_IMAGE_DOMAIN_WHITELIST = [
+  '*.gov.vn',
+  '*.archives.gov.vn',
   'upload.wikimedia.org',
   'commons.wikimedia.org',
   'live.staticflickr.com',
@@ -95,6 +110,15 @@ export const DEFAULT_IMAGE_DOMAIN_WHITELIST = [
   'nhandan.vn',
   'chinhphu.vn',
   'vietnam.vn',
+  'nlv.gov.vn',
+  'vass.gov.vn',
+  'viensuhoc.vass.gov.vn',
+  'hoangthanhthanglong.vn',
+  'hueworldheritage.org.vn',
+  'gallica.bnf.fr',
+  'archive.org',
+  'digitalcollections.nypl.org',
+  'europeana.eu',
   'loc.gov',
   'nga.gov',
   'si.edu',
@@ -102,28 +126,36 @@ export const DEFAULT_IMAGE_DOMAIN_WHITELIST = [
 ];
 
 /**
- * Resolve the active domain whitelist from environment configuration
- * (comma-separated), falling back to the default list.
+ * Resolve the active domain whitelist from default list and optional
+ * environment configuration (comma-separated).
  */
 export function getImageDomainWhitelist(): string[] {
+  const defaults = [...DEFAULT_IMAGE_DOMAIN_WHITELIST];
   const raw = envConfig.IMAGE_DOMAIN_WHITELIST?.trim();
-  if (!raw) return [...DEFAULT_IMAGE_DOMAIN_WHITELIST];
-  return raw
+  if (!raw) return defaults;
+  const custom = raw
     .split(',')
     .map((d) => d.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, ''))
     .filter(Boolean);
+  return Array.from(new Set([...defaults, ...custom]));
 }
 
 /**
  * Returns true when the given image URL points to a host inside the
  * configured domain whitelist (used to guarantee license compliance).
+ * Supports wildcard domain rules (e.g. *.gov.vn).
  */
 export function isAllowedImageDomain(imageUrl: string): boolean {
   try {
     const hostname = new URL(imageUrl).hostname.toLowerCase();
-    return getImageDomainWhitelist().some(
-      (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
-    );
+    return getImageDomainWhitelist().some((pattern) => {
+      const norm = pattern.trim().toLowerCase();
+      if (norm.startsWith('*.')) {
+        const suffix = norm.slice(2);
+        return hostname === suffix || hostname.endsWith(`.${suffix}`);
+      }
+      return hostname === norm || hostname.endsWith(`.${norm}`);
+    });
   } catch {
     return false;
   }
@@ -150,13 +182,26 @@ export function getImageSearchProviderChain(): ImageSearchProviderName[] {
 
 /**
  * Infers a copyright license for an image URL based on its host.
- * Wikimedia / Flickr hosts are treated as PUBLIC_DOMAIN or CC0 (safe defaults),
+ * Wikimedia / Flickr hosts are treated as PUBLIC_DOMAIN or CC0 / CC_BY_SA_4_0,
  * museum / public archive hosts are treated as PUBLIC_DOMAIN / CC0 / CC_BY_4_0,
- * anything else returns UNKNOWN (license-filter will reject it downstream).
+ * anything else returns UNKNOWN (or CC_BY_4_0 under EDITORIAL policy if domain is allowed).
  */
 export function inferLicenseFromDomain(imageUrl: string): LicenseType {
-  const host = new URL(imageUrl).hostname.toLowerCase();
+  let host: string;
+  try {
+    host = new URL(imageUrl).hostname.toLowerCase();
+  } catch {
+    return 'UNKNOWN';
+  }
+
   if (host === 'upload.wikimedia.org' || host === 'commons.wikimedia.org') {
+    return 'PUBLIC_DOMAIN';
+  }
+  if (
+    host === 'gallica.bnf.fr' ||
+    host === 'archive.org' ||
+    host.endsWith('.archive.org')
+  ) {
     return 'PUBLIC_DOMAIN';
   }
   if (
@@ -169,6 +214,7 @@ export function inferLicenseFromDomain(imageUrl: string): LicenseType {
   }
   if (
     host === 'images.metmuseum.org' ||
+    host === 'collectionapi.metmuseum.org' ||
     host === 'www.britishmuseum.org' ||
     host === 'media.britishmuseum.org' ||
     host === 'rijksmuseum.nl' ||
@@ -178,7 +224,10 @@ export function inferLicenseFromDomain(imageUrl: string): LicenseType {
     host === 'loc.gov' ||
     host.endsWith('.loc.gov') ||
     host === 'si.edu' ||
-    host.endsWith('.si.edu')
+    host.endsWith('.si.edu') ||
+    host === 'digitalcollections.nypl.org' ||
+    host === 'europeana.eu' ||
+    host.endsWith('.europeana.eu')
   ) {
     return 'CC0';
   }
@@ -198,9 +247,25 @@ export function inferLicenseFromDomain(imageUrl: string): LicenseType {
     host === 'chinhphu.vn' ||
     host.endsWith('.chinhphu.vn') ||
     host === 'vietnam.vn' ||
-    host.endsWith('.vietnam.vn')
+    host.endsWith('.vietnam.vn') ||
+    host === 'nlv.gov.vn' ||
+    host.endsWith('.nlv.gov.vn') ||
+    host === 'vass.gov.vn' ||
+    host.endsWith('.vass.gov.vn') ||
+    host === 'viensuhoc.vass.gov.vn' ||
+    host === 'hoangthanhthanglong.vn' ||
+    host.endsWith('.hoangthanhthanglong.vn') ||
+    host === 'hueworldheritage.org.vn' ||
+    host.endsWith('.hueworldheritage.org.vn') ||
+    host === 'gov.vn' ||
+    host.endsWith('.gov.vn')
   ) {
     return 'CC_BY_4_0';
   }
+
+  if (envConfig.IMAGE_LICENSE_POLICY === 'EDITORIAL' && isAllowedImageDomain(imageUrl)) {
+    return 'CC_BY_4_0';
+  }
+
   return 'UNKNOWN';
 }

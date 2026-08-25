@@ -5,7 +5,7 @@
  */
 
 import { SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
-import { envConfig } from '@chronoviet/infra';
+import { envConfig, getAdaptiveConcurrency } from '@chronoviet/infra';
 import { inspectSceneVisuals } from '@chronoviet/vlm-inspector';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 
@@ -21,12 +21,13 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutFallback:
 
 export async function vlmInspectionNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'vlm_inspection');
-  nodeLog.info('orchestrator.vlm_inspection_started', `Inspecting visual assets for ${state.scenes.length} scenes`, {
+  const vlmBatchSize = getAdaptiveConcurrency('VLM');
+  nodeLog.info('orchestrator.vlm_inspection_started', `Inspecting visual assets for ${state.scenes.length} scenes (batchSize=${vlmBatchSize})`, {
     projectId: state.projectId,
+    batchSize: vlmBatchSize,
   });
 
   const updatedScenes: SceneGeneration[] = [];
-  const vlmBatchSize = envConfig.VLM_PROVIDER === 'local' ? 2 : 4;
 
   for (let i = 0; i < state.scenes.length; i += vlmBatchSize) {
     const batch = state.scenes.slice(i, i + vlmBatchSize);

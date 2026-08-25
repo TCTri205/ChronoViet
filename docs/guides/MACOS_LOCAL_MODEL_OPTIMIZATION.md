@@ -313,12 +313,15 @@ Bản trả lời của LLM phải phân rã cấu trúc câu trả lời theo m
 ChronoViet hỗ trợ đa dạng cấu hình khởi động để tối ưu tài nguyên phần cứng máy Mac:
 
 ```bash
-# 1. Khởi động trọn gói 1-Lệnh: Docker Infra + AI Supervisor + VieNeu TTS + Web UI + Worker
+# 1. Khởi động thông minh 1-Lệnh: Auto Infra (DB+Redis) + Auto AI Detect + Web & Worker
 pnpm dev
 
 # 2. Khởi động theo Profile công việc tối ưu tài nguyên (Daily Dev Profiles):
-pnpm dev:hybrid      # Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local, tiết kiệm tối đa)
-pnpm dev:data        # Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
+pnpm dev:full        # Full Stack: Docker Infra + AI Supervisor + TTS + Web + Worker
+pnpm dev:cloud       # Fast Cloud mode: 0% local GPU/RAM overhead (Web + Worker with Cloud AI)
+pnpm dev:data        # Data Ingestion Stack: Postgres + Redis + AI Lite (8090 + 8094)
+pnpm dev:web         # Chỉ chạy Web UI (Port 3000)
+pnpm dev:worker      # Chỉ chạy BullMQ Video Render Worker (Port 3001)
 
 # 3. Quản lý AI & TTS Local Runtime thống nhất (Unified AI CLI):
 pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8096, 8080) & model đã nạp

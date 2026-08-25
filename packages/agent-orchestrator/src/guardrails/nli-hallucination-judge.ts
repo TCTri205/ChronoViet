@@ -3,6 +3,8 @@
  * Evaluates script claim entailment against ground truth chunk context (Entailment Score >= 0.80)
  */
 
+import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
+
 export interface NliJudgeRequest {
   scriptClaim: string;
   groundTruthChunks: string[];
@@ -82,4 +84,72 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
       ? `Entailment score ${entailmentScore} < 0.80 threshold. Claim may contain unverified statements.`
       : `Entailment score ${entailmentScore} >= 0.80 threshold.`,
   };
+}
+
+/**
+ * Neural LLM-as-a-Judge NLI Evaluation
+ * Strictly calls local Qwen model for zero-heuristic semantic reasoning in EVAL_STRICT mode
+ */
+export async function evaluateNliWithLlmJudge(request: NliJudgeRequest): Promise<NliJudgeResult> {
+  if (!request.scriptClaim.trim() || request.groundTruthChunks.length === 0) {
+    return {
+      entailmentScore: 0.0,
+      isHallucinated: false,
+      verdict: 'NEUTRAL',
+      explanation: 'No claims or ground truth chunks provided.',
+    };
+  }
+
+  const combinedGroundTruth = request.groundTruthChunks.filter(Boolean).join('\n\n').trim();
+  const systemPrompt = `Bạn là NLI Hallucination Judge của ChronoViet.
+Nhiệm vụ: Thẩm định xem câu kịch bản (Script Claim) có suy diễn logic (Entailment) từ dữ kiện lịch sử gốc (Ground Truth) hay là bịa đặt/ảo giác (Hallucination).
+
+Quy tắc:
+- "verdict": "ENTAILMENT" nếu toàn bộ dữ kiện trong claim được hỗ trợ bởi ground truth.
+- "verdict": "CONTRADICTED" nếu claim mâu thuẫn trực tiếp với ground truth.
+- "verdict": "NEUTRAL" nếu ground truth không đủ thông tin.
+- "entailmentScore": thang điểm float từ 0.0 đến 1.0 (>= 0.80 là ENTAILMENT chuẩn).
+
+Xuất duy nhất 1 JSON object:
+{
+  "entailmentScore": <float 0.0 - 1.0>,
+  "isHallucinated": <boolean>,
+  "verdict": "ENTAILMENT" | "NEUTRAL" | "CONTRADICTION",
+  "explanation": "<giải thích ngắn gọn 1 câu>"
+}`;
+
+  const userContent = `KỊCH BẢN (Script Claim): "${request.scriptClaim}"
+
+DỮ KIỆN LỊCH SỬ GỐC (Ground Truth):
+${combinedGroundTruth.slice(0, 1500)}`;
+
+  try {
+    const res = await callLlm({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      temperature: 0.0,
+      responseFormat: 'json_object',
+      timeoutMs: 30000,
+    });
+
+    const parsed = parseLlmJson(res.content);
+    const validVerdicts = ['ENTAILMENT', 'NEUTRAL', 'CONTRADICTION'] as const;
+    const verdict = validVerdicts.includes(parsed.verdict) ? parsed.verdict : 'NEUTRAL';
+    const score = typeof parsed.entailmentScore === 'number' ? Math.max(0, Math.min(1, parsed.entailmentScore)) : (verdict === 'ENTAILMENT' ? 0.9 : 0.4);
+    const isHallucinated = typeof parsed.isHallucinated === 'boolean' ? parsed.isHallucinated : score < 0.80;
+
+    return {
+      entailmentScore: score,
+      isHallucinated,
+      verdict,
+      explanation: String(parsed.explanation || ''),
+    };
+  } catch (err: any) {
+    if (envConfig.EVAL_STRICT) {
+      throw new Error(`[EVAL_STRICT] Neural NLI evaluation failed: ${err.message}`);
+    }
+    return evaluateNliEntailmentScore(request);
+  }
 }

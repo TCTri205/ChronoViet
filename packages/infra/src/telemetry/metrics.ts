@@ -177,6 +177,13 @@ export const renderDurationSeconds = new Histogram({
   registers: [metricsRegistry],
 });
 
+export const renderWorkerMemoryBytes = new Gauge({
+  name: 'chronoviet_render_worker_memory_bytes',
+  help: 'Peak heap and RSS memory bytes consumed by render worker during rendering',
+  labelNames: ['type'],
+  registers: [metricsRegistry],
+});
+
 // ============================================================================
 // 4. Realtime / WebSocket USE Metrics
 // ============================================================================
@@ -196,6 +203,14 @@ export const orchestratorNodeDurationSeconds = new Histogram({
   help: 'Duration of orchestrator graph node executions in seconds',
   labelNames: ['node', 'status'],
   buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60],
+  registers: [metricsRegistry],
+});
+
+export const orchestratorAssetGenerationDurationSeconds = new Histogram({
+  name: 'chronoviet_orchestrator_asset_generation_duration_seconds',
+  help: 'Duration of parallel fork-join asset generation (Audio || Visual) in seconds',
+  labelNames: ['status'],
+  buckets: [0.1, 0.5, 1, 2, 5, 10, 20, 30, 60],
   registers: [metricsRegistry],
 });
 

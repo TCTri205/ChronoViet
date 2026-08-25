@@ -14,3 +14,4 @@ export * from './telemetry/index.js';
 export * from './tts/index.js';
 export * from './realtime.js';
 export * from './historical-ingest.js';
+export * from './config/concurrency-tuner.js';

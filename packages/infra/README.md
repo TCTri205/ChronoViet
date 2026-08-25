@@ -59,3 +59,28 @@ const response = await callLlm({
   temperature: 0.3,
 });
 ```
+
+---
+
+## ⚡ 3. Bộ Lệnh Kiểm Định & Phát Triển (CLI Commands)
+
+```bash
+# Kiểm tra TypeScript
+pnpm --filter @chronoviet/infra typecheck
+# hoặc từ root monorepo:
+pnpm typecheck:infra
+
+# Chạy Unit Tests (DB Pool, Circuit Breaker, Sentinel, Logger, Telemetry)
+pnpm --filter @chronoviet/infra test
+# hoặc từ root monorepo:
+pnpm test:infra
+
+# Build package
+pnpm --filter @chronoviet/infra build
+```
+
+---
+
+## 📄 4. Giấy Phép (License)
+
+Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**.

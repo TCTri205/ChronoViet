@@ -6,20 +6,23 @@
  */
 
 import { VisualCandidate } from '@chronoviet/shared-spec';
+import { envConfig, getAdaptiveConcurrency } from '@chronoviet/infra';
 import { resolveImageCandidates } from '../../research/index.js';
 import { ChronoGraphState, getNodeLogger, ResearchSceneResult } from '../state.js';
 
-const RESEARCH_CANDIDATE_LIMIT = 3;
-
 export async function researchNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'research');
-  nodeLog.info('orchestrator.research_started', `Researching visual candidates for ${state.scenes.length} scenes`, {
+  const candidateLimit = envConfig.RESEARCH_CANDIDATES_PER_SCENE || 6;
+  const batchSize = getAdaptiveConcurrency('CRAWL');
+
+  nodeLog.info('orchestrator.research_started', `Researching visual candidates for ${state.scenes.length} scenes (pool=${candidateLimit}, batchSize=${batchSize})`, {
     projectId: state.projectId,
+    candidateLimit,
+    batchSize,
   });
 
   const researchResults: Record<string, ResearchSceneResult> = { ...(state.researchResults || {}) };
 
-  const batchSize = 4;
   for (let i = 0; i < state.scenes.length; i += batchSize) {
     const batch = state.scenes.slice(i, i + batchSize);
     await Promise.all(
@@ -37,28 +40,33 @@ export async function researchNode(state: ChronoGraphState): Promise<Partial<Chr
           return;
         }
 
+        const sceneLimit = scene.searchParams?.limit || candidateLimit;
+
         const searchInput = scene.searchParams
           ? {
               sceneId: scene.sceneId,
               primaryQuery: scene.searchParams.primaryQuery,
               englishQuery: scene.searchParams.englishQuery,
+              frenchQuery: scene.searchParams.frenchQuery,
+              negativeQuery: scene.searchParams.negativeQuery,
+              facetQueries: scene.searchParams.facetQueries,
               visualType: (scene.searchParams.visualType as any) || 'GENERAL_HISTORICAL',
               historicalPeriod: scene.searchParams.historicalPeriod,
               minResolution: 'HD' as const,
-              limit: RESEARCH_CANDIDATE_LIMIT,
+              limit: sceneLimit,
             }
           : {
               sceneId: scene.sceneId,
               primaryQuery: scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt,
               minResolution: 'HD' as const,
-              limit: RESEARCH_CANDIDATE_LIMIT,
+              limit: sceneLimit,
             };
 
         const keywords = scene.searchParams?.primaryQuery || (scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt);
         const startedAt = Date.now();
 
         try {
-          const { candidates, provenance } = await resolveImageCandidates(searchInput as any, scene.sceneId, RESEARCH_CANDIDATE_LIMIT);
+          const { candidates, provenance } = await resolveImageCandidates(searchInput as any, scene.sceneId, sceneLimit);
           researchResults[scene.sceneId] = {
             sceneId: scene.sceneId,
             keywords,

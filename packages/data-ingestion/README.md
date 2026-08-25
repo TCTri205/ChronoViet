@@ -85,18 +85,23 @@ packages/data-ingestion/
 
 Tất cả các lệnh có thể thực thi từ root monorepo hoặc trực tiếp trong package:
 
-```bash
+# 0. Khởi động hạ tầng AI Models cục bộ (Port 8090 & 8094)
+pnpm ai:lite                                    # Bật cặp nhẹ BGE-M3 (8090) + Qwen-4B (8094) (~3.1 GB RAM)
+# hoặc bật riêng lẻ:
+# pnpm ai:emb                                   # Chỉ bật Embedding Server Port 8090 (BGE-M3)
+# pnpm ai:extract                               # Chỉ bật Extraction LLM Port 8094 (Qwen-4B)
+# Hoặc kiểm tra: pnpm ai:status
+
 # 1. Khởi động hạ tầng CSDL PostgreSQL (pgvector HNSW) & Redis
 pnpm stack:infra
 
-# 2. Khởi tạo SQL Schema & xác nhận đủ 7 bảng trên PostgreSQL
+# 2. Khởi tạo SQL Schema & xác nhận đủ 8 bảng trên PostgreSQL
 pnpm db:init
 
 # 3. Thu thập dữ liệu Lịch sử (Crawler Pipeline)
-pnpm crawl:all                                  # Cào tự động TOÀN BỘ 15 Thời kỳ Lịch sử Việt Nam
-pnpm crawl:corpus --epoch=EPOCH_05              # Hoặc cào riêng 1 Epoch cụ thể
-pnpm extract:pdf                                # Trích xuất PDF scan sử liệu sang Markdown
-pnpm crawl:pdf                                  # Nạp dữ liệu Markdown đã trích xuất từ PDF vào catalog
+pnpm crawl:corpus                               # Cào dữ liệu theo cấu hình catalog
+pnpm --filter @chronoviet/data-ingestion crawl:corpus --all  # Cào tự động TOÀN BỘ 15 Thời kỳ Lịch sử
+pnpm --filter @chronoviet/data-ingestion crawl:corpus --epoch=EPOCH_05 # Cào riêng 1 Epoch cụ thể
 
 # 4. Nạp kho tri thức vào CSDL thật (Stage-by-Stage Dual-Branch Ingestion)
 pnpm ingest:vector                              # Stage 1: Nạp Chunks & Vector Store (BGE-M3 1024d) + Fast NER
@@ -107,36 +112,24 @@ pnpm ingest:knowledge --offline                 # Nạp nhanh offline (Regex + F
 pnpm ingest:knowledge --force                   # Nạp mới từ đầu (xóa cache checkpoint & truncate DB)
 
 # 5. Quy Trình Làm Sạch & Chuẩn Hóa Dữ Liệu Sau Ingestion (Post-Ingestion Data Governance)
-# Sau khi chạy ingest:vector & ingest:graph, thực thi chuỗi lệnh sau để bảo vệ và hoàn thiện kho tri thức:
-# Bước 0: Tạo Snapshot Sao Lưu Dự Phòng Theo Phiên Bản
-pnpm db:backup --name post_ingest_v1            # Tạo snapshot nhị phân backups/post_ingest_v1.dump bảo vệ dữ liệu
-
-# Bước 1: Sanitization & Health Check
-pnpm db:clean                                   # Xóa self-loops, duplicate edges, dangling relations & tái lập unique index
+pnpm db:clean                                   # Xóa self-loops, duplicate edges, dangling relations & tái lập index
 pnpm db:health                                  # Audit sức khỏe CSDL (yêu cầu PERFECTLY STABLE & HEALTHY)
+pnpm --filter @chronoviet/data-ingestion db:audit-quarantine # Xem danh sách pending review trong quarantine buffer
+pnpm --filter @chronoviet/data-ingestion db:audit-quarantine --accept-all-high-conf --threshold=0.85 # Thăng cấp quan hệ chất lượng cao
+pnpm --filter @chronoviet/data-ingestion db:audit-quarantine --purge-spurious # Thanh lọc quan hệ rác
 
-# Bước 2: Quarantine Triage & Promotion
-pnpm db:audit-quarantine                        # Xem danh sách pending review trong quarantine buffer
-pnpm db:audit-quarantine --accept-all-high-conf --threshold=0.85 # Thăng cấp quan hệ chất lượng cao (>= 0.85) vào Graph
-pnpm db:audit-quarantine --purge-spurious       # Thanh lọc quan hệ rác, spurious edges & thực thể nhiễu
-
-# Bước 3: Master Canonical Re-Resolution
-pnpm rag:re-resolve                             # Ánh xạ entities về Canonical ID, ghi nhật ký entity_audit_logs
-
-# (Tùy chọn) Phục hồi nếu xảy ra sự cố hỏng dữ liệu trong quá trình dọn dẹp:
-# pnpm db:restore --file backups/post_ingest_v1.dump # Khôi phục từ file phiên bản v1
-# pnpm db:restore                                    # Hoặc khôi phục nhanh từ snapshot mới nhất
-
-# Bước 4: Quality Diagnostics & Benchmarking
-pnpm eval:ingest:diagnostic                     # Chẩn đoán độ phủ, mật độ graph, unmapped entities
+# 6. Đánh Giá & Benchmark Bổ Sung (Evaluation & Testing)
 pnpm eval:ingest                                # Master Benchmark Module 0: Đo lường 4 KPI chất lượng
-
-# 6. Đánh Giá & Benchmark Bổ Sung (Granular Evaluation Commands)
-pnpm eval:ingest:vector                         # Đánh giá nhanh Stage 1 (Vector & Chunk Store vừa nạp trên DB thật)
-pnpm eval:ingest:graph                          # Đánh giá Stage 2 (Knowledge Graph Triples, Connectivity, Quarantine)
+pnpm eval:ingest:vector                         # Benchmark Vector Retrieval trên pgvector HNSW thật
+pnpm eval:ingest:graph                          # Đánh giá Knowledge Graph Triples & Connectivity
 pnpm --filter @chronoviet/data-ingestion eval:ner      # Benchmark Stage 1 Pure TS Historical NER (40 test cases)
 pnpm --filter @chronoviet/data-ingestion eval:triples  # Benchmark Stage 2 Triples Extractor
-pnpm eval --chain ingest-rag                    # Benchmark chuỗi E2E Ingest-RAG Chain (MRR, nDCG@5, Fact Precision)
+pnpm --filter @chronoviet/data-ingestion eval:diagnostic # Chẩn đoán độ phủ, mật độ graph
+pnpm test:ingest                                # Chạy deterministic unit tests
+pnpm typecheck:ingest                           # Kiểm tra TypeScript package
+
+# 7. Tắt AI giải phóng RAM sau khi hoàn tất:
+pnpm ai:stop
 ```
 
 ### 📋 Bảng Tham Số & Cờ Tùy Chọn CLI (CLI Flags & Options):

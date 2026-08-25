@@ -318,7 +318,7 @@ export async function runEvalPreflight(required: EvalService[]): Promise<Preflig
     [...new Set(required)].map((svc) => CHECKERS[svc]())
   );
 
-  const strict = envConfig.EVAL_STRICT;
+  const strict = process.env.EVAL_STRICT === 'true' || envConfig.EVAL_STRICT;
   const failed = checks.filter((c) => !c.healthy);
   const ok = !strict || failed.length === 0;
 
@@ -356,7 +356,8 @@ export async function runEvalPreflight(required: EvalService[]): Promise<Preflig
  */
 export async function assertEvalPreflight(required: EvalService[]): Promise<PreflightResult> {
   const result = await runEvalPreflight(required);
-  if (envConfig.EVAL_STRICT && !result.ok) {
+  const isStrict = process.env.EVAL_STRICT === 'true' || envConfig.EVAL_STRICT;
+  if (isStrict && !result.ok) {
     console.error('[EVAL_STRICT] Preflight failed — aborting evaluation.');
     process.exit(1);
   }

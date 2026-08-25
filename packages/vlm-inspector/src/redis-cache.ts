@@ -12,6 +12,7 @@ export type VLMScoreResult = VlmScoringResult & {
   totalScore: number;
   passed: boolean;
   reasons: string[];
+  focalPoint?: [number, number];
 };
 
 let redisClient: Redis | null = null;

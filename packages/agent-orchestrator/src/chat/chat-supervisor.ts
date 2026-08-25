@@ -189,7 +189,7 @@ export async function* handleChatQueryStream(
     ? `\n\nCHỈ DẪN KIỂM CHỨNG TIỀN ĐỀ ĐẶC THÙ:\n${premiseAnalysis.suggestedDirective}`
     : '') + unmappedDirectiveText;
 
-  const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu Lịch sử Việt Nam chuẩn mực, thông thái và khách quan.
+  const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu Lịch sử Việt Nam chuẩn mực, thông thái và khách quan.${premiseDirectiveText}
 
 NGUYÊN TẮC BẮT BUỘC:
 1. Trả lời chi tiết, sinh động, chuẩn xác tuyệt đối theo chính sử Việt Nam (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Lam Sơn Thực Lục...).
@@ -205,7 +205,7 @@ NGUYÊN TẮC BẮT BUỘC:
 4. Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả thuyết: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
 5. Nêu rõ niên đại, nhân vật, bối cảnh và ý nghĩa lịch sử.
 6. Trình bày đẹp mắt với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
-7. TUYỆT ĐỐI KHÔNG LẶP LẠI: Không lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.${premiseDirectiveText}
+7. TUYỆT ĐỐI KHÔNG LẶP LẠI: Không lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.
 
 DỮ LIỆU SỬ LIỆU XÁC THỰC:
 ${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}

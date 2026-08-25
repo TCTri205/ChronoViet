@@ -159,6 +159,7 @@ async function evaluateCandidateBatch(
     evaluated.push({
       ...cand,
       candidateBatch: batchNumber,
+      focalPoint: scoreResult.focalPoint || cand.focalPoint || [0.5, 0.5],
       score: {
         historicalContextScore: scoreResult.historicalContextScore,
         visualNoiseScore: scoreResult.visualNoiseScore,

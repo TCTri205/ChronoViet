@@ -24,11 +24,8 @@ import { chapteringNode } from './nodes/chaptering-node.js';
 import { scriptwriterNode } from './nodes/scriptwriter-node.js';
 import { factCheckerNode } from './nodes/fact-checker-node.js';
 import { segmenterNode } from './nodes/segmenter-node.js';
-import { keywordNode } from './nodes/keyword-node.js';
-import { researchNode } from './nodes/research-node.js';
-import { ttsSynthesisNode } from './nodes/tts-node.js';
+import { assetGenerationForkJoinNode } from './nodes/asset-generation-node.js';
 import { durationReconciliationNode } from './nodes/reconciler-node.js';
-import { vlmInspectionNode } from './nodes/vlm-node.js';
 import { packagerNode } from './nodes/packager-node.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
@@ -174,27 +171,15 @@ export function buildOrchestratorGraph() {
     .addNode('segmenter', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
       return timedNodeExecution('segmenter', () => segmenterNode(state));
     })
-    // Node 5.2: Keyword Extractor (Micro-Step 1C - refine searchKeywords)
-    .addNode('keyword', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return timedNodeExecution('keyword', () => keywordNode(state));
+    // Node 6: Parallel Asset Generation Fork-Join (TTS Synthesis || Keyword -> Research -> VLM Inspection)
+    .addNode('asset_generation', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
+      return timedNodeExecution('asset_generation', () => assetGenerationForkJoinNode(state));
     })
-    // Node 5.5: Research Agent (Micro-Step 1C - Online Image Search)
-    .addNode('research', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return timedNodeExecution('research', () => researchNode(state));
-    })
-    // Node 6: Parallel Worker B - VLM Asset Inspection & Quality Gate
-    .addNode('vlm_inspection', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return timedNodeExecution('vlm_inspection', () => vlmInspectionNode(state));
-    })
-    // Node 7: Parallel Worker A - TTS Synthesis (Audio & Word Timestamps)
-    .addNode('tts_synthesis', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
-      return timedNodeExecution('tts_synthesis', () => ttsSynthesisNode(state));
-    })
-    // Node 8: Duration Reconciliation (Micro-Step 1B-Reconcile Fan-in)
+    // Node 7: Duration Reconciliation (Micro-Step 1B-Reconcile Fan-in)
     .addNode('duration_reconciliation', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
       return timedNodeExecution('duration_reconciliation', () => durationReconciliationNode(state));
     })
-    // Node 9: JSON Schema Packager & Finalize
+    // Node 8: JSON Schema Packager & Finalize
     .addNode('packager', async (state: ChronoGraphState): Promise<ChronoGraphUpdate> => {
       return timedNodeExecution('packager', () => packagerNode(state));
     });
@@ -239,13 +224,10 @@ export function buildOrchestratorGraph() {
   );
   workflow.addEdge('human_review', END);
 
-  // Deterministic Graph Topology (Single-pass pipeline eliminating race condition):
-  // segmenter -> keyword -> research -> vlm_inspection -> tts_synthesis -> duration_reconciliation -> packager -> END
-  workflow.addEdge('segmenter', 'keyword');
-  workflow.addEdge('keyword', 'research');
-  workflow.addEdge('research', 'vlm_inspection');
-  workflow.addEdge('vlm_inspection', 'tts_synthesis');
-  workflow.addEdge('tts_synthesis', 'duration_reconciliation');
+  // Deterministic Fork-Join Topology:
+  // segmenter -> asset_generation -> duration_reconciliation -> packager -> END
+  workflow.addEdge('segmenter', 'asset_generation');
+  workflow.addEdge('asset_generation', 'duration_reconciliation');
   workflow.addEdge('duration_reconciliation', 'packager');
   workflow.addEdge('packager', END);
 

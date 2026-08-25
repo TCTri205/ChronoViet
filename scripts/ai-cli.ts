@@ -297,7 +297,7 @@ export async function showStatus() {
   console.log(`${colors.dim}------------------------------------------------------------------------------${colors.reset}`);
   console.log(`${colors.bright}Unified Commands (CLI: 'pnpm ai <cmd>' or npm scripts 'pnpm ai:<cmd>'):${colors.reset}`);
   console.log(` • ${colors.cyan}pnpm ai${colors.reset} / ${colors.cyan}pnpm ai:status${colors.reset} -> Check services health & loaded models`);
-  console.log(` • ${colors.cyan}pnpm ai start${colors.reset} / ${colors.cyan}pnpm ai:all${colors.reset}   -> Launch full AI stack (Embedding + Extraction + LLM + Reranker + TTS)`);
+  console.log(` • ${colors.cyan}pnpm ai start${colors.reset} / ${colors.cyan}pnpm ai:start${colors.reset} -> Launch full AI stack (Embedding + Extraction + LLM + Reranker + TTS)`);
   console.log(` • ${colors.cyan}pnpm ai lite${colors.reset} / ${colors.cyan}pnpm ai:lite${colors.reset}     -> Launch lightweight pair: Embedding (8090) + Extraction (8094) (~3.1 GB)`);
   console.log(` • ${colors.cyan}pnpm ai emb${colors.reset} / ${colors.cyan}pnpm ai:emb${colors.reset}       -> Launch Embedding server (Port 8090) for Vector RAG`);
   console.log(` • ${colors.cyan}pnpm ai rerank${colors.reset} / ${colors.cyan}pnpm ai:rerank${colors.reset} -> Launch Reranker Engine (Port 8096) for Cross-Encoder`);

@@ -20,4 +20,16 @@ describe('AI_EXECUTION_MODE and Config Presets', () => {
     expect(summary.localEndpoints.rerank).toBeDefined();
     expect(Array.isArray(summary.cloudProvidersConfigured)).toBe(true);
   });
+
+  it('should enforce local_only flags when AI_EXECUTION_MODE is local_only', () => {
+    if (envConfig.AI_EXECUTION_MODE === 'local_only') {
+      expect(envConfig.ENABLE_CLOUD_FALLBACK).toBe(false);
+      expect(envConfig.INFERENCE_ROUTING_MODE).toBe('local_only');
+      expect(envConfig.USE_LOCAL_LLM).toBe(true);
+      expect(envConfig.AI_STANDBY_ON_RENDER).toBe(false);
+      const summary = getAiExecutionSummary();
+      expect(summary.enableCloudFallback).toBe(false);
+      expect(summary.routingMode).toBe('local_only');
+    }
+  });
 });

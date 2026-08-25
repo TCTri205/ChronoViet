@@ -1,7 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { generateLLMCompletion, isLLMServiceHealthy } from '../llm-client.js';
+import { ResourceSentinel } from '../resource-sentinel.js';
 
 describe('LLM Gateway Client', () => {
+  beforeEach(() => {
+    vi.spyOn(ResourceSentinel, 'shouldOffloadToCloud').mockResolvedValue({ shouldOffload: false });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('checks service health gracefully', async () => {
     const health = await isLLMServiceHealthy();
     expect(health).toHaveProperty('healthy');

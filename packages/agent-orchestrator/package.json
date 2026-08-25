@@ -12,6 +12,7 @@
     "eval": "tsx eval/benchmarks/index.ts",
     "eval:all": "tsx eval/benchmarks/index.ts --all",
     "eval:quick": "tsx eval/benchmarks/index.ts --quick",
+    "eval:research": "tsx eval/research-runner.ts",
     "eval:a0": "tsx eval/benchmarks/index.ts --a0",
     "eval:a1": "tsx eval/benchmarks/index.ts --a1",
     "eval:a2": "tsx eval/benchmarks/index.ts --a2",

@@ -64,28 +64,60 @@ graph TD
    $$\text{WPM} = \frac{\text{Word Count}}{\text{Duration (seconds)} / 60}$$
 4. **Pacing Allocation Error:**
    $$\text{Error}_{\%} = \frac{|\text{Planned Seconds} - \text{Target Seconds}|}{\text{Target Seconds}} \times 100\%$$
+5. **Neural LLM-as-a-Judge NLI Grounding (`evaluateNliWithLlmJudge`):**
+   $$\text{EntailmentScore} \in [0.0, 1.0], \quad \text{Verdict} \in \{\text{ENTAILMENT}, \text{NEUTRAL}, \text{CONTRADICTION}\}$$
+6. **TTS Audio Waveform PCM Inspection (`analyzeWavAudioBuffer`):**
+   $$\text{ClippingRatio} = \frac{N_{\text{clipped}}}{N_{\text{total}}}, \quad \text{SilenceRatio} = \frac{N_{\text{silent}}}{N_{\text{total}}}, \quad \text{RMSAmplitude} = \sqrt{\frac{1}{N} \sum_{i=1}^N x_i^2}$$
 
 ---
 
-## 4. CLI Command Reference
+## 4. Preflight Infrastructure & Model Requirements (Yêu Cầu Hạ Tầng AI & CSDL)
+
+> ⚠️ **Chế độ Strict Pre-flight (`EVAL_STRICT`):** Khi chạy benchmark Multi-Agent StateGraph, hệ thống yêu cầu kết nối đến PostgreSQL và các mô hình AI cục bộ thật để đánh giá năng lực lập luận, guardrails và tone văn dã sử.
 
 ```bash
-# Run Full Multi-Agent Evaluation Suite
+# 0. Khởi động CSDL và các AI model tương ứng:
+pnpm stack:infra                                    # Khởi động PostgreSQL (Checkpoints persistence) & Redis
+pnpm ai:llm                                         # [Bắt buộc A0, A1, A2, A3] Primary LLM Port 8092 (Qwen-9B)
+pnpm ai:tts                                         # [Bắt buộc worker TTS] VieNeu TTS Port 8080 (hoặc dùng synthetic fallback)
+
+# Hoặc khởi động nhanh toàn bộ AI stack:
+pnpm ai:start                                       # Bật toàn bộ các cổng 8090, 8092, 8094, 8096, 8080
+pnpm ai:status                                      # Kiểm tra trạng thái các cổng AI
+```
+
+---
+
+## 5. CLI Command Reference (Hướng Dẫn Thực Thi)
+
+```bash
+# 1. Chạy đánh giá toàn diện Orchestrator (State machine completion, pacing & guardrails)
+pnpm eval:orchestrator
+# hoặc trong package:
 pnpm --filter @chronoviet/agent-orchestrator eval
 
-# Fast smoke run with sampling
+# 2. Chạy đánh giá nhanh (Fast smoke run with sampling)
 pnpm --filter @chronoviet/agent-orchestrator eval:quick
 pnpm --filter @chronoviet/agent-orchestrator eval -- --sample 5
 
-# Run targeted component tier
-pnpm --filter @chronoviet/agent-orchestrator eval:a0
-pnpm --filter @chronoviet/agent-orchestrator eval:a1
-pnpm --filter @chronoviet/agent-orchestrator eval:a2
-pnpm --filter @chronoviet/agent-orchestrator eval:a3
-pnpm --filter @chronoviet/agent-orchestrator eval:a4
-pnpm --filter @chronoviet/agent-orchestrator eval:a5
-pnpm --filter @chronoviet/agent-orchestrator eval:sys
+# 3. Chạy từng tầng benchmark con (A0 - A5 & SYS):
+pnpm --filter @chronoviet/agent-orchestrator eval:a0        # A0: Chat & Brief Compilation
+pnpm --filter @chronoviet/agent-orchestrator eval:a1        # A1: Chaptering & Outline Budgeting
+pnpm --filter @chronoviet/agent-orchestrator eval:a2        # A2: Historical Scriptwriting & Tone
+pnpm --filter @chronoviet/agent-orchestrator eval:a3        # A3: Guardrails, Anti-Sycophancy & Auditing
+pnpm --filter @chronoviet/agent-orchestrator eval:a4        # A4: Visual Direction & Scene Segmentation
+pnpm --filter @chronoviet/agent-orchestrator eval:a5        # A5: Research Agent & Whitelist Licensing
+pnpm --filter @chronoviet/agent-orchestrator eval:sys       # SYS: StateGraph Orchestration & Ablation
 
-# Run deterministic unit tests for mathematical metrics
+# 4. Chạy đánh giá riêng Research Agent (Image candidate resolution)
+pnpm --filter @chronoviet/agent-orchestrator eval:research
+
+# 5. Chạy deterministic unit tests (chạy trong CI)
+pnpm test:orchestrator
+# hoặc trong package:
+pnpm --filter @chronoviet/agent-orchestrator test
 pnpm --filter @chronoviet/agent-orchestrator test:eval
+
+# 6. Tắt AI giải phóng RAM sau khi hoàn tất benchmark
+pnpm ai:stop
 ```

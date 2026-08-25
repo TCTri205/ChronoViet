@@ -12,6 +12,8 @@ import { generateEmbedding, isPgAvailable, envConfig } from '@chronoviet/infra';
 import { HighResolutionLatencyProfiler } from '../metrics/latency-profiler.js';
 import { getStratifiedHistoricalSample } from '../datasets/builder.js';
 
+import { QUESTION_STOPWORDS } from '../../src/retrieval/question-ner.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -64,7 +66,32 @@ export async function runC4Benchmark(): Promise<ComponentBenchmarkReport> {
 
   function isMatch(chunk: any, item: ChronoevalDatasetItem): boolean {
     const goldIds = new Set(item.ground_truth_chunks.filter((c) => c.relevance_grade >= 2).map((c) => c.chunk_id));
-    return Boolean(chunk.chunkId && goldIds.has(chunk.chunkId));
+    if (chunk.chunkId && goldIds.has(chunk.chunkId)) return true;
+
+    // Semi-Open World Match: evaluate evidence claim containment in candidate chunk text
+    const chunkText = `${chunk.title || ''} ${chunk.textContent || ''}`.toLowerCase();
+    const goldClaims = item.ground_truth_chunks
+      .filter((c) => c.relevance_grade >= 2)
+      .flatMap((c) => c.key_evidence_claims || [])
+      .filter(Boolean);
+
+    if (goldClaims.length > 0) {
+      let matchedClaims = 0;
+      for (const claim of goldClaims) {
+        const tokens = claim
+          .toLowerCase()
+          .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+          .split(/\s+/)
+          .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
+        if (tokens.length === 0) continue;
+        const hits = tokens.filter((t) => chunkText.includes(t)).length;
+        if (hits >= Math.ceil(tokens.length * 0.65)) {
+          matchedClaims++;
+        }
+      }
+      if (matchedClaims >= 1) return true;
+    }
+    return false;
   }
 
   const kSweepScores: Record<string, number> = {

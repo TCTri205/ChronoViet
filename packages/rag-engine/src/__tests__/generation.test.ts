@@ -51,7 +51,13 @@ describe('PromptEngine', () => {
     expect(intent).toBe('COMPARATIVE');
   });
 
-  it('should build messages with dynamic token budget', () => {
+  it('should detect biography intent from expanded patterns', () => {
+    expect(PromptEngine.detectQueryIntent('Ai đánh tan quân Nam Hán trên sông Bạch Đằng năm 938?')).toBe('BIOGRAPHY');
+    expect(PromptEngine.detectQueryIntent('Vua nào sáng lập ra triều đại nhà Lý?')).toBe('BIOGRAPHY');
+    expect(PromptEngine.detectQueryIntent('Tên thật của vua Quang Trung là gì?')).toBe('BIOGRAPHY');
+  });
+
+  it('should build messages with dynamic token budget and zero-evidence directive', () => {
     const result = PromptEngine.buildPrompt({
       query: 'Tại sao lại có hội nghị Diên Hồng?',
       contextText: 'Nội dung sử liệu mẫu',
@@ -63,6 +69,7 @@ describe('PromptEngine', () => {
     expect(result.messages[0].content).toContain('ChronoViet AI');
     expect(result.messages[0].content).toContain('CAUSAL REASONING');
     expect(result.messages[0].content).toContain('MULTI-HOP LINKING');
+    expect(result.messages[0].content).toContain('ZERO EVIDENCE REFUSAL');
     expect(result.maxTokens).toBeGreaterThanOrEqual(850);
   });
 });

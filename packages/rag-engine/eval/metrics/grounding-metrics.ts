@@ -3,6 +3,8 @@
  * Measures Proposition-level Entailment, Contradiction Detection, Citation Coverage/Correctness, and Folklore Guardrails
  */
 
+import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
+
 const VIETNAMESE_STOP_WORDS = new Set([
   'là', 'và', 'của', 'tại', 'cho', 'vào', 'ra', 'bị', 'bởi', 'thời', 'các', 'những', 'đã', 'trong',
   'với', 'theo', 'như', 'được', 'tháng', 'ngày', 'đến', 'từ', 'có', 'thì', 'ở', 'đó', 'này',
@@ -50,12 +52,13 @@ const KINSHIP_TERMS = ['cha của', 'mẹ của', 'anh của', 'em của', 'ch�
 export const VIETNAMESE_STOPWORDS = new Set([
   'và', 'là', 'của', 'ở', 'tại', 'với', 'trong', 'được', 'các', 'những',
   'cho', 'về', 'này', 'đó', 'thì', 'mà', 'ra', 'vào', 'khi', 'đến', 'từ',
-  'như', 'có', 'đã', 'sẽ', 'đang', 'rất', 'lại', 'nên', 'cũng', 'bởi', 'để'
+  'như', 'có', 'đã', 'sẽ', 'đang', 'rất', 'lại', 'nên', 'cũng', 'bởi', 'để',
+  'do', 'nhà', 'nước', 'thuộc', 'thời', 'kỳ', 'vẫn', 'từng', 'nơi', 'sau', 'trước'
 ]);
 
 const DISCOURSE_PATTERNS = [
   /^dưới đây là/i,
-  /^theo (tư liệu|sử liệu|nguồn tin|tài liệu|thông tin|đại việt sử ký)/i,
+  /^theo (tư liệu|sử liệu|nguồn tin|tài liệu|thông tin|đại việt sử ký|sử sách|lịch sử|ghi chép)/i,
   /^như vậy/i,
   /^tóm lại/i,
   /^nhìn chung/i,
@@ -64,6 +67,13 @@ const DISCOURSE_PATTERNS = [
   /^đây là một trong những/i,
   /^về mặt lịch sử/i,
   /^câu trả lời là/i,
+  /^(chào bạn|dạ thưa|thưa bạn|xin chào|kính chào|vâng|chào anh\/chị)/i,
+  /^để trả lời câu hỏi/i,
+  /^về câu hỏi (này|của bạn)/i,
+  /^dựa vào các thông tin/i,
+  /^sau đây là/i,
+  /^hy vọng thông tin này/i,
+  /^nếu bạn cần/i,
 ];
 
 /**
@@ -87,11 +97,12 @@ export function extractFactualClaims(answerText: string): string[] {
     .map((s) =>
       s
         .replace(/^[-*•\d.)\s]+/, '')
-        .replace(/^(dạ|vâng|xin chào|kính chào)[,.\s]+/i, '')
-        .replace(/^theo (tôi|chúng tôi|em) được biết\s+(thì\s+)?/i, '')
+        .replace(/^(dạ|vâng|xin chào|kính chào|thưa bạn|chào bạn)[,.\s]+/i, '')
+        .replace(/^theo (tôi|chúng tôi|em|sử sách|sử liệu|ghi chép) được biết\s+(thì\s+)?/i, '')
+        .replace(/^(tóm lại|nhìn chung|như vậy|dưới đây là|sau đây là)[,:\s]+/i, '')
         .trim()
     )
-    .filter((s) => s.length > 8 && !isDiscourseOrMetaSentence(s));
+    .filter((s) => s.length > 12 && !isDiscourseOrMetaSentence(s));
 
   return rawSentences;
 }
@@ -374,5 +385,139 @@ export function validateSourceReliabilityTiering(
     }
   }
   return true;
+}
+
+/**
+ * Neural LLM-as-a-Judge Proposition Entailment Verification
+ * Uses local Qwen 3.5 9B with Chain-of-Thought (zero mock/fallback in strict mode)
+ */
+export async function verifyClaimEntailmentWithLlmJudge(
+  claim: string,
+  evidenceChunks: string[]
+): Promise<{
+  status: 'ENTAILED' | 'CONTRADICTED' | 'NEUTRAL' | 'NOT_SUPPORTED';
+  confidence: number;
+  reasoning: string;
+}> {
+  const claimClean = claim.trim();
+  if (!claimClean) {
+    return { status: 'NEUTRAL', confidence: 1.0, reasoning: 'Empty claim' };
+  }
+  const combinedEvidence = evidenceChunks.filter(Boolean).join('\n\n').trim();
+  if (!combinedEvidence) {
+    return { status: 'NOT_SUPPORTED', confidence: 1.0, reasoning: 'No context provided' };
+  }
+
+  const systemPrompt = `Bạn là chuyên gia thẩm định logic và sử liệu Việt Nam (NLI Evaluator).
+Nhiệm vụ: Đánh giá mối quan hệ suy diễn logic giữa MỆNH ĐỀ CẦN KIỂM CHỨNG (Claim) và TƯ LIỆU GỐC (Evidence).
+
+Quy tắc phân loại:
+- "ENTAILED": Mệnh đề được chứng minh hoặc suy diễn logic hoàn toàn từ tư liệu gốc.
+- "CONTRADICTED": Mệnh đề mâu thuẫn trực tiếp với tư liệu gốc (sai niên đại, nhân vật, hành động, kết quả).
+- "NOT_SUPPORTED": Tư liệu gốc không nhắc đến hoặc không đủ thông tin để xác nhận/bác bỏ mệnh đề.
+- "NEUTRAL": Mệnh đề chỉ là câu dẫn dắt giao tiếp hoặc tổng thuật trung lập không chứa dữ kiện lịch sử mới.
+
+Xuất duy nhất 1 JSON object:
+{
+  "status": "ENTAILED" | "CONTRADICTED" | "NOT_SUPPORTED" | "NEUTRAL",
+  "confidence": <number từ 0.0 đến 1.0>,
+  "reasoning": "<Giải thích ngắn gọn 1 câu>"
+}`;
+
+  const userContent = `MỆNH ĐỀ (Claim): "${claimClean}"
+
+TƯ LIỆU GỐC (Evidence):
+${combinedEvidence.slice(0, 1500)}`;
+
+  try {
+    const res = await callLlm({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      temperature: 0.0,
+      responseFormat: 'json_object',
+      timeoutMs: 30000,
+    });
+
+    const parsed = parseLlmJson(res.content);
+    const validStatuses = ['ENTAILED', 'CONTRADICTED', 'NOT_SUPPORTED', 'NEUTRAL'] as const;
+    const status = validStatuses.includes(parsed.status) ? parsed.status : 'NEUTRAL';
+    const confidence = typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0.9;
+    return {
+      status,
+      confidence,
+      reasoning: String(parsed.reasoning || ''),
+    };
+  } catch (err: any) {
+    if (envConfig.EVAL_STRICT) {
+      throw new Error(`[EVAL_STRICT] LLM-as-a-Judge NLI evaluation failed: ${err.message}`);
+    }
+    // Fallback to deterministic heuristic when not in strict mode
+    const fallbackRes = verifyClaimEntailment(claim, evidenceChunks);
+    return {
+      ...fallbackRes,
+      reasoning: `Heuristic fallback: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * Calculates Claim-Level Faithfulness and Hallucination Rate using Neural LLM Judge
+ */
+export async function calculateClaimFaithfulnessAsync(
+  claims: string[],
+  evidenceChunks: string[]
+): Promise<{
+  faithfulnessPercent: number; // 0..100
+  hallucinationRatePercent: number; // 0..100
+  entailedCount: number;
+  totalClaims: number;
+  evaluations: Array<{ claim: string; status: string; confidence: number; reasoning: string }>;
+}> {
+  if (!claims || claims.length === 0) {
+    return {
+      faithfulnessPercent: 100,
+      hallucinationRatePercent: 0,
+      entailedCount: 0,
+      totalClaims: 0,
+      evaluations: [],
+    };
+  }
+
+  let entailedCount = 0;
+  let contradictedOrUnsupported = 0;
+  let factualClaimsCount = 0;
+  const evaluations: Array<{ claim: string; status: string; confidence: number; reasoning: string }> = [];
+
+  for (const claim of claims) {
+    const res = await verifyClaimEntailmentWithLlmJudge(claim, evidenceChunks);
+    evaluations.push({
+      claim,
+      status: res.status,
+      confidence: res.confidence,
+      reasoning: res.reasoning,
+    });
+
+    if (res.status === 'ENTAILED') {
+      entailedCount++;
+      factualClaimsCount++;
+    } else if (res.status === 'CONTRADICTED' || res.status === 'NOT_SUPPORTED') {
+      contradictedOrUnsupported++;
+      factualClaimsCount++;
+    }
+  }
+
+  const effectiveTotal = Math.max(1, factualClaimsCount);
+  const faithfulnessPercent = (entailedCount / effectiveTotal) * 100;
+  const hallucinationRatePercent = (contradictedOrUnsupported / effectiveTotal) * 100;
+
+  return {
+    faithfulnessPercent: Number(faithfulnessPercent.toFixed(2)),
+    hallucinationRatePercent: Number(hallucinationRatePercent.toFixed(2)),
+    entailedCount,
+    totalClaims: claims.length,
+    evaluations,
+  };
 }
 

@@ -94,15 +94,23 @@ switch (resolvedMode) {
     break;
 }
 
-// Normalization & Backward-Compatibility aliases
+// Normalization & Backward-Compatibility aliases:
+// When AI_EXECUTION_MODE is explicitly provided, its master presets have authoritative precedence.
+// Subordinate flags only override presets when AI_EXECUTION_MODE was deduced or when non-conflicting.
+const effectiveUseLocalLlm = rawMode ? presetUseLocalLlm : (rawProcessEnv.USE_LOCAL_LLM ?? presetUseLocalLlm);
+const effectiveEnableCloudFallback = rawMode ? presetEnableCloudFallback : (rawProcessEnv.ENABLE_CLOUD_FALLBACK ?? presetEnableCloudFallback);
+const effectiveInferenceRoutingMode = rawMode ? presetInferenceRoutingMode : (rawProcessEnv.INFERENCE_ROUTING_MODE ?? presetInferenceRoutingMode);
+const effectiveStandbyOnRender = rawMode ? presetStandbyOnRender : (rawProcessEnv.AI_STANDBY_ON_RENDER ?? presetStandbyOnRender);
+const effectiveVlmProvider = rawMode ? presetVlmProvider : (rawProcessEnv.VLM_PROVIDER ?? presetVlmProvider);
+
 const processEnv: Record<string, string | undefined> = {
   ...rawProcessEnv,
   AI_EXECUTION_MODE: resolvedMode,
-  USE_LOCAL_LLM: rawProcessEnv.USE_LOCAL_LLM ?? presetUseLocalLlm,
-  ENABLE_CLOUD_FALLBACK: rawProcessEnv.ENABLE_CLOUD_FALLBACK ?? presetEnableCloudFallback,
-  INFERENCE_ROUTING_MODE: rawProcessEnv.INFERENCE_ROUTING_MODE ?? presetInferenceRoutingMode,
-  AI_STANDBY_ON_RENDER: rawProcessEnv.AI_STANDBY_ON_RENDER ?? presetStandbyOnRender,
-  VLM_PROVIDER: rawProcessEnv.VLM_PROVIDER ?? presetVlmProvider,
+  USE_LOCAL_LLM: effectiveUseLocalLlm,
+  ENABLE_CLOUD_FALLBACK: effectiveEnableCloudFallback,
+  INFERENCE_ROUTING_MODE: effectiveInferenceRoutingMode,
+  AI_STANDBY_ON_RENDER: effectiveStandbyOnRender,
+  VLM_PROVIDER: effectiveVlmProvider,
   REMOTE_LLM_BASE_URL: rawProcessEnv.REMOTE_LLM_BASE_URL || rawProcessEnv.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
   AGNES_BASE_URL: rawProcessEnv.AGNES_BASE_URL || rawProcessEnv.REMOTE_LLM_BASE_URL || 'https://apihub.agnes-ai.com/v1',
   AGNES_API_KEY: rawProcessEnv.AGNES_API_KEY || (rawProcessEnv.AGNES_API_KEYS ? rawProcessEnv.AGNES_API_KEYS.split(/[,;\n]+/)[0]?.trim() : undefined),

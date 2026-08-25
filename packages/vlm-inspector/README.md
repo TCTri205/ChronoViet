@@ -72,20 +72,33 @@ console.log('Pure Code Fallback:', result.isPureCodeFallback);
 console.log('Selected Candidate:', result.selectedCandidate?.title);
 ```
 
-### 3.2. Bộ Lệnh CLI (Thực thi từ Root Monorepo)
+### 3.2. Bộ Lệnh CLI (Thực thi từ Root Monorepo hoặc Package)
 
 ```bash
+# 0. Khởi động Local VLM / Primary LLM (Port 8092 - Qwen 3.5 9B):
+pnpm ai:llm
+# hoặc kiểm tra trạng thái: pnpm ai:status
+
 # 1. Chạy benchmark offline đo lường KPI Mô-đun 3 (dùng candidate pool mock, không phụ thuộc mạng)
+pnpm eval:vlm
+# hoặc trong package:
 pnpm --filter @chronoviet/vlm-inspector eval
 
 # 2. Chạy Unit Tests (License Filter, Clip Scorer, Visual Quality Gate,...)
+pnpm test:vlm
+# hoặc trong package:
 pnpm --filter @chronoviet/vlm-inspector test
 
 # 3. Kiểm tra kiểu dữ liệu TypeScript (0 lỗi)
+pnpm typecheck:vlm
+# hoặc trong package:
 pnpm --filter @chronoviet/vlm-inspector typecheck
 
 # 4. Build gói mã nguồn
 pnpm --filter @chronoviet/vlm-inspector build
+
+# 5. Dừng AI model sau khi kiểm thử:
+pnpm ai:stop
 ```
 
 ---

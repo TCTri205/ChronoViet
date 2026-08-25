@@ -26,7 +26,13 @@ Nhiệm vụ: Phân chia chủ đề lịch sử thành cấu trúc ${numChapter
 QUY TẮC BẮT BUỘC:
 1. Xuất duy nhất 1 JSON object hợp lệ theo schema: { "chapters": [ ... ] }.
 2. Không thêm bất kỳ văn bản giải thích nào ngoài JSON.
-3. Mỗi chương cần tóm tắt rõ nét, thời lượng target sát với yêu cầu (~${secPerChapter}s).`;
+3. Mỗi chương cần tóm tắt rõ nét, thời lượng target sát với yêu cầu (~${secPerChapter}s).
+4. CẤU TRÚC KỊCH TÍNH (DRAMATIC ARC):
+   - Phân bổ mạch kịch bản theo nhịp độ lịch sử điện ảnh:
+     * Hồi mở đầu: Bối cảnh lịch sử, tiền đề & nguyên nhân sâu xa.
+     * Hồi chuyển biến: Nguy cơ khủng hoảng, sách lược đối phó và chuẩn bị thế trận.
+     * Hồi cao trào: Trận quyết chiến, bước ngoặt mang tính định đoạt non sông.
+     * Hồi kết: Kết cục lịch sử, ý nghĩa thời đại, bài học và di sản ngàn đời.`;
 
   const userContent = `Chủ đề: "${state.userPrompt}"
 Thể loại: ${state.videoType}

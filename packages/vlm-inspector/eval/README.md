@@ -9,16 +9,30 @@ Bộ công cụ đánh giá dành riêng cho **VLM Inspector Sub-Agent** (Whitel
 - **License Compliance Rate**: $100\%$ (Tuân thủ bản quyền Public Domain / CC0 / CC-BY).
 - **Image Search Providers** (unit tests tại `packages/agent-orchestrator/src/__tests__/search-providers.test.ts`): domain whitelist đúng, license inference đúng, mapping từng provider (SerpAPI `images_results[].original`, Tavily `images[]`, Brave `results[].properties.url`).
 
-## 🚀 How to Run Evaluation
+## ⚡ Preflight Infrastructure & AI Models
+
+> ⚠️ **Preflight bắt buộc (Eval Integrity):** Khi `EVAL_STRICT=true` (mặc định), eval fail-fast nếu **Local Unified VLM** (`qwen3.5-9b-instruct-q4_k_m` qua llama-server tại `LLM_BASE_URL` - Cổng `8092`) không hoạt động.
+
 ```bash
-# Eval VLM Inspector (offline image scoring, candidate pool mock)
-pnpm --filter @chronoviet/vlm-inspector eval
-
-# Unit tests của VLM Inspector (License Filter, Clip Scorer, Quality Gate)
-pnpm --filter @chronoviet/vlm-inspector test
-
-# Unit tests của Research Agent / Image Search Providers
-pnpm --filter @chronoviet/agent-orchestrator test
+# 0. Khởi động Local VLM (Port 8092 - Qwen 3.5 9B):
+pnpm ai:llm
+# hoặc kiểm tra trạng thái:
+pnpm ai:status
 ```
 
-> ⚠️ **Preflight bắt buộc (Eval Integrity):** Khi `EVAL_STRICT=true` (mặc định), eval fail-fast nếu **Local Unified VLM** (`qwen3.5-9b-instruct-q4_k_m` qua llama-server tại `LLM_BASE_URL`) không hoạt động — không dùng Gemini cloud / CLIP heuristic. Dev-mode: `EVAL_STRICT=false` (Gemini hoặc CLIP, KHÔNG hợp lệ làm benchmark).
+## 🚀 How to Run Evaluation
+
+```bash
+# 1. Eval VLM Inspector (offline image scoring, candidate pool mock)
+pnpm eval:vlm
+# hoặc trong package:
+pnpm --filter @chronoviet/vlm-inspector eval
+
+# 2. Unit tests của VLM Inspector (License Filter, Clip Scorer, Quality Gate)
+pnpm test:vlm
+# hoặc trong package:
+pnpm --filter @chronoviet/vlm-inspector test
+
+# 3. Tắt AI sau khi hoàn tất:
+pnpm ai:stop
+```

@@ -247,7 +247,7 @@ export async function searchDenseVector(
 }
 
 /**
- * Builds resilient PostgreSQL tsquery string combining multi-word AND and disjunctive OR
+ * Builds resilient PostgreSQL tsquery string with disjunctive OR across sanitized tokens
  */
 export function buildDisjunctiveFtsTsQuery(queryText: string): string {
   const sanitized = sanitizeFtsQuery(queryText);
@@ -259,11 +259,7 @@ export function buildDisjunctiveFtsTsQuery(queryText: string): string {
     .filter((t) => t.length >= 2);
 
   if (tokens.length === 0) return '';
-  if (tokens.length <= 2) return tokens.join(' & ');
-
-  const andClause = tokens.join(' & ');
-  const orClause = tokens.join(' | ');
-  return `(${andClause}) | (${orClause})`;
+  return tokens.join(' | ');
 }
 
 export async function searchLexicalFTS(
@@ -277,38 +273,66 @@ export async function searchLexicalFTS(
   if (pgConnected) {
     const tsQueryStr = buildDisjunctiveFtsTsQuery(queryText);
     let ftsRows: any[] = [];
-    try {
-      ftsRows = await query<{
-        id: string;
-        title: string;
-        text_content: string;
-        dynasty?: string;
-        source_reliability?: string;
-        rank: number;
-      }>(
-        `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, to_tsquery('simple', $1)) AS rank
-         FROM document_chunks
-         WHERE tsv @@ to_tsquery('simple', $1)
-         ORDER BY rank DESC
-         LIMIT $2;`,
-        [tsQueryStr, topK]
-      );
-    } catch {
-      ftsRows = await query<{
-        id: string;
-        title: string;
-        text_content: string;
-        dynasty?: string;
-        source_reliability?: string;
-        rank: number;
-      }>(
-        `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
-         FROM document_chunks
-         WHERE tsv @@ plainto_tsquery('simple', $1)
-         ORDER BY rank DESC
-         LIMIT $2;`,
-        [sanitizedQuery, topK]
-      );
+    if (tsQueryStr) {
+      try {
+        ftsRows = await query<{
+          id: string;
+          title: string;
+          text_content: string;
+          dynasty?: string;
+          source_reliability?: string;
+          rank: number;
+        }>(
+          `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, to_tsquery('simple', $1)) AS rank
+           FROM document_chunks
+           WHERE tsv @@ to_tsquery('simple', $1)
+           ORDER BY rank DESC
+           LIMIT $2;`,
+          [tsQueryStr, topK]
+        );
+      } catch {
+        ftsRows = [];
+      }
+    }
+
+    if (!ftsRows || ftsRows.length === 0) {
+      try {
+        ftsRows = await query<{
+          id: string;
+          title: string;
+          text_content: string;
+          dynasty?: string;
+          source_reliability?: string;
+          rank: number;
+        }>(
+          `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, websearch_to_tsquery('simple', $1)) AS rank
+           FROM document_chunks
+           WHERE tsv @@ websearch_to_tsquery('simple', $1)
+           ORDER BY rank DESC
+           LIMIT $2;`,
+          [sanitizedQuery, topK]
+        );
+      } catch {
+        try {
+          ftsRows = await query<{
+            id: string;
+            title: string;
+            text_content: string;
+            dynasty?: string;
+            source_reliability?: string;
+            rank: number;
+          }>(
+            `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
+             FROM document_chunks
+             WHERE tsv @@ plainto_tsquery('simple', $1)
+             ORDER BY rank DESC
+             LIMIT $2;`,
+            [sanitizedQuery, topK]
+          );
+        } catch {
+          ftsRows = [];
+        }
+      }
     }
 
     if (ftsRows && ftsRows.length > 0) {

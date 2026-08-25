@@ -43,7 +43,7 @@ export class TavilyImageSearchProvider implements ImageSearchProvider {
           body: JSON.stringify({
             query: keywords,
             search_depth: 'basic',
-            max_results: Math.min(10, Math.max(1, limit * 2)),
+            max_results: Math.min(20, Math.max(1, limit * 2)),
             include_images: true,
             include_answer: false,
             include_raw_content: false,

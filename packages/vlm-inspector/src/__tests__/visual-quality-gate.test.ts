@@ -165,5 +165,40 @@ describe('VisualQualityGate Unit Tests', () => {
       expect(result.isPureCodeFallback).toBe(true);
       expect(result.inspectedCandidates[0].verdict).toBe('REJECT');
     });
+
+    it('parses VLM anachronism response and extracts focalPoint properly', async () => {
+      const { extractAndParseJson } = await import('../vlm-scorer.js');
+
+      const mockVlmJson = JSON.stringify({
+        historicalContextScore: 35,
+        visualNoiseScore: 25,
+        artisticFitScore: 28,
+        focalPoint: [0.45, 0.38],
+        reasons: ['Trang phục triều Trần chân thực', 'Độ phân giải sắc nét không watermark'],
+      });
+
+      const parsed = extractAndParseJson(mockVlmJson, 'LOCAL_VLM');
+      expect(parsed.passed).toBe(true);
+      expect(parsed.totalScore).toBe(88);
+      expect(parsed.focalPoint).toEqual([0.45, 0.38]);
+      expect(parsed.reasons.length).toBe(2);
+    });
+
+    it('penalizes anachronistic foreign attire or fantasy elements to fail quality threshold', async () => {
+      const { extractAndParseJson } = await import('../vlm-scorer.js');
+
+      const mockAnachronismResponse = JSON.stringify({
+        historicalContextScore: 5, // Penalized for Qing queue braid in Ly dynasty
+        visualNoiseScore: 20,
+        artisticFitScore: 15,
+        focalPoint: [0.5, 0.5],
+        reasons: ['Phát hiện trang phục triều đại Mãn Thanh sai lệch với thời kỳ nhà Lý'],
+      });
+
+      const parsed = extractAndParseJson(mockAnachronismResponse, 'LOCAL_VLM');
+      expect(parsed.passed).toBe(false);
+      expect(parsed.totalScore).toBe(40);
+      expect(parsed.historicalContextScore).toBe(5);
+    });
   });
 });
