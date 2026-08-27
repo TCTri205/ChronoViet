@@ -1,0 +1,116 @@
+name: DevSecOps Security Scanner (Trivy)
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
+  schedule:
+    # Weekly scan at 00:00 every Monday to check for newly published CVEs
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write # Required for uploading SARIF reports to GitHub Security tab
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trivy-fs-and-secrets:
+    name: Quét Filesystem, Dependencies & Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability & secret scanner (Filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret,misconfig'
+          severity: 'CRITICAL,HIGH'
+          format: 'table'
+          output: 'trivy-fs-report.txt'
+          exit-code: '0'
+
+      - name: Generate SARIF report for GitHub Security Tab
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret,misconfig'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          exit-code: '0'
+
+      - name: Upload SARIF to GitHub Code Scanning Alerts
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+        continue-on-error: true
+
+      - name: Print Scan Summary to GitHub Job Summary
+        if: always()
+        run: |
+          echo "### 🛡️ Trivy Filesystem & Secrets Scan Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat trivy-fs-report.txt >> $GITHUB_STEP_SUMMARY || echo "No critical issues detected" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  trivy-docker-images:
+    name: Quét Container Images (App & Worker)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build App Image for Scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.app
+          load: true
+          tags: chronoviet-app:scan
+          cache-from: type=gha
+
+      - name: Build Worker Image for Scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.worker
+          load: true
+          tags: chronoviet-worker:scan
+          cache-from: type=gha
+
+      - name: Scan App Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'chronoviet-app:scan'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Scan Worker Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'chronoviet-worker:scan'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'

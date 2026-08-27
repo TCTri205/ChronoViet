@@ -7,12 +7,16 @@
 
 ![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)
 ![pnpm Workspaces](https://img.shields.io/badge/pnpm-monorepo-orange.svg)
+![CI Status](https://github.com/TCTri205/ChronoViet/actions/workflows/ci.yml/badge.svg)
+![Trivy Security](https://github.com/TCTri205/ChronoViet/actions/workflows/security.yml/badge.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=TCTri205_ChronoViet&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=TCTri205_ChronoViet)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=TCTri205_ChronoViet&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=TCTri205_ChronoViet)
 ![Remotion Engine](https://img.shields.io/badge/Remotion-v4-blue.svg)
-![React](https://img.shields.io/badge/React-18-61dafb.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791.svg)
 ![Redis](https://img.shields.io/badge/Redis-7-red.svg)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ed.svg)
+
 
 ---
 
