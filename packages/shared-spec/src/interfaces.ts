@@ -33,6 +33,8 @@ import {
   GroundedClaimItem,
   HistoricalAnswerGenerationRequest,
   HistoricalAnswerResponse,
+  ChatIntent,
+  ChatIntentSchema,
 } from './schema.js';
 
 export type {
@@ -43,6 +45,7 @@ export type {
   AuditActionType,
   AliasType,
   CandidateEntitySpan,
+  HistoricalContextEntity,
   HistoricalRelationType,
   GoldenBenchmarkEntity,
   GoldenBenchmarkTriple,
@@ -56,8 +59,9 @@ export type {
   GroundedClaimItem,
   HistoricalAnswerGenerationRequest,
   HistoricalAnswerResponse,
+  ChatIntent,
 };
-export { getCanonicalEntityIdPrefix };
+export { getCanonicalEntityIdPrefix, ChatIntentSchema };
 
 // ============================================================================
 // Hierarchical Chunking Bounds (SSOT)

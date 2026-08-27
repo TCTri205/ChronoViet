@@ -15,6 +15,7 @@ import {
   createLogger,
   ensureProjectAssetsReady,
   envConfig,
+  findMonorepoRoot,
   formatErrorMessage,
   initProjectWorkspace,
   loadProjectSchema,
@@ -48,7 +49,32 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     fields: { projectId, jobId: job.id },
   });
 
-  // 0. Acquire Distributed Render Lock to signal system of active video rendering
+  // 0. Pre-lock workspace schema existence verification to discard orphaned jobs immediately
+  let projectSchema;
+  try {
+    projectSchema = loadProjectSchema(projectId);
+  } catch (schemaErr: any) {
+    const errorMsg = `Project schema missing or corrupted for "${projectId}": ${schemaErr.message}`;
+    workerLog.error('worker.missing_schema_discard', errorMsg);
+    await pubsub.publishRenderEvent({
+      projectId,
+      type: 'RENDER_FAILED',
+      status: 'FAILED',
+      errorMessage: errorMsg,
+      timestamp: new Date().toISOString(),
+    }).catch(() => {});
+
+    // Discard orphaned job from BullMQ queue to prevent infinite retry storms
+    try {
+      await job.discard();
+    } catch {}
+
+    const unrecoverableErr = new Error(errorMsg);
+    (unrecoverableErr as any).unrecoverable = true;
+    throw unrecoverableErr;
+  }
+
+  // 1. Acquire Distributed Render Lock to signal system of active video rendering
   const ttlSec = envConfig.RENDER_MUTEX_TTL_SECONDS || 900;
   await ResourceSentinel.acquireRenderLock(ttlSec, projectId);
 
@@ -67,8 +93,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     const paths = initProjectWorkspace(projectId);
     const outputPath = path.join(paths.outputDir, 'video.mp4');
 
-    // 1. Load schema and pre-download any remote assets
-    let projectSchema = loadProjectSchema(projectId);
+    // 2. Pre-download any remote assets
     projectSchema = await ensureProjectAssetsReady(projectId, projectSchema);
 
     const totalFrames = projectSchema.timeline.reduce(
@@ -76,7 +101,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       0
     );
 
-    // 1.1 Zero-Copy Media Streaming: Clean/sanitize timeline scene asset placeholders
+    // 2.1 Zero-Copy Media Streaming: Clean/sanitize timeline scene asset placeholders
     let schemaMutated = false;
     for (const scene of projectSchema.timeline) {
       if (scene.assetUrl && scene.assetUrl.includes('RFVNTVlfSU1BR0VfREFUQV')) {
@@ -88,25 +113,23 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       saveProjectSchema(projectId, projectSchema);
     }
 
-  // 2. Real Remotion Render via CLI / Renderer Engine
-  const schemaPath = path.join(paths.rootDir, 'project_schema.json');
-  let remotionPkgDir = path.resolve(process.cwd(), 'packages/remotion-engine');
-  if (!fs.existsSync(remotionPkgDir)) {
-    remotionPkgDir = path.resolve(__dirname, '../../../../packages/remotion-engine');
-  }
-  const remotionEntry = path.join(remotionPkgDir, 'src/index.ts');
+    // 3. Real Remotion Render via CLI / Renderer Engine
+    const schemaPath = path.join(paths.rootDir, 'project_schema.json');
+    const monorepoRoot = findMonorepoRoot();
+    const remotionPkgDir = path.resolve(monorepoRoot, 'packages/remotion-engine');
+    const remotionEntry = path.join(remotionPkgDir, 'src/index.ts');
 
-  if (!fs.existsSync(remotionEntry) || !fs.existsSync(schemaPath)) {
-    const errorMsg = `Cannot execute Remotion render: missing entry (${remotionEntry}) or schema (${schemaPath})`;
-    await pubsub.publishRenderEvent({
-      projectId,
-      type: 'RENDER_FAILED',
-      status: 'FAILED',
-      errorMessage: errorMsg,
-      timestamp: new Date().toISOString(),
-    }).catch(() => {});
-    throw new Error(errorMsg);
-  }
+    if (!fs.existsSync(remotionEntry) || !fs.existsSync(schemaPath)) {
+      const errorMsg = `Cannot execute Remotion render: missing entry (${remotionEntry}) or schema (${schemaPath})`;
+      await pubsub.publishRenderEvent({
+        projectId,
+        type: 'RENDER_FAILED',
+        status: 'FAILED',
+        errorMessage: errorMsg,
+        timestamp: new Date().toISOString(),
+      }).catch(() => {});
+      throw new Error(errorMsg);
+    }
 
   const defaultConcurrency = envConfig.REMOTION_CONCURRENCY || 2;
   const renderConcurrency = String(

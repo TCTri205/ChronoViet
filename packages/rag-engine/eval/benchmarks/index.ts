@@ -121,6 +121,8 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
   const currentRecall10 = getMetric('C4', 'C4-M4_HybridFusionRecallAt10');
   const currentNdcg5 = getMetric('C6', 'C6-M1_nDCGAt5');
   const currentLatencyP95 = ablationResult?.report.latency_summary?.p95_ms;
+  const c8Rep = reports.find((r) => r.benchmark_id === 'C8');
+  const currentTtftP95 = c8Rep?.latency_summary?.ttft_p95_ms ?? ablationResult?.report.latency_summary?.ttft_p95_ms;
 
   const regressionCheck = evaluateRegressionGates({
     baseline: {
@@ -137,6 +139,7 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
       recallAt10: currentRecall10,
       ndcgAt5: currentNdcg5,
       latencyP95Ms: currentLatencyP95,
+      ttftP95Ms: currentTtftP95,
     },
   });
 
@@ -170,8 +173,8 @@ export async function runMasterBenchmarkSuite(args: string[] = process.argv.slic
         'Config Name': row.name,
         'Recall@10': `${row.recall10}%`,
         'nDCG@5': row.ndcg5,
-        'Fact Prec': `${row.factPrecision}%`,
-        'Faithfulness': `${row.faithfulness}%`,
+        'Context Prec@5': `${row.contextPrecision5}%`,
+        'Evidence Recall': `${row.evidenceRecall10}%`,
         'Latency p95': `${row.latencyP95Ms}ms`,
       }))
     );

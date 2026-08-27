@@ -37,6 +37,51 @@ describe('Intent Classifier', () => {
 
     const r3 = classifyChatIntent('Cảm ơn bạn nhé');
     expect(r3.intent).toBe('CHITCHAT');
+
+    const r4 = classifyChatIntent('hello, bạn là ai?');
+    expect(r4.intent).toBe('CHITCHAT');
+    expect(r4.confidence).toBe(0.99);
+
+    const r5 = classifyChatIntent('xin chào!');
+    expect(r5.intent).toBe('CHITCHAT');
+
+    const r6 = classifyChatIntent('hi bạn');
+    expect(r6.intent).toBe('CHITCHAT');
+
+    const r7 = classifyChatIntent('alo bot');
+    expect(r7.intent).toBe('CHITCHAT');
+  });
+
+  it('strips pleasantry prefix so compound historical queries are not swallowed as chitchat', () => {
+    const r1 = classifyChatIntent('Chào bạn, Quang Trung và Nguyễn Huệ là ai?');
+    expect(r1.intent).toBe('ENTITY_IDENTITY');
+    expect(r1.fastPathResponse).toContain('CÙNG MỘT NHÂN VẬT LỊCH SỬ');
+
+    const r2 = classifyChatIntent('Xin chào, cho mình hỏi về chiến dịch Điện Biên Phủ diễn ra năm nào?');
+    expect(r2.intent).toBe('HISTORICAL_QUERY');
+
+    const r3 = classifyChatIntent('Hello bot, tạo video về Khởi nghĩa Lam Sơn');
+    expect(r3.intent).toBe('VIDEO_INTENT');
+    expect(r3.suggestedTopic).toContain('Khởi nghĩa Lam Sơn');
+  });
+
+  it('identifies coordinate conjunction same-person aliases and disambiguates correctly', () => {
+    const aliasPairs = [
+      ['Quang Trung', 'Nguyễn Huệ'],
+      ['Trần Hưng Đạo', 'Trần Quốc Tuấn'],
+      ['Lê Lợi', 'Lê Thái Tổ'],
+      ['Lý Thái Tổ', 'Lý Công Uẩn'],
+      ['Đinh Tiên Hoàng', 'Đinh Bộ Lĩnh'],
+      ['Gia Long', 'Nguyễn Ánh'],
+      ['Mai Thúc Loan', 'Mai Hắc Đế'],
+      ['An Dương Vương', 'Thục Phán'],
+    ];
+
+    for (const [name1, name2] of aliasPairs) {
+      const res = classifyChatIntent(`${name1} và ${name2} là ai?`);
+      expect(res.intent).toBe('ENTITY_IDENTITY');
+      expect(res.fastPathResponse).toContain('CÙNG MỘT NHÂN VẬT LỊCH SỬ');
+    }
   });
 
   it('identifies video creation commands as VIDEO_INTENT', () => {
@@ -146,6 +191,23 @@ describe('Chat Supervisor Stream', () => {
     expect(searchSpy).not.toHaveBeenCalled();
   });
 
+  it('streams out-of-domain query fast-path with domain boundary and without invoking RAG', async () => {
+    const searchSpy = vi.spyOn(mockRagEngine, 'search');
+    const events = [];
+
+    for await (const chunk of handleChatQueryStream({
+      query: 'Hướng dẫn tôi cách làm món bánh mì nướng bơ tỏi bằng nồi chiên không dầu ngon nhất.',
+      ragEngine: mockRagEngine,
+    })) {
+      events.push(chunk);
+    }
+
+    expect(events.some((e) => e.type === 'intent' && e.intent === 'OUT_OF_DOMAIN')).toBe(true);
+    expect(events.some((e) => e.type === 'token' && e.content?.includes('ngoài phạm vi'))).toBe(true);
+    expect(events.some((e) => e.type === 'done')).toBe(true);
+    expect(searchSpy).not.toHaveBeenCalled();
+  });
+
   it('handles deep historical query with RAG, triples, citations, and tokens', async () => {
     const result = await executeChatQuery({
       query: 'Trận Bạch Đằng năm 938 diễn ra như thế nào?',
@@ -211,6 +273,25 @@ describe('Anti-Sycophancy & False Premise Guardrail', () => {
     const res2 = analyzePremiseAndLeadingIntent('Trần Hưng Đạo có phải là con của Lý Thường Kiệt không?');
     expect(res2.isLeadingQuestion).toBe(true);
     expect(res2.questionType).toBe('KINSHIP');
+  });
+
+  it('detects same-person alias co-reference leading questions and injects anti-co-reference directive', async () => {
+    const { analyzePremiseAndLeadingIntent } = await import('../guardrails/anti-sycophancy.js');
+    const res1 = analyzePremiseAndLeadingIntent('Quang Trung và Nguyễn Huệ có phải là 2 anh em không?');
+    expect(res1.isLeadingQuestion).toBe(true);
+    expect(res1.questionType).toBe('KINSHIP');
+    expect(res1.suggestedDirective).toContain('ANTI-CO-REFERENCE ERROR');
+    expect(res1.suggestedDirective).toContain('CÙNG MỘT NHÂN VẬT LỊCH SỬ');
+
+    const res2 = analyzePremiseAndLeadingIntent('Trần Hưng Đạo và Trần Quốc Tuấn là hai cha con hả?');
+    expect(res2.isLeadingQuestion).toBe(true);
+    expect(res2.suggestedDirective).toContain('ANTI-CO-REFERENCE ERROR');
+
+    // Distinct figures should trigger standard kinship verification directive
+    const res3 = analyzePremiseAndLeadingIntent('Nguyễn Nhạc và Nguyễn Huệ là 2 anh em hả?');
+    expect(res3.isLeadingQuestion).toBe(true);
+    expect(res3.suggestedDirective).toContain('TIỀN ĐỀ QUAN HỆ THÂN TỘC');
+    expect(res3.suggestedDirective).not.toContain('ANTI-CO-REFERENCE ERROR');
   });
 
   it('detects leading dynasty questions', async () => {

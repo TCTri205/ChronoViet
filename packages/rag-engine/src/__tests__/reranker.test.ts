@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   rerankCandidates,
   truncateToSentenceBoundary,
+  calculateTemporalMultiplier,
   getLastRerankerStatus,
   resetRerankerStatusForTest,
 } from '../retrieval/reranker.js';
@@ -199,5 +200,86 @@ describe('Pure Model Context Reranker', () => {
 
     expect(res[0].chunkId).toBe('chunk_le');
     expect(res[0].score).toBeGreaterThan(res[1].score);
+  });
+
+  it('should compute correct Bayesian temporal multipliers across different eras and delta ranges', () => {
+    // Exact match (<= 2 years) -> 1.10
+    expect(calculateTemporalMultiplier([1288], 1288, 1288)).toBe(1.10);
+    expect(calculateTemporalMultiplier([1288], 1287, 1288)).toBe(1.10);
+    expect(calculateTemporalMultiplier([1789], 1788, 1789)).toBe(1.10);
+
+    // Close range (3-30 years) -> 1.00
+    expect(calculateTemporalMultiplier([1288], 1275, 1275)).toBe(1.00);
+
+    // Era mismatch (31-100 years) -> 0.85
+    expect(calculateTemporalMultiplier([1288], 1200, 1200)).toBe(0.85);
+
+    // Distant century mismatch (> 100 years) -> 0.70
+    expect(calculateTemporalMultiplier([1288], 938, 938)).toBe(0.70);
+
+    // Un-dated chunk -> 1.00
+    expect(calculateTemporalMultiplier([1288], undefined, undefined)).toBe(1.00);
+
+    // Query with no temporal constraint -> 1.00
+    expect(calculateTemporalMultiplier([], 1288, 1288)).toBe(1.00);
+
+    // BCE/TCN signed distance
+    expect(calculateTemporalMultiplier([-257], -257, -257)).toBe(1.10);
+    expect(calculateTemporalMultiplier([-257], 40, 43)).toBe(0.70); // delta ~300 years
+  });
+
+  it('should disambiguate multi-era events by boosting exact temporal era chunks over older/newer eras', async () => {
+    const multiEraCandidates: VectorSearchResult[] = [
+      {
+        chunkId: 'chunk_bd_938',
+        title: 'Trận Bạch Đằng năm 938',
+        textContent: 'Ngô Quyền cắm cọc gỗ trên sông Bạch Đằng đánh tan quân Nam Hán.',
+        dynasty: 'Thời kỳ Tự chủ',
+        timeStart: 938,
+        timeEnd: 938,
+        sourceReliability: 'LEVEL_1',
+        score: 0.8,
+      },
+      {
+        chunkId: 'chunk_bd_1288',
+        title: 'Trận Bạch Đằng năm 1288',
+        textContent: 'Trần Hưng Đạo và quân dân nhà Trần đại thắng quân Nguyên Mông trên sông Bạch Đằng.',
+        dynasty: 'Nhà Trần',
+        timeStart: 1288,
+        timeEnd: 1288,
+        sourceReliability: 'LEVEL_1',
+        score: 0.8,
+      },
+      {
+        chunkId: 'chunk_bd_undated',
+        title: 'Nghệ thuật quân sự trên sông Bạch Đằng',
+        textContent: 'Phân tích tổng hợp nghệ thuật lợi dụng thủy triều và cọc nhọn qua các thời kỳ lịch sử.',
+        sourceReliability: 'LEVEL_1',
+        score: 0.8,
+      },
+    ];
+
+    // Query for 1288 battle: chunk_bd_1288 should rank #1 due to exact temporal bonus (1.10) vs penalty on 938 (0.70)
+    const res1288 = await rerankCandidates(
+      'Trận Bạch Đằng năm 1288 do ai chỉ huy?',
+      multiEraCandidates,
+      3,
+      [1288]
+    );
+    expect(res1288[0].chunkId).toBe('chunk_bd_1288');
+
+    // Query for 938 battle: chunk_bd_938 should rank #1
+    const res938 = await rerankCandidates(
+      'Trận Bạch Đằng năm 938 Ngô Quyền đại phá quân Nam Hán',
+      multiEraCandidates,
+      3,
+      [938]
+    );
+    expect(res938[0].chunkId).toBe('chunk_bd_938');
+
+    // Un-dated chunk remains eligible with 1.0 multiplier
+    expect(res1288.find((c) => c.chunkId === 'chunk_bd_undated')?.score).toBeGreaterThan(
+      res1288.find((c) => c.chunkId === 'chunk_bd_938')?.score || 0
+    );
   });
 });

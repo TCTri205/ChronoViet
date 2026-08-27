@@ -30,7 +30,7 @@ export async function runTriplesEval() {
     console.error(` Details: ${llmHealth.details || 'Port 8094 unreachable'}`);
     console.error(' Heuristic rule-based fallback is disabled in STRICT evaluation mode.\n');
     console.error(' 👉 Action required: Start local Extraction Server with:');
-    console.error('    pnpm ai:extract   (or: pnpm ai:lite / pnpm ai:start)\n');
+    console.error('    pnpm ai:extract   (or: pnpm ai:lite)\n');
     console.error('================================================================\n');
     throw new Error(`[STRICT_EVAL] Extraction LLM is offline (${llmHealth.details}). Run \`pnpm ai:extract\` first.`);
   }

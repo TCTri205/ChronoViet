@@ -48,9 +48,17 @@ export function generateMarkdownReport(report: BaseSuiteReport): string {
   const overallBadge = report.allPassed ? '✅ **PASSED**' : '❌ **FAILED**';
 
   let md = `# 📊 Evaluation Report: ${report.title}\n\n`;
+
+  if (report.isSubset) {
+    const totalDs = report.datasetTotalCases || report.totalCases;
+    const filterInfo = report.appliedFilters ? Object.entries(report.appliedFilters).filter(([, v]) => v !== undefined).map(([k, v]) => `${k}=${v}`).join(', ') : 'filters active';
+    md += `> [!WARNING]\n`;
+    md += `> **BENCHMARK SUBSET RUN:** Evaluating ${report.totalCases} / ${totalDs} test cases (${filterInfo}). This run does NOT represent the full dataset benchmark score.\n\n`;
+  }
+
   md += `- **Timestamp:** ${dateStr} (ICT)\n`;
   md += `- **Overall Status:** ${overallBadge}\n`;
-  md += `- **Total Test Cases:** ${report.totalCases}\n`;
+  md += `- **Total Test Cases:** ${report.totalCases}${report.isSubset ? ` *(subset of ${report.datasetTotalCases || report.totalCases})*` : ''}\n`;
   md += `- **Passed:** ${report.passedCases} | **Failed:** ${report.failedCases} (${(report.passRate * 100).toFixed(1)}%)\n`;
   md += `- **Execution Duration:** ${(report.metadata.durationMs / 1000).toFixed(2)}s\n`;
   md += `- **Artifacts Location:** \`${report.outputArtifactsDir}\`\n\n`;
@@ -98,6 +106,11 @@ export function generateMarkdownReport(report: BaseSuiteReport): string {
 export function printCliSummaryTable(report: BaseSuiteReport): void {
   console.log('\n════════════════════════════════════════════════════════════════════════════════');
   console.log(` 📊 BENCHMARK SCORECARD: ${report.title.toUpperCase()}`);
+  if (report.isSubset) {
+    const totalDs = report.datasetTotalCases || report.totalCases;
+    const filterInfo = report.appliedFilters ? Object.entries(report.appliedFilters).filter(([, v]) => v !== undefined).map(([k, v]) => `${k}=${v}`).join(', ') : 'filters active';
+    console.log(` ⚠️  WARNING: SUBSET RUN (${report.totalCases}/${totalDs} cases evaluated | ${filterInfo})`);
+  }
   console.log('════════════════════════════════════════════════════════════════════════════════');
   console.log(` Status:        ${report.allPassed ? '✅ ALL CHECKS PASSED' : '❌ BENCHMARK GATE FAILED'}`);
   console.log(` Pass Rate:     ${report.passedCases}/${report.totalCases} (${(report.passRate * 100).toFixed(1)}%)`);

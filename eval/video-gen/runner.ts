@@ -1,8 +1,12 @@
 /**
  * ChronoViet Video Generation Evaluation Suite Runner
- * Executes real pre-render video production pipeline (RAG -> Chaptering -> Scriptwriting ->
- * Fact-checking -> Scene Segmentation -> Keywords -> Image Research -> Real Disk Download -> VLM Inspection),
- * dumps raw execution artifacts to outputs/, and generates evaluation reports to reports/.
+ * Orchestrates 2-Stage Decoupled Evaluation Suite:
+ * - Stage 1 (Script & Narrative): Fast text-only grounding, narrative flow, planned pacing, fact-checking, scene bounds.
+ * - Stage 2 (Visual Research & Curation): Trilingual visual queries, image search, disk download, license whitelist, VLM scoring.
+ * - Stage All (Master Pre-Render Benchmark): End-to-end pre-render pipeline with unified scorecard.
+ *
+ * CLI usage:
+ *   pnpm eval:video [--stage=1|2|all] [--golden] [--limit <n>] [--type <type>] [--strict] [--clean]
  */
 
 import fs from 'node:fs';
@@ -29,6 +33,8 @@ import {
   evaluateVideoGenCase,
   computeVideoGenAggregatedMetrics,
 } from './metrics/index.js';
+import { runStage1ScriptEvaluation } from './stage1-script-runner.js';
+import { runStage2VisualEvaluation } from './stage2-visual-runner.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,23 +44,51 @@ export interface RunVideoGenEvalOptions {
   type?: string;
   strict?: boolean;
   clean?: boolean;
+  stage?: '1' | '2' | 'all' | 'script' | 'visual';
+  golden?: boolean;
+  stage1Dir?: string;
 }
 
 export async function runVideoGenerationEvaluation(
   options: RunVideoGenEvalOptions = {}
-): Promise<BaseSuiteReport<VideoGenCaseResult>> {
+): Promise<BaseSuiteReport<any>> {
+  const stage = options.stage || 'all';
+
+  if (stage === '1' || stage === 'script') {
+    return runStage1ScriptEvaluation({
+      limit: options.limit,
+      type: options.type,
+      strict: options.strict,
+      clean: options.clean,
+    });
+  }
+
+  if (stage === '2' || stage === 'visual') {
+    return runStage2VisualEvaluation({
+      limit: options.limit,
+      type: options.type,
+      strict: options.strict,
+      clean: options.clean,
+      golden: options.golden,
+      stage1Dir: options.stage1Dir,
+    });
+  }
+
+  // Stage All: Full End-to-End Master Pipeline
   const startTime = new Date();
   const startTimeMs = Date.now();
 
-  console.log('\n🎬 Starting ChronoViet Video Generation (Script & Visual Assets) Evaluation Suite...');
+  console.log('\n🎬 Starting ChronoViet Video Generation (End-to-End Master Pipeline) Evaluation Suite...');
 
-  // 1. Preflight Health Checks (postgres, embedding, llm, vlm)
+  // 1. Preflight Health Checks (postgres, embedding, llm, vlm, search)
   const preflight = await assertEvalPreflight(['postgres', 'embedding', 'llm', 'vlm', 'search']);
 
   // 2. Load Video Test Topics Dataset
   const datasetPath = path.resolve(__dirname, 'datasets/video-gen-test-cases.json');
   const rawData = fs.readFileSync(datasetPath, 'utf-8');
-  let testCases: VideoGenTestCase[] = JSON.parse(rawData);
+  const allDatasetCases: VideoGenTestCase[] = JSON.parse(rawData);
+  const datasetTotalCases = allDatasetCases.length;
+  let testCases: VideoGenTestCase[] = [...allDatasetCases];
 
   if (options.type) {
     const typeUpper = options.type.toUpperCase();
@@ -66,6 +100,8 @@ export async function runVideoGenerationEvaluation(
     testCases = testCases.slice(0, options.limit);
     console.log(`Applied limit: running ${testCases.length} video generation topics.`);
   }
+
+  const isSubset = testCases.length < datasetTotalCases;
 
   const outputsDir = path.resolve(__dirname, 'outputs');
   const reportsDir = path.resolve(__dirname, 'reports');
@@ -79,7 +115,6 @@ export async function runVideoGenerationEvaluation(
   // 3. Execute Pre-Render Pipeline for Each Test Case
   for (let i = 0; i < testCases.length; i++) {
     const tc = testCases[i];
-    // Deterministic project workspace ID per test case
     const projectId = `eval_proj_${tc.id}`;
     createdProjectIds.push(projectId);
 
@@ -283,7 +318,7 @@ export async function runVideoGenerationEvaluation(
 
   // 4. Clean up temporary eval project directories if requested
   if (options.clean) {
-    console.log('\n🧹 Cleaning up temporary eval media folders...');
+    console.log('\n🧹 Cleaning up temporary eval media folders in outputs/...');
     for (const projId of createdProjectIds) {
       try {
         const pPaths = getProjectPaths(projId, outputsDir);
@@ -307,6 +342,13 @@ export async function runVideoGenerationEvaluation(
     suite: 'VIDEO_GEN',
     timestamp: startTime.toISOString(),
     totalCases: testCases.length,
+    datasetTotalCases,
+    isSubset,
+    appliedFilters: {
+      limit: options.limit,
+      type: options.type,
+      strict: options.strict,
+    },
     passedCases: aggregated.passedProjects,
     failedCases: testCases.length - aggregated.passedProjects,
     passRate: testCases.length > 0 ? aggregated.passedProjects / testCases.length : 0,
@@ -347,10 +389,20 @@ if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWi
   const typeArgIdx = args.indexOf('--type');
   const type = typeArgIdx !== -1 ? args[typeArgIdx + 1] : undefined;
 
+  let stage: '1' | '2' | 'all' | 'script' | 'visual' | undefined;
+  const stageArgIdx = args.findIndex((a) => a.startsWith('--stage'));
+  if (stageArgIdx !== -1) {
+    const val = args[stageArgIdx].includes('=') ? args[stageArgIdx].split('=')[1] : args[stageArgIdx + 1];
+    if (val === '1' || val === '2' || val === 'all' || val === 'script' || val === 'visual') {
+      stage = val;
+    }
+  }
+
   const strict = args.includes('--strict');
   const clean = args.includes('--clean');
+  const golden = args.includes('--golden');
 
-  runVideoGenerationEvaluation({ limit, type, strict, clean })
+  runVideoGenerationEvaluation({ limit, type, strict, clean, stage, golden })
     .then((report) => {
       if (!report.allPassed && strict) {
         process.exit(1);

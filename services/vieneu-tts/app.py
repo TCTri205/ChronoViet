@@ -70,16 +70,16 @@ app.mount("/static/audio", StaticFiles(directory=CACHE_DIR), name="static_audio"
 def ensure_piper_model(target_dir: str) -> tuple[str, str]:
     """Ensure Piper Vietnamese ONNX voice weights and config exist, downloading if needed."""
     os.makedirs(target_dir, exist_ok=True)
-    m_path = os.path.join(target_dir, "vi_VN-vivos-medium.onnx")
-    c_path = os.path.join(target_dir, "vi_VN-vivos-medium.onnx.json")
-    base_url = "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vivos/medium"
+    m_path = os.path.join(target_dir, "vi_VN-25hours_single-low.onnx")
+    c_path = os.path.join(target_dir, "vi_VN-25hours_single-low.onnx.json")
+    base_url = "https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/25hours_single/low"
 
     if not os.path.exists(m_path):
         try:
             import urllib.request
             log.info(f"Downloading Piper Vietnamese ONNX voice weights to {m_path}...")
-            urllib.request.urlretrieve(f"{base_url}/vi_VN-vivos-medium.onnx", m_path)
-            log.info("Downloaded vi_VN-vivos-medium.onnx successfully.")
+            urllib.request.urlretrieve(f"{base_url}/vi_VN-25hours_single-low.onnx", m_path)
+            log.info("Downloaded vi_VN-25hours_single-low.onnx successfully.")
         except Exception as err:
             log.warning(f"Failed to auto-download Piper ONNX voice weights: {err}")
 
@@ -87,8 +87,8 @@ def ensure_piper_model(target_dir: str) -> tuple[str, str]:
         try:
             import urllib.request
             log.info(f"Downloading Piper Vietnamese config to {c_path}...")
-            urllib.request.urlretrieve(f"{base_url}/vi_VN-vivos-medium.onnx.json", c_path)
-            log.info("Downloaded vi_VN-vivos-medium.onnx.json successfully.")
+            urllib.request.urlretrieve(f"{base_url}/vi_VN-25hours_single-low.onnx.json", c_path)
+            log.info("Downloaded vi_VN-25hours_single-low.onnx.json successfully.")
         except Exception as err:
             log.warning(f"Failed to auto-download Piper config: {err}")
 
@@ -100,7 +100,22 @@ engine_type = "SYNTHETIC_FALLBACK_PYTHON"
 
 try:
     from piper import PiperVoice
-    default_m, default_c = os.path.join(MODELS_DIR, "vi_VN-vivos-medium.onnx"), os.path.join(MODELS_DIR, "vi_VN-vivos-medium.onnx.json")
+    
+    # Auto-discover any .onnx voice model in MODELS_DIR
+    discovered_model = None
+    discovered_config = None
+    if os.path.exists(MODELS_DIR):
+        candidates = [f for f in os.listdir(MODELS_DIR) if f.endswith(".onnx")]
+        # Prefer 25hours_single, then vivos, then any onnx
+        candidates.sort(key=lambda x: (0 if "25hours" in x else (1 if "vivos" in x else 2)))
+        if candidates:
+            discovered_model = os.path.join(MODELS_DIR, candidates[0])
+            cfg_cand = discovered_model + ".json"
+            if os.path.exists(cfg_cand):
+                discovered_config = cfg_cand
+
+    default_m = discovered_model or os.path.join(MODELS_DIR, "vi_VN-25hours_single-low.onnx")
+    default_c = discovered_config or (default_m + ".json")
     model_path = os.getenv("PIPER_MODEL_PATH", default_m)
     config_path = os.getenv("PIPER_CONFIG_PATH", default_c)
 
@@ -109,9 +124,9 @@ try:
 
     if os.path.exists(model_path):
         log.info(f"Loading Piper ONNX Neural Voice Engine ({model_path})...")
-        tts_engine = PiperVoice.load(model_path, config_path=config_path if os.path.exists(config_path) else None)
+        tts_engine = PiperVoice.load(model_path, config_path=config_path if (config_path and os.path.exists(config_path)) else None)
         engine_type = "PIPER_NEURAL_ONNX"
-        log.info("Piper ONNX Voice Engine loaded successfully!")
+        log.info(f"Piper ONNX Voice Engine loaded successfully from {model_path}!")
     else:
         raise FileNotFoundError(f"Model weights not found at {model_path}")
 except Exception as p_err:
@@ -214,8 +229,16 @@ def synthesize(req: VieNeuRequest, request: Request):
         if tts_engine is not None:
             try:
                 if engine_type == "PIPER_NEURAL_ONNX":
-                    with wave.open(file_path, "wb") as wav_file:
-                        tts_engine.synthesize(text, wav_file)
+                    audio_arrays = []
+                    for chunk in tts_engine.synthesize(text):
+                        if chunk.audio_float_array is not None and len(chunk.audio_float_array) > 0:
+                            audio_arrays.append(chunk.audio_float_array)
+                    if audio_arrays:
+                        full_audio = np.concatenate(audio_arrays)
+                        sr = getattr(tts_engine.config, "sample_rate", sample_rate)
+                        sf.write(file_path, full_audio, sr, subtype="PCM_16")
+                    else:
+                        raise RuntimeError("Piper synthesis yielded no audio chunks")
                 else:
                     audio_data = tts_engine.infer(text)
                     sr = getattr(tts_engine, "sample_rate", sample_rate)

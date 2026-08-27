@@ -82,7 +82,7 @@ pnpm ai:llm                                         # [Bắt buộc A0, A1, A2, 
 pnpm ai:tts                                         # [Bắt buộc worker TTS] VieNeu TTS Port 8080 (hoặc dùng synthetic fallback)
 
 # Hoặc khởi động nhanh toàn bộ AI stack:
-pnpm ai:start                                       # Bật toàn bộ các cổng 8090, 8092, 8094, 8096, 8080
+pnpm ai:start                                       # Bật toàn bộ các cổng 8090, 8092, 8096, 8080
 pnpm ai:status                                      # Kiểm tra trạng thái các cổng AI
 ```
 

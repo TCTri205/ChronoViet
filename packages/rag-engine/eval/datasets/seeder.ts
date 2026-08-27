@@ -20,6 +20,7 @@ import {
   createLogger,
 } from '@chronoviet/infra';
 import { buildChronoEvalDatasets } from './builder.js';
+import { globalCacheManager } from '../../src/retrieval/cache-manager.js';
 
 const log = createLogger({ service: 'rag-benchmark-seeder' });
 
@@ -37,6 +38,10 @@ export async function ensureBenchmarkDatabaseSeeded(options?: SeederOptions): Pr
   usedPostgres: boolean;
 }> {
   const forceRebuild = Boolean(options?.forceRebuild);
+
+  // Invalidate any in-memory retrieval caches deterministically on seeding
+  globalCacheManager.clearAll();
+
   const canonicalPath = path.resolve(__dirname, 'chronoeval-canonical-300.json');
   const goldTriplesPath = path.resolve(__dirname, 'gold-knowledge-graph-triples.json');
 

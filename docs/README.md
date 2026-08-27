@@ -180,7 +180,7 @@ pnpm dev:worker      # Chạy riêng BullMQ Video Render Worker (port 3001)
 # 3. QUẢN LÝ MÔ HÌNH AI CỤC BỘ (UNIFIED AI CLI)
 # ===============================================================
 pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8096, 8080) & model đã nạp
-pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding + Extraction + LLM 9B + Reranker + TTS)
+pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding + LLM 9B + Reranker + TTS)
 pnpm ai:lite         # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb          # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
 pnpm ai:extract      # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~1.8GB) cho Triples/Crawler
@@ -218,11 +218,17 @@ pnpm remotion:render # Render video MP4 qua Remotion CLI
 # ===============================================================
 # 7. ĐÁNH GIÁ CHẤT LƯỢNG TỪNG MODULE (EVAL)
 # ===============================================================
-pnpm eval:ingest        # Đánh giá Data Ingestion
+pnpm eval:ingest        # Đánh giá Data Ingestion (Vector, Graph, Triples, NER)
 pnpm eval:rag           # Đánh giá Chrono-RAG Engine (C0-C10 benchmarks)
 pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator Pipeline
 pnpm eval:vlm           # Đánh giá VLM Inspector offline image scoring
 pnpm eval:remotion      # Đánh giá Remotion Video Engine
+pnpm eval:chat          # Đánh giá Chatbot Dialogue RAG
+pnpm eval:video:stage1  # Video Gen Stage 1: Kịch bản & Phân cảnh (Text-Only Preflight siêu tốc)
+pnpm eval:video:stage2  # Video Gen Stage 2: Curation Ảnh & VLM Quality (Nối tiếp Stage 1)
+pnpm eval:video:golden  # Video Gen Stage 2: Đánh giá độc lập trên Golden Script Fixtures
+pnpm eval:video         # Video Gen Master Benchmark (Pre-Render Pipeline)
+pnpm eval:all           # Master Benchmark toàn hệ thống (Chatbot + Video Gen)
 ```
 
 ---
@@ -244,4 +250,5 @@ pnpm eval:remotion      # Đánh giá Remotion Video Engine
 | Lộ trình triển khai 5 giai đoạn & phân tích song song? | [IMPLEMENTATION_PLAN.md §2 & §3](IMPLEMENTATION_PLAN.md) |
 | Đặc tả thiết kế UI/UX NotebookLM Workspace & Design System? | [specs/UI_UX_DESIGN_SPECIFICATION.md](specs/UI_UX_DESIGN_SPECIFICATION.md) |
 | Ma trận đánh giá KPI & quản trị rủi ro hệ thống? | [IMPLEMENTATION_PLAN.md §4 & §5](IMPLEMENTATION_PLAN.md) |
+| Khung đánh giá 2 Giai đoạn Video Gen (Stage 1 Script + Stage 2 Visual)? | [../eval/README.md](../eval/README.md) |
 | Cách dùng logger thống nhất, correlation ID, event names, truy vết lỗi? | [architecture/06_OBSERVABILITY_AND_LOGGING.md](architecture/06_OBSERVABILITY_AND_LOGGING.md) |

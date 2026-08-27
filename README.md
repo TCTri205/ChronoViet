@@ -210,7 +210,7 @@ pnpm remotion:render # Render video MP4 qua Remotion CLI
 ### 🤖 3. Quản Lý AI Model & TTS Cục Bộ (Unified AI CLI)
 ```bash
 pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8096, 8080) & model đã nạp
-pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding + Extraction + LLM 9B + Reranker + TTS)
+pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding + LLM 9B + Reranker + TTS)
 pnpm ai:lite         # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb          # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
 pnpm ai:extract      # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~1.8GB) cho Triples/Crawler
@@ -245,12 +245,23 @@ pnpm rag:chat        # Chatbot tra cứu RAG trực tiếp trên Terminal
 
 ### 🧪 6. Đánh Giá Chất Lượng Từng Module (Evaluation & Benchmarks)
 ```bash
+# Đánh giá theo từng Module
 pnpm eval:ingest        # Đánh giá Data Ingestion (Vector, Graph, Triples, NER)
 pnpm eval:rag           # Đánh giá RAG Engine (11 tầng C0-C10 + System Ablation)
 pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator (A0-A5 + Ablation)
 pnpm eval:vlm           # Đánh giá VLM Inspector offline image scoring
 pnpm eval:remotion      # Đánh giá Remotion Video Engine
+
+# Đánh giá Hệ thống Chatbot & Video Generation (2-Stage Decoupled Suite)
+pnpm eval:chat          # Đánh giá Hội thoại Chatbot Lịch sử (Fact Grounding, Routing, Context)
+pnpm eval:video:stage1  # Video Gen Stage 1: Kịch bản & Phân cảnh (Text-Only Preflight siêu nhanh)
+pnpm eval:video:stage2  # Video Gen Stage 2: Tìm kiếm tư liệu & Đánh giá VLM (Nối tiếp Stage 1)
+pnpm eval:video:golden  # Video Gen Stage 2: Đánh giá độc lập trên Golden Script Fixtures
+pnpm eval:video         # Video Gen Master Benchmark (Pre-Render Pipeline)
+pnpm eval:all           # Master Benchmark toàn hệ thống (Chatbot + Video Gen)
 ```
+
+> 📖 Hướng dẫn chi tiết & bảng tiêu chí KPI xem tại [`eval/README.md`](eval/README.md).
 
 ---
 
@@ -307,6 +318,7 @@ Toàn bộ tài liệu thiết kế kiến trúc và quy chuẩn kỹ thuật n�
 - ⚙️ [**Remotion Technical Spec (`docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md`)**](docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md): Hướng dẫn chi tiết 31 LayoutModes, 19 Transitions, Zod Schema &amp; Compositions.
 - 📜 [**Content Formats Spec (`docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md`)**](docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md): Quy chuẩn 5 Domain lịch sử &amp; Schema Production v4.1.
 - 📊 [**RAG Component Benchmark Spec (`docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md`)**](docs/specs/RAG_COMPONENT_BENCHMARK_SPEC.md): Benchmark từng component RAG (C0-C10), datasets, metrics &amp; regression gate.
+- 🧪 [**Master Evaluation Framework (`eval/README.md`)**](eval/README.md): Khung đánh giá toàn diện Chatbot Tra cứu &amp; Video Generation 2 Giai đoạn Độc lập (Stage 1 Script + Stage 2 Visual Curation).
 - 🩺 [**Observability &amp; Logging (`docs/architecture/06_OBSERVABILITY_AND_LOGGING.md`)**](docs/architecture/06_OBSERVABILITY_AND_LOGGING.md): Unified structured logger (`@chronoviet/infra`), correlation ID, event names &amp; hướng dẫn truy vết log bằng `jq`.
 - 💻 [**macOS Local Model Optimization (`docs/guides/MACOS_LOCAL_MODEL_OPTIMIZATION.md`)**](docs/guides/MACOS_LOCAL_MODEL_OPTIMIZATION.md): Tối ưu mô hình local trên Apple Silicon.
 

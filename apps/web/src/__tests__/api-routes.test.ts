@@ -9,6 +9,14 @@ vi.mock('../lib/queues', () => ({
   getRenderJobStatus: vi.fn().mockResolvedValue(null),
 }));
 
+// Mock Redis Client
+vi.mock('../lib/redis', () => ({
+  getRedisClient: vi.fn().mockReturnValue({
+    ping: vi.fn().mockResolvedValue('PONG'),
+    on: vi.fn(),
+  }),
+}));
+
 // Mock RAG Engine
 vi.mock('@chronoviet/rag-engine', () => {
   return {

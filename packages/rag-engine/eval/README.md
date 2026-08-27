@@ -64,7 +64,7 @@ pnpm ai:rerank                                      # [Bắt buộc C6] Cross-En
 pnpm ai:llm                                         # [Bắt buộc C8, C9, C10] Primary LLM Port 8092 (Qwen-9B)
 
 # Hoặc khởi động nhanh toàn bộ AI stack:
-pnpm ai:start                                       # Bật toàn bộ các cổng 8090, 8092, 8094, 8096, 8080
+pnpm ai:start                                       # Bật toàn bộ các cổng 8090, 8092, 8096, 8080
 pnpm ai:status                                      # Kiểm tra trạng thái các cổng AI
 ```
 

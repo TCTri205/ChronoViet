@@ -13,6 +13,7 @@ import { callLLM, generateLLMCompletionStream, createLogger } from '@chronoviet/
 import { assembleContext } from './context-synthesizer.js';
 import { buildPrompt } from './prompt-engine.js';
 import { groundClaims } from './claim-grounder.js';
+import { validateQueryHistoricalPremises } from '../retrieval/question-ner.js';
 import type { ChronoRagEngine } from '../rag-engine.js';
 
 const log = createLogger({ service: 'rag-answer-generator' });
@@ -26,7 +27,17 @@ export async function generateHistoricalAnswer(
 ): Promise<HistoricalAnswerResponse> {
   const startTime = Date.now();
 
-  // 1. Execute RAG Retrieval
+  // 1. Validate Historical Premises for Adversarial / Anachronistic Conflicts
+  const premiseValidation = validateQueryHistoricalPremises(request.query);
+  if (premiseValidation.hasPremiseConflict) {
+    log.warn('rag.premise_conflict_detected', 'Historical premise conflict detected in query', {
+      query: request.query,
+      conflictType: premiseValidation.conflictType,
+      conflictReason: premiseValidation.conflictReason,
+    });
+  }
+
+  // 2. Execute RAG Retrieval
   const retrievalStart = Date.now();
   const searchRes = await ragEngine.search({
     query: request.query,
@@ -35,14 +46,14 @@ export async function generateHistoricalAnswer(
   });
   const retrievalLatencyMs = Date.now() - retrievalStart;
 
-  // 2. Synthesize Context with Graph Triples & Numbered Evidence Chunks
+  // 3. Synthesize Context with Graph Triples & Numbered Evidence Chunks
   const contextResult = assembleContext({
     verifiedContext: searchRes.verifiedContext as any,
     triples: searchRes.triples as GraphTripleItem[],
     aliasTable: searchRes.aliasTable,
   });
 
-  // 3. Build Intent-Aware Reasoning Prompt & Token Budget
+  // 4. Build Intent-Aware Reasoning Prompt & Token Budget (with Premise Directives)
   const promptResult = buildPrompt({
     query: request.query,
     contextText: contextResult.formattedContext,
@@ -50,9 +61,10 @@ export async function generateHistoricalAnswer(
     requiresMultiHop: request.requiresMultiHop,
     maxTokens: request.maxTokens,
     temperature: request.temperature,
+    premiseValidation,
   });
 
-  // 4. Generate Answer via LLM
+  // 5. Generate Answer via LLM
   const genStart = Date.now();
   let answerText = '';
   let totalTokens = 0;
@@ -90,6 +102,7 @@ export async function generateHistoricalAnswer(
     claims: grounding.claims,
     citations: grounding.citations.length > 0 ? grounding.citations : searchRes.citations,
     triplesUsed: searchRes.triples as GraphTripleItem[],
+    visualAnchors: grounding.visualAnchors,
     metrics: {
       retrievalLatencyMs,
       generationLatencyMs,
@@ -98,18 +111,38 @@ export async function generateHistoricalAnswer(
   };
 }
 
+export interface HistoricalAnswerStreamEvent {
+  type: 'token' | 'triples' | 'citations' | 'done' | 'meta';
+  content?: string;
+  triples?: GraphTripleItem[];
+  citations?: string[];
+  metrics?: {
+    retrievalLatencyMs?: number;
+    ttftMs?: number;
+    llmFirstTokenMs?: number;
+    totalLatencyMs?: number;
+    tokenCount?: number;
+  };
+}
+
 /**
- * Generates a streaming historical answer yielding SSE token events
+ * Generates a streaming historical answer yielding SSE token events with TTFT instrumentation
  */
 export async function *generateHistoricalAnswerStream(
   ragEngine: ChronoRagEngine,
   request: HistoricalAnswerGenerationRequest
-): AsyncGenerator<{ type: 'token' | 'triples' | 'citations' | 'done'; content?: string; triples?: GraphTripleItem[]; citations?: string[] }> {
+): AsyncGenerator<HistoricalAnswerStreamEvent> {
+  const streamStart = performance.now();
+
+  const premiseValidation = validateQueryHistoricalPremises(request.query);
+
+  const retrievalStart = performance.now();
   const searchRes = await ragEngine.search({
     query: request.query,
     entityFilter: request.entityFilter,
     rerankTopK: request.requiresMultiHop ? 6 : 5,
   });
+  const retrievalLatencyMs = performance.now() - retrievalStart;
 
   const triples = searchRes.triples as GraphTripleItem[];
   if (triples.length > 0) {
@@ -132,22 +165,61 @@ export async function *generateHistoricalAnswerStream(
     requiresMultiHop: request.requiresMultiHop,
     maxTokens: request.maxTokens,
     temperature: request.temperature,
+    premiseValidation,
   });
 
   let fullText = '';
-  for await (const chunk of generateLLMCompletionStream(promptResult.messages, {
-    temperature: promptResult.temperature,
-    max_tokens: promptResult.maxTokens,
-  })) {
-    fullText += chunk;
-    yield { type: 'token', content: chunk };
+  let tokenCount = 0;
+  let isFirstToken = true;
+  let ttftMs = 0;
+  let llmFirstTokenMs = 0;
+
+  const llmStreamStart = performance.now();
+  try {
+    for await (const chunk of generateLLMCompletionStream(promptResult.messages, {
+      temperature: promptResult.temperature,
+      max_tokens: promptResult.maxTokens,
+    })) {
+      if (isFirstToken) {
+        llmFirstTokenMs = performance.now() - llmStreamStart;
+        ttftMs = performance.now() - streamStart;
+        isFirstToken = false;
+        yield {
+          type: 'token',
+          content: chunk,
+          metrics: {
+            retrievalLatencyMs,
+            ttftMs,
+            llmFirstTokenMs,
+          },
+        };
+      } else {
+        yield { type: 'token', content: chunk };
+      }
+      fullText += chunk;
+      tokenCount++;
+    }
+  } catch (err: any) {
+    log.error('rag.stream_generation_failed', `Streaming LLM failed: ${err.message}`, {
+      query: request.query,
+    });
+    throw err;
   }
+
+  const totalLatencyMs = performance.now() - streamStart;
 
   yield {
     type: 'done',
     content: fullText,
     triples,
     citations: searchRes.citations,
+    metrics: {
+      retrievalLatencyMs,
+      ttftMs: isFirstToken ? totalLatencyMs : ttftMs,
+      llmFirstTokenMs: isFirstToken ? totalLatencyMs - retrievalLatencyMs : llmFirstTokenMs,
+      totalLatencyMs,
+      tokenCount,
+    },
   };
 }
 

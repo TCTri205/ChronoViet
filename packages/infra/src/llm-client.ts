@@ -1118,13 +1118,107 @@ export function extractJsonFromText(rawText: string): string {
     cleaned = cleaned.slice(first, last + 1).trim();
   }
 
+  // 3. Remove trailing commas before closing braces/brackets (common LLM JSON syntax error)
+  cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+
   return cleaned;
 }
 
 /**
- * Parses raw text from LLM completion into JSON with automatic codeblock stripping and repair.
+ * Repairs unescaped quotes inside JSON strings using lookahead delimiter analysis.
+ */
+export function repairJsonUnescapedQuotes(json: string): string {
+  let result = '';
+  let inString = false;
+  let isEscaped = false;
+
+  for (let i = 0; i < json.length; i++) {
+    const char = json[i];
+
+    if (isEscaped) {
+      result += char;
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      result += char;
+      isEscaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      if (!inString) {
+        inString = true;
+        result += char;
+      } else {
+        // Check if this quote is legitimately terminating the string.
+        // A valid closing quote in JSON is followed (after optional whitespace) by: ',', '}', ']', ':', or end-of-input.
+        const rest = json.slice(i + 1);
+        const isTerminator = /^\s*([,:}\]\n\r]|$)/.test(rest);
+
+        if (isTerminator) {
+          inString = false;
+          result += char;
+        } else {
+          // Interior unescaped quote -> escape it safely
+          result += '\\"';
+        }
+      }
+    } else {
+      result += char;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Parses raw text from LLM completion into JSON with automatic codeblock stripping and multi-stage self-healing repair.
  */
 export function parseLlmJson<T = any>(rawText: string): T {
   const jsonStr = extractJsonFromText(rawText);
-  return JSON.parse(jsonStr) as T;
+  try {
+    return JSON.parse(jsonStr) as T;
+  } catch (err: any) {
+    // Multi-stage self-healing recovery for common LLM JSON syntax anomalies
+    try {
+      let s = jsonStr;
+
+      // 1. Convert Python-style single quoted JSON keys/values if single quotes are used
+      if (s.startsWith("{'") || s.startsWith("['") || s.includes("': '") || s.includes("': [")) {
+        s = s.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
+      }
+
+      // 2. Remove trailing commas before closing braces/brackets
+      s = s.replace(/,\s*([}\]])/g, '$1');
+
+      // 3. Token-based unescaped quotes repair
+      s = repairJsonUnescapedQuotes(s);
+
+      // 4. Remove trailing commas again after quote repair
+      s = s.replace(/,\s*([}\]])/g, '$1');
+
+      // 5. Fix unescaped newlines/tabs inside string values
+      s = s.replace(/(?<=:\s*"[^"]*)\n([^"]*")/g, '\\n$1');
+
+      // 6. Auto-close truncated JSON objects/arrays if closing brackets are missing
+      const openBraces = (s.match(/\{/g) || []).length;
+      const closeBraces = (s.match(/\}/g) || []).length;
+      const openBrackets = (s.match(/\[/g) || []).length;
+      const closeBrackets = (s.match(/\]/g) || []).length;
+
+      if (openBrackets > closeBrackets) {
+        s += ']'.repeat(openBrackets - closeBrackets);
+      }
+      if (openBraces > closeBraces) {
+        s += '}'.repeat(openBraces - closeBraces);
+      }
+
+      return JSON.parse(s) as T;
+    } catch {
+      throw err;
+    }
+  }
 }
+

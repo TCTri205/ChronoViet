@@ -15,6 +15,7 @@ import {
   envConfig,
   initProjectWorkspace,
 } from '@chronoviet/infra';
+import { isWhitelistedLicense } from './inspector-pipeline.js';
 
 const log = createLogger({ service: 'vlm-inspector' });
 
@@ -217,6 +218,21 @@ export async function downloadCandidateImage(
 
   let imageBuffer: Buffer | null = null;
   const startTime = Date.now();
+
+  // Fast-path: Skip network download immediately if license is explicitly non-whitelisted
+  if (candidate.license && !isWhitelistedLicense(candidate.license)) {
+    log.debug('vlm.skip_non_whitelisted_download', `Skipping download for non-whitelisted license: ${candidate.license}`, {
+      candidateId,
+      license: candidate.license,
+    });
+    return {
+      candidate: { ...candidate, localPath: '', sha256: '', pHash: '' },
+      localPath: '',
+      sha256: '',
+      pHash: '',
+      fileSizeBytes: 0,
+    };
+  }
 
   // If candidate is already a local file (e.g. during testing or pre-seeded assets)
   if (fs.existsSync(candidate.imageUrl)) {

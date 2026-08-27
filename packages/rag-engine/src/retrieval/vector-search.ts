@@ -31,42 +31,29 @@ export interface VectorSearchResult {
   graphScore?: number;
   /** Minimum hop distance from a seed entity to this chunk's linked entity. */
   hopCount?: number;
+  parentChunkId?: string;
+  timeStart?: number;
+  timeEnd?: number;
+  epochIds?: string[];
 }
 
 export const RRF_K = 60;
 
-import { removeVietnameseAccents } from '@chronoviet/shared-spec';
+import {
+  removeVietnameseAccents,
+  HISTORICAL_PERSON_DICTIONARY,
+  HISTORICAL_LOCATION_DICTIONARY,
+} from '@chronoviet/shared-spec';
 
-export class SimpleLRUCache<K, V> {
-  private readonly map = new Map<K, V>();
-  constructor(private readonly maxEntries: number = 500) {}
+import { globalCacheManager, LRUCacheWithTTL } from './cache-manager.js';
 
-  get(key: K): V | undefined {
-    const val = this.map.get(key);
-    if (val !== undefined) {
-      this.map.delete(key);
-      this.map.set(key, val);
-    }
-    return val;
-  }
-
-  set(key: K, value: V): void {
-    this.map.delete(key);
-    if (this.map.size >= this.maxEntries) this.map.delete(this.map.keys().next().value!);
-    this.map.set(key, value);
-  }
-
-  has(key: K): boolean { return this.map.has(key); }
-  size(): number { return this.map.size; }
-  clear(): void { this.map.clear(); }
-}
-
-export const queryEmbeddingCache = new SimpleLRUCache<string, number[]>(500);
+export const SimpleLRUCache = LRUCacheWithTTL;
+export const queryEmbeddingCache = globalCacheManager.embeddingVectorCache;
 const inFlightEmbeddings = new Map<string, Promise<number[]>>();
 
 export async function getCachedQueryEmbedding(queryText: string): Promise<number[]> {
   const normalizedKey = queryText.trim().toLowerCase();
-  const cached = queryEmbeddingCache.get(normalizedKey);
+  const cached = globalCacheManager.embeddingVectorCache.getEmbedding(normalizedKey);
   if (cached) {
     return cached;
   }
@@ -77,7 +64,7 @@ export async function getCachedQueryEmbedding(queryText: string): Promise<number
   const promise = (async () => {
     try {
       const emb = await generateEmbedding(queryText);
-      queryEmbeddingCache.set(normalizedKey, emb);
+      globalCacheManager.embeddingVectorCache.setEmbedding(normalizedKey, emb);
       return emb;
     } finally {
       inFlightEmbeddings.delete(normalizedKey);
@@ -88,7 +75,7 @@ export async function getCachedQueryEmbedding(queryText: string): Promise<number
 }
 
 export function resetQueryEmbeddingCacheForTest(): void {
-  queryEmbeddingCache.clear();
+  globalCacheManager.embeddingVectorCache.clear();
   inFlightEmbeddings.clear();
 }
 
@@ -122,12 +109,13 @@ export async function searchHybridVectorAndBM25(
   queryText: string,
   queryEmbedding: number[] | Promise<number[]>,
   topK: number = 5,
-  rrfK: number = RRF_K
+  rrfK: number = RRF_K,
+  detectedEntityIds?: string[]
 ): Promise<VectorSearchResult[]> {
   const pgConnected = await isPgAvailable();
   const [denseResults, ftsResults] = await Promise.all([
     searchDenseVector(queryEmbedding, topK * 3),
-    searchLexicalFTS(queryText, topK * 3),
+    searchLexicalFTS(queryText, topK * 3, detectedEntityIds),
   ]);
 
   const chunkMap = new Map<string, VectorSearchResult>();
@@ -140,6 +128,10 @@ export async function searchHybridVectorAndBM25(
       textContent: item.textContent,
       dynasty: item.dynasty,
       sourceReliability: item.sourceReliability,
+      parentChunkId: item.parentChunkId,
+      timeStart: item.timeStart,
+      timeEnd: item.timeEnd,
+      epochIds: item.epochIds,
       score: 1 / (rrfK + vecRank),
       rankVector: vecRank,
     });
@@ -152,6 +144,11 @@ export async function searchHybridVectorAndBM25(
     if (existing) {
       existing.score += ftsScore;
       existing.rankFts = ftsRank;
+      if (!existing.parentChunkId && item.parentChunkId) existing.parentChunkId = item.parentChunkId;
+      if (existing.timeStart === undefined && item.timeStart !== undefined) existing.timeStart = item.timeStart;
+      if (existing.timeEnd === undefined && item.timeEnd !== undefined) existing.timeEnd = item.timeEnd;
+      if (!existing.epochIds && item.epochIds) existing.epochIds = item.epochIds;
+      if (!existing.dynasty && item.dynasty) existing.dynasty = item.dynasty;
     } else {
       chunkMap.set(item.chunkId, {
         chunkId: item.chunkId,
@@ -159,6 +156,10 @@ export async function searchHybridVectorAndBM25(
         textContent: item.textContent,
         dynasty: item.dynasty,
         sourceReliability: item.sourceReliability,
+        parentChunkId: item.parentChunkId,
+        timeStart: item.timeStart,
+        timeEnd: item.timeEnd,
+        epochIds: item.epochIds,
         score: ftsScore,
         rankFts: ftsRank,
       });
@@ -198,9 +199,13 @@ export async function searchDenseVector(
         text_content: string;
         dynasty?: string;
         source_reliability?: string;
+        parent_chunk_id?: string;
+        time_start?: number;
+        time_end?: number;
+        epoch_ids?: string[];
         dist: number;
       }>(
-        `SELECT id, title, text_content, dynasty, source_reliability, embedding <=> $1::vector AS dist
+        `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, embedding <=> $1::vector AS dist
          FROM document_chunks
          WHERE embedding IS NOT NULL
          ORDER BY dist ASC
@@ -216,6 +221,10 @@ export async function searchDenseVector(
         textContent: r.text_content,
         dynasty: r.dynasty,
         sourceReliability: r.source_reliability,
+        parentChunkId: r.parent_chunk_id,
+        timeStart: r.time_start != null ? Number(r.time_start) : undefined,
+        timeEnd: r.time_end != null ? Number(r.time_end) : undefined,
+        epochIds: r.epoch_ids,
         score: 1.0 / (1.0 + r.dist),
         rankVector: idx + 1,
       }));
@@ -238,37 +247,117 @@ export async function searchDenseVector(
     textContent: item.chunk.text_content,
     dynasty: item.chunk.dynasty,
     sourceReliability: item.chunk.source_reliability,
+    parentChunkId: item.chunk.parent_chunk_id,
+    timeStart: item.chunk.time_start != null ? Number(item.chunk.time_start) : undefined,
+    timeEnd: item.chunk.time_end != null ? Number(item.chunk.time_end) : undefined,
+    epochIds: item.chunk.epoch_ids,
     score: item.sim,
     rankVector: idx + 1,
   }));
+}
+
+function sanitizeTsToken(token: string): string {
+  return token.replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/gu, '').trim().toLowerCase();
+}
+
+/**
+ * Builds enhanced PostgreSQL tsquery string injecting whitelisted multi-word aliases (>= 2 words)
+ * with conjunctive '&' grouping per alias and disjunctive '|' across aliases.
+ */
+export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: string[]): string {
+  const sanitized = sanitizeFtsQuery(queryText);
+  const baseTokens = sanitized
+    .split(/\s+/)
+    .map(sanitizeTsToken)
+    .filter((t) => t.length >= 2);
+  const unaccentedBaseTokens = removeVietnameseAccents(sanitized)
+    .split(/\s+/)
+    .map(sanitizeTsToken)
+    .filter((t) => t.length >= 2);
+
+  const allBaseTokens = Array.from(new Set([...baseTokens, ...unaccentedBaseTokens]));
+  const baseClause = allBaseTokens.length > 0 ? allBaseTokens.join(' | ') : '';
+  const aliasClauses: string[] = [];
+
+  if (detectedEntityIds && detectedEntityIds.length > 0) {
+    const seenAliases = new Set<string>();
+
+    for (const entId of detectedEntityIds) {
+      const candidates: string[] = [];
+      const personEnt = HISTORICAL_PERSON_DICTIONARY[entId];
+      if (personEnt?.aliases) {
+        candidates.push(...personEnt.aliases);
+      }
+      const locEnt = HISTORICAL_LOCATION_DICTIONARY[entId];
+      if (locEnt?.aliases) {
+        candidates.push(...locEnt.aliases);
+      }
+
+      if (!personEnt && !locEnt) {
+        for (const p of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
+          if (p.entityId === entId && p.aliases) {
+            candidates.push(...p.aliases);
+          }
+        }
+        for (const l of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
+          if (l.entityId === entId && l.aliases) {
+            candidates.push(...l.aliases);
+          }
+        }
+      }
+
+      let entityInjectedCount = 0;
+      for (const alias of candidates) {
+        if (entityInjectedCount >= 3) break;
+        const normalizedAlias = alias.trim().toLowerCase();
+        if (seenAliases.has(normalizedAlias)) continue;
+        seenAliases.add(normalizedAlias);
+
+        const unaccentedWords = removeVietnameseAccents(normalizedAlias)
+          .split(/\s+/)
+          .map(sanitizeTsToken)
+          .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
+
+        const accentedWords = normalizedAlias
+          .split(/\s+/)
+          .map(sanitizeTsToken)
+          .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
+
+        // Strictly whitelist multi-word aliases (>= 2 high-signal tokens)
+        if (unaccentedWords.length >= 2) {
+          aliasClauses.push(`(${unaccentedWords.join(' & ')})`);
+          if (accentedWords.join(' ') !== unaccentedWords.join(' ')) {
+            aliasClauses.push(`(${accentedWords.join(' & ')})`);
+          }
+          entityInjectedCount++;
+        }
+      }
+    }
+  }
+
+  const parts = [baseClause, ...aliasClauses].filter(Boolean);
+  if (parts.length === 0) return '';
+  return parts.join(' | ');
 }
 
 /**
  * Builds resilient PostgreSQL tsquery string with disjunctive OR across sanitized tokens
  */
 export function buildDisjunctiveFtsTsQuery(queryText: string): string {
-  const sanitized = sanitizeFtsQuery(queryText);
-  if (!sanitized) return '';
-
-  const tokens = sanitized
-    .split(/\s+/)
-    .map((t) => t.replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/g, ''))
-    .filter((t) => t.length >= 2);
-
-  if (tokens.length === 0) return '';
-  return tokens.join(' | ');
+  return buildEnhancedFtsQuery(queryText);
 }
 
 export async function searchLexicalFTS(
   queryText: string,
-  topK: number = 20
+  topK: number = 20,
+  detectedEntityIds?: string[]
 ): Promise<VectorSearchResult[]> {
   const sanitizedQuery = sanitizeFtsQuery(queryText);
   if (!sanitizedQuery) return [];
 
   const pgConnected = await isPgAvailable();
   if (pgConnected) {
-    const tsQueryStr = buildDisjunctiveFtsTsQuery(queryText);
+    const tsQueryStr = buildEnhancedFtsQuery(queryText, detectedEntityIds);
     let ftsRows: any[] = [];
     if (tsQueryStr) {
       try {
@@ -278,9 +367,13 @@ export async function searchLexicalFTS(
           text_content: string;
           dynasty?: string;
           source_reliability?: string;
+          parent_chunk_id?: string;
+          time_start?: number;
+          time_end?: number;
+          epoch_ids?: string[];
           rank: number;
         }>(
-          `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, to_tsquery('simple', $1)) AS rank
+          `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, ts_rank_cd(tsv, to_tsquery('simple', $1)) AS rank
            FROM document_chunks
            WHERE tsv @@ to_tsquery('simple', $1)
            ORDER BY rank DESC
@@ -300,9 +393,13 @@ export async function searchLexicalFTS(
           text_content: string;
           dynasty?: string;
           source_reliability?: string;
+          parent_chunk_id?: string;
+          time_start?: number;
+          time_end?: number;
+          epoch_ids?: string[];
           rank: number;
         }>(
-          `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, websearch_to_tsquery('simple', $1)) AS rank
+          `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, ts_rank_cd(tsv, websearch_to_tsquery('simple', $1)) AS rank
            FROM document_chunks
            WHERE tsv @@ websearch_to_tsquery('simple', $1)
            ORDER BY rank DESC
@@ -317,9 +414,13 @@ export async function searchLexicalFTS(
             text_content: string;
             dynasty?: string;
             source_reliability?: string;
+            parent_chunk_id?: string;
+            time_start?: number;
+            time_end?: number;
+            epoch_ids?: string[];
             rank: number;
           }>(
-            `SELECT id, title, text_content, dynasty, source_reliability, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
+            `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
              FROM document_chunks
              WHERE tsv @@ plainto_tsquery('simple', $1)
              ORDER BY rank DESC
@@ -339,6 +440,10 @@ export async function searchLexicalFTS(
         textContent: r.text_content,
         dynasty: r.dynasty,
         sourceReliability: r.source_reliability,
+        parentChunkId: r.parent_chunk_id,
+        timeStart: r.time_start != null ? Number(r.time_start) : undefined,
+        timeEnd: r.time_end != null ? Number(r.time_end) : undefined,
+        epochIds: r.epoch_ids,
         score: r.rank,
         rankFts: idx + 1,
       }));
@@ -349,7 +454,27 @@ export async function searchLexicalFTS(
   if (chunks.length === 0) return [];
 
   const queryTerms = sanitizedQuery.split(/\s+/).filter((t) => t.length >= 2);
-  const unaccentedQueryTerms = queryTerms.map(removeVietnameseAccents);
+  const extraAliasTerms: string[] = [];
+  if (detectedEntityIds && detectedEntityIds.length > 0) {
+    for (const entId of detectedEntityIds) {
+      const p = HISTORICAL_PERSON_DICTIONARY[entId];
+      if (p?.aliases) {
+        for (const a of p.aliases) {
+          const aWords = a.toLowerCase().split(/\s+/).filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
+          if (aWords.length >= 2) extraAliasTerms.push(...aWords);
+        }
+      }
+      const l = HISTORICAL_LOCATION_DICTIONARY[entId];
+      if (l?.aliases) {
+        for (const a of l.aliases) {
+          const aWords = a.toLowerCase().split(/\s+/).filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
+          if (aWords.length >= 2) extraAliasTerms.push(...aWords);
+        }
+      }
+    }
+  }
+  const allTerms = Array.from(new Set([...queryTerms, ...extraAliasTerms]));
+  const unaccentedTerms = allTerms.map(removeVietnameseAccents);
 
   const scoredByBM25 = chunks
     .map((c) => {
@@ -359,9 +484,9 @@ export async function searchLexicalFTS(
       const unaccentedTitle = removeVietnameseAccents(titleLower);
 
       let matchCount = 0;
-      for (let i = 0; i < queryTerms.length; i++) {
-        const term = queryTerms[i];
-        const unaccentedTerm = unaccentedQueryTerms[i];
+      for (let i = 0; i < allTerms.length; i++) {
+        const term = allTerms[i];
+        const unaccentedTerm = unaccentedTerms[i];
 
         if (contentLower.includes(term) || unaccentedContent.includes(unaccentedTerm)) {
           matchCount += 1;
@@ -381,6 +506,10 @@ export async function searchLexicalFTS(
     textContent: item.chunk.text_content,
     dynasty: item.chunk.dynasty,
     sourceReliability: item.chunk.source_reliability,
+    parentChunkId: item.chunk.parent_chunk_id,
+    timeStart: item.chunk.time_start != null ? Number(item.chunk.time_start) : undefined,
+    timeEnd: item.chunk.time_end != null ? Number(item.chunk.time_end) : undefined,
+    epochIds: item.chunk.epoch_ids,
     score: item.matchCount,
     rankFts: idx + 1,
   }));

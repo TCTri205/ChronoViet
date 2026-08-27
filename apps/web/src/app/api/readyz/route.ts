@@ -12,7 +12,34 @@ const log = createLogger({ service: 'web-api-readyz' });
 
 export const dynamic = 'force-dynamic';
 
+interface CachedReadiness {
+  timestamp: number;
+  data: {
+    status: 'ready' | 'degraded';
+    checks: Record<string, { status: string; latencyMs?: number; error?: string; info?: string }>;
+    timestamp: string;
+  };
+}
+
+let cachedReadiness: CachedReadiness | null = null;
+const CACHE_TTL_MS = 5000;
+
+let lastReportedStatus: 'ready' | 'degraded' | null = null;
+let lastDegradedSummary = '';
+
 export async function GET() {
+  const now = Date.now();
+
+  // Fast In-Memory Cache return (5s TTL) to prevent connection pool churn on rapid polling
+  if (cachedReadiness && now - cachedReadiness.timestamp < CACHE_TTL_MS) {
+    return NextResponse.json(cachedReadiness.data, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
+  }
+
   const checks: Record<string, { status: string; latencyMs?: number; error?: string; info?: string }> = {};
   let allHealthy = true;
 
@@ -48,7 +75,7 @@ export async function GET() {
   // 2. Check PostgreSQL
   const pgStart = Date.now();
   try {
-    const available = await isPgAvailable(true);
+    const available = await isPgAvailable(false);
     if (available) {
       checks.postgres = {
         status: 'healthy',
@@ -155,21 +182,43 @@ export async function GET() {
     allHealthy = false;
   }
 
+  // State-gated warning logging: only emit on degraded state change to eliminate 15s console warning loops
+  const currentStatus: 'ready' | 'degraded' = allHealthy ? 'ready' : 'degraded';
   if (!allHealthy) {
-    log.warn('web.readiness_degraded', 'Readiness probe detected degraded dependency', { checks });
+    const currentDegradedSummary = Object.entries(checks)
+      .filter(([, v]) => v.status !== 'healthy')
+      .map(([k, v]) => `${k}:${v.status}`)
+      .sort()
+      .join(',');
+
+    if (lastReportedStatus !== 'degraded' || lastDegradedSummary !== currentDegradedSummary) {
+      log.warn('web.readiness_degraded', 'Readiness probe detected degraded dependency', { checks });
+      lastReportedStatus = 'degraded';
+      lastDegradedSummary = currentDegradedSummary;
+    }
+  } else {
+    if (lastReportedStatus === 'degraded') {
+      log.info('web.readiness_recovered', 'All readiness probe dependencies are healthy');
+    }
+    lastReportedStatus = 'ready';
+    lastDegradedSummary = '';
   }
 
-  return NextResponse.json(
-    {
-      status: allHealthy ? 'ready' : 'degraded',
-      checks,
-      timestamp: new Date().toISOString(),
+  const responsePayload: CachedReadiness['data'] = {
+    status: currentStatus,
+    checks,
+    timestamp: new Date().toISOString(),
+  };
+
+  cachedReadiness = {
+    timestamp: now,
+    data: responsePayload,
+  };
+
+  return NextResponse.json(responsePayload, {
+    status: 200,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
-    {
-      status: 200,
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    }
-  );
+  });
 }

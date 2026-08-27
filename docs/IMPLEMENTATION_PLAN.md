@@ -290,7 +290,14 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
      - `pnpm eval:orchestrator` (`packages/agent-orchestrator/eval`)
      - `pnpm eval:remotion` (`packages/remotion-engine/eval`)
      - `pnpm eval:ingest` (`packages/data-ingestion/eval`)
-2. **Load Test & Resource Audit Trên Single VPS:**
+2. **Khung Đánh Giá Video Generation 2 Giai Đoạn Độc Lập (2-Stage Decoupled Suite):**
+   - `pnpm eval:video:stage1`: Đánh giá kịch bản & phân cảnh text-only (Planned Pacing 145 WPM, Fact-Check, Entity Recall).
+   - `pnpm eval:video:stage2`: Đánh giá curation ảnh & thẩm định VLM (Trilingual Coverage, Download %, License Whitelist, VLM Score).
+   - `pnpm eval:video:golden`: Đánh giá Stage 2 độc lập trên 5 Golden Fixtures chuẩn hóa.
+   - `pnpm eval:video`: Master pre-render benchmark.
+   - `pnpm eval:chat`: Đánh giá Chatbot Dialogue RAG.
+   - `pnpm eval:all`: Master benchmark toàn diện cả hệ thống.
+3. **Load Test & Resource Audit Trên Single VPS:**
    - Giới hạn tài nguyên Docker Compose: Worker CPU max 2.0, RAM max 4GB.
    - Kiểm tra rò rỉ bộ nhớ (Memory Leak Audit): Chạy 100 jobs render liên tục, đảm bảo peak RAM $< 3.8\text{ GB}$ và dọn sạch temp file.
 
@@ -309,6 +316,7 @@ Ma trận dưới đây ánh xạ trực tiếp từng trục đánh giá kỹ t
 | **4. Độ Tin Cậy Agent & Pacing Kịch Bản** | - State Machine Completion Rate<br>- Script Pacing Reconciliation Error<br>- Fact-Checker Escalation Trigger Rate | **100%**<br>**< 5%**<br>**100%** | **Multi-Agent Orchestrator**<br>`packages/agent-orchestrator/eval/` |
 | **5. Hiệu Năng Render & Chuẩn Visual** | - Remotion Render Time (1080p 60s)<br>- Karaoke Caption Frame Delay<br>- Visual Layout Regression Pass | **< 45s**<br>**< 1 frame (33ms)**<br>**100%** | **Remotion Render Engine**<br>`packages/remotion-engine/eval/` |
 | **6. An Toàn Hạ Tầng & Tải VPS** | - Max RAM Peak per Render Job<br>- Worker Process Memory Leak<br>- BullMQ Failover Recovery Rate | **< 3.8 GB RAM**<br>**0 MB leak**<br>**100%** | **Render Worker App**<br>`apps/render-worker/eval/` |
+| **7. Đánh Giá Video Gen 2 Giai Đoạn Độc Lập** | - Planned Pacing Deviation ($\le 8\%$/$\le 15\%$)<br>- Fact-Check Pass ($\ge 95\%$/$\ge 90\%$)<br>- Entity Recall ($\ge 80\%$/$\ge 65\%$)<br>- Trilingual Query Coverage ($\ge 80\%$)<br>- License Whitelist (100% Zero Tolerance)<br>- VLM Quality Score ($\ge 7.5$/$\ge 6.5$) | **$\le 8.0\%$**<br>**$\ge 95.0\%$**<br>**$\ge 80.0\%$**<br>**$\ge 80.0\%$**<br>**$100.0\%$**<br>**$\ge 7.5 / 10$** | **Master Video-Gen Evaluation Suite**<br>`eval/README.md`<br>(`pnpm eval:video:stage1`, `pnpm eval:video:stage2`, `pnpm eval:video:golden`, `pnpm eval:video`) |
 
 ---
 
@@ -334,4 +342,5 @@ Kế hoạch triển khai dự án ChronoViet được xây dựng dựa trên n
 2. ✅ ~~Hoàn thiện Ingestion ETL (`packages/data-ingestion/`), Chrono-RAG (`packages/rag-engine/`), VLM Inspector (`packages/vlm-inspector/`)~~ — **ĐÃ HOÀN THÀNH** (Phase 2)
 3. ✅ ~~Hoàn thiện Multi-Agent Orchestrator (`packages/agent-orchestrator/`), Task Queues & Worker (`apps/render-worker/`)~~ — **ĐÃ HOÀN THÀNH** (Phase 3)
 4. ✅ ~~Hoàn thiện App Monolith E2E (`apps/web` NotebookLM Workspace UI, APIs, WebSocket & Video Player)~~ — **ĐÃ HOÀN THÀNH** (Phase 4)
-5. 🔄 **Thực thi Full Benchmarking Suite & Hardening**: Chạy các bộ evaluation benchmark (`pnpm eval:rag`, `pnpm eval:orchestrator`, `pnpm eval:vlm`, `pnpm eval:remotion`, `pnpm eval:ingest`) trên môi trường thực tế (PostgreSQL pgvector, Redis, Local AI / Agnes Cloud Fallback, VieNeu TTS) để lập báo cáo hiệu năng và kiểm thử tải hệ thống.
+5. ✅ ~~Triển khai Kiến trúc Đánh giá Video Gen 2 Giai đoạn Độc lập (`eval/video-gen/` Stage 1 Script + Stage 2 Visual Curation) & Unified CLI~~ — **ĐÃ HOÀN THÀNH** (Phase 5 Milestone 1)
+6. 🔄 **Thực thi Full Benchmarking Suite & Hardening**: Chạy các bộ evaluation benchmark (`pnpm eval:rag`, `pnpm eval:orchestrator`, `pnpm eval:vlm`, `pnpm eval:video`, `pnpm eval:all`) trên môi trường thực tế để lập báo cáo hiệu năng và kiểm thử tải hệ thống.

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ContextSynthesizer } from '../generation/context-synthesizer.js';
 import { PromptEngine } from '../generation/prompt-engine.js';
 import { ClaimGrounder } from '../generation/claim-grounder.js';
@@ -38,6 +38,83 @@ describe('ContextSynthesizer', () => {
     expect(result.formattedContext).toContain('[CHUNK_1]');
     expect(result.chunkMap.has('chunk_tran_hung_dao_01')).toBe(true);
   });
+
+  it('should stitch contiguous sibling child chunks and strip 40-word boundary overlap', () => {
+    const chunkA = {
+      entityId: 'ent_lam_son_1',
+      canonicalName: 'Khởi nghĩa Lam Sơn',
+      chunkId: 'chunk_ls_parent_01_child_1',
+      title: 'Khởi nghĩa Lam Sơn - Đoạn 1',
+      textContent: 'Lê Lợi dựng cờ khởi nghĩa tại vùng núi Lam Sơn Thanh Hóa. Quân sĩ đồng lòng một dạ cùng vượt qua muôn vàn gian nan thiếu thốn lương thực vũ khí.',
+      parentChunkId: 'parent_ls_01',
+      timeStart: 1418,
+      timeEnd: 1420,
+      sourceReliability: 'LEVEL_1' as const,
+      citations: [],
+      aliases: [],
+      summary: '',
+      confidenceScore: 1.0,
+    };
+
+    const chunkB = {
+      entityId: 'ent_lam_son_2',
+      canonicalName: 'Khởi nghĩa Lam Sơn',
+      chunkId: 'chunk_ls_parent_01_child_2',
+      title: 'Khởi nghĩa Lam Sơn - Đoạn 2',
+      textContent: 'Quân sĩ đồng lòng một dạ cùng vượt qua muôn vàn gian nan thiếu thốn lương thực vũ khí. Nguyễn Trãi dâng Bình Ngô sách vạch ra chiến lược lâu dài.',
+      parentChunkId: 'parent_ls_01',
+      timeStart: 1420,
+      timeEnd: 1427,
+      sourceReliability: 'LEVEL_1' as const,
+      citations: [],
+      aliases: [],
+      summary: '',
+      confidenceScore: 1.0,
+    };
+
+    const stitched = ContextSynthesizer.stitchSiblingChunks([chunkA, chunkB]);
+    expect(stitched.length).toBe(1);
+    expect(stitched[0].title).toContain('Đoạn hợp nhất (1-2)');
+    expect(stitched[0].textContent).toContain('Lê Lợi dựng cờ khởi nghĩa');
+    expect(stitched[0].textContent).toContain('Nguyễn Trãi dâng Bình Ngô sách');
+    // Ensure duplicate boundary sentence was deduplicated
+    const matches = stitched[0].textContent.match(/Quân sĩ đồng lòng một dạ/g);
+    expect(matches?.length).toBe(1);
+    expect(stitched[0].timeStart).toBe(1418);
+    expect(stitched[0].timeEnd).toBe(1427);
+  });
+
+  it('should not stitch non-contiguous child chunks', () => {
+    const chunk1 = {
+      entityId: 'ent_1',
+      canonicalName: 'Sử liệu 1',
+      chunkId: 'chunk_p1_child_1',
+      title: 'Tài liệu 1',
+      textContent: 'Nội dung đoạn 1',
+      parentChunkId: 'parent_01',
+      citations: [],
+      aliases: [],
+      summary: '',
+      confidenceScore: 1.0,
+    };
+    const chunk3 = {
+      entityId: 'ent_3',
+      canonicalName: 'Sử liệu 3',
+      chunkId: 'chunk_p1_child_3',
+      title: 'Tài liệu 3',
+      textContent: 'Nội dung đoạn 3',
+      parentChunkId: 'parent_01',
+      citations: [],
+      aliases: [],
+      summary: '',
+      confidenceScore: 1.0,
+    };
+
+    const stitched = ContextSynthesizer.stitchSiblingChunks([chunk1, chunk3]);
+    expect(stitched.length).toBe(2);
+    expect(stitched[0].chunkId).toBe('chunk_p1_child_1');
+    expect(stitched[1].chunkId).toBe('chunk_p1_child_3');
+  });
 });
 
 describe('PromptEngine', () => {
@@ -70,6 +147,7 @@ describe('PromptEngine', () => {
     expect(result.messages[0].content).toContain('CAUSAL REASONING');
     expect(result.messages[0].content).toContain('MULTI-HOP LINKING');
     expect(result.messages[0].content).toContain('ZERO EVIDENCE REFUSAL');
+    expect(result.messages[0].content).toContain('CHRONOLOGICAL ORDERING GUARDRAIL');
     expect(result.maxTokens).toBeGreaterThanOrEqual(850);
   });
 });
@@ -104,5 +182,78 @@ describe('ClaimGrounder', () => {
     expect(result.claims[0].sourceChunkId).toBe('chunk_1288');
     expect(result.faithfulnessScore).toBe(100);
     expect(result.citationCorrectnessScore).toBe(100);
+  });
+});
+
+describe('AnswerGenerator Streaming & TTFT', () => {
+  it('should yield streaming events and measure TTFT metrics', async () => {
+    const sseChunks = [
+      'data: {"choices":[{"delta":{"content":"Năm "}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"1954 "}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"chiến dịch toàn thắng."}}]}\n\n',
+      'data: [DONE]\n\n',
+    ];
+
+    const encoder = new TextEncoder();
+    const streamBody = new ReadableStream({
+      start(controller) {
+        for (const chunk of sseChunks) {
+          controller.enqueue(encoder.encode(chunk));
+        }
+        controller.close();
+      },
+    });
+
+    const originalFetch = global.fetch;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (typeof url === 'string' && url.includes('/chat/completions')) {
+          return {
+            ok: true,
+            status: 200,
+            headers: new Headers({ 'content-type': 'text/event-stream' }),
+            body: streamBody,
+          } as any;
+        }
+        return { ok: false, status: 404 } as any;
+      })
+    );
+
+    const { AnswerGenerator } = await import('../generation/answer-generator.js');
+
+    const mockRagEngine: any = {
+      search: async () => ({
+        query: 'Chiến dịch Điện Biên Phủ diễn ra năm nào?',
+        chunks: [],
+        triples: [{ source: 'Điện Biên Phủ', relation: 'OCCURRED_IN', target: '1954' }],
+        citations: ['Sử liệu 1954'],
+        verifiedContext: [],
+        aliasTable: {},
+      }),
+    };
+
+    const stream = AnswerGenerator.generateStream(mockRagEngine, {
+      query: 'Chiến dịch Điện Biên Phủ diễn ra năm nào?',
+    });
+
+    const events = [];
+    for await (const event of stream) {
+      events.push(event);
+    }
+
+    expect(events.length).toBeGreaterThan(0);
+    const tokenEvents = events.filter((e) => e.type === 'token');
+    expect(tokenEvents.length).toBe(3);
+    expect(tokenEvents[0].metrics).toBeDefined();
+    expect(tokenEvents[0].metrics?.ttftMs).toBeGreaterThanOrEqual(0);
+    expect(tokenEvents[0].metrics?.llmFirstTokenMs).toBeGreaterThanOrEqual(0);
+
+    const doneEvent = events.find((e) => e.type === 'done');
+    expect(doneEvent).toBeDefined();
+    expect(doneEvent?.metrics?.totalLatencyMs).toBeGreaterThanOrEqual(0);
+    expect(doneEvent?.metrics?.tokenCount).toBe(3);
+
+    vi.stubGlobal('fetch', originalFetch);
   });
 });

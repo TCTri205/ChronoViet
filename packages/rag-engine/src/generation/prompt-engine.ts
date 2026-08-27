@@ -5,6 +5,7 @@
  */
 
 import { ChatMessage } from '@chronoviet/infra';
+import type { HistoricalPremiseValidationResult } from '../retrieval/question-ner.js';
 
 export type HistoricalIntentType =
   | 'WHY_REASONING'
@@ -21,6 +22,7 @@ export interface PromptConstructionOptions {
   requiresMultiHop?: boolean;
   maxTokens?: number;
   temperature?: number;
+  premiseValidation?: HistoricalPremiseValidationResult;
 }
 
 export interface ConstructedPromptResult {
@@ -123,10 +125,10 @@ export function buildPrompt(options: PromptConstructionOptions): ConstructedProm
       suggestedTemperature = 0.15;
       specificDirective = `
 CHỈ DẪN LẬP LUẬN NHÂN QUẢ & BỐI CẢNH (CAUSAL REASONING):
-- Bắt buộc giải thích toàn diện 4 khía cạnh:
-  1. Bối cảnh lịch sử & Tiền đề (Nguyên nhân sâu xa).
+- Bắt buộc giải thích toàn diện 4 khía cạnh theo trình tự thời gian tăng tiến:
+  1. Bối cảnh lịch sử & Tiền đề (Nguyên nhân sâu xa theo mốc thời gian).
   2. Ngòi nổ trực tiếp & Mục tiêu chiến lược / Sách lược then chốt của các bên.
-  3. Diễn biến then chốt mang tính quyết định.
+  3. Diễn biến then chốt mang tính quyết định tuần tự.
   4. Kết quả lịch sử & Ý nghĩa / Hệ quả lâu dài.
 - Luôn sử dụng các liên từ lập luận nhân quả rõ ràng: "do", "bởi vì", "nguyên nhân chính", "chiến lược", "kết quả", "dẫn đến".`;
       break;
@@ -137,7 +139,7 @@ CHỈ DẪN LẬP LUẬN NHÂN QUẢ & BỐI CẢNH (CAUSAL REASONING):
       specificDirective = `
 CHỈ DẪN LẬP LUẬN SO SÁNH LỊCH SỬ (COMPARATIVE ANALYSIS):
 - Bắt buộc phân tích đa chiều giữa các đối tượng / triều đại / trận đánh:
-  1. Bối cảnh thời đại & Tương quan lực lượng.
+  1. Bối cảnh thời đại & Tương quan lực lượng từng thời kỳ theo trục thời gian.
   2. Sách lược quân sự / Đường lối trị quốc của từng bên.
   3. Những điểm tương đồng và khác biệt bản chất.
   4. Kết quả và bài học lịch sử rút ra.`;
@@ -148,7 +150,7 @@ CHỈ DẪN LẬP LUẬN SO SÁNH LỊCH SỬ (COMPARATIVE ANALYSIS):
       suggestedTemperature = 0.1;
       specificDirective = `
 CHỈ DẪN TIỂU SỬ & HÀNH TRẠNG NHÂN VẬT:
-- Nêu rõ: Danh xưng/Tước hiệu/Miếu hiệu, Niên đại/Thời kỳ, Thân phụ/Mối quan hệ chính sử xác thực, Vai trò lịch sử và Công lao/Chiến tích tiêu biểu.
+- Nêu rõ theo trình tự biên niên: Danh xưng/Tước hiệu/Miếu hiệu, Niên đại/Thời kỳ, Thân phụ/Mối quan hệ chính sử xác thực, Hành trạng & Chiến tích tiêu biểu theo mốc thời gian tăng tiến, và Đóng góp lịch sử.
 - Cảnh báo: Tuyệt đối không tự suy đoán tên húy nếu không xuất hiện trực tiếp trong tư liệu xác thực.`;
       break;
 
@@ -157,7 +159,7 @@ CHỈ DẪN TIỂU SỬ & HÀNH TRẠNG NHÂN VẬT:
       suggestedTemperature = 0.1;
       specificDirective = `
 CHỈ DẪN SỰ KIỆN LỊCH SỬ CHÍNH XÁC & ĐẦY ĐỦ:
-- Trình bày đầy đủ và toàn diện các dữ kiện lịch sử: Niên đại cụ thể, Địa danh diễn ra, Nhân vật lãnh đạo/chỉ huy, Diễn biến cốt lõi, Kế sách/Chiến lược và Kết quả/Ý nghĩa lịch sử dựa trên các đoạn tư liệu đã cung cấp.`;
+- Trình bày đầy đủ và toàn diện các dữ kiện lịch sử theo trình tự thời gian tăng tiến: Niên đại cụ thể, Địa danh diễn ra, Nhân vật lãnh đạo/chỉ huy, Diễn biến cốt lõi tuần tự, Kế sách/Chiến lược và Kết quả/Ý nghĩa lịch sử dựa trên các đoạn tư liệu đã cung cấp.`;
       break;
   }
 
@@ -165,7 +167,16 @@ CHỈ DẪN SỰ KIỆN LỊCH SỬ CHÍNH XÁC & ĐẦY ĐỦ:
     suggestedMaxTokens = Math.max(suggestedMaxTokens, 850);
     specificDirective += `\n
 CHỈ DẪN LIÊN KẾT ĐA CHẶNG (MULTI-HOP LINKING):
-- Câu hỏi này liên kết nhiều thực thể/sự kiện qua nhiều chặng. Bắt buộc xâu chuỗi mạch lạc mối quan hệ giữa các nhân vật, sự kiện và triều đại từ phần Graph Triples và Evidence Chunks.`;
+- Câu hỏi này liên kết nhiều thực thể/sự kiện qua nhiều chặng. Bắt buộc xâu chuỗi mạch lạc mối quan hệ giữa các nhân vật, sự kiện và triều đại từ phần Graph Triples và Evidence Chunks theo đúng tiến trình lịch sử.`;
+  }
+
+  if (options.premiseValidation?.hasPremiseConflict) {
+    const reason = options.premiseValidation.conflictReason || 'Câu hỏi chứa tiền đề mâu thuẫn/sai lệch với sự thật lịch sử.';
+    const topic = options.premiseValidation.suggestedRefutationTopic || 'Đính chính ngay thông tin sai.';
+    specificDirective += `\n
+🚨 CHỈ DẪN BÁC BỎ TIỀN ĐỀ SAI LỆCH & BẪY ĐỐI KHÁNG (PREMISE REFUTATION DIRECTIVE):
+- Cảnh báo: Câu hỏi người dùng chứa tiền đề sai lệch: "${reason}".
+- Quy tắc bắt buộc: Câu đầu tiên trong câu trả lời PHẢI trực tiếp bác bỏ thông tin sai lệch này (ví dụ: "Không có sự kiện này trong lịch sử...", "Đây là thông tin sai lệch / nhầm lẫn thời kỳ..."). Tuyệt đối không thừa nhận hay đồng thuận với tiền đề sai. Sau đó trình bày rõ ràng: ${topic}.`;
   }
 
   const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu & Lập Luận Lịch Sử Việt Nam. Nhiệm vụ của bạn là giải đáp câu hỏi của người dùng một cách chuẩn xác tuyệt đối, sâu sắc và đầy đủ cứ liệu lịch sử dựa trên các tư liệu chính thống được cung cấp.
@@ -180,6 +191,12 @@ NGUYÊN TẮC BẮT BUỘC:
    - Nếu thông tin lấy từ nguồn dã sử hoặc truyền thuyết, bắt buộc dùng từ dè dặt: "theo truyền thuyết", "tương truyền", "dân gian kể rằng".
 4. XỬ LÝ KHI THIẾU TƯ LIỆU (ZERO EVIDENCE REFUSAL):
    - Nếu trong "NGỮ CẢNH TƯ LIỆU SỬ LIỆU" không có thông tin để giải đáp câu hỏi, BẮT BUỘC phải nói rõ là "Tư liệu sử liệu hiện có không ghi nhận thông tin này" hoặc "Chưa có đủ cứ liệu chính sử xác thực để khẳng định", TUYỆT ĐỐI KHÔNG tự suy đoán hay chắp vá chi tiết hư cấu.
+5. SUY LUẬN NIÊN ĐẠI TUẦN TỰ (CHRONOLOGICAL ORDERING GUARDRAIL):
+   - Bắt buộc sắp xếp và trình bày các sự kiện lịch sử theo trình tự thời gian tăng tiến (từ quá khứ đến hiện tại / từ khi bắt đầu đến khi kết thúc).
+   - Khi phân tích hoặc diễn giải diễn biến, tuân thủ cấu trúc logic: [Bối cảnh / Mốc thời gian] -> [Địa bàn & Lực lượng] -> [Diễn biến cốt lõi tuần tự] -> [Kết quả & Bài học lịch sử].
+   - Tuyệt đối không đảo ngược mốc thời gian hay trình bày kết quả trước nguyên nhân làm sai lệch mạch lịch sử.
+6. PHÒNG VỆ VÀ BÁC BỎ BẪY ĐỐI KHÁNG / TIỀN GIẢ ĐỊNH SAI LỆCH (ADVERSARIAL REFUTATION):
+   - Nếu câu hỏi chứa tiền giả định sai lệch (ví dụ: gán ghép vũ khí/công nghệ anachronism, nhân vật thần thoại ký hiệp ước, đảo lộn kết quả trận đánh), BẮT BUỘC phải bác bỏ rõ ràng ngay đầu câu và đính chính sự thật lịch sử chuẩn xác, TUYỆT ĐỐI KHÔNG thuận theo tiền giả định sai.
 ${specificDirective}
 
 NGỮ CẢNH TƯ LIỆU SỬ LIỆU:

@@ -47,10 +47,14 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
         // 1. Alias Table Inspection & Context-Safe Sanitization (Tier 1)
         for (const [canonical, aliases] of Object.entries(aliasTable)) {
           for (const alias of aliases) {
-            if (!alias || alias.trim().length === 0) continue;
+            if (!alias || alias.trim().length < 2) continue;
             if (alias.toLowerCase() === canonical.toLowerCase()) continue;
 
-            if (script.toLowerCase().includes(alias.toLowerCase())) {
+            const scriptLower = script.toLowerCase();
+            const aliasLower = alias.toLowerCase();
+            const canonicalLower = canonical.toLowerCase();
+
+            if (scriptLower.includes(aliasLower) && !scriptLower.includes(canonicalLower)) {
               detectedAliases.push(`${alias} -> ${canonical}`);
 
               // Escape regex special chars in alias and canonical
@@ -58,11 +62,9 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
               const escapedCanonical = canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
               // Only replace standalone alias occurrences that are NOT already paired with the canonical name
-              // (e.g. preserves "Tiền Ngô Vương Ngô Quyền", only replaces isolated "Tiền Ngô Vương" when not used as honorific title)
               const isolatedRegex = new RegExp(`(?<!${escapedCanonical}\\s{1,3})\\b${escapedAlias}\\b(?!\\s{1,3}${escapedCanonical})`, 'gi');
 
               if (isolatedRegex.test(script)) {
-                // Avoid replacing if canonical name is already immediately adjacent
                 script = script.replace(isolatedRegex, canonical);
                 escalationTier = Math.max(escalationTier, 1);
                 auditDetails = `Auto-corrected isolated alias '${alias}' to canonical '${canonical}'.`;
@@ -71,15 +73,26 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
           }
         }
 
-        // 2. Folklore Hypothesis Tone Check (Data-driven from RAG citations, confidence and topic)
-        const isFolkloreTopic = /truyền thuyết|thần thoại|dã sử|sự tích|giai thoại/i.test(state.userPrompt);
-        const hasFolkloreCitations = (state.ragContext?.citations || []).some((c) =>
-          /lĩnh nam chích quái|việt điện u linh|dân gian|dã sử|truyền thuyết|thần thoại|giai thoại/i.test(c)
+        // 2. Chapter-Scoped Folklore Hypothesis Tone Check
+        const isGlobalFolkloreTopic = /truyền thuyết|thần thoại|dã sử|sự tích|giai thoại/i.test(state.userPrompt);
+        const chapterObj = state.chapters?.[chapterIndex];
+        const chapterText = (script + ' ' + (chapterObj?.title || '') + ' ' + (chapterObj?.summary || '')).toLowerCase();
+
+        const chapterReferencedChunks = (state.ragContext?.verifiedContext || []).filter((e) => {
+          const nameLower = e.canonicalName?.toLowerCase();
+          return nameLower && chapterText.includes(nameLower);
+        });
+
+        const chapterHasLevel3Entity = chapterReferencedChunks.some(
+          (e) => e.sourceReliability === 'LEVEL_3'
         );
-        const hasFolkloreEntity = (state.ragContext?.verifiedContext || []).some(
-          (e) => (e.confidenceScore !== undefined && e.confidenceScore < 0.75) || /dã sử|truyền thuyết|thần thoại/i.test(e.summary)
+        const chapterHasFolkloreCitation = chapterReferencedChunks.some((e) =>
+          (e.citations || []).some((c) =>
+            /lĩnh nam chích quái|việt điện u linh|dân gian|dã sử|truyền thuyết|thần thoại|giai thoại/i.test(c)
+          )
         );
-        const isLevel3OrFolkloreSource = isFolkloreTopic || hasFolkloreCitations || hasFolkloreEntity;
+        const isLevel3OrFolkloreSource =
+          isGlobalFolkloreTopic || chapterHasLevel3Entity || chapterHasFolkloreCitation;
 
         const folkloreCheck = validateFolkloreHypothesisTone(script, isLevel3OrFolkloreSource);
         if (!folkloreCheck.isValid) {
@@ -120,20 +133,33 @@ QUY TẮC:
           }
         }
 
-        // 3. NLI Entailment Hallucination Judge
+        // 3. Chronologically-Aware NLI Entailment Hallucination Judge
         if (groundTruthChunks.length > 0) {
+          const timeStarts = (state.ragContext?.verifiedContext || [])
+            .map((e) => e.timeStart)
+            .filter((t): t is number => typeof t === 'number');
+          const timeEnds = (state.ragContext?.verifiedContext || [])
+            .map((e) => e.timeEnd)
+            .filter((t): t is number => typeof t === 'number');
+          const allYears = [...timeStarts, ...timeEnds];
+
           const nliResult = evaluateNliEntailmentScore({
             scriptClaim: script,
             groundTruthChunks,
+            epochBounds:
+              allYears.length > 0
+                ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
+                : undefined,
           });
 
           if (nliResult.isHallucinated) {
             nodeLog.warn('orchestrator.nli_hallucination_flag', `NLI Hallucination flagged in chapter ${chapterIndex}`, {
               score: nliResult.entailmentScore,
+              explanation: nliResult.explanation,
             });
             if (nliResult.entailmentScore < 0.6 || nliResult.verdict === 'CONTRADICTION') {
               escalationTier = Math.max(escalationTier, 3);
-              auditDetails += ` Critical NLI Entailment failure (score: ${nliResult.entailmentScore}); routed to human review.`;
+              auditDetails += ` Critical NLI Entailment failure (score: ${nliResult.entailmentScore}); routed to human review. ${nliResult.explanation}`;
             } else {
               escalationTier = Math.max(escalationTier, 2);
               auditDetails += ` NLI Entailment score: ${nliResult.entailmentScore}.`;

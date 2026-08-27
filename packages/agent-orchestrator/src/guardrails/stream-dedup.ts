@@ -86,27 +86,49 @@ export function createStreamLoopDetector(options: {
 }
 
 /**
- * Deduplicates repeated text blocks from a completed full text string.
+ * Deduplicates repeated text blocks and sentences from a completed full text string.
  */
 export function deduplicateRepetitiveText(text: string): string {
   if (!text || !text.trim()) return text;
 
   const paragraphs = text.split(/\n{2,}/);
-  const seen = new Set<string>();
-  const result: string[] = [];
+  const seenParagraphs = new Set<string>();
+  const seenSentences = new Set<string>();
+  const resultParagraphs: string[] = [];
 
   for (const para of paragraphs) {
-    const trimmed = para.trim();
-    if (!trimmed) continue;
+    const trimmedPara = para.trim();
+    if (!trimmedPara) continue;
 
-    // Normalize punctuation & whitespace for fuzzy match
-    const normalized = trimmed.toLowerCase().replace(/[.,!?:;\s]+/g, ' ');
-    if (trimmed.length >= 35 && seen.has(normalized)) {
+    // Normalize paragraph for deduplication
+    const normPara = trimmedPara.toLowerCase().replace(/[.,!?:;\s]+/g, ' ');
+    if (trimmedPara.length >= 35 && seenParagraphs.has(normPara)) {
       continue; // Skip duplicate paragraph
     }
-    seen.add(normalized);
-    result.push(trimmed);
+    seenParagraphs.add(normPara);
+
+    // Sentence-level deduplication within the paragraph
+    const sentences = trimmedPara.split(/(?<=[.?!])\s+/);
+    const uniqueSentences: string[] = [];
+
+    for (const sent of sentences) {
+      const trimmedSent = sent.trim();
+      if (!trimmedSent) continue;
+
+      const normSent = trimmedSent.toLowerCase().replace(/[.,!?:;\s]+/g, ' ');
+      if (trimmedSent.length >= 25 && seenSentences.has(normSent)) {
+        continue; // Skip duplicate sentence
+      }
+      if (trimmedSent.length >= 25) {
+        seenSentences.add(normSent);
+      }
+      uniqueSentences.push(trimmedSent);
+    }
+
+    if (uniqueSentences.length > 0) {
+      resultParagraphs.push(uniqueSentences.join(' '));
+    }
   }
 
-  return result.join('\n\n');
+  return resultParagraphs.join('\n\n');
 }

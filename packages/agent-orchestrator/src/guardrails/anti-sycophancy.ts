@@ -4,6 +4,8 @@
  * and generates strict refusal & verification guidance for LLM prompts.
  */
 
+import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
+
 export interface PremiseAnalysisResult {
   isLeadingQuestion: boolean;
   questionType?: 'KINSHIP' | 'IDENTITY' | 'DYNASTY' | 'CHRONOLOGY' | 'GENERAL';
@@ -12,10 +14,11 @@ export interface PremiseAnalysisResult {
 }
 
 const KINSHIP_PATTERNS = [
-  /(.+)\s+và\s+(.+)\s+(?:là|có\s+phải)\s+(?:2|hai)?\s*(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu)(?:\s+hả|\s+không|\s*\?)?/i,
-  /(.+)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+)(?:\s+không|\s+hả|\s*\?)?/i,
-  /(.+)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu|ông|bà|vợ|chồng)\s+của\s+(.+)(?:\s+hả|\s+không|\s*\?)?/i,
-  /(.+)\s+là\s+anh\s+em\s+ruột\s+với\s+(.+)/i,
+  /(.+?)\s+và\s+(.+?)\s+(?:có\s+phải\s+(?:là\s+)?|là\s+có\s+phải\s+|là\s+|có\s+phải\s+)(?:2|hai)?\s*(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu)(?:\s+hả|\s+không|\s*\?)?/i,
+  /(.+?)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+?)(?:\s+không|\s+hả|\s*\?)?/i,
+  /(.+?)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu|ông|bà|vợ|chồng)\s+của\s+(.+?)(?:\s+hả|\s+không|\s*\?)?/i,
+  /(.+?)\s+là\s+anh\s+em\s+ruột\s+với\s+(.+?)(?:\s+hả|\s+không|\s*\?)?/i,
+  /(.+?)\s+và\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau)(?:\s+không|\s+hả|\s*\?)?/i,
 ];
 
 const DYNASTY_PATTERNS = [
@@ -43,6 +46,7 @@ const MIXED_PREMISE_PATTERNS = [
 function cleanEntitySpan(span: string): string {
   return span
     .replace(/^(?:cho\s+(?:mình|tôi|em)\s+hỏi|bạn\s+ơi|bot\s+ơi|làm\s+ơn\s+cho\s+biết)\s+/i, '')
+    .replace(/\s+(?:có\s+phải\s+(?:là\s+)?|có\s+phải|là\s+có\s+phải|là)$/i, '')
     .replace(/[?!.,;:]+$/g, '')
     .trim();
 }
@@ -53,12 +57,25 @@ function cleanEntitySpan(span: string): string {
 export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisResult {
   const trimmed = query.trim();
 
-  // 1. Kinship leading question check
+  // 1. Kinship & Co-reference leading question check
   for (const pattern of KINSHIP_PATTERNS) {
     const match = trimmed.match(pattern);
     if (match) {
       const e1 = cleanEntitySpan(match[1] || '');
       const e2 = cleanEntitySpan(match[2] || '');
+
+      const canon1 = resolveCanonicalEntity(e1);
+      const canon2 = resolveCanonicalEntity(e2);
+
+      if (canon1.entityId && canon2.entityId && canon1.entityId === canon2.entityId) {
+        return {
+          isLeadingQuestion: true,
+          questionType: 'KINSHIP',
+          detectedEntities: [e1, e2].filter(Boolean),
+          suggestedDirective: `BẮT BUỘC ĐÍNH CHÍNH CÙNG MỘT NGƯỜI (ANTI-CO-REFERENCE ERROR): "${e1}" và "${e2}" thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ (${canon1.canonicalName}), không phải là hai người khác nhau. BẮT BUỘC phải khẳng định ngay ở câu đầu tiên rằng đây là cùng một người (${e1} và ${e2} là các tên gọi, tên húy, niên hiệu, tôn hiệu hoặc tước hiệu khác nhau của cùng một nhân vật qua các thời kỳ), TUYỆT ĐỐI KHÔNG tách thành hai nhân vật hay nhận định là quan hệ anh em/họ hàng.`,
+        };
+      }
+
       return {
         isLeadingQuestion: true,
         questionType: 'KINSHIP',

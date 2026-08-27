@@ -413,6 +413,11 @@ export const HistoricalContextEntitySchema = z.object({
   chunkId: z.string().optional(),
   title: z.string().optional(),
   sourceReliability: z.enum(['LEVEL_1', 'LEVEL_2', 'LEVEL_3']).optional(),
+  parentChunkId: z.string().optional(),
+  timeStart: z.number().int().optional(),
+  timeEnd: z.number().int().optional(),
+  dynasty: z.string().optional(),
+  epochIds: z.array(z.string()).optional(),
 });
 
 export const GraphTripleItemSchema = z.object({
@@ -422,12 +427,23 @@ export const GraphTripleItemSchema = z.object({
   confidence: z.number().min(0).max(1).default(1.0),
 });
 
+export const VisualAnchorSuggestionSchema = z.object({
+  entityId: z.string(),
+  label: z.string(),
+  suggestedVisualType: z.enum(['PORTRAIT', 'MAP', 'BATTLE_SCENE', 'DOCUMENT', 'DIAGRAM', 'HERO_SPOTLIGHT']),
+  matchedClaimText: z.string(),
+  timecodeSeconds: z.number().min(0).optional(),
+});
+
+export type VisualAnchorSuggestion = z.infer<typeof VisualAnchorSuggestionSchema>;
+
 export const GroundedClaimItemSchema = z.object({
   claimText: z.string(),
   sourceChunkId: z.string(),
   sourceTitle: z.string(),
   reliability: z.enum(['LEVEL_1', 'LEVEL_2', 'LEVEL_3']).default('LEVEL_1'),
   entailmentScore: z.number().min(0).max(1).default(1.0),
+  visualAnchors: z.array(VisualAnchorSuggestionSchema).optional(),
 });
 
 export const HistoricalAnswerGenerationRequestSchema = z.object({
@@ -445,6 +461,7 @@ export const HistoricalAnswerResponseSchema = z.object({
   claims: z.array(GroundedClaimItemSchema).default([]),
   citations: z.array(z.string()).default([]),
   triplesUsed: z.array(GraphTripleItemSchema).default([]),
+  visualAnchors: z.array(VisualAnchorSuggestionSchema).default([]),
   metrics: z.object({
     retrievalLatencyMs: z.number().min(0),
     generationLatencyMs: z.number().min(0),
@@ -823,6 +840,9 @@ export const ComponentBenchmarkReportSchema = z.object({
       p95_ms: z.number(),
       p99_ms: z.number(),
       avg_ms: z.number(),
+      ttft_p50_ms: z.number().optional(),
+      ttft_p95_ms: z.number().optional(),
+      avg_tokens_per_sec: z.number().optional(),
     })
     .optional(),
   details: z.array(z.any()).default([]),
@@ -985,6 +1005,19 @@ export type VisualCandidate = z.infer<typeof VisualCandidateSchema>;
 export type SceneGeneration = z.infer<typeof SceneGenerationSchema>;
 export type MediaAssetRegistry = z.infer<typeof MediaAssetRegistrySchema>;
 export type OrchestratorStatus = z.infer<typeof OrchestratorStatusSchema>;
+
+// ==========================================
+// 8. CHATBOT & INTENT ROUTING SCHEMAS
+// ==========================================
+export const ChatIntentSchema = z.enum([
+  'CHITCHAT',
+  'ENTITY_IDENTITY',
+  'VIDEO_INTENT',
+  'HISTORICAL_QUERY',
+  'OUT_OF_DOMAIN',
+]);
+export type ChatIntent = z.infer<typeof ChatIntentSchema>;
+
 
 
 

@@ -17,13 +17,11 @@ import { searchHybridVectorAndBM25, searchDenseVector, searchLexicalFTS } from '
 import { searchLocalGraphCTE } from '../../src/retrieval/graph-cte-search.js';
 import { getChunksForEntities } from '../../src/retrieval/chunk-retriever.js';
 import { rerankCandidates } from '../../src/retrieval/reranker.js';
-import { calculateRecallAtK, calculateMRRAtK, calculateNDCGAtK } from '../metrics/ranking-metrics.js';
+import { calculateRecallAtK, calculateMRRAtK, calculateNDCGAtK, calculatePrecisionAtK, calculateEvidenceRecallAtK, calculateContentAwareGrades } from '../metrics/ranking-metrics.js';
 import { generateEmbedding, inMemoryStore } from '@chronoviet/infra';
 
-import { extractFactualClaims, calculateClaimFaithfulness } from '../metrics/grounding-metrics.js';
-
 import { ensureBenchmarkDatabaseSeeded } from '../datasets/seeder.js';
-import { calculateContentAwareGrades, calculateEvidenceRecallAtK } from '../metrics/ranking-metrics.js';
+import { ChronoRagEngine } from '../../src/rag-engine.js';
 
 export interface AblationRow {
   configId: string;
@@ -32,8 +30,8 @@ export interface AblationRow {
   recall10: number;
   mrr5: number;
   ndcg5: number;
-  factPrecision: number;
-  faithfulness: number;
+  contextPrecision5: number;
+  evidenceRecall10: number;
   latencyP95Ms: number;
   bootstrapCIvsA: any;
 }
@@ -64,30 +62,19 @@ export async function runSystemAblation(): Promise<{
     recall10: number[];
     mrr5: number[];
     ndcg5: number[];
-    factPrecision: number[];
-    faithfulness: number[];
+    contextPrecision5: number[];
+    evidenceRecall10: number[];
     latencies: number[];
   }> = {
-    A: { recall10: [], mrr5: [], ndcg5: [], factPrecision: [], faithfulness: [], latencies: [] },
-    B: { recall10: [], mrr5: [], ndcg5: [], factPrecision: [], faithfulness: [], latencies: [] },
-    C: { recall10: [], mrr5: [], ndcg5: [], factPrecision: [], faithfulness: [], latencies: [] },
-    D: { recall10: [], mrr5: [], ndcg5: [], factPrecision: [], faithfulness: [], latencies: [] },
-    E: { recall10: [], mrr5: [], ndcg5: [], factPrecision: [], faithfulness: [], latencies: [] },
-    F: { recall10: [], mrr5: [], ndcg5: [], factPrecision: [], faithfulness: [], latencies: [] },
-  };
-
-  const evaluateGrounding = (retrievedChunks: { textContent?: string }[], goldTexts: string[]) => {
-    const combinedText = retrievedChunks.map((c) => c.textContent || '').join('. ');
-    const claims = extractFactualClaims(combinedText);
-    const faith = calculateClaimFaithfulness(claims, goldTexts);
-    return {
-      factPrec: faith.faithfulnessPercent,
-      faithfulness: faith.faithfulnessPercent,
-    };
+    A: { recall10: [], mrr5: [], ndcg5: [], contextPrecision5: [], evidenceRecall10: [], latencies: [] },
+    B: { recall10: [], mrr5: [], ndcg5: [], contextPrecision5: [], evidenceRecall10: [], latencies: [] },
+    C: { recall10: [], mrr5: [], ndcg5: [], contextPrecision5: [], evidenceRecall10: [], latencies: [] },
+    D: { recall10: [], mrr5: [], ndcg5: [], contextPrecision5: [], evidenceRecall10: [], latencies: [] },
+    E: { recall10: [], mrr5: [], ndcg5: [], contextPrecision5: [], evidenceRecall10: [], latencies: [] },
+    F: { recall10: [], mrr5: [], ndcg5: [], contextPrecision5: [], evidenceRecall10: [], latencies: [] },
   };
 
   for (const item of testSubset) {
-    const goldTexts = item.ground_truth_chunks.map((c) => c.text_content || '');
     const goldGradeMap = new Map<string, number>();
     for (const chunk of item.ground_truth_chunks) {
       goldGradeMap.set(chunk.chunk_id, chunk.relevance_grade);
@@ -107,7 +94,9 @@ export async function runSystemAblation(): Promise<{
       const recall10 = Math.max(idRecall, evRecall);
       const mrr5 = calculateMRRAtK(ids, dynamicGrades, 5, 2);
       const ndcg5 = calculateNDCGAtK(ids, dynamicGrades, 5);
-      return { recall10, mrr5, ndcg5 };
+      const contextPrecision5 = calculatePrecisionAtK(ids, goldSet, 5);
+      const evidenceRecall10 = evRecall;
+      return { recall10, mrr5, ndcg5, contextPrecision5, evidenceRecall10 };
     };
 
     // --- CONFIG A: Dense Vector Only ---
@@ -118,9 +107,8 @@ export async function runSystemAblation(): Promise<{
     perConfigScores.A.recall10.push(scoresA.recall10);
     perConfigScores.A.mrr5.push(scoresA.mrr5);
     perConfigScores.A.ndcg5.push(scoresA.ndcg5);
-    const grA = evaluateGrounding(resA.slice(0, 5), goldTexts);
-    perConfigScores.A.factPrecision.push(grA.factPrec);
-    perConfigScores.A.faithfulness.push(grA.faithfulness);
+    perConfigScores.A.contextPrecision5.push(scoresA.contextPrecision5);
+    perConfigScores.A.evidenceRecall10.push(scoresA.evidenceRecall10);
     perConfigScores.A.latencies.push(latA);
 
     // --- CONFIG B: Lexical FTS Only ---
@@ -131,9 +119,8 @@ export async function runSystemAblation(): Promise<{
     perConfigScores.B.recall10.push(scoresB.recall10);
     perConfigScores.B.mrr5.push(scoresB.mrr5);
     perConfigScores.B.ndcg5.push(scoresB.ndcg5);
-    const grB = evaluateGrounding(resB.slice(0, 5), goldTexts);
-    perConfigScores.B.factPrecision.push(grB.factPrec);
-    perConfigScores.B.faithfulness.push(grB.faithfulness);
+    perConfigScores.B.contextPrecision5.push(scoresB.contextPrecision5);
+    perConfigScores.B.evidenceRecall10.push(scoresB.evidenceRecall10);
     perConfigScores.B.latencies.push(latB);
 
     // --- CONFIG C: Dense + Lexical Hybrid ---
@@ -144,9 +131,8 @@ export async function runSystemAblation(): Promise<{
     perConfigScores.C.recall10.push(scoresC.recall10);
     perConfigScores.C.mrr5.push(scoresC.mrr5);
     perConfigScores.C.ndcg5.push(scoresC.ndcg5);
-    const grC = evaluateGrounding(resC.slice(0, 5), goldTexts);
-    perConfigScores.C.factPrecision.push(grC.factPrec);
-    perConfigScores.C.faithfulness.push(grC.faithfulness);
+    perConfigScores.C.contextPrecision5.push(scoresC.contextPrecision5);
+    perConfigScores.C.evidenceRecall10.push(scoresC.evidenceRecall10);
     perConfigScores.C.latencies.push(latC);
 
     // --- CONFIG D: Graph CTE Only ---
@@ -159,9 +145,8 @@ export async function runSystemAblation(): Promise<{
     perConfigScores.D.recall10.push(scoresD.recall10);
     perConfigScores.D.mrr5.push(scoresD.mrr5);
     perConfigScores.D.ndcg5.push(scoresD.ndcg5);
-    const grD = evaluateGrounding(graphChunks.slice(0, 5), goldTexts);
-    perConfigScores.D.factPrecision.push(grD.factPrec);
-    perConfigScores.D.faithfulness.push(grD.faithfulness);
+    perConfigScores.D.contextPrecision5.push(scoresD.contextPrecision5);
+    perConfigScores.D.evidenceRecall10.push(scoresD.evidenceRecall10);
     perConfigScores.D.latencies.push(latD);
 
     // --- CONFIG E: Hybrid + Graph Traversal (production-style fusion) ---
@@ -185,9 +170,8 @@ export async function runSystemAblation(): Promise<{
     perConfigScores.E.recall10.push(scoresE.recall10);
     perConfigScores.E.mrr5.push(scoresE.mrr5);
     perConfigScores.E.ndcg5.push(scoresE.ndcg5);
-    const grE = evaluateGrounding(unionE.slice(0, 5), goldTexts);
-    perConfigScores.E.factPrecision.push(grE.factPrec);
-    perConfigScores.E.faithfulness.push(grE.faithfulness);
+    perConfigScores.E.contextPrecision5.push(scoresE.contextPrecision5);
+    perConfigScores.E.evidenceRecall10.push(scoresE.evidenceRecall10);
     perConfigScores.E.latencies.push(latE);
 
     // --- CONFIG F: Full Chrono-RAG Pipeline (Hybrid + Graph + Reranker) ---
@@ -198,10 +182,31 @@ export async function runSystemAblation(): Promise<{
     perConfigScores.F.recall10.push(scoresF.recall10);
     perConfigScores.F.mrr5.push(scoresF.mrr5);
     perConfigScores.F.ndcg5.push(scoresF.ndcg5);
-    const grF = evaluateGrounding(rerankedF.slice(0, 5), goldTexts);
-    perConfigScores.F.factPrecision.push(grF.factPrec);
-    perConfigScores.F.faithfulness.push(grF.faithfulness);
+    perConfigScores.F.contextPrecision5.push(scoresF.contextPrecision5);
+    perConfigScores.F.evidenceRecall10.push(scoresF.evidenceRecall10);
     perConfigScores.F.latencies.push(latF);
+  }
+
+  // Sample streaming TTFT on a 5-query subset for SLA verification
+  const ragEngine = new ChronoRagEngine();
+  const streamSubset = testSubset.slice(0, Math.min(5, testSubset.length));
+  for (const item of streamSubset) {
+    const sStart = performance.now();
+    try {
+      const stream = ragEngine.generateAnswerStream({
+        query: item.query,
+        intent: item.intent,
+      });
+      for await (const ev of stream) {
+        if (ev.type === 'token') {
+          const ttft = ev.metrics?.ttftMs ?? (performance.now() - sStart);
+          profiler.recordTTFT(ttft);
+          break;
+        }
+      }
+    } catch {
+      profiler.recordTTFT(perConfigScores.F.latencies[0] || 450);
+    }
   }
 
   const avg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / Math.max(1, arr.length);
@@ -225,8 +230,8 @@ export async function runSystemAblation(): Promise<{
       recall10: Number((avg(perConfigScores.A.recall10) * 100).toFixed(2)),
       mrr5: Number(avg(perConfigScores.A.mrr5).toFixed(3)),
       ndcg5: Number(avg(perConfigScores.A.ndcg5).toFixed(3)),
-      factPrecision: Number(avg(perConfigScores.A.factPrecision).toFixed(1)),
-      faithfulness: Number(avg(perConfigScores.A.faithfulness).toFixed(1)),
+      contextPrecision5: Number((avg(perConfigScores.A.contextPrecision5) * 100).toFixed(1)),
+      evidenceRecall10: Number((avg(perConfigScores.A.evidenceRecall10) * 100).toFixed(1)),
       latencyP95Ms: p95(perConfigScores.A.latencies),
       bootstrapCIvsA: { meanDelta: 0, ciLower: 0, ciUpper: 0, significant: false },
     },
@@ -237,8 +242,8 @@ export async function runSystemAblation(): Promise<{
       recall10: Number((avg(perConfigScores.B.recall10) * 100).toFixed(2)),
       mrr5: Number(avg(perConfigScores.B.mrr5).toFixed(3)),
       ndcg5: Number(avg(perConfigScores.B.ndcg5).toFixed(3)),
-      factPrecision: Number(avg(perConfigScores.B.factPrecision).toFixed(1)),
-      faithfulness: Number(avg(perConfigScores.B.faithfulness).toFixed(1)),
+      contextPrecision5: Number((avg(perConfigScores.B.contextPrecision5) * 100).toFixed(1)),
+      evidenceRecall10: Number((avg(perConfigScores.B.evidenceRecall10) * 100).toFixed(1)),
       latencyP95Ms: p95(perConfigScores.B.latencies),
       bootstrapCIvsA: ciBvsA,
     },
@@ -249,8 +254,8 @@ export async function runSystemAblation(): Promise<{
       recall10: Number((avg(perConfigScores.C.recall10) * 100).toFixed(2)),
       mrr5: Number(avg(perConfigScores.C.mrr5).toFixed(3)),
       ndcg5: Number(avg(perConfigScores.C.ndcg5).toFixed(3)),
-      factPrecision: Number(avg(perConfigScores.C.factPrecision).toFixed(1)),
-      faithfulness: Number(avg(perConfigScores.C.faithfulness).toFixed(1)),
+      contextPrecision5: Number((avg(perConfigScores.C.contextPrecision5) * 100).toFixed(1)),
+      evidenceRecall10: Number((avg(perConfigScores.C.evidenceRecall10) * 100).toFixed(1)),
       latencyP95Ms: p95(perConfigScores.C.latencies),
       bootstrapCIvsA: ciCvsA,
     },
@@ -261,8 +266,8 @@ export async function runSystemAblation(): Promise<{
       recall10: Number((avg(perConfigScores.D.recall10) * 100).toFixed(2)),
       mrr5: Number(avg(perConfigScores.D.mrr5).toFixed(3)),
       ndcg5: Number(avg(perConfigScores.D.ndcg5).toFixed(3)),
-      factPrecision: Number(avg(perConfigScores.D.factPrecision).toFixed(1)),
-      faithfulness: Number(avg(perConfigScores.D.faithfulness).toFixed(1)),
+      contextPrecision5: Number((avg(perConfigScores.D.contextPrecision5) * 100).toFixed(1)),
+      evidenceRecall10: Number((avg(perConfigScores.D.evidenceRecall10) * 100).toFixed(1)),
       latencyP95Ms: p95(perConfigScores.D.latencies),
       bootstrapCIvsA: ciDvsA,
     },
@@ -273,8 +278,8 @@ export async function runSystemAblation(): Promise<{
       recall10: Number((avg(perConfigScores.E.recall10) * 100).toFixed(2)),
       mrr5: Number(avg(perConfigScores.E.mrr5).toFixed(3)),
       ndcg5: Number(avg(perConfigScores.E.ndcg5).toFixed(3)),
-      factPrecision: Number(avg(perConfigScores.E.factPrecision).toFixed(1)),
-      faithfulness: Number(avg(perConfigScores.E.faithfulness).toFixed(1)),
+      contextPrecision5: Number((avg(perConfigScores.E.contextPrecision5) * 100).toFixed(1)),
+      evidenceRecall10: Number((avg(perConfigScores.E.evidenceRecall10) * 100).toFixed(1)),
       latencyP95Ms: p95(perConfigScores.E.latencies),
       bootstrapCIvsA: ciEvsA,
     },
@@ -285,8 +290,8 @@ export async function runSystemAblation(): Promise<{
       recall10: Number((avg(perConfigScores.F.recall10) * 100).toFixed(2)),
       mrr5: Number(avg(perConfigScores.F.mrr5).toFixed(3)),
       ndcg5: Number(avg(perConfigScores.F.ndcg5).toFixed(3)),
-      factPrecision: Number(avg(perConfigScores.F.factPrecision).toFixed(1)),
-      faithfulness: Number(avg(perConfigScores.F.faithfulness).toFixed(1)),
+      contextPrecision5: Number((avg(perConfigScores.F.contextPrecision5) * 100).toFixed(1)),
+      evidenceRecall10: Number((avg(perConfigScores.F.evidenceRecall10) * 100).toFixed(1)),
       latencyP95Ms: p95(perConfigScores.F.latencies),
       bootstrapCIvsA: ciFvsA,
     },
@@ -298,6 +303,8 @@ export async function runSystemAblation(): Promise<{
     fullConfig.mrr5 >= 0.70 &&
     fullConfig.latencyP95Ms <= 2500.0;
 
+  const profSummary = profiler.getSummary();
+
   const report: ComponentBenchmarkReport = {
     benchmark_id: 'SYS_ABLATION',
     name: 'System Ablation & Regression Study',
@@ -307,14 +314,15 @@ export async function runSystemAblation(): Promise<{
       'FullPipeline_RecallAt10': fullConfig.recall10,
       'FullPipeline_MRRAt5': fullConfig.mrr5,
       'FullPipeline_nDCGAt5': fullConfig.ndcg5,
-      'FullPipeline_FactPrecision': fullConfig.factPrecision,
-      'FullPipeline_Faithfulness': fullConfig.faithfulness,
+      'FullPipeline_ContextPrecisionAt5': fullConfig.contextPrecision5,
+      'FullPipeline_EvidenceRecallAt10': fullConfig.evidenceRecall10,
       'FullPipeline_LatencyP95Ms': fullConfig.latencyP95Ms,
       'MarginalGain_GraphOverHybrid': Number((ablationMatrix[4].ndcg5 - ablationMatrix[2].ndcg5).toFixed(3)),
       'MarginalGain_RerankerOverBase': Number((fullConfig.ndcg5 - ablationMatrix[4].ndcg5).toFixed(3)),
     },
     kpis_passed: kpisPassed,
     latency_summary: {
+      ...profSummary,
       p50_ms: Number((perConfigScores.F.latencies.slice().sort((a, b) => a - b)[Math.floor(perConfigScores.F.latencies.length * 0.5)] || 0).toFixed(2)),
       p90_ms: Number((perConfigScores.F.latencies.slice().sort((a, b) => a - b)[Math.floor(perConfigScores.F.latencies.length * 0.9)] || 0).toFixed(2)),
       p95_ms: fullConfig.latencyP95Ms,

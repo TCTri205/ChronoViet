@@ -166,4 +166,44 @@ describe('ChronoRagEngine Integration & End-to-End Search', { timeout: 20000 }, 
 
     expect(inMemoryStore.documentChunks.size).toBeGreaterThanOrEqual(2);
   });
+
+  it('should execute comparative query decomposition and retrieve candidates for both entities', async () => {
+    const engine = new ChronoRagEngine();
+
+    await engine.ingestDocument(
+      'Năm 938, Ngô Quyền chỉ huy quân dân đánh tan quân Nam Hán trên sông Bạch Đằng bằng cọc gỗ bọc sắt.',
+      {
+        title: 'Chiến thắng Bạch Đằng 938 của Ngô Quyền',
+        source: 'Đại Việt Sử Ký Toàn Thư',
+        dynasty: 'Thời kỳ Tự chủ',
+        timeStart: 938,
+        timeEnd: 938,
+        sourceReliability: 'LEVEL_1',
+      }
+    );
+
+    await engine.ingestDocument(
+      'Năm 1288, Quốc công Tiết chế Trần Hưng Đạo đại phá thủy quân Ô Mã Nhi nhà Nguyên Mông trên sông Bạch Đằng.',
+      {
+        title: 'Chiến thắng Bạch Đằng 1288 của Trần Hưng Đạo',
+        source: 'Đại Việt Sử Ký Toàn Thư',
+        dynasty: 'Nhà Trần',
+        timeStart: 1288,
+        timeEnd: 1288,
+        sourceReliability: 'LEVEL_1',
+      }
+    );
+
+    const result = await engine.search({
+      query: 'So sánh nghệ thuật quân sự của Ngô Quyền và Trần Hưng Đạo trên sông Bạch Đằng',
+      rerankTopK: 5,
+    });
+
+    expect(result.verifiedContext.length).toBeGreaterThanOrEqual(2);
+    const titles = result.verifiedContext.map((c) => c.title || '');
+    const hasNgoQuyen = titles.some((t) => t.includes('Ngô Quyền'));
+    const hasTranHungDao = titles.some((t) => t.includes('Trần Hưng Đạo'));
+    expect(hasNgoQuyen).toBe(true);
+    expect(hasTranHungDao).toBe(true);
+  });
 });

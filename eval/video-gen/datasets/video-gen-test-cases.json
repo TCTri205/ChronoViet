@@ -218,5 +218,27 @@
     "expectedEntities": ["Võ Nguyên Giáp", "Điện Biên Phủ", "Đồi A1", "Tướng De Castries", "Kéo pháo vào kéo pháo ra", "Hiệp định Genève"],
     "expectedChapters": ["Tập đoàn cứ điểm bất khả xâm phạm", "Quyết định chuyển từ đánh nhanh sang đánh chắc", "56 ngày đêm khoét núi ngủ hầm và toàn thắng"],
     "searchKeywordsCheck": ["Chiến thắng Điện Biên Phủ", "Đại tướng Võ Nguyên Giáp", "Đồi A1 Điện Biên Phủ"]
+  },
+  {
+    "id": "vg_21_short_1min",
+    "topic": "Hịch tướng sĩ và Hào khí Đông A ba lần đại thắng Nguyên Mông",
+    "epoch": "TRẦN",
+    "targetDurationMinutes": 1,
+    "videoType": "BIOGRAPHY",
+    "templateId": "QUICK_SHORTS",
+    "expectedEntities": ["Trần Quốc Tuấn", "Trần Hưng Đạo", "Hịch tướng sĩ", "Hội nghị Diên Hồng"],
+    "expectedChapters": ["Hịch tướng sĩ khơi dậy lòng yêu nước", "Hào khí Đông A bất tử"],
+    "searchKeywordsCheck": ["Trần Quốc Tuấn", "Hịch tướng sĩ", "Hội nghị Diên Hồng"]
+  },
+  {
+    "id": "vg_22_mystery_dia_dao",
+    "topic": "Bí ẩn mê cung thành cổ và hệ thống kiến trúc quân sự thời cổ",
+    "epoch": "CỔ_TRUNG_ĐẠI",
+    "targetDurationMinutes": 3,
+    "videoType": "MYSTERY",
+    "templateId": "mystery_investigation_default",
+    "expectedEntities": ["Cổ Loa", "Thành Cổ Loa", "An Dương Vương", "Nỏ thần Kim Quy"],
+    "expectedChapters": ["Bí ẩn cấu trúc thành lũy xoáy ốc", "Mê cung phòng thủ và nghệ thuật quân sự cổ đại", "Giải mã những bí ẩn khảo cổ học"],
+    "searchKeywordsCheck": ["Thành Cổ Loa khảo cổ", "Kiến trúc thành lũy cổ Việt Nam", "Nỏ thần Cổ Loa"]
   }
 ]

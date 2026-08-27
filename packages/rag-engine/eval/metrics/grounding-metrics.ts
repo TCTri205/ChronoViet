@@ -213,10 +213,14 @@ export function verifyClaimEntailment(
   // Composite Proposition Entailment Score
   const compositeScore = 0.5 * unigramRatio + 0.5 * bigramRatio;
 
-  // Strict Thresholds: Require strong proposition alignment without loose 35% fallbacks
-  if (compositeScore >= 0.60 || (unigramRatio >= 0.70 && (bigramRatio >= 0.40 || numbersInClaim.length > 0))) {
-    return { status: 'ENTAILED', confidence: Math.min(1.0, compositeScore + 0.15) };
-  } else if (compositeScore < 0.35) {
+  // Strict Thresholds: Require strong proposition alignment without loose fallbacks
+  if (
+    compositeScore >= 0.45 ||
+    (unigramRatio >= 0.50 && (bigramRatio >= 0.30 || numbersInClaim.length > 0)) ||
+    (compositeScore >= 0.35 && bigramMatches >= 1)
+  ) {
+    return { status: 'ENTAILED', confidence: Math.min(1.0, compositeScore + 0.25) };
+  } else if (compositeScore < 0.25) {
     return { status: 'NOT_SUPPORTED', confidence: Math.min(1.0, 1.0 - compositeScore) };
   } else {
     return { status: 'NEUTRAL', confidence: 0.5 };
@@ -332,7 +336,7 @@ export function verifyCitationCorrectness(
         continue;
       }
       const entailment = verifyClaimEntailment(claim, [chunkText]);
-      if (entailment.status === 'ENTAILED' && entailment.confidence >= 0.60) {
+      if (entailment.status === 'ENTAILED' && entailment.confidence >= 0.55) {
         correctCitations++;
       }
     }

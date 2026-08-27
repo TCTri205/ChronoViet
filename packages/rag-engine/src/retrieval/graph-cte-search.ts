@@ -12,6 +12,7 @@
 
 import { buildAliasTable } from '@chronoviet/shared-spec';
 import { createLogger, isPgAvailable, query, inMemoryStore } from '@chronoviet/infra';
+import { globalCacheManager } from './cache-manager.js';
 
 const log = createLogger({ service: 'rag-engine' });
 
@@ -83,6 +84,13 @@ export async function searchLocalGraphCTE(
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const minConfidence = options.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
   const relationTypes = options.relationTypes;
+
+  // Check Graph Neighborhood Cache (30-min TTL)
+  const cacheKey = `${[...entityIds].sort().join(',')}:h=${maxHops}:n=${maxNodes}:c=${minConfidence}:r=${relationTypes ? relationTypes.join(',') : '*'}`;
+  const cached = globalCacheManager.graphNeighborhoodCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
 
   const pgConnected = await isPgAvailable();
   const startTime = Date.now();
@@ -201,11 +209,15 @@ export async function searchLocalGraphCTE(
     budgetHit,
   });
 
-  return {
+  const result: LocalGraphSearchResult = {
     triples,
     aliasTable,
     entityIds: allEntityIds,
     timedOut: Date.now() - startTime > timeoutMs,
     budgetHit,
   };
+
+  globalCacheManager.graphNeighborhoodCache.set(cacheKey, result);
+
+  return result;
 }

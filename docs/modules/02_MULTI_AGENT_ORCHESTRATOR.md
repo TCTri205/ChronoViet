@@ -555,3 +555,23 @@ export type Attribution = z.infer<typeof AttributionSchema>;
 5. **Hạ Tầng Linh Hoạt & Độc Lập (Hybrid VLM Scorer):** Chạy mượt mà với Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m`, eval strict) hoặc Gemini Cloud VLM + Local CLIP fallback (dev) khi bị rate-limit hoặc ngắt mạng.
 6. **An Toàn Bản Quyền Hình Ảnh (License Compliance):** 100% ảnh crawl có nhãn giấy phép whitelisted (`Public Domain`, `CC0`, `CC-BY`) kèm metadata `attribution` chuẩn xác.
 7. **Khôi Phục Tốc Độ Cao & An Toàn (Fine-Grained Idempotency):** Resume chính xác từng task (TTS/Crawl) khi rớt container dựa trên Hash Keys, không tiêu tốn lại token LLM hay băng thông network.
+
+---
+
+## 7. Khung Đánh Giá & Benchmark Mô-đun (Evaluation Framework)
+
+Mô-đun được đánh giá qua cả cấp độ thành phần (Component A0–A5) lẫn cấp độ quy trình kịch bản Stage 1 và quy trình hình ảnh Stage 2:
+
+```bash
+# Đánh giá nội bộ từng Node & System Ablation
+pnpm eval:orchestrator       # Toàn bộ benchmark Agent Orchestrator
+
+# Đánh giá Kịch bản Video Stage 1 (Text-only preflight: postgres + embedding + llm)
+pnpm eval:video:stage1       # Planned Pacing (145 WPM), Fact-Check Pass Rate, Entity Recall
+
+# Đánh giá Curation Ảnh & VLM Stage 2 (Vision preflight: llm + vlm + search)
+pnpm eval:video:stage2       # Chạy nối tiếp từ Stage 1
+pnpm eval:video:golden       # Chạy độc lập trên 5 Golden Fixtures chuẩn hóa
+```
+
+👉 *Xem chi tiết tại:* [`eval/README.md`](../../eval/README.md)

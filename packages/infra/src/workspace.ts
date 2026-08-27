@@ -43,8 +43,12 @@ export function findMonorepoRoot(startDir: string = process.cwd()): string {
 }
 
 export function getDefaultProjectsBaseDir(): string {
+  const root = findMonorepoRoot();
   if (envConfig.PROJECTS_MEDIA_ROOT) {
-    return path.resolve(envConfig.PROJECTS_MEDIA_ROOT);
+    if (path.isAbsolute(envConfig.PROJECTS_MEDIA_ROOT)) {
+      return envConfig.PROJECTS_MEDIA_ROOT;
+    }
+    return path.resolve(root, envConfig.PROJECTS_MEDIA_ROOT);
   }
   // If running in Docker / Linux with /media/projects available and writable
   if (fs.existsSync('/media/projects')) {
@@ -56,7 +60,6 @@ export function getDefaultProjectsBaseDir(): string {
     }
   }
 
-  const root = findMonorepoRoot();
   if (envConfig.MEDIA_DIR) {
     if (path.isAbsolute(envConfig.MEDIA_DIR)) {
       return path.join(envConfig.MEDIA_DIR, 'projects');

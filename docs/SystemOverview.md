@@ -193,7 +193,36 @@ Remotion Engine của ChronoViet tuân thủ kiến trúc **100% Data-Driven**. 
 
 ---
 
-## 6. Định hướng Mở rộng Tương lai (Future Scope & Scalability)
+## 6. Khung Đánh Giá & Benchmark Hệ Thống (Master Evaluation Architecture)
+
+ChronoViet áp dụng kiến trúc đánh giá 2 giai đoạn độc lập (**2-Stage Decoupled Evaluation Suite**), cho phép đo lường chuyên sâu chất lượng sinh kịch bản và chất lượng tìm kiếm tư liệu/VLM mà không phụ thuộc vào hạ tầng nặng:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                           MASTER EVALUATION SUITE                              │
+├───────────────────────────────────────┬────────────────────────────────────────┤
+│ STAGE 1: SCRIPT & NARRATIVE (Text)    │ STAGE 2: VISUAL CURATION (Vision)      │
+│ Preflight: ['postgres', 'emb', 'llm'] │ Preflight: ['llm', 'vlm', 'search']    │
+├───────────────────────────────────────┼────────────────────────────────────────┤
+│ • Planned Pacing Deviation (145 WPM)  │ • Trilingual Query Coverage (Vi/En/Fr) │
+│ • Historical Fact-Check Pass Rate     │ • Image Candidate Yield (>= 3/scene)   │
+│ • Historical Entity Recall Rate       │ • Asset Download Success Rate          │
+│ • Scene Duration & Density Bounds     │ • 100% License Whitelist Compliance    │
+│                                       │ • VLM Visual Quality Score (>= 7.5/10) │
+└───────────────────────────────────────┴────────────────────────────────────────┘
+```
+
+- **Stage 1 (`pnpm eval:video:stage1`):** Đánh giá kịch bản text-only siêu nhanh (0% overhead GPU/crawling).
+- **Stage 2 (`pnpm eval:video:stage2` / `pnpm eval:video:golden`):** Đánh giá tìm kiếm tư liệu & thẩm định VLM (nối tiếp Stage 1 hoặc chạy độc lập trên 5 Golden Fixtures).
+- **Master Pre-Render Benchmark (`pnpm eval:video`):** Đánh giá toàn diện chuỗi sinh video trước render.
+- **Chatbot Dialogue Benchmark (`pnpm eval:chat`):** Đánh giá tra cứu, trích dẫn và hội thoại lịch sử.
+- **Unified Master Benchmark (`pnpm eval:all`):** Chạy toàn bộ hệ thống đánh giá.
+
+👉 *Xem tài liệu chi tiết tại:* [`eval/README.md`](../eval/README.md)
+
+---
+
+## 7. Định hướng Mở rộng Tương lai (Future Scope & Scalability)
 
 Dự án **ChronoViet** được thiết kế với kiến trúc Mô-đun (Modular), cho phép mở rộng các tính năng nâng cao trong các giai đoạn sau:
 

@@ -203,3 +203,20 @@ Thay vào đó, hệ thống kích hoạt **Pure Code Fallback** chuyển giao c
 ## 6. Ý Nghĩa Kỹ Thuật Của VLM Inspector Sub-Agent (v4.1)
 
 Nhờ Sub-Agent VLM Inspector (Local Unified Multimodal VLM `qwen3.5-9b-instruct-q4_k_m` cho eval strict, Hybrid Gemini + Local CLIP cho dev, License Whitelist Filter và Redis Caching) và cơ chế Fallback Pure Code, ChronoViet giải quyết triệt để rủi ro lớn nhất của các hệ thống tự động hóa video: **Hệ thống luôn luôn render xuất ra được video hoàn chỉnh, đẹp mắt, an toàn về mặt văn hóa/lịch sử và tuân thủ bản quyền thương mại 100% ngay cả khi nguồn dữ liệu crawl trên internet bị thiếu sót hoặc cloud API gặp sự cố.**
+
+---
+
+## 7. Khung Đánh Giá & Benchmark Mô-đun (Evaluation Framework)
+
+Mô-đun được đánh giá qua cả benchmark nội bộ lẫn quy trình Curation Ảnh & VLM Stage 2:
+
+```bash
+# Đánh giá nội bộ VLM Scorer & Cache
+pnpm eval:vlm
+
+# Đánh giá Curation Ảnh & Thẩm định VLM Stage 2 (Vision preflight: llm + vlm + search)
+pnpm eval:video:stage2       # Chạy nối tiếp kịch bản từ Stage 1
+pnpm eval:video:golden       # Chạy độc lập trên bộ Golden Script Fixtures (5 thời kỳ)
+```
+
+👉 *Xem chi tiết tiêu chí KPI tại:* [`eval/README.md`](../../eval/README.md)

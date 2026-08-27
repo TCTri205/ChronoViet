@@ -45,7 +45,7 @@ export const DEFAULT_QUALITY_FLOORS: QualityFloorConfig = {
   minRecallAt10: 75.0,
   minNdcgAt5: 0.70,
   maxLatencyP95Ms: 1500.0,
-  maxTtftP95Ms: 1500.0,
+  maxTtftP95Ms: 800.0,
 };
 
 export function evaluateRegressionGates(

@@ -28,10 +28,12 @@ import {
   getCachedQueryEmbedding,
 } from './retrieval/vector-search.js';
 import { getChunksForEntities, ChunkGraphSignal } from './retrieval/chunk-retriever.js';
-import { rerankCandidates, truncateToSentenceBoundary } from './retrieval/reranker.js';
+import { rerankCandidates, truncateToSentenceBoundary, extractQueryRelevantExcerpt } from './retrieval/reranker.js';
+import { detectQueryIntent } from './generation/prompt-engine.js';
 import {
   generateHistoricalAnswer,
   generateHistoricalAnswerStream,
+  HistoricalAnswerStreamEvent,
 } from './generation/answer-generator.js';
 
 const log = createLogger({ service: 'rag-engine' });
@@ -100,63 +102,154 @@ export class ChronoRagEngine implements IRagEngine {
       maxTokens: request.maxTokens,
     });
 
-    // Steps 2, 3, 4: Dual-Branch Parallel Execution (Graph Branch & Vector Branch)
-    const graphBranchPromise = (async () => {
-      try {
-        const graphResult = await searchLocalGraphCTE(filterEntityIds, {
+    // Steps 2, 3, 4: Dual-Branch Parallel Execution (with Conditional Comparative Decomposition)
+    const isComparative = detectQueryIntent(queryText) === 'COMPARATIVE' && filterEntityIds.length >= 2;
+
+    let hybridCandidates: VectorSearchResult[] = [];
+    let graphResult: { triples: GraphTriple[]; aliasTable: Record<string, string[]>; entityIds: string[] } = {
+      triples: [],
+      aliasTable: {},
+      entityIds: [],
+    };
+    let graphChunks: VectorSearchResult[] = [];
+    let timedOut = false;
+
+    if (isComparative) {
+      const entA = filterEntityIds[0];
+      const entB = filterEntityIds[1];
+      const nameA = queryInfo.entityNames[0] || entA;
+      const nameB = queryInfo.entityNames[1] || entB;
+
+      const subQueryA = `${queryText} ${nameA}`;
+      const subQueryB = `${queryText} ${nameB}`;
+
+      const [gRes, [resA, resB]] = await Promise.all([
+        searchLocalGraphCTE(filterEntityIds, {
           maxHops: 2,
           maxNodes: GRAPH_BRANCH_MAX_NODES,
           timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
-        });
+        }).catch(() => ({ triples: [], aliasTable: {}, entityIds: [], timedOut: true })),
+        Promise.all([
+          searchHybridVectorAndBM25(
+            subQueryA,
+            getCachedQueryEmbedding(subQueryA),
+            Math.max(10, rerankTopK * 2),
+            60,
+            [entA]
+          ),
+          searchHybridVectorAndBM25(
+            subQueryB,
+            getCachedQueryEmbedding(subQueryB),
+            Math.max(10, rerankTopK * 2),
+            60,
+            [entB]
+          ),
+        ]),
+      ]);
 
-        // Entity -> (maxConfidence, minHop) signals for weighting graph chunks by relevance.
-        const graphSignals = new Map<string, ChunkGraphSignal>();
-        for (const t of graphResult.triples) {
-          for (const eid of [t.sourceEntityId, t.targetEntityId]) {
-            const existing = graphSignals.get(eid);
-            if (!existing) {
-              graphSignals.set(eid, { maxConfidence: t.confidence, minHop: t.hopCount });
-            } else {
-              existing.maxConfidence = Math.max(existing.maxConfidence, t.confidence);
-              existing.minHop = Math.min(existing.minHop, t.hopCount);
-            }
+      graphResult = gRes as any;
+      timedOut = Boolean(gRes.timedOut);
+
+      const gSignals = new Map<string, ChunkGraphSignal>();
+      for (const t of graphResult.triples) {
+        for (const eid of [t.sourceEntityId, t.targetEntityId]) {
+          const existing = gSignals.get(eid);
+          if (!existing) {
+            gSignals.set(eid, { maxConfidence: t.confidence, minHop: t.hopCount });
+          } else {
+            existing.maxConfidence = Math.max(existing.maxConfidence, t.confidence);
+            existing.minHop = Math.min(existing.minHop, t.hopCount);
           }
         }
-
-        const graphChunks = await getChunksForEntities(
-          graphResult.entityIds,
-          20,
-          filterEntityIds,
-          graphSignals
-        );
-        return { graphResult, graphChunks, timedOut: Boolean(graphResult.timedOut) };
-      } catch (err) {
-        log.warn('rag.graph_branch_error', 'Graph branch failed; falling back gracefully to vector/FTS retrieval only', {
-          error: err,
-          query: queryText,
-        });
-        return {
-          graphResult: { triples: [], aliasTable: {}, entityIds: [] },
-          graphChunks: [],
-          timedOut: true,
-        };
       }
-    })();
 
-    const vectorBranchPromise = (async () => {
-      const embeddingPromise = getCachedQueryEmbedding(queryText);
-      const hybridCandidates = await searchHybridVectorAndBM25(
-        queryText,
-        embeddingPromise,
-        Math.max(15, rerankTopK * 3)
-      );
-      return hybridCandidates;
-    })();
+      graphChunks = await getChunksForEntities(
+        graphResult.entityIds.length > 0 ? graphResult.entityIds : filterEntityIds,
+        20,
+        filterEntityIds,
+        gSignals
+      ).catch(() => []);
 
-    const [{ graphResult, graphChunks, timedOut }, hybridCandidates] = await Promise.all([
-      graphBranchPromise,
-      vectorBranchPromise,
-    ]);
+      // Balanced 50/50 RRF fusion between both entities
+      const balancedMap = new Map<string, VectorSearchResult>();
+      resA.forEach((item, idx) => {
+        const score = 0.5 * (1 / (60 + idx + 1));
+        balancedMap.set(item.chunkId, { ...item, score });
+      });
+      resB.forEach((item, idx) => {
+        const score = 0.5 * (1 / (60 + idx + 1));
+        const existing = balancedMap.get(item.chunkId);
+        if (existing) {
+          existing.score += score;
+        } else {
+          balancedMap.set(item.chunkId, { ...item, score });
+        }
+      });
+      hybridCandidates = Array.from(balancedMap.values());
+    } else {
+      const graphBranchPromise = (async () => {
+        try {
+          const gRes = await searchLocalGraphCTE(filterEntityIds, {
+            maxHops: 2,
+            maxNodes: GRAPH_BRANCH_MAX_NODES,
+            timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
+          });
+
+          const graphSignals = new Map<string, ChunkGraphSignal>();
+          for (const t of gRes.triples) {
+            for (const eid of [t.sourceEntityId, t.targetEntityId]) {
+              const existing = graphSignals.get(eid);
+              if (!existing) {
+                graphSignals.set(eid, { maxConfidence: t.confidence, minHop: t.hopCount });
+              } else {
+                existing.maxConfidence = Math.max(existing.maxConfidence, t.confidence);
+                existing.minHop = Math.min(existing.minHop, t.hopCount);
+              }
+            }
+          }
+
+          const gChunks = await getChunksForEntities(
+            gRes.entityIds,
+            20,
+            filterEntityIds,
+            graphSignals
+          );
+          return { graphResult: gRes, graphChunks: gChunks, timedOut: Boolean(gRes.timedOut) };
+        } catch (err) {
+          log.warn('rag.graph_branch_error', 'Graph branch failed; falling back gracefully to vector/FTS retrieval only', {
+            error: err,
+            query: queryText,
+          });
+          return {
+            graphResult: { triples: [], aliasTable: {}, entityIds: [] },
+            graphChunks: [],
+            timedOut: true,
+          };
+        }
+      })();
+
+      const vectorBranchPromise = (async () => {
+        const embeddingPromise = getCachedQueryEmbedding(queryText);
+        const candidates = await searchHybridVectorAndBM25(
+          queryText,
+          embeddingPromise,
+          Math.max(15, rerankTopK * 3),
+          60,
+          filterEntityIds
+        );
+        return candidates;
+      })();
+
+      const [gBranch, vBranch] = await Promise.all([
+        graphBranchPromise,
+        vectorBranchPromise,
+      ]);
+
+      graphResult = gBranch.graphResult;
+      graphChunks = gBranch.graphChunks;
+      timedOut = gBranch.timedOut;
+      hybridCandidates = vBranch;
+    }
 
     // Step 4b: Deduplicate & Apply Co-Retrieval Fusion Boost
     const candidateMap = new Map<string, VectorSearchResult>();
@@ -194,7 +287,12 @@ export class ChronoRagEngine implements IRagEngine {
     allCandidates.sort((a, b) => b.score - a.score);
 
     // Step 5: Pure Model Cross-Encoder Reranker & Response Formatting
-    const topChunks = await rerankCandidates(queryText, allCandidates, rerankTopK);
+    const topChunks = await rerankCandidates(
+      queryText,
+      allCandidates,
+      rerankTopK,
+      queryInfo.extractedYears
+    );
 
     log.debug('rag.search_completed', 'RAG search completed', {
       query: queryText,
@@ -217,7 +315,7 @@ export class ChronoRagEngine implements IRagEngine {
 
     for (let idx = 0; idx < topChunks.length; idx++) {
       const chunk = topChunks[idx];
-      const cleanSummary = truncateToSentenceBoundary(chunk.textContent || '', 800);
+      const cleanSummary = extractQueryRelevantExcerpt(chunk.textContent || '', queryText, 900);
       const estimatedChunkTokens = Math.ceil(
         (cleanSummary.length + (chunk.title?.length || 0)) / VIETNAMESE_CHARS_PER_TOKEN
       );
@@ -258,6 +356,11 @@ export class ChronoRagEngine implements IRagEngine {
         chunkId: chunk.chunkId,
         title: chunk.title,
         sourceReliability: chunk.sourceReliability as any,
+        parentChunkId: chunk.parentChunkId,
+        timeStart: chunk.timeStart,
+        timeEnd: chunk.timeEnd,
+        dynasty: chunk.dynasty,
+        epochIds: chunk.epochIds,
       });
 
       citations.push(`${chunk.title} [Nguồn: ${chunk.sourceReliability || 'LEVEL_1'}]`);
@@ -293,11 +396,11 @@ export class ChronoRagEngine implements IRagEngine {
   }
 
   /**
-   * Streaming Grounded Historical Answer Generation
+   * Streaming Grounded Historical Answer Generation with TTFT instrumentation
    */
   async *generateAnswerStream(
     request: HistoricalAnswerGenerationRequest
-  ): AsyncGenerator<{ type: 'token' | 'triples' | 'citations' | 'done'; content?: string; triples?: any[]; citations?: string[] }> {
+  ): AsyncGenerator<HistoricalAnswerStreamEvent> {
     await ensureGlobalSchemaInitialized();
     yield* generateHistoricalAnswerStream(this, request);
   }
@@ -307,7 +410,16 @@ export class ChronoRagEngine implements IRagEngine {
    */
   async ingestDocument(
     content: string,
-    metadata: { title: string; source: string; dynasty?: string; sourceReliability?: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3' }
+    metadata: {
+      title: string;
+      source: string;
+      dynasty?: string;
+      sourceReliability?: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3';
+      timeStart?: number;
+      timeEnd?: number;
+      parentChunkId?: string;
+      epochIds?: string[];
+    }
   ): Promise<void> {
     await ensureGlobalSchemaInitialized();
     await ingestHistoricalDocument(content, metadata);

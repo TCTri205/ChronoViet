@@ -8,6 +8,7 @@ import {
   searchHybridVectorAndBM25,
   SimpleLRUCache,
   sanitizeFtsQuery,
+  buildEnhancedFtsQuery,
   getCachedQueryEmbedding,
   resetQueryEmbeddingCacheForTest,
 } from '../retrieval/vector-search.js';
@@ -289,5 +290,29 @@ describe('Vector Search & Lexical FTS Retrieval', () => {
     expect(cache.has('q1')).toBe(true);
     expect(cache.has('q3')).toBe(true);
     expect(cache.has('q4')).toBe(true);
+  });
+
+  it('should build enhanced FTS tsquery with whitelisted multi-word aliases and conjunctive tokens', () => {
+    const tsQuery = buildEnhancedFtsQuery('Vua Quang Trung', ['person_quang_trung']);
+    expect(tsQuery).toContain('quang');
+    expect(tsQuery).toContain('trung');
+    // Multi-word alias "Nguyễn Huệ" -> (nguyen & hue)
+    expect(tsQuery).toContain('nguyen & hue');
+    // Multi-word alias "Bắc Bình Vương" -> (bac & binh & vuong)
+    expect(tsQuery).toContain('bac & binh & vuong');
+  });
+
+  it('should retrieve chunks via injected alias matching in lexical FTS search', async () => {
+    inMemoryStore.documentChunks.set('chunk_nguyen_hue', {
+      id: 'chunk_nguyen_hue',
+      title: 'Bắc Bình Vương',
+      text_content: 'Nguyễn Huệ cử đại binh ra Bắc lập lại trật tự.',
+      source_reliability: 'LEVEL_1',
+    });
+
+    // Query uses canonical name "Quang Trung", chunk contains alias "Nguyễn Huệ"
+    const results = await searchLexicalFTS('Vua Quang Trung đánh giặc', 5, ['person_quang_trung']);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].chunkId).toBe('chunk_nguyen_hue');
   });
 });

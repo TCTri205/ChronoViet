@@ -83,7 +83,7 @@ pnpm remotion:studio # Remotion Studio UI (Port 9876)
 
 ### 3. AI & Infrastructure Management
 ```bash
-pnpm ai:start        # Start Full Local AI Stack (8090, 8092, 8094, 8096, 8080 + TTS)
+pnpm ai:start        # Start Full Local AI Stack (8090, 8092, 8096, 8080 + TTS)
 pnpm ai:lite         # Start Lightweight Pair (8090 + 8094) (~3.1 GB RAM)
 pnpm ai:status       # Check AI port status (8090, 8092, 8094, 8096, 8080)
 pnpm ai:stop         # Stop all background AI & TTS processes
@@ -108,6 +108,12 @@ pnpm eval:orchestrator   # Multi-Agent Orchestrator Benchmark (A0 - A5 + SYS)
 pnpm eval:orchestrator:a0 .. :a5 # Discrete Agent Benchmarks (A0..A5)
 pnpm eval:vlm            # VLM Visual Quality Inspector
 pnpm eval:remotion       # Remotion Video Rendering Fidelity
+pnpm eval:chat           # Historical Chatbot Dialogue Benchmark
+pnpm eval:video          # Video Generation Master Pre-Render Benchmark
+pnpm eval:video:stage1   # Video Gen Stage 1 (Script & Narrative Text-Only)
+pnpm eval:video:stage2   # Video Gen Stage 2 (Visual Research & Curation)
+pnpm eval:video:golden   # Video Gen Stage 2 on Golden Script Fixtures
+pnpm eval:all            # Unified Master Evaluation (Chat + Video Gen)
 ```
 
 ---

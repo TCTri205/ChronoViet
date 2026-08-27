@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { ComponentBenchmarkReport, ChronoevalDatasetItem, removeVietnameseAccents } from '@chronoviet/shared-spec';
 import { callLLM, ChatMessage } from '@chronoviet/infra';
 import { ChronoRagEngine } from '../../src/rag-engine.js';
+import { extractHistoricalYears } from '../../src/retrieval/question-ner.js';
 import { HighResolutionLatencyProfiler } from '../metrics/latency-profiler.js';
 import { verifyClaimEntailment, verifyClaimEntailmentWithLlmJudge, extractFactualClaims } from '../metrics/grounding-metrics.js';
 import { ensureBenchmarkDatabaseSeeded } from '../datasets/seeder.js';
@@ -43,20 +44,56 @@ export async function runC8Benchmark(): Promise<ComponentBenchmarkReport> {
     console.log(`  [C8 Benchmark] (${idx + 1}/${evalSubset.length}) Query: "${item.query.slice(0, 55)}..."`);
     const timer = profiler.startTimer();
 
-    // Generate Real LLM Answer through ChronoRagEngine
+    // Generate Real LLM Answer through ChronoRagEngine with Streaming TTFT
     let generatedAnswer = '';
+    const queryStartTime = performance.now();
     try {
-      const answerRes = await ragEngine.generateAnswer({
+      const stream = ragEngine.generateAnswerStream({
         query: item.query,
         intent: item.intent,
         requiresMultiHop: item.requires_multihop,
       });
-      generatedAnswer = answerRes.answerText;
-    } catch (err) {
-      if (process.env.EVAL_STRICT !== 'false') {
-        throw new Error(`[C8 Benchmark Failure] LLM service unavailable or call failed: ${String(err)}`);
+      let firstTokenRecorded = false;
+      for await (const event of stream) {
+        if (event.type === 'token' && !firstTokenRecorded) {
+          const ttft = event.metrics?.ttftMs ?? (performance.now() - queryStartTime);
+          profiler.recordTTFT(ttft);
+          firstTokenRecorded = true;
+        }
+        if (event.type === 'done') {
+          generatedAnswer = event.content || '';
+          if (!firstTokenRecorded && event.metrics?.ttftMs) {
+            profiler.recordTTFT(event.metrics.ttftMs);
+            firstTokenRecorded = true;
+          }
+        }
       }
-      generatedAnswer = '';
+      if (!generatedAnswer) {
+        const answerRes = await ragEngine.generateAnswer({
+          query: item.query,
+          intent: item.intent,
+          requiresMultiHop: item.requires_multihop,
+        });
+        generatedAnswer = answerRes.answerText;
+        if (!firstTokenRecorded) {
+          profiler.recordTTFT(performance.now() - queryStartTime);
+        }
+      }
+    } catch (err) {
+      try {
+        const answerRes = await ragEngine.generateAnswer({
+          query: item.query,
+          intent: item.intent,
+          requiresMultiHop: item.requires_multihop,
+        });
+        generatedAnswer = answerRes.answerText;
+        profiler.recordTTFT(performance.now() - queryStartTime);
+      } catch (fallbackErr) {
+        if (process.env.EVAL_STRICT !== 'false') {
+          throw new Error(`[C8 Benchmark Failure] LLM service unavailable or call failed: ${String(err)}`);
+        }
+        generatedAnswer = '';
+      }
     }
 
     timer();
@@ -149,7 +186,7 @@ export async function runC8Benchmark(): Promise<ComponentBenchmarkReport> {
       : (claimsMet > 0 ? 100 : 0);
     completenessScoreSum += completeness;
 
-    // Temporal correctness check: verify exact year or dynasty alignment
+    // Temporal correctness & Chronological Timeline Flow check (Rule 5 Guardrail)
     let isTemporalCorrectForQuery = false;
     if (item.temporal_bounds?.time_start) {
       const year = String(item.temporal_bounds.time_start);
@@ -160,10 +197,33 @@ export async function runC8Benchmark(): Promise<ComponentBenchmarkReport> {
         item.temporal_bounds.time_start < 0
       ) {
         isTemporalCorrectForQuery = true;
-        temporalCorrectCount++;
       }
     } else {
       isTemporalCorrectForQuery = true;
+    }
+
+    // Verify Chronological Flow (Rule 5: Timeline-First CoT verification)
+    const sentences = generatedAnswer.split(/[.\n;]+/).map((s) => s.trim()).filter(Boolean);
+    const chronologicalYears: number[] = [];
+    for (const sent of sentences) {
+      const parsed = extractHistoricalYears(sent);
+      if (parsed.extractedYears.length > 0) {
+        chronologicalYears.push(parsed.extractedYears[0]);
+      }
+    }
+    let isChronologicalOrderMaintained = true;
+    if (chronologicalYears.length >= 2) {
+      let validTransitions = 0;
+      const totalTransitions = chronologicalYears.length - 1;
+      for (let i = 0; i < totalTransitions; i++) {
+        if (chronologicalYears[i + 1] >= chronologicalYears[i]) {
+          validTransitions++;
+        }
+      }
+      isChronologicalOrderMaintained = (validTransitions / totalTransitions) >= 0.60;
+    }
+
+    if (isTemporalCorrectForQuery && isChronologicalOrderMaintained) {
       temporalCorrectCount++;
     }
 

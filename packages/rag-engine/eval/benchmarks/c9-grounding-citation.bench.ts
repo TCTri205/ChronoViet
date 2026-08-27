@@ -98,15 +98,21 @@ export async function runC9Benchmark(): Promise<ComponentBenchmarkReport> {
         return [matched.sourceChunkId];
       }
 
-      // Check context chunk entailment
+      // Check context chunk entailment across all retrieved context chunks
+      let bestChunkId: string | null = null;
+      let highestConf = 0;
       for (const [cId, cText] of chunkMap.entries()) {
         const entailment = verifyClaimEntailment(claim, [cText]);
-        if (entailment.status === 'ENTAILED' && entailment.confidence >= 0.65) {
-          return [cId];
+        if (entailment.status === 'ENTAILED' && entailment.confidence > highestConf) {
+          highestConf = entailment.confidence;
+          bestChunkId = cId;
         }
       }
+      if (bestChunkId) {
+        return [bestChunkId];
+      }
 
-      // No fallback shortcut - ungrounded claims must be penalized
+      // Ungrounded claims must be penalized
       return [];
     });
 

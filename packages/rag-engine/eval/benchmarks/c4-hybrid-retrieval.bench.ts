@@ -12,7 +12,7 @@ import { generateEmbedding, isPgAvailable, envConfig } from '@chronoviet/infra';
 import { HighResolutionLatencyProfiler } from '../metrics/latency-profiler.js';
 import { getStratifiedHistoricalSample } from '../datasets/builder.js';
 
-import { QUESTION_STOPWORDS } from '../../src/retrieval/question-ner.js';
+import { QUESTION_STOPWORDS, extractQueryEntities } from '../../src/retrieval/question-ner.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,7 +85,7 @@ export async function runC4Benchmark(): Promise<ComponentBenchmarkReport> {
           .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
         if (tokens.length === 0) continue;
         const hits = tokens.filter((t) => chunkText.includes(t)).length;
-        if (hits >= Math.ceil(tokens.length * 0.65)) {
+        if (hits >= Math.ceil(tokens.length * 0.75)) {
           matchedClaims++;
         }
       }
@@ -108,11 +108,12 @@ export async function runC4Benchmark(): Promise<ComponentBenchmarkReport> {
 
   for (const item of evalSubset) {
     const queryEmb = await generateEmbedding(item.query);
+    const queryInfo = extractQueryEntities(item.query);
 
     const timer = profiler.startTimer();
     const [denseResults, ftsResults] = await Promise.all([
       searchDenseVector(queryEmb, 20),
-      searchLexicalFTS(item.query, 20),
+      searchLexicalFTS(item.query, 20, queryInfo.entityIds),
     ]);
 
     // In-memory RRF Fusion for K = 60 across all retrieved candidates

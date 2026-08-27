@@ -127,12 +127,19 @@ export async function runC2Benchmark(): Promise<ComponentBenchmarkReport> {
       }
     }
 
-    // Temporal detection check: verify if year in query was actually parsed into keywords/tokens
-    const yearMatch = item.query.match(/\b\d{3,4}\b/);
-    if (yearMatch) {
+    // Temporal detection check: verify if historical years (AD, BCE, 2-digit, centuries) in query were parsed into extractedYears / keywords
+    const hasTemporalClue =
+      /\b\d{3,4}\b/.test(item.query) ||
+      /(?:tcn|trước\s+công\s+nguyên)/i.test(item.query) ||
+      /(?:thế\s+kỷ|thế\s+kỉ|tk)\s*(?:thứ\s+)?([ivxlcdm]+|\d{1,2})/i.test(item.query) ||
+      /(?:vào\s+năm|năm)\s+(\d{1,2})\b/i.test(item.query);
+
+    if (hasTemporalClue) {
       temporalTotal++;
-      const extractedYear = yearMatch[0];
-      if (queryInfo.keywords.some((k) => k.includes(extractedYear))) {
+      const hasExtractedYears = queryInfo.extractedYears && queryInfo.extractedYears.length > 0;
+      const hasTemporalRange = Boolean(queryInfo.temporalRange);
+      const hasTemporalKeyword = queryInfo.keywords.some((k) => /\d+/.test(k));
+      if (hasExtractedYears || hasTemporalRange || hasTemporalKeyword) {
         temporalExtractedCorrect++;
       }
     }

@@ -8,7 +8,7 @@
  * - `rerank`: Start only Reranker Engine (Port 8096 - Qwen3-Reranker-0.6B / BGE-Reranker-v2)
  * - `extract`: Start only Stage 2 Extraction LLM (Port 8094 - Qwen 3.5 4B)
  * - `lite`: Start lightweight pair: Embedding (8090) + Extraction (8094) (~3.1 GB RAM)
- * - `all`: Start full AI stack (Port 8090, 8092, 8094, 8096) + TTS (Port 8080)
+ * - `all`: Start full AI stack (Port 8090, 8092, 8096) + TTS (Port 8080)
  */
 
 import { spawn, execSync, ChildProcess } from 'child_process';
@@ -297,7 +297,7 @@ export async function showStatus() {
   console.log(`${colors.dim}------------------------------------------------------------------------------${colors.reset}`);
   console.log(`${colors.bright}Unified Commands (CLI: 'pnpm ai <cmd>' or npm scripts 'pnpm ai:<cmd>'):${colors.reset}`);
   console.log(` • ${colors.cyan}pnpm ai${colors.reset} / ${colors.cyan}pnpm ai:status${colors.reset} -> Check services health & loaded models`);
-  console.log(` • ${colors.cyan}pnpm ai start${colors.reset} / ${colors.cyan}pnpm ai:start${colors.reset} -> Launch full AI stack (Embedding + Extraction + LLM + Reranker + TTS)`);
+  console.log(` • ${colors.cyan}pnpm ai start${colors.reset} / ${colors.cyan}pnpm ai:start${colors.reset} -> Launch full AI stack (Embedding + LLM + Reranker + TTS)`);
   console.log(` • ${colors.cyan}pnpm ai lite${colors.reset} / ${colors.cyan}pnpm ai:lite${colors.reset}     -> Launch lightweight pair: Embedding (8090) + Extraction (8094) (~3.1 GB)`);
   console.log(` • ${colors.cyan}pnpm ai emb${colors.reset} / ${colors.cyan}pnpm ai:emb${colors.reset}       -> Launch Embedding server (Port 8090) for Vector RAG`);
   console.log(` • ${colors.cyan}pnpm ai rerank${colors.reset} / ${colors.cyan}pnpm ai:rerank${colors.reset} -> Launch Reranker Engine (Port 8096) for Cross-Encoder`);
@@ -702,7 +702,7 @@ export async function launchAll() {
   const procs: ChildProcess[] = [];
 
   console.log(`\n${colors.bright}${colors.cyan}==============================================================================${colors.reset}`);
-  console.log(`${colors.bright}${colors.cyan} CHRONOVIET FULL LOCAL AI STACK (Embedding, Extraction, LLM, Reranker + TTS)${colors.reset}`);
+  console.log(`${colors.bright}${colors.cyan} CHRONOVIET FULL LOCAL AI STACK (Embedding, LLM, Reranker + TTS)${colors.reset}`);
   console.log(`${colors.dim} Press Ctrl+C to terminate all local AI servers.${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}==============================================================================${colors.reset}\n`);
 
@@ -733,22 +733,7 @@ export async function launchAll() {
     console.log(`${colors.yellow}⚠️  Embedding model weights missing. Skipping Port 8090.${colors.reset}`);
   }
 
-  // 2. Extraction Server
-  if (weights.extPath) {
-    const { extCtxSize, extExtraArgs } = getExtractionLlamaConfig();
-    procs.push(
-      spawnLlamaService('Stage 2 Extraction LLM', EXTRACTION_PORT, weights.extPath, {
-        ctxSize: extCtxSize,
-        extraArgs: extExtraArgs,
-        tag: 'EXTRACT-8094',
-        tagColor: colors.magenta,
-      })
-    );
-  } else {
-    console.log(`${colors.yellow}⚠️  Extraction model weights missing. Skipping Port 8094.${colors.reset}`);
-  }
-
-  // 3. Primary LLM / VLM
+  // 2. Primary LLM / VLM
   if (weights.llmPath) {
     const extraArgs: string[] = [
       '--cache-type-k',
@@ -778,7 +763,7 @@ export async function launchAll() {
     console.log(`${colors.yellow}⚠️  Primary LLM model weights missing. Skipping Port 8092.${colors.reset}`);
   }
 
-  // 4. Reranker Server
+  // 3. Reranker Server
   if (weights.rerankPath) {
     const { rerankCtxSize, rerankExtraArgs } = getRerankLlamaConfig();
     procs.push(
@@ -794,7 +779,7 @@ export async function launchAll() {
     console.log(`${colors.yellow}⚠️  Reranker model weights missing. Skipping Port 8096.${colors.reset}`);
   }
 
-  // 5. VieNeu TTS Voice Engine (Docker, Port 8080)
+  // 4. VieNeu TTS Voice Engine (Docker, Port 8080)
   const cleanup = () => {
     console.log(`\n${colors.yellow}[*] Shutting down all Local AI services...${colors.reset}`);
     for (const p of procs) {

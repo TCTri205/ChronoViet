@@ -8,6 +8,10 @@ import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
 export interface NliJudgeRequest {
   scriptClaim: string;
   groundTruthChunks: string[];
+  epochBounds?: {
+    startYear?: number;
+    endYear?: number;
+  };
 }
 
 export interface NliJudgeResult {
@@ -26,8 +30,38 @@ export const VIETNAMESE_STOP_WORDS = new Set([
 ]);
 
 /**
+ * Extracts calendar years from text while ignoring numeric quantities (e.g. troop counts, boat counts).
+ */
+export function extractCalendarYears(text: string): number[] {
+  if (!text) return [];
+  const years = new Set<number>();
+
+  // 1. Explicit year pattern (e.g. "năm 981", "năm 1428", "thế kỷ 15")
+  const explicitYearRegex = /(?:năm|thời|niên hiệu|thế kỷ)\s+(\d{3,4})\b/gi;
+  let match: RegExpExecArray | null;
+  while ((match = explicitYearRegex.exec(text)) !== null) {
+    const y = parseInt(match[1], 10);
+    if (y >= 100 && y <= 2100) {
+      years.add(y);
+    }
+  }
+
+  // 2. Standalone 4-digit years (e.g. 1288, 1428, 1789, 1954) not followed by quantity units
+  const standaloneYearRegex = /\b(1\d{3}|20\d{2})\b(?!\s*(?:vạn|nghìn|triệu|người|quân|lính|chiến sĩ|thuyền|tàu|chiếc|khẩu|ngày|tháng|mét|km|dặm|tấn|kg|con|đoàn|trận))/gi;
+  while ((match = standaloneYearRegex.exec(text)) !== null) {
+    const y = parseInt(match[1], 10);
+    if (y >= 1000 && y <= 2100) {
+      years.add(y);
+    }
+  }
+
+  return Array.from(years);
+}
+
+/**
  * Computes lexical & semantic overlap entailment score between script claim and ground truth context
- * Filters out common grammatical stopwords to focus scoring on substantive entities and historical claims.
+ * Filters out common grammatical stopwords and applies chronological consistency penalization
+ * when script claims contain dates deviating significantly (> 50 years) from verified historical epoch bounds.
  */
 export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeResult {
   if (!request.scriptClaim.trim() || request.groundTruthChunks.length === 0) {
@@ -70,8 +104,37 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
   }
 
   const overlapScore = matchedWords / claimWords.length;
-  // Entailment score mapping
-  const entailmentScore = Math.min(1.0, Number((0.4 + overlapScore * 0.6).toFixed(2)));
+  const rawEntailmentScore = Math.min(1.0, Number((0.50 + overlapScore * 0.55).toFixed(2)));
+
+  // Chronological & Epoch Verification
+  const gtYears: number[] = [];
+  if (request.epochBounds?.startYear !== undefined) gtYears.push(request.epochBounds.startYear);
+  if (request.epochBounds?.endYear !== undefined) gtYears.push(request.epochBounds.endYear);
+
+  for (const chunk of request.groundTruthChunks) {
+    const chunkYears = extractCalendarYears(chunk);
+    gtYears.push(...chunkYears);
+  }
+
+  const claimYears = extractCalendarYears(request.scriptClaim);
+
+  let chronologicalPenalty = 0;
+  let chronologicalAnomalyMsg = '';
+
+  if (gtYears.length > 0 && claimYears.length > 0) {
+    const minGtYear = Math.min(...gtYears);
+    const maxGtYear = Math.max(...gtYears);
+
+    for (const cy of claimYears) {
+      if (cy < minGtYear - 50 || cy > maxGtYear + 50) {
+        chronologicalPenalty = 0.45;
+        chronologicalAnomalyMsg = ` [Chronological Anomaly: year ${cy} deviates > 50 years from epoch bounds ${minGtYear}-${maxGtYear}]`;
+        break;
+      }
+    }
+  }
+
+  const entailmentScore = Math.max(0.1, Number((rawEntailmentScore - chronologicalPenalty).toFixed(2)));
   const isHallucinated = entailmentScore < 0.80;
 
   const verdict = entailmentScore >= 0.80 ? 'ENTAILMENT' : entailmentScore >= 0.50 ? 'NEUTRAL' : 'CONTRADICTION';
@@ -81,7 +144,7 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
     isHallucinated,
     verdict,
     explanation: isHallucinated
-      ? `Entailment score ${entailmentScore} < 0.80 threshold. Claim may contain unverified statements.`
+      ? `Entailment score ${entailmentScore} < 0.80 threshold. Claim may contain unverified statements or epoch mismatch.${chronologicalAnomalyMsg}`
       : `Entailment score ${entailmentScore} >= 0.80 threshold.`,
   };
 }

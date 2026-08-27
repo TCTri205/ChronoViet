@@ -26,7 +26,16 @@ function hashString(str: string): number {
  */
 export async function ingestHistoricalDocument(
   content: string,
-  metadata: { title: string; source: string; dynasty?: string; sourceReliability?: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3' }
+  metadata: {
+    title: string;
+    source: string;
+    dynasty?: string;
+    sourceReliability?: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3';
+    timeStart?: number;
+    timeEnd?: number;
+    parentChunkId?: string;
+    epochIds?: string[];
+  }
 ): Promise<void> {
   const chunkId = `chunk_${hashString(metadata.title + content.slice(0, 50))}`;
   const embedding = await generateEmbedding(content);
@@ -50,10 +59,21 @@ export async function ingestHistoricalDocument(
 
   if (pgConnected) {
     await query(
-      `INSERT INTO document_chunks (id, title, text_content, dynasty, source_reliability, embedding)
-       VALUES ($1, $2, $3, $4, $5, $6::vector)
+      `INSERT INTO document_chunks (id, title, text_content, dynasty, source_reliability, time_start, time_end, parent_chunk_id, epoch_ids, embedding)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector)
        ON CONFLICT (id) DO UPDATE SET text_content = EXCLUDED.text_content;`,
-      [chunkId, metadata.title, content, metadata.dynasty || null, metadata.sourceReliability || 'LEVEL_1', JSON.stringify(embedding)]
+      [
+        chunkId,
+        metadata.title,
+        content,
+        metadata.dynasty || null,
+        metadata.sourceReliability || 'LEVEL_1',
+        metadata.timeStart ?? null,
+        metadata.timeEnd ?? null,
+        metadata.parentChunkId || null,
+        metadata.epochIds || null,
+        JSON.stringify(embedding),
+      ]
     );
 
     for (const entity of entityMap.values()) {
@@ -131,6 +151,10 @@ export async function ingestHistoricalDocument(
       text_content: content,
       dynasty: metadata.dynasty,
       source_reliability: metadata.sourceReliability || 'LEVEL_1',
+      time_start: metadata.timeStart,
+      time_end: metadata.timeEnd,
+      parent_chunk_id: metadata.parentChunkId,
+      epoch_ids: metadata.epochIds,
       embedding,
     });
 

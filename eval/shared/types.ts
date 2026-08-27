@@ -50,6 +50,9 @@ export interface BaseSuiteReport<TCaseResult extends BaseTestCaseResult = BaseTe
   suite: EvalSuiteType;
   timestamp: string;
   totalCases: number;
+  datasetTotalCases?: number;
+  isSubset?: boolean;
+  appliedFilters?: Record<string, any>;
   passedCases: number;
   failedCases: number;
   passRate: number;

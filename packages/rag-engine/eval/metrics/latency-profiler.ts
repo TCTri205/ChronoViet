@@ -13,6 +13,7 @@ export interface LatencySummary {
   max_ms: number;
   stdDev_ms: number;
   count: number;
+  ttft_p50_ms?: number;
   ttft_p95_ms?: number;
   avg_tokens_per_sec?: number;
 }
@@ -124,6 +125,7 @@ export class HighResolutionLatencyProfiler {
     };
 
     if (this.ttftMeasurements.length > 0) {
+      summary.ttft_p50_ms = Number(this.getPercentile(50, this.ttftMeasurements).toFixed(2));
       summary.ttft_p95_ms = Number(this.getPercentile(95, this.ttftMeasurements).toFixed(2));
     }
     if (this.tokenVelocities.length > 0) {

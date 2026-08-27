@@ -1,0 +1,772 @@
+[
+  {
+    "id": "gold_01_hong_bang_van_lang",
+    "topic": "Thời đại Hùng Vương và Nhà nước Văn Lang",
+    "epoch": "HỒNG_BÀNG",
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "targetDurationMinutes": 2,
+    "chapters": [
+      {
+        "chapterIndex": 0,
+        "title": "Bình minh dựng nước",
+        "summary": "Nguồn gốc Lạc Long Quân - Âu Cơ và sự hình thành nhà nước sơ khai Văn Lang.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Truyền thuyết bọc trăm trứng", "18 đời Hùng Vương định đô Phong Châu"],
+        "introducedEntities": ["Hùng Vương", "Văn Lang", "Phong Châu", "Lạc Long Quân", "Âu Cơ"],
+        "transitionHook": "Nền tảng nhà nước vững chắc tạo điều kiện cho nền văn minh đồng thau rực rỡ phát triển.",
+        "establishedTone": "Hào hùng, trang trọng"
+      },
+      {
+        "chapterIndex": 1,
+        "title": "Di sản Văn hóa Trống Đồng",
+        "summary": "Đỉnh cao kỹ thuật đúc đồng Đông Sơn và đời sống tinh thần của cư dân Lạc Việt.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Kỹ nghệ đúc trống đồng Đông Sơn", "Họa tiết chim Lạc và hội mùa"],
+        "introducedEntities": ["Trống đồng Đông Sơn", "Văn hóa Đông Sơn", "Sông Hồng"],
+        "transitionHook": "Hào khí Đông Sơn mãi là cội nguồn sức mạnh ngàn đời của dân tộc Việt.",
+        "establishedTone": "Thiêng liêng, tự hào"
+      }
+    ],
+    "chapterScripts": {
+      "0": "Trong dòng chảy hàng nghìn năm lịch sử của dân tộc Việt Nam, thời đại Hùng Vương mở ra buổi bình minh dựng nước thiêng liêng. Đất nước Văn Lang ra đời dưới sự trị vì của các đời Vua Hùng, đóng đô tại Phong Châu. Bách tính cùng nhau khai khẩn đất đai màu mỡ dọc đôi bờ sông Hồng, kiến tạo nên nền tảng xã hội và tổ chức nhà nước sơ khai đầu tiên của non sông đất Việt.",
+      "1": "Đỉnh cao rực rỡ của thời đại này chính là nền văn hóa Đông Sơn với những chiếc trống đồng tuyệt tác. Từng họa tiết chim Lạc bay bổng, cảnh giã gạo hội mùa và hình ảnh chiến binh chèo thuyền phản ánh đời sống tinh thần phong phú cùng kỹ thuật luyện kim đồng thau siêu việt. Di sản văn hóa Đông Sơn đã trở thành biểu tượng trường tồn của bản sắc Việt Nam qua muôn đời."
+    },
+    "scenes": [
+      {
+        "sceneId": "gold_01_scene_001",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "HISTORICAL_FRAME",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Trong dòng chảy hàng nghìn năm lịch sử của dân tộc Việt Nam, thời đại Hùng Vương mở ra buổi bình minh dựng nước thiêng liêng.",
+        "searchKeywords": ["Hùng Vương", "Vua Hùng", "Buổi bình minh dựng nước"],
+        "searchParams": {
+          "sceneId": "gold_01_scene_001",
+          "primaryQuery": "Đền Hùng Phú Thọ tượng Vua Hùng",
+          "englishQuery": "Hung Kings Temple Phu Tho Vietnam historical monument",
+          "frenchQuery": "Temple des rois Hung Phu Tho Tonkin histoire",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "portrait": "Chân dung Vua Hùng tượng đồng",
+            "artifact": "Phù điêu Hùng Vương dựng nước",
+            "map": "Bản đồ Văn Lang thời cổ đại",
+            "battleOrArt": "Tranh vẽ Vua Hùng họp bàn chính sự"
+          },
+          "visualType": "PORTRAIT",
+          "historicalPeriod": "Thời đại Hùng Vương - Văn Lang",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_01_scene_002",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "TIMELINE_CHRONO",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Đất nước Văn Lang ra đời dưới sự trị vì của các đời Vua Hùng, đóng đô tại Phong Châu.",
+        "searchKeywords": ["Nhà nước Văn Lang", "Kinh đô Phong Châu", "Bản đồ Văn Lang"],
+        "searchParams": {
+          "sceneId": "gold_01_scene_002",
+          "primaryQuery": "Bản đồ nước Văn Lang kinh đô Phong Châu cổ đại",
+          "englishQuery": "Ancient map Van Lang kingdom Phong Chau capital Red River Delta",
+          "frenchQuery": "Carte ancienne royaume Van Lang delta du fleuve Rouge",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "map": "Bản đồ cương vực nước Văn Lang thời Hùng Vương",
+            "artifact": "Mô hình làng cổ thời Văn Lang",
+            "portrait": "Tượng Lạc tướng Lạc hầu",
+            "battleOrArt": "Cảnh sinh hoạt cư dân Lạc Việt"
+          },
+          "visualType": "MAP_CHRONO",
+          "historicalPeriod": "Thời đại Hùng Vương - Văn Lang",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_01_scene_003",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "CENTER_SCALE",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Bách tính cùng nhau khai khẩn đất đai màu mỡ dọc đôi bờ sông Hồng, kiến tạo nên nền tảng xã hội đầu tiên.",
+        "searchKeywords": ["Cư dân Lạc Việt", "Sông Hồng thời cổ", "Nông nghiệp lúa nước"],
+        "searchParams": {
+          "sceneId": "gold_01_scene_003",
+          "primaryQuery": "Đồng bằng sông Hồng thời cổ đại cư dân Lạc Việt trồng lúa nước",
+          "englishQuery": "Red River delta ancient agriculture wet rice cultivation Dong Son era",
+          "frenchQuery": "Delta du fleuve Rouge agriculture riziculture epoque Dong Son",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "landscape": "Phong cảnh phù sa sông Hồng thời xưa",
+            "artifact": "Lưỡi cày đồng Đông Sơn nông nghiệp",
+            "portrait": "Hình ảnh người Việt cổ làm ruộng",
+            "battleOrArt": "Tranh khắc cảnh cư dân săn bắn hái lượm"
+          },
+          "visualType": "LANDSCAPE",
+          "historicalPeriod": "Thời đại Hùng Vương - Văn Lang",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_01_scene_004",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "ARTIFACT_INSPECT",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Đỉnh cao rực rỡ của thời đại này chính là nền văn hóa Đông Sơn với những chiếc trống đồng tuyệt tác.",
+        "searchKeywords": ["Trống đồng Đông Sơn", "Trống đồng Ngọc Lũ", "Bảo vật quốc gia"],
+        "searchParams": {
+          "sceneId": "gold_01_scene_004",
+          "primaryQuery": "Trống đồng Ngọc Lũ Đông Sơn bảo vật quốc gia bảo tàng lịch sử",
+          "englishQuery": "Ngoc Lu bronze drum Dong Son culture National Museum of History Hanoi",
+          "frenchQuery": "Tambour de bronze Ngoc Lu culture de Dong Son Musee histoire Hanoi",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "artifact": "Chi tiết trống đồng Ngọc Lũ mặt trống",
+            "archaeology": "Di chỉ khảo cổ học Đông Sơn Thanh Hóa",
+            "portrait": "Thợ đúc đồng thời cổ đại",
+            "battleOrArt": "Hoa văn trang trí trên thân trống đồng"
+          },
+          "visualType": "ARTIFACT",
+          "historicalPeriod": "Văn hóa Đông Sơn",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_01_scene_005",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "DOCUMENTARY_GRID",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Từng họa tiết chim Lạc bay bổng, cảnh giã gạo hội mùa và hình ảnh chiến binh chèo thuyền phản ánh đời sống tinh thần phong phú.",
+        "searchKeywords": ["Họa tiết chim Lạc", "Cảnh giã gạo trống đồng", "Chiến thuyền Đông Sơn"],
+        "searchParams": {
+          "sceneId": "gold_01_scene_005",
+          "primaryQuery": "Hoa văn chim Lạc giã gạo thuyền chiến trên mặt trống đồng Đông Sơn",
+          "englishQuery": "Dong Son bronze drum patterns Lac bird boat warriors rice pounding motifs",
+          "frenchQuery": "Motifs oiseaux Lac bateaux guerriers tambour bronze Dong Son",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "artifact": "Bản vẽ họa tiết chim Lạc trên trống đồng",
+            "battleOrArt": "Hình khắc thuyền chiến vũ trang Đông Sơn",
+            "archaeology": "Khuôn đúc đồng di chỉ Luy Lâu Đông Sơn",
+            "portrait": "Vũ công hóa trang lông chim nhảy múa"
+          },
+          "visualType": "ARTIFACT",
+          "historicalPeriod": "Văn hóa Đông Sơn",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_01_scene_006",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "FULL_COVER",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Di sản văn hóa Đông Sơn đã trở thành biểu tượng trường tồn của bản sắc Việt Nam qua muôn đời.",
+        "searchKeywords": ["Di sản Đông Sơn", "Tự hào dân tộc", "Bảo tàng lịch sử quốc gia"],
+        "searchParams": {
+          "sceneId": "gold_01_scene_006",
+          "primaryQuery": "Bộ sưu tập hiện vật đồng thau Đông Sơn Bảo tàng Lịch sử Quốc gia Hà Nội",
+          "englishQuery": "Dong Son bronze collection artifacts Vietnam National Museum of History",
+          "frenchQuery": "Collection bronzes Dong Son Musee National Histoire Vietnam",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "artifact": "Thạp đồng Đào Thịnh tượng tượng hổ",
+            "archaeology": "Hiện vật khảo cổ văn hóa Đông Sơn",
+            "landscape": "Toàn cảnh Bảo tàng Lịch sử Quốc gia Hà Nội",
+            "portrait": "Tượng nhân vật thời đại Hùng Vương"
+          },
+          "visualType": "ARCHAEOLOGY",
+          "historicalPeriod": "Văn hóa Đông Sơn",
+          "limit": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "gold_02_au_lac_co_loa",
+    "topic": "An Dương Vương và Tòa thành Cổ Loa hình xoáy ốc",
+    "epoch": "ÂU_LẠC",
+    "videoType": "ARTIFACT",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "targetDurationMinutes": 2,
+    "chapters": [
+      {
+        "chapterIndex": 0,
+        "title": "Thành Cổ Loa kiệt tác phòng thủ",
+        "summary": "Thục Phán An Dương Vương sáp nhập Văn Lang - Tây Vu lập Âu Lạc và xây thành Cổ Loa.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Hợp nhất Âu Việt và Lạc Việt", "Quy hoạch kiến trúc 3 vòng thành xoáy ốc"],
+        "introducedEntities": ["An Dương Vương", "Thục Phán", "Thành Cổ Loa", "Âu Lạc"],
+        "transitionHook": "Cùng với kiến trúc phòng thủ vững chắc, vũ khí phòng ngự độc đáo đã tạo nên huyền thoại nỏ thần.",
+        "establishedTone": "Hào hùng, thán phục"
+      },
+      {
+        "chapterIndex": 1,
+        "title": "Nỏ thần Kim Quy và Di chỉ Khảo cổ",
+        "summary": "Kỹ thuật đúc mũi tên đồng Cầu Vực và bài học lịch sử về cảnh giác giữ nước.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Kho mũi tên đồng Cổ Loa", "Bài học mất nước đau xót"],
+        "introducedEntities": ["Nỏ thần Kim Quy", "Mũi tên đồng Cổ Loa", "Triệu Đà", "Mỵ Châu", "Trọng Thủy"],
+        "transitionHook": "Dấu tích Cổ Loa vẫn sừng sững như một lời nhắc nhở ngàn đời về lòng yêu nước.",
+        "establishedTone": "Trầm lắng, suy ngẫm"
+      }
+    ],
+    "chapterScripts": {
+      "0": "Sau khi hợp nhất hai bộ tộc Âu Việt và Lạc Việt để thành lập quốc gia Âu Lạc, Thục Phán An Dương Vương dời đô về đồng bằng và cho khởi công xây dựng tòa thành Cổ Loa vĩ đại. Tòa thành được thiết kế độc đáo với chín vòng xoắn hình vỏ ốc kiên cố, hào nước sâu rộng bao quanh liên hoàn, tạo nên một pháo đài quân sự bất khả xâm phạm thời bấy giờ.",
+      "1": "Gắn liền với kỳ công quân sự ấy là kho mũi tên đồng Cầu Vực và truyền thuyết về chiếc nỏ thần Kim Quy bách phát bách trúng. Hàng vạn mũi tên đồng ba cạnh sắc nhọn được khai quật tại Cổ Loa đã minh chứng cho trình độ luyện kim và chế tạo vũ khí đỉnh cao của người Việt cổ, để lại bài học lịch sử sâu sắc về sự cảnh giác bảo vệ bờ cõi."
+    },
+    "scenes": [
+      {
+        "sceneId": "gold_02_scene_001",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "HISTORICAL_FRAME",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Sau khi hợp nhất hai bộ tộc Âu Việt và Lạc Việt để thành lập quốc gia Âu Lạc, Thục Phán An Dương Vương dời đô về đồng bằng.",
+        "searchKeywords": ["An Dương Vương", "Thục Phán", "Nhà nước Âu Lạc"],
+        "searchParams": {
+          "sceneId": "gold_02_scene_001",
+          "primaryQuery": "Tượng đài An Dương Vương Thục Phán đền Thượng Cổ Loa",
+          "englishQuery": "King An Duong Vuong statue Co Loa temple Dong Anh Hanoi",
+          "frenchQuery": "Statue roi An Duong Vuong temple Co Loa Hanoi",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "portrait": "Tượng đồng An Dương Vương đền Cổ Loa",
+            "artifact": "Bia đá khắc ghi công tích An Dương Vương",
+            "map": "Bản đồ nhà nước Âu Lạc thời Thục Phán",
+            "battleOrArt": "Tranh vẽ An Dương Vương tiếp kiến bách quan"
+          },
+          "visualType": "PORTRAIT",
+          "historicalPeriod": "Thời kỳ Âu Lạc - An Dương Vương",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_02_scene_002",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Tòa thành được thiết kế độc đáo với chín vòng xoắn hình vỏ ốc kiên cố, hào nước sâu rộng bao quanh liên hoàn.",
+        "searchKeywords": ["Thành Cổ Loa", "Kiến trúc xoáy ốc", "Sơ đồ Thành Cổ Loa"],
+        "searchParams": {
+          "sceneId": "gold_02_scene_002",
+          "primaryQuery": "Sơ đồ mặt bằng thành Cổ Loa xoáy ốc ba vòng thành hào nước",
+          "englishQuery": "Co Loa spiral citadel tactical layout map aerial view moat defense",
+          "frenchQuery": "Plan citadelle Co Loa spirale douves fortifications Tonkin",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "map": "Bản đồ quân sự hào luỹ thành Cổ Loa",
+            "archaeology": "Dấu tích luỹ đất thành Cổ Loa khai quật",
+            "landscape": "Toàn cảnh di tích Thành Cổ Loa từ trên cao",
+            "battleOrArt": "Mô hình phục dựng 3D thành Cổ Loa"
+          },
+          "visualType": "MAP_CHRONO",
+          "historicalPeriod": "Thời kỳ Âu Lạc - An Dương Vương",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_02_scene_003",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "ARTIFACT_INSPECT",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Gắn liền với kỳ công quân sự ấy là kho mũi tên đồng Cầu Vực và truyền thuyết về chiếc nỏ thần Kim Quy bách phát bách trúng.",
+        "searchKeywords": ["Mũi tên đồng Cổ Loa", "Nỏ thần Kim Quy", "Vũ khí Âu Lạc"],
+        "searchParams": {
+          "sceneId": "gold_02_scene_003",
+          "primaryQuery": "Kho mũi tên đồng Cổ Loa ba cạnh khai quật Cầu Vực bảo tàng",
+          "englishQuery": "Co Loa bronze arrowheads three-winged excavation artifacts Au Lac",
+          "frenchQuery": "Pointes de fleches en bronze Co Loa fouilles archeologiques",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "artifact": "Mũi tên đồng 3 cạnh Cổ Loa sắc nét",
+            "archaeology": "Hố khai quật mũi tên đồng Cầu Vực Cổ Loa",
+            "battleOrArt": "Phục dựng nỏ liên châu bắn nhiều mũi tên",
+            "portrait": "Tượng thần Kim Quy trao lẫy nỏ"
+          },
+          "visualType": "ARTIFACT",
+          "historicalPeriod": "Thời kỳ Âu Lạc - An Dương Vương",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_02_scene_004",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "DOCUMENTARY_GRID",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Hàng vạn mũi tên đồng ba cạnh sắc nhọn minh chứng cho trình độ luyện kim đỉnh cao của người Việt cổ.",
+        "searchKeywords": ["Khảo cổ Cổ Loa", "Luyện kim thời cổ", "Di tích thành Cổ Loa"],
+        "searchParams": {
+          "sceneId": "gold_02_scene_004",
+          "primaryQuery": "Di chỉ khảo cổ học Cổ Loa lũy thành giếng Ngọc đền Thượng Đông Anh",
+          "englishQuery": "Co Loa archaeological site Pearl Well Thuong Temple Dong Anh Hanoi",
+          "frenchQuery": "Site archeologique Co Loa puits de perles temple Dong Anh",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "archaeology": "Cắt lớp khảo cổ luỹ thành Cổ Loa",
+            "landscape": "Giếng Ngọc đền thờ An Dương Vương Cổ Loa",
+            "artifact": "Trống đồng Cổ Loa khai quật trong lòng đất",
+            "portrait": "Du khách tham quan di tích lịch sử Cổ Loa"
+          },
+          "visualType": "ARCHAEOLOGY",
+          "historicalPeriod": "Thời kỳ Âu Lạc - An Dương Vương",
+          "limit": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "gold_03_hai_ba_trung_me_linh",
+    "topic": "Hai Bà Trưng và Tiếng trống Mê Linh khởi nghĩa",
+    "epoch": "BẮC_THUỘC",
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "targetDurationMinutes": 2,
+    "chapters": [
+      {
+        "chapterIndex": 0,
+        "title": "Nợ nước thù nhà",
+        "summary": "Ách thống trị bạo tàn của thái thú Tô Định và hội thề Hát Môn lịch sử.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Tô Định áp bức bóc lột và sát hại Thi Sách", "Hai Bà Trưng dựng cờ tụ nghĩa tại Hát Môn"],
+        "introducedEntities": ["Hai Bà Trưng", "Trưng Trắc", "Trưng Nhị", "Thi Sách", "Tô Định", "Hát Môn"],
+        "transitionHook": "Tiếng trống đồng Mê Linh nổi lên, hiệu triệu hào kiệt bốn phương nhất tề đứng dậy.",
+        "establishedTone": "Bi tráng, quật khởi"
+      },
+      {
+        "chapterIndex": 1,
+        "title": "Khởi nghĩa Mê Linh và Nền độc lập",
+        "summary": "Nghĩa quân tiến đánh Luy Lâu, Tô Định tháo chạy, Trưng Trắc xưng vương.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Đại phá thành Luy Lâu", "65 thành trì quy phục", "Trưng Trắc lên ngôi Trưng Vương"],
+        "introducedEntities": ["Luy Lâu", "Mê Linh", "Trưng Nữ Vương"],
+        "transitionHook": "Chiến công hiển hách của Hai Bà Trưng là ngọn đuốc mở đầu cho ngàn năm chống Bắc thuộc.",
+        "establishedTone": "Hào hùng, rực rỡ"
+      }
+    ],
+    "chapterScripts": {
+      "0": "Vào đầu Công nguyên, ách đô hộ tàn bạo và hà khắc của quan lại nhà Đông Hán dưới thời thái thú Tô Định đã đẩy nhân dân Giao Chỉ vào cảnh lầm than cùng cực. Căm thù giặc bạo tàn và đền nợ nước trả thù nhà sau cái chết của Thi Sách, hai chị em Trưng Trắc và Trưng Nhị đã tổ chức hội thề thiêng liêng bên dòng sông Hát Môn, dấy cờ tụ nghĩa giải phóng non sông.",
+      "1": "Tiếng trống đồng Mê Linh rền vang như sấm dậy, thôi thúc các lạc tướng và nghĩa sĩ khắp các quận huyện nhất tề hưởng ứng. Nghĩa quân thần tốc công phá phủ trị Luy Lâu, đánh đuổi Tô Định tháo chạy tan tác về phương Bắc. Thu hồi toàn bộ 65 huyện thành, Trưng Trắc lên ngôi vua, xưng hiệu Trưng Nữ Vương, khẳng định chủ quyền độc lập của dân tộc."
+    },
+    "scenes": [
+      {
+        "sceneId": "gold_03_scene_001",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "HISTORICAL_FRAME",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Vào đầu Công nguyên, ách đô hộ tàn bạo của quan lại nhà Đông Hán dưới thời thái thú Tô Định đẩy nhân dân vào lầm than.",
+        "searchKeywords": ["Thời Bắc thuộc", "Ách đô hộ nhà Hán", "Tô Định thái thú"],
+        "searchParams": {
+          "sceneId": "gold_03_scene_001",
+          "primaryQuery": "Bản đồ quận Giao Chỉ thời Bắc thuộc nhà Đông Hán",
+          "englishQuery": "Giao Chi commandery map Eastern Han dynasty domination Vietnam",
+          "frenchQuery": "Commanderie de Giao Chi domination Han carte historique",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "map": "Bản đồ các quận Giao Chỉ Cửu Chân Nhật Nam thời Hán",
+            "artifact": "Hiện vật gốm và tiền đồng thời Đông Hán tại Việt Nam",
+            "portrait": "Hình ảnh quan lại phong kiến phương Bắc",
+            "battleOrArt": "Tranh khắc nhân dân bị bóc lột cống nạp ngọc trai đồi mồi"
+          },
+          "visualType": "MAP_CHRONO",
+          "historicalPeriod": "Thời kỳ Bắc thuộc lần 1",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_03_scene_002",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "POEM_RECITING",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Căm thù giặc bạo tàn, Trưng Trắc và Trưng Nhị tổ chức hội thề thiêng liêng bên dòng sông Hát Môn, dấy cờ tụ nghĩa.",
+        "searchKeywords": ["Hội thề Hát Môn", "Hai Bà Trưng", "Đền Hát Môn"],
+        "searchParams": {
+          "sceneId": "gold_03_scene_002",
+          "primaryQuery": "Đền Hát Môn Phúc Thọ Hà Nội thờ Hai Bà Trưng nơi tế cờ khởi nghĩa",
+          "englishQuery": "Hat Mon temple Phuc Tho Hanoi Trung Sisters oath ceremony uprising",
+          "frenchQuery": "Temple Hat Mon culte des soeurs Trung serment insurrection",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "landscape": "Cửa sông Hát Môn nơi Hai Bà Trưng dựng cờ khởi nghĩa",
+            "portrait": "Tranh chân dung Hai Bà Trưng cưỡi voi xuất trận",
+            "artifact": "Bia đá cổ đền thờ Hai Bà Trưng Hát Môn",
+            "battleOrArt": "Tranh dân gian Đông Hồ Hai Bà Trưng xuất quân"
+          },
+          "visualType": "LANDSCAPE",
+          "historicalPeriod": "Khởi nghĩa Hai Bà Trưng (40-43)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_03_scene_003",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "FULL_COVER",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Nghĩa quân thần tốc công phá phủ trị Luy Lâu, đánh đuổi thái thú Tô Định tháo chạy tan tác về phương Bắc.",
+        "searchKeywords": ["Đại phá Luy Lâu", "Trận đánh Luy Lâu", "Khởi nghĩa Mê Linh"],
+        "searchParams": {
+          "sceneId": "gold_03_scene_003",
+          "primaryQuery": "Thành cổ Luy Lâu Thuận Thành Bắc Ninh Hai Bà Trưng công phá",
+          "englishQuery": "Luy Lau ancient citadel Thuan Thanh Bac Ninh Trung Sisters battle",
+          "frenchQuery": "Ancienne citadelle Luy Lau siege soeurs Trung Bac Ninh",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "battleOrArt": "Tranh chiến trận nghĩa quân Hai Bà Trưng đánh chiếm thành",
+            "archaeology": "Thành luỹ cổ Luy Lâu khảo cổ học",
+            "map": "Sơ đồ hành quân nghĩa quân Mê Linh về Luy Lâu",
+            "portrait": "Tượng nữ tướng thời Hai Bà Trưng"
+          },
+          "visualType": "BATTLE_SCENE",
+          "historicalPeriod": "Khởi nghĩa Hai Bà Trưng (40-43)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_03_scene_004",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "HERO_SPOTLIGHT",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Thu hồi toàn bộ 65 huyện thành, Trưng Trắc lên ngôi vua, xưng hiệu Trưng Nữ Vương, khẳng định chủ quyền.",
+        "searchKeywords": ["Trưng Nữ Vương", "Tượng Hai Bà Trưng", "Đền Đồng Nhân"],
+        "searchParams": {
+          "sceneId": "gold_03_scene_004",
+          "primaryQuery": "Tượng Hai Bà Trưng cưỡi voi đền Đồng Nhân Mê Linh Hà Nội",
+          "englishQuery": "Trung Sisters monument riding elephants Dong Nhan Me Linh temple",
+          "frenchQuery": "Statues soeurs Trung sur elephants temple Dong Nhan Me Linh",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "portrait": "Tượng Trưng Trắc Trưng Nhị uy nghiêm cưỡi voi chiến",
+            "artifact": "Sắc phong đền Hai Bà Trưng di tích quốc gia đặc biệt",
+            "landscape": "Khu di tích quốc gia đặc biệt Đền Hai Bà Trưng Mê Linh",
+            "battleOrArt": "Tranh hội tụ 65 huyện thành quy phục Trưng Vương"
+          },
+          "visualType": "PORTRAIT",
+          "historicalPeriod": "Khởi nghĩa Hai Bà Trưng (40-43)",
+          "limit": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "gold_04_ly_nam_de_van_xuan",
+    "topic": "Lý Nam Đế lập nước Vạn Xuân độc lập",
+    "epoch": "TIỀN_LÝ",
+    "videoType": "DYNASTY",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "targetDurationMinutes": 2,
+    "chapters": [
+      {
+        "chapterIndex": 0,
+        "title": "Lý Bí dấy binh khởi nghĩa",
+        "summary": "Lý Bí liên kết hào kiệt lật đổ ách thống trị nhà Lương năm 542.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Lý Bí từ quan về Thái Bình chiêu mộ nghĩa sĩ", "Đánh chiếm thành Long Biên, Tiêu Tư bỏ chạy"],
+        "introducedEntities": ["Lý Bí", "Lý Nam Đế", "Tiêu Tư", "Long Biên", "Triệu Túc", "Tinh Thiều"],
+        "transitionHook": "Thắng lợi vang dội mở ra kỷ nguyên xưng đế và quốc hiệu Vạn Xuân độc lập.",
+        "establishedTone": "Hào sảng, quật cường"
+      },
+      {
+        "chapterIndex": 1,
+        "title": "Quốc hiệu Vạn Xuân và Di sản",
+        "summary": "Lý Bí lên ngôi hoàng đế, đặt niên hiệu Thiên Đức và xây chùa Khai Quốc.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Xưng đế lập triều đình Tiền Lý", "Đúc tiền đồng riêng và dựng chùa Trấn Quốc"],
+        "introducedEntities": ["Vạn Xuân", "Thiên Đức", "Chùa Khai Quốc", "Chùa Trấn Quốc"],
+        "transitionHook": "Tên gọi Vạn Xuân mãi là ước vọng trường tồn ngàn năm về nền thái bình thịnh trị.",
+        "establishedTone": "Trang nghiêm, tự hào"
+      }
+    ],
+    "chapterScripts": {
+      "0": "Vào thế kỷ thứ 6, trước sự bóc lột hà khắc và phân biệt đối xử của chính quyền nhà Lương, thủ lĩnh Lý Bí đã từ quan, tập hợp hào kiệt khắp nơi nổi dậy khởi nghĩa. Với sự phò tá của các mưu sĩ kiệt xuất như Triệu Túc và Tinh Thiều, nghĩa quân đã nhanh chóng đánh chiếm thành Long Biên, buộc thứ sử Tiêu Tư phải khiếp sợ trốn chạy về phương Bắc.",
+      "1": "Năm 544, Lý Bí chính thức lên ngôi hoàng đế, xưng là Lý Nam Đế, đặt quốc hiệu là Vạn Xuân với ước nguyện giang sơn trường tồn vạn mùa xuân thái bình. Triều đình cho lập điện Vạn Thọ, đúc đồng tiền riêng và xây dựng chùa Khai Quốc bên bờ sông Hồng, nay là chùa Trấn Quốc cổ kính, đánh dấu cột mốc tự chủ huy hoàng của dân tộc."
+    },
+    "scenes": [
+      {
+        "sceneId": "gold_04_scene_001",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "HISTORICAL_FRAME",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Vào thế kỷ thứ 6, trước ách thống trị nhà Lương, thủ lĩnh Lý Bí từ quan, tập hợp hào kiệt nổi dậy khởi nghĩa.",
+        "searchKeywords": ["Lý Bí", "Lý Nam Đế", "Khởi nghĩa Lý Bí"],
+        "searchParams": {
+          "sceneId": "gold_04_scene_001",
+          "primaryQuery": "Tượng Hoàng đế Lý Nam Đế Lý Bí đền thờ chùa Hương Gia Thái Bình",
+          "englishQuery": "Emperor Ly Nam De Ly Bi statue temple founder of Van Xuan",
+          "frenchQuery": "Empereur Ly Nam De statue fondateur royaume Van Xuan",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "portrait": "Chân dung tượng thờ Lý Nam Đế hoàng đế đầu tiên",
+            "artifact": "Bia đá di tích đền thờ Lý Nam Đế Hoài Đức",
+            "map": "Bản đồ cuộc khởi nghĩa Lý Bí thế kỷ 6",
+            "battleOrArt": "Tranh vẽ Lý Bí phất cờ chiêu mộ anh hào"
+          },
+          "visualType": "PORTRAIT",
+          "historicalPeriod": "Nhà Tiền Lý (544-602)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_04_scene_002",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Nghĩa quân nhanh chóng đánh chiếm thành Long Biên, buộc thứ sử Tiêu Tư phải khiếp sợ trốn chạy về phương Bắc.",
+        "searchKeywords": ["Thành Long Biên", "Giải phóng Long Biên", "Nhà Lương"],
+        "searchParams": {
+          "sceneId": "gold_04_scene_002",
+          "primaryQuery": "Bản đồ cổ thành Long Biên Bắc Ninh sông Hồng thời Tiền Lý",
+          "englishQuery": "Ancient Long Bien citadel map Red River Liang dynasty garrison",
+          "frenchQuery": "Citadelle de Long Bien carte historique fleuve Rouge",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "map": "Sơ đồ địa thế quân sự căn cứ Long Biên Thái Bình",
+            "battleOrArt": "Tranh chiến sự nghĩa quân Lý Bí hạ thành Long Biên",
+            "archaeology": "Gạch ngói cổ di tích khảo cổ thời Tiền Lý",
+            "portrait": "Hình khắc dũng tướng Triệu Túc Triệu Quang Phục"
+          },
+          "visualType": "MAP_CHRONO",
+          "historicalPeriod": "Nhà Tiền Lý (544-602)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_04_scene_003",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "ROYAL_DECREE",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Năm 544, Lý Bí chính thức lên ngôi hoàng đế, xưng Lý Nam Đế, đặt quốc hiệu là Vạn Xuân với ước nguyện vạn mùa xuân thái bình.",
+        "searchKeywords": ["Nước Vạn Xuân", "Lý Nam Đế xưng đế", "Niên hiệu Thiên Đức"],
+        "searchParams": {
+          "sceneId": "gold_04_scene_003",
+          "primaryQuery": "Quốc hiệu Vạn Xuân Lý Nam Đế xưng vương tiền đồng Vạn Xuân",
+          "englishQuery": "Van Xuan kingdom founding Emperor Ly Nam De ancient coin",
+          "frenchQuery": "Fondation du royaume Van Xuan empereur Ly Nam De monnaie",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "artifact": "Đồng tiền cổ thời Lý Nam Đế đúc lưu hành",
+            "portrait": "Tranh Lý Nam Đế ngự trên ngai vàng triều đình",
+            "landscape": "Toàn cảnh sông Tô Lịch nơi Lý Nam Đế đắp thành",
+            "battleOrArt": "Tranh lễ đăng quang thành lập nước Vạn Xuân"
+          },
+          "visualType": "ARTIFACT",
+          "historicalPeriod": "Nhà Tiền Lý (544-602)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_04_scene_004",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "DOCUMENTARY_GRID",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Triều đình cho xây dựng chùa Khai Quốc bên bờ sông Hồng, nay là chùa Trấn Quốc cổ kính bậc nhất Thăng Long.",
+        "searchKeywords": ["Chùa Khai Quốc", "Chùa Trấn Quốc", "Bảo tháp Chùa Trấn Quốc"],
+        "searchParams": {
+          "sceneId": "gold_04_scene_004",
+          "primaryQuery": "Chùa Trấn Quốc chùa Khai Quốc Tây Hồ Hà Nội bảo tháp cổ kính",
+          "englishQuery": "Tran Quoc Pagoda ancient Khai Quoc Pagoda West Lake Hanoi tower",
+          "frenchQuery": "Pagode Tran Quoc ancienne pagode Khai Quoc Lac de Ouest Hanoi",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "landscape": "Toàn cảnh chùa Trấn Quốc trên đảo sen hồ Tây hoàng hôn",
+            "artifact": "Bia đá cổ và tượng Phật chùa Trấn Quốc Hà Nội",
+            "archaeology": "Kiến trúc tháp bảo đồ cổ chùa Khai Quốc",
+            "portrait": "Nhà sư và Phật tử chiêm bái chùa Trấn Quốc"
+          },
+          "visualType": "LANDSCAPE",
+          "historicalPeriod": "Nhà Tiền Lý (544-602)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_04_scene_005",
+        "chapterIndex": 1,
+        "contentType": "PURE_CODE",
+        "layoutMode": "STAT_CARD",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Nhà Tiền Lý và nước Vạn Xuân tồn tại gần 60 năm (544 - 602), trải qua 3 đời vua, đặt dấu son mở đầu cho nền độc lập tự chủ.",
+        "searchKeywords": ["Nhà Tiền Lý", "Vạn Xuân 544", "Niên đại Tiền Lý"],
+        "searchParams": {
+          "sceneId": "gold_04_scene_005",
+          "primaryQuery": "",
+          "englishQuery": "",
+          "frenchQuery": "",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {},
+          "visualType": "DATA_CARD",
+          "historicalPeriod": "Nhà Tiền Lý (544-602)",
+          "limit": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "gold_05_quang_trung_ngoc_hoi_dong_da",
+    "topic": "Quang Trung đại phá 29 vạn quân Thanh đại thắng Xuân Kỷ Dậu",
+    "epoch": "TÂY_SƠN",
+    "videoType": "BATTLE",
+    "templateId": "HISTORICAL_DOCUMENTARY",
+    "targetDurationMinutes": 2,
+    "chapters": [
+      {
+        "chapterIndex": 0,
+        "title": "Hành quân thần tốc và Hội thề Tam Điệp",
+        "summary": "Nguyễn Huệ lên ngôi hoàng đế Quang Trung, tiến quân thần tốc ra Bắc tập kết tại Tam Điệp.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Lên ngôi tại núi Bân Phú Xuân", "Tuyển quân tại Nghệ An, duyệt binh tại Tam Điệp"],
+        "introducedEntities": ["Quang Trung", "Nguyễn Huệ", "Núi Bân", "Tam Điệp", "Ngô Thì Nhậm", "Tôn Sĩ Nghị"],
+        "transitionHook": "Lời hiệu triệu đanh thép trước ba quân đã mở màn cho chiến dịch thần tốc vĩ đại nhất lịch sử.",
+        "establishedTone": "Hào hùng, bừng bừng khí thế"
+      },
+      {
+        "chapterIndex": 1,
+        "title": "Đại thắng Ngọc Hồi - Đống Đa mùng 5 Tết",
+        "summary": "Đột kích đồn Ngọc Hồi, công phá đồn Khương Thượng Đống Đa, giải phóng Thăng Long.",
+        "targetDurationSeconds": 60,
+        "keyEvents": ["Hạ đồn Ngọc Hồi sáng mùng 5 Tết", "Sầm Nghi Đống thắt cổ tại gò Đống Đa", "Vua Quang Trung áo bào sạm khói súng vào Thăng Long"],
+        "introducedEntities": ["Ngọc Hồi", "Đống Đa", "Thăng Long", "Gò Đống Đa", "Sầm Nghi Đống"],
+        "transitionHook": "Chiến công hiển hách mùa xuân Kỷ Dậu 1789 mãi là khúc tráng ca bất tử của non sông.",
+        "establishedTone": "Hào hùng, tráng lệ"
+      }
+    ],
+    "chapterScripts": {
+      "0": "Mùa đông năm 1788, trước hiểm họa 29 vạn quân Mãn Thanh do Tôn Sĩ Nghị chỉ huy tràn vào xâm lược miền Bắc, người anh hùng áo vải cờ đào Nguyễn Huệ đã làm lễ tế trời đất tại núi Bân, chính thức lên ngôi hoàng đế lấy niên hiệu Quang Trung. Ngài lập tức phát lệnh hành quân thần tốc ra Bắc, hội quân tại phòng tuyến Tam Điệp - Biện Sơn, chuẩn bị kế sách quét sạch quân thù.",
+      "1": "Đúng mùng 5 Tết Kỷ Dậu 1789, quân Tây Sơn đồng loạt tổng tấn công như vũ bão. Đội tượng binh dũng mãnh đập tan cứ điểm then chốt Ngọc Hồi, trong khi mũi tiến công của Đô đốc Long giáng đòn sấm sét vào đồn Khương Thượng khiến tướng giặc Sầm Nghi Đống phải khiếp phục tự vẫn tại gò Đống Đa. Hoàng đế Quang Trung ngự trên lưng voi, áo bào sạm đen khói súng, dẫn đầu đoàn quân chiến thắng tiến vào giải phóng Thăng Long."
+    },
+    "scenes": [
+      {
+        "sceneId": "gold_05_scene_001",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "HISTORICAL_FRAME",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Trước hiểm họa 29 vạn quân Mãn Thanh xâm lược, Nguyễn Huệ tế trời đất tại núi Bân, lên ngôi hoàng đế Quang Trung.",
+        "searchKeywords": ["Quang Trung", "Nguyễn Huệ", "Núi Bân Huế"],
+        "searchParams": {
+          "sceneId": "gold_05_scene_001",
+          "primaryQuery": "Tượng đài Hoàng đế Quang Trung Nguyễn Huệ núi Bân thành phố Huế",
+          "englishQuery": "Emperor Quang Trung Nguyen Hue monument statue Ban Mountain Hue",
+          "frenchQuery": "Monument empereur Quang Trung mont Ban Hue",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "portrait": "Chân dung tượng Hoàng đế Quang Trung oai nghiêm",
+            "landscape": "Khu di tích đàn tế trời đất núi Bân An Tây Huế",
+            "artifact": "Bảo kiếm lệnh bài thời Tây Sơn bảo tàng",
+            "battleOrArt": "Tranh lễ tế cờ đăng quang vua Quang Trung tại Phú Xuân"
+          },
+          "visualType": "PORTRAIT",
+          "historicalPeriod": "Nhà Tây Sơn (1778-1802)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_05_scene_002",
+        "chapterIndex": 0,
+        "contentType": "IMAGE",
+        "layoutMode": "MAP_TACTICAL",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Ngài lập tức phát lệnh hành quân thần tốc ra Bắc, hội quân tại phòng tuyến Tam Điệp - Biện Sơn.",
+        "searchKeywords": ["Hành quân thần tốc", "Phòng tuyến Tam Điệp", "Ngô Thì Nhậm"],
+        "searchParams": {
+          "sceneId": "gold_05_scene_002",
+          "primaryQuery": "Bản đồ hành quân thần tốc Tây Sơn phòng tuyến Tam Điệp Ninh Bình",
+          "englishQuery": "Tay Son rapid march map Tam Diep defense line Ninh Binh campaign",
+          "frenchQuery": "Marche rapide Tay Son carte ligne de defense Tam Diep",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "map": "Bản đồ chiến dịch đại phá quân Thanh mùa xuân Kỷ Dậu 1789",
+            "landscape": "Đèo Tam Điệp ranh giới Ninh Bình Thanh Hóa di tích cổ",
+            "portrait": "Chân dung danh sĩ Ngô Thì Nhậm mưu lược",
+            "battleOrArt": "Tranh binh lính Tây Sơn cáng đôi hành quân ngày đêm"
+          },
+          "visualType": "MAP_CHRONO",
+          "historicalPeriod": "Nhà Tây Sơn (1778-1802)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_05_scene_003",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "FULL_COVER",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Đúng mùng 5 Tết Kỷ Dậu 1789, quân Tây Sơn đồng loạt tổng tấn công đập tan cứ điểm Ngọc Hồi và đồn Khương Thượng.",
+        "searchKeywords": ["Trận Ngọc Hồi Đống Đa", "Tượng binh Tây Sơn", "Đại phá quân Thanh"],
+        "searchParams": {
+          "sceneId": "gold_05_scene_003",
+          "primaryQuery": "Trận chiến Ngọc Hồi Đống Đa tượng binh Tây Sơn đại phá quân Thanh 1789",
+          "englishQuery": "Battle of Ngoc Hoi Dong Da 1789 Tay Son war elephants victory Qing",
+          "frenchQuery": "Bataille de Ngoc Hoi Dong Da elephants de guerre Tay Son",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "battleOrArt": "Tranh sơn dầu hoành tráng trận Ngọc Hồi Đống Đa voi chiến",
+            "artifact": "Đại bác súng lệnh thần công thời Tây Sơn",
+            "portrait": "Hình ảnh đô đốc Đặng Tiến Đông Đô đốc Long xuất trận",
+            "archaeology": "Vũ khí giáo mác thời Tây Sơn khai quật tại Hà Nội"
+          },
+          "visualType": "BATTLE_SCENE",
+          "historicalPeriod": "Nhà Tây Sơn (1778-1802)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_05_scene_004",
+        "chapterIndex": 1,
+        "contentType": "IMAGE",
+        "layoutMode": "HERO_SPOTLIGHT",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Hoàng đế Quang Trung ngự trên lưng voi, áo bào sạm đen khói súng, dẫn đầu đoàn quân tiến vào giải phóng Thăng Long.",
+        "searchKeywords": ["Gò Đống Đa", "Tượng đài Quang Trung", "Giải phóng Thăng Long"],
+        "searchParams": {
+          "sceneId": "gold_05_scene_004",
+          "primaryQuery": "Công viên văn hóa Gò Đống Đa tượng đài Quang Trung Đống Đa Hà Nội",
+          "englishQuery": "Dong Da Mound cultural park Emperor Quang Trung statue Hanoi",
+          "frenchQuery": "Monticule Dong Da monument empereur Quang Trung Hanoi",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {
+            "landscape": "Toàn cảnh gò Đống Đa và tượng đài Quang Trung Hà Nội",
+            "portrait": "Tượng Hoàng đế Quang Trung Nguyễn Huệ cưỡi voi",
+            "artifact": "Phù điêu tái hiện cảnh vua Quang Trung vào Thăng Long",
+            "battleOrArt": "Tranh cành đào báo tin thắng trận gửi về Phú Xuân"
+          },
+          "visualType": "PORTRAIT",
+          "historicalPeriod": "Nhà Tây Sơn (1778-1802)",
+          "limit": 6
+        }
+      },
+      {
+        "sceneId": "gold_05_scene_005",
+        "chapterIndex": 1,
+        "contentType": "PURE_CODE",
+        "layoutMode": "POEM_RECITING",
+        "targetDurationSeconds": 15,
+        "voiceoverText": "Đánh cho để dài tóc, đánh cho để đen răng. Đánh cho nó chích luân bất phản, đánh cho nó phiến giáp bất hoàn, đánh cho sử tri nam quốc anh hùng chi hữu chủ.",
+        "searchKeywords": ["Lời hịch Quang Trung", "Đánh cho để dài tóc", "Nam quốc anh hùng"],
+        "searchParams": {
+          "sceneId": "gold_05_scene_005",
+          "primaryQuery": "",
+          "englishQuery": "",
+          "frenchQuery": "",
+          "negativeQuery": "-anime -cartoon -watermark -game -3d_render -stock",
+          "facetQueries": {},
+          "visualType": "POEM_SLIDE",
+          "historicalPeriod": "Nhà Tây Sơn (1778-1802)",
+          "limit": 0
+        }
+      }
+    ]
+  }
+]

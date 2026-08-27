@@ -173,6 +173,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_rel_unique ON relationships (source_entity
 CREATE INDEX IF NOT EXISTS idx_entity_chunks_chunk_id ON entity_chunks (chunk_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_reliability ON document_chunks (source_reliability);
 CREATE INDEX IF NOT EXISTS idx_chunks_epoch_ids ON document_chunks USING GIN (epoch_ids);
+CREATE INDEX IF NOT EXISTS idx_chunks_temporal_range ON document_chunks (time_start, time_end) WHERE time_start IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_chunks_dynasty_temporal ON document_chunks (dynasty, time_start, time_end);
 
 CREATE INDEX IF NOT EXISTS idx_chunks_embedding_hnsw 
 ON document_chunks USING hnsw (embedding vector_cosine_ops) 

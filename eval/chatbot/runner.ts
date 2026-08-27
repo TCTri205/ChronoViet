@@ -46,7 +46,9 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
   // 2. Load Test Cases
   const datasetPath = path.resolve(__dirname, 'datasets/chatbot-test-cases.json');
   const rawData = fs.readFileSync(datasetPath, 'utf-8');
-  let testCases: ChatbotTestCase[] = JSON.parse(rawData);
+  const allDatasetCases: ChatbotTestCase[] = JSON.parse(rawData);
+  const datasetTotalCases = allDatasetCases.length;
+  let testCases: ChatbotTestCase[] = [...allDatasetCases];
 
   if (options.category) {
     const cat = options.category.toUpperCase();
@@ -58,6 +60,8 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
     testCases = testCases.slice(0, options.limit);
     console.log(`Applied limit: running ${testCases.length} test cases.`);
   }
+
+  const isSubset = testCases.length < datasetTotalCases;
 
   const outputsDir = path.resolve(__dirname, 'outputs');
   const reportsDir = path.resolve(__dirname, 'reports');
@@ -180,6 +184,13 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
     suite: 'CHATBOT',
     timestamp: startTime.toISOString(),
     totalCases: testCases.length,
+    datasetTotalCases,
+    isSubset,
+    appliedFilters: {
+      limit: options.limit,
+      category: options.category,
+      strict: options.strict,
+    },
     passedCases: aggregated.passedCases,
     failedCases: testCases.length - aggregated.passedCases,
     passRate: testCases.length > 0 ? aggregated.passedCases / testCases.length : 0,

@@ -148,5 +148,14 @@ describe('ProjectWorkspaceManager', () => {
       globalThis.fetch = originalFetch;
     }
   });
+
+  it('should anchor default projects base directory to monorepo root', async () => {
+    const { getDefaultProjectsBaseDir, findMonorepoRoot } = await import('../workspace.js');
+    const baseDir = getDefaultProjectsBaseDir();
+    const monorepoRoot = findMonorepoRoot();
+    expect(baseDir).toBeDefined();
+    expect(baseDir).toContain('media/projects');
+    expect(baseDir.startsWith(monorepoRoot) || baseDir.startsWith('/media')).toBe(true);
+  });
 });
 

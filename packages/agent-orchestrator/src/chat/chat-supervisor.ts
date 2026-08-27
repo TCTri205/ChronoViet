@@ -73,7 +73,22 @@ export async function* handleChatQueryStream(
     content: classification.suggestedTopic || classification.matchedCanonicalName,
   };
 
-  // 2. Chitchat Fast Path
+  // 2. Out-of-Domain Fast Path (< 1ms)
+  if (classification.intent === 'OUT_OF_DOMAIN') {
+    const oodMsg =
+      classification.fastPathResponse ||
+      'Xin lỗi bạn, tôi là ChronoViet AI — Trợ lý chuyên sâu về Nghiên cứu Lịch sử Việt Nam. Yêu cầu này nằm ngoài phạm vi tri thức lịch sử của hệ thống. Bạn có thể hỏi tôi về các triều đại, nhân vật, sự kiện hoặc trận đánh lịch sử Việt Nam!';
+    yield { type: 'token', content: oodMsg };
+    yield { type: 'citation', citations: [] };
+    yield {
+      type: 'done',
+      content: oodMsg,
+      conversationId,
+    };
+    return;
+  }
+
+  // 3. Chitchat Fast Path
   if (classification.intent === 'CHITCHAT') {
     const fastMsg = classification.fastPathResponse || 'Xin chào! Tôi có thể giúp gì cho bạn?';
     yield { type: 'token', content: fastMsg };
@@ -86,7 +101,7 @@ export async function* handleChatQueryStream(
     return;
   }
 
-  // 3. Video Creation Fast Path
+  // 4. Video Creation Fast Path
   if (classification.intent === 'VIDEO_INTENT') {
     const topic = classification.suggestedTopic || query;
     const msg =
@@ -193,7 +208,9 @@ export async function* handleChatQueryStream(
 
 NGUYÊN TẮC BẮT BUỘC:
 1. Trả lời chi tiết, sinh động, chuẩn xác tuyệt đối theo chính sử Việt Nam (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Lam Sơn Thực Lục...).
-2. KIỂM TRA TIỀN ĐỀ CÂU HỎI & CHỐNG BỊA ĐẶT (ANTI-SYCOPHANCY & ZERO FABRICATION):
+2. KIỂM TRA TIỀN ĐỀ CÂU HỎI, ĐỒNG NHẤT DANH XƯNG & CHỐNG BỊA ĐẶT (ANTI-SYCOPHANCY & CO-REFERENCE INTEGRITY):
+   - Khi người dùng hỏi về hai hay nhiều tên gọi thực chất là tên húy, niên hiệu, tôn hiệu hoặc tước vị của CÙNG MỘT NGƯỜI (ví dụ: Quang Trung - Nguyễn Huệ, Trần Hưng Đạo - Trần Quốc Tuấn, Lê Lợi - Lê Thái Tổ, Lý Thái Tổ - Lý Công Uẩn, Đinh Tiên Hoàng - Đinh Bộ Lĩnh, Gia Long - Nguyễn Ánh, Mai Thúc Loan - Mai Hắc Đế, An Dương Vương - Thục Phán), BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là CÙNG MỘT NHÂN VẬT LỊCH SỬ. Tuyệt đối không được tách thành hai nhân vật hoặc mô tả như hai người riêng biệt.
+   - Nếu câu hỏi gán ghép quan hệ anh em/họ hàng/thân tộc cho cùng một người (ví dụ: "Quang Trung và Nguyễn Huệ có phải là 2 anh em?"), BẮT BUỘC đính chính ngay rằng đây là cùng một nhân vật lịch sử với các danh xưng khác nhau qua từng giai đoạn, tuyệt đối không thừa nhận là hai anh em.
    - Nếu câu hỏi của người dùng chứa tiền đề sai lệch (ví dụ: gán sai quan hệ anh em/cha con/vợ chồng, gán sai triều đại, đảo lộn niên đại, gán chiến công cho sai nhân vật), bạn BẮT BUỘC phải bác bỏ và đính chính rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [A] và [B] không phải là anh em...", "Theo chính sử, thông tin này không chính xác...").
    - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng rồi tự bịa đặt câu chuyện để hợp thức hóa tiền đề đó.
    - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.

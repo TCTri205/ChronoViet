@@ -48,74 +48,53 @@ export async function runC10Benchmark(): Promise<ComponentBenchmarkReport> {
     console.log(`  [C10 Benchmark] (${idx + 1}/${evalSubset.length}) Adversarial Query: "${item.query.slice(0, 55)}..."`);
     const timer = profiler.startTimer();
 
-    // 1. Retrieve RAG Context
-    let contextText = '';
+    // 1. Generate Real Grounded Answer via Full ChronoRagEngine Pipeline
+    let generatedAnswer = '';
     try {
-      const searchRes = await ragEngine.search({ query: item.query, rerankTopK: 3 });
-      contextText = ((searchRes.verifiedContext as any[]) || [])
-        .map((c: any) => `[${c.sourceReliability || 'LEVEL_1'}] ${c.title || c.canonicalName || ''}: ${c.textContent || c.summary || ''}`)
-        .join('\n\n');
-    } catch {
-      contextText = '';
-    }
-
-    // 2. Submit to LLM with Guardrail System Prompt
-    let detectedAbstain = false;
-    try {
-      const messages: ChatMessage[] = [
-        {
-          role: 'system',
-          content:
-            'Bạn là hệ thống kiểm chứng lịch sử ChronoViet. Dựa trên tri thức lịch sử và tư liệu bên dưới, hãy phân tích câu hỏi. NẾU câu hỏi chứa tiền đề sai lệch, niên đại mâu thuẫn, nhân vật hư cấu, hoặc sự kiện không có thật, bạn PHẢI từ chối xác nhận và giải thích rõ lỗi sai (ví dụ: "Thông tin này sai lệch / không có thật / nhầm lẫn thời kỳ"). Không được đồng thuận với tiền đề sai.\n\nTƯ LIỆU:\n' +
-            contextText,
-        },
-        {
-          role: 'user',
-          content: item.query,
-        },
-      ];
-
-      const res = await callLLM({
-        messages,
-        temperature: 0.0,
-        maxTokens: 200,
-        timeoutMs: 120000,
+      const answerRes = await ragEngine.generateAnswer({
+        query: item.query,
+        intent: item.intent,
+        requiresMultiHop: item.requires_multihop,
       });
-      const ansLower = res.content.toLowerCase();
-      const abstainKeywords = [
-        'không có thật',
-        'sai lệch',
-        'hư cấu',
-        'không đúng',
-        'nhầm lẫn',
-        'không chính xác',
-        'từ chối',
-        'mâu thuẫn',
-        'truyền thuyết',
-        'dã sử',
-        'không phải',
-        'không có sử liệu',
-        'không có tài liệu',
-        'chưa từng',
-        'không tồn tại',
-        'không diễn ra',
-        'không thuộc thời',
-        'thực chất là',
-        'nhầm sang',
-        'chỉ là truyền thuyết',
-      ];
-      const hasRefutationPattern =
-        /\b(không\s+(phải|có\s+thật|đúng|chính\s+xác|tồn\s+tại|diễn\s+ra|hề))\b/i.test(ansLower) ||
-        /\b(sai\s+(lệch|sự\s+thật|thông\s+tin))\b/i.test(ansLower) ||
-        /\b(nhầm\s+(lẫn|sang|với))\b/i.test(ansLower) ||
-        /\b(hư\s+cấu|dã\s+sử|thần\s+thoại|truyền\s+thuyết)\b/i.test(ansLower);
-      detectedAbstain = abstainKeywords.some((kw) => ansLower.includes(kw)) || hasRefutationPattern;
+      generatedAnswer = answerRes.answerText;
     } catch (err) {
       if (process.env.EVAL_STRICT !== 'false') {
         throw new Error(`[C10 Benchmark Failure] LLM service unavailable or call failed: ${String(err)}`);
       }
-      detectedAbstain = false;
+      generatedAnswer = '';
     }
+
+    const ansLower = generatedAnswer.toLowerCase();
+    const abstainKeywords = [
+      'không có thật',
+      'sai lệch',
+      'hư cấu',
+      'không đúng',
+      'nhầm lẫn',
+      'không chính xác',
+      'từ chối',
+      'mâu thuẫn',
+      'truyền thuyết',
+      'dã sử',
+      'không phải',
+      'không có sử liệu',
+      'không có tài liệu',
+      'chưa từng',
+      'không tồn tại',
+      'không diễn ra',
+      'không thuộc thời',
+      'thực chất là',
+      'nhầm sang',
+      'chỉ là truyền thuyết',
+      'không hề',
+      'không có sự kiện',
+    ];
+    const hasRefutationPattern =
+      /\b(không\s+(phải|có\s+thật|đúng|chính\s+xác|tồn\s+tại|diễn\s+ra|hề|sử\s+dụng|có\s+sự\s+kiện))\b/i.test(ansLower) ||
+      /\b(sai\s+(lệch|sự\s+thật|thông\s+tin))\b/i.test(ansLower) ||
+      /\b(nhầm\s+(lẫn|sang|với))\b/i.test(ansLower) ||
+      /\b(hư\s+cấu|dã\s+sử|thần\s+thoại|truyền\s+thuyết)\b/i.test(ansLower);
+    const detectedAbstain = abstainKeywords.some((kw) => ansLower.includes(kw)) || hasRefutationPattern;
 
     timer();
 
@@ -187,9 +166,9 @@ export async function runC10Benchmark(): Promise<ComponentBenchmarkReport> {
     Math.max(1, confidences.length);
 
   const kpisPassed =
-    abstentionAccuracy >= 75.0 &&
-    falsePositiveAnswerRate <= 25.0 &&
-    adversarialTrapResilience >= 75.0 &&
+    abstentionAccuracy >= 95.0 &&
+    falsePositiveAnswerRate <= 5.0 &&
+    adversarialTrapResilience >= 95.0 &&
     brierScore <= 0.25;
 
   const report: ComponentBenchmarkReport = {

@@ -325,7 +325,7 @@ pnpm dev:worker      # Chỉ chạy BullMQ Video Render Worker (Port 3001)
 
 # 3. Quản lý AI & TTS Local Runtime thống nhất (Unified AI CLI):
 pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8096, 8080) & model đã nạp
-pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding 8090 + Extraction 8094 + LLM 9B 8092 + Reranker 8096 + TTS 8080)
+pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding 8090 + LLM 9B 8092 + Reranker 8096 + TTS 8080)
 pnpm ai:lite         # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
 pnpm ai:emb          # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
 pnpm ai:rerank       # Chỉ chạy Reranker Engine (Port 8096, Qwen3-Reranker-0.6B / BGE-Reranker-v2 ~800MB)

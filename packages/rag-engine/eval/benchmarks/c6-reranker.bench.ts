@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { rerankCandidates } from '../../src/retrieval/reranker.js';
+import { extractQueryEntities } from '../../src/retrieval/question-ner.js';
 import { searchHybridVectorAndBM25, VectorSearchResult } from '../../src/retrieval/vector-search.js';
 import { ComponentBenchmarkReport, ChronoevalDatasetItem } from '@chronoviet/shared-spec';
 import { generateEmbedding, rerankWithLocalCrossEncoder, envConfig } from '@chronoviet/infra';
@@ -113,9 +114,10 @@ export async function runC6Benchmark(): Promise<ComponentBenchmarkReport> {
     const preRerankIds = [...candidatePool].sort((a, b) => b.score - a.score).map((c) => c.chunkId);
     baselineNdcg5Total += calculateNDCGAtK(preRerankIds, goldGradeMap, 5);
 
-    // Reranking step
+    // Reranking step with Soft Temporal Prior
     const timer = profiler.startTimer();
-    const reranked = await rerankCandidates(item.query, candidatePool, 5);
+    const queryInfo = extractQueryEntities(item.query);
+    const reranked = await rerankCandidates(item.query, candidatePool, 5, queryInfo.extractedYears);
     timer();
 
     const rerankedIds = reranked.map((c) => c.chunkId);

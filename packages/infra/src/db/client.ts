@@ -173,18 +173,26 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
 
     await client.query('SELECT 1');
     client.release();
+    const wasConnected = pgConnected;
     pgConnected = true;
-    log.info('db.pg_connected', 'PostgreSQL connection established', {
-      host: cfg.host,
-      database: cfg.database,
-    });
+    if (!wasConnected) {
+      log.info('db.pg_connected', 'PostgreSQL connection established', {
+        host: cfg.host,
+        database: cfg.database,
+      });
+    } else {
+      log.debug('db.pg_health_check_ok', 'PostgreSQL routine health check passed');
+    }
   } catch (err) {
+    const wasConnected = pgConnected;
     pgConnected = false;
-    log.warn('db.pg_unavailable', 'PostgreSQL unavailable; falling back to in-memory store', {
-      error: err,
-      host: cfg.host,
-      database: cfg.database,
-    });
+    if (wasConnected || !checkAttempted) {
+      log.warn('db.pg_unavailable', 'PostgreSQL unavailable; falling back to in-memory store', {
+        error: err,
+        host: cfg.host,
+        database: cfg.database,
+      });
+    }
     if (pgPool) {
       const poolToClose = pgPool;
       pgPool = null;

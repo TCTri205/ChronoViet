@@ -38,9 +38,13 @@ export async function getChunksForEntities(
       text_content: string;
       dynasty?: string;
       source_reliability?: string;
+      parent_chunk_id?: string;
+      time_start?: number;
+      time_end?: number;
+      epoch_ids?: string[];
       entity_id: string;
     }>(
-      `SELECT c.id, c.title, c.text_content, c.dynasty, c.source_reliability, ec.entity_id
+      `SELECT c.id, c.title, c.text_content, c.dynasty, c.source_reliability, c.parent_chunk_id, c.time_start, c.time_end, c.epoch_ids, ec.entity_id
        FROM document_chunks c
        INNER JOIN entity_chunks ec ON c.id = ec.chunk_id
        WHERE ec.entity_id = ANY($1)
@@ -85,6 +89,10 @@ export async function getChunksForEntities(
           textContent: r.text_content,
           dynasty: r.dynasty,
           sourceReliability: r.source_reliability,
+          parentChunkId: r.parent_chunk_id,
+          timeStart: r.time_start != null ? Number(r.time_start) : undefined,
+          timeEnd: r.time_end != null ? Number(r.time_end) : undefined,
+          epochIds: r.epoch_ids,
           score: 1.0 / (RRF_K + (result.length + 1)),
           graphScore,
           hopCount: agg.hop,
@@ -141,6 +149,10 @@ export async function getChunksForEntities(
       textContent: chunk.text_content,
       dynasty: chunk.dynasty,
       sourceReliability: chunk.source_reliability,
+      parentChunkId: chunk.parent_chunk_id,
+      timeStart: chunk.time_start != null ? Number(chunk.time_start) : undefined,
+      timeEnd: chunk.time_end != null ? Number(chunk.time_end) : undefined,
+      epochIds: chunk.epoch_ids,
       score: 1.0 / (RRF_K + (idx + 1)),
       graphScore: maxConf * Math.pow(0.6, Math.max(0, minHop - 1)),
       hopCount: minHop,

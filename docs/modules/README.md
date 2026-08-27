@@ -41,7 +41,7 @@ Từ khi kích hoạt `EVAL_STRICT=true` (mặc định), mọi eval runner sẽ
 | Embedding Server (Port 8090) | `EMBEDDING_API_URL` | `pnpm ai:emb` (hoặc `pnpm ai emb`) |
 | Cross-Encoder Reranker (Port 8096) | `LOCAL_RERANKER_BASE_URL` | `pnpm ai:rerank` (hoặc `pnpm ai rerank`) |
 | VieNeu Python TTS (Port 8080) | `VIENEU_PYTHON_URL` | `pnpm ai:tts` (hoặc `pnpm ai tts`) |
-| Full AI Stack (8090..8080) | - | `pnpm ai:start` (hoặc `pnpm ai start`) |
+| Full AI Stack (8090, 8092, 8096, 8080) | - | `pnpm ai:start` (hoặc `pnpm ai start`) |
 | PostgreSQL pgvector & Redis | `DATABASE_URL` | `pnpm stack:infra` |
 
 **Tắt strict (dev-only, KHÔNG hợp lệ làm benchmark):** đặt `EVAL_STRICT=false` trong `.env` — khi đó các fallback cũ được phép dùng lại.

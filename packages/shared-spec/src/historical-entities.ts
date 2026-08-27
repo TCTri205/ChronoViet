@@ -11,6 +11,9 @@ export interface HistoricalEntityInfo {
   canonicalName: string;
   type: 'HISTORICAL_PERSON' | 'LOCATION' | 'EVENT_BATTLE' | 'DYNASTY_ERA' | 'ORGANIZATION' | 'ARTIFACT' | 'DOCUMENT_CULTURE' | string;
   aliases: string[];
+  timeRange?: { start?: number; end?: number };
+  dynasty?: string;
+  isMythological?: boolean;
 }
 
 export function removeVietnameseAccents(str: string): string {
@@ -23,7 +26,72 @@ export function removeVietnameseAccents(str: string): string {
 }
 
 /**
- * Built-in Historical Character Dictionary with Canonical Entity IDs and Aliases
+ * Curated Lexicon for Modern Technology / Modern Weaponry (strictly >= 19th/20th century)
+ */
+export const MODERN_TECH_LEXICON: string[] = [
+  'tàu bọc thép',
+  'tàu sắt',
+  'tàu hơi nước',
+  'máy bay',
+  'phi cơ',
+  'tiêm kích',
+  'oanh tạc cơ',
+  'trực thăng',
+  'xe tăng',
+  'xe thiết giáp',
+  'súng máy',
+  'súng trường',
+  'súng tự động',
+  'súng bắn tỉa',
+  'bom nguyên tử',
+  'vũ khí hạt nhân',
+  'hạt nhân',
+  'nguyên tử',
+  'radar',
+  'ra-đa',
+  'tên lửa',
+  'ngư lôi',
+  'tàu ngầm',
+  'điện tín',
+  'internet',
+  'vệ tinh',
+  'súng phóng lựu',
+];
+
+/**
+ * Curated Lexicon for Mythological / Legendary Entities
+ */
+export const MYTHOLOGICAL_ENTITIES_LEXICON: string[] = [
+  'thần kim quy',
+  'kim quy',
+  'sơn tinh',
+  'thủy tinh',
+  'thánh gióng',
+  'phù đổng thiên vương',
+  'bà chúa liễu hạnh',
+  'liễu hạnh',
+  'chử đồng tử',
+  'rùa vàng',
+];
+
+/**
+ * Curated Lexicon for Modern Treaties & Political Events
+ */
+export const MODERN_POLITICAL_LEGAL_LEXICON: string[] = [
+  'hiệp định geneva',
+  'hiệp định giơ-ne-vơ',
+  'hiệp định paris',
+  'hội nghị potsdam',
+  'hòa ước giáp tuất',
+  'hòa ước patenôtre',
+  'hòa ước hác-măng',
+  'tuyên ngôn độc lập 1945',
+  'liên hợp quốc',
+  'bầu cử quốc hội',
+];
+
+/**
+ * Built-in Historical Character Dictionary with Canonical Entity IDs, Aliases, and Temporal Bounds
  */
 export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> = {
   'person_quang_trung': {
@@ -31,174 +99,262 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     canonicalName: 'Quang Trung',
     type: 'HISTORICAL_PERSON',
     aliases: ['Nguyễn Huệ', 'Hồ Thơm', 'Bắc Bình Vương', 'Vua Quang Trung', 'Quang Trung Hoàng Đế', 'Long Nhương Tướng Quân', 'Long Nhượng Tướng Quân'],
+    timeRange: { start: 1753, end: 1792 },
+    dynasty: 'Nhà Tây Sơn',
   },
   'person_nguyen_nhac': {
     entityId: 'person_nguyen_nhac',
     canonicalName: 'Nguyễn Nhạc',
     type: 'HISTORICAL_PERSON',
     aliases: ['Tây Sơn Vương', 'Thái Đức Hoàng Đế', 'Vua Thái Đức'],
+    timeRange: { start: 1743, end: 1793 },
+    dynasty: 'Nhà Tây Sơn',
   },
   'person_tran_hung_dao': {
     entityId: 'person_tran_hung_dao',
     canonicalName: 'Trần Hưng Đạo',
     type: 'HISTORICAL_PERSON',
     aliases: ['Trần Quốc Tuấn', 'Hưng Đạo Đại Vương', 'Hưng Đạo Vương', 'Đức Thánh Trần'],
+    timeRange: { start: 1228, end: 1300 },
+    dynasty: 'Nhà Trần',
   },
   'person_le_loi': {
     entityId: 'person_le_loi',
     canonicalName: 'Lê Lợi',
     type: 'HISTORICAL_PERSON',
     aliases: ['Lê Thái Tổ', 'Bình Định Vương', 'Vua Lê Lợi'],
+    timeRange: { start: 1385, end: 1433 },
+    dynasty: 'Nhà Hậu Lê',
   },
   'person_ngo_quyen': {
     entityId: 'person_ngo_quyen',
     canonicalName: 'Ngô Quyền',
     type: 'HISTORICAL_PERSON',
     aliases: ['Tiền Ngô Vương', 'Vua Ngô Quyền'],
+    timeRange: { start: 897, end: 944 },
+    dynasty: 'Nhà Ngô / Thời kỳ Tự chủ',
   },
   'person_ly_thai_to': {
     entityId: 'person_ly_thai_to',
     canonicalName: 'Lý Thái Tổ',
     type: 'HISTORICAL_PERSON',
     aliases: ['Lý Công Uẩn', 'Vua Lý Thái Tổ'],
+    timeRange: { start: 974, end: 1028 },
+    dynasty: 'Nhà Lý',
   },
   'person_dinh_tien_hoang': {
     entityId: 'person_dinh_tien_hoang',
     canonicalName: 'Đinh Tiên Hoàng',
     type: 'HISTORICAL_PERSON',
     aliases: ['Đinh Bộ Lĩnh', 'Vạn Thắng Vương', 'Đinh Tiên Hoàng Đế'],
+    timeRange: { start: 924, end: 979 },
+    dynasty: 'Nhà Đinh',
   },
   'person_nguyen_trai': {
     entityId: 'person_nguyen_trai',
     canonicalName: 'Nguyễn Trãi',
     type: 'HISTORICAL_PERSON',
     aliases: ['Ức Trai', 'Quan Trãi'],
+    timeRange: { start: 1380, end: 1442 },
+    dynasty: 'Nhà Hậu Lê',
   },
   'person_vo_nguyen_giap': {
     entityId: 'person_vo_nguyen_giap',
     canonicalName: 'Võ Nguyên Giáp',
     type: 'HISTORICAL_PERSON',
     aliases: ['Đại tướng Võ Nguyên Giáp', 'Tướng Giáp', 'Anh Văn'],
+    timeRange: { start: 1911, end: 2013 },
+    dynasty: 'Thời kỳ Hiện đại',
   },
   'person_le_dai_hanh': {
     entityId: 'person_le_dai_hanh',
     canonicalName: 'Lê Đại Hành',
     type: 'HISTORICAL_PERSON',
     aliases: ['Lê Hoàn', 'Vua Lê Đại Hành', 'Lê Đại Hành Hoàng Đế'],
+    timeRange: { start: 941, end: 1005 },
+    dynasty: 'Nhà Tiền Lê',
   },
   'person_ba_trieu': {
     entityId: 'person_ba_trieu',
     canonicalName: 'Bà Triệu',
     type: 'HISTORICAL_PERSON',
     aliases: ['Triệu Thị Trinh', 'Triệu Trinh Nương', 'Nhất Lục Nương'],
+    timeRange: { start: 225, end: 248 },
+    dynasty: 'Thời kỳ Bắc thuộc',
   },
   'person_hai_ba_trung': {
     entityId: 'person_hai_ba_trung',
     canonicalName: 'Hai Bà Trưng',
     type: 'HISTORICAL_PERSON',
     aliases: ['Trưng Trắc', 'Trưng Nhị', 'Trưng Vương', 'Hai Bà Trưng'],
+    timeRange: { start: 14, end: 43 },
+    dynasty: 'Trưng Nữ Vương',
   },
   'person_ly_thuong_kiet': {
     entityId: 'person_ly_thuong_kiet',
     canonicalName: 'Lý Thường Kiệt',
     type: 'HISTORICAL_PERSON',
     aliases: ['Ngô Tuấn', 'Thái úy Lý Thường Kiệt', 'Thái úy'],
+    timeRange: { start: 1019, end: 1105 },
+    dynasty: 'Nhà Lý',
   },
   'person_an_duong_vuong': {
     entityId: 'person_an_duong_vuong',
     canonicalName: 'An Dương Vương',
     type: 'HISTORICAL_PERSON',
     aliases: ['Thục Phán', 'Thục Phán An Dương Vương'],
+    timeRange: { start: -257, end: -208 },
+    dynasty: 'Âu Lạc',
+    isMythological: false,
   },
   'person_cao_lo': {
     entityId: 'person_cao_lo',
     canonicalName: 'Cao Lỗ',
     type: 'HISTORICAL_PERSON',
     aliases: ['Tướng quân Cao Lỗ', 'Đô Lỗ'],
+    timeRange: { start: -257, end: -208 },
+    dynasty: 'Âu Lạc',
   },
   'person_hung_vuong': {
     entityId: 'person_hung_vuong',
     canonicalName: 'Hùng Vương',
     type: 'HISTORICAL_PERSON',
     aliases: ['Vua Hùng', 'Vua Hùng Vương', 'Hùng Vương thứ 18'],
+    timeRange: { start: -2879, end: -258 },
+    dynasty: 'Hồng Bàng / Văn Lang',
+    isMythological: true,
+  },
+  'person_than_kim_quy': {
+    entityId: 'person_than_kim_quy',
+    canonicalName: 'Thần Kim Quy',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Rùa Vàng', 'Thần Rùa Vàng', 'Kim Quy'],
+    isMythological: true,
+  },
+  'person_thanh_giong': {
+    entityId: 'person_thanh_giong',
+    canonicalName: 'Thánh Gióng',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Phù Đổng Thiên Vương', 'Gióng'],
+    isMythological: true,
+  },
+  'person_son_tinh': {
+    entityId: 'person_son_tinh',
+    canonicalName: 'Sơn Tinh',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Tản Viên Sơn Thánh'],
+    isMythological: true,
+  },
+  'person_thuy_tinh': {
+    entityId: 'person_thuy_tinh',
+    canonicalName: 'Thủy Tinh',
+    type: 'HISTORICAL_PERSON',
+    aliases: [],
+    isMythological: true,
   },
   'person_ly_bi': {
     entityId: 'person_ly_bi',
     canonicalName: 'Lý Bí',
     type: 'HISTORICAL_PERSON',
     aliases: ['Lý Nam Đế', 'Vua Lý Nam Đế'],
+    timeRange: { start: 503, end: 548 },
+    dynasty: 'Nhà Tiền Lý / Vạn Xuân',
   },
   'person_tran_nhan_tong': {
     entityId: 'person_tran_nhan_tong',
     canonicalName: 'Trần Nhân Tông',
     type: 'HISTORICAL_PERSON',
     aliases: ['Vua Trần Nhân Tông', 'Trúc Lâm Đại Đầu Đà'],
+    timeRange: { start: 1258, end: 1308 },
+    dynasty: 'Nhà Trần',
   },
   'person_ho_quy_ly': {
     entityId: 'person_ho_quy_ly',
     canonicalName: 'Hồ Quý Ly',
     type: 'HISTORICAL_PERSON',
     aliases: ['Lê Quý Ly', 'Vua Hồ Quý Ly'],
+    timeRange: { start: 1336, end: 1407 },
+    dynasty: 'Nhà Hồ',
   },
   'person_ho_nguyen_trung': {
     entityId: 'person_ho_nguyen_trung',
     canonicalName: 'Hồ Nguyên Trừng',
     type: 'HISTORICAL_PERSON',
     aliases: ['Lê Trừng'],
+    timeRange: { start: 1374, end: 1446 },
+    dynasty: 'Nhà Hồ',
   },
   'person_mac_dang_dung': {
     entityId: 'person_mac_dang_dung',
     canonicalName: 'Mạc Đăng Dung',
     type: 'HISTORICAL_PERSON',
     aliases: ['Mạc Thái Tổ', 'Vua Mạc Thái Tổ'],
+    timeRange: { start: 1483, end: 1541 },
+    dynasty: 'Nhà Mạc',
   },
   'person_nguyen_kim': {
     entityId: 'person_nguyen_kim',
     canonicalName: 'Nguyễn Kim',
     type: 'HISTORICAL_PERSON',
     aliases: ['Thái sư Lương quốc công Nguyễn Kim'],
+    timeRange: { start: 1468, end: 1545 },
+    dynasty: 'Lê Trung Hưng',
   },
   'person_nguyen_hoang': {
     entityId: 'person_nguyen_hoang',
     canonicalName: 'Nguyễn Hoàng',
     type: 'HISTORICAL_PERSON',
     aliases: ['Chúa Tiên', 'Đoan Quốc Công'],
+    timeRange: { start: 1525, end: 1613 },
+    dynasty: 'Chúa Nguyễn',
   },
   'person_dao_duy_tu': {
     entityId: 'person_dao_duy_tu',
     canonicalName: 'Đào Duy Từ',
     type: 'HISTORICAL_PERSON',
     aliases: ['Lộc Khê hầu'],
+    timeRange: { start: 1572, end: 1634 },
+    dynasty: 'Chúa Nguyễn',
   },
   'person_gia_long': {
     entityId: 'person_gia_long',
     canonicalName: 'Gia Long',
     type: 'HISTORICAL_PERSON',
     aliases: ['Nguyễn Ánh', 'Vua Gia Long', 'Gia Long Hoàng Đế'],
+    timeRange: { start: 1762, end: 1820 },
+    dynasty: 'Nhà Nguyễn',
   },
   'person_minh_mang': {
     entityId: 'person_minh_mang',
     canonicalName: 'Minh Mạng',
     type: 'HISTORICAL_PERSON',
     aliases: ['Nguyễn Phúc Đảm', 'Vua Minh Mạng', 'Minh Mệnh'],
+    timeRange: { start: 1791, end: 1841 },
+    dynasty: 'Nhà Nguyễn',
   },
   'person_pham_van_dong': {
     entityId: 'person_pham_van_dong',
     canonicalName: 'Phạm Văn Đồng',
     type: 'HISTORICAL_PERSON',
     aliases: ['Thủ tướng Phạm Văn Đồng', 'Anh Tô'],
+    timeRange: { start: 1906, end: 2000 },
+    dynasty: 'Thời kỳ Hiện đại',
   },
   'person_lieu_thang': {
     entityId: 'person_lieu_thang',
     canonicalName: 'Liễu Thăng',
     type: 'HISTORICAL_PERSON',
     aliases: ['Tổng binh Liễu Thăng'],
+    timeRange: { start: 1370, end: 1427 },
+    dynasty: 'Nhà Minh',
   },
   'person_mai_thuc_loan': {
     entityId: 'person_mai_thuc_loan',
     canonicalName: 'Mai Thúc Loan',
     type: 'HISTORICAL_PERSON',
     aliases: ['Mai Hắc Đế', 'Vua Mai Hắc Đế'],
+    timeRange: { start: 670, end: 722 },
+    dynasty: 'Thời kỳ Bắc thuộc',
   },
 };
 
@@ -500,6 +656,14 @@ export function resolveEntityAlias(aliasOrName: string, entityType?: string): En
   const strippedMatch = FAST_ENTITY_MAP.get(strippedNorm) || FAST_ENTITY_MAP.get(unaccentedStrippedNorm);
   if (strippedMatch) {
     return strippedMatch;
+  }
+
+  // 2. Honorific & Title Stripping (Vua, Hoàng đế, Thái sư, Tướng quân, Đức Thánh, Chúa, Đại tướng...)
+  const strippedHonorific = normInput.replace(/^(vua|hoàng\s*đế|thái\s*sư|tướng\s*quân|đức\s*thánh|đại\s*vương|chúa|thượng\s*hoàng|thái\s*úy|tổng\s*binh|đại\s*tướng|thủ\s*tướng|anh\s*hùng)\s+/, '');
+  const unaccentedStrippedHonorific = strippedHonorific.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd');
+  const honorificMatch = FAST_ENTITY_MAP.get(strippedHonorific) || FAST_ENTITY_MAP.get(unaccentedStrippedHonorific);
+  if (honorificMatch) {
+    return honorificMatch;
   }
 
   // Fallback for unknown entity with canonical prefix & ASCII slug

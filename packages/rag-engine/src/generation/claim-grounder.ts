@@ -4,7 +4,8 @@
  * and precise chunk attribution to eliminate citation hallucination (C9-M4).
  */
 
-import { GroundedClaimItem } from '@chronoviet/shared-spec';
+import { GroundedClaimItem, VisualAnchorSuggestion } from '@chronoviet/shared-spec';
+import { extractQueryEntities } from '../retrieval/question-ner.js';
 
 const STOP_WORDS = new Set([
   'là', 'và', 'của', 'tại', 'cho', 'vào', 'ra', 'bị', 'bởi', 'thời', 'các', 'những', 'đã', 'trong', 'với', 'theo', 'như', 'được', 'năm', 'tháng', 'ngày', 'đến', 'từ', 'có', 'thì', 'ở', 'đó', 'này', 'đây', 'một', 'những'
@@ -20,6 +21,7 @@ export interface ChunkInfo {
 export interface GroundingAnalysisResult {
   claims: GroundedClaimItem[];
   citations: string[];
+  visualAnchors: VisualAnchorSuggestion[];
   faithfulnessScore: number;
   citationCorrectnessScore: number;
 }
@@ -121,33 +123,76 @@ export function groundClaims(
     }
 
     const assignedChunk = explicitChunkId
-      ? chunkList.find((c) => c.id === explicitChunkId) || bestChunk
-      : bestChunk;
+      ? chunkList.find((c) => c.id === explicitChunkId) || (highestScore >= 0.30 ? bestChunk : null)
+      : (highestScore >= 0.30 ? bestChunk : null);
 
     const entailmentScore = assignedChunk
       ? calculateEntailment(claim, assignedChunk.content)
       : 0;
 
-    const isEntailed = entailmentScore >= 0.40;
+    const isEntailed = entailmentScore >= 0.30;
     if (isEntailed) {
       totalEntailed++;
       correctlyCited++;
     }
 
-    if (assignedChunk) {
+    if (assignedChunk && isEntailed) {
       const rel = assignedChunk.reliability === 'LEVEL_2' || assignedChunk.reliability === 'LEVEL_3'
         ? (assignedChunk.reliability as 'LEVEL_2' | 'LEVEL_3')
         : 'LEVEL_1';
 
+      const cleanedClaim = claim.replace(/\[(?:Nguồn:\s*|CHUNK_)?([^\]]+)\]/gi, '').trim();
+
+      // Infer visual anchor suggestions from entities and locations in the claim
+      const claimEntities = extractQueryEntities(cleanedClaim);
+      const claimVisualAnchors: VisualAnchorSuggestion[] = [];
+
+      for (let i = 0; i < claimEntities.entityIds.length; i++) {
+        const entId = claimEntities.entityIds[i];
+        const entName = claimEntities.entityNames[i] || entId;
+
+        let visualType: VisualAnchorSuggestion['suggestedVisualType'] = 'DIAGRAM';
+        if (entId.startsWith('person_')) {
+          visualType = 'PORTRAIT';
+        } else if (entId.startsWith('loc_')) {
+          visualType = 'MAP';
+        } else if (entId.startsWith('event_')) {
+          visualType = 'BATTLE_SCENE';
+        } else if (entId.startsWith('doc_') || entId.startsWith('artifact_')) {
+          visualType = 'DOCUMENT';
+        }
+
+        claimVisualAnchors.push({
+          entityId: entId,
+          label: entName,
+          suggestedVisualType: visualType,
+          matchedClaimText: cleanedClaim,
+        });
+      }
+
       groundedClaims.push({
-        claimText: claim.replace(/\[(?:Nguồn:\s*|CHUNK_)?([^\]]+)\]/gi, '').trim(),
+        claimText: cleanedClaim,
         sourceChunkId: assignedChunk.id,
         sourceTitle: assignedChunk.title,
         reliability: rel,
         entailmentScore,
+        visualAnchors: claimVisualAnchors.length > 0 ? claimVisualAnchors : undefined,
       });
 
       usedCitationsSet.add(`${assignedChunk.title} [Nguồn: ${rel}]`);
+    }
+  }
+
+  const allVisualAnchors: VisualAnchorSuggestion[] = [];
+  const seenAnchorKeys = new Set<string>();
+  for (const c of groundedClaims) {
+    if (c.visualAnchors) {
+      for (const a of c.visualAnchors) {
+        if (!seenAnchorKeys.has(a.entityId)) {
+          seenAnchorKeys.add(a.entityId);
+          allVisualAnchors.push(a);
+        }
+      }
     }
   }
 
@@ -158,6 +203,7 @@ export function groundClaims(
   return {
     claims: groundedClaims,
     citations: Array.from(usedCitationsSet),
+    visualAnchors: allVisualAnchors,
     faithfulnessScore,
     citationCorrectnessScore,
   };

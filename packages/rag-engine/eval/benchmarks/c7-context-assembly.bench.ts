@@ -8,6 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ComponentBenchmarkReport, ChronoevalDatasetItem } from '@chronoviet/shared-spec';
 import { ChronoRagEngine } from '../../src/rag-engine.js';
+import { ContextSynthesizer } from '../../src/generation/context-synthesizer.js';
 import { HighResolutionLatencyProfiler } from '../metrics/latency-profiler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +26,7 @@ export async function runC7Benchmark(): Promise<ComponentBenchmarkReport> {
   let contextTokenOverflowCount = 0;
   let totalRelevantTokens = 0;
   let totalContextTokens = 0;
+  let totalSynthesizedChunkTokens = 0;
   let dedupItemsCount = 0;
   let rawItemsCount = 0;
   let lostInMiddleCompliant = 0;
@@ -50,14 +52,17 @@ export async function runC7Benchmark(): Promise<ComponentBenchmarkReport> {
       assembledChunks = item.ground_truth_chunks;
     }
 
-    rawItemsCount += item.ground_truth_chunks.length;
-    dedupItemsCount += assembledChunks.length;
-
-    const assembledText = assembledChunks
-      .map((c) => `[${c.sourceReliability || 'LEVEL_1'}] ${c.title || c.canonicalName || ''}: ${c.textContent || c.summary || ''}`)
-      .join('\n\n');
-    const estimatedTokens = assembledText.length / 3.5;
+    // Execute real ContextSynthesizer with Sibling Chunk Stitching and Overlap Deduplication
+    const synthRes = ContextSynthesizer.assembleContext({
+      verifiedContext: assembledChunks,
+      maxTokenBudget: MAX_TOKEN_BUDGET,
+    });
+    const assembledText = synthRes.formattedContext;
+    const estimatedTokens = synthRes.tokenEstimate;
     totalContextTokens += estimatedTokens;
+
+    rawItemsCount += assembledChunks.length;
+    dedupItemsCount += synthRes.chunkMap.size;
 
     timer();
 
@@ -83,14 +88,16 @@ export async function runC7Benchmark(): Promise<ComponentBenchmarkReport> {
     }
 
     // Verify context precision of assembled chunks
-    for (const chunk of assembledChunks) {
-      const cText = (chunk.textContent || chunk.summary || '').toLowerCase();
+    const synthesizedChunks = Array.from(synthRes.chunkMap.values());
+    totalSynthesizedChunkTokens += synthesizedChunks.reduce((sum, c) => sum + (c.content.length / 3.5), 0);
+    for (const chunk of synthesizedChunks) {
+      const cText = (chunk.content || '').toLowerCase();
       const targetEntity = (item.canonical_entity_id || item.epoch || '').replace(/^person_|^event_|^artifact_|^epoch_/, '').replace(/_/g, ' ').toLowerCase();
       const aliases = (item.expected_aliases || []).map((a) => a.toLowerCase()).filter(Boolean);
       const isRelevant =
         (targetEntity && cText.includes(targetEntity)) ||
         aliases.some((a) => cText.includes(a)) ||
-        item.ground_truth_chunks.some((gt) => gt.chunk_id === chunk.chunkId || (gt.title && cText.includes(gt.title.toLowerCase())));
+        item.ground_truth_chunks.some((gt) => gt.chunk_id === chunk.id || (gt.title && cText.includes(gt.title.toLowerCase())));
       if (isRelevant) {
         totalRelevantTokens += (cText.length / 3.5);
       }
@@ -120,7 +127,7 @@ export async function runC7Benchmark(): Promise<ComponentBenchmarkReport> {
   const contextEvidenceRecall =
     totalEvidenceCount > 0 ? (evidenceSurvivedCount / totalEvidenceCount) * 100 : 90.0;
   const contextPrecision =
-    totalContextTokens > 0 ? Math.min(100, (totalRelevantTokens / totalContextTokens) * 100) : 80.0;
+    totalSynthesizedChunkTokens > 0 ? Math.min(100, (totalRelevantTokens / totalSynthesizedChunkTokens) * 100) : 80.0;
   const dedupCompressionLoss =
     rawItemsCount > 0 ? ((rawItemsCount - dedupItemsCount) / rawItemsCount) * 100 : 0.0;
   const lostInMiddleResilience = (lostInMiddleCompliant / count) * 100;

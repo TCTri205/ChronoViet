@@ -854,6 +854,18 @@ export function buildChronoEvalDatasets(): {
             ],
           },
           {
+            chunk_id: `chunk_${evt.id}_tactical_maneuver_q${qIdx}`,
+            relevance_grade: 3,
+            source_reliability: 'LEVEL_1',
+            title: `${evt.name} - Diễn biến chiến thuật và điều động binh lực`,
+            text_content: `Chi tiết chiến thuật trong sự kiện ${evt.name}: Vào năm ${evt.year}, các cánh quân tại ${evt.location} đã triển khai thế trận theo phương châm "${evt.strategy}". Nhờ sự chuẩn bị chu đáo về địa hình thủy thổ và tinh thần quyết chiến dưới trướng ${evt.commander}, toàn bộ diễn biến đã dẫn đến thắng lợi: ${evt.outcome}.`,
+            key_evidence_claims: [
+              `Địa hình tác chiến: ${evt.location}`,
+              `Phương châm tác chiến: ${evt.strategy}`,
+              `Hệ quả thực tế: ${evt.outcome}`,
+            ],
+          },
+          {
             chunk_id: `chunk_${activeTargetEnt.id}_biography_primary`,
             relevance_grade: 2,
             source_reliability: 'LEVEL_1',
@@ -875,10 +887,10 @@ export function buildChronoEvalDatasets(): {
             ],
           },
           {
-            chunk_id: `chunk_distractor_${epoch.epochId}_${activeTargetEnt.id}`,
+            chunk_id: `chunk_distractor_q${qIdx}_${epoch.epochId}_${activeTargetEnt.id}`,
             relevance_grade: 0,
             source_reliability: 'LEVEL_2',
-            title: `Khảo luận ngoài lề: Nhân vật và giai thoại triều ${epoch.dynasty}`,
+            title: `Khảo luận ngoài lề: Nhân vật và giai thoại triều ${epoch.dynasty} (Tập ${qIdx})`,
             text_content: `Các tài liệu khảo cứu khác có nhắc tới danh xưng ${activeTargetEnt.name} hoặc các sự kiện thời ${epoch.dynasty}, tuy nhiên đây là ghi chép tổng quát về phong tục và hành chính, không chứa bằng chứng trực tiếp cho chiến dịch hoặc niên đại cụ thể này.`,
             key_evidence_claims: [],
           },
