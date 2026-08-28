@@ -383,10 +383,37 @@ export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank')
 
   svc.process = proc;
 
+async function warmupService(key: 'llm' | 'emb' | 'extraction' | 'rerank', port: number): Promise<void> {
+  try {
+    if (key === 'emb') {
+      const res = await fetch(`http://127.0.0.1:${port}/embedding`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: 'ChronoViet warmup ping' }),
+      });
+      if (res.ok) log.info('supervisor.warmup_success', `⚡ Embedding (BGE-M3) warmup completed`);
+    } else if (key === 'rerank') {
+      const res = await fetch(`http://127.0.0.1:${port}/v1/rerank`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'qwen3-reranker-0.6b',
+          query: 'warmup',
+          documents: ['warmup document'],
+        }),
+      });
+      if (res.ok) log.info('supervisor.warmup_success', `⚡ Reranker warmup completed`);
+    }
+  } catch (e: any) {
+    log.warn('supervisor.warmup_skipped', `Warmup for ${key} on port ${port} skipped: ${e?.message}`);
+  }
+}
+
   const ready = await waitForServiceReady(svc.port, svc.probePath, 30000);
   if (ready) {
     svc.status = 'RUNNING';
     log.info('supervisor.service_ready', `✅ ${svc.name} is HEALTHY and listening on port ${svc.port}`);
+    await warmupService(key, svc.port);
     return true;
   } else {
     log.error('supervisor.service_health_failed', `❌ ${svc.name} failed healthcheck probe within timeout`);

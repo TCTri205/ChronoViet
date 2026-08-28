@@ -150,7 +150,7 @@ export const EnvSchema = z.object({
   RERANKER_API_KEY: z.string().optional(),
   RERANK_TOP_K: z.coerce.number().int().positive().default(10),
   RERANK_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
-  RAG_SEARCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
+  RAG_SEARCH_TIMEOUT_MS: z.coerce.number().int().positive().default(20000),
   LOCAL_VISION_FILTER: z.string().default('siglip-2-multilingual-onnx'),
   LOCAL_VLM_INSPECTOR: z.string().default('qwen3.5-9b-instruct-q4_k_m'),
   HISTORICAL_OCR_ENGINE: z.string().default('paddleocr_v5_hannom'),

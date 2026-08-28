@@ -129,8 +129,9 @@ export async function* handleChatQueryStream(
   let graphTriples: GraphTripleItem[] = [];
   let contextSnippets = '';
   let isFolkloreSource = false;
+  let isRagFallback = false;
 
-  const ragTimeoutMs = envConfig.RAG_SEARCH_TIMEOUT_MS || 10000;
+  const ragTimeoutMs = envConfig.RAG_SEARCH_TIMEOUT_MS || 20000;
   try {
     const ragResponse = await Promise.race([
       engine.search({
@@ -163,7 +164,12 @@ export async function* handleChatQueryStream(
     isFolkloreSource = (ragResponse.verifiedContext || []).some((v: any) =>
       v.citations.some((c: any) => /LEVEL_3|dã sử|truyền thuyết/i.test(c))
     );
+
+    if (!contextSnippets || contextSnippets.trim().length === 0) {
+      isRagFallback = true;
+    }
   } catch (ragErr: any) {
+    isRagFallback = true;
     if (ragErr.message?.includes('RAG search timeout')) {
       ragTimeoutsTotal.inc();
     }
@@ -200,9 +206,17 @@ export async function* handleChatQueryStream(
     ? `\n\nCẢNH BÁO THỰC THỂ NGOÀI CHÍNH SỬ:\nCác tên/nhân vật sau xuất hiện trong câu hỏi nhưng KHÔNG TỒN TẠI trong cơ sở dữ liệu chính sử: "${unmappedEntities.join('", "')}". Bạn BẮT BUỘC phải nói rõ là trong chính sử không có ghi chép về nhân vật này, TUYỆT ĐỐI KHÔNG tự phong vương/vua/tướng hoặc suy đoán tiểu sử hư cấu.`
     : '';
 
+  const ragFallbackDirective = isRagFallback
+    ? `\n\nCHỈ DẪN KHẨN CẤP KHI KHÔNG CÓ DỮ LIỆU RAG (ZERO-CONTEXT ANTI-HALLUCINATION GUARDRAILS):
+- CẢNH BÁO: Hiện tại hệ thống không thể trích xuất sử liệu xác thực (Chrono-RAG).
+- BẮT BUỘC chỉ trình bày các sự kiện, bối cảnh đại cương được giới sử học công nhận rộng rãi (ví dụ: Hội nghị Diên Hồng là do Vua Trần Nhân Tông và Thượng hoàng Trần Thánh Tông triệu tập các bô lão cả nước để hỏi kế đánh giặc, muôn người đồng thanh hô "ĐÁNH").
+- TUYỆT ĐỐI KHÔNG tự suy diễn, không tự bịa đặt tên tướng lĩnh hoặc gán ghép các nhân vật Mông Cổ/ngoại quốc không có căn cứ (như Mông Kha, Mông Kha Thiếp Mộc Nhi...).
+- Nếu không có tư liệu chắc chắn về một chi tiết cụ thể nào, BẮT BUỘC nêu rõ: "Cần tra cứu thêm chính sử để có thông tin chi tiết về...".`
+    : '';
+
   const premiseDirectiveText = (premiseAnalysis.suggestedDirective
     ? `\n\nCHỈ DẪN KIỂM CHỨNG TIỀN ĐỀ ĐẶC THÙ:\n${premiseAnalysis.suggestedDirective}`
-    : '') + unmappedDirectiveText;
+    : '') + unmappedDirectiveText + ragFallbackDirective;
 
   const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu Lịch sử Việt Nam chuẩn mực, thông thái và khách quan.${premiseDirectiveText}
 
@@ -219,10 +233,18 @@ NGUYÊN TẮC BẮT BUỘC:
    - NGUYÊN TẮC VỀ TÊN HÚY (TÊN KHAI SINH TRONG NGOẶC ĐƠN): CHỈ ĐƯỢC PHÉP ghi tên húy nếu tên đó XUẤT HIỆN TRỰC TIẾP trong "DỮ LIỆU SỬ LIỆU XÁC THỰC". Tuyệt đối không tự ghép họ tên (CẤM TỰ BỊA "Trần Thừa Thải", "Trần Thừa Bình" hay bất kỳ tên húy nào không có trong sử liệu). Nếu không có tên húy trong ngữ cảnh, CHỈ ĐƯỢC DÙNG MIẾU HIỆU/DANH XƯNG (Ví dụ: "Vua Trần Thái Tông", "Vua Trần Nhân Tông").
    - Tuyệt đối không tự bịa đặt tên tướng lĩnh chỉ huy hư cấu hoặc gán sai địa danh/trận đánh (ví dụ: 3 lần chống Mông-Nguyên lần lượt do Vua Trần Thái Tông - Thái sư Trần Thủ Độ [lần 1 - Đông Bộ Đầu 1258], Vua Trần Nhân Tông - Thượng hoàng Trần Thánh Tông - Tiết chế Trần Quốc Tuấn [lần 2 - 1285 & lần 3 - Bạch Đằng 1288]. Trận Bạch Đằng lừng lẫy tiêu diệt Ô Mã Nhi là ở Lần 3 năm 1288, không phải Lần 2).
    - Nếu một nhân vật hoặc mối quan hệ không có ghi chép trong chính sử, hãy nêu rõ "Không có ghi chép chính sử" thay vì tự suy diễn.
-4. Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả thuyết: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
-5. Nêu rõ niên đại, nhân vật, bối cảnh và ý nghĩa lịch sử.
-6. Trình bày đẹp mắt với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
-7. TUYỆT ĐỐI KHÔNG LẶP LẠI: Không lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.
+4. NGUYÊN TẮC BỐI CẢNH LỊCH SỬ & CHỐNG SUY DIỄN PHI THỜI ĐẠI (ANTI-ANACHRONISM & FEUDAL SOCIETAL PARADIGM):
+   - Mọi lý giải về nhân khẩu học, sự phân bố dòng họ (đặc biệt là họ Nguyễn, họ Lê, họ Trần, họ Vũ/Võ...), thứ bậc xã hội và phong tục tập quán cổ truyền BẮT BUỘC phải dựa trên hệ quy chiếu chế độ phong kiến Nho giáo (văn hóa phụ hệ nghiêm ngặt - con mang họ cha theo huyết thống, lệnh cưỡng chế đổi họ khi vương triều sụp đổ, lệ ban quốc tính của hoàng tộc, và việc lập sổ đinh/sổ hộ tịch thời Pháp thuộc).
+   - TUYỆT ĐỐI KHÔNG áp dụng tư duy tự do cá nhân, xu hướng truyền thông, phim ảnh hay thói quen hiện đại vào lịch sử (ví dụ: TUYỆT ĐỐI KHÔNG giải thích rằng người dân "tự do chọn họ cho con cái", "chọn họ vì hâm mộ triều đại", hay "do ảnh hưởng từ phim ảnh").
+   - Khi giải thích vì sao họ Nguyễn chiếm tỷ lệ áp đảo (~38-40% dân số Việt Nam), BẮT BUỘC phải dựa trên các mốc lịch sử cốt lõi:
+     + Thái sư Trần Thủ Độ ép tôn thất nhà Lý đổi sang họ Nguyễn năm 1232 (kiêng húy Trần Lý và dứt lòng vọng Lý của dân chúng).
+     + Hậu duệ nhà Hồ (1407), nhà Mạc (1592) và Tây Sơn (1802) đổi sang họ Nguyễn để lánh nạn diệt vong.
+     + Tập tục Ban Quốc Tính thời Chúa Nguyễn và Triều Nguyễn cho công thần có công.
+     + Việc lập sổ đinh, căn cước hộ tịch thời Pháp thuộc gán họ của triều đại đang trị vì cho tầng lớp bần nông không có họ.
+5. Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả thuyết: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
+6. Nêu rõ niên đại, nhân vật, bối cảnh và ý nghĩa lịch sử.
+7. Trình bày đẹp mắt với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
+8. TUYỆT ĐỐI KHÔNG LẶP LẠI: Không lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.
 
 DỮ LIỆU SỬ LIỆU XÁC THỰC:
 ${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}
@@ -239,6 +261,12 @@ ${triplesText}`;
 
   let fullResponse = '';
   const loopDetector = createStreamLoopDetector();
+
+  if (isRagFallback) {
+    const disclaimer = `> ⚠️ **Lưu ý:** *Hệ thống tra cứu sử liệu chuyên sâu (Chrono-RAG) đang phản hồi chậm hoặc tạm gián đoạn. Phản hồi dưới đây dựa trên tri thức đại cương, vui lòng đối chiếu lại với chính sử.*\n\n`;
+    yield { type: 'token', content: disclaimer };
+    fullResponse += disclaimer;
+  }
 
   try {
     for await (const chunk of generateLLMCompletionStream(messages, {

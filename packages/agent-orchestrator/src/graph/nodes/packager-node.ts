@@ -33,15 +33,21 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
     const sceneCaptions: CaptionWord[] = [];
     if (scene.wordTimestamps && scene.wordTimestamps.length > 0) {
       for (const wt of scene.wordTimestamps) {
-        const startFrame = currentGlobalFrame + Math.round((wt.startMs / 1000) * fps);
-        const endFrame = currentGlobalFrame + Math.round((wt.endMs / 1000) * fps);
-        const capWord: CaptionWord = {
+        const localStartFrame = Math.round((wt.startMs / 1000) * fps);
+        const localEndFrame = Math.round((wt.endMs / 1000) * fps);
+        const sceneCapWord: CaptionWord = {
           word: wt.word,
-          startFrame,
-          endFrame,
+          startFrame: localStartFrame,
+          endFrame: localEndFrame,
         };
-        sceneCaptions.push(capWord);
-        allCaptions.push(capWord);
+        sceneCaptions.push(sceneCapWord);
+
+        const globalCapWord: CaptionWord = {
+          word: wt.word,
+          startFrame: currentGlobalFrame + localStartFrame,
+          endFrame: currentGlobalFrame + localEndFrame,
+        };
+        allCaptions.push(globalCapWord);
       }
     }
 

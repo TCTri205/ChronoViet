@@ -102,3 +102,79 @@ export async function DELETE(
     );
   }
 }
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const startTime = Date.now();
+  const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const { id } = params;
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const title = body.title?.trim();
+
+    if (!title) {
+      httpRequestsTotal.inc({ method: 'PATCH', route: '/api/v1/conversations/[id]', status_class: '4xx' });
+      return NextResponse.json(
+        { error: 'Title is required' },
+        { status: 400, headers: { 'x-request-id': correlationId } }
+      );
+    }
+
+    const pgUp = await isPgAvailable();
+    let updatedConv: any = null;
+
+    if (pgUp) {
+      const rows = await query<any>(
+        'UPDATE conversations SET title = $1, updated_at = NOW() WHERE id = $2 RETURNING id, title, mode, metadata, created_at, updated_at',
+        [title, id]
+      );
+      if (rows.length > 0) {
+        updatedConv = ConversationSchema.parse({
+          id: rows[0].id,
+          title: rows[0].title,
+          mode: rows[0].mode || 'RESEARCH',
+          metadata: rows[0].metadata || {},
+          createdAt: rows[0].created_at,
+          updatedAt: rows[0].updated_at,
+        });
+      }
+    } else {
+      const existing = inMemoryStore.conversations.get(id);
+      if (existing) {
+        existing.title = title;
+        existing.updatedAt = new Date().toISOString();
+        inMemoryStore.conversations.set(id, existing);
+        updatedConv = existing;
+      }
+    }
+
+    if (!updatedConv) {
+      httpRequestsTotal.inc({ method: 'PATCH', route: '/api/v1/conversations/[id]', status_class: '4xx' });
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404, headers: { 'x-request-id': correlationId } }
+      );
+    }
+
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'PATCH', route: '/api/v1/conversations/[id]', status_class: '2xx' });
+    httpRequestDurationSeconds.observe({ method: 'PATCH', route: '/api/v1/conversations/[id]', status_class: '2xx' }, durationSec);
+
+    return NextResponse.json(
+      { success: true, conversation: updatedConv },
+      { headers: { 'x-request-id': correlationId } }
+    );
+  } catch (err: any) {
+    const durationSec = (Date.now() - startTime) / 1000;
+    httpRequestsTotal.inc({ method: 'PATCH', route: '/api/v1/conversations/[id]', status_class: '5xx' });
+    httpRequestDurationSeconds.observe({ method: 'PATCH', route: '/api/v1/conversations/[id]', status_class: '5xx' }, durationSec);
+    log.error('api.conversation_patch_failed', `Failed to update conversation: ${err.message}`, { error: err });
+    return NextResponse.json(
+      { error: err.message || 'Internal Server Error' },
+      { status: 500, headers: { 'x-request-id': correlationId } }
+    );
+  }
+}

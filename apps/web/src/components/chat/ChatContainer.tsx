@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage, MessageData } from "./ChatMessage";
 import { EmptyChatState } from "./EmptyChatState";
 import { HistoricalSourceModal } from "./HistoricalSourceModal";
-import { CitationItem } from "./CitationBadge";
+import { CitationItem, parseRawCitation } from "./CitationBadge";
 
 export interface ChatContainerProps {
   activeConversationId?: string | null;
@@ -51,15 +51,7 @@ export function ChatContainer({
               role: m.role,
               content: m.content,
               citations: Array.isArray(m.citations)
-                ? m.citations.map((c: any, idx: number) => ({
-                    id: idx + 1,
-                    sourceTitle: typeof c === 'string' ? c : c.sourceTitle || "Đại Việt Sử Ký Toàn Thư",
-                    annalsName: typeof c === 'string' ? "Chính Sử" : c.annalsName || "Bản Kỷ Toàn Thư",
-                    dynasty: typeof c === 'string' ? "Thời Trần / Lê" : c.dynasty || "Thời Trần",
-                    period: typeof c === 'string' ? "Lịch Sử Cổ Trung Đại" : c.period || "Thế kỷ XIII",
-                    reliabilityLevel: 1,
-                    originalExcerpt: typeof c === 'string' ? c : c.excerpt || "",
-                  }))
+                ? m.citations.map((c: any, idx: number) => parseRawCitation(c, idx))
                 : [],
               timestamp: m.createdAt,
             }));
@@ -189,15 +181,7 @@ export function ChatContainer({
                 }
 
                 if (parsed.citations && Array.isArray(parsed.citations) && parsed.citations.length > 0) {
-                  citations = parsed.citations.map((c: any, idx: number) => ({
-                    id: idx + 1,
-                    sourceTitle: typeof c === 'string' ? c : c.sourceTitle || c.title || "Đại Việt Sử Ký Toàn Thư",
-                    annalsName: typeof c === 'string' ? "Chính Sử Quốc Triều" : c.annalsName || "Bản Kỷ Toàn Thư",
-                    dynasty: typeof c === 'string' ? "Thời Trần / Lê" : c.dynasty || "Thời Trần",
-                    period: typeof c === 'string' ? "Lịch Sử Cổ Trung Đại" : c.period || "Thế kỷ XIII",
-                    reliabilityLevel: typeof c === 'string' ? 1 : c.reliabilityLevel || 1,
-                    originalExcerpt: typeof c === 'string' ? c : c.excerpt || c.content || c.originalExcerpt || "",
-                  }));
+                  citations = parsed.citations.map((c: any, idx: number) => parseRawCitation(c, idx));
                 }
               } catch {
                 // Ignore unparseable raw fragments

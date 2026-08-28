@@ -19,18 +19,12 @@ const log = createLogger({ service: 'web-api-projects' });
 
 export const dynamic = 'force-dynamic';
 
-// In-memory cache for directory entries list to prevent disk amplification
-interface ProjectsDirCache {
-  timestamp: number;
-  dirNames: string[];
-}
-
-let dirCache: ProjectsDirCache | null = null;
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL
-
-function invalidateProjectsCache(): void {
-  dirCache = null;
-}
+import {
+  getProjectsDirCache,
+  setProjectsDirCache,
+  invalidateProjectsCache,
+  CACHE_TTL_MS,
+} from '@/lib/project-cache';
 
 function extractTimestampFromDirName(name: string): number {
   const match = name.match(/^proj_(\d+)/);
@@ -197,8 +191,9 @@ export async function GET(req: NextRequest) {
     let sortedDirNames: string[] = [];
 
     const now = Date.now();
-    if (dirCache && now - dirCache.timestamp < CACHE_TTL_MS) {
-      sortedDirNames = dirCache.dirNames;
+    const currentCache = getProjectsDirCache();
+    if (currentCache && now - currentCache.timestamp < CACHE_TTL_MS) {
+      sortedDirNames = currentCache.dirNames;
     } else {
       try {
         const entries = await fs.promises.readdir(baseDir, { withFileTypes: true });
@@ -230,10 +225,10 @@ export async function GET(req: NextRequest) {
           return b.localeCompare(a);
         });
 
-        dirCache = {
+        setProjectsDirCache({
           timestamp: now,
           dirNames: sortedDirNames,
-        };
+        });
       } catch {
         sortedDirNames = [];
       }

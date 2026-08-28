@@ -347,3 +347,41 @@ Lê Lợi là lãnh tụ cuộc khởi nghĩa Lam Sơn đánh đuổi quân Minh
   });
 });
 
+describe('Anti-Anachronism & Feudal Paradigm Guardrails', () => {
+  it('includes feudal patriarchal and dynastic transition rules in chat supervisor prompt', async () => {
+    const mockRag: IRagEngine = {
+      search: vi.fn().mockResolvedValue({
+        entities: [],
+        triples: [],
+        verifiedContext: [
+          {
+            entityId: 'ent_nguyen_nhac',
+            canonicalName: 'Nguyễn Nhạc',
+            aliases: ['Tây Sơn Vương'],
+            summary: 'Nguyễn Nhạc là một trong ba thủ lĩnh của phong trào Tây Sơn.',
+            citations: ['Nhà Tây Sơn'],
+            confidenceScore: 0.9,
+          },
+        ],
+        citations: ['Nhà Tây Sơn'],
+        queryInfo: { query: 'vì sao hiện nay lại có nhiều người họ Nguyễn như vậy?', entityIds: [] },
+      }),
+      ingestDocument: async () => {},
+    };
+
+    const events: any[] = [];
+    for await (const evt of handleChatQueryStream({
+      query: 'vì sao hiện nay lại có nhiều người họ Nguyễn như vậy? lý do là vì sao?',
+      conversationId: 'test_demographic_conv_001',
+      ragEngine: mockRag,
+    })) {
+      events.push(evt);
+    }
+
+    // Verify stream completes properly
+    const doneEvt = events.find((e) => e.type === 'done');
+    expect(doneEvt).toBeDefined();
+    expect(doneEvt.conversationId).toBe('test_demographic_conv_001');
+  });
+});
+

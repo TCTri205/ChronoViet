@@ -229,6 +229,48 @@ export class ChronoRagEngine implements IRagEngine {
       })();
 
       const vectorBranchPromise = (async () => {
+        const queryIntent = detectQueryIntent(queryText);
+        const isCausalOrOrigin =
+          queryIntent === 'WHY_REASONING' ||
+          /(?:nguồn\s*gốc|tại\s*sao|vì\s*sao|lý\s*do|nguyên\s*nhân|tập\s*tục|dòng\s*họ|biến\s*thiên|họ\s*nguyễn)/i.test(
+            queryText
+          );
+
+        if (isCausalOrOrigin) {
+          const expandedThematicQuery = `${queryText} nguồn gốc biến cố chuyển giao triều đại đổi họ ban quốc tính lịch sử`;
+          const [primaryCandidates, expandedCandidates] = await Promise.all([
+            searchHybridVectorAndBM25(
+              queryText,
+              getCachedQueryEmbedding(queryText),
+              Math.max(15, rerankTopK * 3),
+              60,
+              filterEntityIds
+            ),
+            searchHybridVectorAndBM25(
+              expandedThematicQuery,
+              getCachedQueryEmbedding(expandedThematicQuery),
+              Math.max(15, rerankTopK * 3),
+              60,
+              filterEntityIds
+            ),
+          ]);
+
+          const fusedMap = new Map<string, VectorSearchResult>();
+          primaryCandidates.forEach((item, idx) => {
+            fusedMap.set(item.chunkId, { ...item, score: 0.6 * (1 / (60 + idx + 1)) });
+          });
+          expandedCandidates.forEach((item, idx) => {
+            const score = 0.4 * (1 / (60 + idx + 1));
+            const existing = fusedMap.get(item.chunkId);
+            if (existing) {
+              existing.score += score;
+            } else {
+              fusedMap.set(item.chunkId, { ...item, score });
+            }
+          });
+          return Array.from(fusedMap.values());
+        }
+
         const embeddingPromise = getCachedQueryEmbedding(queryText);
         const candidates = await searchHybridVectorAndBM25(
           queryText,

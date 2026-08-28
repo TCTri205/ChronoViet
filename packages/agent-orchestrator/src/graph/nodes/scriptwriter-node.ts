@@ -147,83 +147,109 @@ function computeEpochBounds(
 
 export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'scriptwriter');
-  nodeLog.info('orchestrator.scriptwriting_started', `Starting Scriptwriter Agent for ${state.chapters.length} chapters`, {
+  nodeLog.info('orchestrator.scriptwriting_started', `Starting Parallel Scriptwriter Agent for ${state.chapters.length} chapters`, {
     projectId: state.projectId,
   });
 
+  if (!state.chapters || state.chapters.length === 0) {
+    return {
+      status: 'CHAPTER_SCRIPT_GENERATED',
+      currentStep: 4,
+      chapterScripts: {},
+      runningNarrativeState: state.runningNarrativeState || {
+        previousChapterSummary: '',
+        establishedTone: 'Hùng tráng',
+        introducedEntities: [],
+        transitionHook: '',
+      },
+      telemetryAudit: [],
+    };
+  }
+
   const chapterScripts: Record<number, string> = {};
-  let currentNarrativeState: RunningNarrativeState = { ...state.runningNarrativeState };
   const telemetryAudit: TelemetryAuditEntry[] = [];
 
   const verifiedEntities = state.ragContext?.verifiedContext || [];
   const epochInfo = computeEpochBounds(verifiedEntities, state.userPrompt);
 
-  for (let i = 0; i < state.chapters.length; i++) {
-    const chapter = state.chapters[i];
-    const chapterDurationSec = Math.max(15, chapter.targetDurationSeconds || 30);
-    // 145 WPM calibration (2.4167 words/sec ~ 2.42 words/sec)
-    const targetWords = Math.max(25, Math.round(chapterDurationSec * 2.42));
-    const minWords = Math.round(targetWords * 0.90);
-    const maxWords = Math.round(targetWords * 1.10);
+  const maxLlmConcurrency = envConfig.USE_LOCAL_LLM
+    ? Math.max(1, envConfig.LOCAL_LLM_MAX_CONCURRENCY || 1)
+    : 4;
 
-    const wordsContext = Math.round(targetWords * 0.30);
-    const wordsClimax = Math.round(targetWords * 0.50);
-    const wordsLegacy = Math.round(targetWords * 0.20);
+  const chapterIndices = state.chapters.map((_, i) => i);
 
-    const targetSentences = Math.max(3, Math.round(targetWords / 18));
-    const numOpeningSentences = Math.max(1, Math.round(wordsContext / 18));
-    const numLegacySentences = Math.max(1, Math.round(wordsLegacy / 18));
-    const numClimaxSentences = Math.max(1, targetSentences - numOpeningSentences - numLegacySentences);
+  // Process chapters in parallel batches bounded by maxLlmConcurrency
+  for (let batchStart = 0; batchStart < chapterIndices.length; batchStart += maxLlmConcurrency) {
+    const batch = chapterIndices.slice(batchStart, batchStart + maxLlmConcurrency);
 
-    // 1. Extract RAG Grounding Facts relevant to this specific chapter
-    const keyEventLower = (chapter.keyEvents || []).map((k) => k.toLowerCase().trim()).filter(Boolean);
-    const chapterTitleLower = chapter.title.toLowerCase().trim();
-    const chapterEntitiesLower = (chapter.introducedEntities || []).map((e) => e.toLowerCase().trim()).filter(Boolean);
+    await Promise.all(
+      batch.map(async (i) => {
+        const chapter = state.chapters[i];
+        const chapterDurationSec = Math.max(15, chapter.targetDurationSeconds || 30);
+        // 145 WPM calibration (2.4167 words/sec ~ 2.42 words/sec)
+        const targetWords = Math.max(25, Math.round(chapterDurationSec * 2.42));
+        const minWords = Math.round(targetWords * 0.90);
+        const maxWords = Math.round(targetWords * 1.10);
 
-    // Rank verified chunks by relevance to chapter title, summary, key events, and entities
-    const relevantChunks = verifiedEntities.filter((chunk) => {
-      const summaryLower = (chunk.summary || '').toLowerCase();
-      const titleLower = (chunk.title || '').toLowerCase();
-      const nameLower = (chunk.canonicalName || '').toLowerCase();
+        const wordsContext = Math.round(targetWords * 0.30);
+        const wordsClimax = Math.round(targetWords * 0.50);
+        const wordsLegacy = Math.round(targetWords * 0.20);
 
-      const inChapterEntities = chapterEntitiesLower.some((ce) => summaryLower.includes(ce) || titleLower.includes(ce) || nameLower.includes(ce));
-      const inTitle = chapterTitleLower.split(/\s+/).some((w) => w.length > 3 && summaryLower.includes(w));
-      const inEvents = keyEventLower.some((ev) => summaryLower.includes(ev) || ev.includes(nameLower));
-      const inSummary = chapter.summary.toLowerCase().split(/\s+/).some((w) => w.length > 4 && summaryLower.includes(w));
-      return inChapterEntities || inTitle || inEvents || inSummary;
-    });
+        const targetSentences = Math.max(3, Math.round(targetWords / 18));
+        const numOpeningSentences = Math.max(1, Math.round(wordsContext / 18));
+        const numLegacySentences = Math.max(1, Math.round(wordsLegacy / 18));
+        const numClimaxSentences = Math.max(1, targetSentences - numOpeningSentences - numLegacySentences);
 
-    // Combine relevant chunks and general verified chunks, deduplicating by chunkId / content snippet (NEVER by entityId)
-    const chunkCandidates = [
-      ...relevantChunks,
-      ...verifiedEntities,
-    ];
-    const seenChunkKeys = new Set<string>();
-    const selectedChunks = chunkCandidates.filter((chunk) => {
-      const chunkKey = chunk.chunkId || chunk.summary?.slice(0, 80) || chunk.canonicalName;
-      if (!chunkKey || seenChunkKeys.has(chunkKey)) return false;
-      seenChunkKeys.add(chunkKey);
-      return true;
-    }).slice(0, 6);
+        // 1. Extract RAG Grounding Facts relevant to this specific chapter
+        const keyEventLower = (chapter.keyEvents || []).map((k) => k.toLowerCase().trim()).filter(Boolean);
+        const chapterTitleLower = chapter.title.toLowerCase().trim();
+        const chapterEntitiesLower = (chapter.introducedEntities || []).map((e) => e.toLowerCase().trim()).filter(Boolean);
 
-    const ragGroundingText =
-      selectedChunks.length > 0
-        ? selectedChunks.map((e) => `- [${e.title || e.canonicalName}]: ${e.summary}`).join('\n\n')
-        : '- Dựa trên tóm tắt sự kiện của chương.';
+        // Rank verified chunks by relevance to chapter title, summary, key events, and entities
+        const relevantChunks = verifiedEntities.filter((chunk) => {
+          const summaryLower = (chunk.summary || '').toLowerCase();
+          const titleLower = (chunk.title || '').toLowerCase();
+          const nameLower = (chunk.canonicalName || '').toLowerCase();
 
-    const systemMessage = `Bạn là Nhà biên kịch Lịch sử Chuyên nghiệp của nền tảng ChronoViet.
+          const inChapterEntities = chapterEntitiesLower.some((ce) => summaryLower.includes(ce) || titleLower.includes(ce) || nameLower.includes(ce));
+          const inTitle = chapterTitleLower.split(/\s+/).some((w) => w.length > 3 && summaryLower.includes(w));
+          const inEvents = keyEventLower.some((ev) => summaryLower.includes(ev) || ev.includes(nameLower));
+          const inSummary = chapter.summary.toLowerCase().split(/\s+/).some((w) => w.length > 4 && summaryLower.includes(w));
+          return inChapterEntities || inTitle || inEvents || inSummary;
+        });
+
+        // Combine relevant chunks and general verified chunks, deduplicating by chunkId / content snippet
+        const chunkCandidates = [
+          ...relevantChunks,
+          ...verifiedEntities,
+        ];
+        const seenChunkKeys = new Set<string>();
+        const selectedChunks = chunkCandidates.filter((chunk) => {
+          const chunkKey = chunk.chunkId || chunk.summary?.slice(0, 80) || chunk.canonicalName;
+          if (!chunkKey || seenChunkKeys.has(chunkKey)) return false;
+          seenChunkKeys.add(chunkKey);
+          return true;
+        }).slice(0, 6);
+
+        const ragGroundingText =
+          selectedChunks.length > 0
+            ? selectedChunks.map((e) => `- [${e.title || e.canonicalName}]: ${e.summary}`).join('\n\n')
+            : '- Dựa trên tóm tắt sự kiện của chương.';
+
+        const systemMessage = `Bạn là Nhà biên kịch Lịch sử Chuyên nghiệp của nền tảng ChronoViet.
 Nhiệm vụ: Viết lời bình dẫn chuyện (Voiceover Narration) cho từng chương video lịch sử đạt chuẩn nhịp độ 145 WPM (130–160 WPM).
-QUY TẮC CẤU TRÚC KỊCH BẢN:
-- Đoạn mở đầu (~30% số từ, ${numOpeningSentences} câu): Dẫn dắt không gian, thời gian, nguyên nhân và tiền đề lịch sử.
-- Đoạn diễn biến & cao trào (~50% số từ, ${numClimaxSentences} câu): Miêu tả chi tiết mưu lược, biến cố, hành động của các nhân vật và quyết sách lịch sử.
-- Đoạn đúc kết & dư âm (~20% số từ, ${numLegacySentences} câu): Khắc họa ý nghĩa thời đại, cảm xúc hào hùng, bài học lịch sử và chuyển tiếp mạch lạc.
+QUY TẮC CẤU TRÚC KỊCH BẢN 1-PASS CHUẨN XÁC:
+- Đoạn mở đầu (~30% số từ, đúng ${numOpeningSentences} câu): Dẫn dắt không gian, thời gian, nguyên nhân và tiền đề lịch sử theo entry hook.
+- Đoạn diễn biến & cao trào (~50% số từ, đúng ${numClimaxSentences} câu): Miêu tả chi tiết mưu lược, biến cố, hành động của các nhân vật và quyết sách lịch sử.
+- Đoạn đúc kết & dư âm (~20% số từ, đúng ${numLegacySentences} câu): Khắc họa ý nghĩa thời đại, cảm xúc hào hùng, bài học lịch sử và chuyển tiếp mượt mà theo exit hook.
+- TỔNG CỘNG: Viết chính xác ${targetSentences} câu văn xuôi trọn vẹn (khoảng 16-22 từ/câu) để tổng độ dài đạt đúng ${minWords} - ${maxWords} từ tiếng Việt.
 
 QUY TẮC BẢO TOÀN NIÊN ĐẠI & TRÁNH HALLUCINATION:
 - Niên đại trọng tâm của video: ${epochInfo.epochDesc}.
 - TUYỆT ĐỐI KHÔNG tự ý đưa vào các nhân vật, tướng lĩnh hoặc triều đại thuộc các thế kỷ khác không thuộc bối cảnh này (ví dụ: không đưa nhân vật nhà Trần hay Hậu Lê vào bối cảnh thời Tiền Lê/Đinh/Lý).
 - Cho phép đề cập bối cảnh tiền đề hoặc hệ quả trong phạm vi ±30 năm cùng dòng lịch sử, nhưng nghiêm cấm vượt thế kỷ hoặc đảo lộn diễn biến lịch sử.
 
-QUY TẮC BẮT BUỘC DÀNH CHO GIỌNG ĐỌC TTS:
+QUY TẮC BẮT BUỘC DÀNH CHO GIỌNG ĐỌC TTS (LOCAL LLM COMPLIANCE):
 1. TUYỆT ĐỐI KHÔNG chèn tiêu đề đoạn, KHÔNG viết các nhãn cấu trúc như: "Hồi 1:", "Mở cảnh:", "Diễn biến:", "Cao trào:", "Dư âm:", "Bài học:", "Hào hùng, trang trọng." vào văn bản.
 2. TUYỆT ĐỐI KHÔNG chèn thẻ chỉ dẫn sân khấu như: [Nhạc nền], (Giọng truyền cảm), (Cười), [Hình ảnh...].
 3. TUYỆT ĐỐI KHÔNG chèn nhãn người nói như: "MC:", "Người dẫn chuyện:", "Lời bình:".
@@ -234,164 +260,174 @@ QUY TẮC BẮT BUỘC DÀNH CHO GIỌNG ĐỌC TTS:
    - Không dùng số La Mã viết tắt (viết "thế kỷ thứ mười" thay vì "thế kỷ X").
    - Viết thành câu văn xuôi mượt mà (ví dụ: "từ năm 1428 đến năm 1433" thay vì "(1428 - 1433)").`;
 
-    // Extract entities from selected RAG chunks
-    const chunkEntityNames: string[] = [];
-    for (const sc of selectedChunks) {
-      if (sc.canonicalName && isValidHistoricalEntity(sc.canonicalName)) chunkEntityNames.push(sc.canonicalName);
-      if (Array.isArray(sc.aliases)) {
-        for (const a of sc.aliases) {
-          if (a && isValidHistoricalEntity(a)) chunkEntityNames.push(a);
+        // Extract entities from selected RAG chunks
+        const chunkEntityNames: string[] = [];
+        for (const sc of selectedChunks) {
+          if (sc.canonicalName && isValidHistoricalEntity(sc.canonicalName)) chunkEntityNames.push(sc.canonicalName);
+          if (Array.isArray(sc.aliases)) {
+            for (const a of sc.aliases) {
+              if (a && isValidHistoricalEntity(a)) chunkEntityNames.push(a);
+            }
+          }
         }
-      }
-    }
 
-    const allHistoricalEntities = extractHistoricalEntitiesFromRag(state.ragContext);
-    const targetChapterEntities = Array.from(
-      new Set([
-        ...(chapter.introducedEntities || []),
-        ...chunkEntityNames,
-        ...allHistoricalEntities,
-      ])
-    ).filter(isValidHistoricalEntity);
+        const allHistoricalEntities = extractHistoricalEntitiesFromRag(state.ragContext);
+        const targetChapterEntities = Array.from(
+          new Set([
+            ...(chapter.introducedEntities || []),
+            ...chunkEntityNames,
+            ...allHistoricalEntities,
+          ])
+        ).filter(isValidHistoricalEntity);
 
-    const userMessage = `Hãy viết lời dẫn chuyện cho Chương ${i + 1}: "${chapter.title}".
+        const entryHook = chapter.entryHook || (i === 0 ? 'Mở đầu bối cảnh lịch sử' : `Tiếp nối diễn biến phần trước`);
+        const exitHook = chapter.exitHook || chapter.transitionHook || (i < state.chapters.length - 1 ? 'Chuyển sang hồi tiếp theo' : 'Khép lại trang sử hào hùng');
+        const climaxFocus = chapter.climaxFocus || (chapter.keyEvents && chapter.keyEvents[0]) || chapter.title;
+        const entityList = targetChapterEntities.length > 0 ? targetChapterEntities.join(', ') : state.userPrompt;
+
+        const userMessage = `Hãy viết lời dẫn chuyện cho Chương ${i + 1}: "${chapter.title}".
 Chủ đề video chính: "${state.userPrompt}" (Thể loại: ${state.videoType})
 Bối cảnh & Niên đại bắt buộc: ${epochInfo.epochDesc}
 Tóm tắt nội dung chương: ${chapter.summary}
 Thời lượng mục tiêu: ${chapterDurationSec} giây.
 
+BLUEPRINT MẠCH TRUYỆN:
+- Ý mở đầu (Entry Hook): "${entryHook}".
+- Trọng tâm kịch tính (Climax Focus): "${climaxFocus}".
+- Ý chuyển tiếp kết thúc (Exit Hook): "${exitHook}".
+- Giọng văn chủ đạo: ${chapter.establishedTone || state.runningNarrativeState?.establishedTone || 'Hào hùng, trang trọng'}.
+
 YÊU CẦU ĐỘ DÀI VÀ CẤU TRÚC CÂU (BẮT BUỘC ~${targetWords} từ, dải chuẩn 145 WPM: ${minWords} - ${maxWords} từ, tổng cộng khoảng ${targetSentences} câu):
 - Đoạn 1: Mở đầu (Bối cảnh & Tiền đề): đúng ${numOpeningSentences} câu (~${wordsContext} từ).
 - Đoạn 2: Diễn biến & Cao trào (Sách lược, biến cố, hành động): đúng ${numClimaxSentences} câu (~${wordsClimax} từ).
 - Đoạn 3: Đúc kết & Dư âm (Ý nghĩa lịch sử, bài học): đúng ${numLegacySentences} câu (~${wordsLegacy} từ).
-Mỗi câu văn phải viết trọn vẹn (khoảng 15-22 từ/câu), giàu tính điện ảnh và chuẩn xác sử liệu.
+Mỗi câu văn phải viết trọn vẹn (khoảng 16-22 từ/câu), giàu tính điện ảnh và chuẩn xác sử liệu.
 
 DANH SÁCH THỰC THỂ SỬ LIỆU BẮT BUỘC LỒNG GHÉP VÀO LỜI BÌNH (Tên nhân vật, tướng lĩnh, đối thủ, địa danh, trận đánh, vũ khí, mưu lược):
-${targetChapterEntities.join(', ')}
+${entityList}
 
 TƯ LIỆU LỊCH SỬ XÁC THỰC TỪ CHRONO-RAG:
 ${ragGroundingText}
 
 QUY TẮC MẠCH TRUYỆN:
-- Giọng văn chủ đạo: ${currentNarrativeState.establishedTone || 'Hào hùng, trang trọng'}.
-- Chuyển tiếp mượt mà từ đoạn trước: "${currentNarrativeState.transitionHook || 'Tiếp tục diễn biến lịch sử'}".
 - BẮT BUỘC lồng ghép tự nhiên và chính xác các tên nhân vật, tướng lĩnh, địa danh được liệt kê ở trên.
 - TUYỆT ĐỐI KHÔNG chuyển sang các nhân vật hoặc triều đại lịch sử khác ngoài bối cảnh "${epochInfo.epochDesc}".
 
 NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiếp, KHÔNG viết bất kỳ tiêu đề hoặc nhãn cấu trúc nào. Bắt đầu viết:`;
 
-    const estimatedMaxTokens = Math.min(2048, Math.max(512, Math.round(targetWords * 3) + 512));
-    let cleanedScript = '';
-
-    try {
-      const res = await callLlm({
-        messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: userMessage },
-        ],
-        temperature: 0.3,
-        maxTokens: estimatedMaxTokens,
-        timeoutMs: envConfig.LOCAL_LLM_TIMEOUT_MS || 60000,
-      });
-
-      cleanedScript = sanitizeVoiceoverScript(res.content);
-
-      // Selective Pacing Refinement Loop
-      const words = cleanedScript.split(/\s+/).filter(Boolean);
-      const wordCount = words.length;
-      const durationMin = chapterDurationSec / 60;
-      const actualWpm = Math.round(wordCount / durationMin);
-
-      // Trigger single-pass delta refinement only if severe pacing deviation occurs (WPM < 115 or > 185)
-      if (actualWpm < 115 || actualWpm > 185) {
-        nodeLog.info('orchestrator.scriptwriter_pacing_refinement', `Pacing deviation detected for chapter ${i} (WPM=${actualWpm}, target=145, words=${wordCount}/${targetWords}). Triggering refinement pass.`, {
-          chapterIndex: i,
-          actualWpm,
-          wordCount,
-          targetWords,
-        });
-
-        const isTooShort = actualWpm < 115;
-        const deltaInstruction = isTooShort
-          ? `Văn bản hiện tại (${wordCount} từ) quá ngắn so với thời lượng ${chapterDurationSec}s (yêu cầu ${minWords} - ${maxWords} từ, chuẩn 145 WPM). Hãy mở rộng thêm chi tiết bối cảnh lịch sử, khắc họa sâu sắc hơn diễn biến/chiến lược và làm nổi bật dư âm ý nghĩa lịch sử để đạt đúng ~${targetWords} từ.`
-          : `Văn bản hiện tại (${wordCount} từ) quá dài so với thời lượng ${chapterDurationSec}s (yêu cầu ${minWords} - ${maxWords} từ, chuẩn 145 WPM). Hãy cô đọng lại các câu văn rườm rà, lược bỏ từ ngữ dư thừa nhưng TUYỆT ĐỐI giữ nguyên toàn bộ sự kiện, nhân vật và niên đại lịch sử để đạt đúng ~${targetWords} từ.`;
+        const estimatedMaxTokens = Math.min(2048, Math.max(512, Math.round(targetWords * 3) + 512));
+        let cleanedScript = '';
 
         try {
-          const refineRes = await callLlm({
+          const res = await callLlm({
             messages: [
               { role: 'system', content: systemMessage },
-              {
-                role: 'user',
-                content: `Dưới đây là bản thảo lời bình hiện tại của Chương ${i + 1}:\n"""\n${cleanedScript}\n"""\n\nYÊU CẦU TINH CHỈNH TỐC ĐỘ ĐỌC (PACING CALIBRATION):\n${deltaInstruction}\nBắt buộc kết quả mới phải có độ dài từ ${minWords} đến ${maxWords} từ tiếng Việt để đọc vừa vặn trong ${chapterDurationSec} giây.\n\nChỉ xuất văn bản lời bình hoàn chỉnh (văn xuôi thuần túy, KHÔNG tiêu đề) sau khi tinh chỉnh:`,
-              },
+              { role: 'user', content: userMessage },
             ],
-            temperature: 0.1,
+            temperature: 0.3,
             maxTokens: estimatedMaxTokens,
             timeoutMs: envConfig.LOCAL_LLM_TIMEOUT_MS || 60000,
           });
 
-          const refinedCleaned = sanitizeVoiceoverScript(refineRes.content);
-          if (refinedCleaned) {
-            cleanedScript = refinedCleaned;
+          cleanedScript = sanitizeVoiceoverScript(res.content);
+
+          // Selective Pacing Refinement Loop (Only on severe pacing deviations outside 105-185 WPM)
+          const words = cleanedScript.split(/\s+/).filter(Boolean);
+          const wordCount = words.length;
+          const durationMin = chapterDurationSec / 60;
+          const actualWpm = Math.round(wordCount / durationMin);
+
+          if (actualWpm < 105 || actualWpm > 185) {
+            nodeLog.info('orchestrator.scriptwriter_pacing_refinement', `Severe pacing deviation detected for chapter ${i} (WPM=${actualWpm}, target=145, words=${wordCount}/${targetWords}). Triggering refinement pass.`, {
+              chapterIndex: i,
+              actualWpm,
+              wordCount,
+              targetWords,
+            });
+
+            const isTooShort = actualWpm < 105;
+            const deltaInstruction = isTooShort
+              ? `Văn bản hiện tại (${wordCount} từ) quá ngắn so với thời lượng ${chapterDurationSec}s (yêu cầu ${minWords} - ${maxWords} từ, chuẩn 145 WPM). Hãy mở rộng thêm chi tiết bối cảnh lịch sử, khắc họa sâu sắc hơn diễn biến/chiến lược và làm nổi bật dư âm ý nghĩa lịch sử để đạt đúng ~${targetWords} từ.`
+              : `Văn bản hiện tại (${wordCount} từ) quá dài so với thời lượng ${chapterDurationSec}s (yêu cầu ${minWords} - ${maxWords} từ, chuẩn 145 WPM). Hãy cô đọng lại các câu văn rườm rà, lược bỏ từ ngữ dư thừa nhưng TUYỆT ĐỐI giữ nguyên toàn bộ sự kiện, nhân vật và niên đại lịch sử để đạt đúng ~${targetWords} từ.`;
+
+            try {
+              const refineRes = await callLlm({
+                messages: [
+                  { role: 'system', content: systemMessage },
+                  {
+                    role: 'user',
+                    content: `Dưới đây là bản thảo lời bình hiện tại của Chương ${i + 1}:\n"""\n${cleanedScript}\n"""\n\nYÊU CẦU TINH CHỈNH TỐC ĐỘ ĐỌC (PACING CALIBRATION):\n${deltaInstruction}\nBắt buộc kết quả mới phải có độ dài từ ${minWords} đến ${maxWords} từ tiếng Việt để đọc vừa vặn trong ${chapterDurationSec} giây.\n\nChỉ xuất văn bản lời bình hoàn chỉnh (văn xuôi thuần túy, KHÔNG tiêu đề) sau khi tinh chỉnh:`,
+                  },
+                ],
+                temperature: 0.1,
+                maxTokens: estimatedMaxTokens,
+                timeoutMs: envConfig.LOCAL_LLM_TIMEOUT_MS || 60000,
+              });
+
+              const refinedCleaned = sanitizeVoiceoverScript(refineRes.content);
+              if (refinedCleaned) {
+                cleanedScript = refinedCleaned;
+              }
+            } catch (refineErr: any) {
+              nodeLog.warn('orchestrator.scriptwriter_refine_failed', `Refinement pass skipped: ${refineErr.message}`);
+            }
           }
-        } catch (refineErr: any) {
-          nodeLog.warn('orchestrator.scriptwriter_refine_failed', `Refinement pass skipped: ${refineErr.message}`);
+
+          chapterScripts[i] = cleanedScript || sanitizeVoiceoverScript(res.content);
+
+          if (!chapterScripts[i] && !envConfig.EVAL_STRICT) {
+            chapterScripts[i] = generateProportionalNarration(
+              chapter.title,
+              chapter.summary,
+              chapterDurationSec,
+              chapter.establishedTone || state.runningNarrativeState?.establishedTone || 'Hùng tráng',
+              chapter.introducedEntities,
+              state.videoType
+            );
+          }
+        } catch (err: any) {
+          // Eval Integrity: strict mode must not substitute canned narration
+          if (envConfig.EVAL_STRICT) {
+            throw err;
+          }
+          nodeLog.warn('orchestrator.scriptwriter_llm_fallback', `LLM call fallback for chapter ${i}: ${err.message}`);
+          telemetryAudit.push({
+            timestamp: new Date().toISOString(),
+            node: 'scriptwriter',
+            level: 'WARN',
+            category: 'FALLBACK',
+            message: `LLM call fallback for chapter ${i}: ${err.message}`,
+            metadata: { chapterIndex: i, error: err.message },
+          });
+          chapterScripts[i] = generateProportionalNarration(
+            chapter.title,
+            chapter.summary,
+            chapterDurationSec,
+            chapter.establishedTone || state.runningNarrativeState?.establishedTone || 'Hùng tráng',
+            chapter.introducedEntities,
+            state.videoType
+          );
         }
-      }
-
-      chapterScripts[i] = cleanedScript || sanitizeVoiceoverScript(res.content);
-
-      if (!chapterScripts[i] && !envConfig.EVAL_STRICT) {
-        chapterScripts[i] = generateProportionalNarration(
-          chapter.title,
-          chapter.summary,
-          chapterDurationSec,
-          currentNarrativeState.establishedTone,
-          chapter.introducedEntities,
-          state.videoType
-        );
-      }
-    } catch (err: any) {
-      // Eval Integrity: strict mode must not substitute canned narration
-      if (envConfig.EVAL_STRICT) {
-        throw err;
-      }
-      nodeLog.warn('orchestrator.scriptwriter_llm_fallback', `LLM call fallback for chapter ${i}: ${err.message}`);
-      telemetryAudit.push({
-        timestamp: new Date().toISOString(),
-        node: 'scriptwriter',
-        level: 'WARN',
-        category: 'FALLBACK',
-        message: `LLM call fallback for chapter ${i}: ${err.message}`,
-        metadata: { chapterIndex: i, error: err.message },
-      });
-      chapterScripts[i] = generateProportionalNarration(
-        chapter.title,
-        chapter.summary,
-        chapterDurationSec,
-        currentNarrativeState.establishedTone,
-        chapter.introducedEntities,
-        state.videoType
-      );
-    }
-
-    // Update narrative state (bounded to avoid token explosion)
-    const combinedEntities = Array.from(
-      new Set([...currentNarrativeState.introducedEntities, ...(chapter.introducedEntities || [])])
+      })
     );
-    currentNarrativeState = {
-      previousChapterSummary: chapter.summary,
-      establishedTone: chapter.establishedTone || 'Hùng tráng',
-      introducedEntities: combinedEntities.slice(-15),
-      transitionHook: chapter.transitionHook || `Chuyển tiếp sang diễn biến tiếp theo của ${chapter.title}`,
-    };
   }
+
+  // Aggregate narrative state across chapters
+  const allIntroduced = state.chapters.flatMap((c) => c.introducedEntities || []);
+  const lastChapter = state.chapters[state.chapters.length - 1];
+  const existingIntroduced = state.runningNarrativeState?.introducedEntities || [];
+  const aggregatedNarrativeState: RunningNarrativeState = {
+    previousChapterSummary: lastChapter?.summary || '',
+    establishedTone: lastChapter?.establishedTone || state.runningNarrativeState?.establishedTone || 'Hùng tráng',
+    introducedEntities: Array.from(new Set([...existingIntroduced, ...allIntroduced])).slice(-15),
+    transitionHook: lastChapter?.transitionHook || lastChapter?.exitHook || '',
+  };
 
   return {
     status: 'CHAPTER_SCRIPT_GENERATED',
     currentStep: 4,
     chapterScripts,
-    runningNarrativeState: currentNarrativeState,
+    runningNarrativeState: aggregatedNarrativeState,
     telemetryAudit,
   };
 }

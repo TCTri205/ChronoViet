@@ -88,13 +88,13 @@ import * as path from 'path';
 import { initProjectWorkspace, cleanProjectWorkspace } from '@chronoviet/infra';
 
 import { GET as getProjects, POST as createProject } from '../app/api/v1/projects/route';
-import { GET as getProjectDetail } from '../app/api/v1/projects/[id]/route';
+import { GET as getProjectDetail, DELETE as deleteProject, PATCH as updateProject } from '../app/api/v1/projects/[id]/route';
 import { POST as handleChat } from '../app/api/v1/chat/route';
 import { POST as triggerRender } from '../app/api/v1/projects/[id]/render/route';
 import { POST as handleAbort } from '../app/api/v1/projects/[id]/abort/route';
 import { POST as handleResume } from '../app/api/v1/projects/[id]/resume/route';
 import { GET as getConversations, POST as createConversation } from '../app/api/v1/conversations/route';
-import { GET as getConversationDetail, DELETE as deleteConversation } from '../app/api/v1/conversations/[id]/route';
+import { GET as getConversationDetail, DELETE as deleteConversation, PATCH as updateConversation } from '../app/api/v1/conversations/[id]/route';
 import { GET as getMessages, POST as createMessage } from '../app/api/v1/conversations/[id]/messages/route';
 import { GET as getStream } from '../app/api/v1/projects/[id]/stream/route';
 import { GET as getVideo } from '../app/api/v1/projects/[id]/video/route';
@@ -228,11 +228,41 @@ describe('Web RESTful API Routes', () => {
     });
   });
 
-  describe('GET /api/v1/projects/[id]', () => {
+  describe('GET, PATCH & DELETE /api/v1/projects/[id]', () => {
     it('returns 404 for non-existent project', async () => {
       const req = new NextRequest('http://localhost:3000/api/v1/projects/definitely_non_existent_project_99999');
       const res = await getProjectDetail(req, { params: { id: 'definitely_non_existent_project_99999' } });
       expect(res.status).toBe(404);
+    });
+
+    it('updates and deletes existing project workspace', async () => {
+      const pId = `proj_crud_test_${Date.now()}`;
+      initProjectWorkspace(pId);
+      createdProjectIds.push(pId);
+
+      // Test PATCH
+      const patchReq = new NextRequest(`http://localhost:3000/api/v1/projects/${pId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ topic: 'Đại Việt Sử Ký Toàn Thư Cải Biên' }),
+      });
+      const patchRes = await updateProject(patchReq, { params: { id: pId } });
+      expect(patchRes.status).toBe(200);
+      const patchData = await patchRes.json();
+      expect(patchData.metadata.topic).toBe('Đại Việt Sử Ký Toàn Thư Cải Biên');
+
+      // Test DELETE
+      const delReq = new NextRequest(`http://localhost:3000/api/v1/projects/${pId}`, {
+        method: 'DELETE',
+      });
+      const delRes = await deleteProject(delReq, { params: { id: pId } });
+      expect(delRes.status).toBe(200);
+      const delData = await delRes.json();
+      expect(delData.success).toBe(true);
+
+      // Verify 404 after deletion
+      const getReq = new NextRequest(`http://localhost:3000/api/v1/projects/${pId}`);
+      const getRes = await getProjectDetail(getReq, { params: { id: pId } });
+      expect(getRes.status).toBe(404);
     });
   });
 
@@ -427,7 +457,7 @@ describe('Web RESTful API Routes', () => {
       expect(data.messages.length).toBeGreaterThan(0);
     });
 
-    it('retrieves conversation detail and deletes conversation', async () => {
+    it('retrieves conversation detail, updates title, and deletes conversation', async () => {
       const getReq = new NextRequest(`http://localhost:3000/api/v1/conversations/${convId}`, {
         method: 'GET',
       });
@@ -435,6 +465,16 @@ describe('Web RESTful API Routes', () => {
       expect(getRes.status).toBe(200);
       const data = await getRes.json();
       expect(data.conversation.id).toBe(convId);
+
+      // Test PATCH
+      const patchReq = new NextRequest(`http://localhost:3000/api/v1/conversations/${convId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ title: 'Triều đại Nhà Trần Thời Kỳ Hưng Thịnh' }),
+      });
+      const patchRes = await updateConversation(patchReq, { params: { id: convId } });
+      expect(patchRes.status).toBe(200);
+      const patchData = await patchRes.json();
+      expect(patchData.conversation.title).toBe('Triều đại Nhà Trần Thời Kỳ Hưng Thịnh');
 
       const delReq = new NextRequest(`http://localhost:3000/api/v1/conversations/${convId}`, {
         method: 'DELETE',

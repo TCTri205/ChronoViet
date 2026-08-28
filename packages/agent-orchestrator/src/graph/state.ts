@@ -202,7 +202,7 @@ export const ChronoGraphAnnotation = Annotation.Root({
     default: () => [],
   }),
   scenes: Annotation<SceneGeneration[]>({
-    reducer: mergeScenes,
+    reducer: updateValue,
     default: () => [],
   }),
   researchResults: Annotation<Record<string, ResearchSceneResult>>({
@@ -210,7 +210,7 @@ export const ChronoGraphAnnotation = Annotation.Root({
     default: () => ({}),
   }),
   audioAssets: Annotation<AudioAssetEntry[]>({
-    reducer: mergeAudioAssets,
+    reducer: updateValue,
     default: () => [],
   }),
   pacingErrorPercentage: Annotation<number | undefined>({

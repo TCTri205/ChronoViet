@@ -912,6 +912,9 @@ export const ChapterPlanSchema = z.object({
   keyEvents: z.array(z.string()).default([]),
   introducedEntities: z.array(z.string()).default([]),
   transitionHook: z.string().optional(),
+  entryHook: z.string().optional(),
+  exitHook: z.string().optional(),
+  climaxFocus: z.string().optional(),
   establishedTone: z.string().optional(),
 });
 

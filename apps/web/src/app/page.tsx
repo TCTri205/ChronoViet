@@ -92,6 +92,35 @@ export default function MasterWorkspacePage() {
     }
   };
 
+  const handleDeleteProject = (projectId: string) => {
+    if (activeProjectId === projectId) {
+      setActiveProjectId(null);
+      setVideoTopic("");
+      setIsTheaterDockOpen(false);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("projectId");
+        window.history.pushState({}, "", url.toString());
+      }
+    }
+  };
+
+  const handleDeleteConversation = (conversationId: string) => {
+    if (activeConversationId === conversationId) {
+      setActiveConversationId(null);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("conversationId");
+        window.history.pushState({}, "", url.toString());
+      }
+    }
+  };
+
+  const handleNewConversation = () => {
+    const newConvId = `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    handleSelectConversation(newConvId);
+  };
+
   const handleHandoverFromChat = (topic: string, conversationId?: string) => {
     setVideoTopic(topic);
     if (conversationId) {
@@ -125,6 +154,16 @@ export default function MasterWorkspacePage() {
             }}
             onSelectConversation={(id) => {
               handleSelectConversation(id);
+              setIsMobileDrawerOpen(false);
+            }}
+            onDeleteProject={handleDeleteProject}
+            onDeleteConversation={handleDeleteConversation}
+            onNewProject={() => {
+              handleNewProject();
+              setIsMobileDrawerOpen(false);
+            }}
+            onNewConversation={() => {
+              handleNewConversation();
               setIsMobileDrawerOpen(false);
             }}
             className="w-full h-full border-r-0"
@@ -171,6 +210,10 @@ export default function MasterWorkspacePage() {
           activeConversationId={activeConversationId || undefined}
           onSelectProject={handleSelectProject}
           onSelectConversation={handleSelectConversation}
+          onDeleteProject={handleDeleteProject}
+          onDeleteConversation={handleDeleteConversation}
+          onNewProject={handleNewProject}
+          onNewConversation={handleNewConversation}
           className="hidden sm:flex"
         />
 

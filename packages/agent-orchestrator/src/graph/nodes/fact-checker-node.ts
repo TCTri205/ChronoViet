@@ -6,7 +6,7 @@
 import { callLlm, envConfig } from '@chronoviet/infra';
 import { ChronoGraphState, FactCheckAuditEntry, getNodeLogger } from '../state.js';
 import { validateFolkloreHypothesisTone } from '../../guardrails/folklore-validator.js';
-import { evaluateNliEntailmentScore } from '../../guardrails/nli-hallucination-judge.js';
+import { evaluateNliEntailmentScore, evaluateNliWithLlmJudge } from '../../guardrails/nli-hallucination-judge.js';
 
 export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'fact_checker');
@@ -45,30 +45,36 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
         let auditDetails = 'Passed standard fact-checking.';
 
         // 1. Alias Table Inspection & Context-Safe Sanitization (Tier 1)
+        const flattenedAliasPairs: { canonical: string; alias: string }[] = [];
         for (const [canonical, aliases] of Object.entries(aliasTable)) {
           for (const alias of aliases) {
             if (!alias || alias.trim().length < 2) continue;
             if (alias.toLowerCase() === canonical.toLowerCase()) continue;
+            flattenedAliasPairs.push({ canonical, alias });
+          }
+        }
+        // Sort by longest alias first to prevent partial substring collision
+        flattenedAliasPairs.sort((a, b) => b.alias.length - a.alias.length);
 
-            const scriptLower = script.toLowerCase();
-            const aliasLower = alias.toLowerCase();
-            const canonicalLower = canonical.toLowerCase();
+        for (const { canonical, alias } of flattenedAliasPairs) {
+          const scriptLower = script.toLowerCase();
+          const aliasLower = alias.toLowerCase();
+          const canonicalLower = canonical.toLowerCase();
 
-            if (scriptLower.includes(aliasLower) && !scriptLower.includes(canonicalLower)) {
-              detectedAliases.push(`${alias} -> ${canonical}`);
+          if (scriptLower.includes(aliasLower) && !scriptLower.includes(canonicalLower)) {
+            detectedAliases.push(`${alias} -> ${canonical}`);
 
-              // Escape regex special chars in alias and canonical
-              const escapedAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              const escapedCanonical = canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Escape regex special chars in alias and canonical
+            const escapedAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escapedCanonical = canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-              // Only replace standalone alias occurrences that are NOT already paired with the canonical name
-              const isolatedRegex = new RegExp(`(?<!${escapedCanonical}\\s{1,3})\\b${escapedAlias}\\b(?!\\s{1,3}${escapedCanonical})`, 'gi');
+            // Only replace standalone alias occurrences that are NOT already paired with the canonical name
+            const isolatedRegex = new RegExp(`(?<!${escapedCanonical}\\s{1,3})(?:(?<=^|[\\s,.:;!?"'“”‘’—(]))${escapedAlias}(?=[\\s,.:;!?"'“”‘’—)]|$)(?!\\s{1,3}${escapedCanonical})`, 'gi');
 
-              if (isolatedRegex.test(script)) {
-                script = script.replace(isolatedRegex, canonical);
-                escalationTier = Math.max(escalationTier, 1);
-                auditDetails = `Auto-corrected isolated alias '${alias}' to canonical '${canonical}'.`;
-              }
+            if (isolatedRegex.test(script)) {
+              script = script.replace(isolatedRegex, canonical);
+              escalationTier = Math.max(escalationTier, 1);
+              auditDetails = `Auto-corrected isolated alias '${alias}' to canonical '${canonical}'.`;
             }
           }
         }
@@ -143,14 +149,37 @@ QUY TẮC:
             .filter((t): t is number => typeof t === 'number');
           const allYears = [...timeStarts, ...timeEnds];
 
-          const nliResult = evaluateNliEntailmentScore({
-            scriptClaim: script,
-            groundTruthChunks,
-            epochBounds:
-              allYears.length > 0
-                ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
-                : undefined,
-          });
+          let nliResult;
+          if (envConfig.USE_LOCAL_LLM && !process.env.VITEST) {
+            try {
+              nliResult = await evaluateNliWithLlmJudge({
+                scriptClaim: script,
+                groundTruthChunks,
+                epochBounds:
+                  allYears.length > 0
+                    ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
+                    : undefined,
+              });
+            } catch {
+              nliResult = evaluateNliEntailmentScore({
+                scriptClaim: script,
+                groundTruthChunks,
+                epochBounds:
+                  allYears.length > 0
+                    ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
+                    : undefined,
+              });
+            }
+          } else {
+            nliResult = evaluateNliEntailmentScore({
+              scriptClaim: script,
+              groundTruthChunks,
+              epochBounds:
+                allYears.length > 0
+                  ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
+                  : undefined,
+            });
+          }
 
           if (nliResult.isHallucinated) {
             nodeLog.warn('orchestrator.nli_hallucination_flag', `NLI Hallucination flagged in chapter ${chapterIndex}`, {
@@ -184,6 +213,9 @@ QUY TẮC:
     );
     results.push(...batchResults);
   }
+
+  // Sort results by chapterIndex to maintain strict chronological order
+  results.sort((a, b) => a.chapterIndex - b.chapterIndex);
 
   for (const res of results) {
     updatedScripts[res.chapterIndex] = res.script;

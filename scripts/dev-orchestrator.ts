@@ -306,8 +306,18 @@ function startTtsService(): void {
   });
 }
 
+function killStalePort(port: number): void {
+  try {
+    execSync(`lsof -ti :${port} | xargs kill -9 2>/dev/null || true`, { stdio: 'ignore' });
+  } catch {}
+}
+
 // 7. Start Web App & Render Worker
 function startApps(): void {
+  // Clean up any stale Node instances occupying development ports
+  killStalePort(3000);
+  killStalePort(3001);
+
   // Web App
   updateStatus('web', 'STARTING');
   const webProc = spawn('pnpm', ['--filter', '@chronoviet/web', 'dev'], {
@@ -319,12 +329,18 @@ function startApps(): void {
 
   webProc.stdout?.on('data', (d) => {
     const text = d.toString();
-    if (text.includes('Ready') || text.includes('http://localhost') || text.includes('3000')) {
+    if (text.includes('Ready') || text.includes('http://localhost') || text.includes('server.ready') || text.includes('3000')) {
       updateStatus('web', 'HEALTHY', 'http://localhost:3000');
     }
     streamLog('WEB', colors.green, d);
   });
   webProc.stderr?.on('data', (d) => streamLog('WEB', colors.green, d));
+
+  webProc.on('exit', (code) => {
+    if (!isShuttingDown && code !== 0) {
+      updateStatus('web', 'FAILED', `Exited with code ${code}`);
+    }
+  });
 
   // Render Worker
   updateStatus('worker', 'STARTING');
@@ -338,18 +354,22 @@ function startApps(): void {
   workerProc.stdout?.on('data', (d) => {
     const text = d.toString();
     if (
-      text.includes('listening') ||
-      text.includes('Worker started') ||
-      text.includes('Probe port') ||
       text.includes('probe_listening') ||
+      text.includes('Render worker probe server listening') ||
       text.includes('render_worker.ready') ||
-      text.includes('Initializing BullMQ workers')
+      text.includes('Probe port')
     ) {
-      updateStatus('worker', 'HEALTHY', 'BullMQ Workers Ready');
+      updateStatus('worker', 'HEALTHY', 'BullMQ Workers Ready (Port 3001)');
     }
     streamLog('WORKER', colors.yellow, d);
   });
   workerProc.stderr?.on('data', (d) => streamLog('WORKER', colors.yellow, d));
+
+  workerProc.on('exit', (code) => {
+    if (!isShuttingDown && code !== 0) {
+      updateStatus('worker', 'FAILED', `Exited with code ${code}`);
+    }
+  });
 }
 
 // 8. Graceful Teardown

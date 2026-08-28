@@ -125,12 +125,13 @@ QUY TẮC BẮT BUỘC:
 1. Xuất duy nhất 1 JSON object hợp lệ theo schema: { "chapters": [ ... ] } với ĐỦ ${numChapters} chương.
 2. Không thêm bất kỳ văn bản giải thích nào ngoài JSON.
 3. Mỗi chương BẮT BUỘC có trường "summary" viết cụ thể, súc tích (từ 25 đến 60 từ) thuật lại diễn biến lịch sử thực tế dựa trên Chrono-RAG. TUYỆT ĐỐI KHÔNG dùng câu văn mẫu hay placeholder như "Tóm tắt sự kiện...".
-4. CẤU TRÚC KỊCH TÍNH (DRAMATIC ARC):
+4. CẤU TRÚC KỊCH TÍNH & BLUEPRINT KẾT NỐI MẠCH TRUYỆN:
    - Phân bổ mạch kịch bản theo nhịp độ lịch sử điện ảnh:
      * Hồi 1 (Mở đầu): Bối cảnh lịch sử, tiền đề & nguyên nhân sâu xa.
      * Hồi 2 (Chuyển biến / Sách lược): Nguy cơ khủng hoảng, sách lược đối phó và chuẩn bị thế trận.
      * Hồi 3 (Cao trào / Quyết chiến): Trận quyết chiến, bước ngoặt mang tính định đoạt non sông.
      * Hồi kết (Di sản / Dư âm): Kết cục lịch sử, ý nghĩa thời đại, bài học và di sản ngàn đời.
+   - BẮT BUỘC cung cấp "entryHook" (câu mở đầu kết nối), "climaxFocus" (trọng tâm kịch tính) và "exitHook" (câu kết gợi mở tiếp theo) cho từng chương để đảm bảo mạch truyện liền mạch khi viết kịch bản song song.
 5. PHÂN BỔ TOÀN BỘ THỰC THỂ LỊCH SỬ (CHRONOLOGICAL ENTITY DISTRIBUTION):
    - Hãy phân bổ danh sách nhân vật, địa danh, trận đánh, hiện vật từ Chrono-RAG vào trường "introducedEntities" của tất cả ${numChapters} chương theo đúng diễn biến thời gian.
    - TUYỆT ĐỐI KHÔNG dồn toàn bộ thực thể vào Chương 1; các chương sau tiếp tục giới thiệu các nhân vật, tướng lĩnh, địa bàn chiến sự hoặc di sản tương ứng.
@@ -158,6 +159,9 @@ CẤU TRÚC SCHEMA JSON BẮT BUỘC:
       "targetDurationSeconds": ${secPerChapter},
       "keyEvents": ["Sự kiện lịch sử cụ thể 1", "Sự kiện lịch sử cụ thể 2"],
       "introducedEntities": ["Tên thực thể lịch sử tương ứng giai đoạn này"],
+      "entryHook": "Ý tưởng hoặc câu mở đầu kết nối với bối cảnh thời cuộc",
+      "climaxFocus": "Trọng tâm kịch tính hoặc quyết sách quan trọng nhất trong hồi này",
+      "exitHook": "Ý tưởng hoặc câu chuyển tiếp mượt mà sang hồi kế tiếp",
       "transitionHook": "Câu nối gợi mở sang hồi tiếp theo",
       "establishedTone": "Hào hùng, trang trọng"
     }
@@ -180,7 +184,11 @@ CẤU TRÚC SCHEMA JSON BẮT BUỘC:
     });
 
     const parsed = parseLlmJson(res.content);
-    const chapterArray = Array.isArray(parsed) ? parsed : parsed.chapters || [parsed];
+    const chapterArray = Array.isArray(parsed)
+      ? parsed
+      : (parsed && Array.isArray(parsed.chapters))
+        ? parsed.chapters
+        : (parsed ? [parsed] : []);
     chapters = chapterArray.map((c: any, idx: number) => ({
       chapterIndex: idx,
       title: c.title || `Hồi ${idx + 1}: ${state.userPrompt}`,
@@ -190,7 +198,10 @@ CẤU TRÚC SCHEMA JSON BẮT BUỘC:
       introducedEntities: Array.isArray(c.introducedEntities) && c.introducedEntities.length > 0
         ? c.introducedEntities.filter(isValidHistoricalEntity)
         : allHistoricalEntities.slice(idx * 2, (idx + 1) * 2),
-      transitionHook: c.transitionHook || '',
+      entryHook: c.entryHook || (idx === 0 ? `Khởi nguồn từ biến động thời cuộc của ${state.userPrompt}` : `Nối tiếp cục diện lịch sử`),
+      exitHook: c.exitHook || c.transitionHook || (idx < numChapters - 1 ? `Mở ra bước ngoặt tiếp theo trong tiến trình lịch sử` : `Để lại di sản và bài học ngàn đời`),
+      climaxFocus: c.climaxFocus || (Array.isArray(c.keyEvents) && c.keyEvents[0] ? c.keyEvents[0] : state.userPrompt),
+      transitionHook: c.transitionHook || c.exitHook || '',
       establishedTone: c.establishedTone || 'Hùng tráng',
     }));
 
@@ -224,6 +235,17 @@ CẤU TRÚC SCHEMA JSON BẮT BUỘC:
       if (c.keyEvents.length === 0) {
         c.keyEvents = [c.title || state.userPrompt];
       }
+
+      if (!c.entryHook) {
+        c.entryHook = idx === 0 ? `Mở đầu dòng chảy lịch sử ${state.userPrompt}` : `Tiếp tục diễn biến hào hùng`;
+      }
+      if (!c.exitHook) {
+        c.exitHook = idx < chapters.length - 1 ? `Chuyển sang hồi tiếp theo` : `Khép lại trang sử vẻ vang`;
+      }
+      if (!c.climaxFocus) {
+        c.climaxFocus = c.keyEvents[0] || state.userPrompt;
+      }
+      c.transitionHook = c.exitHook;
     });
 
     // Ensure full chapter count coverage if LLM generated fewer than requested
@@ -245,6 +267,9 @@ CẤU TRÚC SCHEMA JSON BẮT BUỘC:
           targetDurationSeconds: secPerChapter,
           keyEvents: [`Giai đoạn ${idx + 1} của ${state.userPrompt}`],
           introducedEntities: chapterEntities.length > 0 ? chapterEntities : allHistoricalEntities.slice(0, 3),
+          entryHook: `Tiếp tục dòng chảy lịch sử phần ${idx + 1}`,
+          exitHook: idx < numChapters - 1 ? `Mở ra diễn biến phần ${idx + 2}` : `Khắc sâu di sản muôn đời`,
+          climaxFocus: `Quyết chiến tại giai đoạn ${idx + 1}`,
           transitionHook: `Tiếp tục diễn biến lịch sử...`,
           establishedTone: 'Hào hùng, trang trọng',
         });

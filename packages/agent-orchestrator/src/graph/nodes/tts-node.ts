@@ -3,6 +3,7 @@
  * Generates audio WAV files and word timestamps for each scene
  */
 
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
 import * as path from 'path';
@@ -31,8 +32,11 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
     const batch = state.scenes.slice(i, i + batchSize);
     const batchResults = await Promise.all(
       batch.map(async (scene) => {
-        const audioFileName = `${scene.sceneId}.wav`;
+        const textHash = crypto.createHash('md5').update(scene.voiceoverText.trim()).digest('hex').slice(0, 8);
+        const audioFileName = `${scene.sceneId}_${textHash}.wav`;
+        const legacyAudioFileName = `${scene.sceneId}.wav`;
         const audioFilePath = path.join(paths.audioDir, audioFileName);
+        const legacyAudioFilePath = path.join(paths.audioDir, legacyAudioFileName);
 
         // 0. Idempotency / Resume Support: Check if existing asset is valid and exists on disk
         const existingAsset = state.audioAssets?.find((a) => a.sceneId === scene.sceneId);
@@ -49,6 +53,27 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
               wordTimestamps: existingAsset.wordTimestamps,
             },
             asset: existingAsset,
+          };
+        }
+
+        if (fs.existsSync(audioFilePath)) {
+          nodeLog.debug('orchestrator.tts_reuse_hashed', `Reusing hashed audio file for scene ${scene.sceneId}`, {
+            audioFilePath,
+          });
+          const dur = scene.audioDurationSeconds || scene.targetDurationSeconds || 3;
+          return {
+            scene: {
+              ...scene,
+              audioPath: audioFilePath,
+              audioDurationSeconds: dur,
+              wordTimestamps: scene.wordTimestamps || [],
+            },
+            asset: {
+              sceneId: scene.sceneId,
+              audioPath: audioFilePath,
+              durationSeconds: dur,
+              wordTimestamps: scene.wordTimestamps || [],
+            },
           };
         }
 

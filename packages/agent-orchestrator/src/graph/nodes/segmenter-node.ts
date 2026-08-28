@@ -19,6 +19,39 @@ const TEMPLATE_LAYOUTS: Record<string, LayoutMode[]> = {
   ],
 };
 
+export function inferSemanticLayoutMode(
+  text: string,
+  templateId: string = 'HISTORICAL_DOCUMENTARY',
+  fallbackIdx: number = 0,
+  availableLayouts: LayoutMode[] = TEMPLATE_LAYOUTS.HISTORICAL_DOCUMENTARY
+): LayoutMode {
+  const lower = text.toLowerCase();
+
+  // 1. Direct speech, proclamation or historical quote
+  if (/["“'‘].{5,50}["”'’]|hịch tướng sĩ|bình ngô đại cáo|tuyên ngôn|lời thề|lời dặn|khẳng định rằng|lời nói của/i.test(text)) {
+    if (availableLayouts.includes('QUOTE_SLIDE')) return 'QUOTE_SLIDE';
+  }
+
+  // 2. Comparison / Versus confrontation
+  if (/so với|đối đầu|hai bên|tương quan lực lượng|địch và ta|quân ta.*quân địch|thủy chiến.*bộ chiến/i.test(lower)) {
+    if (availableLayouts.includes('VERSUS_CARD')) return 'VERSUS_CARD';
+  }
+
+  // 3. Quantifiable statistics / Numbers / Dates
+  if (/(?:\d+\s*(?:vạn|nghìn|triệu|chiến thuyền|quân|binh sĩ|khẩu thần công|ngày đêm))|năm\s+\d{3,4}/i.test(text)) {
+    if (availableLayouts.includes('STAT_CARD')) return 'STAT_CARD';
+    if (availableLayouts.includes('TIMELINE_CHRONO')) return 'TIMELINE_CHRONO';
+  }
+
+  // 4. Chronological progression / Milestones
+  if (/tiến trình|giai đoạn|sau đó|tiếp theo|bước ngoặt|thời kỳ|thế kỷ/i.test(lower)) {
+    if (availableLayouts.includes('TIMELINE_CHRONO')) return 'TIMELINE_CHRONO';
+  }
+
+  // 5. Default: balanced round-robin from template layouts
+  return availableLayouts[fallbackIdx % availableLayouts.length];
+}
+
 export async function segmenterNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'segmenter');
   nodeLog.info('orchestrator.segmenter_started', `Segmenting chapter scripts into scenes`, {
@@ -30,7 +63,9 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
   const scenes: SceneGeneration[] = [];
   let globalSceneIdx = 0;
 
-  for (const [key, scriptText] of Object.entries(state.chapterScripts)) {
+  const sortedEntries = Object.entries(state.chapterScripts).sort(([a], [b]) => Number(a) - Number(b));
+
+  for (const [key, scriptText] of sortedEntries) {
     const chapterIdx = Number(key);
     // Split sentences
     const rawSentences = scriptText
@@ -62,7 +97,7 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
       const voiceoverText = sceneChunks[i];
       const wordCount = voiceoverText.split(/\s+/).length;
       const targetDurationSeconds = Math.max(5, Math.ceil(wordCount / 2.5));
-      const layoutMode = availableLayouts[globalSceneIdx % availableLayouts.length];
+      const layoutMode = inferSemanticLayoutMode(voiceoverText, state.templateId, globalSceneIdx, availableLayouts);
 
       // Extract search keywords from text (including Vietnamese quotes and punctuation)
       const words = voiceoverText
