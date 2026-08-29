@@ -63,45 +63,58 @@ export async function runTriplesEval() {
   const startTime = performance.now();
 
   const isLlmOffline = !llmHealth.healthy;
+  const concurrency = isLlmOffline ? 16 : 6;
+  let nextIdx = 0;
 
-  for (const snippet of dataset) {
-    const text = snippet.sourceText;
-    const extracted = await extractTriplesFromTextAsync(text, {
-      allowFallback,
-      strict: !allowFallback,
-      regexOnly: isLlmOffline && allowFallback,
-    });
+  async function worker() {
+    while (nextIdx < dataset.length) {
+      const idx = nextIdx++;
+      const snippet = dataset[idx];
+      const text = snippet.sourceText;
+      const extracted = await extractTriplesFromTextAsync(text, {
+        allowFallback,
+        strict: !allowFallback,
+        regexOnly: isLlmOffline && allowFallback,
+        chunkId: snippet.id,
+      });
 
-    const candidateTriples = extracted.map((t: ExtractedTriple) => ({
-      sourceEntityId: t.sourceEntityId,
-      relationType: t.relationType,
-      targetEntityId: t.targetEntityId,
-      confidence: t.confidence,
-    }));
+      const candidateTriples = extracted.map((t: ExtractedTriple) => ({
+        sourceEntityId: t.sourceEntityId,
+        relationType: t.relationType,
+        targetEntityId: t.targetEntityId,
+        confidence: t.confidence,
+      }));
 
-    const validEntityIdsInSnippet = new Set(
-      snippet.groundTruthEntities.map((e) => e.id.toLowerCase())
-    );
+      const validEntityIdsInSnippet = new Set(
+        snippet.groundTruthEntities.map((e) => e.id.toLowerCase())
+      );
 
-    const metrics = computeStrictTripleMetrics(
-      candidateTriples,
-      snippet.groundTruthTriples,
-      validEntityIdsInSnippet
-    );
+      const metrics = computeStrictTripleMetrics(
+        candidateTriples,
+        snippet.groundTruthTriples,
+        validEntityIdsInSnippet
+      );
 
-    totalGtTriples += snippet.groundTruthTriples.length;
-    totalExtractedTriples += candidateTriples.length;
-    totalTruePositives += metrics.truePositives;
-    totalDirectionalCorrect += metrics.directionalCorrect;
-    totalDirectionalInverted += metrics.directionalInverted;
-    totalHallucinated += metrics.hallucinatedCount;
+      snippetDiagnostics[idx] = {
+        id: snippet.id,
+        metrics,
+        gtTriples: snippet.groundTruthTriples,
+        extractedTriples: candidateTriples,
+      };
+    }
+  }
 
-    snippetDiagnostics.push({
-      id: snippet.id,
-      metrics,
-      gtTriples: snippet.groundTruthTriples,
-      extractedTriples: candidateTriples,
-    });
+  const workerCount = Math.min(concurrency, dataset.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+  for (const item of snippetDiagnostics) {
+    if (!item) continue;
+    totalGtTriples += item.gtTriples.length;
+    totalExtractedTriples += item.extractedTriples.length;
+    totalTruePositives += item.metrics.truePositives;
+    totalDirectionalCorrect += item.metrics.directionalCorrect;
+    totalDirectionalInverted += item.metrics.directionalInverted;
+    totalHallucinated += item.metrics.hallucinatedCount;
   }
 
   const totalTimeMs = performance.now() - startTime;

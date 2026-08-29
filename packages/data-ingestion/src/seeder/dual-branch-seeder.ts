@@ -185,82 +185,56 @@ export async function seedDualBranch(
         const resultIdx = parentChunks.length + childIdx;
         const chunkStartTime = Date.now();
 
-        // 1. Check persistent extraction cache (unless regex-only)
-        let cachedTriples: ExtractedTriple[] | null = null;
-        if (!options?.regexOnly) {
-          cachedTriples = await extractionCache.get(chunk.textContent);
-        }
-
-        if (cachedTriples) {
-          metricsCollector.recordCache(true);
-          chunkResults[resultIdx] = { chunk, triples: cachedTriples };
-          completedChildChunks++;
-          const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
-          const meta = (cachedTriples as any)?._meta;
-          const providerName = meta?.provider || 'CACHED';
-          const modelName = meta?.model ? ` (${meta.model})` : '';
-
-          log.info(
-            'dual_branch_seeder.chunk_cached',
-            `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> ${cachedTriples.length} triples via [${providerName}${modelName}] (CACHED / RESUMED)`,
-            {
-              correlationId,
-              chunkIndex: completedChildChunks,
-              childChunksCount: childChunks.length,
-              chunkId: chunk.id,
-              triplesCount: cachedTriples.length,
-              provider: providerName,
-              model: meta?.model || 'CACHE',
-              cached: true,
-            }
-          );
-          continue;
-        }
-
-        metricsCollector.recordCache(false);
-
         try {
-          const triples = await extractTriplesFromTextAsync(chunk.textContent, options);
+          const triples = await extractTriplesFromTextAsync(chunk.textContent, {
+            ...options,
+            chunkId: chunk.id,
+          });
           chunkResults[resultIdx] = { chunk, triples };
           completedChildChunks++;
 
-          // Save successful extraction to persistent cache (NEVER cache if regex-only, LLM errored, or rule-based fallback)
           const meta = (triples as any)?._meta;
-          const isLegitLlmExtraction =
-            !options?.regexOnly &&
-            triples &&
-            meta?.strategy === 'ensemble_ai' &&
-            !meta?.llmError &&
-            meta?.provider !== undefined;
-
-          if (isLegitLlmExtraction) {
-            await extractionCache.set(chunk.textContent, chunk.id, triples, {
-              provider: meta?.provider,
-              model: meta?.model,
-            });
-          }
+          const isCached = meta?.cached === true;
+          metricsCollector.recordCache(isCached);
 
           const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
-          const providerName = meta?.provider || 'LOCAL_LLM';
+          const providerName = meta?.provider || (isCached ? 'CACHED' : 'LOCAL_LLM');
           const modelName = meta?.model ? ` (${meta.model})` : '';
           const chunkDurationMs = (meta?.durationMs) ?? (Date.now() - chunkStartTime);
           const chunkSec = (chunkDurationMs / 1000).toFixed(1);
 
-          log.info(
-            'dual_branch_seeder.chunk_success',
-            `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
-            {
-              correlationId,
-              chunkIndex: completedChildChunks,
-              childChunksCount: childChunks.length,
-              chunkId: chunk.id,
-              triplesCount: triples.length,
-              provider: providerName,
-              model: meta?.model || 'UNKNOWN',
-              strategy: meta?.strategy || 'ensemble_ai',
-              durationMs: chunkDurationMs,
-            }
-          );
+          if (isCached) {
+            log.info(
+              'dual_branch_seeder.chunk_cached',
+              `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] (CACHED / RESUMED)`,
+              {
+                correlationId,
+                chunkIndex: completedChildChunks,
+                childChunksCount: childChunks.length,
+                chunkId: chunk.id,
+                triplesCount: triples.length,
+                provider: providerName,
+                model: meta?.model || 'CACHE',
+                cached: true,
+              }
+            );
+          } else {
+            log.info(
+              'dual_branch_seeder.chunk_success',
+              `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
+              {
+                correlationId,
+                chunkIndex: completedChildChunks,
+                childChunksCount: childChunks.length,
+                chunkId: chunk.id,
+                triplesCount: triples.length,
+                provider: providerName,
+                model: meta?.model || 'UNKNOWN',
+                strategy: meta?.strategy || 'ensemble_ai',
+                durationMs: chunkDurationMs,
+              }
+            );
+          }
         } catch (err: any) {
           completedChildChunks++;
           const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
@@ -723,8 +697,8 @@ export async function seedDualBranch(
       }
     });
 
-    // Refresh Materialized Views on PostgreSQL for instant GraphRAG lineage traversal
-    if (!isVectorOnly && productionTriplesMap.size > 0) {
+    // Refresh Materialized Views on PostgreSQL for instant GraphRAG lineage traversal (unless skipped in bulk batch mode)
+    if (!options?.skipMvRefresh && !isVectorOnly && productionTriplesMap.size > 0) {
       try {
         await query(`REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dynasty_lineage_paths;`);
       } catch {
@@ -942,6 +916,7 @@ export class DualBranchSeeder implements IIngestionPipeline {
         },
         {
           ...options,
+          skipMvRefresh: true, // Batch mode: skip per-doc MV refresh; refreshed once at end of batch
           correlationId: options?.correlationId || `${batchCorrelationId}-doc-${documentsProcessed + 1}`,
         }
       );

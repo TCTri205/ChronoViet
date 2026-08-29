@@ -16,7 +16,10 @@ export interface OcrExtractorOptions {
  */
 async function extractWithMinerU(pdfPath: string): Promise<OcrPageStructure[]> {
   try {
-    const { stdout } = await execFileAsync('mineru', ['--input', pdfPath, '--output-format', 'json']);
+    const { stdout } = await execFileAsync('mineru', ['--input', pdfPath, '--output-format', 'json'], {
+      timeout: 30000,
+      maxBuffer: 10 * 1024 * 1024,
+    });
     const parsed = JSON.parse(stdout);
     if (Array.isArray(parsed) && parsed.length > 0) {
       log.info('ocr.mineru_success', `MinerU extracted ${parsed.length} pages from ${pdfPath}`, {
@@ -48,7 +51,10 @@ async function extractWithMinerU(pdfPath: string): Promise<OcrPageStructure[]> {
  */
 async function extractWithTesseract(pdfPath: string): Promise<OcrPageStructure[]> {
   try {
-    const { stdout } = await execFileAsync('tesseract', [pdfPath, 'stdout', '-l', 'vie+eng', '--oem', '1']);
+    const { stdout } = await execFileAsync('tesseract', [pdfPath, 'stdout', '-l', 'vie+eng', '--oem', '1'], {
+      timeout: 30000,
+      maxBuffer: 10 * 1024 * 1024,
+    });
     if (stdout && stdout.trim().length > 0) {
       const pages = parseRawTextToPages(stdout);
       log.info('ocr.tesseract_success', `Tesseract extracted ${pages.length} pages from ${pdfPath}`, {

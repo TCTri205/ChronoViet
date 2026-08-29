@@ -81,17 +81,26 @@ async function fetchWikiExtract(domain: string, title: string): Promise<string> 
       title
     )}&format=json&redirects=1`;
 
-    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
-    if (!res.ok) return '';
+    const res = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) {
+      log.warn('crawl_pdf.wiki_http_error', `HTTP ${res.status} fetching ${title} from ${domain}`, { domain, title, status: res.status });
+      return '';
+    }
     const data = (await res.json()) as WikiApiQueryResponse;
     const pages = data.query?.pages;
     if (!pages) return '';
     const pageId = Object.keys(pages)[0];
     const page = pages[pageId];
-    if (!page || page.missing || !page.extract) return '';
+    if (!page || page.missing || !page.extract) {
+      log.debug('crawl_pdf.wiki_extract_missing', `No extract found for ${title} on ${domain}`, { domain, title });
+      return '';
+    }
     return cleanWikiExtract(page.extract);
-  } catch (err) {
-    log.debug('crawl_pdf.wiki_fetch_failed', 'Wiki extract fetch failed', { domain, title, error: err });
+  } catch (err: any) {
+    log.warn('crawl_pdf.wiki_fetch_failed', `Wiki extract fetch failed for ${title} on ${domain}: ${err.message}`, { domain, title, error: err.message });
     return '';
   }
 }
@@ -105,13 +114,19 @@ async function searchWikisourcePrefixes(prefix: string): Promise<string[]> {
       prefix
     )}&pslimit=100&format=json`;
 
-    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
-    if (!res.ok) return [];
+    const res = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) {
+      log.warn('crawl_pdf.prefix_http_error', `HTTP ${res.status} prefix search for ${prefix}`, { prefix, status: res.status });
+      return [];
+    }
     const data = (await res.json()) as WikiApiQueryResponse;
     const results = data.query?.prefixsearch || [];
     return results.map((r) => r.title);
-  } catch (err) {
-    log.debug('crawl_pdf.prefix_search_failed', 'Wikisource prefix search failed', { prefix, error: err });
+  } catch (err: any) {
+    log.warn('crawl_pdf.prefix_search_failed', `Wikisource prefix search failed for ${prefix}: ${err.message}`, { prefix, error: err.message });
     return [];
   }
 }
@@ -183,9 +198,18 @@ async function main() {
       wordCount = combinedText.split(/\s+/).filter(Boolean).length;
     }
 
-    // 3. Fallback description if online text is unreachable
-    if (!combinedText || wordCount < 50) {
-      combinedText = `## NỘI DUNG TÁC PHẨM\n\n${meta.description}\n\nTác phẩm "${meta.title}" do ${meta.author} biên soạn, ghi chép lịch sử Việt Nam thuộc triều đại ${meta.dynasty || 'Cổ/Trung đại'}. Dữ liệu văn bản đã được đăng ký và phân tích ngữ nghĩa trong CSDL Tri thức ChronoViet.`;
+    // 3. Check if real text was acquired or if this must be marked as quarantine-ready Bitmap Scanned Document stub
+    const isStub = !combinedText || wordCount < 100;
+    const documentType = isStub
+      ? 'Bitmap Scanned Document (Bản scan hình ảnh)'
+      : 'Master Historical Document (Chính sử / Tư liệu gốc Level 1)';
+
+    if (isStub) {
+      log.warn('crawl_pdf.stub_fallback', `Online text unavailable for "${meta.title}"; generating quarantine-ready descriptor stub`, {
+        slug,
+        wordCount,
+      });
+      combinedText = `> ⚠️ **Thông tin tệp PDF:** Bộ tác phẩm "${meta.title}" là bản PDF Scan hình ảnh (Bitmap Scanned PDF Document).  \n> **Trạng thái trích xuất:** Tệp chứa ${meta.description} (Cấp độ tin cậy: LEVEL_1). Văn bản scan đã được đăng ký vào CSDL Tri thức ChronoViet để liên kết truy vấn GraphRAG. Để nâng cao chất lượng nhận dạng ở cấp toàn bộ từng trang văn bản thô, hệ thống khuyến nghị chạy luồng OCR (Tesseract / NomNaOCR).\n\n## NỘI DUNG TÁC PHẨM\n\n${meta.description}\n\nTác phẩm "${meta.title}" do ${meta.author} biên soạn, ghi chép lịch sử Việt Nam thuộc triều đại ${meta.dynasty || 'Cổ/Trung đại'}. Dữ liệu văn bản đã được đăng ký và phân tích ngữ nghĩa trong CSDL Tri thức ChronoViet.`;
       wordCount = combinedText.split(/\s+/).filter(Boolean).length;
     }
 
@@ -197,7 +221,7 @@ async function main() {
 title: "${meta.title}"
 author: "${meta.author}"
 source_reliability: "LEVEL_1"
-document_type: "Master Historical Document (Chính sử / Tư liệu gốc Level 1)"
+document_type: "${documentType}"
 total_pages: ${estimatedPages}
 extracted_at: "${new Date().toISOString()}"
 original_file: "${slug}.pdf"
@@ -209,6 +233,7 @@ original_file: "${slug}.pdf"
 > **Triều đại / Thời kỳ:** ${meta.dynasty || 'Lịch sử Việt Nam'}  
 > **Cấp độ Tin cậy Sử liệu:** LEVEL_1 (Chính sử / Tư liệu gốc Level 1)  
 > **Mô tả:** ${meta.description}  
+> **Loại tài liệu:** ${documentType}  
 > **Số từ trích xuất:** ${wordCount} từ (ước tính ~${estimatedPages} trang văn bản)  
 
 ---
@@ -222,6 +247,7 @@ ${combinedText}
       outPath,
       wordCount,
       estimatedPages,
+      docType: documentType,
     });
   }
 

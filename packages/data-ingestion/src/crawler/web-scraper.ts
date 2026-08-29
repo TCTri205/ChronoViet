@@ -37,6 +37,7 @@ export class WebScraper {
         headers: {
           'User-Agent': 'ChronoVietBot/1.0 (https://chronoviet.internal; historical-rag-engine)',
         },
+        signal: AbortSignal.timeout(15000),
       });
 
       const httpDurationMs = Date.now() - startTime;

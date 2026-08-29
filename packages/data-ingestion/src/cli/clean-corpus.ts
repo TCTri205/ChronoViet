@@ -24,11 +24,12 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { preprocessCorpusDocument } from '../text/corpus-preprocessor.js';
 import { createLogger } from '@chronoviet/infra';
+import { findMonorepoRoot } from '../utils/path-utils.js';
 
 const log = createLogger({ service: 'corpus-cleaner' });
 
 // Project root detection
-const PROJECT_ROOT = process.cwd();
+const PROJECT_ROOT = findMonorepoRoot();
 const RAW_CORPUS_DIR = path.join(PROJECT_ROOT, 'data/raw_corpus');
 const PROCESSED_CORPUS_DIR = path.join(PROJECT_ROOT, 'data/processed_corpus');
 

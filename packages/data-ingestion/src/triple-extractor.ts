@@ -69,6 +69,9 @@ export interface ExtractionOptions {
   stage?: 'vector' | 'graph' | 'all';
   correlationId?: string;
   headingAnchorYear?: number;
+  chunkId?: string;
+  skipCache?: boolean;
+  skipMvRefresh?: boolean;
 }
 
 let warnedLlmOffline = false;
@@ -460,18 +463,20 @@ export async function extractTriplesWithLLMDetailed(
 ): Promise<{ triples: ExtractedTriple[]; candidateSpans: CandidateEntitySpan[]; res?: any; error?: string }> {
   const candidateSpans = extractHistoricalCandidateSpans(text);
 
-  // 1. Check Disk Cache first
-  try {
-    const cached = await extractionCache.get(text);
-    if (cached && Array.isArray(cached) && cached.length > 0) {
-      return {
-        triples: cached,
-        candidateSpans,
-        res: { provider: 'LOCAL_CACHE', model: 'disk_cache' },
-      };
+  // 1. Check Disk Cache first (unless skipCache is requested)
+  if (!options?.skipCache) {
+    try {
+      const cached = await extractionCache.get(text);
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        return {
+          triples: cached,
+          candidateSpans,
+          res: { provider: (cached as any)?._meta?.provider || 'LOCAL_CACHE', model: (cached as any)?._meta?.model || 'disk_cache' },
+        };
+      }
+    } catch {
+      // Non-fatal cache lookup failure
     }
-  } catch {
-    // Non-fatal cache lookup failure
   }
 
   // Deduplicate unique candidate entities for compact prompt
@@ -626,11 +631,11 @@ Hãy trích xuất các bộ ba quan hệ (Knowledge Triples) và trả về JSO
       parsedFirst = parseAndValidate(res.content || '');
     }
 
-    // Persist to Disk Cache
-    if (parsedFirst.triples.length > 0) {
+    // Persist to Disk Cache (unless skipCache is requested)
+    if (parsedFirst.triples.length > 0 && !options?.skipCache) {
       await extractionCache.set(
         text,
-        `chunk_${Date.now()}`,
+        options?.chunkId || `chunk_${Date.now()}`,
         parsedFirst.triples,
         { provider: res?.provider, model: res?.model }
       ).catch(() => {});
