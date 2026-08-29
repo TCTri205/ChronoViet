@@ -142,32 +142,13 @@ CREATE TABLE IF NOT EXISTS video_briefs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Migrations for existing tables (Upgrading to TEXT type for zero length restrictions)
-ALTER TABLE document_chunks DROP COLUMN IF EXISTS tsv;
-
-ALTER TABLE entities ALTER COLUMN id TYPE TEXT;
-ALTER TABLE entities ALTER COLUMN name TYPE TEXT;
-ALTER TABLE entities ALTER COLUMN type TYPE TEXT;
-ALTER TABLE relationships ALTER COLUMN source_entity_id TYPE TEXT;
-ALTER TABLE relationships ALTER COLUMN target_entity_id TYPE TEXT;
-ALTER TABLE relationships ALTER COLUMN relation_type TYPE TEXT;
-ALTER TABLE document_chunks ALTER COLUMN id TYPE TEXT;
-ALTER TABLE document_chunks ALTER COLUMN title TYPE TEXT;
-ALTER TABLE document_chunks ALTER COLUMN parent_chunk_id TYPE TEXT;
-ALTER TABLE document_chunks ALTER COLUMN dynasty TYPE TEXT;
-ALTER TABLE document_chunks ALTER COLUMN location TYPE TEXT;
-ALTER TABLE entity_chunks ALTER COLUMN entity_id TYPE TEXT;
-ALTER TABLE entity_chunks ALTER COLUMN chunk_id TYPE TEXT;
-ALTER TABLE entity_audit_logs ALTER COLUMN entity_id TYPE TEXT;
-
-ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', title || ' ' || text_content)) STORED;
-
 -- 13. Indexes
 CREATE INDEX IF NOT EXISTS idx_entities_aliases ON entities USING GIN (aliases);
 
 CREATE INDEX IF NOT EXISTS idx_rel_source ON relationships (source_entity_id);
 CREATE INDEX IF NOT EXISTS idx_rel_target ON relationships (target_entity_id);
 CREATE INDEX IF NOT EXISTS idx_rel_type ON relationships (relation_type);
+CREATE INDEX IF NOT EXISTS idx_rel_source_target_conf ON relationships (source_entity_id, target_entity_id, confidence DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rel_unique ON relationships (source_entity_id, target_entity_id, relation_type);
 
 CREATE INDEX IF NOT EXISTS idx_entity_chunks_chunk_id ON entity_chunks (chunk_id);
@@ -191,5 +172,25 @@ CREATE INDEX IF NOT EXISTS idx_conv_messages_cid ON conversation_messages (conve
 CREATE INDEX IF NOT EXISTS idx_conv_messages_created ON conversation_messages (created_at);
 CREATE INDEX IF NOT EXISTS idx_video_briefs_cid ON video_briefs (conversation_id);
 CREATE INDEX IF NOT EXISTS idx_video_briefs_proj ON video_briefs (project_id);
+
+-- 14. Materialized Views for Fast Dynastic Lineage Traversal
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_dynasty_lineage_paths AS
+SELECT 
+    r.source_entity_id,
+    e1.name AS source_name,
+    e1.type AS source_type,
+    r.relation_type,
+    r.target_entity_id,
+    e2.name AS target_name,
+    e2.type AS target_type,
+    r.confidence
+FROM relationships r
+JOIN entities e1 ON r.source_entity_id = e1.id
+JOIN entities e2 ON r.target_entity_id = e2.id
+WHERE r.relation_type IN ('PART_OF', 'ROYAL_LINEAGE', 'LED_BY', 'HAPPENED_IN', 'HAPPENED_AT', 'ALIAS_OF', 'SAME_AS_LOCATION', 'FATHER', 'MOTHER', 'CHILD', 'FOUNDED', 'COMMANDED');
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_dynasty_lineage_src_tgt_rel ON mv_dynasty_lineage_paths (source_entity_id, target_entity_id, relation_type);
+CREATE INDEX IF NOT EXISTS idx_mv_dynasty_lineage_src ON mv_dynasty_lineage_paths (source_entity_id);
+CREATE INDEX IF NOT EXISTS idx_mv_dynasty_lineage_tgt ON mv_dynasty_lineage_paths (target_entity_id);
 `;
 

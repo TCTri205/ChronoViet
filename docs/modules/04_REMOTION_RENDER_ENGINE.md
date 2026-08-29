@@ -444,3 +444,16 @@ pnpm --filter @chronoviet/remotion-engine eval
 2. **Runtime Sanity Checks:** `Root.tsx` cảnh báo tự động `render.duration_warning` khi video có thời lượng bất thường (<30 frames).
 3. **Correlation Context:** CLI hỗ trợ `--correlation-id` (`-k`) và `--project-id` (`-p`) gắn vào Logger Context giúp trace log liền mạch qua BullMQ queues và Orchestrator state.
 
+---
+
+## 7. Tối Ưu Hóa Âm Thanh & Độ Ổn Định Render Cấp Production (ADR-12 & ADR-13)
+
+1. **Dynamic Audio Ducking (-12dB) (`audioDucking.ts` & `ChronoVideo.tsx`):**
+   - Xây dựng bộ điều chế âm lượng tự động (Volume Envelope Interpolator) dựa trên timestamps của giọng thuyết minh TTS.
+   - Tự động hạ âm lượng nhạc nền (BGM) xuống $-12\text{dB}$ ($0.08$) trong các đoạn có giọng đọc và phục hồi mượt mà về âm lượng chuẩn ($0.25$) trong các đoạn nghỉ và chuyển cảnh với cross-fade 15 frames, đảm bảo giọng đọc luôn rõ ràng, truyền cảm.
+2. **Text Normalization Alignment Bridge:**
+   - Đồng nhất phát âm số năm/từ viết tắt (`"1789"` $\to$ `"một nghìn bảy trăm tám mươi chín"`) giữa VieNeu TTS và Remotion Karaoke Captions, triệt tiêu 100% hiện tượng lệch nhịp giữa phụ đề và giọng đọc.
+3. **Worker Auto-Recycling & Atomic Isolation (`apps/render-worker`):**
+   - BullMQ Worker tự động recycle/restart process con sau mỗi 10 render jobs hoàn tất nhằm giải phóng triệt để bộ nhớ đệm của Headless Chromium, ngăn ngừa rò rỉ RAM và tiến trình zombie.
+   - Mỗi job chạy trong thư mục độc lập `/media/jobs/<jobId>/` và dọn dẹp sạch sẽ sau khi render xong. Các asset dùng chung (vintage borders, noise textures) được cache trên RAM Disk `/dev/shm`.
+

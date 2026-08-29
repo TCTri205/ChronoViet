@@ -20,24 +20,32 @@ export async function runTriplesEval() {
   console.log(' CHRONOVIET STAGE 2 KNOWLEDGE GRAPH TRIPLES EVALUATION RUNNER');
   console.log('===============================================================\n');
 
+  const args = process.argv.slice(2);
+  const allowFallback = args.includes('--allow-fallback') || args.includes('--fallback') || args.includes('--fast') || process.env.ALLOW_FALLBACK === 'true';
+
   // Pre-flight check: Strict Extraction LLM requirement
   const llmHealth = await isLLMServiceHealthy({ task: 'extraction' });
   if (!llmHealth.healthy) {
-    console.error('================================================================');
-    console.error(' [!] FATAL PRE-FLIGHT ERROR: Extraction LLM Server is OFFLINE');
-    console.error('================================================================');
-    console.error(' Stage 2 Knowledge Graph Triples Evaluation requires active Qwen-4B Extraction LLM.');
-    console.error(` Details: ${llmHealth.details || 'Port 8094 unreachable'}`);
-    console.error(' Heuristic rule-based fallback is disabled in STRICT evaluation mode.\n');
-    console.error(' 👉 Action required: Start local Extraction Server with:');
-    console.error('    pnpm ai:extract   (or: pnpm ai:lite)\n');
-    console.error('================================================================\n');
-    throw new Error(`[STRICT_EVAL] Extraction LLM is offline (${llmHealth.details}). Run \`pnpm ai:extract\` first.`);
+    if (!allowFallback) {
+      console.error('================================================================');
+      console.error(' [!] FATAL PRE-FLIGHT ERROR: Extraction LLM Server is OFFLINE');
+      console.error('================================================================');
+      console.error(' Stage 2 Knowledge Graph Triples Evaluation requires active Qwen-4B Extraction LLM.');
+      console.error(` Details: ${llmHealth.details || 'Port 8094 unreachable'}`);
+      console.error(' Heuristic rule-based fallback is disabled in STRICT evaluation mode.\n');
+      console.error(' 👉 Action required: Start local Extraction Server with:');
+      console.error('    pnpm ai:extract   (or: pnpm ai:lite)');
+      console.error('    Or pass --allow-fallback to test with rule-based fallback.\n');
+      console.error('================================================================\n');
+      throw new Error(`[STRICT_EVAL] Extraction LLM is offline (${llmHealth.details}). Run \`pnpm ai:extract\` first or pass --allow-fallback.`);
+    } else {
+      console.warn(' [!] WARNING: Extraction LLM is offline; running with rule-based fallback as permitted by --allow-fallback\n');
+    }
   }
 
   const dataset = loadGoldenTriplesBenchmark();
   console.log(`[*] Loaded ${dataset.length} golden benchmark snippets for Stage 2 Triples Evaluation...`);
-  console.log(`[*] Extraction Engine: ${llmHealth.provider}\n`);
+  console.log(`[*] Extraction Engine: ${llmHealth.healthy ? llmHealth.provider : 'Rule-Based Candidate Extractor (Fallback)'}\n`);
 
   let totalGtTriples = 0;
   let totalExtractedTriples = 0;
@@ -54,9 +62,15 @@ export async function runTriplesEval() {
 
   const startTime = performance.now();
 
+  const isLlmOffline = !llmHealth.healthy;
+
   for (const snippet of dataset) {
     const text = snippet.sourceText;
-    const extracted = await extractTriplesFromTextAsync(text, { allowFallback: false, strict: true });
+    const extracted = await extractTriplesFromTextAsync(text, {
+      allowFallback,
+      strict: !allowFallback,
+      regexOnly: isLlmOffline && allowFallback,
+    });
 
     const candidateTriples = extracted.map((t: ExtractedTriple) => ({
       sourceEntityId: t.sourceEntityId,

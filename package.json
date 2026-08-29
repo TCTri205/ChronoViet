@@ -37,6 +37,7 @@
     "ai:rerank": "tsx scripts/ai-cli.ts rerank",
     "ai:llm": "tsx scripts/ai-cli.ts llm",
     "ai:tts": "tsx scripts/ai-cli.ts tts",
+    "corpus:clean": "pnpm --filter @chronoviet/data-ingestion corpus:clean",
     "db:init": "pnpm --filter @chronoviet/data-ingestion db:init",
     "db:audit-quarantine": "pnpm --filter @chronoviet/data-ingestion db:audit-quarantine",
     "db:health": "tsx scripts/verify-db-health.ts",

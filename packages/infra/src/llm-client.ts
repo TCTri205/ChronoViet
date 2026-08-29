@@ -488,9 +488,19 @@ export async function generateLLMCompletion(
         const errMsg = err instanceof Error ? err.message : String(err);
         localFailureReason = errMsg;
 
+        if (!envConfig.ENABLE_CLOUD_FALLBACK) {
+          log.warn('llm.local_failed', 'Local LLM request failed (Cloud Fallback is disabled)', {
+            error: errMsg,
+            model: localModel,
+            cloudFallbackEnabled: false,
+          });
+          throw new Error(`Local LLM failed and Cloud Fallback is disabled: ${errMsg}`);
+        }
+
         log.warn('llm.local_failed', 'Local LLM request failed; attempting cloud fallback', {
           error: errMsg,
           model: localModel,
+          cloudFallbackEnabled: true,
         });
 
         if (!warnedLocalLlmFailure) {
@@ -502,10 +512,6 @@ export async function generateLLMCompletion(
             actionRequired: `Check if llama-server is running on ${envConfig.LLM_BASE_URL} with model ${localModel}`,
           });
           warnedLocalLlmFailure = true;
-        }
-
-        if (!envConfig.ENABLE_CLOUD_FALLBACK) {
-          throw new Error(`Local LLM failed and Cloud Fallback is disabled: ${errMsg}`);
         }
 
         // Eval Integrity: strict mode forbids silent cloud substitution during evaluation

@@ -168,6 +168,16 @@ async function evaluateCandidateBatch(
       },
       verdict: scoreResult.passed ? 'PASS' : 'REJECT',
     });
+
+    // Cascade Evaluation Early Exit (Fast-path if score >= 85)
+    if (scoreResult.totalScore >= 85) {
+      log.debug('vlm.cascade_early_exit', `Candidate ${cand.candidateId} scored ${scoreResult.totalScore} >= 85; cascade early exit triggered`, {
+        candidateId: cand.candidateId,
+        score: scoreResult.totalScore,
+        sceneId: context.sceneId,
+      });
+      break;
+    }
   }
 
   return evaluated;
@@ -274,7 +284,8 @@ export async function inspectSceneVisuals(
 
   let finalLayoutMode = scene.layoutMode;
   if (isPureCodeFallback) {
-    const rotationIndex = scene.sceneIndex % PURE_CODE_LAYOUT_ROTATION.length;
+    const rawIndex = scene.sceneIndex ?? 0;
+    const rotationIndex = Math.abs(rawIndex) % PURE_CODE_LAYOUT_ROTATION.length;
     finalLayoutMode = PURE_CODE_LAYOUT_ROTATION[rotationIndex];
     log.warn('vlm.pure_code_fallback', `All candidates failed (<${scoreThreshold}); falling back to PURE_CODE Layout: ${finalLayoutMode}`, {
       sceneId: scene.sceneId,

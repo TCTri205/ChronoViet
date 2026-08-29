@@ -246,9 +246,7 @@ export async function runVectorEval(): Promise<VectorChunkEvalReport> {
     }>(`
       SELECT c.id, c.text_content, c.parent_chunk_id, p.text_content as parent_text
       FROM document_chunks c
-      LEFT JOIN document_chunks p ON c.parent_chunk_id = p.id
-      ORDER BY RANDOM()
-      LIMIT 200;
+      LEFT JOIN document_chunks p ON c.parent_chunk_id = p.id;
     `);
 
     sampledChunksCount = sampleRows.length;
@@ -263,7 +261,7 @@ export async function runVectorEval(): Promise<VectorChunkEvalReport> {
           validWordCountChunks++;
         }
       } else {
-        if (wordCount >= 80 && wordCount <= CHUNK_CHILD_MAX_WORDS + 150) {
+        if (wordCount >= 280 && wordCount <= CHUNK_CHILD_MAX_WORDS + 20) {
           validWordCountChunks++;
         }
       }

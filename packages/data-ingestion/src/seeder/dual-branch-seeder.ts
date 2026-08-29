@@ -133,7 +133,7 @@ export async function seedDualBranch(
 
   metricsCollector.startStage('extraction');
 
-  // Stage 1 Fast-Path NER for Parent Chunks (2,000–3,000 words) — <1ms/chunk, 0% GPU
+  // Stage 1 Fast-Path NER for Parent Chunks (2,000–3,000 words) — Entity linking only (No unverified rule triples for KG)
   log.info(
     'dual_branch_seeder.parent_chunks_ner',
     `Processed ${parentChunks.length} parent chunks via Stage 1 Fast-Path NER (<1ms/chunk)`,
@@ -141,12 +141,12 @@ export async function seedDualBranch(
   );
   for (let i = 0; i < parentChunks.length; i++) {
     const parentChunk = parentChunks[i];
-    const fastTriples = extractTriplesFromText(parentChunk.textContent);
-    chunkResults[i] = { chunk: parentChunk, triples: fastTriples };
+    const parentTriples = options?.regexOnly ? extractTriplesFromText(parentChunk.textContent) : [];
+    chunkResults[i] = { chunk: parentChunk, triples: parentTriples };
   }
 
   if (isVectorOnly) {
-    // Fast Path: Stage 1 Pure TS NER & Rule-based extraction for Child Chunks (Bypass LLM)
+    // Fast Path: Stage 1 Pure TS NER for Child Chunks (Bypass LLM, Vector only)
     log.info(
       'dual_branch_seeder.stage_vector_only',
       `Stage 1 (Vector): Extracting Fast NER candidate entities for ${childChunks.length} child chunks (LLM bypassed)`,
@@ -154,8 +154,8 @@ export async function seedDualBranch(
     );
     for (let i = 0; i < childChunks.length; i++) {
       const childChunk = childChunks[i];
-      const fastTriples = extractTriplesFromText(childChunk.textContent);
-      chunkResults[parentChunks.length + i] = { chunk: childChunk, triples: fastTriples };
+      const childTriples = options?.regexOnly ? extractTriplesFromText(childChunk.textContent) : [];
+      chunkResults[parentChunks.length + i] = { chunk: childChunk, triples: childTriples };
     }
   } else if (childChunks.length > 0) {
     // Stage 2 (or Full): Parallel Child Chunk Triple Extraction via LLM / Cache
@@ -166,8 +166,8 @@ export async function seedDualBranch(
       activeTargetsCount <= 1;
 
     const concurrency = isLocalOnlyMode
-      ? Math.max(1, envConfig.LOCAL_LLM_MAX_CONCURRENCY || 1)
-      : Math.min(6, Math.max(1, activeTargetsCount));
+      ? Math.min(16, Math.max(1, envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || envConfig.LOCAL_LLM_MAX_CONCURRENCY || 4))
+      : Math.min(16, Math.max(1, activeTargetsCount));
 
     log.info(
       'dual_branch_seeder.extract_triples_parallel',
@@ -265,21 +265,39 @@ export async function seedDualBranch(
           completedChildChunks++;
           const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
           const conciseErrMsg = formatConciseError(err);
-          const fallbackTriples = extractTriplesFromText(chunk.textContent);
           failedExtractionChunkIds.push(chunk.id);
-          log.warn(
-            'dual_branch_seeder.chunk_failed',
-            `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples.`,
-            {
-              correlationId,
-              chunkIndex: completedChildChunks,
-              childChunksCount: childChunks.length,
-              chunkId: chunk.id,
-              error: conciseErrMsg,
-              salvagedCount: fallbackTriples.length,
-            }
-          );
-          chunkResults[resultIdx] = { chunk, triples: fallbackTriples };
+
+          const isStrictQuality = options?.strict !== false && (options?.strict === true || envConfig.EVAL_STRICT || !options?.allowFallback);
+
+          if (isStrictQuality) {
+            log.error(
+              'dual_branch_seeder.chunk_failed_strict',
+              `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}] in STRICT mode: ${conciseErrMsg}. (Rule fallback rejected to maintain knowledge integrity)`,
+              {
+                correlationId,
+                chunkIndex: completedChildChunks,
+                childChunksCount: childChunks.length,
+                chunkId: chunk.id,
+                error: conciseErrMsg,
+              }
+            );
+            chunkResults[resultIdx] = { chunk, triples: [] };
+          } else {
+            const fallbackTriples = extractTriplesFromText(chunk.textContent);
+            log.warn(
+              'dual_branch_seeder.chunk_failed_salvaged',
+              `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples (--allow-fallback).`,
+              {
+                correlationId,
+                chunkIndex: completedChildChunks,
+                childChunksCount: childChunks.length,
+                chunkId: chunk.id,
+                error: conciseErrMsg,
+                salvagedCount: fallbackTriples.length,
+              }
+            );
+            chunkResults[resultIdx] = { chunk, triples: fallbackTriples };
+          }
         }
       }
     }
@@ -620,13 +638,13 @@ export async function seedDualBranch(
           const values: unknown[] = [];
           const valueRows: string[] = [];
           batch.forEach(({ chunk, embedding }, idx) => {
-            const offset = idx * 13;
+            const offset = idx * 14;
             const epochIds = chunk.metadata.epochIds && chunk.metadata.epochIds.length > 0
               ? chunk.metadata.epochIds
               : resolveHistoricalEpochs(chunk.metadata.timeStart, chunk.metadata.timeEnd);
 
             valueRows.push(
-              `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}::vector)`
+              `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}::vector, $${offset + 14}::jsonb)`
             );
             values.push(
               chunk.id,
@@ -641,7 +659,8 @@ export async function seedDualBranch(
               chunk.metadata.keyFigures || [],
               chunk.metadata.location || null,
               chunk.metadata.pageNumber || null,
-              JSON.stringify(embedding)
+              JSON.stringify(embedding),
+              JSON.stringify(chunk.metadata || {})
             );
           });
 
@@ -649,10 +668,14 @@ export async function seedDualBranch(
             await execQuery(
               `INSERT INTO document_chunks (
                 id, title, text_content, dynasty, epoch_ids, source_reliability, parent_chunk_id,
-                time_start, time_end, key_figures, location, page_number, embedding
+                time_start, time_end, key_figures, location, page_number, embedding, metadata
                )
                VALUES ${valueRows.join(', ')}
-               ON CONFLICT (id) DO UPDATE SET text_content = EXCLUDED.text_content, embedding = EXCLUDED.embedding, epoch_ids = EXCLUDED.epoch_ids;`,
+               ON CONFLICT (id) DO UPDATE SET
+                 text_content = EXCLUDED.text_content,
+                 embedding = EXCLUDED.embedding,
+                 epoch_ids = EXCLUDED.epoch_ids,
+                 metadata = EXCLUDED.metadata;`,
               values
             );
           }
@@ -743,6 +766,19 @@ export async function seedDualBranch(
           entity_id: entityId,
           chunk_id: chunk.id,
         });
+      }
+    }
+
+    // Refresh Materialized Views for instant GraphRAG lineage traversal
+    if (pgConnected && !isVectorOnly && productionTriplesMap.size > 0) {
+      try {
+        await query(`REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dynasty_lineage_paths;`);
+      } catch {
+        try {
+          await query(`REFRESH MATERIALIZED VIEW mv_dynasty_lineage_paths;`);
+        } catch {
+          // Graceful fallback if view is not initialized
+        }
       }
     }
   }
@@ -881,6 +917,12 @@ export class DualBranchSeeder implements IIngestionPipeline {
         continue;
       }
 
+      const wordCount = content.trim().split(/\s+/).length;
+      if (wordCount < 15 && (content.includes('...') || content.toLowerCase().includes('chưa có nội dung') || content.toLowerCase().includes('trống'))) {
+        log.warn('seeder.stub_skipped', 'Skipping placeholder/stub document', { filePath, wordCount });
+        continue;
+      }
+
       const seedResult = await seedDualBranch(
         content,
         {
@@ -904,6 +946,19 @@ export class DualBranchSeeder implements IIngestionPipeline {
       unmappedEntitiesTotal += seedResult.unmappedEntitiesCount;
       lastDocTelemetry = seedResult.telemetry;
 
+      if (documentsProcessed % 25 === 0) {
+        const mem = process.memoryUsage();
+        log.info('seeder.memory_heartbeat', 'Ingestion memory heartbeat', {
+          docsProcessed: documentsProcessed,
+          totalDocs: filesToProcess.length,
+          heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
+          rssMb: Math.round(mem.rss / 1024 / 1024),
+        });
+        if (typeof (global as any).gc === 'function') {
+          (global as any).gc();
+        }
+      }
+
       log.info('seeder.document_ingested', 'Document ingested into dual-branch store', {
         correlationId: seedResult.correlationId,
         title,
@@ -920,6 +975,9 @@ export class DualBranchSeeder implements IIngestionPipeline {
     }
 
     const durationMs = Date.now() - startTime;
+
+    // Refresh Materialized Views for Lineage Graph CTE acceleration
+    await refreshMaterializedViews();
 
     log.info('seeder.batch_completed', 'Dual-branch seeding batch completed', {
       correlationId: batchCorrelationId,
@@ -942,5 +1000,30 @@ export class DualBranchSeeder implements IIngestionPipeline {
       correlationId: batchCorrelationId,
       telemetry: lastDocTelemetry,
     };
+  }
+}
+
+/**
+ * Refreshes PostgreSQL Materialized Views for accelerated Graph Lineage traversals
+ */
+export async function refreshMaterializedViews(): Promise<boolean> {
+  const pgUp = await isPgAvailable();
+  if (!pgUp) return false;
+
+  try {
+    // Try concurrent refresh first (requires unique index and populated MV)
+    await query('REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dynasty_lineage_paths;');
+    log.info('seeder.mv_refreshed_concurrent', 'Materialized view mv_dynasty_lineage_paths refreshed concurrently');
+    return true;
+  } catch (err: any) {
+    try {
+      // Fallback to non-concurrent refresh (e.g. on initial unpopulated state)
+      await query('REFRESH MATERIALIZED VIEW mv_dynasty_lineage_paths;');
+      log.info('seeder.mv_refreshed_standard', 'Materialized view mv_dynasty_lineage_paths refreshed');
+      return true;
+    } catch (innerErr: any) {
+      log.warn('seeder.mv_refresh_failed', `Failed to refresh materialized view: ${innerErr.message}`);
+      return false;
+    }
   }
 }

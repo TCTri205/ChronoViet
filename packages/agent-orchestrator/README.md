@@ -25,6 +25,12 @@ Gói `@chronoviet/agent-orchestrator` đảm nhận nhiệm vụ biên tập k�
 4. **Automated Guardrail Gates:**
    * **Folklore Guardrail Gate (`folklore-validator.ts`):** Tự động quét Regex Pattern Matching trên các câu thoại trích xuất từ nguồn Dã sử / Truyền thuyết (Level 3), ép dùng các cụm từ tín hiệu giả thuyết (*"theo truyền thuyết"*, *"tương truyền"*, *"dân gian kể"*...) theo ngữ cảnh đoạn văn mở đầu (Paragraph-Aware).
    * **NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts`):** Đánh giá điểm suy luận Entailment Score giữa câu thoại kịch bản và ngữ cảnh RAG gốc với bộ lọc Stopword Tiếng Việt để bảo toàn trọng số thực thể lịch sử (Yêu cầu $\ge 0.80$, trả về `NEUTRAL` khi không có ground truth).
+5. **2-Tier Cascading Intent Router (`intent-classifier.ts`):**
+   * Tier 1 (Fast Regex <1ms): Lọc nhanh `CHITCHAT`, `OUT_OF_SCOPE` mà không tốn token.
+   * Tier 2 (Semantic Sub-Intents): Phân loại sâu `FACTOID_LOOKUP`, `GENEALOGY_RELATION`, `BATTLE_TACTICS`, `COMPARATIVE_SYNTHESIS`.
+6. **Bridge Graph Pruning & Static Prefix KV-Cache (`chat-supervisor.ts`, `context-pruner.ts`):**
+   * Ưu tiên giữ lại Bridge Triples ($A \leftrightarrow B$) và tên húy/niên hiệu/mất, loại bỏ ảo giác thế thứ.
+   * Cố định System Persona và chuyển dynamic context vào `<historical_context>` của user message, giảm TTFT chat xuống $< 2\text{s}$.
 
 ---
 

@@ -25,21 +25,21 @@
 **ChronoViet** (*Chronology + Việt Nam*) giải quyết bài toán sấy khô kiến thức lịch sử bằng cách biến nguồn tri thức lịch sử Việt Nam dạng văn bản thành các **Video tóm tắt trực quan tự động** kết hợp **Hệ thống Chatbot RAG tương tác hai chiều**.
 
 Dự án ứng dụng mô hình **Decoupled Event-Driven Architecture** với 5 mô-đun xử lý chuyên biệt:
-0. **Data Preprocessing &amp; Ingestion Engine [✅]**: Nạp tri thức lịch sử offline, cào tự động toàn bộ 15 thời kỳ lịch sử (`pnpm crawl:all`), làm sạch lỗi OCR, chuẩn hóa địa danh qua các thời kỳ (`SAME_AS_LOCATION`), khử nhập nhằng nhân vật (`ALIAS_OF`), Dynamic Hierarchical Chunking, xử lý song song có kiểm soát (Concurrency Worker Pool), điều phối Hierarchical 2-Level Interleaved Rotation, nạp PostgreSQL pgvector (1024d BGE-M3 + FTS BM25), Relational Graph &amp; Append-Only Audit Trail (`entity_audit_logs`).
+0. **Data Preprocessing & Ingestion Engine [✅]**: Nạp tri thức lịch sử offline, Layer 0 Preprocessor (`pnpm corpus:clean`, Unicode NFC, 3-token lookahead syllable healer, strict mộc bản regex bảo vệ 100% 924 năm dương lịch `[40]`, lọc nhiễu các bài wiki năm `1954.md`/`1973.md`), Dual-Syntax Heading Chunking (Markdown + MediaWiki) với cửa sổ động `[300, 500]` từ kèm macro-context banners, trích xuất đồ thị bằng SLM Qwen 4B (Port 8094) + Write-Through Disk Cache + cô lập 2,360+ khối bình luận sử gia, nạp PostgreSQL pgvector (1024d BGE-M3) & JSONB metadata.
 
-1. **Hybrid GraphRAG Engine [✅]**: Động cơ tìm kiếm kết hợp Knowledge Graph + Dense Vector BGE-M3 + Sparse BM25 (lọc Stopword tiếng Việt) + PostgreSQL Recursive CTE Subgraph Search (Cycle Pruning) + Pure Local Cross-Encoder Reranker (`Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0 qua `POST /v1/rerank` trên `llama-server` Port 8096, bảo tồn danh xưng 2 ký tự) + Multi-Factor Historical Fusion + LRU Query Embedding Cache + Global Singleton Schema Init. Đảm bảo tri thức lịch sử chính xác 100%, loại bỏ hoàn toàn suy đoán sai (Hallucination Rate 0%).
-2. **Multi-Agent Orchestrator (LangGraph.js) [✅]**: Lập kịch bản video chi tiết, phân chia phân cảnh & chọn bố cục trực quan phù hợp, tích hợp NLI Entailment Hallucination Judge & Folklore Guardrail Gate.
-3. **VLM Inspector Agent (Gemini 3.6 Flash / Agnes / CLIP) [✅]**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh & thẩm định giấy phép bản quyền.
-4. **Remotion Render Engine [✅]**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v4.1.
+1. **Hybrid GraphRAG Engine [✅]**: Động cơ tìm kiếm kết hợp Knowledge Graph + Dense Vector BGE-M3 + Sparse BM25 + Query-Adaptive Dynamic RRF (tự động nâng BM25 lên 70% khi có mốc năm, nâng Graph lên 50% khi hỏi phả hệ/thế thứ) + PostgreSQL Directed BFS Subgraph Traversal song song 2 chiều + Local Cross-Encoder Reranker (`Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0 qua `POST /v1/rerank` trên `llama-server` Port 8096) + LRU Query Embedding Cache. Đảm bảo tri thức lịch sử chính xác 100% (Hallucination Rate 0%).
+2. **Multi-Agent Orchestrator (LangGraph.js) [✅]**: 2-Tier Cascading Intent Router (Fast Regex <1ms + Sub-Intents), Bridge Graph Context Pruner (ưu tiên Bridge Triples & tên húy/niên hiệu/mất), Static Prefix KV-Cache Prompt Architecture (giảm TTFT chat từ 30s xuống < 2s), LangGraph DAG sinh kịch bản song song, tích hợp NLI Entailment Hallucination Judge & Folklore Guardrail Gate.
+3. **VLM Inspector Agent [✅]**: Kiểm định bối cảnh lịch sử của tư liệu hình ảnh với Async Circuit Breaker (timeout 2.5s) và Cascade VLM Early Exit (chấm tuần tự, dừng ngay khi điểm >= 85, giảm 80% tải VLM) & thẩm định giấy phép bản quyền (Public Domain, CC0, CC-BY).
+4. **Remotion Render Engine [✅]**: Engine render video MP4 100% Data-Driven từ Zod JSON Schema v4.1, 31 `LayoutMode`, 19 `TransitionType`, Dynamic Audio Ducking (-12dB) tự động hạ nhạc nền khi có thuyết minh, và Text-to-Phoneme Normalization Alignment Bridge khớp 100% chữ Karaoke.
 
 ```mermaid
 flowchart LR
-    A["Mô-đun 0: Data Ingestion\n(Crawler & Normalizer)"] --> B["PostgreSQL (pgvector)\n+ Knowledge Graph"]
-    B --> C["Mô-đun 1: Chrono-RAG\n(Hybrid Search & Rerank)"]
-    C --> D["Mô-đun 2: Multi-Agent\n(LangGraph Orchestrator)"]
-    D --> E["Mô-đun 3: VLM Inspector\n(Image & License Check)"]
-    D --> F["VieNeu Neural TTS\n(Audio & Word Timestamps)"]
-    E --> G["Mô-đun 4: Remotion Engine\n(100% Data-Driven Video)"]
+    A["Mô-đun 0: Data Ingestion\n(Layer 0 Clean + Chunker)"] --> B["PostgreSQL (pgvector)\n+ Knowledge Graph"]
+    B --> C["Mô-đun 1: Chrono-RAG\n(Dynamic RRF & BFS Graph)"]
+    C --> D["Mô-đun 2: Multi-Agent\n(LangGraph DAG & Router)"]
+    D --> E["Mô-đun 3: VLM Inspector\n(Early Exit & Circuit Breaker)"]
+    D --> F["VieNeu Neural TTS\n(Phoneme Bridge & Timestamps)"]
+    E --> G["Mô-đun 4: Remotion Engine\n(Ducking -12dB & 31 Layouts)"]
     F --> G
     G --> H["🎬 Video MP4\n(31 Layouts / 5 Domains)"]
 ```

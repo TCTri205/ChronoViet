@@ -149,22 +149,54 @@ export async function searchLocalGraphCTE(
     let forwardRows: RelationshipRow[] = [];
     let reverseRows: RelationshipRow[] = [];
     if (pgConnected) {
-      const [fRows, rRows] = await Promise.all([
-        query<RelationshipRow>(
-          `SELECT source_entity_id, target_entity_id, relation_type, confidence
-           FROM relationships
-           WHERE source_entity_id = ANY($1)
-           ORDER BY confidence DESC;`,
-          [frontierArr]
-        ),
-        query<RelationshipRow>(
-          `SELECT source_entity_id, target_entity_id, relation_type, confidence
-           FROM relationships
-           WHERE target_entity_id = ANY($1)
-           ORDER BY confidence DESC;`,
-          [frontierArr]
-        ),
-      ]);
+      let fRows: RelationshipRow[] = [];
+      let rRows: RelationshipRow[] = [];
+
+      try {
+        const [mvF, mvR] = await Promise.all([
+          query<RelationshipRow>(
+            `SELECT source_entity_id, target_entity_id, relation_type, confidence
+             FROM mv_dynasty_lineage_paths
+             WHERE source_entity_id = ANY($1)
+             ORDER BY confidence DESC;`,
+            [frontierArr]
+          ),
+          query<RelationshipRow>(
+            `SELECT source_entity_id, target_entity_id, relation_type, confidence
+             FROM mv_dynasty_lineage_paths
+             WHERE target_entity_id = ANY($1)
+             ORDER BY confidence DESC;`,
+            [frontierArr]
+          ),
+        ]);
+        if (mvF.length > 0 || mvR.length > 0) {
+          fRows = mvF;
+          rRows = mvR;
+        }
+      } catch {
+        // Fall back seamlessly if Materialized View is unpopulated
+      }
+
+      if (fRows.length === 0 && rRows.length === 0) {
+        const [baseF, baseR] = await Promise.all([
+          query<RelationshipRow>(
+            `SELECT source_entity_id, target_entity_id, relation_type, confidence
+             FROM relationships
+             WHERE source_entity_id = ANY($1)
+             ORDER BY confidence DESC;`,
+            [frontierArr]
+          ),
+          query<RelationshipRow>(
+            `SELECT source_entity_id, target_entity_id, relation_type, confidence
+             FROM relationships
+             WHERE target_entity_id = ANY($1)
+             ORDER BY confidence DESC;`,
+            [frontierArr]
+          ),
+        ]);
+        fRows = baseF;
+        rRows = baseR;
+      }
       forwardRows = fRows;
       reverseRows = rRows;
     } else {

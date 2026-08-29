@@ -77,6 +77,23 @@ describe('Stage 1 Pure TS Vietnamese Historical NER Engine', () => {
     expect(spanTexts).toContain('quân Mãn Thanh');
   });
 
+  it('should strip leading honorifics regardless of casing (Title Case, lowercase, UPPERCASE)', () => {
+    const text1 = 'Thái Thượng Hoàng Trần Cảnh là vị vua đầu tiên của nhà Trần.';
+    const spans1 = extractHistoricalCandidateSpans(text1);
+    const personSpan1 = spans1.find((s) => s.text === 'Trần Cảnh');
+    expect(personSpan1).toBeDefined();
+
+    const text2 = 'THÁI THƯỢNG HOÀNG Trần Cảnh là vị vua đầu tiên.';
+    const spans2 = extractHistoricalCandidateSpans(text2);
+    const personSpan2 = spans2.find((s) => s.text === 'Trần Cảnh');
+    expect(personSpan2).toBeDefined();
+
+    const text3 = 'vua Lê Lợi dựng cờ khởi nghĩa Lam Sơn.';
+    const spans3 = extractHistoricalCandidateSpans(text3);
+    const personSpan3 = spans3.find((s) => s.text === 'Lê Lợi');
+    expect(personSpan3).toBeDefined();
+  });
+
   it('should execute with sub-10ms latency per sentence', () => {
     const text = 'Năm 1789, Hoàng đế Quang Trung chỉ huy đại quân Tây Sơn tiến vào Thăng Long đại phá 29 vạn quân Mãn Thanh trong Trận Ngọc Hồi - Đống Đa.';
     const start = performance.now();

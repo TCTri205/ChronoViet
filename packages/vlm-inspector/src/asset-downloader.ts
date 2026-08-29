@@ -196,8 +196,8 @@ export async function downloadCandidateImage(
   options: DownloadCandidateOptions = {}
 ): Promise<DownloadedAssetResult> {
   const paths = initProjectWorkspace(projectId, options.customBaseDir);
-  const candidateId = candidate.candidateId;
-  const timeout = options.timeoutMs || envConfig.IMAGE_DOWNLOAD_TIMEOUT_MS || 10000;
+  const candidateId = path.basename(candidate.candidateId).replace(/[^a-zA-Z0-9_-]/g, '') || `asset_${Date.now()}`;
+  const timeout = options.timeoutMs || envConfig.IMAGE_DOWNLOAD_TIMEOUT_MS || 2500;
   const userAgent = envConfig.IMAGE_DOWNLOAD_USER_AGENT || 'ChronoViet-VLM-Downloader/1.0 (https://chronoviet.vn; contact@chronoviet.vn)';
 
   // Determine file extension
@@ -235,13 +235,42 @@ export async function downloadCandidateImage(
   }
 
   // If candidate is already a local file (e.g. during testing or pre-seeded assets)
-  if (fs.existsSync(candidate.imageUrl)) {
+  if (fs.existsSync(candidate.imageUrl) && !candidate.imageUrl.startsWith('http://') && !candidate.imageUrl.startsWith('https://')) {
     try {
       imageBuffer = fs.readFileSync(candidate.imageUrl);
     } catch {
       imageBuffer = null;
     }
   } else if (candidate.imageUrl.startsWith('http://') || candidate.imageUrl.startsWith('https://')) {
+    // SSRF Guard: Block private/internal hostnames and loopback IP addresses
+    try {
+      const parsedUrl = new URL(candidate.imageUrl);
+      const hostname = parsedUrl.hostname.toLowerCase();
+      const isBlocked = /^(localhost|metadata\.google\.internal|169\.254\.169\.254|127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|0\.|::1)|(\.local)$/i.test(hostname);
+
+      if (isBlocked) {
+        log.warn('vlm.download_ssrf_blocked', `Blocked SSRF attempt to private/internal host: ${hostname}`, {
+          candidateId,
+          imageUrl: candidate.imageUrl,
+        });
+        return {
+          candidate: { ...candidate, localPath: '', sha256: '', pHash: '' },
+          localPath: '',
+          sha256: '',
+          pHash: '',
+          fileSizeBytes: 0,
+        };
+      }
+    } catch {
+      return {
+        candidate: { ...candidate, localPath: '', sha256: '', pHash: '' },
+        localPath: '',
+        sha256: '',
+        pHash: '',
+        fileSizeBytes: 0,
+      };
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     try {
@@ -267,7 +296,15 @@ export async function downloadCandidateImage(
         });
         imageBuffer = null;
       } else {
+        const MAX_DOWNLOAD_BYTES = 15 * 1024 * 1024; // 15MB limit
+        const contentLength = Number(res.headers.get('content-length'));
+        if (contentLength && contentLength > MAX_DOWNLOAD_BYTES) {
+          throw new Error(`Image exceeds maximum size limit of ${MAX_DOWNLOAD_BYTES} bytes`);
+        }
         const arrayBuf = await res.arrayBuffer();
+        if (arrayBuf.byteLength > MAX_DOWNLOAD_BYTES) {
+          throw new Error(`Downloaded byte length ${arrayBuf.byteLength} exceeds limit`);
+        }
         imageBuffer = Buffer.from(arrayBuf);
         log.debug('vlm.download_success', `Successfully downloaded image candidate ${candidateId}`, {
           candidateId,

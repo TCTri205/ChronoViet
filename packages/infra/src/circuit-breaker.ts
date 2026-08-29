@@ -40,6 +40,7 @@ export const embeddingCircuit: CircuitBreakerState = {
 };
 
 export const CIRCUIT_FAILURE_THRESHOLD = 2;
+export const LOCAL_LLM_FAILURE_THRESHOLD = 5;
 export const CIRCUIT_COOLDOWN_MS = 30000;
 
 /**
@@ -71,14 +72,14 @@ export function recordCircuitSuccess(): void {
 }
 
 /**
- * Checks if an error is a client-side payload error (e.g. 400 Bad Request, context overflow, 413)
+ * Checks if an error is a client-side payload or transient timeout error (e.g. 400 Bad Request, context overflow, 413, AbortError)
  * which should NOT trip the infrastructure circuit breaker or quarantine the LLM.
  */
 export function isClientSidePayloadError(err?: unknown): boolean {
   if (!err) return false;
   const msg = err instanceof Error ? err.message : String(err);
   return (
-    /\b(400|413|Bad Request|Payload Too Large|exceeds the available context size|context length)\b/i.test(msg) ||
+    /\b(400|413|Bad Request|Payload Too Large|exceeds the available context size|context length|This operation was aborted|AbortError|TimeoutError|ETIMEDOUT)\b/i.test(msg) ||
     (err as any)?.status === 400 ||
     (err as any)?.status === 413
   );

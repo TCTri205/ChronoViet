@@ -35,6 +35,8 @@ import {
   HistoricalAnswerResponse,
   ChatIntent,
   ChatIntentSchema,
+  ChatSubIntent,
+  ChatSubIntentSchema,
 } from './schema.js';
 
 export type {
@@ -60,8 +62,9 @@ export type {
   HistoricalAnswerGenerationRequest,
   HistoricalAnswerResponse,
   ChatIntent,
+  ChatSubIntent,
 };
-export { getCanonicalEntityIdPrefix, ChatIntentSchema };
+export { getCanonicalEntityIdPrefix, ChatIntentSchema, ChatSubIntentSchema };
 
 // ============================================================================
 // Hierarchical Chunking Bounds (SSOT)

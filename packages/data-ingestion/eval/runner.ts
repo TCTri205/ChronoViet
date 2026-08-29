@@ -92,7 +92,7 @@ export async function runMasterIngestEval(): Promise<MasterIngestRealDataReport>
     (vectorScore * vectorWeight + graphScore * graphWeight).toFixed(1)
   );
 
-  const overallPassed = vectorReport.overallPassed && graphReport.overallPassed;
+  const overallPassed = vectorReport.overallPassed && graphReport.overallPassed && overallHealthIndex >= 98.0;
 
   console.log('================================================================');
   console.log(` MASTER REAL DATABASE INGESTION EVALUATION: [${overallPassed ? 'PASS ✅' : 'FAIL ❌'}]`);

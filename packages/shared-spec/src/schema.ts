@@ -394,6 +394,27 @@ export const ChronoVideoScriptSchema = z.object({
 export const ChronoVideoSchema = ChronoVideoScriptSchema;
 
 // ==========================================
+// 4.5. CHATBOT & INTENT ROUTING SCHEMAS
+// ==========================================
+export const ChatIntentSchema = z.enum([
+  'CHITCHAT',
+  'ENTITY_IDENTITY',
+  'VIDEO_INTENT',
+  'HISTORICAL_QUERY',
+  'OUT_OF_DOMAIN',
+]);
+export type ChatIntent = z.infer<typeof ChatIntentSchema>;
+
+export const ChatSubIntentSchema = z.enum([
+  'FACTOID_LOOKUP',
+  'GENEALOGY_RELATION',
+  'BATTLE_TACTICS',
+  'COMPARATIVE_SYNTHESIS',
+  'GENERAL_OVERVIEW',
+]);
+export type ChatSubIntent = z.infer<typeof ChatSubIntentSchema>;
+
+// ==========================================
 // 5. RAG ENGINE SCHEMAS (`packages/rag-engine`)
 // ==========================================
 export const RagSearchRequestSchema = z.object({
@@ -401,6 +422,7 @@ export const RagSearchRequestSchema = z.object({
   entityFilter: z.array(z.string()).optional(),
   maxTokens: z.number().int().positive().optional().default(2048),
   rerankTopK: z.number().int().positive().optional().default(5),
+  subIntent: ChatSubIntentSchema.optional(),
 });
 
 export const HistoricalContextEntitySchema = z.object({
@@ -605,6 +627,7 @@ export const EntityTypeEnum = z.enum([
   'ORGANIZATION',
   'ARTIFACT',
   'DOCUMENT_CULTURE',
+  'UNKNOWN',
 ]);
 
 export const AliasTypeEnum = z.enum([
@@ -649,6 +672,7 @@ export function getCanonicalEntityIdPrefix(entityType: z.infer<typeof EntityType
     case 'ORGANIZATION': return 'org_';
     case 'ARTIFACT': return 'artifact_';
     case 'DOCUMENT_CULTURE': return 'doc_';
+    case 'UNKNOWN': return 'unknown_';
     default: return 'entity_';
   }
 }
@@ -721,6 +745,7 @@ export const CandidateEntitySpanSchema = z.object({
   confidence: z.number().min(0).max(1).default(1.0),
   sourceLayer: z.enum(['GAZETTEER', 'RULE_PREFIX', 'PROPER_NOUN_REGEX', 'HYBRID']).default('GAZETTEER'),
   suggestedCanonicalId: z.string().optional(),
+  priority: z.number().optional(),
 });
 
 export const GoldenBenchmarkEntitySchema = z.object({
@@ -1008,24 +1033,3 @@ export type VisualCandidate = z.infer<typeof VisualCandidateSchema>;
 export type SceneGeneration = z.infer<typeof SceneGenerationSchema>;
 export type MediaAssetRegistry = z.infer<typeof MediaAssetRegistrySchema>;
 export type OrchestratorStatus = z.infer<typeof OrchestratorStatusSchema>;
-
-// ==========================================
-// 8. CHATBOT & INTENT ROUTING SCHEMAS
-// ==========================================
-export const ChatIntentSchema = z.enum([
-  'CHITCHAT',
-  'ENTITY_IDENTITY',
-  'VIDEO_INTENT',
-  'HISTORICAL_QUERY',
-  'OUT_OF_DOMAIN',
-]);
-export type ChatIntent = z.infer<typeof ChatIntentSchema>;
-
-
-
-
-
-
-
-
-

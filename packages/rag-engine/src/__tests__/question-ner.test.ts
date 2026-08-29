@@ -137,5 +137,9 @@ describe('Historical Premise Incompatibility & Adversarial Trap Validation', () 
     const query3 = 'Quang Trung đại phá 29 vạn quân Thanh vào Tết Kỷ Dậu 1789 như thế nào?';
     const res3 = validateQueryHistoricalPremises(query3);
     expect(res3.hasPremiseConflict).toBe(false);
+
+    const query4 = 'Phan Bội Châu đóng vai trò là hạt nhân của phong trào Đông Du như thế nào?';
+    const res4 = validateQueryHistoricalPremises(query4);
+    expect(res4.hasPremiseConflict).toBe(false);
   });
 });

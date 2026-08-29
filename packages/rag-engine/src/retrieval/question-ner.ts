@@ -247,10 +247,14 @@ export function validateQueryHistoricalPremises(
   // Check 1: Mythological Entities paired with Modern Treaties/Conferences/Events
   for (const myth of MYTHOLOGICAL_ENTITIES_LEXICON) {
     const mythUnaccented = removeVietnameseAccents(myth);
-    if (qLower.includes(myth) || qUnaccented.includes(mythUnaccented)) {
+    const mythPattern = new RegExp(`(?<![\\p{L}\\p{N}])${myth}(?![\\p{L}\\p{N}])`, 'iu');
+    const mythUnaccentedPattern = new RegExp(`(?<![\\p{L}\\p{N}])${mythUnaccented}(?![\\p{L}\\p{N}])`, 'iu');
+    if (mythPattern.test(qLower) || mythUnaccentedPattern.test(qUnaccented)) {
       for (const treaty of MODERN_POLITICAL_LEGAL_LEXICON) {
         const treatyUnaccented = removeVietnameseAccents(treaty);
-        if (qLower.includes(treaty) || qUnaccented.includes(treatyUnaccented)) {
+        const treatyPattern = new RegExp(`(?<![\\p{L}\\p{N}])${treaty}(?![\\p{L}\\p{N}])`, 'iu');
+        const treatyUnaccentedPattern = new RegExp(`(?<![\\p{L}\\p{N}])${treatyUnaccented}(?![\\p{L}\\p{N}])`, 'iu');
+        if (treatyPattern.test(qLower) || treatyUnaccentedPattern.test(qUnaccented)) {
           const canonicalMyth = resolveCanonicalEntity(myth).canonicalName;
           return {
             hasPremiseConflict: true,
@@ -267,7 +271,9 @@ export function validateQueryHistoricalPremises(
   let matchedTech: string | undefined;
   for (const tech of MODERN_TECH_LEXICON) {
     const techUnaccented = removeVietnameseAccents(tech);
-    if (qLower.includes(tech) || qUnaccented.includes(techUnaccented)) {
+    const techPattern = new RegExp(`(?<![\\p{L}\\p{N}])${tech}(?![\\p{L}\\p{N}])`, 'iu');
+    const techUnaccentedPattern = new RegExp(`(?<![\\p{L}\\p{N}])${techUnaccented}(?![\\p{L}\\p{N}])`, 'iu');
+    if (techPattern.test(qLower) || techUnaccentedPattern.test(qUnaccented)) {
       matchedTech = tech;
       break;
     }

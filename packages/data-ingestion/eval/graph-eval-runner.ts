@@ -50,12 +50,12 @@ export interface GraphEvalReport {
 const CANONICAL_RELATION_RULES: Record<string, { srcPrefixes: string[]; tgtPrefixes: string[] }> = {
   LED_BY: { srcPrefixes: ['event_', 'org_'], tgtPrefixes: ['person_'] },
   HAPPENED_AT: { srcPrefixes: ['event_'], tgtPrefixes: ['loc_'] },
-  HAPPENED_IN: { srcPrefixes: ['event_'], tgtPrefixes: ['dynasty_'] },
-  PART_OF: { srcPrefixes: ['artifact_', 'person_', 'org_', 'event_'], tgtPrefixes: ['dynasty_', 'org_', 'event_'] },
+  HAPPENED_IN: { srcPrefixes: ['event_'], tgtPrefixes: ['dynasty_', 'epoch_'] },
+  PART_OF: { srcPrefixes: ['artifact_', 'person_', 'org_', 'event_'], tgtPrefixes: ['dynasty_', 'org_', 'event_', 'epoch_'] },
   SAME_AS_LOCATION: { srcPrefixes: ['loc_'], tgtPrefixes: ['loc_'] },
-  ALIAS_OF: { srcPrefixes: ['person_', 'loc_', 'dynasty_'], tgtPrefixes: ['person_', 'loc_', 'dynasty_'] },
+  ALIAS_OF: { srcPrefixes: ['person_', 'loc_', 'dynasty_', 'event_', 'artifact_', 'org_', 'doc_'], tgtPrefixes: ['person_', 'loc_', 'dynasty_', 'event_', 'artifact_', 'org_', 'doc_'] },
   ROYAL_LINEAGE: { srcPrefixes: ['person_'], tgtPrefixes: ['person_'] },
-  MENTIONED_IN: { srcPrefixes: ['person_', 'event_', 'artifact_'], tgtPrefixes: ['doc_'] },
+  MENTIONED_IN: { srcPrefixes: ['person_', 'event_', 'artifact_', 'loc_', 'dynasty_', 'org_'], tgtPrefixes: ['doc_'] },
 };
 
 export async function runGraphEval(): Promise<GraphEvalReport> {
@@ -140,8 +140,6 @@ export async function runGraphEval(): Promise<GraphEvalReport> {
           const tInverted = rule.srcPrefixes.some((p) => tId.startsWith(p));
           if (sInverted && tInverted) {
             invertedEdges++;
-          } else {
-            compliantEdges++; // Generic match allowed
           }
         }
       }

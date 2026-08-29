@@ -54,7 +54,7 @@ export function getProcessOnPort(port: number): { pid: number; command: string }
   }
 }
 
-export function safelyReclaimPort(port: number, serviceName: string): boolean {
+export async function safelyReclaimPort(port: number, serviceName: string): Promise<boolean> {
   const proc = getProcessOnPort(port);
   if (!proc) return true;
 
@@ -74,7 +74,7 @@ export function safelyReclaimPort(port: number, serviceName: string): boolean {
   while (Date.now() - start < 2000) {
     try {
       process.kill(proc.pid, 0); // Check if alive
-      execSync('sleep 0.1');
+      await new Promise((r) => setTimeout(r, 100));
     } catch {
       return true;
     }
@@ -278,7 +278,7 @@ export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank')
     return false;
   }
 
-  safelyReclaimPort(svc.port, svc.name);
+  await safelyReclaimPort(svc.port, svc.name);
 
   const ctxSize =
     key === 'llm'
@@ -438,12 +438,15 @@ export function evictService(key: 'llm' | 'emb' | 'extraction' | 'rerank'): void
 export function checkIdleEviction(): void {
   if (AUTO_EVICT_MINUTES <= 0) return;
   const idleThresholdMs = AUTO_EVICT_MINUTES * 60 * 1000;
+  const specializedSeconds = process.env.AI_AUTO_EVICT_SPECIALIZED_SECONDS ? parseInt(process.env.AI_AUTO_EVICT_SPECIALIZED_SECONDS, 10) : 30;
+  const specializedIdleThresholdMs = Math.min(idleThresholdMs, specializedSeconds * 1000);
   const now = Date.now();
 
   for (const key of ['llm', 'emb', 'extraction', 'rerank'] as const) {
     const svc = services[key];
-    if (svc.status === 'RUNNING' && now - svc.lastActivityTime > idleThresholdMs) {
-      log.info('supervisor.idle_detected', `${svc.name} has been idle for >${AUTO_EVICT_MINUTES}m (${Math.round((now - svc.lastActivityTime) / 60000)}m)`);
+    const threshold = (key === 'extraction' || key === 'rerank') ? specializedIdleThresholdMs : idleThresholdMs;
+    if (svc.status === 'RUNNING' && now - svc.lastActivityTime > threshold) {
+      log.info('supervisor.idle_detected', `${svc.name} has been idle for >${Math.round(threshold / 1000)}s (${Math.round((now - svc.lastActivityTime) / 1000)}s)`);
       evictService(key);
     }
   }

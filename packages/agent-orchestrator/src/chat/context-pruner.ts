@@ -99,16 +99,50 @@ export function pruneRagContext(
 }
 
 /**
- * Prunes knowledge graph triples to avoid unbounded graph expansion
+ * Prunes knowledge graph triples with Entity-Priority & Bridge-Graph retention.
+ * Direct bridge triples connecting query entities (A <-> B) get priority 100.
+ * Core identity triples (Húy, Niên hiệu, Năm sinh/mất, Phả hệ) get priority 50.
+ * Peripheral 1-hop relations get priority 10.
  */
 export function pruneGraphTriples(
-  triples: Array<{ source?: string; relation?: string; target?: string }>,
-  maxTriples: number = 15
+  triples: Array<{ source?: string; relation?: string; target?: string; confidence?: number }>,
+  maxTriples: number = 15,
+  queryEntityNames: string[] = []
 ): string {
   if (!triples || triples.length === 0) {
     return 'Không có quan hệ thực thể đặc thù.';
   }
-  const sliced = triples.slice(0, maxTriples);
+
+  const queryNorms = queryEntityNames.map((n) => n.trim().toLowerCase()).filter(Boolean);
+
+  const scoredTriples = triples.map((t) => {
+    const src = (t.source || '').toLowerCase();
+    const tgt = (t.target || '').toLowerCase();
+    const rel = (t.relation || '').toUpperCase();
+
+    let priority = 10;
+
+    // Direct Bridge Triple (Connecting 2 distinct query entities)
+    if (queryNorms.length >= 2) {
+      const srcMatches = queryNorms.some((qn) => src.includes(qn) || qn.includes(src));
+      const tgtMatches = queryNorms.some((qn) => tgt.includes(qn) || qn.includes(tgt));
+      if (srcMatches && tgtMatches) {
+        priority = 100;
+      }
+    }
+
+    // Core Identity & Genealogy Relations
+    if (priority < 100 && /(?:ALIAS|REIGN|BORN|DIED|FATHER|MOTHER|CHILD|SIBLING|SPOUSE|FOUNDED|COMMANDED|LED_BY|TEMPLE_NAME|POSTHUMOUS)/.test(rel)) {
+      priority = 50;
+    }
+
+    return { triple: t, priority, conf: t.confidence || 1.0 };
+  });
+
+  // Sort descending by priority, then confidence
+  scoredTriples.sort((a, b) => b.priority - a.priority || b.conf - a.conf);
+
+  const sliced = scoredTriples.slice(0, maxTriples).map((st) => st.triple);
   return sliced.map((t) => `- ${t.source} [${t.relation}] -> ${t.target}`).join('\n');
 }
 

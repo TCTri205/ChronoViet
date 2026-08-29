@@ -69,6 +69,19 @@ async function verifyDbHealth() {
   console.log('\n--- [6. AUDIT LOGS AUDIT] ---');
   console.log(`• Audit Log Records:   ${totalLogs[0].count} ${parseInt(totalLogs[0].count, 10) > 0 ? '✅ (Active)' : 'ℹ️ (Initial State)'}`);
 
+  // 7. Materialized Views Audit
+  let mvCount = '0';
+  let mvExists = false;
+  try {
+    const mvRes = await query<{ count: string }>('SELECT COUNT(*) as count FROM mv_dynasty_lineage_paths');
+    mvCount = mvRes[0].count;
+    mvExists = true;
+  } catch {
+    mvExists = false;
+  }
+  console.log('\n--- [7. MATERIALIZED VIEWS AUDIT] ---');
+  console.log(`• mv_dynasty_lineage_paths: ${mvExists ? `✅ (${mvCount} pre-computed paths)` : '⚠️ (Not Populated / Pending Refresh)'}`);
+
   const isHealthy =
     selfLoops[0].count === '0' &&
     totalRels[0].count === distinctRels[0].count &&
@@ -96,6 +109,7 @@ async function verifyDbHealth() {
     quarantinedTriples: parseInt(totalQuarantine[0].count, 10),
     unmappedEntities: parseInt(totalUnmapped[0].count, 10),
     auditLogRecords: parseInt(totalLogs[0].count, 10),
+    materializedViewPaths: parseInt(mvCount, 10),
   });
 
   await closePool();

@@ -167,4 +167,23 @@ Hy vọng kết quả này hữu ích cho pipeline ChronoViet!`;
       expect(phash.length).toBeGreaterThan(0);
     });
   });
+
+  describe('PURE_CODE Layout Rotation & Fallback', () => {
+    it('should rotate layouts deterministically on empty candidate pool', async () => {
+      const { inspectSceneVisuals } = await import('../inspector-pipeline.js');
+      const testScene: any = {
+        sceneId: 'sc_test_empty_1',
+        sceneIndex: 2,
+        layoutMode: 'PORTRAIT_SPLIT',
+        voiceoverText: 'Trận Bạch Đằng năm 938.',
+      };
+
+      const result = await inspectSceneVisuals('proj_test_vlm_1', testScene, []);
+      expect(result.isPureCodeFallback).toBe(true);
+      expect(result.updatedScene.contentType).toBe('PURE_CODE');
+      expect(result.updatedScene.usePureCodeFallback).toBe(true);
+      expect(result.selectedLayoutMode).toBe('STAT_CARD');
+    });
+  });
 });
+

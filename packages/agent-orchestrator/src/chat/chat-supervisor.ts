@@ -33,6 +33,11 @@ import { createStreamLoopDetector, deduplicateRepetitiveText } from '../guardrai
 
 const log = createLogger({ service: 'agent-orchestrator' });
 
+export function escapePromptXml(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  return text.replace(/<\/?(?:historical_context|user_query|premise_directives|verified_rag_evidence|knowledge_graph_triples)[^>]*>/gi, '');
+}
+
 export interface ChatSupervisorRequest {
   query: string;
   conversationId?: string;
@@ -48,6 +53,37 @@ export interface ChatExecutionResult {
   triples: GraphTripleItem[];
   conversationId?: string;
 }
+
+/**
+ * 100% Static System Persona Prompt for KV-Cache Preservation across all conversation turns.
+ */
+export const STATIC_SYSTEM_PERSONA_PROMPT = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu Lịch sử Việt Nam chuẩn mực, thông thái và khách quan.
+
+NGUYÊN TẮC BẮT BUỘC:
+1. Trả lời chi tiết, sinh động, chuẩn xác tuyệt đối theo chính sử Việt Nam (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Lam Sơn Thực Lục...).
+2. KIỂM TRA TIỀN ĐỀ CÂU HỎI, ĐỒNG NHẤT DANH XƯNG & CHỐNG BỊA ĐẶT (ANTI-SYCOPHANCY & CO-REFERENCE INTEGRITY):
+   - Khi người dùng hỏi về hai hay nhiều tên gọi thực chất là tên húy, niên hiệu, tôn hiệu hoặc tước vị của CÙNG MỘT NGƯỜI (ví dụ: Quang Trung - Nguyễn Huệ, Trần Hưng Đạo - Trần Quốc Tuấn, Lê Lợi - Lê Thái Tổ, Lý Thái Tổ - Lý Công Uẩn, Đinh Tiên Hoàng - Đinh Bộ Lĩnh, Gia Long - Nguyễn Ánh, Mai Thúc Loan - Mai Hắc Đế, An Dương Vương - Thục Phán), BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là CÙNG MỘT NHÂN VẬT LỊCH SỬ. Tuyệt đối không được tách thành hai nhân vật hoặc mô tả như hai người riêng biệt.
+   - Nếu câu hỏi gán ghép quan hệ anh em/họ hàng/thân tộc cho cùng một người (ví dụ: "Quang Trung và Nguyễn Huệ có phải là 2 anh em?"), BẮT BUỘC đính chính ngay rằng đây là cùng một nhân vật lịch sử với các danh xưng khác nhau qua từng giai đoạn, tuyệt đối không thừa nhận là hai anh em.
+   - Nếu câu hỏi của người dùng chứa tiền đề sai lệch (ví dụ: gán sai quan hệ anh em/cha con/vợ chồng, gán sai triều đại, đảo lộn niên đại, gán chiến công cho sai nhân vật), bạn BẮT BUỘC phải bác bỏ và đính chính rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [A] và [B] không phải là anh em...", "Theo chính sử, thông tin này không chính xác...").
+   - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng rồi tự bịa đặt câu chuyện để hợp thức hóa tiền đề đó.
+   - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.
+3. TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT THÂN TỘC, DANH TÍNH & CHIẾN TÍCH (ZERO HISTORICAL HALLUCINATION):
+   - Tuyệt đối không tự suy diễn hoặc bịa đặt tên khai sinh, năm sinh/mất, niên hiệu, thân phụ, anh em, hoặc vị thứ hoàng đế/vua chúa.
+   - NGUYÊN TẮC VỀ TÊN HÚY (TÊN KHAI SINH TRONG NGOẶC ĐƠN): CHỈ ĐƯỢC PHÉP ghi tên húy nếu tên đó XUẤT HIỆN TRỰC TIẾP trong "DỮ LIỆU SỬ LIỆU XÁC THỰC". Tuyệt đối không tự ghép họ tên (CẤM TỰ BỊA "Trần Thừa Thải", "Trần Thừa Bình" hay bất kỳ tên húy nào không có trong sử liệu). Nếu không có tên húy trong ngữ cảnh, CHỈ ĐƯỢC DÙNG MIẾU HIỆU/DANH XƯNG (Ví dụ: "Vua Trần Thái Tông", "Vua Trần Nhân Tông").
+   - Tuyệt đối không tự bịa đặt tên tướng lĩnh chỉ huy hư cấu hoặc gán sai địa danh/trận đánh (ví dụ: 3 lần chống Mông-Nguyên lần lượt do Vua Trần Thái Tông - Thái sư Trần Thủ Độ [lần 1 - Đông Bộ Đầu 1258], Vua Trần Nhân Tông - Thượng hoàng Trần Thánh Tông - Tiết chế Trần Quốc Tuấn [lần 2 - 1285 & lần 3 - Bạch Đằng 1288]. Trận Bạch Đằng lừng lẫy tiêu diệt Ô Mã Nhi là ở Lần 3 năm 1288, không phải Lần 2).
+   - Nếu một nhân vật hoặc mối quan hệ không có ghi chép trong chính sử, hãy nêu rõ "Không có ghi chép chính sử" thay vì tự suy diễn.
+4. NGUYÊN TẮC BỐI CẢNH LỊCH SỬ & CHỐNG SUY DIỄN PHI THỜI ĐẠI (ANTI-ANACHRONISM & FEUDAL SOCIETAL PARADIGM):
+   - Mọi lý giải về nhân khẩu học, sự phân bố dòng họ (đặc biệt là họ Nguyễn, họ Lê, họ Trần, họ Vũ/Võ...), thứ bậc xã hội và phong tục tập quán cổ truyền BẮT BUỘC phải dựa trên hệ quy chiếu chế độ phong kiến Nho giáo (văn hóa phụ hệ nghiêm ngặt - con mang họ cha theo huyết thống, lệnh cưỡng chế đổi họ khi vương triều sụp đổ, lệ ban quốc tính của hoàng tộc, và việc lập sổ đinh/sổ hộ tịch thời Pháp thuộc).
+   - TUYỆT ĐỐI KHÔNG áp dụng tư duy tự do cá nhân, xu hướng truyền thông, phim ảnh hay thói quen hiện đại vào lịch sử (ví dụ: TUYỆT ĐỐI KHÔNG giải thích rằng người dân "tự do chọn họ cho con cái", "chọn họ vì hâm mộ triều đại", hay "do ảnh hưởng từ phim ảnh").
+   - Khi giải thích vì sao họ Nguyễn chiếm tỷ lệ áp đảo (~38-40% dân số Việt Nam), BẮT BUỘC phải dựa trên các mốc lịch sử cốt lõi:
+     + Thái sư Trần Thủ Độ ép tôn thất nhà Lý đổi sang họ Nguyễn năm 1232 (kiêng húy Trần Lý và dứt lòng vọng Lý của dân chúng).
+     + Hậu duệ nhà Hồ (1407), nhà Mạc (1592) và Tây Sơn (1802) đổi sang họ Nguyễn để lánh nạn diệt vong.
+     + Tập tục Ban Quốc Tính thời Chúa Nguyễn và Triều Nguyễn cho công thần có công.
+     + Việc lập sổ đinh, căn cước hộ tịch thời Pháp thuộc gán họ của triều đại đang trị vì cho tầng lớp bần nông không có họ.
+5. Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả thuyết: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
+6. Nêu rõ niên đại, nhân vật, bối cảnh và ý nghĩa lịch sử.
+7. Trình bày đẹp mắt với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
+8. TUYỆT ĐỐI KHÔNG LẶP LẠI: Không lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.`;
 
 export async function* handleChatQueryStream(
   request: ChatSupervisorRequest
@@ -136,7 +172,8 @@ export async function* handleChatQueryStream(
     const ragResponse = await Promise.race([
       engine.search({
         query: searchTopic,
-        rerankTopK: 4,
+        subIntent: classification.subIntent,
+        rerankTopK: classification.subIntent === 'FACTOID_LOOKUP' ? 3 : 4,
       }),
       new Promise<any>((_, reject) =>
         setTimeout(() => reject(new Error('RAG search timeout')), ragTimeoutMs)
@@ -187,9 +224,8 @@ export async function* handleChatQueryStream(
 
   // 6. Build Context & Multi-turn Prompt
   const prunedHistory = pruneConversationHistory(history);
-  const triplesText = pruneGraphTriples(graphTriples, 15);
-
   const premiseAnalysis = analyzePremiseAndLeadingIntent(query);
+  const triplesText = pruneGraphTriples(graphTriples, 15, premiseAnalysis.detectedEntities);
   const unmappedEntities: string[] = [];
   for (const ent of premiseAnalysis.detectedEntities) {
     const isMaster = isKnownMasterEntity(ent);
@@ -214,48 +250,37 @@ export async function* handleChatQueryStream(
 - Nếu không có tư liệu chắc chắn về một chi tiết cụ thể nào, BẮT BUỘC nêu rõ: "Cần tra cứu thêm chính sử để có thông tin chi tiết về...".`
     : '';
 
+  let subIntentDirective = '';
+  if (classification.subIntent === 'GENEALOGY_RELATION') {
+    subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI PHẢ HỆ / THÂN TỘC: Nêu rõ quan hệ huyết thống, cha-con, anh-em, phu-thê, nguồn gốc tông tộc hoặc biến cố đổi họ/ban quốc tính theo chính sử.`;
+  } else if (classification.subIntent === 'BATTLE_TACTICS') {
+    subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI CHIẾN THUẬT & TRẬN ĐÁNH: Trình bày mạch lạc diễn biến, bài binh bố trận, kế sách quân sự (mai phục, thủy chiến, cọc ngầm, nghi binh...) và vai trò chỉ huy.`;
+  } else if (classification.subIntent === 'FACTOID_LOOKUP') {
+    subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI TRA CỨU NIÊN ĐẠI / SỰ KIỆN: Trả lời trực diện, chính xác mốc năm, địa danh, niên hiệu hoặc nhân vật trước khi trình bày tóm lược bối cảnh.`;
+  } else if (classification.subIntent === 'COMPARATIVE_SYNTHESIS') {
+    subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI SO SÁNH / ĐỐI CHIẾU: Phân tích rõ ràng các điểm tương đồng, dị biệt, bối cảnh lịch sử và ý nghĩa của từng đối tượng được đối chiếu.`;
+  }
+
   const premiseDirectiveText = (premiseAnalysis.suggestedDirective
-    ? `\n\nCHỈ DẪN KIỂM CHỨNG TIỀN ĐỀ ĐẶC THÙ:\n${premiseAnalysis.suggestedDirective}`
-    : '') + unmappedDirectiveText + ragFallbackDirective;
+    ? `CHỈ DẪN KIỂM CHỨNG TIỀN ĐỀ ĐẶC THÙ:\n${premiseAnalysis.suggestedDirective}\n\n`
+    : '') + unmappedDirectiveText + subIntentDirective + (ragFallbackDirective ? `\n\n${ragFallbackDirective}` : '');
 
-  const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu Lịch sử Việt Nam chuẩn mực, thông thái và khách quan.${premiseDirectiveText}
+  const contextSections: string[] = [];
+  if (premiseDirectiveText.trim()) {
+    contextSections.push(`<premise_directives>\n${premiseDirectiveText.trim()}\n</premise_directives>`);
+  }
+  contextSections.push(`<verified_rag_evidence>\n${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}\n</verified_rag_evidence>`);
+  if (triplesText.trim()) {
+    contextSections.push(`<knowledge_graph_triples>\n${triplesText}\n</knowledge_graph_triples>`);
+  }
 
-NGUYÊN TẮC BẮT BUỘC:
-1. Trả lời chi tiết, sinh động, chuẩn xác tuyệt đối theo chính sử Việt Nam (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Lam Sơn Thực Lục...).
-2. KIỂM TRA TIỀN ĐỀ CÂU HỎI, ĐỒNG NHẤT DANH XƯNG & CHỐNG BỊA ĐẶT (ANTI-SYCOPHANCY & CO-REFERENCE INTEGRITY):
-   - Khi người dùng hỏi về hai hay nhiều tên gọi thực chất là tên húy, niên hiệu, tôn hiệu hoặc tước vị của CÙNG MỘT NGƯỜI (ví dụ: Quang Trung - Nguyễn Huệ, Trần Hưng Đạo - Trần Quốc Tuấn, Lê Lợi - Lê Thái Tổ, Lý Thái Tổ - Lý Công Uẩn, Đinh Tiên Hoàng - Đinh Bộ Lĩnh, Gia Long - Nguyễn Ánh, Mai Thúc Loan - Mai Hắc Đế, An Dương Vương - Thục Phán), BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là CÙNG MỘT NHÂN VẬT LỊCH SỬ. Tuyệt đối không được tách thành hai nhân vật hoặc mô tả như hai người riêng biệt.
-   - Nếu câu hỏi gán ghép quan hệ anh em/họ hàng/thân tộc cho cùng một người (ví dụ: "Quang Trung và Nguyễn Huệ có phải là 2 anh em?"), BẮT BUỘC đính chính ngay rằng đây là cùng một nhân vật lịch sử với các danh xưng khác nhau qua từng giai đoạn, tuyệt đối không thừa nhận là hai anh em.
-   - Nếu câu hỏi của người dùng chứa tiền đề sai lệch (ví dụ: gán sai quan hệ anh em/cha con/vợ chồng, gán sai triều đại, đảo lộn niên đại, gán chiến công cho sai nhân vật), bạn BẮT BUỘC phải bác bỏ và đính chính rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [A] và [B] không phải là anh em...", "Theo chính sử, thông tin này không chính xác...").
-   - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng rồi tự bịa đặt câu chuyện để hợp thức hóa tiền đề đó.
-   - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.
-3. TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT THÂN TỘC, DANH TÍNH & CHIẾN TÍCH (ZERO HISTORICAL HALLUCINATION):
-   - Tuyệt đối không tự suy diễn hoặc bịa đặt tên khai sinh, năm sinh/mất, niên hiệu, thân phụ, anh em, hoặc vị thứ hoàng đế/vua chúa.
-   - NGUYÊN TẮC VỀ TÊN HÚY (TÊN KHAI SINH TRONG NGOẶC ĐƠN): CHỈ ĐƯỢC PHÉP ghi tên húy nếu tên đó XUẤT HIỆN TRỰC TIẾP trong "DỮ LIỆU SỬ LIỆU XÁC THỰC". Tuyệt đối không tự ghép họ tên (CẤM TỰ BỊA "Trần Thừa Thải", "Trần Thừa Bình" hay bất kỳ tên húy nào không có trong sử liệu). Nếu không có tên húy trong ngữ cảnh, CHỈ ĐƯỢC DÙNG MIẾU HIỆU/DANH XƯNG (Ví dụ: "Vua Trần Thái Tông", "Vua Trần Nhân Tông").
-   - Tuyệt đối không tự bịa đặt tên tướng lĩnh chỉ huy hư cấu hoặc gán sai địa danh/trận đánh (ví dụ: 3 lần chống Mông-Nguyên lần lượt do Vua Trần Thái Tông - Thái sư Trần Thủ Độ [lần 1 - Đông Bộ Đầu 1258], Vua Trần Nhân Tông - Thượng hoàng Trần Thánh Tông - Tiết chế Trần Quốc Tuấn [lần 2 - 1285 & lần 3 - Bạch Đằng 1288]. Trận Bạch Đằng lừng lẫy tiêu diệt Ô Mã Nhi là ở Lần 3 năm 1288, không phải Lần 2).
-   - Nếu một nhân vật hoặc mối quan hệ không có ghi chép trong chính sử, hãy nêu rõ "Không có ghi chép chính sử" thay vì tự suy diễn.
-4. NGUYÊN TẮC BỐI CẢNH LỊCH SỬ & CHỐNG SUY DIỄN PHI THỜI ĐẠI (ANTI-ANACHRONISM & FEUDAL SOCIETAL PARADIGM):
-   - Mọi lý giải về nhân khẩu học, sự phân bố dòng họ (đặc biệt là họ Nguyễn, họ Lê, họ Trần, họ Vũ/Võ...), thứ bậc xã hội và phong tục tập quán cổ truyền BẮT BUỘC phải dựa trên hệ quy chiếu chế độ phong kiến Nho giáo (văn hóa phụ hệ nghiêm ngặt - con mang họ cha theo huyết thống, lệnh cưỡng chế đổi họ khi vương triều sụp đổ, lệ ban quốc tính của hoàng tộc, và việc lập sổ đinh/sổ hộ tịch thời Pháp thuộc).
-   - TUYỆT ĐỐI KHÔNG áp dụng tư duy tự do cá nhân, xu hướng truyền thông, phim ảnh hay thói quen hiện đại vào lịch sử (ví dụ: TUYỆT ĐỐI KHÔNG giải thích rằng người dân "tự do chọn họ cho con cái", "chọn họ vì hâm mộ triều đại", hay "do ảnh hưởng từ phim ảnh").
-   - Khi giải thích vì sao họ Nguyễn chiếm tỷ lệ áp đảo (~38-40% dân số Việt Nam), BẮT BUỘC phải dựa trên các mốc lịch sử cốt lõi:
-     + Thái sư Trần Thủ Độ ép tôn thất nhà Lý đổi sang họ Nguyễn năm 1232 (kiêng húy Trần Lý và dứt lòng vọng Lý của dân chúng).
-     + Hậu duệ nhà Hồ (1407), nhà Mạc (1592) và Tây Sơn (1802) đổi sang họ Nguyễn để lánh nạn diệt vong.
-     + Tập tục Ban Quốc Tính thời Chúa Nguyễn và Triều Nguyễn cho công thần có công.
-     + Việc lập sổ đinh, căn cước hộ tịch thời Pháp thuộc gán họ của triều đại đang trị vì cho tầng lớp bần nông không có họ.
-5. Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả thuyết: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
-6. Nêu rõ niên đại, nhân vật, bối cảnh và ý nghĩa lịch sử.
-7. Trình bày đẹp mắt với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
-8. TUYỆT ĐỐI KHÔNG LẶP LẠI: Không lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.
-
-DỮ LIỆU SỬ LIỆU XÁC THỰC:
-${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}
-
-QUAN HỆ THỰC THỂ (GRAPH TRIPLES):
-${triplesText}`;
+  const safeQuery = escapePromptXml(query);
+  const userTurnWithContext = `<historical_context>\n${contextSections.join('\n\n')}\n</historical_context>\n\n<user_query>\n${safeQuery}\n</user_query>`;
 
   const rawMessages: ChatMessage[] = [
-    { role: 'system', content: systemPrompt },
+    { role: 'system', content: STATIC_SYSTEM_PERSONA_PROMPT },
     ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
-    { role: 'user', content: query },
+    { role: 'user', content: userTurnWithContext },
   ];
   const messages = clampTotalPromptMessages(rawMessages, 5000);
 

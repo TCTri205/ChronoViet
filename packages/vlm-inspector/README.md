@@ -15,12 +15,13 @@ VLM Inspector nhận vào `candidatePool` đã research sẵn và thực hiện 
    - Nhận `(projectId, scene, candidatePool, options)` và chấm điểm từng ứng viên theo 3 trục: `historicalContextScore` (0–40), `visualNoiseScore` (0–30), `artisticFitScore` (0–30).
    - Nếu `candidatePool` **rỗng** → trả về ngay `PURE_CODE` layout fallback **mà không thực hiện bất kỳ network request nào** (deterministic, không phụ thuộc mạng).
    - Không còn logic crawl inline — mọi ứng viên đến từ Research Agent state `researchResults[sceneId]`.
-2. **Dual-Layer Scoring & Visual Quality Gate:**
+2. **Dual-Layer Scoring & Cascade Early Exit:**
+   - **Cascade VLM Early Exit:** Chấm điểm tuần tự ứng viên; dừng ngay khi ứng viên đạt `vlmScore >= 85` (giảm 80% tải VLM).
    - **Lớp 1 (Local Unified Multimodal VLM / Gemini Flash):** Đánh giá độ phù hợp trang phục, niên đại, bối cảnh lịch sử và phát hiện nhiễu thị giác (`vlm-scorer.ts`).
    - **Lớp 2 (Local CLIP ONNX Scorer):** Chấm điểm độ tương đồng ngữ nghĩa giữa văn bản phân cảnh và ảnh ứng viên (Vector Cosine Similarity) — `clip-scorer.ts`.
 3. **Whitelisted License Filter:** Chỉ chấp nhận tư liệu có giấy phép hợp lệ `PUBLIC_DOMAIN`, `CC0`, `CC_BY_4_0`, `CC_BY_SA_4_0` (ánh xạ qua `@chronoviet/shared-spec` LicenseType).
 4. **Redis Cache Layer (`redis-cache.ts`):** Bộ nhớ đệm 2 tầng (SHA-256 + pHash) lưu kết quả chấm điểm, giảm độ trễ và tiết kiệm quota API.
-5. **Asset Downloader (`asset-downloader.ts`):** Tải và xác thực ảnh đáp ứng kích thước tối thiểu lưu vào `/media/` khi cần sử dụng.
+5. **Asset Downloader & Async Circuit Breaker (`asset-downloader.ts`):** Tải và xác thực ảnh với timeout 2.5s (`AbortController`), chống treo network khi tải từ host chậm.
 6. **Technical Visual Quality Gate (`visual-quality-gate.ts`):** Binary Header Dimension Reader (PNG/JPEG/WEBP) + Resolution / Aspect Ratio / Payload Guard trước khi encode Base64.
 
 ---

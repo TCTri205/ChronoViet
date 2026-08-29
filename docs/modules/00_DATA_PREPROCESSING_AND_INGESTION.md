@@ -56,30 +56,40 @@ Nguồn dữ liệu đầu vào của ChronoViet được thu thập từ 3 cấ
 | **LEVEL 2** | Educational Standards (Chuẩn giáo dục) | Sách giáo khoa Lịch sử & Địa lý (Chương trình GDPT mới 2018), Giáo trình Lịch sử ĐH Sư phạm / ĐH KHXH&NV. | **0.95 (Chuẩn hóa)** |
 | **LEVEL 3** | Secondary Research (Nghiên cứu chuyên khảo) | Các công trình nghiên cứu của Viện Sử học Việt Nam, tạp chí khoa học sử học đã thẩm định, tài liệu khảo cổ học. | **0.85 (Mở rộng)** |
 
-### 2.2. Tiến Trình Làm Sạch & Chuẩn Hóa Sử Liệu (Normalization Pipeline)
+### 2.2. Tiến Trình Làm Sạch & Chuẩn Hóa Sử Liệu (Layer 0 Preprocessing & Normalization Pipeline)
 
 ```
- [Raw Text / PDF / Scan Books]
+ [Raw Text / PDF / Scan Books (data/raw_corpus)]
                │
-               ▼
- ┌───────────────────────────┐
- │ 1. OCR & Structural Extract│ ──► Sử dụng Tesseract / MinerU trích xuất văn bản từ PDF/Scan
- └─────────────┬─────────────┘
-               │
-               ▼
- ┌───────────────────────────┐
- │ 2. Text Normalization     │ ──► Sửa lỗi OCR, loại bỏ trang sách/header/footer, chuẩn hóa Hán-Việt
- └─────────────┬─────────────┘
-               │
-               ▼
- ┌───────────────────────────┐
- │ 3. Location Mapping Table │ ──► Ánh xạ tên địa danh cổ ──► địa danh hiện đại (SAME_AS_LOCATION)
- └─────────────┬─────────────┘
-               │
-               ▼
- ┌───────────────────────────┐
- │ 4. Entity Disambiguation  │ ──► Đồng nhất nhân vật: Nguyễn Huệ = Quang Trung (ALIAS_OF)
- └─────────────┬─────────────┘
+               ▼  [CLI: pnpm corpus:clean]
+ ┌────────────────────────────────────────────────────────┐
+ │ 1. Layer 0 Preprocessor (corpus-preprocessor.ts)       │
+ │    • Unicode NFC Normalization & OCR repair (ñ->đ, CJK)│
+ │    • Guarded Soft-Wrap Paragraph Unwrapping            │
+ │    • 3-Token Lookahead Syllable Healer (~6,500 lexicon)│
+ │    • Single-Letter Guard (bảo vệ 'a bảo', 'y như')     │
+ │    • Strict Mộc Bản Regex (bảo tồn 924 năm [40], [938])│
+ │    • Pruning rác Wiki năm (1954.md, 1973.md)           │
+ │    • Flagging bitmap stubs (is_quarantine_stub: true)  │
+ └─────────────────────────┬──────────────────────────────┘
+                           │ Output: data/processed_corpus/
+                           ▼
+ ┌────────────────────────────────────────────────────────┐
+ │ 2. Dual-Syntax Heading Chunking (hierarchical-chunker) │
+ │    • Heading Stack: Markdown (#) & MediaWiki (==)      │
+ │    • Dynasty Inheritance & Dialogue Pseudo-Bypass      │
+ │    • Dynamic Window [300, 500] words (split ~400, merge│
+ │    • Bơm Macro-Context Banner vào từng Child Chunk     │
+ └─────────────────────────┬──────────────────────────────┘
+                           │
+                           ▼
+ ┌────────────────────────────────────────────────────────┐
+ │ 3. Knowledge Graph & Vector Seeder (dual-branch-seeder)│
+ │    • Vector Branch: BGE-M3 (Port 8090, 1024d)          │
+ │    • Graph Branch: Qwen 4B SLM (Port 8094) + Disk Cache│
+ │    • Cách ly 2,360+ khối bình sử quan (Ngô Sĩ Liên,...)│
+ │    • 3-Tier Can Chi & Reign Era Disambiguation         │
+ └────────────────────────────────────────────────────────┘
 ```
 
 #### Xử Lý Ánh Xạ Địa Danh Qua Các Thời Kỳ (`SAME_AS_LOCATION`):

@@ -3,12 +3,13 @@
  * SSOT for Chatbot query triage: CHITCHAT vs ENTITY_IDENTITY vs VIDEO_INTENT vs HISTORICAL_QUERY
  */
 
-import { resolveCanonicalEntity, ChatIntent } from '@chronoviet/shared-spec';
+import { resolveCanonicalEntity, ChatIntent, ChatSubIntent } from '@chronoviet/shared-spec';
 
-export type { ChatIntent };
+export type { ChatIntent, ChatSubIntent };
 
 export interface IntentClassificationResult {
   intent: ChatIntent;
+  subIntent?: ChatSubIntent;
   confidence: number;
   fastPathResponse?: string;
   suggestedTopic?: string;
@@ -238,9 +239,40 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
     }
   }
 
-  // 5. Default: Deep Historical Query with GraphRAG
+  // 5. Default: Deep Historical Query with Semantic Sub-Intent Classification
+  const subIntent = detectHistoricalSubIntent(effectiveQuery || cleanQuery);
   return {
     intent: 'HISTORICAL_QUERY',
+    subIntent,
     confidence: 0.9,
   };
+}
+
+/**
+ * Classifies fine-grained historical sub-intents for specialized RAG retrieval budgeting.
+ */
+export function detectHistoricalSubIntent(queryText: string): ChatSubIntent {
+  const norm = queryText.toLowerCase();
+
+  // Genealogy & Kinship
+  if (/(?:quan\s+hệ|thân\s+tộc|cha\s+con|mẹ\s+con|anh\s+em|vợ\s+chồng|hậu\s+duệ|tiền\s+bối|dòng\s+dõi|phả\s+hệ|tổ\s+tiên|con\s+của|cha\s+của|mẹ\s+của|vợ\s+của|chồng\s+của|gốc\s+tích\s+dòng\s+họ|đổi\s+họ|ban\s+quốc\s+tính)/i.test(norm)) {
+    return 'GENEALOGY_RELATION';
+  }
+
+  // Warfare Tactics & Battles
+  if (/(?:chiến\s+thuật|kế\s+sách|trận\s+đánh|bài\s+binh|bố\s+trận|đánh\s+như\s+thế\s+nào|diễn\s+biến|mai\s+phục|thủy\s+chiến|hỏa\s+công|cọc\s+ngầm|phục\s+kích|nghi\s+binh|vây\s+hãm|phản\s+công|thế\s+trận)/i.test(norm)) {
+    return 'BATTLE_TACTICS';
+  }
+
+  // Comparative Synthesis
+  if (/(?:so\s+sánh|khác\s+nhau|giống\s+nhau|điểm\s+chung|ai\s+hơn|tương\s+đồng|đối\s+chiếu|phân\s+biệt)/i.test(norm)) {
+    return 'COMPARATIVE_SYNTHESIS';
+  }
+
+  // Factoid Lookup (Exact Dates, Regnal Eras, Birth/Death)
+  if (/(?:năm\s+nào|khi\s+nào|ở\s+đâu|bao\s+nhiêu|ai\s+là\s+người|niên\s+hiệu|tên\s+thật|thọ\s+bao\s+nhiêu|mất\s+năm|sinh\s+năm|tại\s+đâu|vào\s+thời\s+điểm\s+nào)/i.test(norm)) {
+    return 'FACTOID_LOOKUP';
+  }
+
+  return 'GENERAL_OVERVIEW';
 }

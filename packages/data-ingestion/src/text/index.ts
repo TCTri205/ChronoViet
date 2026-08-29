@@ -5,3 +5,5 @@
 export * from './ocr-extractor.js';
 export * from './text-normalizer.js';
 export * from './vietnamese-ner.js';
+export * from './vietnamese-syllables.js';
+export * from './corpus-preprocessor.js';

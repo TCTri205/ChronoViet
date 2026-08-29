@@ -103,7 +103,7 @@ export class ChronoRagEngine implements IRagEngine {
     });
 
     // Steps 2, 3, 4: Dual-Branch Parallel Execution (with Conditional Comparative Decomposition)
-    const isComparative = detectQueryIntent(queryText) === 'COMPARATIVE' && filterEntityIds.length >= 2;
+    const isComparative = (detectQueryIntent(queryText) === 'COMPARATIVE' || request.subIntent === 'COMPARATIVE_SYNTHESIS') && filterEntityIds.length >= 2;
 
     let hybridCandidates: VectorSearchResult[] = [];
     let graphResult: { triples: GraphTriple[]; aliasTable: Record<string, string[]>; entityIds: string[] } = {
@@ -125,7 +125,7 @@ export class ChronoRagEngine implements IRagEngine {
 
       const [gRes, [resA, resB]] = await Promise.all([
         searchLocalGraphCTE(filterEntityIds, {
-          maxHops: 2,
+          maxHops: request.subIntent === 'GENEALOGY_RELATION' ? 3 : 2,
           maxNodes: GRAPH_BRANCH_MAX_NODES,
           timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
         }).catch(() => ({ triples: [], aliasTable: {}, entityIds: [], timedOut: true })),
@@ -135,14 +135,16 @@ export class ChronoRagEngine implements IRagEngine {
             getCachedQueryEmbedding(subQueryA),
             Math.max(10, rerankTopK * 2),
             60,
-            [entA]
+            [entA],
+            request.subIntent
           ),
           searchHybridVectorAndBM25(
             subQueryB,
             getCachedQueryEmbedding(subQueryB),
             Math.max(10, rerankTopK * 2),
             60,
-            [entB]
+            [entB],
+            request.subIntent
           ),
         ]),
       ]);
@@ -190,8 +192,8 @@ export class ChronoRagEngine implements IRagEngine {
       const graphBranchPromise = (async () => {
         try {
           const gRes = await searchLocalGraphCTE(filterEntityIds, {
-            maxHops: 2,
-            maxNodes: GRAPH_BRANCH_MAX_NODES,
+            maxHops: request.subIntent === 'GENEALOGY_RELATION' ? 3 : 2,
+            maxNodes: request.subIntent === 'GENEALOGY_RELATION' ? 60 : GRAPH_BRANCH_MAX_NODES,
             timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
           });
 
@@ -232,6 +234,7 @@ export class ChronoRagEngine implements IRagEngine {
         const queryIntent = detectQueryIntent(queryText);
         const isCausalOrOrigin =
           queryIntent === 'WHY_REASONING' ||
+          request.subIntent === 'GENEALOGY_RELATION' ||
           /(?:nguồn\s*gốc|tại\s*sao|vì\s*sao|lý\s*do|nguyên\s*nhân|tập\s*tục|dòng\s*họ|biến\s*thiên|họ\s*nguyễn)/i.test(
             queryText
           );
@@ -244,14 +247,16 @@ export class ChronoRagEngine implements IRagEngine {
               getCachedQueryEmbedding(queryText),
               Math.max(15, rerankTopK * 3),
               60,
-              filterEntityIds
+              filterEntityIds,
+              request.subIntent
             ),
             searchHybridVectorAndBM25(
               expandedThematicQuery,
               getCachedQueryEmbedding(expandedThematicQuery),
               Math.max(15, rerankTopK * 3),
               60,
-              filterEntityIds
+              filterEntityIds,
+              request.subIntent
             ),
           ]);
 
@@ -277,7 +282,8 @@ export class ChronoRagEngine implements IRagEngine {
           embeddingPromise,
           Math.max(15, rerankTopK * 3),
           60,
-          filterEntityIds
+          filterEntityIds,
+          request.subIntent
         );
         return candidates;
       })();

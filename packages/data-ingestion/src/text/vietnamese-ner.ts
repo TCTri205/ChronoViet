@@ -17,6 +17,8 @@ import {
   HISTORICAL_PERSON_DICTIONARY,
   HISTORICAL_LOCATION_DICTIONARY,
   HISTORICAL_LOCATION_MAPPINGS,
+  CAN_CHI_SET,
+  PERSON_HONORIFICS_AND_RANKS,
   getCanonicalEntityIdPrefix,
   inferEntityTypeFromName,
   resolveCanonicalEntity,
@@ -79,12 +81,23 @@ class GazetteerTrie {
           // Check trailing unicode word boundary
           const nextChar = j < len ? lowerText[j] : ' ';
           if (!/[\p{L}\p{N}]/u.test(nextChar)) {
-            lastMatch = {
-              start: i,
-              end: j,
-              entry: curr.entry,
-              matchedText: text.substring(i, j),
-            };
+            const start = i;
+            const end = j;
+            const matchedText = text.substring(start, end);
+
+            const entryNameLower = curr.entry.name.toLowerCase();
+            const isLordGeneric = entryNameLower === 'chúa trịnh' || entryNameLower === 'chúa nguyễn';
+            const remainder = text.substring(j);
+            const followedByCapitalized = /^\s+[A-ZÀ-Ỹ][a-zà-ỹ]+/u.test(remainder);
+
+            if (!isLordGeneric || !followedByCapitalized) {
+              lastMatch = {
+                start,
+                end,
+                entry: curr.entry,
+                matchedText,
+              };
+            }
           }
         }
       }
@@ -337,7 +350,7 @@ const HISTORICAL_PREFIX_PATTERNS: Array<{
 }> = [
   // Events / Battles / Movements / Conferences / Campaigns
   {
-    regex: /(?<![\p{L}\p{N}])(?:Trận\s+(?:đánh\s+)?|Chiến\s+dịch\s+|Chiến\s+thắng\s+|Đại\s+thắng\s+|Cuộc\s+khởi\s+nghĩa\s+|Khởi\s+nghĩa\s+|Hội\s+nghị\s+|Đại\s+hội\s+|Phong\s+trào\s+|Sáng\s+lập\s+|Dựng\s+nước\s+|Lập\s+nước\s+|Lập\s+nên\s+|Lập\s+triều\s+|Thành\s+lập\s+|Đắp\s+lũy\s+|Xây\s+thành\s+|Đánh\s+tan\s+|Dẹp\s+loạn\s+)(?:(?:phòng\s+tuyến\s+|bán\s+đảo\s+|trên\s+không\s+|sông\s+|núi\s+|thành\s+|cửa\s+|đèo\s+|ải\s+|biên\s+giới\s+)*[\p{Lu}][\p{Ll}]*(?:[\s\-–—]+(?:phòng\s+tuyến\s+|bán\s+đảo\s+|trên\s+không\s+|sông\s+|núi\s+|thành\s+|cửa\s+|đèo\s+|ải\s+|biên\s+giới\s+)*[\p{Lu}\d][\p{Ll}\d]*){0,6}(?:\s+trên\s+không)?)/gu,
+    regex: /(?<![\p{L}\p{N}])(?:Trận\s+(?:đánh\s+)?|Chiến\s+dịch\s+|Chiến\s+thắng\s+|Đại\s+thắng\s+|Cuộc\s+khởi\s+nghĩa\s+|Khởi\s+nghĩa\s+|Hội\s+nghị\s+|Đại\s+hội\s+|Phong\s+trào\s+|Sáng\s+lập\s+|Dựng\s+nước\s+|Lập\s+nước\s+|Lập\s+nên\s+|Lập\s+triều\s+|Thành\s+lập\s+|Đắp\s+lũy\s+|Xây\s+thành\s+|Đánh\s+tan\s+|Dẹp\s+loạn\s+)(?:(?:phòng\s+tuyến\s+|bán\s+đảo\s+|trên\s+không\s+|sông\s+|núi\s+|thành\s+|cửa\s+|đèo\s+|ải\s+|biên\s+giới\s+)?(?:[\p{Lu}]{2,}|[\p{Lu}][\p{Ll}]*|[\p{Lu}\d]+)(?:[\s\-–—]+(?:phòng\s+tuyến\s+|bán\s+đảo\s+|trên\s+không\s+|sông\s+|núi\s+|thành\s+|cửa\s+|đèo\s+|ải\s+|biên\s+giới\s+)?(?:[\p{Lu}]{2,}|[\p{Lu}][\p{Ll}]*|[\p{Lu}\d][\p{Ll}\d]*|[\p{Lu}\d]+)){0,4}(?:\s+trên\s+không)?)/gu,
     type: 'EVENT_BATTLE',
     includePrefixInText: true,
   },
@@ -355,7 +368,7 @@ const HISTORICAL_PREFIX_PATTERNS: Array<{
   },
   // Person Titles & Honorifics
   {
-    regex: /(?<![\p{L}\p{N}])(?:Vua\s+|Hoàng\s+đế\s+|Thái\s+thượng\s+hoàng\s+|Chúa\s+|Đại\s+vương\s+|Vương\s+|Thái\s+sư\s+|Thái\s+úy\s+|Tiết\s+chế\s+|Quốc\s+công\s+|Đại\s+tướng\s+|Tướng\s+|Đô\s+đốc\s+|Nữ\s+tướng\s+|Trạng\s+Trình\s+|Trạng\s+nguyên\s+|Sử\s+quan\s+|Chủ\s+tịch\s+|Bác\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
+    regex: /(?<![\p{L}\p{N}])(?:Vua\s+|Hoàng\s+đế\s+|Thái\s+thượng\s+hoàng\s+|Chúa\s+|Đại\s+vương\s+|Vương\s+|Thái\s+sư\s+|Thái\s+úy\s+|Tiết\s+chế\s+|Quốc\s+công\s+|Đại\s+tướng\s+|Tướng\s+|Đô\s+đốc\s+|Nữ\s+tướng\s+|Trạng\s+Trình\s+|Trạng\s+nguyên\s+|Sử\s+quan\s+|Chủ\s+tịch\s+|Bác\s+|Bắc\s+Bình\s+Vương\s+|Hưng\s+Đạo\s+Đại\s+Vương\s+|Hưng\s+Đạo\s+Vương\s+|Bình\s+Định\s+Vương\s+|Vạn\s+Thắng\s+Vương\s+|Tiền\s+Ngô\s+Vương\s+|Triệu\s+Việt\s+Vương\s+|Bố\s+Cái\s+Đại\s+Vương\s+|Mai\s+Hắc\s+Đế\s+|Lý\s+Nam\s+Đế\s+|Đức\s+Thánh\s+Trần\s+|Đức\s+Thánh\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
     type: 'HISTORICAL_PERSON',
     includePrefixInText: false,
   },
@@ -370,7 +383,7 @@ const HISTORICAL_PREFIX_PATTERNS: Array<{
 /**
  * Proper Noun Regex (Tier 3) with Unicode Word Boundaries
  */
-const VI_PROPER_NOUN_REGEX = /(?<![\p{L}\p{N}])([\p{Lu}][\p{Ll}]*(?:[\s\-–—]+[\p{Lu}][\p{Ll}]*){1,4})(?![\p{L}\p{N}])/gu;
+const VI_PROPER_NOUN_REGEX = /(?<![\p{L}\p{N}])([\p{Lu}][\p{Ll}]*(?:[\s\-–—]+[\p{Lu}][\p{Ll}]*){1,6})(?![\p{L}\p{N}])/gu;
 
 /**
  * Strict validity check for extracted entity span
@@ -383,6 +396,7 @@ export function isValidCandidateSpan(text: string): boolean {
   if (/[\[\]\(\)=\/\\<>|#*]/.test(clean)) return false;
   const cleanLower = clean.toLowerCase();
   if (GENERIC_EXCLUSION_TERMS.has(cleanLower)) return false;
+  if (CAN_CHI_SET.has(cleanLower)) return false;
 
   const words = clean.split(/\s+/);
   if (words.length > 8) return false;
@@ -432,9 +446,10 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
     while ((match = rule.regex.exec(text)) !== null) {
       const fullMatch = match[0];
       const matchIndex = match.index;
+      const leadingSpaces = fullMatch.length - fullMatch.trimStart().length;
       let spanText = fullMatch.trim();
-      let startOffset = matchIndex;
-      let endOffset = matchIndex + fullMatch.length;
+      let startOffset = matchIndex + leadingSpaces;
+      let endOffset = startOffset + spanText.length;
 
       // Adjust offsets if rule specifies extracting only the captured group
       if (!rule.includePrefixInText && match[1]) {
@@ -450,6 +465,7 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
         const prefixLen = 8;
         spanText = spanText.substring(prefixLen).trim();
         startOffset += prefixLen;
+        endOffset = startOffset + spanText.length;
       }
 
       if (!isValidCandidateSpan(spanText)) continue;
@@ -509,32 +525,14 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
   // -------------------------------------------------------------
   // Layer 4: Strip leading person honorifics from person spans
   // -------------------------------------------------------------
-  const PERSON_HONORIFICS = [
-    'Thái thượng hoàng', 'thái thượng hoàng',
-    'Hoàng đế', 'hoàng đế',
-    'Đại tướng', 'đại tướng',
-    'Tiết chế', 'tiết chế',
-    'Thái sư', 'thái sư',
-    'Thái úy', 'thái úy',
-    'Quốc công', 'quốc công',
-    'Đô đốc', 'đô đốc',
-    'Nữ tướng', 'nữ tướng',
-    'Trạng Trình', 'trạng Trình',
-    'Trạng nguyên', 'trạng nguyên',
-    'Sử quan', 'sử quan',
-    'Chủ tịch', 'chủ tịch',
-    'Đại vương', 'đại vương',
-    'Vua', 'vua',
-    'Chúa', 'chúa',
-    'Tướng', 'tướng',
-    'Bác', 'bác',
-  ];
-
   for (const span of rawSpans) {
     if (span.type === 'HISTORICAL_PERSON') {
-      for (const h of PERSON_HONORIFICS) {
-        if (span.text.startsWith(`${h} `) && span.text.length > h.length + 2) {
-          const stripped = span.text.substring(h.length + 1).trim();
+      const spanNorm = span.text.normalize('NFC');
+      const spanLower = spanNorm.toLowerCase();
+      for (const h of PERSON_HONORIFICS_AND_RANKS) {
+        const hLower = h.toLowerCase().normalize('NFC');
+        if (spanLower.startsWith(`${hLower} `) && spanNorm.length > hLower.length + 2) {
+          const stripped = spanNorm.substring(hLower.length + 1).trim();
           if (stripped.length >= 2) {
             span.startOffset += (span.text.length - stripped.length);
             span.text = stripped;
@@ -560,8 +558,8 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
 
   for (const span of rawSpans) {
     const exactSlice = text.substring(span.startOffset, span.endOffset);
-    if (exactSlice !== span.text) {
-      span.text = exactSlice;
+    if (exactSlice.trim() !== span.text.trim()) {
+      span.text = exactSlice.trim();
     }
 
     if (!isValidCandidateSpan(span.text)) continue;
@@ -578,30 +576,63 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
     );
 
     if (overlapping) {
-      // Suppress sub-span if same type or inside proper name like Thành nhà Hồ
-      if (
-        (span.type === overlapping.type && span.sourceLayer !== 'GAZETTEER') ||
-        (overlapping.text === 'Thành nhà Hồ' && span.text === 'nhà Hồ')
-      ) {
+      // If current span is nested inside existing longer span:
+      const isSpanNestedInOverlapping = span.startOffset >= overlapping.startOffset && span.endOffset <= overlapping.endOffset;
+      if (isSpanNestedInOverlapping) {
+        // If outer is EVENT_BATTLE: allow PERSON in any event, or LOCATION in Khởi nghĩa / Chiến dịch
+        if (
+          (span.type === 'HISTORICAL_PERSON' && overlapping.type === 'EVENT_BATTLE') ||
+          (span.type === 'LOCATION' && overlapping.type === 'EVENT_BATTLE' && (overlapping.text.startsWith('Khởi nghĩa') || overlapping.text.startsWith('Chiến dịch')))
+        ) {
+          finalSpans.push({
+            text: span.text,
+            type: span.type,
+            startOffset: span.startOffset,
+            endOffset: span.endOffset,
+            confidence: span.confidence,
+            sourceLayer: span.sourceLayer,
+            suggestedCanonicalId: span.suggestedCanonicalId,
+            priority: span.priority,
+          });
+        }
         continue;
       }
 
-      // Allow nested entity if one contains the other and types are distinct
-      // or if the sub-entity is from GAZETTEER
-      const isNested =
-        (span.startOffset >= overlapping.startOffset && span.endOffset <= overlapping.endOffset) ||
-        (overlapping.startOffset >= span.startOffset && overlapping.endOffset <= span.endOffset);
+      // If existing span is nested inside current longer span:
+      const isOverlappingNestedInSpan = overlapping.startOffset >= span.startOffset && overlapping.endOffset <= span.endOffset;
+      if (isOverlappingNestedInSpan) {
+        // If outer is EVENT_BATTLE or ORGANIZATION and inner has distinct type, keep both
+        if (span.type !== overlapping.type && (span.type === 'EVENT_BATTLE' || span.type === 'ORGANIZATION')) {
+          finalSpans.push({
+            text: span.text,
+            type: span.type,
+            startOffset: span.startOffset,
+            endOffset: span.endOffset,
+            confidence: span.confidence,
+            sourceLayer: span.sourceLayer,
+            suggestedCanonicalId: span.suggestedCanonicalId,
+          });
+        } else {
+          // If overlapping has higher priority than current span (e.g. Gazetteer vs Regex), keep overlapping
+          if ((overlapping.priority ?? 0) > (span.priority ?? 0)) {
+            continue;
+          }
 
-      if (isNested && (span.type !== overlapping.type || span.sourceLayer === 'GAZETTEER')) {
-        finalSpans.push({
-          text: span.text,
-          type: span.type,
-          startOffset: span.startOffset,
-          endOffset: span.endOffset,
-          confidence: span.confidence,
-          sourceLayer: span.sourceLayer,
-          suggestedCanonicalId: span.suggestedCanonicalId,
-        });
+          // Replace shorter with longer
+          const idx = finalSpans.indexOf(overlapping);
+          if (idx !== -1) {
+            finalSpans[idx] = {
+              text: span.text,
+              type: span.type,
+              startOffset: span.startOffset,
+              endOffset: span.endOffset,
+              confidence: span.confidence,
+              sourceLayer: span.sourceLayer,
+              suggestedCanonicalId: span.suggestedCanonicalId,
+              priority: span.priority,
+            };
+          }
+        }
       }
       continue;
     }
@@ -614,6 +645,7 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
       confidence: span.confidence,
       sourceLayer: span.sourceLayer,
       suggestedCanonicalId: span.suggestedCanonicalId,
+      priority: span.priority,
     });
   }
 

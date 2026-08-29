@@ -443,16 +443,43 @@ export function spawnLlamaService(
 // SERVICE LAUNCHERS
 // ==============================================================================
 export function getExtractionLlamaConfig() {
-  const extCtxSize = envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 32768;
+  const parallel = envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 12;
+  const minRequiredCtx = parallel * 4096; // Guarantee at least 4,096 tokens per slot
+  const extCtxSize = Math.max(envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 49152, minRequiredCtx);
   const extExtraArgs: string[] = [
+    '--cache-type-k',
+    'q8_0',
+    '--cache-type-v',
+    'q8_0',
     '--cont-batching',
+    '--batch-size',
+    '2048',
+    '--ubatch-size',
+    '512',
     '--parallel',
-    String(envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 4),
+    String(parallel),
     '--threads',
-    String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 6),
+    String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 8),
     ...(envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS ? envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS.split(' ').filter(Boolean) : []),
   ];
   return { extCtxSize, extExtraArgs };
+}
+
+export function getEmbeddingLlamaConfig() {
+  const embCtxSize = envConfig.EMBEDDING_CTX_SIZE || 4096;
+  const embExtraArgs: string[] = [
+    '--batch-size',
+    '2048',
+    '--ubatch-size',
+    '2048',
+    '--cont-batching',
+    '--parallel',
+    String(envConfig.LOCAL_EMBEDDING_PARALLEL || 4),
+    '--threads',
+    String(envConfig.LOCAL_EMBEDDING_THREADS || 6),
+    ...(envConfig.LOCAL_EMBEDDING_EXTRA_ARGS ? envConfig.LOCAL_EMBEDDING_EXTRA_ARGS.split(' ').filter(Boolean) : []),
+  ];
+  return { embCtxSize, embExtraArgs };
 }
 
 export function getRerankLlamaConfig() {
@@ -520,21 +547,10 @@ export async function launchEmbeddingOnly() {
   console.log(`\n${colors.bright}${colors.blue}=== Starting Embedding Server (Port ${EMBEDDING_PORT}) ===${colors.reset}`);
   console.log(`${colors.dim}Press Ctrl+C to terminate.${colors.reset}\n`);
 
-  const embExtraArgs: string[] = [
-    '--batch-size',
-    '8192',
-    '--ubatch-size',
-    '8192',
-    '--cont-batching',
-    '--parallel',
-    String(envConfig.LOCAL_EMBEDDING_PARALLEL || 4),
-    '--threads',
-    String(envConfig.LOCAL_EMBEDDING_THREADS || 6),
-    ...(envConfig.LOCAL_EMBEDDING_EXTRA_ARGS ? envConfig.LOCAL_EMBEDDING_EXTRA_ARGS.split(' ').filter(Boolean) : []),
-  ];
+  const { embCtxSize, embExtraArgs } = getEmbeddingLlamaConfig();
 
   const proc = spawnLlamaService('Embedding Server', EMBEDDING_PORT, weights.embPath, {
-    ctxSize: 32768,
+    ctxSize: embCtxSize,
     isEmbedding: true,
     extraArgs: embExtraArgs,
     tag: 'EMB-8090',
@@ -611,24 +627,13 @@ export async function launchLitePair() {
 
   console.log(`\n${colors.bright}${colors.green}==============================================================================${colors.reset}`);
   console.log(`${colors.bright}${colors.green} CHRONOVIET AI LITE STACK (Embedding: 8090 + Extraction: 8094)${colors.reset}`);
-  console.log(`${colors.dim} Memory Footprint: ~3.1 GB RAM | Ideal for Ingestion & Evaluation${colors.reset}`);
+  console.log(`${colors.dim} Memory Footprint: ~3.5 GB RAM (Q8_0 KV Cache Optimized) | Ideal for Ingestion${colors.reset}`);
   console.log(`${colors.bright}${colors.green}==============================================================================${colors.reset}\n`);
 
-  const embExtraArgs: string[] = [
-    '--batch-size',
-    '8192',
-    '--ubatch-size',
-    '8192',
-    '--cont-batching',
-    '--parallel',
-    String(envConfig.LOCAL_EMBEDDING_PARALLEL || 4),
-    '--threads',
-    String(envConfig.LOCAL_EMBEDDING_THREADS || 6),
-    ...(envConfig.LOCAL_EMBEDDING_EXTRA_ARGS ? envConfig.LOCAL_EMBEDDING_EXTRA_ARGS.split(' ').filter(Boolean) : []),
-  ];
+  const { embCtxSize, embExtraArgs } = getEmbeddingLlamaConfig();
 
   const embProc = spawnLlamaService('Embedding Server', EMBEDDING_PORT, weights.embPath, {
-    ctxSize: 32768,
+    ctxSize: embCtxSize,
     isEmbedding: true,
     extraArgs: embExtraArgs,
     tag: 'EMB-8090',

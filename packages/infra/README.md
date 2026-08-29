@@ -23,7 +23,8 @@ Gói `@chronoviet/infra` đóng gói toàn bộ các tài nguyên runtime và st
    - Quản lý `embeddingCache` với cơ chế evict 20% bản ghi cũ nhất khi đạt ngưỡng.
 5. **Local Cross-Encoder Reranker Client (`reranker-client.ts`):**
    - Gửi request trực tiếp qua HTTP `POST /v1/rerank` tới `llama-server` (Port 8096, `Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3`).
-6. **VieNeu TTS Engine Client (`tts/`):**
+6. **VieNeu TTS Engine Client & Text Normalizer (`tts/`):**
+   - `normalizeVietnameseTextForTTS`: Chuẩn hóa phát âm chữ số, năm dương lịch, tỷ lệ và từ viết tắt sang dạng văn bản mở rộng hoàn chỉnh trước khi gửi đến TTS và Remotion.
    - `VieNeuEngine`: Client gọi Python FastAPI Microservice qua HTTP (Port 8080), tự động fallback sang `createSyntheticWavBuffer` khi service offline.
    - Bộ tiện ích tính toán mốc thời gian phụ đề Remotion: `convertVieNeuTimestampsToCaptions` và `calculateSceneDurationInFrames`.
 7. **Resource Sentinel & Distributed Render Mutex (`resource-sentinel.ts`):**
@@ -34,6 +35,8 @@ Gói `@chronoviet/infra` đóng gói toàn bộ các tài nguyên runtime và st
    - Quản lý toàn bộ metrics RED và USE của monorepo.
 10. **BullMQ Queues (`queues.ts`):**
     - Đóng gói hàng đợi `renderQueue` và các helper enqueue job render video Remotion.
+11. **AI Supervisor Dynamic JIT Model Eviction (`scripts/ai-supervisor.ts`):**
+    - Tự động unmount các mô hình trích xuất (Extraction Qwen 4B - Port 8094) và Reranker (Port 8096) sau khi hoàn tất batch ingestion/script generation, duy trì mức RAM nhàn rỗi $\le 8\text{GB}$.
 
 ---
 

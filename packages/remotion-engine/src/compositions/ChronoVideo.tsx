@@ -11,6 +11,7 @@ import { HistoryBackground, HistoryForeground } from './HistorySlide';
 import { DocumentaryHeader } from '../components/DocumentaryHeader';
 import { DocumentarySubtitle } from '../components/DocumentarySubtitle';
 import { getMergedTheme } from '../utils/themeUtils';
+import { computeDuckedBgmVolume, SpeechInterval } from '../utils/audioDucking';
 
 const resolveMediaUrl = (url?: string): string => {
   if (!url || typeof url !== 'string') return '';
@@ -133,6 +134,32 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
   const { fps, durationInFrames, width, height } = useVideoConfig();
   const effectiveTheme = getMergedTheme(templateId, theme, videoType);
 
+  const speechIntervals = React.useMemo<SpeechInterval[]>(() => {
+    const list: SpeechInterval[] = [];
+    if (captions && captions.length > 0) {
+      captions.forEach((c) => list.push({ start: c.startFrame, end: c.endFrame }));
+    }
+    let currentFrame = 0;
+    timeline.forEach((scene) => {
+      const dur = getSceneDurationInFrames(scene, fps);
+      if (scene.captions && scene.captions.length > 0) {
+        scene.captions.forEach((c) =>
+          list.push({
+            start: currentFrame + (c.startFrame || 0),
+            end: currentFrame + (c.endFrame || dur),
+          })
+        );
+      } else if (scene.sceneAudioUrl || scene.text) {
+        list.push({
+          start: currentFrame,
+          end: currentFrame + dur,
+        });
+      }
+      currentFrame += dur;
+    });
+    return list;
+  }, [captions, timeline, fps]);
+
   return (
     <div
       style={{
@@ -153,17 +180,12 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
         />
       )}
 
-      {/* Audio Layer 2: Background Music with 15-frame fade-in ramp */}
+      {/* Audio Layer 2: Background Music with Dynamic Audio Ducking (-12dB during speech frames) */}
       {bgmUrl && (
         <Loop durationInFrames={durationInFrames}>
           <Audio
             src={resolveMediaUrl(bgmUrl)}
-            volume={(f) =>
-              interpolate(f, [0, 15], [0, bgmVolume], {
-                extrapolateLeft: 'clamp',
-                extrapolateRight: 'clamp',
-              })
-            }
+            volume={(f) => computeDuckedBgmVolume(f, bgmVolume, speechIntervals, durationInFrames)}
           />
         </Loop>
       )}

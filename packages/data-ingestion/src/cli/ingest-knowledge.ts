@@ -5,7 +5,7 @@
 
 import path from 'path';
 import { promises as fs } from 'fs';
-import { DualBranchSeeder } from '../seeder/dual-branch-seeder.js';
+import { DualBranchSeeder, refreshMaterializedViews } from '../seeder/dual-branch-seeder.js';
 import { findMonorepoRoot } from '../utils/path-utils.js';
 import {
   createLogger,
@@ -35,7 +35,10 @@ interface IngestCliOptions {
 
 function parseArgs(): IngestCliOptions {
   const args = process.argv.slice(2);
-  let inputPath = path.resolve(findMonorepoRoot(), 'data', 'raw_corpus');
+  const root = findMonorepoRoot();
+  const processedPath = path.resolve(root, 'data', 'processed_corpus');
+  const rawPath = path.resolve(root, 'data', 'raw_corpus');
+  let inputPath = processedPath;
   let force = false; // Default to resume mode (reuse cache, no db truncate)
   let strict = true; // Strict by default: production-grade validation, no silent fake embeddings
   let regexOnly = false;
@@ -228,6 +231,7 @@ async function main() {
     if (cliOptions.stage === 'graph' || cliOptions.stage === 'all') {
       log.info('ingest.reresolve_started', 'Running Entity Disambiguation & Audit Log Sync');
       await runReResolve();
+      await refreshMaterializedViews();
     }
 
     process.exit(0);

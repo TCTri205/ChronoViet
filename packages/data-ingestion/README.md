@@ -9,12 +9,12 @@
 
 Gói `@chronoviet/data-ingestion` đóng vai trò là Lớp Nạp Dữ Liệu Offline của hệ thống ChronoViet:
 
-1. **Master Corpus Crawler (`crawl:all`):** Cào tự động tài liệu tri thức lịch sử từ Wikipedia/Wikisource phủ rộng qua **15 Thời Kỳ Lịch Sử Việt Nam** chuẩn hóa qua danh mục `master-corpus-catalog.ts`.
-2. **Text Cleaning & Entity Normalization:** Bóc tách văn bản, làm sạch nhiễu OCR, chuẩn hóa từ ngữ Hán-Việt, ánh xạ địa danh qua các thời kỳ (`SAME_AS_LOCATION`) và khử nhập nhằng nhân vật (`ALIAS_OF`).
-3. **Dual-Axis Epoch Assignment (1771–1777):** Tự động gán mảng `epoch_ids: ["EPOCH_09", "EPOCH_10"]` cho các sự kiện thuộc giai đoạn mốc giao thời Nam-Bắc Triều và Tây Sơn.
-4. **Hierarchical Temporal Chunking:** Phân đoạn văn bản đa cấp (Parent 2000–3000 từ, Child 300–500 từ) đính kèm JSON Metadata chuẩn hóa.
-5. **Dual-Branch Parallel Seeder & Concurrency Pool:** Tạo Dense Embedding BGE-M3 (1024d) + BM25 Sparse Index nạp vào PostgreSQL `document_chunks`, đồng thời trích xuất bộ ba $(Entity \rightarrow Relationship \rightarrow Entity)$ thông qua hàng đợi xử lý song song ($N = \min(8, \max(2, \text{activeTargets})))$ kết hợp điều phối **Hierarchical 2-Level Interleaved Rotation** (`HybridInferenceDispatcher`), gom kết quả tất định trong Single Thread và nạp vào `entities` & `relationships`.
-6. **Quarantine & Disambiguation Buffer:** Tự động cách ly các bộ ba nghi vấn (confidence < 0.85 hoặc quan hệ lơ lửng) vào `quarantine_triples`, và ghi nhận thực thể mới ngoài Master Ontology vào `unmapped_entities`.
+1. **Layer 0 Preprocessor & Corpus Sanitizer (`corpus:clean`):** Tiền xử lý kho ngữ liệu thô (`data/raw_corpus` $\to$ `data/processed_corpus`), Unicode NFC, 3-token lookahead syllable healer (~6,500 âm tiết chuẩn tiếng Việt), bảo vệ từ đơn (`a bảo`, `y như`), strict mộc bản regex bảo tồn 100% 924 năm dương lịch `[40]`, lọc rác Nobel/Oscar các bài wiki năm `1954.md`/`1973.md`.
+2. **Master Corpus Crawler (`crawl:all`):** Cào tự động tài liệu tri thức lịch sử từ Wikipedia/Wikisource phủ rộng qua **15 Thời Kỳ Lịch Sử Việt Nam** chuẩn hóa qua danh mục `master-corpus-catalog.ts`.
+3. **Dual-Syntax Heading-Aware Chunking:** Phân đoạn văn bản đa cấp (Markdown `#` + MediaWiki `==`) với cửa sổ động $[300, 500]$ từ, kế thừa triều đại (Dynasty Inheritance), bỏ qua pseudo-headings (`##### Sư nói:`), và bơm macro-context banners.
+4. **SLM Triples Extractor (Qwen 4B) & Write-Through Disk Cache:** Trích xuất quan hệ chính xác, loại bỏ heuristics 200 ký tự giả, cô lập 2,360+ khối lời bình sử gia (`isHistorianCommentary: true`), và giải mã Can Chi 3 tầng (Reign Era $\to$ Heading Bounds $\to$ Sliding Anchor Reset).
+5. **Dual-Branch Parallel Seeder & Concurrency Pool:** Tạo Dense Embedding BGE-M3 (1024d) nạp vào PostgreSQL `document_chunks`, đồng thời nạp thực thể và bộ ba chuẩn hóa vào `entities` & `relationships`.
+6. **Quarantine & Disambiguation Buffer:** Tự động cách ly các bộ ba nghi vấn vào `quarantine_triples`, và ghi nhận thực thể mới ngoài Master Ontology vào `unmapped_entities`.
 7. **Re-Indexing & Audit Trail (`rag:re-resolve`):** Hợp giải nút thực thể trùng lặp và ghi nhật ký thay đổi append-only vào `entity_audit_logs`.
 8. **Quality Diagnostics (`eval:diagnostic`):** Kiểm tra chất lượng phân đoạn, ánh xạ thực thể và phát hiện quan hệ bất thường trên kho văn bản thật.
 9. **Fast Failover & Adaptive Timeouts:** Áp dụng timeout thích ứng 45s cho Local LLM và 35s cho Cloud API, cách ly 24h cho lỗi Quota/429 và 30s cho lỗi tạm thời/503/timeout, chuyển vùng tức thì mà không nghẽn pipeline.

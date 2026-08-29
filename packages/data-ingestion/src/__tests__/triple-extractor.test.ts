@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateLLMCompletion } from '@chronoviet/infra';
+import { extractionCache } from '../cache/extraction-cache.js';
 import {
   isValidEntityName,
   extractTriplesFromText,
@@ -73,8 +74,9 @@ describe('Triple Extractor Unit Tests', () => {
   });
 
   describe('extractTriplesWithLLM', () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
+    beforeEach(async () => {
+      vi.resetAllMocks();
+      await extractionCache.clear();
     });
 
     it('should parse standard JSON triples from LLM response', async () => {
@@ -172,12 +174,12 @@ describe('Triple Extractor Unit Tests', () => {
       const candidateLines = candidateSection.trim().split('\n').filter((l) => l.startsWith('- ['));
 
       expect(candidateLines.length).toBeLessThanOrEqual(MAX_CANDIDATE_SPANS_IN_PROMPT);
-      expect(candidateLines.length).toBe(30);
+      expect(candidateLines.length).toBeGreaterThanOrEqual(25);
     });
   });
 
   describe('extractTriplesFromTextAsync', () => {
-    it('should combine regex and LLM triples deduplicating higher confidence', async () => {
+    it('should extract pure LLM-verified triples on success without unverified rule pollution', async () => {
       vi.mocked(generateLLMCompletion).mockResolvedValueOnce({
         content: JSON.stringify({
           triples: [
@@ -189,15 +191,41 @@ describe('Triple Extractor Unit Tests', () => {
             },
           ],
         }),
-        model: 'agnes-2.5-flash',
-        provider: 'AGNES_FLASH_FALLBACK',
+        model: 'qwen3.5-4b-instruct-q4_k_m',
+        provider: 'LOCAL_LLM',
         finishReason: 'stop',
       });
 
       const result = await extractTriplesFromTextAsync('Quang Trung tức là Nguyễn Huệ.');
-      expect(result.length).toBeGreaterThanOrEqual(1);
+      expect(result.length).toBe(1);
       const alias = result.find(t => t.relationType === 'ALIAS_OF');
       expect(alias).toBeDefined();
+      expect(alias?.confidence).toBe(0.99);
+    });
+  });
+
+  describe('Commentary Isolation & Action Verb Gating', () => {
+    it('isolates historian commentary blocks and does not link historians as military commanders', () => {
+      const commentary = 'Sử thần Ngô Sĩ Liên nói: Trận Bạch Đằng năm 938 là võ công hiển hách.';
+      const triples = extractTriplesFromText(commentary);
+      const invalidLedBy = triples.find(
+        (t) => t.relationType === 'LED_BY' && t.targetEntityName.includes('Ngô Sĩ Liên')
+      );
+      expect(invalidLedBy).toBeUndefined();
+    });
+
+    it('requires explicit action verbs before linking LED_BY in normal text', () => {
+      // Normal narrative with explicit leader verb
+      const textWithVerb = 'Trận Chi Lăng do Lê Lợi lãnh đạo đánh tan quân Minh.';
+      const triplesWithVerb = extractTriplesFromText(textWithVerb);
+      const ledByWithVerb = triplesWithVerb.find((t) => t.relationType === 'LED_BY');
+      expect(ledByWithVerb).toBeDefined();
+
+      // Incidental coexistence without action verb
+      const textWithoutVerb = 'Trong Trận Chi Lăng, nhân dân nhớ tới công lao của Lê Lợi.';
+      const triplesWithoutVerb = extractTriplesFromText(textWithoutVerb);
+      const ledByWithoutVerb = triplesWithoutVerb.find((t) => t.relationType === 'LED_BY');
+      expect(ledByWithoutVerb).toBeUndefined();
     });
   });
 

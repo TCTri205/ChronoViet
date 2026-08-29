@@ -73,20 +73,21 @@ VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiê
   │ ├─ Dev primary: Cloud Gemini 3.6 Flash API (khi có GEMINI_API_KEY)         │
   │ └─ Dev fallback (429/500/Timeout): Local CLIP/SigLIP Cosine Scorer        │
   │ - Historical Context Score (0-40): Đúng trang phục, cờ, kiến trúc VN?     │
-  │ - Visual Noise Score (0-30): Có watermark, logo, chữ đè không?            │
-  │ - Artistic & Resolution Fit (0-30): Độ sắc nét, phong cách nghệ thuật?   │
+  │ - Async Circuit Breaker: Timeout 2.5s (AbortController) khi tải ảnh        │
+  │ - Cascade VLM Early Exit: Chấm điểm tuần tự; ứng viên đầu tiên đạt >= 85    │
+  │   thì lập tức CHỌN NGAY và dừng kiểm tra các ảnh còn lại (giảm 80% tải VLM) │
   │ - Bộ trích xuất JSON bằng Regex bọc ngoại vi ({ ... }) chống preamble text │
   └────────────────────────────────────┬───────────────────────────────────────┘
                                        │
                    ┌───────────────────┴───────────────────┐
                    ▼                                       ▼
        [Có ảnh điểm Max >= 60]                  [Tất cả 3 ảnh đợt 1 < 60]
-                   │                                       │
-                   ▼                                       ▼
-       Duyệt ảnh tốt nhất Đợt 1               RESEARCH BATCH 2 (3 ẢNH TỪ KHÓA MỞ RỘNG)
-       (Lưu License & Attribution)            - Research Agent thử từ khóa Bản đồ/Sơ đồ/Di tích
-                                              - VLM chấm điểm 3 ảnh Đợt 2
-                                                           │
+       (Early Exit nếu score >= 85)                        │
+                   │                                       ▼
+                   ▼                            RESEARCH BATCH 2 (3 ẢNH TỪ KHÓA MỞ RỘNG)
+       Duyệt ảnh tốt nhất Đợt 1                 - Research Agent thử từ khóa Bản đồ/Sơ đồ/Di tích
+       (Lưu License & Attribution)              - VLM chấm điểm 3 ảnh Đợt 2
+                                                            │
                                        ┌───────────────────┴───────────────────┐
                                        ▼                                       ▼
                            [Có ảnh điểm Max 6 ảnh >= 60]          [Cả 6 ảnh đều < 60 điểm]

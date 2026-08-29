@@ -96,7 +96,7 @@ Quân Tây Sơn thần tốc tiến vào Thăng Long giải phóng kinh thành.
     expect(callCount).toBe(result.childChunksCount);
   });
 
-  it('should isolate chunk extraction failures without crashing the whole seed process', async () => {
+  it('should isolate chunk extraction failures without crashing the whole seed process and reject unverified triples in strict mode', async () => {
     let callIndex = 0;
     vi.mocked(extractTriplesFromTextAsync).mockImplementation(async () => {
       callIndex++;
@@ -105,19 +105,21 @@ Quân Tây Sơn thần tốc tiến vào Thăng Long giải phóng kinh thành.
       }
       return [
         {
-          sourceEntityId: 'ent:nguyen_hue',
-          sourceEntityName: 'Nguyễn Huệ',
-          relationType: 'ALIAS_OF',
-          targetEntityId: 'ent:quang_trung',
+          sourceEntityId: 'event_ngoc_hoi_dong_da',
+          sourceEntityName: 'Trận Ngọc Hồi - Đống Đa',
+          relationType: 'LED_BY',
+          targetEntityId: 'person_quang_trung',
           targetEntityName: 'Quang Trung',
-          confidence: 1.0,
+          confidence: 0.98,
         },
       ];
     });
 
     const sampleContent = `
+# Tiểu sử Quang Trung
+
 Nguyễn Huệ tức Quang Trung. Hoàng đế áo vải cờ đào dấy binh từ Tây Sơn.
-`.repeat(15);
+`.repeat(60); // large enough to produce multiple child chunks
 
     const result = await seedDualBranch(sampleContent, {
       title: 'Tiểu sử Quang Trung',
@@ -125,7 +127,9 @@ Nguyễn Huệ tức Quang Trung. Hoàng đế áo vải cờ đào dấy binh t
 
     expect(result).toBeDefined();
     expect(result.correlationId).toBeDefined();
-    expect(result.chunksIngested).toBeGreaterThan(0);
+    expect(result.chunksIngested).toBeGreaterThan(1);
+    expect(result.childChunksCount).toBeGreaterThanOrEqual(2);
+    // Successful chunks contribute verified triples, while failed chunk 1 was safely isolated
     expect(result.highConfidenceTriplesCount).toBeGreaterThanOrEqual(1);
     expect(result.telemetry?.durations.totalDurationMs).toBeGreaterThan(0);
   });

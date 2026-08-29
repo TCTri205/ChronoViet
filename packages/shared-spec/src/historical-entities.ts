@@ -3,7 +3,12 @@
  */
 
 import { EntityAliasMapping, HistoricalLocationMapping } from './interfaces.js';
-import { getCanonicalEntityIdPrefix } from './schema.js';
+import { getCanonicalEntityIdPrefix, EntityType } from './schema.js';
+import {
+  DEITY_TITLE_MAPPINGS,
+  REIGN_ERA_DICTIONARY,
+  VIETNAMESE_PROVINCES_AND_ADMIN_UNITS,
+} from './dictionaries.js';
 
 
 export interface HistoricalEntityInfo {
@@ -45,8 +50,8 @@ export const MODERN_TECH_LEXICON: string[] = [
   'súng bắn tỉa',
   'bom nguyên tử',
   'vũ khí hạt nhân',
-  'hạt nhân',
-  'nguyên tử',
+  'bom hạt nhân',
+  'năng lượng nguyên tử',
   'radar',
   'ra-đa',
   'tên lửa',
@@ -356,6 +361,78 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     timeRange: { start: 670, end: 722 },
     dynasty: 'Thời kỳ Bắc thuộc',
   },
+  'person_ho_chi_minh': {
+    entityId: 'person_ho_chi_minh',
+    canonicalName: 'Hồ Chí Minh',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Bác Hồ', 'Nguyễn Ái Quốc', 'Nguyễn Tất Thành', 'Chủ tịch Hồ Chí Minh', 'Cụ Hồ'],
+    timeRange: { start: 1890, end: 1969 },
+    dynasty: 'Thời kỳ Hiện đại',
+  },
+  'person_tran_thu_do': {
+    entityId: 'person_tran_thu_do',
+    canonicalName: 'Trần Thủ Độ',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Thái sư Trần Thủ Độ'],
+    timeRange: { start: 1194, end: 1264 },
+    dynasty: 'Nhà Trần',
+  },
+  'person_tran_canh': {
+    entityId: 'person_tran_canh',
+    canonicalName: 'Trần Thái Tông',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Trần Cảnh', 'Vua Trần Thái Tông'],
+    timeRange: { start: 1218, end: 1277 },
+    dynasty: 'Nhà Trần',
+  },
+  'person_tran_thanh_tong': {
+    entityId: 'person_tran_thanh_tong',
+    canonicalName: 'Trần Thánh Tông',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Trần Hoảng', 'Vua Trần Thánh Tông'],
+    timeRange: { start: 1240, end: 1290 },
+    dynasty: 'Nhà Trần',
+  },
+  'person_phan_boi_chau': {
+    entityId: 'person_phan_boi_chau',
+    canonicalName: 'Phan Bội Châu',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Sào Nam', 'Cụ Phan Bội Châu'],
+    timeRange: { start: 1867, end: 1940 },
+    dynasty: 'Thời kỳ Pháp thuộc',
+  },
+  'person_phan_chau_trinh': {
+    entityId: 'person_phan_chau_trinh',
+    canonicalName: 'Phan Châu Trinh',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Tây Hồ', 'Cụ Phan Châu Trinh'],
+    timeRange: { start: 1872, end: 1926 },
+    dynasty: 'Thời kỳ Pháp thuộc',
+  },
+  'person_hoang_hoa_tham': {
+    entityId: 'person_hoang_hoa_tham',
+    canonicalName: 'Hoàng Hoa Thám',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Đề Thám', 'Hùm xám Yên Thế'],
+    timeRange: { start: 1858, end: 1913 },
+    dynasty: 'Thời kỳ Pháp thuộc',
+  },
+  'person_le_thanh_tong': {
+    entityId: 'person_le_thanh_tong',
+    canonicalName: 'Lê Thánh Tông',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Lê Tư Thành', 'Vua Lê Thánh Tông'],
+    timeRange: { start: 1442, end: 1497 },
+    dynasty: 'Nhà Hậu Lê',
+  },
+  'person_chu_van_an': {
+    entityId: 'person_chu_van_an',
+    canonicalName: 'Chu Văn An',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Vạn Thế Sư Biểu', 'Tiều Ẩn'],
+    timeRange: { start: 1292, end: 1370 },
+    dynasty: 'Nhà Trần',
+  },
 };
 
 /**
@@ -484,27 +561,38 @@ export function resolveLocationMapping(locationName: string): HistoricalLocation
 /**
  * Infers normalized entity taxonomy type from textual name clues
  */
-export function inferEntityTypeFromName(name: string): 'HISTORICAL_PERSON' | 'LOCATION' | 'EVENT_BATTLE' | 'DYNASTY_ERA' | 'ORGANIZATION' | 'ARTIFACT' | 'DOCUMENT_CULTURE' {
+export function inferEntityTypeFromName(name: string): EntityType {
   const norm = name.toLowerCase().trim();
-  if (/\b(trận|chiến dịch|cuộc khởi nghĩa|khởi nghĩa|biến cố|hội nghị|hội thề|sáng lập|dựng nước|chiến thắng|đại thắng|dẹp loạn)\b/.test(norm)) {
+  if (/(?:^|\s)(trận|chiến dịch|cuộc khởi nghĩa|khởi nghĩa|biến cố|hội nghị|hội thề|sáng lập|dựng nước|chiến thắng|đại thắng|dẹp loạn)(?:$|\s)/i.test(norm)) {
     return 'EVENT_BATTLE';
   }
-  if (/\b(sông|núi|ải|thành|đô|trấn|phủ|huyện|tỉnh|làng|xã|đàng|đông kinh|đông quan|thăng long|hà nội|phong châu|mê linh|hát môn|luy lâu|phú xuân|mường thanh|ngọc hồi|đống đa|chi lăng|xương giang|bạch đằng|như nguyệt|cổ loa|tây đô|hoa lư|huế|sài gòn|gia định)\b/.test(norm)) {
+  // Person checks (Feudal honorifics, deity titles, monastic titles, ranks)
+  if (/(?:^|\s)(vua|hoàng đế|thái tử|thái thượng hoàng|chúa|đại vương|vương|thái sư|thái úy|tiết chế|quốc công|đại tướng|tướng|đô đốc|nữ tướng|trạng trình|trạng nguyên|sử quan|chủ tịch|thủ tướng|bác|thiền sư|trưởng lão|đại sư|quốc sư|cư sĩ|thượng tọa|hòa thượng|đạo sĩ|công chúa|hoàng hậu|quốc mẫu|thứ phi|ái phi|thái phi|hưng đạo|bắc bình|bình định|vạn thắng|tiền ngô|triệu việt|bố cái|mai hắc đế|lý nam đế|đức thánh)(?:$|\s)/i.test(norm)) {
+    return 'HISTORICAL_PERSON';
+  }
+  const words = norm.split(/\s+/);
+  const firstWord = words[0];
+  const viSurnames = ['nguyễn', 'trần', 'lê', 'phạm', 'hoàng', 'huỳnh', 'phan', 'vũ', 'võ', 'đặng', 'bùi', 'đỗ', 'hồ', 'ngô', 'dương', 'lý', 'đinh', 'đoàn', 'lâm', 'trịnh', 'mai', 'đào', 'cao', 'hà', 'lưu', 'lương', 'thái', 'châu', 'tạ', 'phùng', 'tô', 'vương', 'quách', 'nhâm', 'tôn', 'trương', 'khuất'];
+  if (words.length >= 2 && words.length <= 6 && viSurnames.includes(firstWord)) {
+    return 'HISTORICAL_PERSON';
+  }
+  // Locations including palace architecture, citadels, gates, modern 63 provinces and classical admin units
+  if (/(?:^|\s)(sông|núi|ải|thành|đô|trấn|phủ|huyện|tỉnh|làng|xã|đàng|đông kinh|đông quan|thăng long|hà nội|phong châu|mê linh|hát môn|luy lâu|phú xuân|mường thanh|ngọc hồi|đống đa|chi lăng|xương giang|bạch đằng|như nguyệt|cổ loa|tây đô|hoa lư|huế|sài gòn|gia định|điện|lầu|các|cửa|cầu|cung|đồn|bến|cảng|đèo|hồ|lăng|miếu|đền|chùa|quảng trường|dinh|hoàng thành|kinh thành|cố đô|quần đảo|bán đảo|địa đạo|đường mòn|đoài|xứ|kinh bắc|sơn nam|ái châu|hoan châu|trấn man|bắc hà|nam hà|trung kỳ|bắc kỳ|nam kỳ|thanh hóa|thái bình|quảng ninh|nghệ an|hải phòng|nam định|hải dương|bắc ninh|bắc giang|lạng sơn|cao bằng|hà giang|yên bái|tuyên quang|phú thọ|vĩnh phúc|hà nam|ninh bình|hà tĩnh|quảng bình|quảng trị|quảng nam|đà nẵng|quảng ngãi|bình định|phú yên|khánh hòa|ninh thuận|bình thuận|kon tum|gia lai|đắk lắk|đắk nông|lâm đồng|bình phước|tây ninh|bình dương|đồng nai|bà rịa|long an|tiền giang|bến tre|trà vinh|vĩnh long|đồng tháp|an giang|kiên giang|cần thơ|hậu giang|sóc trăng|bạc liêu|cà mau|điện biên|lai châu|sơn la|hòa bình|lào cai)(?:$|\s)/i.test(norm)) {
     return 'LOCATION';
   }
-  if (/\b(triều|nhà|thời|kỷ|kỷ nguyên|hồng bàng|văn lang|âu lạc|vạn xuân|đại cồ việt|đông sơn)\b/.test(norm)) {
+  if (/(?:^|\s)(triều|nhà|thời|kỷ|kỷ nguyên|hồng bàng|văn lang|âu lạc|vạn xuân|đại cồ việt|đại việt|đại nam|đông sơn)(?:$|\s)/i.test(norm)) {
     return 'DYNASTY_ERA';
   }
-  if (/\b(quân|hội|viện|quán|đoàn|tập đoàn|triều đình|tây sơn)\b/.test(norm)) {
+  if (/(?:^|\s)(quân|hội|viện|quán|đoàn|tập đoàn|triều đình|tây sơn|nghĩa quân|đảng)(?:$|\s)/i.test(norm)) {
     return 'ORGANIZATION';
   }
-  if (/\b(bia|sắc|ấn|trống|vũ khí|bảo vật|thần khí|nỏ)\b/.test(norm)) {
+  if (/(?:^|\s)(ngọc ấn|kim ấn|quốc ấn|ấn tín|văn bia|tấm bia|sắc phong|trống đồng|vũ khí|bảo vật|thần khí|nỏ thần|nỏ|xe tăng|thông bảo)(?:$|\s)/i.test(norm)) {
     return 'ARTIFACT';
   }
-  if (/\b(sử|bình|hịch|chiếu|cáo|thư|quyển|bản kỷ|tập|tác phẩm|luật|hiệp định)\b/.test(norm)) {
+  if (/(?:^|\s)(bình ngô|hịch tướng sĩ|hịch|chiếu|đại cáo|tuyên ngôn|bản kỷ|tác phẩm|bộ luật|luật hồng đức|hình luật|hiệp định|toàn thư|cương mục|thực lục|tiêu án|chí lược|văn tập|bài thơ)(?:$|\s)/i.test(norm)) {
     return 'DOCUMENT_CULTURE';
   }
-  return 'HISTORICAL_PERSON';
+  return 'UNKNOWN';
 }
 
   const DYNASTY_DICTIONARY: Record<string, { entityId: string; canonicalName: string; aliases: string[] }> = {
@@ -623,6 +711,29 @@ function initFastEntityMap(): void {
     register(d.name, d.id, d.name);
     for (const al of d.aliases) {
       register(al, d.id, d.name);
+    }
+  }
+
+  // Deity Title & Epithet Mappings
+  for (const [alias, info] of Object.entries(DEITY_TITLE_MAPPINGS)) {
+    register(alias, info.canonicalId, info.canonicalName);
+  }
+
+  // Reign Eras (only register if not already mapped to a specific person/dynasty)
+  for (const [reignKey, info] of Object.entries(REIGN_ERA_DICTIONARY)) {
+    const norm = normalizeKey(info.reignName);
+    if (!FAST_ENTITY_MAP.has(norm)) {
+      const dynId = `dynasty_${removeVietnameseAccents(info.dynasty).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')}`;
+      register(info.reignName, dynId, info.reignName);
+    }
+  }
+
+  // Provinces & Admin Units (only register if not already mapped to an existing canonical location)
+  for (const loc of VIETNAMESE_PROVINCES_AND_ADMIN_UNITS) {
+    const norm = normalizeKey(loc);
+    if (!FAST_ENTITY_MAP.has(norm)) {
+      const locId = `loc_${removeVietnameseAccents(loc).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')}`;
+      register(loc, locId, loc);
     }
   }
 

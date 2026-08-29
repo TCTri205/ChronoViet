@@ -14,6 +14,7 @@ import {
 } from '@chronoviet/infra';
 
 import { QUESTION_STOPWORDS } from './question-ner.js';
+import { ChatSubIntent } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'rag-engine' });
 
@@ -80,37 +81,74 @@ export function resetQueryEmbeddingCacheForTest(): void {
 }
 
 /**
- * Sanitizes natural language query by stripping Vietnamese stopwords before FTS tsquery
+ * Normalizes query string for PostgreSQL tsquery (AND combination with prefix matching)
  */
 export function sanitizeFtsQuery(queryText: string): string {
   if (!queryText || typeof queryText !== 'string') return '';
-  const tokens = queryText
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .split(/\s+/)
-    .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
+  const clean = queryText
+    .replace(/[!&|()<>:*"'\\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  if (tokens.length === 0) {
-    // If all tokens were stopwords (e.g. "Ai là ai"), fallback to non-empty alphanumeric tokens
-    const rawTokens = queryText
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-      .split(/\s+/)
-      .filter((w) => w.length > 0);
-    return rawTokens.join(' ');
-  }
-  return tokens.join(' ');
+  if (!clean) return '';
+
+  const rawTokens = clean.toLowerCase().split(/\s+/).filter(Boolean);
+  const tokens = rawTokens.filter((w) => !QUESTION_STOPWORDS.has(w));
+  return (tokens.length > 0 ? tokens : rawTokens).join(' ');
 }
 
 /**
- * Executes Hybrid Vector (1024d) + BM25 Full-Text Search fused by RRF
+ * Calculates dynamic RRF fusion weights based on query sub-intent and lexical & temporal characteristics:
+ * - FACTOID_LOOKUP: BM25 boost (FTS 0.80, Vector 0.20)
+ * - GENEALOGY_RELATION: FTS 0.60, Vector 0.40
+ * - BATTLE_TACTICS: Vector 0.60, FTS 0.40
+ * - Exact year digits or Can Chi: BM25 boost (FTS 0.70, Vector 0.30)
+ * - Purely conceptual / thematic: Vector boost (Vector 0.60, FTS 0.40)
+ * - Balanced default (Vector 0.50, FTS 0.50)
+ */
+export function computeDynamicRrfWeights(
+  queryText: string,
+  subIntent?: ChatSubIntent
+): { vectorWeight: number; ftsWeight: number } {
+  if (subIntent === 'FACTOID_LOOKUP') {
+    return { vectorWeight: 0.20, ftsWeight: 0.80 };
+  }
+  if (subIntent === 'GENEALOGY_RELATION') {
+    return { vectorWeight: 0.40, ftsWeight: 0.60 };
+  }
+  if (subIntent === 'BATTLE_TACTICS') {
+    return { vectorWeight: 0.60, ftsWeight: 0.40 };
+  }
+  if (subIntent === 'COMPARATIVE_SYNTHESIS') {
+    return { vectorWeight: 0.50, ftsWeight: 0.50 };
+  }
+
+  const norm = queryText.toLowerCase();
+  const hasExactYear = /\b(?:năm\s+)?\d{3,4}\b/.test(norm);
+  const hasCanChi = /\b(?:giáp|ất|bính|đinh|mậu|kỷ|canh|tân|nhâm|quý)\s+(?:tý|sửu|dần|mão|thìn|tỵ|ngọ|mùi|thân|dậu|tuất|hợi)\b/i.test(norm);
+
+  if (hasExactYear || hasCanChi) {
+    return { vectorWeight: 0.30, ftsWeight: 0.70 };
+  }
+
+  const isConceptual = /(?:ý\s+nghĩa|ảnh\s+hưởng|nguyên\s+nhân|bối\s+cảnh|tổng\s+quan|đánh\s+giá|vai\s+trò)/i.test(norm);
+  if (isConceptual && !/\b[A-ZÀ-Ỹ]/.test(queryText)) {
+    return { vectorWeight: 0.60, ftsWeight: 0.40 };
+  }
+
+  return { vectorWeight: 0.50, ftsWeight: 0.50 };
+}
+
+/**
+ * Executes Hybrid Vector (1024d) + BM25 Full-Text Search fused by Query-Adaptive RRF
  */
 export async function searchHybridVectorAndBM25(
   queryText: string,
   queryEmbedding: number[] | Promise<number[]>,
   topK: number = 5,
   rrfK: number = RRF_K,
-  detectedEntityIds?: string[]
+  detectedEntityIds?: string[],
+  subIntent?: ChatSubIntent
 ): Promise<VectorSearchResult[]> {
   const pgConnected = await isPgAvailable();
   const [denseResults, ftsResults] = await Promise.all([
@@ -118,6 +156,7 @@ export async function searchHybridVectorAndBM25(
     searchLexicalFTS(queryText, topK * 3, detectedEntityIds),
   ]);
 
+  const { vectorWeight, ftsWeight } = computeDynamicRrfWeights(queryText, subIntent);
   const chunkMap = new Map<string, VectorSearchResult>();
 
   denseResults.forEach((item, idx) => {
@@ -132,14 +171,14 @@ export async function searchHybridVectorAndBM25(
       timeStart: item.timeStart,
       timeEnd: item.timeEnd,
       epochIds: item.epochIds,
-      score: 1 / (rrfK + vecRank),
+      score: vectorWeight / (rrfK + vecRank),
       rankVector: vecRank,
     });
   });
 
   ftsResults.forEach((item, idx) => {
     const ftsRank = idx + 1;
-    const ftsScore = 1 / (rrfK + ftsRank);
+    const ftsScore = ftsWeight / (rrfK + ftsRank);
     const existing = chunkMap.get(item.chunkId);
     if (existing) {
       existing.score += ftsScore;
@@ -175,6 +214,8 @@ export async function searchHybridVectorAndBM25(
     fusedCandidates: results.length,
     topK,
     pgMode: pgConnected,
+    vectorWeight,
+    ftsWeight,
   });
 
   return results.slice(0, topK);

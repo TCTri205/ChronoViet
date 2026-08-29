@@ -11,7 +11,7 @@ function makeText(n: number): string {
   return words.join(' ');
 }
 
-describe('chunkDocumentHierarchical child chunk bounds (300-500 words)', () => {
+describe('Dual-Syntax Heading-Aware Hierarchical Chunker', () => {
   it('splits a 2000-word parent into valid child chunks within [300, 500]', () => {
     const text = makeText(2000);
     const result = chunkDocumentHierarchical(text, { title: 'Tài liệu test' });
@@ -24,7 +24,6 @@ describe('chunkDocumentHierarchical child chunk bounds (300-500 words)', () => {
   });
 
   it('keeps the final tail chunk valid (no short tail below 300 words)', () => {
-    // 2000 words with no sentence punctuation exercises the tail-absorption path.
     const text = makeText(2000);
     const result = chunkDocumentHierarchical(text, { title: 'Tài liệu test' });
     const last = result.childChunks[result.childChunks.length - 1];
@@ -33,7 +32,6 @@ describe('chunkDocumentHierarchical child chunk bounds (300-500 words)', () => {
   });
 
   it('does not produce chunks above 500 words when snapping pulls past the target', () => {
-    // Sentences with end punctuation every ~50 words; snapping should still respect MAX.
     const sentences: string[] = [];
     for (let i = 0; i < 45; i++) {
       sentences.push(makeText(50) + '.');
@@ -55,7 +53,7 @@ describe('chunkDocumentHierarchical child chunk bounds (300-500 words)', () => {
     }
   });
 
-  it('safely partitions an oversized document (10,000 words) without double newlines into multiple parent chunks', () => {
+  it('safely partitions an oversized document (10,000 words) into multiple parent chunks', () => {
     const sentences: string[] = [];
     for (let i = 0; i < 200; i++) {
       sentences.push(makeText(50) + '.');
@@ -67,5 +65,44 @@ describe('chunkDocumentHierarchical child chunk bounds (300-500 words)', () => {
       expect(chunk.wordCount).toBeGreaterThanOrEqual(1000);
       expect(chunk.wordCount).toBeLessThanOrEqual(3500);
     }
+  });
+
+  it('injects Macro-Context Header and inherits dynasty across MediaWiki headings', () => {
+    const documentText = [
+      '== Kỷ Nhà Trần ==',
+      makeText(200),
+      '',
+      '=== Trận Bạch Đằng năm 1288 ===',
+      makeText(250) + ' Vua Trần Nhân Tông và Trần Hưng Đạo lãnh đạo quân dân đánh tan quân Nguyên.',
+    ].join('\n\n');
+
+    const result = chunkDocumentHierarchical(documentText, {
+      title: 'Đại Việt Sử Ký Toàn Thư',
+    });
+
+    expect(result.childChunks.length).toBeGreaterThanOrEqual(1);
+    const firstChild = result.childChunks[0];
+    expect(firstChild.textContent).toContain('[Sử Liệu: Đại Việt Sử Ký Toàn Thư]');
+    expect(firstChild.textContent).toContain('[Kỷ/Triều Đại: Nhà Trần]');
+    expect(firstChild.metadata.dynasty).toBe('Nhà Trần');
+  });
+
+  it('bypasses dialogue pseudo-headings and does not treat them as section titles', () => {
+    const documentText = [
+      '# Kỷ Nhà Lý',
+      makeText(200),
+      '',
+      '##### Sử Trung nói:',
+      makeText(200),
+    ].join('\n\n');
+
+    const result = chunkDocumentHierarchical(documentText, {
+      title: 'Khâm Định Việt Sử Cương Mục',
+    });
+
+    expect(result.childChunks.length).toBeGreaterThanOrEqual(1);
+    const chunk = result.childChunks[0];
+    expect(chunk.textContent).not.toContain('[Mục: Sử Trung nói:]');
+    expect(chunk.textContent).toContain('[Kỷ/Triều Đại: Nhà Lý]');
   });
 });

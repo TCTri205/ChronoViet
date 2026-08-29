@@ -1,8 +1,8 @@
 # CHI TIẾT MÔ-ĐUN 1: CHRONO-RAG ENGINE
 ## (Hybrid GraphRAG: Knowledge Graph + Vector Database + Local Search)
 
-> **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED 100% — COMPLIANT WITH DUAL-BRANCH CONCURRENCY, PARALLEL BFS & RESILIENT ERROR BOUNDARIES SPEC v2.3 PRODUCTION HARDENED]`
-> **Cập nhật:** Tích hợp Global Singleton Schema Init (ngăn DDL SQL chạy lặp lại trên mỗi request), **Directed BFS Graph Traversal song song 2 chiều (Forward + Reverse queries via `Promise.all`)** với Global Visited-Set + Node Budget (50 nodes) + Timeout (150ms) + Edge-Type Filter (`MENTIONED_IN`/`SAME_AS_LOCATION` bị loại trừ; duyệt ngược chỉ cho `LED_BY`/`PART_OF`/`ALIAS_OF`), Tiền xử lý Lexical FTS lọc Stopwords tiếng Việt (`sanitizeFtsQuery`), **Chạy song song không đồng bộ (Overlapped Execution) giữa Lexical FTS và Query Embedding**, **Bộ đệm In-Flight Promise Memoization chống Cache Stampede (Thundering Herd)** cho Query Embeddings kèm SimpleLRUCache, **Resilient Error Boundary cho nhánh Graph** tự động phân rã an toàn (Graceful Fallback) khi timeout/lock DB mà không ngắt quãng truy vấn RAG, Graph Score theo `confidence * 0.6^(hop-1)` + Co-Retrieval Boost nhỏ ($+0.05 \times \text{graphScore}$, bỏ boost flat $+0.35$ cũ), Reranker Pool = 5 & Truncation = 700 ký tự (đạt SLA p95 $\le 300\text{ms}$), Bảo tồn danh xưng/triều đại lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô*) trong Reranker, Dual-Branch Parallel Execution (`Promise.all`), và 100% Bộ Unit Test Suite độc lập cho CI/CD Gate.
+> **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED 100% — COMPLIANT WITH DUAL-BRANCH CONCURRENCY, SUB-INTENT ADAPTIVE RRF & MATERIALIZED LINEAGE GRAPH SPEC v2.4 PRODUCTION HARDENED]`
+> **Cập nhật:** Tích hợp **Sub-Intent Adaptive Chrono-RAG** (`GENEALOGY_RELATION`, `BATTLE_TACTICS`, `FACTOID_LOOKUP`, `COMPARATIVE_SYNTHESIS`), **Materialized View (`mv_dynasty_lineage_paths`)** tăng tốc truy vấn phả hệ đa bậc kèm cơ chế tự động refresh, Global Singleton Schema Init, **Directed BFS Graph Traversal song song 2 chiều (Forward + Reverse queries via `Promise.all`)** với Global Visited-Set + Node Budget (50–60 nodes) + Timeout (350ms) + Edge-Type Filter, Tiền xử lý Lexical FTS lọc Stopwords tiếng Việt (`sanitizeFtsQuery`), **Chạy song song không đồng bộ (Overlapped Execution) giữa Lexical FTS và Query Embedding**, **Bộ đệm In-Flight Promise Memoization chống Cache Stampede**, **Resilient Error Boundary cho nhánh Graph** tự động phân rã an toàn, Graph Score theo `confidence * 0.6^(hop-1)` + Co-Retrieval Boost nhỏ ($+0.05 \times \text{graphScore}$), Reranker Pool = 5, và 100% Bộ Unit Test Suite độc lập cho CI/CD Gate.
 
 ---
 
@@ -217,9 +217,10 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 
 * **Embedding Model Chuẩn Hóa SSOT (1024-dim Vector Space):**
   * **`BAAI/bge-m3` (SSOT Cố Định Toàn Hệ Thống):** Mô hình Multi-Lingual mạnh mẽ nhất. Hỗ trợ **Dense Retrieval** (1024 chiều) kết hợp **Sparse Retrieval (Lexical BM25)**. Được cố định duy nhất cho toàn bộ quy trình Ingestion, pgvector Indexing và RAG Dense Retrieval để đảm bảo không phân mảnh hoặc lệch không gian vector.
-* **Thuật toán Tìm kiếm Vector & Hybrid Search:**
-  * **HNSW (Hierarchical Navigable Small World):** Thuật toán indexing mặc định trên PostgreSQL `pgvector` và các Vector DB cho tốc độ tìm kiếm lân cận cực nhanh.
-  * **RRF (Reciprocal Rank Fusion):** Thuật toán kết hợp kết quả xếp hạng giữa **Sparse Search (BM25)** (tìm từ khóa chính xác tên tướng/địa danh) và **Dense Search (Vector Embedding)** (tìm ngữ nghĩa câu hỏi).
+  * **Query-Adaptive Dynamic RRF (Reciprocal Rank Fusion):** Thuật toán kết hợp kết quả xếp hạng giữa **Sparse Search (BM25)** (tìm từ khóa chính xác tên tướng/địa danh/số năm) và **Dense Search (Vector Embedding)** (tìm ngữ nghĩa câu hỏi).
+    - **Year-Centric Queries (`extractHistoricalYears(query) > 0`):** Tự động nâng trọng số $w_{\text{sparse}} = 0.7$, $w_{\text{dense}} = 0.3$ để khóa chặt mốc niên đại lịch sử (ví dụ: `1789`, `938`, `1288`).
+    - **Genealogy & Lineage Queries (quan hệ dòng tộc, thế thứ):** Tự động nâng $w_{\text{graph}} = 0.5$, $w_{\text{dense}} = 0.3$, $w_{\text{sparse}} = 0.2$ kết hợp PostgreSQL Directed BFS Traversal.
+    - **General Semantic Queries:** Cân bằng chuẩn $k=60$.
 
 ### 5.3. Công đoạn Duyệt Đồ thị & Gom nhóm (Graph Traversal & Community Detection)
 *Các thuật toán chạy trực tiếp trên PostgreSQL Relational Graph Schema qua Directed BFS theo hop (hoặc Neo4j khi Scale-Out).*

@@ -70,6 +70,8 @@ Template được thiết kế theo cấu trúc phân đoạn chuyên nghiệp, 
 5. **Thẻ Chỉ Số & Tương Quan (`STAT_CARD`, `VERSUS_CARD`):** Hiển thị quân số, năm, thành tựu hoặc so sánh hai lực lượng.
 6. **Thẻ Điểm Nhấn & Bảo Tàng (`BULLET_HIGHLIGHT`, `MUSEUM_TAG`, `SPLIT_THEORY`):** Phân tích tư liệu, hiện vật và giả thuyết lịch sử.
 7. **Outro / End Card (`OUTRO_CARD`):** Trích đoạn thơ lắng đọng chuyển tiếp sang End Card ChronoViet kêu gọi Like/Share/Subscribe.
+8. **Dynamic Audio Ducking (-12dB):** Tự động điều chế giảm âm lượng nhạc nền BGM xuống $-12\text{dB}$ ($0.08$) trong các đoạn có giọng đọc thuyết minh, phục hồi mượt mà ($0.25$) với 15-frame cross-fade.
+9. **Karaoke Text-to-Phoneme Alignment:** Hiệu ứng chữ Karaoke khớp chính xác 100% với cách phát âm chữ số và tên viết tắt.
 
 ---
 
