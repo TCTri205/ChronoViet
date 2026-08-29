@@ -282,3 +282,36 @@ export function findHistoricalEpoch(year: number): HistoricalEpochRange | undefi
   return undefined;
 }
 
+/**
+ * Normalized lookup helper for Reign Eras (Niên hiệu), resolving collisions via context
+ */
+export function resolveReignEra(
+  reignName: string,
+  context?: { year?: number; dynasty?: string }
+): ReignEraInfo | undefined {
+  if (!reignName || typeof reignName !== 'string') return undefined;
+  const clean = reignName.trim().toLowerCase().normalize('NFC');
+  
+  // 1. Direct match by reignName across all entries
+  const matched = Object.values(REIGN_ERA_DICTIONARY).filter(
+    (info) => info.reignName.toLowerCase().normalize('NFC') === clean
+  );
+  if (matched.length === 0) return undefined;
+  if (matched.length === 1) return matched[0];
+
+  // 2. Disambiguate by year context
+  if (context?.year !== undefined && !isNaN(context.year)) {
+    const byYear = matched.find((m) => context.year! >= m.startYear && context.year! <= m.endYear);
+    if (byYear) return byYear;
+  }
+
+  // 3. Disambiguate by dynasty context
+  if (context?.dynasty) {
+    const cleanDyn = context.dynasty.toLowerCase().normalize('NFC');
+    const byDyn = matched.find((m) => m.dynasty.toLowerCase().normalize('NFC').includes(cleanDyn));
+    if (byDyn) return byDyn;
+  }
+
+  return matched[0];
+}
+

@@ -10,6 +10,7 @@ import {
   VIETNAMESE_PROVINCES_AND_ADMIN_UNITS,
   findHistoricalEpoch,
   HISTORICAL_CHRONOLOGY,
+  resolveHistoricalEpochs,
 } from '@chronoviet/shared-spec';
 
 export interface EnrichedMetadata {
@@ -210,14 +211,18 @@ export function enrichChunkMetadata(
     new Set([...(docMetadata.keyFigures || []), ...extractedFigures])
   );
   const detectedLocation = docMetadata.location || extractLocation(text);
+  const startTime = docMetadata.timeStart ?? extractedBounds.timeStart;
+  const endTime = docMetadata.timeEnd ?? extractedBounds.timeEnd;
+  const resolvedEpochs = resolveHistoricalEpochs(startTime, endTime);
 
   return {
     title: docMetadata.title,
     sourceName: docMetadata.sourceName || docMetadata.title,
     dynasty: detectedDynasty,
+    epochIds: resolvedEpochs.length > 0 ? resolvedEpochs : undefined,
     sourceReliability: docMetadata.sourceReliability || 'LEVEL_1',
-    timeStart: docMetadata.timeStart ?? extractedBounds.timeStart,
-    timeEnd: docMetadata.timeEnd ?? extractedBounds.timeEnd,
+    timeStart: startTime,
+    timeEnd: endTime,
     keyFigures: combinedFigures,
     location: detectedLocation,
     pageNumber: docMetadata.pageNumber,

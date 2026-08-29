@@ -138,10 +138,20 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
     const list: SpeechInterval[] = [];
     if (captions && captions.length > 0) {
       captions.forEach((c) => list.push({ start: c.startFrame, end: c.endFrame }));
+      return list;
     }
+
     let currentFrame = 0;
-    timeline.forEach((scene) => {
+    timeline.forEach((scene, index) => {
       const dur = getSceneDurationInFrames(scene, fps);
+      const effectiveTransition = scene.transition !== undefined ? scene.transition : defaultTransition;
+      const transitionDuration = scene.transitionDurationFrames || 15;
+      const hasTransition =
+        enableTransitions &&
+        effectiveTransition &&
+        effectiveTransition !== 'NONE' &&
+        index < timeline.length - 1;
+
       if (scene.captions && scene.captions.length > 0) {
         scene.captions.forEach((c) =>
           list.push({
@@ -155,10 +165,10 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
           end: currentFrame + dur,
         });
       }
-      currentFrame += dur;
+      currentFrame += dur - (hasTransition ? transitionDuration : 0);
     });
     return list;
-  }, [captions, timeline, fps]);
+  }, [captions, timeline, fps, defaultTransition, enableTransitions]);
 
   return (
     <div

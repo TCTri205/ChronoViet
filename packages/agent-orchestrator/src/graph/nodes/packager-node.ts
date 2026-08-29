@@ -28,7 +28,8 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
 
   for (let i = 0; i < state.scenes.length; i++) {
     const scene = state.scenes[i];
-    const durationInFrames = Math.max(90, Math.ceil(scene.targetDurationSeconds * fps));
+    const effectiveAudioDuration = scene.audioDurationSeconds || scene.targetDurationSeconds || 3;
+    const durationInFrames = Math.max(90, Math.ceil(effectiveAudioDuration * fps));
 
     const sceneCaptions: CaptionWord[] = [];
     if (scene.wordTimestamps && scene.wordTimestamps.length > 0) {

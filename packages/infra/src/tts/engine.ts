@@ -8,6 +8,7 @@ import {
   ttsRequestsTotal,
   ttsSynthesisDurationSeconds,
 } from '../telemetry/metrics.js';
+import { normalizeVietnameseTextForSpeech } from './text-normalizer.js';
 
 const log = createLogger({ service: 'vieneu-tts' });
 
@@ -117,7 +118,7 @@ export class SyntheticTTSFallbackEngine implements IVieNeuEngine {
   }
 
   async synthesize(request: VieNeuTTSRequest): Promise<VieNeuTTSResponse> {
-    const text = request.text.trim();
+    const text = normalizeVietnameseTextForSpeech(request.text || '').trim();
     if (!text) {
       return {
         status: 'ERROR',
@@ -194,8 +195,14 @@ export class VieNeuEngine implements IVieNeuEngine {
 
   async synthesize(request: VieNeuTTSRequest): Promise<VieNeuTTSResponse> {
     const startTime = Date.now();
+    const normalizedText = normalizeVietnameseTextForSpeech(request.text || '').trim();
+    const normalizedRequest: VieNeuTTSRequest = {
+      ...request,
+      text: normalizedText,
+    };
+
     try {
-      const payload = JSON.stringify(request);
+      const payload = JSON.stringify(normalizedRequest);
       const url = new URL('/api/v1/synthesize', this.pythonUrl);
 
       const response = await new Promise<VieNeuTTSResponse>((resolve, reject) => {
@@ -261,7 +268,7 @@ export class VieNeuEngine implements IVieNeuEngine {
       log.warn('tts.python_engine_failed', 'VieNeu Python ONNX engine failed; falling back to synthetic engine', {
         error: err,
         pythonUrl: this.pythonUrl,
-        requestText: request.text,
+        requestText: normalizedRequest.text,
       });
       logFallbackAlert({
         subsystem: 'TTS_ENGINE',
@@ -270,7 +277,7 @@ export class VieNeuEngine implements IVieNeuEngine {
         reason: reason,
         actionRequired: `Start VieNeu Python FastAPI ONNX service at ${this.pythonUrl} (e.g. python app.py)`,
       });
-      return this.fallbackEngine.synthesize(request);
+      return this.fallbackEngine.synthesize(normalizedRequest);
     }
   }
 }

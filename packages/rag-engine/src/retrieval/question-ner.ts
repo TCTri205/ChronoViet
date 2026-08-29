@@ -17,6 +17,7 @@ import {
   MYTHOLOGICAL_ENTITIES_LEXICON,
   MODERN_POLITICAL_LEGAL_LEXICON,
   removeVietnameseAccents,
+  REIGN_ERA_DICTIONARY,
 } from '@chronoviet/shared-spec';
 import { extractHistoricalCandidateSpans } from '@chronoviet/data-ingestion';
 
@@ -47,7 +48,7 @@ const ROMAN_NUMERAL_MAP: Record<string, number> = {
 
 /**
  * Fast pure TypeScript historical temporal extractor (< 0.1ms)
- * Parses AD years, 2-digit "năm XX", BCE/TCN negative years, and Roman/Arabic centuries.
+ * Parses AD years, 2-digit "năm XX", BCE/TCN negative years, Roman/Arabic centuries, and Reign Eras (Niên hiệu).
  */
 export function extractHistoricalYears(queryText: string): HistoricalTemporalInfo {
   if (!queryText || typeof queryText !== 'string' || queryText.trim().length === 0) {
@@ -107,7 +108,23 @@ export function extractHistoricalYears(queryText: string): HistoricalTemporalInf
     }
   }
 
-  // 4. Parse 2-Digit Prefixed Years (e.g. "năm 40", "vào năm 99")
+  // 4. Parse Historical Reign Eras (e.g. "thời Hồng Đức", "niên hiệu Cảnh Hưng", "vua Quang Thuận")
+  for (const info of Object.values(REIGN_ERA_DICTIONARY)) {
+    const eraNameLower = info.reignName.toLowerCase();
+    // Match only full-word phrases or prefixed with "thời/niên hiệu/đời"
+    const eraPattern = new RegExp(`(?:thời|niên\\s+hiệu|triều|đời)?\\s*\\b${eraNameLower}\\b`, 'i');
+    if (eraPattern.test(normalized)) {
+      const medianYear = Math.round((info.startYear + info.endYear) / 2);
+      if (!years.includes(medianYear)) {
+        years.push(medianYear);
+      }
+      if (!temporalRange) {
+        temporalRange = { start: info.startYear, end: info.endYear };
+      }
+    }
+  }
+
+  // 5. Parse 2-Digit Prefixed Years (e.g. "năm 40", "vào năm 99")
   const twoDigitYearRegex = /(?:vào\s+năm|năm)\s+(\d{1,2})\b(?!\s*(?:tcn|trước))/gi;
   let twoDigitMatch: RegExpExecArray | null;
   while ((twoDigitMatch = twoDigitYearRegex.exec(normalized)) !== null) {
@@ -119,7 +136,7 @@ export function extractHistoricalYears(queryText: string): HistoricalTemporalInf
     }
   }
 
-  // 5. Parse 3-4 Digit AD Years (e.g. "938", "1010", "1288", "1789", "1945", "1975")
+  // 6. Parse 3-4 Digit AD Years (e.g. "938", "1010", "1288", "1789", "1945", "1975")
   const adYearRegex = /\b(\d{3,4})\b/g;
   let adMatch: RegExpExecArray | null;
   while ((adMatch = adYearRegex.exec(normalized)) !== null) {

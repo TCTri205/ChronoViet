@@ -8,6 +8,7 @@ import {
   DEITY_TITLE_MAPPINGS,
   REIGN_ERA_DICTIONARY,
   VIETNAMESE_PROVINCES_AND_ADMIN_UNITS,
+  HISTORICAL_CHRONOLOGY,
 } from './dictionaries.js';
 
 
@@ -796,37 +797,29 @@ export function resolveEntityAlias(aliasOrName: string, entityType?: string): En
 }
 
 /**
- * Resolves historical epoch IDs for a given time range (Spec Section 2.1)
- * Enforces Dual-Axis Overlap Protocol for 1771 - 1777 (EPOCH_09 and EPOCH_10)
+ * Maps a Gregorian or BCE year interval to matching ChronoViet Canonical Epoch IDs
+ * Uses exact interval overlap against HISTORICAL_CHRONOLOGY and enforces Dual-Axis Overlap for 1771 - 1777 (EPOCH_09 and EPOCH_10)
  */
 export function resolveHistoricalEpochs(timeStart?: number, timeEnd?: number): string[] {
   if (timeStart === undefined && timeEnd === undefined) return [];
   const start = timeStart ?? timeEnd!;
   const end = timeEnd ?? timeStart!;
+  const minYear = Math.min(start, end);
+  const maxYear = Math.max(start, end);
 
   const epochSet = new Set<string>();
 
   // Dual-Axis Overlap Protocol (Spec 2.1): 1771 - 1777 must have BOTH EPOCH_09 and EPOCH_10
-  if ((start >= 1771 && start <= 1777) || (end >= 1771 && end <= 1777) || (start <= 1771 && end >= 1777)) {
+  if ((minYear <= 1777 && maxYear >= 1771)) {
     epochSet.add('EPOCH_09');
     epochSet.add('EPOCH_10');
   }
 
-  if (start < -179 || (start <= -179 && end <= -179)) epochSet.add('EPOCH_01');
-  if (start >= -179 && start < 938) epochSet.add('EPOCH_02');
-  if (start >= 938 && start < 1009) epochSet.add('EPOCH_03');
-  if (start >= 1009 && start < 1225) epochSet.add('EPOCH_04');
-  if (start >= 1225 && start < 1400) epochSet.add('EPOCH_05');
-  if (start >= 1400 && start < 1407) epochSet.add('EPOCH_06');
-  if (start >= 1407 && start < 1428) epochSet.add('EPOCH_07');
-  if (start >= 1428 && start < 1527) epochSet.add('EPOCH_08');
-  if (start >= 1527 && start <= 1777) epochSet.add('EPOCH_09');
-  if (start >= 1771 && start < 1802) epochSet.add('EPOCH_10');
-  if (start >= 1802 && start < 1858) epochSet.add('EPOCH_11');
-  if (start >= 1858 && start < 1945) epochSet.add('EPOCH_12');
-  if (start >= 1945 && start < 1954) epochSet.add('EPOCH_13');
-  if (start >= 1954 && start < 1975) epochSet.add('EPOCH_14');
-  if (start >= 1975) epochSet.add('EPOCH_15');
+  for (const epoch of HISTORICAL_CHRONOLOGY) {
+    if (epoch.startYear <= maxYear && epoch.endYear >= minYear) {
+      epochSet.add(epoch.epochId);
+    }
+  }
 
   return Array.from(epochSet);
 }

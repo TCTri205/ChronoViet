@@ -672,9 +672,18 @@ export async function seedDualBranch(
                )
                VALUES ${valueRows.join(', ')}
                ON CONFLICT (id) DO UPDATE SET
+                 title = EXCLUDED.title,
                  text_content = EXCLUDED.text_content,
-                 embedding = EXCLUDED.embedding,
+                 dynasty = EXCLUDED.dynasty,
                  epoch_ids = EXCLUDED.epoch_ids,
+                 source_reliability = EXCLUDED.source_reliability,
+                 parent_chunk_id = EXCLUDED.parent_chunk_id,
+                 time_start = EXCLUDED.time_start,
+                 time_end = EXCLUDED.time_end,
+                 key_figures = EXCLUDED.key_figures,
+                 location = EXCLUDED.location,
+                 page_number = EXCLUDED.page_number,
+                 embedding = EXCLUDED.embedding,
                  metadata = EXCLUDED.metadata;`,
               values
             );
@@ -713,6 +722,19 @@ export async function seedDualBranch(
         }
       }
     });
+
+    // Refresh Materialized Views on PostgreSQL for instant GraphRAG lineage traversal
+    if (!isVectorOnly && productionTriplesMap.size > 0) {
+      try {
+        await query(`REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dynasty_lineage_paths;`);
+      } catch {
+        try {
+          await query(`REFRESH MATERIALIZED VIEW mv_dynasty_lineage_paths;`);
+        } catch {
+          // Graceful fallback if view is not initialized
+        }
+      }
+    }
   } else {
     // 4. In-Memory Mock Ingestion Fallback (for testing / eval environments)
     for (const entity of entityMap.values()) {
@@ -766,19 +788,6 @@ export async function seedDualBranch(
           entity_id: entityId,
           chunk_id: chunk.id,
         });
-      }
-    }
-
-    // Refresh Materialized Views for instant GraphRAG lineage traversal
-    if (pgConnected && !isVectorOnly && productionTriplesMap.size > 0) {
-      try {
-        await query(`REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dynasty_lineage_paths;`);
-      } catch {
-        try {
-          await query(`REFRESH MATERIALIZED VIEW mv_dynasty_lineage_paths;`);
-        } catch {
-          // Graceful fallback if view is not initialized
-        }
       }
     }
   }
