@@ -26,7 +26,7 @@
     "@chronoviet/rag-engine": "workspace:*",
     "@chronoviet/shared-spec": "workspace:*",
     "@chronoviet/vlm-inspector": "workspace:*",
-    "@langchain/core": "^0.3.80",
+    "@langchain/core": "^1.2.9",
     "@langchain/langgraph": "^0.2.74"
   },
   "devDependencies": {
