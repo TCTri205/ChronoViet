@@ -328,11 +328,14 @@ export function slugify(text: string): string {
 
 export function buildCanonicalId(name: string, entityType: string): string {
   let cleanName = name.trim();
+  const prefix = getCanonicalEntityIdPrefix(entityType);
   if (entityType === 'HISTORICAL_PERSON') {
     cleanName = cleanName.replace(/^(?:Nhân\s+Huệ\s+Vương|Chiêu\s+Minh\s+Đại\s+Vương|Chiêu\s+Văn\s+Vương|Bình\s+Định\s+Vương|Bố\s+Cái\s+Đại\s+Vương|Tiền\s+Ngô\s+Vương|Vạn\s+Thắng\s+Vương|Hưng\s+Đạo\s+Đại\s+Vương|Hưng\s+Đạo\s+Vương|Đức\s+Thánh\s+Trần|Đức\s+Thánh|Vua|Hoàng\s+đế|Thái\s+sư|Tướng\s+quân|Đại\s+vương|Chúa|Thượng\s+hoàng|Thái\s+úy|Tổng\s+binh|Đại\s+tướng|Thủ\s+tướng|Anh\s+hùng|Sứ\s+thần|Sử\s+gia|Sử\s+thần|Tăng\s+thống|Trạng\s+nguyên|Bảng\s+nhãn|Danh\s+sĩ|Nữ\s+tướng)\s+/i, '');
   }
-  const prefix = getCanonicalEntityIdPrefix(entityType);
-  const slug = slugify(cleanName);
+  let slug = slugify(cleanName);
+  if (prefix && slug.startsWith(prefix)) {
+    slug = slug.substring(prefix.length);
+  }
   return `${prefix}${slug}`;
 }
 
@@ -440,16 +443,6 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
     const rawSpanText = text.substring(m.start, m.end);
     if (!isValidCandidateSpan(rawSpanText)) continue;
 
-    // For PERSON: preserve distinct surface ID for aliases (e.g. Thục Phán -> person_thuc_phan)
-    // For DYNASTY_ERA, EVENT_BATTLE, ARTIFACT, DOCUMENT_CULTURE: always use master canonicalId
-    const isPerson = m.entry.type === 'HISTORICAL_PERSON';
-    let cleanSpanName = rawSpanText;
-    if (isPerson) {
-      cleanSpanName = rawSpanText.replace(/^(?:quốc\s+sư|thiền\s+sư|sư|thầy\s+giáo|thầy|vua|hoàng\s+đế|thái\s+tử|hoàng\s+tử|chúa|đại\s+tướng|tướng|thái\s+úy|thái\s+sư|bình\s+định\s+vương|bắc\s+bình\s+vương|nam\s+việt\s+vương|vạn\s+thắng\s+vương)\s+/i, '').trim();
-    }
-    const isPersonAlias = isPerson && slugify(cleanSpanName) !== slugify(m.entry.name);
-    const suggestedId = isPersonAlias ? buildCanonicalId(cleanSpanName, m.entry.type) : m.entry.canonicalId;
-
     rawSpans.push({
       text: rawSpanText,
       type: m.entry.type,
@@ -457,7 +450,7 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
       endOffset: m.end,
       confidence: 0.99,
       sourceLayer: 'GAZETTEER',
-      suggestedCanonicalId: suggestedId,
+      suggestedCanonicalId: m.entry.canonicalId,
       priority: 30,
     });
   }
@@ -554,13 +547,12 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
     // Infer taxonomy type from text features
     const inferredType = inferEntityTypeFromName(spanText);
     const canonicalInfo = resolveCanonicalEntity(spanText);
-    const isPerson = (canonicalInfo?.type || inferredType) === 'HISTORICAL_PERSON';
-    const isPersonAlias = isPerson && canonicalInfo && slugify(canonicalInfo.canonicalName) !== slugify(spanText);
-    const canonicalId = (canonicalInfo && !isPersonAlias) ? canonicalInfo.entityId : buildCanonicalId(spanText, inferredType);
+    const effectiveType = canonicalInfo?.type || inferredType;
+    const canonicalId = canonicalInfo ? canonicalInfo.entityId : buildCanonicalId(spanText, effectiveType);
 
     rawSpans.push({
       text: spanText,
-      type: inferredType,
+      type: effectiveType,
       startOffset,
       endOffset,
       confidence: 0.85,
@@ -586,8 +578,7 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
             span.text = stripped;
             span.type = 'HISTORICAL_PERSON';
             const reCanon = resolveCanonicalEntity(stripped);
-            const isReAlias = reCanon && slugify(reCanon.canonicalName) !== slugify(stripped);
-            span.suggestedCanonicalId = (reCanon && !isReAlias) ? reCanon.entityId : buildCanonicalId(stripped, 'HISTORICAL_PERSON');
+            span.suggestedCanonicalId = reCanon ? reCanon.entityId : buildCanonicalId(stripped, 'HISTORICAL_PERSON');
             break;
           }
         }
@@ -631,10 +622,10 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
       // If current span is nested inside existing longer span:
       const isSpanNestedInOverlapping = span.startOffset >= overlapping.startOffset && span.endOffset <= overlapping.endOffset;
       if (isSpanNestedInOverlapping) {
-        // If outer is EVENT_BATTLE: allow PERSON in any event, or LOCATION in Khởi nghĩa / Chiến dịch
+        // If outer is EVENT_BATTLE, ORGANIZATION, or DOCUMENT_CULTURE: allow nested sub-entities (HISTORICAL_PERSON, LOCATION, DYNASTY_ERA, ARTIFACT, DOCUMENT_CULTURE)
         if (
-          (span.type === 'HISTORICAL_PERSON' && overlapping.type === 'EVENT_BATTLE') ||
-          (span.type === 'LOCATION' && overlapping.type === 'EVENT_BATTLE' && (overlapping.text.toLowerCase().includes('khởi nghĩa') || overlapping.text.toLowerCase().includes('chiến dịch') || overlapping.text.toLowerCase().includes('căn cứ')))
+          (overlapping.type === 'EVENT_BATTLE' || overlapping.type === 'ORGANIZATION' || overlapping.type === 'DOCUMENT_CULTURE') &&
+          (span.type === 'HISTORICAL_PERSON' || span.type === 'DYNASTY_ERA' || span.type === 'LOCATION' || span.type === 'ARTIFACT' || span.type === 'DOCUMENT_CULTURE')
         ) {
           finalSpans.push({
             text: span.text,

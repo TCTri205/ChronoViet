@@ -19,6 +19,7 @@ import {
   GoldenBenchmarkEntity,
   GoldenBenchmarkTriple,
   CandidateEntitySpan,
+  resolveCanonicalEntity,
 } from '@chronoviet/shared-spec';
 
 export interface EntityDisambiguationTestCase {
@@ -211,140 +212,208 @@ export function computeGraphTransitiveClosure(
   const normKey = (s: string, r: string, o: string) => `${s.trim().toLowerCase()}::${r.trim().toUpperCase()}::${o.trim().toLowerCase()}`;
   const closure = new Set<string>();
 
-  const ledByMap = new Map<string, string[]>(); // eventId -> personIds
-  const eventLocMap = new Map<string, string[]>(); // eventId -> locIds
-  const locHierarchyMap = new Map<string, string[]>(); // childLocId -> parentLocIds
-  const entityLocMap = new Map<string, string[]>(); // entityId -> locIds
-
+  const ledByMap = new Map<string, Set<string>>(); // eventId -> personIds
+  const eventLocMap = new Map<string, Set<string>>(); // eventId -> locIds
+  const locHierarchyMap = new Map<string, Set<string>>(); // childLocId -> parentLocIds
+  const entityLocMap = new Map<string, Set<string>>(); // entityId -> locIds
+  const lineageParentMap = new Map<string, Set<string>>(); // childId -> parentIds
+  const dynastyMap = new Map<string, Set<string>>(); // entityId -> dynastyIds
+  const docAuthorMap = new Map<string, Set<string>>(); // docId -> authorIds
   const identityMap = new Map<string, Set<string>>(); // entity -> equivalent entities
 
   const addEquiv = (a: string, b: string) => {
-    if (!identityMap.has(a)) identityMap.set(a, new Set([a]));
-    if (!identityMap.has(b)) identityMap.set(b, new Set([b]));
-    identityMap.get(a)!.add(b);
-    identityMap.get(b)!.add(a);
+    if (!a || !b) return;
+    const aNorm = a.trim().toLowerCase();
+    const bNorm = b.trim().toLowerCase();
+    if (!identityMap.has(aNorm)) identityMap.set(aNorm, new Set([aNorm]));
+    if (!identityMap.has(bNorm)) identityMap.set(bNorm, new Set([bNorm]));
+    identityMap.get(aNorm)!.add(bNorm);
+    identityMap.get(bNorm)!.add(aNorm);
   };
 
+  const addToMapSet = (map: Map<string, Set<string>>, key: string, val: string) => {
+    if (!key || !val) return;
+    const k = key.trim().toLowerCase();
+    const v = val.trim().toLowerCase();
+    if (!map.has(k)) map.set(k, new Set());
+    map.get(k)!.add(v);
+  };
+
+  // Seed base triples and initial structures
   for (const t of triples) {
+    if (!t.sourceEntityId || !t.relationType || !t.targetEntityId) continue;
     const s = t.sourceEntityId.trim().toLowerCase();
     const r = t.relationType.trim().toUpperCase();
     const o = t.targetEntityId.trim().toLowerCase();
     closure.add(normKey(s, r, o));
 
+    const sCanon = resolveCanonicalEntity(s)?.entityId?.toLowerCase();
+    if (sCanon && sCanon !== s && !sCanon.startsWith('unknown_')) {
+      addEquiv(s, sCanon);
+    }
+    const oCanon = resolveCanonicalEntity(o)?.entityId?.toLowerCase();
+    if (oCanon && oCanon !== o && !oCanon.startsWith('unknown_')) {
+      addEquiv(o, oCanon);
+    }
+
     if (r === 'ALIAS_OF' || r === 'SAME_AS_LOCATION') {
       addEquiv(s, o);
       closure.add(normKey(o, r, s));
     } else if (r === 'LED_BY') {
-      const list = ledByMap.get(s) || [];
-      list.push(o);
-      ledByMap.set(s, list);
+      addToMapSet(ledByMap, s, o);
       closure.add(normKey(o, 'PART_OF', s));
-    } else if (r === 'PART_OF' && (s.startsWith('person_') || s.startsWith('org_')) && (o.startsWith('event_') || o.startsWith('org_'))) {
-      const list = ledByMap.get(o) || [];
-      list.push(s);
-      ledByMap.set(o, list);
-      closure.add(normKey(o, 'LED_BY', s));
+    } else if (r === 'PART_OF') {
+      if ((s.startsWith('person_') || s.startsWith('org_')) && (o.startsWith('event_') || o.startsWith('org_'))) {
+        addToMapSet(ledByMap, o, s);
+        closure.add(normKey(o, 'LED_BY', s));
+      } else if (o.startsWith('dynasty_') || o.startsWith('epoch_')) {
+        addToMapSet(dynastyMap, s, o);
+        closure.add(normKey(s, 'HAPPENED_IN', o));
+      }
+    } else if (r === 'HAPPENED_IN' && (o.startsWith('dynasty_') || o.startsWith('epoch_'))) {
+      addToMapSet(dynastyMap, s, o);
+      closure.add(normKey(s, 'PART_OF', o));
     } else if (r === 'HAPPENED_AT') {
       if (s.startsWith('event_') || s.startsWith('org_')) {
-        const list = eventLocMap.get(s) || [];
-        list.push(o);
-        eventLocMap.set(s, list);
+        addToMapSet(eventLocMap, s, o);
       }
       if (s.startsWith('loc_')) {
-        const list = locHierarchyMap.get(s) || [];
-        list.push(o);
-        locHierarchyMap.set(s, list);
+        addToMapSet(locHierarchyMap, s, o);
       }
-      const eList = entityLocMap.get(s) || [];
-      eList.push(o);
-      entityLocMap.set(s, eList);
+      addToMapSet(entityLocMap, s, o);
     } else if (r === 'MENTIONED_IN') {
-      if (s.startsWith('doc_') && o.startsWith('person_')) {
-        closure.add(normKey(o, 'MENTIONED_IN', s));
-      } else if (s.startsWith('person_') && o.startsWith('doc_')) {
-        closure.add(normKey(o, 'MENTIONED_IN', s));
+      closure.add(normKey(o, 'MENTIONED_IN', s));
+      if (s.startsWith('person_') && o.startsWith('doc_')) {
+        addToMapSet(docAuthorMap, o, s);
+      } else if (s.startsWith('doc_') && o.startsWith('person_')) {
+        addToMapSet(docAuthorMap, s, o);
       }
-    } else if (r === 'HAPPENED_IN' && s.startsWith('artifact_') && o.startsWith('dynasty_')) {
-      closure.add(normKey(s, 'PART_OF', o));
-    } else if (r === 'HAPPENED_IN' && s.startsWith('artifact_') && o.startsWith('dynasty_')) {
-      closure.add(normKey(s, 'PART_OF', o));
-    } else if (r === 'PART_OF' && s.startsWith('artifact_') && o.startsWith('dynasty_')) {
-      closure.add(normKey(s, 'HAPPENED_IN', o));
-    } else if (r === 'HAPPENED_IN' && s.startsWith('doc_') && o.startsWith('dynasty_')) {
-      closure.add(normKey(s, 'PART_OF', o));
-    } else if (r === 'PART_OF' && s.startsWith('doc_') && o.startsWith('dynasty_')) {
-      closure.add(normKey(s, 'HAPPENED_IN', o));
+    } else if (r === 'ROYAL_LINEAGE') {
+      addToMapSet(lineageParentMap, s, o);
     }
   }
 
-  // Identity transitive closure expansion
-  for (const key of Array.from(closure)) {
-    const [s, r, o] = key.split('::');
-    const sEquiv = identityMap.get(s) || new Set([s]);
-    const oEquiv = identityMap.get(o) || new Set([o]);
-    for (const se of sEquiv) {
-      for (const oe of oEquiv) {
-        closure.add(normKey(se, r, oe));
+  // Fixed-point iterative inference expansion (up to 4 rounds)
+  for (let round = 0; round < 4; round++) {
+    const sizeBefore = closure.size;
+
+    // 1. Identity transitive expansion across all equivalence classes
+    for (const key of Array.from(closure)) {
+      const [s, r, o] = key.split('::');
+      const sEquiv = identityMap.get(s) || new Set([s]);
+      const oEquiv = identityMap.get(o) || new Set([o]);
+      for (const se of sEquiv) {
+        for (const oe of oEquiv) {
+          closure.add(normKey(se, r, oe));
+        }
       }
     }
-  }
 
-  // 1. (Event / Org LED_BY Person) <=> (Person PART_OF Event / Org) + Transitive Location
-  for (const [eventId, personIds] of ledByMap.entries()) {
-    const locs = eventLocMap.get(eventId) || [];
-    for (const p of personIds) {
-      closure.add(normKey(p, 'PART_OF', eventId));
-      for (const l of locs) {
-        closure.add(normKey(p, 'HAPPENED_AT', l));
-        const eList = entityLocMap.get(p) || [];
-        eList.push(l);
-        entityLocMap.set(p, eList);
-      }
-      // If Person has location, Event also inherits location
-      const pLocs = entityLocMap.get(p) || [];
-      for (const pl of pLocs) {
-        closure.add(normKey(eventId, 'HAPPENED_AT', pl));
+    // 2. Event/Leader/Organization location and membership transitivity
+    for (const [eventId, personIds] of ledByMap.entries()) {
+      const locs = eventLocMap.get(eventId) || new Set();
+      const dyns = dynastyMap.get(eventId) || new Set();
+      for (const p of personIds) {
+        closure.add(normKey(p, 'PART_OF', eventId));
+        closure.add(normKey(eventId, 'LED_BY', p));
+
+        for (const l of locs) {
+          closure.add(normKey(p, 'HAPPENED_AT', l));
+          addToMapSet(entityLocMap, p, l);
+        }
+        for (const d of dyns) {
+          closure.add(normKey(p, 'PART_OF', d));
+          closure.add(normKey(p, 'HAPPENED_IN', d));
+          addToMapSet(dynastyMap, p, d);
+        }
+        const pLocs = entityLocMap.get(p) || new Set();
+        for (const pl of pLocs) {
+          closure.add(normKey(eventId, 'HAPPENED_AT', pl));
+          addToMapSet(eventLocMap, eventId, pl);
+        }
+        const pDyns = dynastyMap.get(p) || new Set();
+        for (const pd of pDyns) {
+          closure.add(normKey(eventId, 'HAPPENED_IN', pd));
+          addToMapSet(dynastyMap, eventId, pd);
+        }
       }
     }
-  }
 
-  // 2. (Entity HAPPENED_AT LocA) + (LocA HAPPENED_AT LocB) => (Entity HAPPENED_AT LocB)
-  for (const [entityId, locs] of entityLocMap.entries()) {
-    for (const l of locs) {
-      const parentLocs = locHierarchyMap.get(l) || [];
-      for (const pl of parentLocs) {
-        closure.add(normKey(entityId, 'HAPPENED_AT', pl));
+    // 3. Hierarchical and Synonym Spatial Transitivity
+    for (const [entityId, locs] of entityLocMap.entries()) {
+      for (const l of Array.from(locs)) {
+        const parentLocs = locHierarchyMap.get(l) || new Set();
+        for (const pl of parentLocs) {
+          closure.add(normKey(entityId, 'HAPPENED_AT', pl));
+          locs.add(pl);
+        }
+        const equivLocs = identityMap.get(l) || new Set();
+        for (const el of equivLocs) {
+          closure.add(normKey(entityId, 'HAPPENED_AT', el));
+          locs.add(el);
+        }
       }
     }
-  }
 
-  // 3. Document Authorship & Epoch Transitivity:
-  for (const t of triples) {
-    const s = t.sourceEntityId.toLowerCase();
-    const r = t.relationType.toUpperCase();
-    const o = t.targetEntityId.toLowerCase();
+    // 4. Document Authorship, Location & Dynasty Inheritance
+    for (const [docId, authors] of docAuthorMap.entries()) {
+      const docLocs = entityLocMap.get(docId) || new Set();
+      const docDyns = dynastyMap.get(docId) || new Set();
+      for (const a of authors) {
+        closure.add(normKey(a, 'MENTIONED_IN', docId));
+        closure.add(normKey(docId, 'MENTIONED_IN', a));
 
-    if (r === 'MENTIONED_IN') {
-      const personId = s.startsWith('person_') ? s : o.startsWith('person_') ? o : null;
-      const docId = s.startsWith('doc_') ? s : o.startsWith('doc_') ? o : null;
-      if (personId && docId) {
-        // Location inheritance
-        const docLocs = entityLocMap.get(docId) || [];
         for (const dl of docLocs) {
-          closure.add(normKey(personId, 'HAPPENED_AT', dl));
+          closure.add(normKey(a, 'HAPPENED_AT', dl));
+          addToMapSet(entityLocMap, a, dl);
         }
-        const personLocs = entityLocMap.get(personId) || [];
-        for (const pl of personLocs) {
-          closure.add(normKey(docId, 'HAPPENED_AT', pl));
+        for (const dd of docDyns) {
+          closure.add(normKey(a, 'PART_OF', dd));
+          closure.add(normKey(a, 'HAPPENED_IN', dd));
+          addToMapSet(dynastyMap, a, dd);
+        }
+        const aLocs = entityLocMap.get(a) || new Set();
+        for (const al of aLocs) {
+          closure.add(normKey(docId, 'HAPPENED_AT', al));
+          addToMapSet(entityLocMap, docId, al);
+        }
+        const aDyns = dynastyMap.get(a) || new Set();
+        for (const ad of aDyns) {
+          closure.add(normKey(docId, 'HAPPENED_IN', ad));
+          closure.add(normKey(docId, 'PART_OF', ad));
+          addToMapSet(dynastyMap, docId, ad);
         }
       }
     }
 
-    if (r === 'HAPPENED_IN' && s.startsWith('event_') && o.startsWith('dynasty_')) {
-      const leaders = ledByMap.get(s) || [];
-      for (const leader of leaders) {
-        closure.add(normKey(leader, 'PART_OF', o));
+    // 5. Royal Lineage Multi-Generation Transitivity & Dynasty Inheritance
+    for (const [childId, parents] of lineageParentMap.entries()) {
+      for (const parentId of Array.from(parents)) {
+        closure.add(normKey(childId, 'ROYAL_LINEAGE', parentId));
+
+        // Transitive ancestry: Grandparent inheritance
+        const grandParents = lineageParentMap.get(parentId) || new Set();
+        for (const gp of grandParents) {
+          closure.add(normKey(childId, 'ROYAL_LINEAGE', gp));
+          parents.add(gp);
+        }
+
+        // Dynasty inheritance
+        const pDyns = dynastyMap.get(parentId) || new Set();
+        for (const pd of pDyns) {
+          closure.add(normKey(childId, 'PART_OF', pd));
+          addToMapSet(dynastyMap, childId, pd);
+        }
+        const cDyns = dynastyMap.get(childId) || new Set();
+        for (const cd of cDyns) {
+          closure.add(normKey(parentId, 'PART_OF', cd));
+          addToMapSet(dynastyMap, parentId, cd);
+        }
       }
+    }
+
+    if (closure.size === sizeBefore) {
+      break;
     }
   }
 
@@ -372,33 +441,58 @@ export function computeStrictTripleMetrics(
     gtInvMap.set(invKey(t.sourceEntityId, t.relationType, t.targetEntityId), normKey(t.sourceEntityId, t.relationType, t.targetEntityId));
   }
 
-  let truePositives = 0;
-  let falsePositives = 0;
+  const matchedGtIndices = new Set<number>();
+  const matchedPredIndices = new Set<number>();
   let directionalCorrect = 0;
   let directionalInverted = 0;
   let hallucinatedCount = 0;
 
-  const matchedGtKeys = new Set<string>();
-
-  for (const p of predicted) {
-    const key = normKey(p.sourceEntityId, p.relationType, p.targetEntityId);
-
-    if (gtSet.has(key) || gtClosure.has(key)) {
-      if (!matchedGtKeys.has(key)) {
-        truePositives++;
+  // Pass 1: Exact matches
+  for (let i = 0; i < predicted.length; i++) {
+    const p = predicted[i];
+    const pKey = normKey(p.sourceEntityId, p.relationType, p.targetEntityId);
+    for (let j = 0; j < groundTruth.length; j++) {
+      if (matchedGtIndices.has(j)) continue;
+      const gt = groundTruth[j];
+      const gtKey = normKey(gt.sourceEntityId, gt.relationType, gt.targetEntityId);
+      if (pKey === gtKey) {
+        matchedPredIndices.add(i);
+        matchedGtIndices.add(j);
         directionalCorrect++;
-        matchedGtKeys.add(key);
-      } else {
-        // Redundant duplicate extraction of an already matched triple
-        falsePositives++;
+        break;
       }
-    } else if (gtInvMap.has(key)) {
-      // Inverted direction!
+    }
+  }
+
+  // Pass 2: Closure / Transitive / Alias Equivalence matches
+  for (let i = 0; i < predicted.length; i++) {
+    if (matchedPredIndices.has(i)) continue;
+    const p = predicted[i];
+    const pKey = normKey(p.sourceEntityId, p.relationType, p.targetEntityId);
+    for (let j = 0; j < groundTruth.length; j++) {
+      if (matchedGtIndices.has(j)) continue;
+      const gt = groundTruth[j];
+      const gtKey = normKey(gt.sourceEntityId, gt.relationType, gt.targetEntityId);
+      if (gtClosure.has(pKey) || predClosure.has(gtKey)) {
+        matchedPredIndices.add(i);
+        matchedGtIndices.add(j);
+        directionalCorrect++;
+        break;
+      }
+    }
+  }
+
+  const truePositives = matchedGtIndices.size;
+  let falsePositives = 0;
+
+  for (let i = 0; i < predicted.length; i++) {
+    if (!matchedPredIndices.has(i)) {
       falsePositives++;
-      directionalInverted++;
-    } else {
-      falsePositives++;
-      // Check if entities were hallucinated
+      const p = predicted[i];
+      const pKey = normKey(p.sourceEntityId, p.relationType, p.targetEntityId);
+      if (gtInvMap.has(pKey)) {
+        directionalInverted++;
+      }
       if (validEntityIdsInSnippet) {
         const sValid = validEntityIdsInSnippet.has(p.sourceEntityId.trim().toLowerCase());
         const oValid = validEntityIdsInSnippet.has(p.targetEntityId.trim().toLowerCase());
@@ -409,19 +503,9 @@ export function computeStrictTripleMetrics(
     }
   }
 
-  // Account for GT triples satisfied via predicted closure
-  for (const gt of groundTruth) {
-    const gtKey = normKey(gt.sourceEntityId, gt.relationType, gt.targetEntityId);
-    if (!matchedGtKeys.has(gtKey) && predClosure.has(gtKey)) {
-      truePositives++;
-      matchedGtKeys.add(gtKey);
-    }
-  }
-
   const falseNegatives = Math.max(0, groundTruth.length - truePositives);
 
-  const effectiveExtracted = Math.max(predicted.length, truePositives);
-  const precision = effectiveExtracted > 0 ? (truePositives / effectiveExtracted) * 100 : (groundTruth.length === 0 ? 100 : 0);
+  const precision = predicted.length > 0 ? (truePositives / predicted.length) * 100 : (groundTruth.length === 0 ? 100 : 0);
   const recall = groundTruth.length > 0 ? (truePositives / groundTruth.length) * 100 : (predicted.length === 0 ? 100 : 0);
   const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
 

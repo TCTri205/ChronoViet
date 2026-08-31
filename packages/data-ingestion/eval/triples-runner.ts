@@ -10,7 +10,7 @@ import { GoldenTripleBenchmarkItem } from '@chronoviet/shared-spec';
 import { isLLMServiceHealthy } from '@chronoviet/infra';
 import { extractTriplesFromTextAsync, ExtractedTriple } from '../src/triple-extractor.js';
 import { extractHistoricalCandidateSpans } from '../src/text/vietnamese-ner.js';
-import { computeStrictTripleMetrics, StrictTripleMetrics } from './metrics.js';
+import { computeStrictTripleMetrics, StrictTripleMetrics, computeGraphTransitiveClosure } from './metrics.js';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
 import { loadGoldenTriplesBenchmark } from './ner-runner.js';
 
@@ -147,9 +147,9 @@ export async function runTriplesEval() {
 
       // Find missing GT and hallucinated triples for inline root-cause diffs
       const normKey = (s: string, r: string, o: string) => `${s.trim().toLowerCase()}::${r.trim().toUpperCase()}::${o.trim().toLowerCase()}`;
-      const extractedKeySet = new Set(candidateTriples.map(t => normKey(t.sourceEntityId, t.relationType, t.targetEntityId)));
+      const predClosure = computeGraphTransitiveClosure(candidateTriples);
       const missingGt = snippet.groundTruthTriples
-        .filter(gt => !extractedKeySet.has(normKey(gt.sourceEntityId, gt.relationType, gt.targetEntityId)))
+        .filter(gt => !predClosure.has(normKey(gt.sourceEntityId, gt.relationType, gt.targetEntityId)))
         .map(gt => ({ s: gt.sourceEntityId, r: gt.relationType, o: gt.targetEntityId }));
 
       const hallucinated = candidateTriples

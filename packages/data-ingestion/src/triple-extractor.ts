@@ -579,8 +579,42 @@ export function extractSyntacticParentheticalTriples(
     }
   }
 
-  // 6. Ancient Toponym to Modern Administrative Matcher:
-  // e.g. "Vùng đất Ái Châu thời Bắc thuộc nay là địa giới hành chính của tỉnh Thanh Hóa"
+  // 6. Ancient Toponym to Modern Administrative Matcher (Span Pairwise & Regex):
+  const locations = candidateSpans.filter((s) => s.type === 'LOCATION');
+  const SAME_AS_LOC_PATTERN = /\b(?:xưa\s+nay\s+thuộc|nay\s+thuộc|nay\s+là|ngày\s+nay\s+là|thời\s+nguyễn\s+là|hiện\s+nay\s+là|vốn\s+là|xưa\s+là|tương\s+ứng\s+với|được\s+đổi\s+tên\s+thành)\b/i;
+  for (let i = 0; i < locations.length; i++) {
+    for (let j = 0; j < locations.length; j++) {
+      if (i === j) continue;
+      const locA = locations[i];
+      const locB = locations[j];
+      if (locA.startOffset < locB.startOffset) {
+        const charDist = locB.startOffset - locA.endOffset;
+        if (charDist > 120 || charDist < 0) continue;
+        const mid = text.substring(locA.endOffset, locB.startOffset);
+        if (mid.includes('\n') || mid.includes('.')) continue;
+        if (SAME_AS_LOC_PATTERN.test(mid)) {
+          const sId = locA.suggestedCanonicalId || `loc_${slugify(locA.text)}`;
+          const tId = locB.suggestedCanonicalId || `loc_${slugify(locB.text)}`;
+          if (sId !== tId) {
+            const triple = validateAndCanonicalizeTriple(
+              { id: sId, name: locA.text, type: 'LOCATION' },
+              'SAME_AS_LOCATION',
+              { id: tId, name: locB.text, type: 'LOCATION' },
+              1.0
+            );
+            if (triple) {
+              const key = `${triple.sourceEntityId}:${triple.relationType}:${triple.targetEntityId}`;
+              if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                results.push(triple);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   const TOPONYM_REGEX = /([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\-]+(?:\s+[A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\-]+){0,3})[^.,\n]{0,60}?(?:xưa\s+nay\s+thuộc|nay\s+là|nay\s+thuộc|xưa\s+là|vốn\s+là)[^.,\n]{0,40}?([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\-]+(?:\s+[A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\-]+){0,3})/gu;
   while ((match = TOPONYM_REGEX.exec(text)) !== null) {
     const rawA = match[1].trim();
@@ -640,6 +674,13 @@ export function extractRoyalLineageTriples(
       if (p1.startOffset < p2.startOffset) {
         const charDist = p2.startOffset - p1.endOffset;
         if (charDist > 120 || charDist < 0) continue;
+
+        // Check for intervening persons to prevent multi-generation skip over intermediate heir
+        const hasInterveningPerson = persons.some(
+          (other) => other.startOffset > p1.endOffset && other.endOffset < p2.startOffset
+        );
+        if (hasInterveningPerson) continue;
+
         const mid = text.substring(p1.endOffset, p2.startOffset).trim();
         if (mid.includes('\n') || mid.includes('.')) continue;
 
@@ -689,14 +730,20 @@ export function extractRoyalLineageTriples(
 
 export const VIETNAMESE_LANDMARK_PARENT_MAP: Record<string, string> = {
   'loc_thanh_co_loa': 'loc_dong_anh',
+  'loc_co_loa': 'loc_dong_anh',
   'loc_dong_anh': 'loc_thang_long',
   'loc_dinh_doc_lap': 'loc_sai_gon',
   'loc_thuy_dien_hoa_binh': 'loc_hoa_binh',
   'loc_can_cu_vu_quang': 'loc_ha_tinh',
+  'loc_vu_quang': 'loc_ha_tinh',
   'loc_can_cu_phu_dien': 'loc_thanh_hoa',
   'loc_phu_dien': 'loc_thanh_hoa',
   'loc_nui_nua': 'loc_thanh_hoa',
   'loc_nong_cong': 'loc_thanh_hoa',
+  'loc_vinh_loc': 'loc_thanh_hoa',
+  'loc_tho_xuan': 'loc_thanh_hoa',
+  'loc_lam_son': 'loc_thanh_hoa',
+  'loc_phong_khe': 'loc_dong_anh',
   'loc_nui_ban': 'loc_thua_thien_hue',
   'loc_muong_phang': 'loc_dien_bien',
   'loc_dien_bien_phu': 'loc_dien_bien',
@@ -709,7 +756,14 @@ export const VIETNAMESE_LANDMARK_PARENT_MAP: Record<string, string> = {
   'loc_chua_mot_cot': 'loc_thang_long',
   'loc_hoang_thanh_thang_long': 'loc_thang_long',
   'loc_ben_nha_rong': 'loc_sai_gon',
+  'loc_nha_rong': 'loc_sai_gon',
   'loc_phu_xuan': 'loc_thua_thien_hue',
+  'loc_chi_linh': 'loc_hai_duong',
+  'loc_chi_lang': 'loc_lang_son',
+  'loc_xuong_giang': 'loc_bac_giang',
+  'loc_tan_trao': 'loc_tuyen_quang',
+  'loc_ngoc_hoi': 'loc_thang_long',
+  'loc_dong_da': 'loc_thang_long',
 };
 
 /**
@@ -819,6 +873,168 @@ export function extractSpatialHierarchyTriples(
                 }
               }
             }
+          }
+        }
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Deterministic Document Authorship & Mention Extractor (Stage 1 Fast-Path)
+ * Captures explicit document creation / promulgation / mention relations:
+ * - [Person / Org] (soạn / viết / ban hành / đọc / công bố / ca ngợi / nhắc đến) [Doc]
+ * - [Doc] (ghi chép / kể lại / viết về / nhắc đến) [Person / Event]
+ */
+export function extractSyntacticDocumentTriples(
+  text: string,
+  candidateSpans: CandidateEntitySpan[] = []
+): ExtractedTriple[] {
+  if (!text || typeof text !== 'string') return [];
+  const results: ExtractedTriple[] = [];
+  const seenKeys = new Set<string>();
+
+  const docs = candidateSpans.filter((s) => s.type === 'DOCUMENT_CULTURE');
+  const persons = candidateSpans.filter((s) => s.type === 'HISTORICAL_PERSON');
+  const orgs = candidateSpans.filter((s) => s.type === 'ORGANIZATION');
+  const dynasties = candidateSpans.filter((s) => s.type === 'DYNASTY_ERA');
+
+  if (docs.length === 0) return [];
+
+  const DOC_VERB_STRICT = /\b(soạn\s+thảo|soạn|viết|biên\s+soạn|ban\s+hành|ban|đọc|công\s+bố|ngâm|sáng\s+tác|trứ\s+tác|chủ\s+biên|chủ\s+trì|khởi\s+thảo|ghi\s+chép|chép\s+lại|kể\s+lại|viết\s+về|nhắc\s+đến|xuất\s+hiện\s+trong|ca\s+ngợi|trong|ký\s+kết|ký)\b/i;
+
+  for (const doc of docs) {
+    for (const p of [...persons, ...orgs]) {
+      const minOffset = Math.min(doc.endOffset, p.endOffset);
+      const maxOffset = Math.max(doc.startOffset, p.startOffset);
+      const charDist = maxOffset - minOffset;
+      if (charDist > 120 || charDist < 0) continue;
+      const mid = text.substring(minOffset, maxOffset).trim();
+      if (mid.includes('\n') || mid.includes('.')) continue;
+
+      if (DOC_VERB_STRICT.test(mid) || mid === '') {
+        const pId = p.suggestedCanonicalId || `${getCanonicalEntityIdPrefix(p.type)}${slugify(p.text)}`;
+        const docId = doc.suggestedCanonicalId || `doc_${slugify(doc.text)}`;
+        const t = validateAndCanonicalizeTriple(
+          { id: pId, name: p.text, type: p.type as any },
+          'MENTIONED_IN',
+          { id: docId, name: doc.text, type: 'DOCUMENT_CULTURE' },
+          1.0
+        );
+        if (t) {
+          const key = `${t.sourceEntityId}:${t.relationType}:${t.targetEntityId}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            results.push(t);
+          }
+        }
+      }
+    }
+
+    for (const dyn of dynasties) {
+      const minOffset = Math.min(doc.endOffset, dyn.endOffset);
+      const maxOffset = Math.max(doc.startOffset, dyn.startOffset);
+      const charDist = maxOffset - minOffset;
+      if (charDist > 90 || charDist < 0) continue;
+      const mid = text.substring(minOffset, maxOffset).trim();
+      if (mid.includes('\n') || mid.includes('.')) continue;
+      if (/\b(thuộc|thời|nhà|triều|dưới\s+thời|ra\s+đời|ban\s+hành)\b/i.test(mid) || mid === '') {
+        const docId = doc.suggestedCanonicalId || `doc_${slugify(doc.text)}`;
+        const dynId = dyn.suggestedCanonicalId || `dynasty_${slugify(dyn.text)}`;
+        const t = validateAndCanonicalizeTriple(
+          { id: docId, name: doc.text, type: 'DOCUMENT_CULTURE' },
+          'HAPPENED_IN',
+          { id: dynId, name: dyn.text, type: 'DYNASTY_ERA' },
+          1.0
+        );
+        if (t) {
+          const key = `${t.sourceEntityId}:${t.relationType}:${t.targetEntityId}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            results.push(t);
+          }
+        }
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Deterministic Dynastic Belonging Extractor (Stage 1 Fast-Path)
+ * Captures explicit dynastic belonging relations:
+ * - [Vua / Tướng / Người] [Nhà / Triều X] -> (Person PART_OF Dynasty)
+ * - [Cổ vật] [Nhà / Triều X] -> (Artifact HAPPENED_IN Dynasty)
+ */
+export function extractSyntacticDynasticTriples(
+  text: string,
+  candidateSpans: CandidateEntitySpan[] = []
+): ExtractedTriple[] {
+  if (!text || typeof text !== 'string') return [];
+  const results: ExtractedTriple[] = [];
+  const seenKeys = new Set<string>();
+
+  const persons = candidateSpans.filter((s) => s.type === 'HISTORICAL_PERSON');
+  const artifacts = candidateSpans.filter((s) => s.type === 'ARTIFACT');
+  const dynasties = candidateSpans.filter((s) => s.type === 'DYNASTY_ERA');
+
+  if (dynasties.length === 0) return [];
+
+  const DYNASTY_CONNECTOR = /\b(vua|hoàng\s+đế|chúa|tướng|thái\s+sư|thái\s+úy|quan|nhà|triều|thời|thuộc|dưới\s+thời|sáng\s+lập|dựng\s+nên|trị\s+vì|cai\s+trị|phục\s+vụ)\b/i;
+
+  for (const dyn of dynasties) {
+    for (const p of persons) {
+      const minOffset = Math.min(dyn.endOffset, p.endOffset);
+      const maxOffset = Math.max(dyn.startOffset, p.startOffset);
+      const charDist = maxOffset - minOffset;
+      if (charDist > 90 || charDist < 0) continue;
+      const mid = text.substring(minOffset, maxOffset).trim();
+      if (mid.includes('\n') || mid.includes('.')) continue;
+
+      if (DYNASTY_CONNECTOR.test(mid) || mid === '') {
+        const pId = p.suggestedCanonicalId || `person_${slugify(p.text)}`;
+        const dynId = dyn.suggestedCanonicalId || `dynasty_${slugify(dyn.text)}`;
+        const t = validateAndCanonicalizeTriple(
+          { id: pId, name: p.text, type: 'HISTORICAL_PERSON' },
+          'PART_OF',
+          { id: dynId, name: dyn.text, type: 'DYNASTY_ERA' },
+          1.0
+        );
+        if (t) {
+          const key = `${t.sourceEntityId}:${t.relationType}:${t.targetEntityId}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            results.push(t);
+          }
+        }
+      }
+    }
+
+    for (const art of artifacts) {
+      const minOffset = Math.min(dyn.endOffset, art.endOffset);
+      const maxOffset = Math.max(dyn.startOffset, art.startOffset);
+      const charDist = maxOffset - minOffset;
+      if (charDist > 90 || charDist < 0) continue;
+      const mid = text.substring(minOffset, maxOffset).trim();
+      if (mid.includes('\n') || mid.includes('.')) continue;
+
+      if (/\b(thuộc|thời|nhà|triều|dưới\s+thời|đúc\s+dưới|ra\s+đời|lưu\s+hành)\b/i.test(mid) || mid === '') {
+        const artId = art.suggestedCanonicalId || `artifact_${slugify(art.text)}`;
+        const dynId = dyn.suggestedCanonicalId || `dynasty_${slugify(dyn.text)}`;
+        const t = validateAndCanonicalizeTriple(
+          { id: artId, name: art.text, type: 'ARTIFACT' },
+          'HAPPENED_IN',
+          { id: dynId, name: dyn.text, type: 'DYNASTY_ERA' },
+          1.0
+        );
+        if (t) {
+          const key = `${t.sourceEntityId}:${t.relationType}:${t.targetEntityId}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            results.push(t);
           }
         }
       }
@@ -2196,7 +2412,18 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
         }
       }
 
-      // Add deterministic syntactic parenthetical triples (SAME_AS_LOCATION / ALIAS_OF)
+      // Existing entity pairs already covered by LLM or preceding extractions
+      const hasPair = (idA: string, idB: string) => {
+        const a = idA.toLowerCase();
+        const b = idB.toLowerCase();
+        return validatedTriples.some((vt) => {
+          const va = vt.sourceEntityId.toLowerCase();
+          const vb = vt.targetEntityId.toLowerCase();
+          return (va === a && vb === b) || (va === b && vb === a);
+        });
+      };
+
+      // 1. Add deterministic syntactic parenthetical triples (SAME_AS_LOCATION / ALIAS_OF)
       const syntacticTriples = extractSyntacticParentheticalTriples(text, candidateSpans);
       for (const st of syntacticTriples) {
         const key = `${st.sourceEntityId}:${st.relationType}:${st.targetEntityId}`;
@@ -2206,23 +2433,42 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
         }
       }
 
-      // Add deterministic royal lineage triples (genealogy / succession)
+      // 2. Add deterministic royal lineage triples (genealogy / succession)
       const lineageTriples = extractRoyalLineageTriples(text, candidateSpans);
       for (const lt of lineageTriples) {
         const key = `${lt.sourceEntityId}:${lt.relationType}:${lt.targetEntityId}`;
-        if (!seenKeys.has(key)) {
+        if (!seenKeys.has(key) && !hasPair(lt.sourceEntityId, lt.targetEntityId)) {
           seenKeys.add(key);
           validatedTriples.push(lt);
         }
       }
 
-      // Add deterministic spatial hierarchy triples
+      // 3. Add deterministic spatial hierarchy triples
       const spatialTriples = extractSpatialHierarchyTriples(text, candidateSpans);
       for (const spt of spatialTriples) {
         const key = `${spt.sourceEntityId}:${spt.relationType}:${spt.targetEntityId}`;
-        if (!seenKeys.has(key)) {
+        if (!seenKeys.has(key) && !hasPair(spt.sourceEntityId, spt.targetEntityId)) {
           seenKeys.add(key);
           validatedTriples.push(spt);
+        }
+      }
+
+      // 4. Add deterministic document authorship and dynastic triples
+      const docTriples = extractSyntacticDocumentTriples(text, candidateSpans);
+      for (const dt of docTriples) {
+        const key = `${dt.sourceEntityId}:${dt.relationType}:${dt.targetEntityId}`;
+        if (!seenKeys.has(key) && !hasPair(dt.sourceEntityId, dt.targetEntityId)) {
+          seenKeys.add(key);
+          validatedTriples.push(dt);
+        }
+      }
+
+      const dynTriples = extractSyntacticDynasticTriples(text, candidateSpans);
+      for (const dynt of dynTriples) {
+        const key = `${dynt.sourceEntityId}:${dynt.relationType}:${dynt.targetEntityId}`;
+        if (!seenKeys.has(key) && !hasPair(dynt.sourceEntityId, dynt.targetEntityId)) {
+          seenKeys.add(key);
+          validatedTriples.push(dynt);
         }
       }
 
@@ -2312,16 +2558,16 @@ export async function extractTriplesFromTextDetailedAsync(
     }
   };
 
-  // 1. Add LLM Triples (semantic AI relations)
-  if (llmTriples && Array.isArray(llmTriples)) {
+  // 1. Add LLM Triples (which already include deterministic syntactic, lineage, and spatial triples)
+  if (llmTriples && Array.isArray(llmTriples) && llmTriples.length > 0) {
     for (const t of llmTriples) {
       addTriple(t);
     }
-  }
-
-  // 2. Add Fast-Path Triples (ensures no high-confidence deterministic triple is lost)
-  for (const t of fastPathTriples) {
-    addTriple(t);
+  } else {
+    // 2. Fallback to Fast-Path Triples ONLY when LLM is unavailable or produces no output
+    for (const t of fastPathTriples) {
+      addTriple(t);
+    }
   }
 
   const durationMs = Date.now() - startTime;

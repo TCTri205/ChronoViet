@@ -7,7 +7,7 @@ import { createLogger } from '@chronoviet/infra';
 
 const log = createLogger({ service: 'data-ingestion' });
 
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 4;
 
 export interface CachedChunkExtraction {
   chunkHash: string;
