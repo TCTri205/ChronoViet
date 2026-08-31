@@ -55,6 +55,7 @@ interface RelationshipRow {
   target_entity_id: string;
   relation_type: string;
   confidence: number;
+  is_reverse?: number;
 }
 
 function shouldTraverse(relationType: string, relationTypes?: string[]): boolean {
@@ -149,56 +150,44 @@ export async function searchLocalGraphCTE(
     let forwardRows: RelationshipRow[] = [];
     let reverseRows: RelationshipRow[] = [];
     if (pgConnected) {
-      let fRows: RelationshipRow[] = [];
-      let rRows: RelationshipRow[] = [];
-
+      let combinedRows: RelationshipRow[] = [];
       try {
-        const [mvF, mvR] = await Promise.all([
-          query<RelationshipRow>(
-            `SELECT source_entity_id, target_entity_id, relation_type, confidence
-             FROM mv_dynasty_lineage_paths
-             WHERE source_entity_id = ANY($1)
-             ORDER BY confidence DESC;`,
-            [frontierArr]
-          ),
-          query<RelationshipRow>(
-            `SELECT source_entity_id, target_entity_id, relation_type, confidence
-             FROM mv_dynasty_lineage_paths
-             WHERE target_entity_id = ANY($1)
-             ORDER BY confidence DESC;`,
-            [frontierArr]
-          ),
-        ]);
-        if (mvF.length > 0 || mvR.length > 0) {
-          fRows = mvF;
-          rRows = mvR;
-        }
+        combinedRows = await query<RelationshipRow>(
+          `SELECT source_entity_id, target_entity_id, relation_type, confidence, 0 AS is_reverse
+           FROM mv_dynasty_lineage_paths
+           WHERE source_entity_id = ANY($1)
+           UNION ALL
+           SELECT source_entity_id, target_entity_id, relation_type, confidence, 1 AS is_reverse
+           FROM mv_dynasty_lineage_paths
+           WHERE target_entity_id = ANY($1)
+           ORDER BY confidence DESC;`,
+          [frontierArr]
+        );
       } catch {
         // Fall back seamlessly if Materialized View is unpopulated
       }
 
-      if (fRows.length === 0 && rRows.length === 0) {
-        const [baseF, baseR] = await Promise.all([
-          query<RelationshipRow>(
-            `SELECT source_entity_id, target_entity_id, relation_type, confidence
-             FROM relationships
-             WHERE source_entity_id = ANY($1)
-             ORDER BY confidence DESC;`,
-            [frontierArr]
-          ),
-          query<RelationshipRow>(
-            `SELECT source_entity_id, target_entity_id, relation_type, confidence
-             FROM relationships
-             WHERE target_entity_id = ANY($1)
-             ORDER BY confidence DESC;`,
-            [frontierArr]
-          ),
-        ]);
-        fRows = baseF;
-        rRows = baseR;
+      if (!combinedRows || combinedRows.length === 0) {
+        combinedRows = await query<RelationshipRow>(
+          `SELECT source_entity_id, target_entity_id, relation_type, confidence, 0 AS is_reverse
+           FROM relationships
+           WHERE source_entity_id = ANY($1)
+           UNION ALL
+           SELECT source_entity_id, target_entity_id, relation_type, confidence, 1 AS is_reverse
+           FROM relationships
+           WHERE target_entity_id = ANY($1)
+           ORDER BY confidence DESC;`,
+          [frontierArr]
+        );
       }
-      forwardRows = fRows;
-      reverseRows = rRows;
+
+      for (const row of combinedRows) {
+        if (row.is_reverse === 1) {
+          reverseRows.push(row);
+        } else {
+          forwardRows.push(row);
+        }
+      }
     } else {
       for (const rel of inMemoryStore.relationships) {
         if (frontierArr.includes(rel.source_entity_id)) forwardRows.push(rel);

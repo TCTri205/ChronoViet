@@ -15,7 +15,7 @@ The `eval/shared/` module provides shared utilities used by the Chatbot (`eval/c
 | File | Purpose | Key Exports |
 |---|---|---|
 | [`types.ts`](file:///Users/congtri/IT/Personal_Projects/ChronoViet/eval/shared/types.ts) | Central TypeScript definitions for evaluation suites | `BaseSuiteReport`, `MetricScorecard`, `CaseExecutionSummary`, `PreflightCheckResult` |
-| [`reporter.ts`](file:///Users/congtri/IT/Personal_Projects/ChronoViet/eval/shared/reporter.ts) | Markdown scorecard generator, JSON persistence, CLI summary table formatter | `saveJsonArtifact`, `generateMarkdownReport`, `printCliSummaryTable`, `calculatePercentile`, `ensureDirectory` |
+| [`reporter.ts`](file:///Users/congtri/IT/Personal_Projects/ChronoViet/eval/shared/reporter.ts) | Markdown scorecard generator, JSON persistence, CLI summary table formatter | `saveJsonArtifact`, `generateMarkdownReport`, `printCliSummaryTable`, `calculateLatencyPercentiles`, `ensureDirectory` |
 | [`index.ts`](file:///Users/congtri/IT/Personal_Projects/ChronoViet/eval/shared/index.ts) | Public module exports | Re-exports all shared types and reporter functions |
 
 ---
@@ -25,14 +25,13 @@ The `eval/shared/` module provides shared utilities used by the Chatbot (`eval/c
 ### Markdown & CLI Scorecard Generator (`generateMarkdownReport`, `printCliSummaryTable`)
 Generates standardized Markdown and ASCII CLI tables comparing measured metrics against target KPIs and hard failure pass/fail gates.
 
-### Percentile Calculator (`calculatePercentile`)
+### Percentile Calculator (`calculateLatencyPercentiles`)
 Calculates deterministic P50, P90, and P99 percentiles for streaming token latencies (TTFT) and processing times:
 ```ts
-import { calculatePercentile } from './reporter.js';
+import { calculateLatencyPercentiles } from './reporter.js';
 
-const p50 = calculatePercentile(latencies, 50);
-const p90 = calculatePercentile(latencies, 90);
-const p99 = calculatePercentile(latencies, 99);
+const profile = calculateLatencyPercentiles(latenciesMs);
+console.log(`P50: ${profile.p50}ms, P90: ${profile.p90}ms, P99: ${profile.p99}ms`);
 ```
 
 ### JSON Artifact Persistence (`saveJsonArtifact`)

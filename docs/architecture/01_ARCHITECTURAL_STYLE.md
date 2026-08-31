@@ -38,7 +38,7 @@ Hệ thống được thiết kế dưới dạng TypeScript Monorepo tinh gọn
                                                   ▼
                                      ┌───────────────────────────┐
                                      │    APP MONOLITH SERVER    │
-                                     │ (Next.js / Fastify / TS)  │
+                                     │ (Next.js 14 App Router)   │
                                      │ - NotebookLM Hub & API    │
                                      │ - RAG Engine (pgvector)   │
                                      │ - LangGraph Orchestrator  │
@@ -50,25 +50,32 @@ Hệ thống được thiết kế dưới dạng TypeScript Monorepo tinh gọn
        │   PostgreSQL DB    │            │ Unified Redis DB   │          │ AI & Render Worker │
        │  (Relational + SSOT│            │ (BullMQ Job Queues │          │ (Remotion Chrome & │
        │  + pgvector Search)│            │  + Multi-Cache)    │          │  TTS Client Infra) │
+       │  (Port 5432)       │            │  (Port 6379)       │          │  (Probe Port 3001) │
        └────────────────────┘            └────────────────────┘          └─────────┬──────────┘
                                                                                    │ (HTTP :8080)
                                                                                    ▼
                                                                          ┌────────────────────┐
                                                                          │ VieNeu TTS Service │
                                                                          │ (Python ONNX micro)│
+                                                                         │ (Port 8080)        │
                                                                          └────────────────────┘
 ```
 
-### Chi tiết nhiệm vụ từng dịch vụ (Unified VPS Stack):
+### Chi tiết nhiệm vụ từng dịch vụ (Unified Monorepo & AI Topology):
 
-| Dịch vụ | Công nghệ chính | Trách nhiệm chính | Môi trường triển khai |
+| Dịch vụ / Cổng | Công nghệ chính | Trách nhiệm chính | Môi trường triển khai / Giới hạn tài nguyên |
 | :--- | :--- | :--- | :--- |
-| **Caddy Gateway** | Caddy v2 Alpine | Route request, Auto-HTTPS/SSL Cert, Serve static `/media`, WebSocket forwarding, HTTP/2 & HTTP/3. | Docker Container (~30MB RAM) |
-| **App Monolith** | Next.js 14 / TypeScript | Quản lý NotebookLM Workspace (RAG Chatbot + 1-Click Video Generator), Projects CRUD, RAG Engine (Postgres `pgvector`), LangGraph Orchestrator (Postgres Checkpointer SSOT). Sử dụng `@chronoviet/infra` và `@chronoviet/shared-spec`. | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
-| **Database Engine** | PostgreSQL 15+ (`pgvector`) | SSOT lưu trữ dữ liệu dự án, LangGraph state checkpoints, và Vector Embeddings (1024d HNSW index). | Docker Container (Max 1.5 CPUs / 2.0GB RAM) |
-| **Redis Engine** | Redis 7 Alpine | Đảm nhận cả BullMQ Job Queues (AOF persistence) lẫn LRU Caching & WebSocket PubSub trong 1 container duy nhất. | Docker Container (Max 0.5 CPU / 1.0GB RAM) |
-| **Render Worker** | Node.js / TypeScript (Remotion CLI, Headless Chrome) | Lắng nghe job từ Redis Queue: pre-fetch media từ Host Volume `/media`, render MP4 video và dọn dẹp Chromium process (`CONCURRENCY=1`). | Docker Container (Max 2.0 CPUs / 4.0GB RAM) |
-| **VieNeu TTS Service** | Python 3.11 / FastAPI / ONNX | Microservice độc lập sinh giọng thuyết minh tiếng Việt và wordTimestamps qua HTTP API Port 8080. | Docker Container (~1.0GB RAM) |
+| **Caddy Gateway** (`:80`, `:443`) | Caddy v2 Alpine | Route request, Auto-HTTPS/SSL Cert, Serve static `/media`, WebSocket forwarding, HTTP/2 & HTTP/3. | Docker Container (~30MB RAM) |
+| **App Monolith** (`:3000`) | Next.js 14 App Router / TypeScript | Quản lý NotebookLM Workspace (RAG Chatbot + 1-Click Video Generator), Projects CRUD, RAG Engine (Postgres `pgvector`), LangGraph Orchestrator (Postgres Checkpointer SSOT). Sử dụng `@chronoviet/infra` và `@chronoviet/shared-spec`. | Docker Container (Max 1.5 CPUs / 2000M RAM) |
+| **Database Engine** (`:5432`) | PostgreSQL 15+ (`pgvector`) | SSOT lưu trữ dữ liệu lịch sử, LangGraph state checkpoints, và Vector Embeddings (1024d HNSW index $m=32, ef=128$). | Docker Container (Max 1.5 CPUs / 1500M RAM) |
+| **Redis Engine** (`:6379`) | Redis 7 Alpine | Đảm nhận cả BullMQ Job Queues (AOF persistence) lẫn LRU Caching & WebSocket PubSub (`noeviction`). | Docker Container (Max 0.5 CPU / 768M RAM) |
+| **Render Worker** (`:3001`) | Node.js / TypeScript (Remotion CLI, Headless Chrome) | Lắng nghe job từ Redis Queue: pre-fetch media từ Volume `/media`, render MP4 video và dọn dẹp Chromium process (`CONCURRENCY=1`). Cung cấp health probe qua Port 3001. | Docker Container (Max 2.0 CPUs / 4000M RAM) |
+| **VieNeu TTS Service** (`:8080`) | Python 3.11 / FastAPI / ONNX | Microservice độc lập sinh giọng thuyết minh tiếng Việt và wordTimestamps qua HTTP API Port 8080. | Docker Container (~2000M RAM) |
+| **Embedding Engine** (`:8090`) | llama-server / BGE-M3 (1024d) | Sinh embedding vector cho văn bản sử liệu và truy vấn tìm kiếm ngữ nghĩa. | Local AI / Container `local-ai-cuda-emb` |
+| **Primary LLM / VLM** (`:8092`) | llama-server / Qwen 3.5 9B / Qwen 2.5 VL | Sinh kịch bản phân cảnh, điều phối tác tử và kiểm định thị giác nội bộ. | Local AI / Container `local-ai-cuda-llm` |
+| **Extraction LLM** (`:8094`) | llama-server / Qwen 3.5 4B / 2.5 3B | Trích xuất bộ ba thực thể (Knowledge Triples) và cấu trúc đồ thị sử liệu. | Local AI / Container `local-ai-cuda-ext` |
+| **Reranker Engine** (`:8096`) | llama-server / Qwen3-Reranker-0.6B / BGE-Reranker-v2 | Xếp hạng lại ngữ cảnh đa nguồn theo xác suất Bayes. | Local AI / CLI Supervisor |
+| **Remotion Studio** (`:9876`) | Remotion Studio UI (`pnpm remotion:studio`) | Môi trường preview và tinh chỉnh trực quan các bố cục phân cảnh React. | Local Dev Runtime |
 
 ---
 

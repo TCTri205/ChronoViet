@@ -116,7 +116,7 @@ describe('Metadata Enricher & Chronology Unit Tests', () => {
       expect(enriched.dynasty).toBe('Nhà Tây Sơn');
       expect(enriched.timeStart).toBe(1789);
       expect(enriched.keyFigures).toContain('Quang Trung');
-      expect(enriched.location).toBe('Hà Nội');
+      expect(enriched.location).toBe('Thăng Long');
     });
   });
 });

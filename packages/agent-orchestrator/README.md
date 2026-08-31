@@ -9,11 +9,11 @@
 
 Gói `@chronoviet/agent-orchestrator` đảm nhận nhiệm vụ biên tập kịch bản tự động từ ngữ cảnh RAG:
 
-1. **Multi-Agent Pipeline (LangGraph.js StateGraph):**
+1. **Multi-Agent Pipeline (LangGraph.js StateGraph v4.1):**
    * Lập kịch bản video 100% Data-Driven tuân thủ `VideoProjectSchema` (SSOT) cho 5 thể loại lịch sử (*BIOGRAPHY*, *BATTLE*, *DYNASTY*, *MYSTERY*, *ARTIFACT*).
    * Phân cấp theo Chương/Hồi (`chapteringNode`) động theo thời lượng video (`Math.max(1, Math.round(totalTargetSec / 150))`).
    * Phân chia phân cảnh (`segmenterNode`), ánh xạ Layout Modes theo mẫu (`templateId`: *QUICK_SHORTS*, *MODERN_NEWS*, *HISTORICAL_DOCUMENTARY*).
-   * **Deterministic Sequential Pipeline:** Khử hoàn toàn Race Condition Fan-in với luồng thực thi: `segmenter` $\rightarrow$ `keyword` $\rightarrow$ `research` $\rightarrow$ `vlm_inspection` $\rightarrow$ `tts_synthesis` $\rightarrow$ `duration_reconciliation` $\rightarrow$ `packager` $\rightarrow$ `END`. Đảm bảo mỗi node chạy đúng 1 lần duy nhất, `project_schema.json` được đóng gói hoàn chỉnh.
+   * **Fork-Join Parallel Asset Generation:** Luồng thực thi: `START` $\to$ `rag_init` $\to$ `chaptering` $\to$ `scriptwriter` $\to$ `fact_checker` $\to$ `segmenter` $\to$ `asset_generation` (Nhánh A: VieNeu TTS song song với Nhánh B: Keyword $\to$ Research $\to$ VLM Inspector) $\to$ `duration_reconciliation` $\to$ `packager` $\to$ `END`. Đảm bảo tận dụng tối đa băng thông đa luồng và khử race-condition.
    * Cân bằng thời lượng âm thanh và nhịp điệu hình ảnh (`durationReconciliationNode`), cam kết Pacing Error $< 3.0\%$.
 2. **Observability & Prometheus RED Metrics:**
    * **Context-Bound Child Loggers (`getNodeLogger`):** Truyền `correlationId` và metadata `projectId`, `node` vào 100% dòng log.
@@ -25,12 +25,12 @@ Gói `@chronoviet/agent-orchestrator` đảm nhận nhiệm vụ biên tập k�
 4. **Automated Guardrail Gates:**
    * **Folklore Guardrail Gate (`folklore-validator.ts`):** Tự động quét Regex Pattern Matching trên các câu thoại trích xuất từ nguồn Dã sử / Truyền thuyết (Level 3), ép dùng các cụm từ tín hiệu giả thuyết (*"theo truyền thuyết"*, *"tương truyền"*, *"dân gian kể"*...) theo ngữ cảnh đoạn văn mở đầu (Paragraph-Aware).
    * **NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts`):** Đánh giá điểm suy luận Entailment Score giữa câu thoại kịch bản và ngữ cảnh RAG gốc với bộ lọc Stopword Tiếng Việt để bảo toàn trọng số thực thể lịch sử (Yêu cầu $\ge 0.80$, trả về `NEUTRAL` khi không có ground truth).
+   * **Anti-Sycophancy Gate (`anti-sycophancy.ts`):** Tự động phát hiện các câu hỏi bẫy có tiền đề sai sự thật và từ chối đồng tình giả tạo.
 5. **2-Tier Cascading Intent Router (`intent-classifier.ts`):**
    * Tier 1 (Fast Regex <1ms): Lọc nhanh `CHITCHAT`, `OUT_OF_SCOPE` mà không tốn token.
    * Tier 2 (Semantic Sub-Intents): Phân loại sâu `FACTOID_LOOKUP`, `GENEALOGY_RELATION`, `BATTLE_TACTICS`, `COMPARATIVE_SYNTHESIS`.
-6. **Bridge Graph Pruning & Static Prefix KV-Cache (`chat-supervisor.ts`, `context-pruner.ts`):**
-   * Ưu tiên giữ lại Bridge Triples ($A \leftrightarrow B$) và tên húy/niên hiệu/mất, loại bỏ ảo giác thế thứ.
-   * Cố định System Persona và chuyển dynamic context vào `<historical_context>` của user message, giảm TTFT chat xuống $< 2\text{s}$.
+6. **Chat Supervisor & Brief Compiler (`chat-supervisor.ts`, `chat-to-brief-compiler.ts`):**
+   * Quản lý phiên hội thoại lịch sử đa lượt, trích xuất thực thể, tổng hợp brief sản xuất video từ nội dung người dùng quan tâm.
 
 ---
 
@@ -39,33 +39,47 @@ Gói `@chronoviet/agent-orchestrator` đảm nhận nhiệm vụ biên tập k�
 ```text
 packages/agent-orchestrator/
 ├── src/
+│   ├── brief/                         # Chat-to-Brief Compilation Engine
+│   │   └── chat-to-brief-compiler.ts  # Tự động trích xuất brief làm video từ hội thoại
+│   ├── chat/                          # Chatbot Supervisor & Context Pruning
+│   │   ├── chat-supervisor.ts         # Quản lý luồng chat lịch sử đa lượt (SSE Streaming)
+│   │   ├── context-pruner.ts          # Cắt tỉa ngữ cảnh & tối ưu KV-Cache
+│   │   ├── intent-classifier.ts       # 2-Tier Cascading Intent Classifier (<1ms Regex + Semantic)
+│   │   └── query-rewriter.ts          # Viết lại câu hỏi đa lượt theo ngữ cảnh trước
 │   ├── graph/                         # Điểm điều phối LangGraph.js Graph & State
 │   │   ├── checkpointer.ts            # ChronoCheckpointer (Disk & Postgres persistence)
-│   │   ├── orchestrator.ts            # Build & Execute StateGraph Pipeline
+│   │   ├── orchestrator.ts            # Build & Execute StateGraph Pipeline (9 Nodes)
 │   │   ├── state.ts                   # ChronoGraphAnnotation & Reducers
 │   │   └── nodes/                     # Các Agent Nodes chuyên biệt
+│   │       ├── rag-init-node.ts       # Node khởi tạo & truy xuất tri thức RAG ban đầu
 │   │       ├── chaptering-node.ts     # Micro-Step 0: Chapter Outline
 │   │       ├── scriptwriter-node.ts   # Micro-Step 1A: Voiceover Narration
 │   │       ├── fact-checker-node.ts   # Micro-Step 1A-Audit: Fact-Checking & Safe Alias
 │   │       ├── segmenter-node.ts      # Micro-Step 1B: Scene Segmentation & Layouts
+│   │       ├── asset-generation-node.ts # Fork-Join Node song song TTS & Visual Research
 │   │       ├── keyword-node.ts        # Micro-Step 1C: Vietnamese Keyword Extractor
-│   │       ├── research-node.ts       # Micro-Step 1C: Visual Asset Search (Batching = 4)
-│   │       ├── tts-node.ts            # Worker A: VieNeu TTS Synthesis (Batching = 4)
+│   │       ├── research-node.ts       # Micro-Step 1C: Visual Asset Search
+│   │       ├── tts-node.ts            # Worker A: VieNeu TTS Synthesis
 │   │       ├── reconciler-node.ts     # Micro-Step 1B-Reconcile: Duration Engine
 │   │       ├── vlm-node.ts            # Worker B: VLM Asset Inspector
 │   │       └── packager-node.ts       # Micro-Step 4: JSON Schema Packager
 │   │
 │   ├── guardrails/                    # Tầng Guardrails Bảo vệ Nội dung
+│   │   ├── anti-sycophancy.ts         # Chống bẫy câu hỏi sai lệch lịch sử
 │   │   ├── folklore-validator.ts      # Automated Folklore Guardrail Validator Gate
-│   │   └── nli-hallucination-judge.ts # NLI Entailment Judge chống Hallucination
+│   │   ├── nli-hallucination-judge.ts # NLI Entailment Judge chống Hallucination
+│   │   └── stream-dedup.ts            # Khử lặp token streaming thời gian thực
 │   ├── research/                      # Research Agent: Provider Chain Tìm kiếm Ảnh
 │   │   ├── index.ts                   # buildProviderChain, executeImageSearchTool, resolveImageCandidates
-│   │   └── providers/                 # Image Search Providers: image-search-provider.ts, serpapi, tavily, brave, wikimedia (gồm CuratedCatalog)
+│   │   └── providers/                 # Image Search Providers: serpapi, tavily, brave, wikimedia, catalog
 │   └── index.ts                       # Entrypoint export public APIs
 │
-├── eval/                              # Tầng Đánh Giá & Benchmark Module 2
-│   ├── runner.ts                      # Benchmark Runner chính (State completion & Pacing error)
-│   ├── research-runner.ts             # Benchmark Runner riêng cho Research Agent (Image candidate resolution)
+├── eval/                              # Tầng Đánh Giá & Benchmark Module 2 (A0-A5 + SYS)
+│   ├── benchmarks/                    # ChronoAgent-Eval v2.0 Benchmark Suite (A0..A5 + SYS)
+│   │   └── index.ts                   # Benchmark CLI Router & Preflight Probes
+│   ├── datasets/                      # Chat dialogues, Historical topics, Guardrail traps
+│   ├── runner.ts                      # E2E 20 Long-form Historical Video Benchmark Runner
+│   ├── research-runner.ts             # Benchmark Runner riêng cho Research Agent
 │   └── __tests__/                     # Unit & Integration Tests cho Guardrails
 │
 ├── package.json
@@ -155,3 +169,10 @@ pnpm typecheck:orchestrator
 # 7. Dừng các model AI sau khi kiểm thử:
 pnpm ai:stop
 ```
+
+---
+
+## 📄 4. Giấy Phép (License)
+
+Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**.
+

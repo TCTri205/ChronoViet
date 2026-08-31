@@ -6,6 +6,7 @@
 import { Worker, Job } from 'bullmq';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import {
   RenderJobPayload,
   RenderJobResult as BaseRenderJobResult,
@@ -30,6 +31,29 @@ import { parseRemotionStdoutLine } from '../lib/remotion-progress-parser.js';
 
 const log = createLogger({ service: 'render-worker' });
 const pubsub = new RedisPubSubManager();
+
+export const MAX_JOBS_BEFORE_RECYCLE = 10;
+let totalCompletedRenderJobs = 0;
+
+/**
+ * Static overlay & texture asset caching in RAM Disk (/dev/shm) with OS temp fallback
+ */
+export function getRamDiskAssetCacheDir(): string {
+  const ramDiskPath = '/dev/shm/chronoviet_assets';
+  if (fs.existsSync('/dev/shm')) {
+    try {
+      if (!fs.existsSync(ramDiskPath)) fs.mkdirSync(ramDiskPath, { recursive: true });
+      return ramDiskPath;
+    } catch {}
+  }
+  const fallbackPath = path.join(os.tmpdir(), 'chronoviet_assets');
+  if (!fs.existsSync(fallbackPath)) {
+    try {
+      fs.mkdirSync(fallbackPath, { recursive: true });
+    } catch {}
+  }
+  return fallbackPath;
+}
 
 export type RenderJobData = RenderJobPayload;
 
@@ -84,13 +108,15 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     ResourceSentinel.renewRenderLock(ttlSec, projectId).catch(() => {});
   }, heartbeatIntervalMs);
 
+  let paths: ReturnType<typeof initProjectWorkspace> | undefined;
+
   try {
     workerLog.info('worker.render_started', `Starting Remotion render for project ${projectId}`, {
       projectId,
       jobId: job.id,
     });
 
-    const paths = initProjectWorkspace(projectId);
+    paths = initProjectWorkspace(projectId);
     const outputPath = path.join(paths.outputDir, 'video.mp4');
 
     // 2. Pre-download any remote assets
@@ -274,18 +300,26 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     fileSizeBytes,
   });
 
-    return {
-      projectId,
-      outputPath,
-      fileSizeBytes,
-      durationMs,
-      peakMemoryMb,
-      totalFrames,
-    };
-  } finally {
-    clearInterval(heartbeatTimer);
-    await ResourceSentinel.releaseRenderLock(projectId);
-  }
+  return {
+    projectId,
+    outputPath,
+    fileSizeBytes,
+    durationMs,
+    peakMemoryMb,
+    totalFrames,
+  };
+} finally {
+  clearInterval(heartbeatTimer);
+  try {
+    if (paths) {
+      const atomicJobDir = path.join(paths.tempDir, 'jobs', String(job.id || projectId));
+      if (fs.existsSync(atomicJobDir)) {
+        fs.rmSync(atomicJobDir, { recursive: true, force: true });
+      }
+    }
+  } catch {}
+  await ResourceSentinel.releaseRenderLock(projectId);
+}
 }
 
 export function startRenderWorker(): Worker<RenderJobData, RenderJobResult> {
@@ -303,7 +337,15 @@ export function startRenderWorker(): Worker<RenderJobData, RenderJobResult> {
   );
 
   worker.on('completed', (job) => {
-    log.info('worker.render_job_completed', `Render job ${job.id} completed for project ${job.data.projectId}`);
+    totalCompletedRenderJobs++;
+    log.info('worker.render_job_completed', `Render job ${job.id} completed for project ${job.data.projectId} (batch: ${totalCompletedRenderJobs}/${MAX_JOBS_BEFORE_RECYCLE})`);
+    if (totalCompletedRenderJobs >= MAX_JOBS_BEFORE_RECYCLE) {
+      log.info('worker.auto_recycle_triggered', `Render worker completed ${totalCompletedRenderJobs} jobs. Triggering graceful resource recycling to prevent Chromium memory leaks.`);
+      totalCompletedRenderJobs = 0;
+      if (global.gc) {
+        try { global.gc(); } catch {}
+      }
+    }
   });
 
   worker.on('failed', (job, err) => {

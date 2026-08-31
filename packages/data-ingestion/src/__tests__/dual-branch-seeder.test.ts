@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateEmbedding, generateEmbeddingsBatch, isPgAvailable } from '@chronoviet/infra';
 import { extractTriplesFromTextAsync } from '../triple-extractor.js';
 import { seedDualBranch } from '../seeder/dual-branch-seeder.js';
-import { extractionCache } from '../cache/extraction-cache.js';
 
 vi.mock('@chronoviet/infra', async (importOriginal) => {
   const original = await importOriginal<typeof import('@chronoviet/infra')>();
@@ -27,7 +26,6 @@ vi.mock('../triple-extractor.js', async (importOriginal) => {
 describe('DualBranchSeeder Unit Tests', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    await extractionCache.clear();
     vi.mocked(generateEmbedding).mockResolvedValue(new Array(1024).fill(0.01));
     vi.mocked(generateEmbeddingsBatch).mockImplementation(async (texts: string[]) => {
       return texts.map(() => new Array(1024).fill(0.01));
@@ -132,6 +130,61 @@ Nguyễn Huệ tức Quang Trung. Hoàng đế áo vải cờ đào dấy binh t
     // Successful chunks contribute verified triples, while failed chunk 1 was safely isolated
     expect(result.highConfidenceTriplesCount).toBeGreaterThanOrEqual(1);
     expect(result.telemetry?.durations.totalDurationMs).toBeGreaterThan(0);
+  });
+
+  it('should bypass LLM extraction for pre-cached chunks during resume seeding', async () => {
+    const { extractionCache } = await import('../cache/extraction-cache.js');
+    let extractCalls = 0;
+    vi.mocked(extractTriplesFromTextAsync).mockImplementation(async () => {
+      extractCalls++;
+      return [
+        {
+          sourceEntityId: 'person_nguyen_hue',
+          sourceEntityName: 'Nguyễn Huệ',
+          relationType: 'ALIAS_OF',
+          targetEntityId: 'person_quang_trung',
+          targetEntityName: 'Quang Trung',
+          confidence: 0.99,
+        },
+      ];
+    });
+
+    const sampleContent = `
+# Chiến dịch Tây Sơn
+Nguyễn Huệ hành quân thần tốc ra Thăng Long đại phá hai mươi vạn quân Thanh.
+`.repeat(30);
+
+    // Mock cache get to return cached triples on the first call
+    const originalGet = extractionCache.get.bind(extractionCache);
+    let cacheLookupIndex = 0;
+    vi.spyOn(extractionCache, 'get').mockImplementation(async (text: string) => {
+      cacheLookupIndex++;
+      if (cacheLookupIndex === 1) {
+        // Chunk 1 is cached
+        return [
+          {
+            sourceEntityId: 'event_ngoc_hoi',
+            sourceEntityName: 'Trận Ngọc Hồi',
+            relationType: 'LED_BY',
+            targetEntityId: 'person_quang_trung',
+            targetEntityName: 'Quang Trung',
+            confidence: 0.98,
+          },
+        ];
+      }
+      return null; // Chunk 2+ uncached
+    });
+
+    const result = await seedDualBranch(sampleContent, {
+      title: 'Chiến dịch Tây Sơn',
+    });
+
+    expect(result.childChunksCount).toBeGreaterThanOrEqual(2);
+    // extractTriplesFromTextAsync was only called for remaining uncached chunks (childChunksCount - 1)
+    expect(extractCalls).toBe(result.childChunksCount - 1);
+    expect(result.highConfidenceTriplesCount).toBeGreaterThanOrEqual(1);
+
+    vi.restoreAllMocks();
   });
 });
 

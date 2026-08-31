@@ -358,6 +358,7 @@ Theo kiến trúc chuẩn phân tách trách nhiệm (Separation of Concerns):
 | `conversations` | Chat Conversations | Quản lý phiên hội thoại lịch sử đa lượt của Web Chatbot Supervisor |
 | `conversation_messages` | Chat Messages & Citations | Lưu trữ chi tiết từng tin nhắn chat, intent classification và trích dẫn citations |
 | `video_briefs` | Compiled Video Briefs | Lưu trữ hồ sơ brief làm video đã biên soạn từ chat hội thoại phục vụ 1-Click Studio Handover |
+| `mv_dynasty_lineage_paths` | Materialized View | Phả hệ dòng tộc triều đại tiền tính toán (Precomputed lineage paths) tối ưu hóa truy vấn BFS/CTE |
 
 ### 6.2. Bộ Lệnh CLI Seeders & Kiểm Định Dữ Liệu Thật
 
@@ -404,14 +405,14 @@ pnpm db:audit-quarantine --accept-all-high-conf --threshold=0.85 # Thăng cấp 
 pnpm db:audit-quarantine --purge-spurious                       # Thanh lọc quan hệ rác, spurious edges & unmapped noise
 
 # Bước 5.3: Master Entity Re-Resolution
-pnpm --filter @chronoviet/data-ingestion rag:re-resolve         # Chuẩn hoá entities về Canonical ID & ghi entity_audit_logs
+pnpm db:re-resolve                                              # Chuẩn hoá entities về Canonical ID & ghi entity_audit_logs
 
 # (Tùy chọn) Phục hồi nếu quá trình làm sạch/hợp giải xảy ra sự cố hỏng dữ liệu:
 # pnpm db:restore --file backups/post_ingest_v1.dump  # Khôi phục chính xác từ bản snapshot phiên bản v1
 # pnpm db:restore                                    # Hoặc khôi phục nhanh từ bản snapshot mới nhất
 
 # Bước 5.4: Quality Diagnostics & Benchmarking
-pnpm eval:ingest:diagnostic                     # Chẩn đoán độ phủ, mật độ graph, unmapped entities trên kho văn bản
+pnpm eval:diagnostic                                            # Chẩn đoán độ phủ, mật độ graph, unmapped entities trên kho văn bản
 pnpm --filter @chronoviet/data-ingestion eval:seed  # Nạp Golden Datasets vào thư mục eval/ chuẩn bị cho Benchmark
 pnpm eval:ingest                                # Master Benchmark Module 0: Đo lường toàn diện trên DB thật
 pnpm eval:ingest:vector                         # Benchmark 100 câu hỏi Vector Retrieval trên pgvector HNSW

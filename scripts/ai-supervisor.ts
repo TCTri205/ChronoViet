@@ -309,6 +309,8 @@ export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank')
           '--cont-batching',
           '--parallel',
           String(envConfig.LOCAL_LLM_PARALLEL || 4),
+          '--threads',
+          String(envConfig.LOCAL_LLM_THREADS || 10),
         ]
       : []),
     ...(key === 'extraction'

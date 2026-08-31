@@ -87,12 +87,39 @@ pnpm ai:start        # Start Full Local AI Stack (8090, 8092, 8096, 8080 + TTS)
 pnpm ai:lite         # Start Lightweight Pair (8090 + 8094) (~3.1 GB RAM)
 pnpm ai:status       # Check AI port status (8090, 8092, 8094, 8096, 8080)
 pnpm ai:stop         # Stop all background AI & TTS processes
+pnpm ai:emb          # Start Embedding Server only (Port 8090)
+pnpm ai:extract      # Start Extraction LLM only (Port 8094)
+pnpm ai:rerank       # Start Reranker Engine only (Port 8096)
+pnpm ai:llm          # Start Chat/Agent LLM & VLM only (Port 8092)
+pnpm ai:tts          # Start VieNeu TTS microservice only (Port 8080)
 pnpm stack:infra     # Start PostgreSQL (pgvector) & Redis
+pnpm stack:prod      # Start Production Stack (Caddy, Postgres, Redis, App, Worker)
+pnpm stack:prod:all  # Start Production Stack with CUDA Local AI
+pnpm stack:ai        # Start AI Container Cluster
 pnpm stack:down      # Stop all Docker containers
-pnpm db:health       # Audit DB health (relationships, embeddings, indexes)
+pnpm stack:ps        # Inspect running containers
+pnpm stack:logs      # Follow container logs
 ```
 
-### 4. Granular Per-Package Commands (Dev, Test, Typecheck, Eval)
+### 4. Data Ingestion & Database Operations
+```bash
+pnpm db:init         # Initialize Database schema & 11 tables (pgvector 1024d)
+pnpm db:health       # Audit DB health (relationships, embeddings, indexes)
+pnpm db:backup       # Snapshot database dump to backups/
+pnpm db:restore      # Restore database from backup snapshot
+pnpm db:clean        # Clean duplicate edges, self-loops & dangling relations
+pnpm db:audit-quarantine # Inspect & triage quarantine triples
+pnpm corpus:clean    # Clean raw crawled corpus & temporary files
+pnpm reset:data      # Reset projects data and checkpoints
+pnpm crawl:corpus    # Crawl historical corpus by epoch
+pnpm crawl:all       # Crawl all 15 Vietnamese historical epochs
+pnpm ingest:vector   # Stage 1: Chunks & Vector Store (BGE-M3 1024d) + Fast NER
+pnpm ingest:graph    # Stage 2: Knowledge Graph Triples extraction (LLM 4B)
+pnpm ingest:knowledge# Complete end-to-end knowledge ingestion
+pnpm rag:chat        # Interactive terminal RAG chat
+```
+
+### 5. Granular Per-Package Commands (Dev, Test, Typecheck, Eval)
 ```bash
 # Targeted Typecheck (Fast)
 pnpm typecheck:spec | :infra | :ingest | :rag | :orchestrator | :vlm | :remotion | :web | :worker
@@ -101,11 +128,16 @@ pnpm typecheck:spec | :infra | :ingest | :rag | :orchestrator | :vlm | :remotion
 pnpm test:spec | :infra | :ingest | :rag | :orchestrator | :vlm | :remotion | :web | :worker
 
 # Targeted Evaluation & Benchmarks
-pnpm eval:ingest         # Data Ingestion (Vector, Graph, Triples, NER)
+pnpm eval:ingest         # Data Ingestion Master Benchmark
+pnpm eval:ner            # Stage 1 Fast NER Benchmark
+pnpm eval:triples        # Stage 2 Knowledge Triples Extraction Benchmark
+pnpm eval:chunks         # Hierarchical Production Chunks Benchmark (60 chunks / 15 epochs)
 pnpm eval:rag            # RAG Engine Master Benchmark (C0 - C10 + SYS)
 pnpm eval:rag:c0 .. :c10 # Discrete RAG Component Benchmarks (C0..C10)
+pnpm eval:rag:sys        # RAG System Ablation & Latency Benchmark
 pnpm eval:orchestrator   # Multi-Agent Orchestrator Benchmark (A0 - A5 + SYS)
 pnpm eval:orchestrator:a0 .. :a5 # Discrete Agent Benchmarks (A0..A5)
+pnpm eval:orchestrator:sys # Multi-Agent Pipeline End-to-End Ablation
 pnpm eval:vlm            # VLM Visual Quality Inspector
 pnpm eval:remotion       # Remotion Video Rendering Fidelity
 pnpm eval:chat           # Historical Chatbot Dialogue Benchmark

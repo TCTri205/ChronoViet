@@ -5,6 +5,7 @@
  */
 
 import { rerankWithLocalCrossEncoder, createLogger } from '@chronoviet/infra';
+import { ChatSubIntent } from '@chronoviet/shared-spec';
 import { VectorSearchResult } from './vector-search.js';
 import { QUESTION_STOPWORDS } from './question-ner.js';
 
@@ -15,6 +16,20 @@ export const MAX_RERANK_CANDIDATE_POOL = process.env.RERANK_CANDIDATE_POOL
   : 25;
 export const MAX_CHUNK_CHAR_TRUNCATION = 750;
 export const MIN_RELEVANCE_SCORE_THRESHOLD = 0.15;
+
+export function calculateDynamicPoolSize(subIntent?: ChatSubIntent, rerankTopK: number = 5): number {
+  let basePool = MAX_RERANK_CANDIDATE_POOL;
+  if (subIntent === 'FACTOID_LOOKUP') {
+    basePool = 12;
+  } else if (subIntent === 'GENEALOGY_RELATION') {
+    basePool = 15;
+  } else if (subIntent === 'BATTLE_TACTICS') {
+    basePool = 20;
+  } else if (subIntent === 'COMPARATIVE_SYNTHESIS') {
+    basePool = 25;
+  }
+  return Math.max(rerankTopK * 2, Math.min(MAX_RERANK_CANDIDATE_POOL, basePool));
+}
 
 export interface RerankerStatus {
   active: boolean;
@@ -183,14 +198,16 @@ export async function rerankCandidates(
   queryText: string,
   candidates: VectorSearchResult[],
   rerankTopK: number = 5,
-  queryYears: number[] = []
+  queryYears: number[] = [],
+  subIntent?: ChatSubIntent
 ): Promise<VectorSearchResult[]> {
   if (!candidates || candidates.length === 0 || !queryText || !queryText.trim()) {
     return [];
   }
 
-  // 1. Take expanded candidate pool (up to 25) for thorough reranking
-  const candidatePool = candidates.slice(0, MAX_RERANK_CANDIDATE_POOL);
+  // 1. Take sub-intent adaptive candidate pool for thorough reranking
+  const poolSize = calculateDynamicPoolSize(subIntent, rerankTopK);
+  const candidatePool = candidates.slice(0, poolSize);
 
   // 2. Prepare query-relevant truncated documents with sentence boundary awareness
   const documents = candidatePool.map((c) => {

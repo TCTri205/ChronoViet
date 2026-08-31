@@ -25,25 +25,25 @@ describe('Question NER in Chrono-RAG Runtime', () => {
 
     expect(result.entityIds).toContain('person_ly_thai_to');
     expect(result.entityIds).toContain('doc_chieu_doi_do');
-    expect(result.entityIds).toContain('loc_ha_noi');
-    expect(result.entityNames).toContain('Hà Nội');
+    expect(result.entityIds).toContain('loc_thang_long');
+    expect(result.entityNames).toContain('Thăng Long');
   });
 
   it('should resolve ancient locations (Đông Quan, Phú Xuân, Gia Định) to canonical entity IDs', () => {
     const query1 = 'Quân Minh chiếm đóng thành Đông Quan năm bao nhiêu?';
     const res1 = extractQueryEntities(query1);
-    expect(res1.entityIds).toContain('loc_ha_noi');
-    expect(res1.entityNames).toContain('Hà Nội');
+    expect(res1.entityIds).toContain('loc_dong_quan');
+    expect(res1.entityNames).toContain('Đông Quan');
 
     const query2 = 'Chúa Nguyễn thiên đô về Phú Xuân vào thời kỳ nào?';
     const res2 = extractQueryEntities(query2);
-    expect(res2.entityIds).toContain('loc_hue');
-    expect(res2.entityNames).toContain('Huế');
+    expect(res2.entityIds).toContain('loc_phu_xuan');
+    expect(res2.entityNames).toContain('thành Phú Xuân');
 
     const query3 = 'Nguyễn Hữu Cảnh kinh lược xứ Gia Định lập nên phủ Gia Định năm 1698.';
     const res3 = extractQueryEntities(query3);
-    expect(res3.entityIds).toContain('loc_ho_chi_minh');
-    expect(res3.entityNames).toContain('Thành phố Hồ Chí Minh');
+    expect(res3.entityIds).toContain('loc_sai_gon');
+    expect(res3.entityNames).toContain('Sài Gòn');
   });
 
   it('should execute in sub-15ms without any LLM dependency', () => {

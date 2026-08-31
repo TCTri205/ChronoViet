@@ -47,14 +47,14 @@ flowchart TD
 ### Directory Organization: `outputs/` vs `reports/` Separation
 
 - **[`eval/chatbot/`](eval/chatbot/README.md)** (Chi tiết xem [Chatbot Eval README](eval/chatbot/README.md)):
-  - `datasets/`: 30+ curated test cases covering canonical history, multi-turn continuity, adversarial trap questions, folklore vs history, and video intent.
+  - `datasets/`: 40 curated test cases across 8 distinct categories covering canonical history, entity identity, multi-turn continuity, adversarial trap questions, folklore vs history, and video intent.
   - `metrics/`: Intent accuracy, citation grounding rate, anti-sycophancy refusal rate, folklore tone, and streaming latency (TTFT & throughput).
   - `outputs/`: Per-case raw execution traces & SSE token stream JSON dumps.
   - `reports/`: Aggregated benchmark scorecards (`chatbot-eval-report.json` and `chatbot-eval-report.md`).
   - `runner.ts`: Standalone & programmatic chatbot test runner (`pnpm eval:chat`).
 - **[`eval/video-gen/`](eval/video-gen/README.md)** (Chi tiết xem [Video Gen Eval README](eval/video-gen/README.md)):
   - `datasets/`: 
-    - `video-gen-test-cases.json`: 20 historical topics across 5 video types (`BIOGRAPHY`, `BATTLE`, `DYNASTY`, `MYSTERY`, `ARTIFACT`).
+    - `video-gen-test-cases.json`: 22 historical topics (`vg_01` đến `vg_22`) across 5 video types (`BIOGRAPHY`, `BATTLE`, `DYNASTY`, `MYSTERY`, `ARTIFACT`).
     - `golden-script-scenes.json`: 5 standardized golden script fixtures across canonical Vietnamese historical epochs.
   - `metrics/`:
     - `stage1-script-metrics.ts`: Planned pacing WPM, fact-checking safeguards, entity recall (with canonical alias resolution), scene chunk duration bounds (5s–25s).

@@ -227,9 +227,9 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
 ---
 
 ### ⚙️ Phase 3: LangGraph.js Orchestrator & Task Queues (Tuần 5 – Tuần 6) ✅ **HOÀN THÀNH**
-**Mục tiêu:** Xây dựng "Bộ não điều phối" Multi-Agent (Workstream D) quản lý máy trạng thái LangGraph (15 canonical states), lưu vết Postgres Checkpointer, điều hành BullMQ, kèm hai suite đánh giá `packages/agent-orchestrator/eval/` và `apps/render-worker/src/__tests__/`.
+**Mục tiêu:** Xây dựng "Bộ não điều phối" Multi-Agent (Workstream D) quản lý máy trạng thái LangGraph (17 canonical states), lưu vết Postgres Checkpointer, điều hành BullMQ, kèm hai suite đánh giá `packages/agent-orchestrator/eval/` và `apps/render-worker/src/__tests__/`.
 
-**Trạng thái:** Đã hoàn thành 100% — LangGraph.js 15 trạng thái, 5 Script Micro-Steps, Duration Reconciler, Research Agent (Micro-Step 1C), Fact-Checker, NLI Hallucination Judge, và BullMQ Queues (`apps/render-worker`).
+**Trạng thái:** Đã hoàn thành 100% — LangGraph.js 17 trạng thái, 5 Script Micro-Steps, Duration Reconciler, Research Agent (Micro-Step 1C), Fact-Checker, NLI Hallucination Judge, và BullMQ Queues (`apps/render-worker`).
 
 #### 📋 Công việc Workstream D (Multi-Agent Orchestrator & `agent-orchestrator/eval/`):
 1. **LangGraph.js State Machine & Postgres Checkpointer:**
@@ -245,8 +245,8 @@ Tuần 8     :  Phase 5 [Chạy Toàn Bộ Evaluation Suites, Benchmarking & T�
 3. **Triển khai `packages/agent-orchestrator/eval/`:**
    - Xây dựng 20 kịch bản lịch sử phức tạp (video 3 phút đến 15 phút).
    - Viết runner đánh giá:
-     - **State Machine Reliability**: Tỉ lệ hoàn thành toàn bộ 15 trạng thái không bị kẹt loop (Target 100%).
-     - **Pacing Reconciliation Error**: Sai lệch thời lượng tổng so với target (Target $< 5\%$).
+     - **State Machine Reliability**: Tỉ lệ hoàn thành toàn bộ 17 trạng thái không bị kẹt loop (Target 100%).
+     - **Pacing Reconciliation Error**: Sai lệch thời lượng tổng so với target (Target $< 3\%$).
      - **Fact-Checker Escalation Audit**: Khả năng phát hiện và chặn các câu sai lịch sử.
      - **Narrative Consistency Score**: Đánh giá độ mượt và văn phong nối giữa các Chapter bằng LLM-as-a-Judge.
 

@@ -3,7 +3,7 @@
  * Component of Chrono-RAG Runtime
  */
 
-import type { ExtractedQueryInfo, HistoricalPremiseValidationResult } from './question-ner.js';
+import type { ExtractedQueryInfo, HistoricalPremiseValidationResult } from '@chronoviet/shared-spec';
 import type { LocalGraphSearchResult } from './graph-cte-search.js';
 
 export interface CacheEntry<V> {

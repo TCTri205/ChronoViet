@@ -161,6 +161,9 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
   try {
     if (!pgPool) {
       pgPool = new Pool({ ...cfg, connectionTimeoutMillis: timeoutMs });
+      pgPool.on('connect', (client) => {
+        client.query('SET hnsw.ef_search = 100;').catch(() => {});
+      });
       pgPool.on('error', () => {
         pgConnected = false;
       });

@@ -65,7 +65,8 @@ export function countWords(text: string): number {
 /**
  * Truncate heading to max words and clean trailing punctuation
  */
-function cleanHeadingTitle(rawTitle: string, maxWords: number = 15): string {
+function cleanHeadingTitle(rawTitle?: string, maxWords: number = 15): string {
+  if (!rawTitle || typeof rawTitle !== 'string') return '';
   let clean = rawTitle
     .replace(/^[\#\=\s]+|[\#\=\s]+$/g, '')
     .replace(/[\.\:\;\,\!\?]+$/g, '')

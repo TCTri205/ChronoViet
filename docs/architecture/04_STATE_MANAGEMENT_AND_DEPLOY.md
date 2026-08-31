@@ -11,14 +11,14 @@ Vòng đời từ khi người dùng nhập yêu cầu cho đến khi nhận vid
  [INIT] ──► [RAG_RETRIEVED] ──► [OUTLINE_CHAPTERED] ──► [CHAPTER_SCRIPT_GENERATED]
                                                                │
                                                                ▼
- [RESEARCH_COMPLETED] ◄─── [KEYWORDS_EXTRACTED] ◄─── [SCENES_SEGMENTED] ◄─── [CHAPTER_FACT_CHECKED]
+ [TTS_SYNTHESIZED] ◄─── [RESEARCH_COMPLETED] ◄─── [SCENES_SEGMENTED] ◄─── [CHAPTER_FACT_CHECKED]
        │
        ▼
- [ASSETS_AUDITED] ──► [TTS_SYNTHESIZED] ──► [DURATION_RECONCILED] ──► [PACKAGED] ──► [RENDERING] ──► [COMPLETED]
-       │                    │                      │                     │              │
-    [FAILED] ◄──────────────┴──────────────────────┴─────────────────────┴──────────────┴── (Max Retry Exceeded)
+ [DURATION_RECONCILED] ──► [KEYWORDS_EXTRACTED] ──► [ASSETS_AUDITED] ──► [PACKAGED] ──► [RENDERING] ──► [COMPLETED]
+       │                          │                     │                  │              │
+    [FAILED] ◄────────────────────┴─────────────────────┴──────────────────┴──────────────┴── (Max Retry Exceeded)
        ▲
-       └─────────────────────────────────────────────────────────────────── [NEEDS_HUMAN_REVIEW]
+       └─────────────────────────────────────────────────────────────────────────── [NEEDS_HUMAN_REVIEW]
 ```
 
 ### Chi tiết các trạng thái (17 Canonical Operational States):
@@ -26,16 +26,16 @@ Vòng đời từ khi người dùng nhập yêu cầu cho đến khi nhận vid
 | State | Mô tả trạng thái | Xử lý Idempotency & Compensation (Phục hồi lỗi) |
 | :--- | :--- | :--- |
 | `INIT` | Khởi tạo session dự án video từ prompt người dùng. | Tạo `projectId` duy nhất (UUIDv4). |
-| `RAG_RETRIEVED` | Lấy xong trích dẫn sử liệu chuẩn từ PostgreSQL (`pgvector` + Graph). | Checkpoint state vào PostgreSQL, cache context vào Redis. |
+| `RAG_RETRIEVED` | Lấy xong trích dẫn sử liệu chuẩn từ PostgreSQL (`pgvector` + Graph BFS). | Checkpoint state vào PostgreSQL, cache context vào Redis. |
 | `OUTLINE_CHAPTERED` | Micro-Step 0 chia video thành $N$ Chapters (2-3 min/Chap). | Checkpoint danh sách Chapter Outlines & `runningNarrativeState`. |
 | `CHAPTER_SCRIPT_GENERATED` | Micro-Step 1A sinh lời thoại voiceover truyền `narrativeContext`. | Checkpoint voiceover text của từng Chapter. |
-| `CHAPTER_FACT_CHECKED` | Micro-Step 1B Dual Guardrails (Folklore Regex + NLI Entailment Judge $\ge 0.80$). | Thang Escalation: Safe Auto-Fix ➔ Retry $\le 2$ ➔ Flag `NEEDS_HUMAN_REVIEW` (Resume trực tiếp `segmenter` không lặp node). |
+| `CHAPTER_FACT_CHECKED` | Micro-Step 1B Dual Guardrails (Folklore Regex + NLI Entailment Judge $\ge 0.80$). | Thang Escalation: Safe Auto-Fix ➔ Retry $\le 2$ ➔ Flag `NEEDS_HUMAN_REVIEW`. |
 | `SCENES_SEGMENTED` | Phân đoạn kịch bản thành các scene chi tiết theo timing và visual cue. | Checkpoint danh sách các scene cần tìm tài nguyên. |
-| `KEYWORDS_EXTRACTED` | Micro-Step 1C Visual Query Planning & Keyword Extractor Agent chuẩn hóa truy vấn. | Checkpoint search keywords và `ImageSearchToolInput` cho từng scene. |
 | `RESEARCH_COMPLETED` | Research Agent tìm kiếm tư liệu lịch sử qua provider chain. | Thu thập provenance, license candidates cho từng scene. |
-| `ASSETS_AUDITED` | VLM Inspector kiểm định bản quyền & chất lượng ảnh (`PD`, `CC0`, `CC-BY`). | Tự động fallback Pure Code Layout nếu ảnh < 60 điểm. |
-| `TTS_SYNTHESIZED` | VieNeu TTS sinh file audio và word-level timestamps cho từng scene. | Lưu audio vào Host Volume `/media/audio-cache/`, fallback `SyntheticTTSFallbackEngine` (sine 480Hz) khi service Python chưa sẵn sàng (dev). |
+| `TTS_SYNTHESIZED` | VieNeu TTS sinh file audio và word-level timestamps cho từng scene. | Lưu audio vào Host Volume `/media/audio-cache/`, fallback `SyntheticTTSFallbackEngine` khi service Python chưa sẵn sàng. |
 | `DURATION_RECONCILED` | Pacing Reconcile Engine cân bằng thời lượng thoại và hình ảnh. | Time-Stretch ±10%, reconcile frame timings. |
+| `KEYWORDS_EXTRACTED` | Micro-Step 1C Visual Query Planning & Keyword Extractor Agent chuẩn hóa truy vấn. | Checkpoint search keywords và `ImageSearchToolInput` cho từng scene. |
+| `ASSETS_AUDITED` | VLM Inspector kiểm định bản quyền & chất lượng ảnh (`PD`, `CC0`, `CC-BY`). | Tự động fallback Pure Code Layout nếu ảnh < 60 điểm. |
 | `PACKAGED` | Đóng gói toàn diện thành `ChronoVideoScriptSchema` v4.1. | Validate 100% Zod Schema v4.1 trước khi đưa vào Render Queue. |
 | `RENDERING` | Render Worker tiếp nhận job render video MP4 qua Remotion Headless Chrome. | BullMQ concurrency control, process isolation. |
 | `COMPLETED` | Video MP4 đã render xuất xưởng thành công vào `/media/projects/:projectId/output/video.mp4`. | Trả link phát/tải MP4 (`/api/v1/projects/:id/video`), dọn dẹp temp files & Chrome processes. |
@@ -67,6 +67,7 @@ ChronoViet hỗ trợ đồng thời 2 môi trường phần cứng với cơ ch
 - **100% Containerized:** Khai thác NVIDIA Container Toolkit, đóng gói toàn bộ hệ thống trong Docker Compose:
   - `local-ai-cuda-llm` (Port 8092): Qwen3.5-9B Instruct + Flash Attention + Continuous Batching + mmproj.
   - `local-ai-cuda-emb` (Port 8090): BGE-M3 (1024d Dense Vector Space) `--embedding`.
+  - `local-ai-cuda-ext` (Port 8094): Qwen3.5-4B / 2.5-3B Instruct phục vụ trích xuất Knowledge Triples.
   - `vieneu-tts-service` (Port 8080): Python FastAPI ONNX Heritage TTS.
   - `postgres` (Port 5432) & `redis` (Port 6379).
   - `app` (Next.js Monolith API) & `worker` (Remotion Headless Chrome Render Worker).

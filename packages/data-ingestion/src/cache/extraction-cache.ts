@@ -40,6 +40,11 @@ export class ExtractionCache {
     }
   }
 
+  public setCacheDir(customDir: string): void {
+    this.cacheDir = customDir;
+    this.initialized = false;
+  }
+
   private async ensureDir(): Promise<void> {
     if (this.initialized) return;
     try {

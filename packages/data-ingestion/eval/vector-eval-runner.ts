@@ -388,8 +388,9 @@ export async function runVectorEval(): Promise<VectorChunkEvalReport> {
         }
         if (hits > maxKeywordHits) maxKeywordHits = hits;
 
-        // Consider chunk relevant if it hits at least 2 keywords or 40% of target keywords
-        const isRelevant = hits >= Math.min(2, bq.expectedKeywords.length) || hits / bq.expectedKeywords.length >= 0.4;
+        // Consider chunk relevant if it hits strict criteria: >= 60% of expectedKeywords
+        const requiredHits = Math.min(bq.expectedKeywords.length, Math.max(2, Math.ceil(bq.expectedKeywords.length * 0.6)));
+        const isRelevant = hits >= requiredHits;
         if (isRelevant && foundRank === 0) {
           foundRank = idx + 1;
         }

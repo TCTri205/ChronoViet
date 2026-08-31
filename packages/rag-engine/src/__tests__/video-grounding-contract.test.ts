@@ -28,7 +28,7 @@ describe('Video-Ready Grounding & Remotion Bridge Contract', () => {
     expect(personAnchor).toBeDefined();
     expect(personAnchor?.suggestedVisualType).toBe('PORTRAIT');
 
-    const locAnchor = result.visualAnchors.find((a) => a.entityId === 'loc_ha_noi');
+    const locAnchor = result.visualAnchors.find((a) => a.entityId === 'loc_thang_long');
     expect(locAnchor).toBeDefined();
     expect(locAnchor?.suggestedVisualType).toBe('MAP');
 

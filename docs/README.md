@@ -142,7 +142,7 @@ pnpm models:download:llm      # Chỉ tải Qwen 3.5 9B (~5.8 GB)
 # 2. Khởi chạy cụm CSDL PostgreSQL pgvector & Redis
 pnpm stack:infra
 
-# 3. Khởi tạo schema CSDL 7 bảng chuẩn hóa
+# 3. Khởi tạo schema CSDL 11 bảng chuẩn hóa
 pnpm db:init
 ```
 
@@ -160,33 +160,35 @@ pnpm dev:data        # Data Ingestion Stack: Postgres + Redis + AI Lite (8090 + 
 ### Bảng Tra Cứu Bộ Lệnh Toàn Hệ Thống:
 ```bash
 # ===============================================================
-# 1. BỘ 4 LỆNH CỐT LÕI HÀNG NGÀY (CORE 4 ESSENTIALS)
+# 1. BỘ LỆNH THIẾT YẾU HÀNG NGÀY (CORE 4)
 # ===============================================================
-pnpm dev             # 🚀 Smart 1-Click Dev: Tự bật Docker Infra + Tự kết nối AI + Chạy Web & Worker
-pnpm data:setup      # 📦 1-Click Data: Bật Infra -> Init Schema CSDL -> Nạp Tri thức chuẩn -> Health Audit
-pnpm ai              # 🤖 AI Dashboard TUI: Quản lý, kiểm tra port & bật/tắt Local AI Stack
-pnpm check           # ✅ Verification Gate: Typecheck -> Lint -> Test -> Build (100% Pass)
+pnpm dev             # 🚀 Khởi chạy 1-Click: Tự động hạ tầng + AI Detect + Web & Worker
+pnpm data:setup      # 📦 Nạp dữ liệu 1-Click: Docker Infra -> DB Init -> Ingest -> Health Audit
+pnpm ai              # 🤖 Bảng điều khiển quản lý AI tương tác trực quan
+pnpm check           # ✅ Cổng kiểm tra toàn diện: Typecheck -> Lint -> Test -> Build
 
 # ===============================================================
-# 2. CÁC CHẾ ĐỘ THỰC THI CHUYÊN BIỆT (SPECIALIZED DEV PROFILES)
+# 2. HẠ TẦNG DOCKER & CONTAINER PROFILES
 # ===============================================================
-pnpm dev:full        # Khởi chạy Full Stack: Docker Infra + AI + TTS + Web + Worker
-pnpm dev:cloud       # Khởi động Web + Worker với Cloud AI fallback (0% RAM/GPU AI Local)
-pnpm dev:data        # Khởi động Postgres + Redis + AI Lite (Embedding + Extraction) cho Data/Crawler
-pnpm dev:web         # Chạy riêng Web App Next.js (port 3000)
-pnpm dev:worker      # Chạy riêng BullMQ Video Render Worker (port 3001)
+pnpm stack:infra     # Khởi chạy PostgreSQL (pgvector 1024d) & Redis BullMQ
+pnpm stack:prod      # Khởi chạy toàn bộ hệ thống Production (Caddy, Postgres, Redis, App, Worker)
+pnpm stack:prod:all  # Khởi chạy Production kèm AI Containers (CUDA)
+pnpm stack:ai        # Khởi chạy AI Container Cluster
+pnpm stack:down      # Dừng toàn bộ Docker containers
+pnpm stack:ps        # Xem trạng thái các container
+pnpm stack:logs      # Xem logs thời gian thực
 
 # ===============================================================
-# 3. QUẢN LÝ MÔ HÌNH AI CỤC BỘ (UNIFIED AI CLI)
+# 3. QUẢN LÝ DỊCH VỤ AI CỤC BỘ (LOCAL AI STACK)
 # ===============================================================
-pnpm ai              # [Tương tác] Xem trạng thái các port (8090, 8092, 8094, 8096, 8080) & model đã nạp
-pnpm ai:start        # Khởi chạy Full Local AI Stack (Embedding + LLM 9B + Reranker + TTS)
-pnpm ai:lite         # Chạy cặp đôi AI Lite: Embedding (8090) + Extraction (8094) (~3.1GB RAM)
-pnpm ai:emb          # Chỉ chạy Embedding Server (Port 8090, BGE-M3 ~600MB) cho Vector Search
-pnpm ai:extract      # Chỉ chạy Extraction LLM (Port 8094, Qwen 4B ~1.8GB) cho Triples/Crawler
-pnpm ai:rerank       # Chỉ chạy Reranker Engine (Port 8096, Qwen3-Reranker-0.6B ~600MB)
-pnpm ai:llm          # Chỉ chạy Chat/Agent LLM & VLM (Port 8092, Qwen 9B)
-pnpm ai:tts          # Khởi chạy microservice VieNeu TTS FastAPI trong Docker (Port 8080)
+pnpm ai:start        # Bật Full Local AI Stack (8090, 8092, 8094, 8096, 8080)
+pnpm ai:lite         # Bật cặp nhẹ Data Ingestion (8090 + 8094) (~3.1 GB RAM)
+pnpm ai:emb          # Bật riêng Embedding Engine BGE-M3 (Port 8090)
+pnpm ai:extract      # Bật riêng Extraction LLM Qwen-4B (Port 8094)
+pnpm ai:rerank       # Bật riêng Cross-Encoder Reranker Qwen-0.6B (Port 8096)
+pnpm ai:llm          # Bật riêng Primary LLM / VLM Qwen-9B (Port 8092)
+pnpm ai:tts          # Bật riêng VieNeu TTS Microservice (Port 8080)
+pnpm ai:status       # Kiểm tra trạng thái các port AI (8090, 8092, 8094, 8096, 8080)
 pnpm ai:stop         # Dừng/giải phóng toàn bộ tiến trình AI & TTS, trả lại 100% RAM/VRAM
 
 # ===============================================================
@@ -198,7 +200,7 @@ pnpm test:spec | :infra | :ingest | :rag | :orchestrator | :vlm | :remotion | :w
 # ===============================================================
 # 5. CƠ SỞ DỮ LIỆU & NẠP TRI THỨC LỊCH SỬ
 # ===============================================================
-pnpm db:init         # Khởi tạo CSDL & Schema Vector/Graph (pgvector 1024d)
+pnpm db:init         # Khởi tạo CSDL & Schema Vector/Graph (pgvector 1024d, 11 bảng)
 pnpm db:health       # Audit sức khỏe DB (dangling refs, embeddings, chunks, entities, indexes)
 pnpm db:backup       # Sao lưu snapshot CSDL
 pnpm db:restore      # Khôi phục CSDL từ snapshot
@@ -218,11 +220,17 @@ pnpm remotion:render # Render video MP4 qua Remotion CLI
 # ===============================================================
 # 7. ĐÁNH GIÁ CHẤT LƯỢNG TỪNG MODULE (EVAL)
 # ===============================================================
-pnpm eval:ingest        # Đánh giá Data Ingestion (Vector, Graph, Triples, NER)
+pnpm eval:ingest        # Đánh giá Data Ingestion Master Benchmark
+pnpm eval:ner           # Đánh giá Stage 1 Fast NER
+pnpm eval:triples       # Đánh giá Stage 2 Knowledge Triples Extraction
 pnpm eval:rag           # Đánh giá Chrono-RAG Engine (C0-C10 benchmarks)
-pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator Pipeline
-pnpm eval:vlm           # Đánh giá VLM Inspector offline image scoring
-pnpm eval:remotion      # Đánh giá Remotion Video Engine
+pnpm eval:rag:c0 .. :c10# Đánh giá từng tầng RAG riêng biệt (C0 đến C10)
+pnpm eval:rag:sys       # Đánh giá System Ablation RAG
+pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator Pipeline (A0-A5 + SYS)
+pnpm eval:orchestrator:a0 .. :a5 # Đánh giá từng Agent A0 đến A5
+pnpm eval:orchestrator:sys # Đánh giá Orchestrator Pipeline End-to-End
+pnpm eval:vlm           # Đánh giá VLM Inspector visual quality scoring
+pnpm eval:remotion      # Đánh giá Remotion Video Rendering Fidelity
 pnpm eval:chat          # Đánh giá Chatbot Dialogue RAG
 pnpm eval:video:stage1  # Video Gen Stage 1: Kịch bản & Phân cảnh (Text-Only Preflight siêu tốc)
 pnpm eval:video:stage2  # Video Gen Stage 2: Curation Ảnh & VLM Quality (Nối tiếp Stage 1)

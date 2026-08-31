@@ -2,7 +2,7 @@
 ## (Hybrid GraphRAG: Knowledge Graph + Vector Database + Local Search)
 
 > **Trạng thái:** `[✅ FULLY IMPLEMENTED & VERIFIED 100% — COMPLIANT WITH DUAL-BRANCH CONCURRENCY, SUB-INTENT ADAPTIVE RRF & MATERIALIZED LINEAGE GRAPH SPEC v2.4 PRODUCTION HARDENED]`
-> **Cập nhật:** Tích hợp **Sub-Intent Adaptive Chrono-RAG** (`GENEALOGY_RELATION`, `BATTLE_TACTICS`, `FACTOID_LOOKUP`, `COMPARATIVE_SYNTHESIS`), **Materialized View (`mv_dynasty_lineage_paths`)** tăng tốc truy vấn phả hệ đa bậc kèm cơ chế tự động refresh, Global Singleton Schema Init, **Directed BFS Graph Traversal song song 2 chiều (Forward + Reverse queries via `Promise.all`)** với Global Visited-Set + Node Budget (50–60 nodes) + Timeout (350ms) + Edge-Type Filter, Tiền xử lý Lexical FTS lọc Stopwords tiếng Việt (`sanitizeFtsQuery`), **Chạy song song không đồng bộ (Overlapped Execution) giữa Lexical FTS và Query Embedding**, **Bộ đệm In-Flight Promise Memoization chống Cache Stampede**, **Resilient Error Boundary cho nhánh Graph** tự động phân rã an toàn, Graph Score theo `confidence * 0.6^(hop-1)` + Co-Retrieval Boost nhỏ ($+0.05 \times \text{graphScore}$), Reranker Pool = 5, và 100% Bộ Unit Test Suite độc lập cho CI/CD Gate.
+> **Cập nhật:** Tích hợp **Sub-Intent Adaptive Chrono-RAG** (`GENEALOGY_RELATION`, `BATTLE_TACTICS`, `FACTOID_LOOKUP`, `COMPARATIVE_SYNTHESIS`), **Materialized View (`mv_dynasty_lineage_paths`)** tăng tốc truy vấn phả hệ đa bậc kèm cơ chế tự động refresh, Global Singleton Schema Init, **Directed BFS Graph Traversal song song 2 chiều (Forward + Reverse queries via `Promise.all`)** với Global Visited-Set + Node Budget (50–60 nodes) + Timeout (150ms) + Edge-Type Filter, Tiền xử lý Lexical FTS lọc Stopwords tiếng Việt (`sanitizeFtsQuery`), **Chạy song song không đồng bộ (Overlapped Execution) giữa Lexical FTS và Query Embedding**, **Bộ đệm In-Flight Promise Memoization chống Cache Stampede**, **Resilient Error Boundary cho nhánh Graph** tự động phân rã an toàn, Graph Score theo `confidence * 0.6^(hop-1)` + Co-Retrieval Boost nhỏ ($+0.05 \times \text{graphScore}$), Reranker Pool = 10, và 100% Bộ Unit Test Suite độc lập cho CI/CD Gate.
 
 ---
 
@@ -177,7 +177,7 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
 
 0. **Step 0 - Global Singleton Schema Init & In-Flight Promise LRU Cache:** 
    - Kiểm tra và đảm bảo schema DDL được khởi tạo duy nhất một lần toàn process (`ensureGlobalSchemaInitialized`).
-   - Tận dụng `SimpleLRUCache` (500 mục, TTL LRU) kết hợp **`inFlightEmbeddings: Map<string, Promise<number[]>>`** để deduplicate triệt để các concurrent requests cùng câu hỏi (chống thundering herd/cache stampede), dọn dẹp an toàn trong block `finally`.
+   - Tận dụng `LRUCacheWithTTL` (1,000 mục, TTL LRU) và `EmbeddingVectorCache` (2,000 mục `Float32Array`) kết hợp **`inFlightEmbeddings: Map<string, Promise<number[]>>`** để deduplicate triệt để các concurrent requests cùng câu hỏi (chống thundering herd/cache stampede), dọn dẹp an toàn trong block `finally`.
 1. **Step 1 - Trích xuất thực thể câu hỏi (Question NER & Multi-Taxonomy Canonical Resolution):** 
    - Pure TS NER Engine (< 1ms) nhận diện thực thể trung tâm: `[Trận Tốt Động - Chúc Động]` và `[Nguyễn Chích]`, đồng thời tự động chuẩn hóa địa danh cổ (*Đông Quan, Phú Xuân, Gia Định*) sang Canonical Entity ID chuẩn.
 2. **Steps 2, 3, 4 - Dual-Branch Parallel Execution & Concurrency Decoupling:**

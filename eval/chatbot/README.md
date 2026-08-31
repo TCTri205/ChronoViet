@@ -17,11 +17,12 @@ The Chatbot Evaluation Suite evaluates live multi-turn historical dialogue again
 
 ## 2. Test Datasets (`datasets/chatbot-test-cases.json`)
 
-Contains 30 curated multi-turn dialogue test cases across 7 distinct categories:
+Contains 40 curated multi-turn dialogue test cases across 8 distinct categories:
 
 | Category | Description | Primary Verification Target |
 |---|---|---|
 | `CANONICAL_QA` | Standard historical inquiries on key figures, battles, and epochs (Ngô Quyền, Đinh Bộ Lĩnh, Lê Hoàn, Lý Thường Kiệt, Trần Hưng Đạo, etc.). | Entity recall, historical fidelity, citation grounding. |
+| `ENTITY_IDENTITY` | Questions asking to disambiguate historical personages, reign titles, and aliases (e.g. Mai Thúc Loan vs. Mai Hắc Đế, Quang Trung vs. Nguyễn Huệ). | Canonical entity resolution, alias mapping. |
 | `MULTI_TURN` | Complex 2–4 turn dialogues testing context continuity, antecedent memory, and pronoun resolution across turns. | Context retention, co-reference resolution across turns. |
 | `ANTI_SYCOPHANCY` | Adversarial trap questions with subtle historical falsehoods, false anachronisms, or leading biased claims. | Anti-sycophancy refusal, factual correction rate without sycophancy. |
 | `FOLKLORE_MYTH` | Questions about legends, mythological traditions, and folkloric figures (Sơn Tinh - Thủy Tinh, An Dương Vương, Thánh Gióng, Lê Lợi trả gươm). | Clear demarcation between historical fact and mythological tradition. |
@@ -39,15 +40,15 @@ Contains 30 curated multi-turn dialogue test cases across 7 distinct categories:
 | **Intent Accuracy** | $\ge 95.0\%$ | $< 90.0\%$ | Exact match against expected intent enum (`OUT_OF_DOMAIN`, `CHITCHAT`, `VIDEO_INTENT`, `HISTORICAL_QUERY`, `ENTITY_IDENTITY`) |
 | **Citation Grounding Rate** | $\ge 90.0\%$ | $< 80.0\%$ | Percentage of turns with valid primary source citations and key entities |
 | **Anti-Sycophancy Pass Rate** | $\ge 90.0\%$ | $< 80.0\%$ | Detection and refusal of false historical premises and forbidden claims |
-| **Folklore Demarcation Rate** | $\ge 85.0\%$ | $< 75.0\%$ | Explicit qualification of folkloric / mythical elements |
+| **Folklore Demarcation Rate** | $\ge 90.0\%$ | $< 75.0\%$ | Explicit qualification of folkloric / mythical elements |
 | **Key Fact Coverage Rate** | $\ge 85.0\%$ | $< 70.0\%$ | Semantic overlap against curated golden historical summaries |
 
 ### B. Hardware Latency & Streaming Performance Profile
-| Metric | Target Profile (Cloud / GPU) | Baseline Target (Local Quantized) | Method |
+| Metric | Target KPI | Pass Gate Threshold | Method |
 |---|:---:|:---:|---|
-| **Time-to-First-Token (TTFT P50)** | $< 1500\text{ ms}$ | $< 15000\text{ ms}$ | Measured latency to first streamed token chunk |
-| **Streaming Throughput** | $\ge 25\text{ tok/s}$ | $\ge 3\text{ tok/s}$ | Average token generation and emission speed |
-| **Turn Duration (P50/P90)** | $< 5000\text{ ms}$ | $< 25000\text{ ms}$ | Total turn round-trip duration |
+| **Time-to-First-Token (TTFT P50)** | $< 2500\text{ ms}$ | $\le 5000\text{ ms}$ | Measured latency to first streamed token chunk |
+| **Streaming Throughput** | $\ge 12.0\text{ tok/s}$ | $\ge 8.0\text{ tok/s}$ | Average token generation and emission speed |
+| **Turn Duration (P50/P90)** | $< 5000\text{ ms}$ | $\le 15000\text{ ms}$ | Total turn round-trip duration |
 
 ---
 
@@ -63,10 +64,11 @@ pnpm eval:chat
 pnpm eval:chat -- --limit 3
 
 # Run a specific category only
-pnpm eval:chat -- --category ANTI_SYCOPHANCY
-pnpm eval:chat -- --category MULTI_TURN
-pnpm eval:chat -- --category FOLKLORE_MYTH
 pnpm eval:chat -- --category CANONICAL_QA
+pnpm eval:chat -- --category ENTITY_IDENTITY
+pnpm eval:chat -- --category MULTI_TURN
+pnpm eval:chat -- --category ANTI_SYCOPHANCY
+pnpm eval:chat -- --category FOLKLORE_MYTH
 pnpm eval:chat -- --category VIDEO_INTENT
 pnpm eval:chat -- --category CHITCHAT
 pnpm eval:chat -- --category OUT_OF_DOMAIN

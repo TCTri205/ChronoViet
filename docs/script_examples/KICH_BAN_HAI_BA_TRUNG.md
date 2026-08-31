@@ -88,7 +88,7 @@ Tệp này nằm tại `packages/remotion-engine/src/data/hai-ba-trung/haiBaTrun
       "id": "scene_00_intro",
       "startTime": 0,
       "endTime": 15,
-      "text": "ChronoViet Documentary Series â€” Hai BĂ  TrÆ°ng.",
+      "text": "ChronoViet Documentary Series — Hai Bà Trưng.",
       "layoutMode": "ARTICLE_UI",
       "overlayType": "ARTICLE_INTRO",
       "transition": "FADE_TO_BLACK",

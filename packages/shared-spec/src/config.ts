@@ -55,6 +55,7 @@ export const EnvSchema = z.object({
   LLM_PORT: z.coerce.number().int().positive().default(8092),
   LLM_CTX_SIZE: z.coerce.number().int().positive().default(131072),
   LOCAL_LLM_PARALLEL: z.coerce.number().int().positive().default(4),
+  LOCAL_LLM_THREADS: z.coerce.number().int().positive().default(10),
   LLM_EXTRA_ARGS: z.string().optional(),
   LOCAL_LLM_EXTRACTION_PORT: z.coerce.number().int().positive().default(8094),
   LOCAL_LLM_EXTRACTION_BASE_URL: z.string().default('http://localhost:8094'),

@@ -339,7 +339,8 @@ export class ChronoRagEngine implements IRagEngine {
       queryText,
       allCandidates,
       rerankTopK,
-      queryInfo.extractedYears
+      queryInfo.extractedYears,
+      request.subIntent
     );
 
     log.debug('rag.search_completed', 'RAG search completed', {

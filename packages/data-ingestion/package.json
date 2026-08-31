@@ -31,10 +31,12 @@
     "eval:graph": "tsx eval/graph-eval-runner.ts",
     "eval:ner": "tsx eval/ner-runner.ts",
     "eval:triples": "tsx eval/triples-runner.ts",
+    "eval:chunks": "tsx eval/chunk-runner.ts",
     "eval:diagnostic": "tsx src/cli/ingest-diagnostic.ts",
     "eval:seed": "tsx src/cli/seed-eval.ts",
     "extract:pdf": "tsx src/cli/extract-pdf-md.ts",
     "crawl:pdf-extracted": "tsx src/cli/crawl-pdf-extracted.ts",
+    "db:re-resolve": "tsx src/cli/re-resolve-cli.ts",
     "rag:re-resolve": "tsx src/cli/re-resolve-cli.ts",
     "db:audit-quarantine": "tsx src/cli/quarantine-inspector.ts"
   },

@@ -1,8 +1,7 @@
-# ChronoViet - Remotion Evaluation & Render Engine (`@chronoviet/remotion-engine`)
+# `@chronoviet/remotion-engine`
 
-Mô-đun Remotion Render Engine thuần túy (**Pure Render Engine**) thuộc hệ sinh thái **ChronoViet**. Nhiệm vụ chính của mô-đun là tiếp nhận dữ liệu kịch bản chuẩn hóa dạng JSON (từ RAG & Multi-Agent Orchestrator) và render thành các video ngắn/dài (Shorts/Reels 9:16, YouTube 16:9, Post 1:1) chất lượng cao với cấu trúc phân đoạn chuyên nghiệp.
-
-Engine tuân thủ nguyên tắc **100% Data-Driven**, không hardcode kịch bản hay business logic của RAG/Agent trong component code. Mọi thông tin (phân cảnh, hiệu ứng, transition, typography, audio) được nạp trực tiếp qua JSON Schema v4.1.
+> **ChronoViet Remotion Evaluation & Render Engine (Mô-đun 4)**  
+> Mô-đun Remotion Render Engine thuần túy (**Pure Render Engine**) thuộc hệ sinh thái **ChronoViet**. Nhiệm vụ chính của mô-đun là tiếp nhận dữ liệu kịch bản chuẩn hóa dạng JSON (từ RAG & Multi-Agent Orchestrator) và render thành các video ngắn/dài (Shorts/Reels 9:16, YouTube 16:9, Post 1:1) chất lượng cao với cấu trúc phân đoạn chuyên nghiệp. Tuân thủ 100% nguyên tắc **Data-Driven v4.1**.
 
 > [!NOTE]
 > **Về tài nguyên tĩnh & Mock Assets:**
@@ -11,7 +10,7 @@ Engine tuân thủ nguyên tắc **100% Data-Driven**, không hardcode kịch b�
 
 ---
 
-## 🏗️ Cấu trúc Thư mục
+## 🏗️ 1. Cấu Trúc Thư Mục (Directory Architecture)
 
 ```text
 packages/remotion-engine/
@@ -25,7 +24,7 @@ packages/remotion-engine/
 │   └── out/               # Kết quả render thực tế khi dùng `--render-stills`
 ├── src/                   # Mã nguồn Pure Render Engine
 │   ├── cli.ts             # Bộ CLI chính cho remotion-engine (render, still, inspect, eval)
-│   ├── components/        # Thư viện Component chuyên biệt theo chuẩn ChronoViet
+│   ├── components/        # Thư viện 21 Component chuyên biệt theo chuẩn ChronoViet
 │   │   ├── SlideImage.tsx     # Ken Burns + Blur Background & 4 chuyên biệt (Archive, Grid, 3D, Pure)
 │   │   ├── QuoteSlide.tsx     # Thẻ trích dẫn câu nói / thơ (Quote Card)
 │   │   ├── ChapterTitle.tsx   # Thẻ phân đoạn chương (Chapter Subdivision Title Card)
@@ -44,9 +43,13 @@ packages/remotion-engine/
 │   │   ├── ArtifactInspect.tsx  # Giao diện thẩm định bảo vật quốc gia 16:9 kèm 4 Hotspot tags
 │   │   ├── PoemReciting.tsx     # Giao diện ngâm thơ lịch sử / tuyên ngôn độc lập 16:9
 │   │   ├── HeroSpotlight.tsx    # Điểm sáng danh nhân lịch sử (Hero Spotlight)
-│   │   └── ArmyStrength.tsx     # So sánh tương quan quân sự & thanh tỉ lệ (Army Strength)
+│   │   ├── ArmyStrength.tsx     # So sánh tương quan quân sự & thanh tỉ lệ (Army Strength)
+│   │   ├── DocumentaryHeader.tsx # Thẻ tiêu đề định dạng phim tài liệu
+│   │   └── DocumentarySubtitle.tsx # Thẻ phụ đề / trích yếu phim tài liệu
 │   ├── constants/         # Cấu hình màu sắc thương hiệu ChronoViet & kích thước canvas
 │   ├── types/             # TypeScript interfaces & Zod schemas cho Timeline & Compositions
+│   ├── templates/         # Template mappings & layout mode presets
+│   ├── transitions/       # Custom transition animations (FadeToBlack, CrossFade...)
 │   ├── data/              # Dữ liệu kịch bản JSON mẫu cho Studio Preview
 │   ├── utils/             # Hàm toán học Ken Burns, responsive layout & theme presets
 │   ├── compositions/      # Composition React Components Remotion (ChronoVideo.tsx)
@@ -59,7 +62,7 @@ packages/remotion-engine/
 
 ---
 
-## 🎬 ChronoViet Video Template Architecture
+## 🎬 2. Kiến Trúc Template Video (Template Architecture)
 
 Template được thiết kế theo cấu trúc phân đoạn chuyên nghiệp, tự động thích ứng theo `layoutMode` trong JSON:
 
@@ -75,11 +78,11 @@ Template được thiết kế theo cấu trúc phân đoạn chuyên nghiệp, 
 
 ---
 
-## 🛠️ Hướng dẫn Sử dụng CLI (`remotion-engine`)
+## 🛠️ 3. Hướng Dẫn Sử Dụng CLI (CLI Usage & Options)
 
 Package cung cấp công cụ CLI linh hoạt nhận tham số đầu vào/đầu ra và vị trí thư mục (Tất cả lệnh bên dưới đều thực thi từ **Root Monorepo**):
 
-### Cú pháp Lệnh CLI (Chạy tại Root Monorepo)
+### Cú pháp Lệnh CLI
 
 ```bash
 # Render MP4 video từ file JSON kịch bản
@@ -95,7 +98,7 @@ pnpm --filter @chronoviet/remotion-engine cli inspect -i <input.json>
 pnpm --filter @chronoviet/remotion-engine eval [-t <testCasesDir>] [-o <outDir>] [-r <reportsDir>]
 ```
 
-### Các Tham Số CLI:
+### Bảng Tham Số CLI
 
 | Tham số | Viết tắt | Ý nghĩa | Mặc định |
 | :--- | :--- | :--- | :--- |
@@ -111,9 +114,9 @@ pnpm --filter @chronoviet/remotion-engine eval [-t <testCasesDir>] [-o <outDir>]
 
 ---
 
-## 📊 Evaluation Suite (`eval/`)
+## 📊 4. Tầng Đánh Giá & Benchmark (Evaluation Suite)
 
-Thư mục [`eval/`](eval) cung cấp bộ công cụ tự động kiểm định 31 LayoutModes và 19 Transitions, đồng thời mở Remotion Studio cho Human trực tiếp đánh giá (Tất cả lệnh chạy tại **Root Monorepo**):
+Thư mục [`eval/`](eval) cung cấp bộ công cụ tự động kiểm định 31 LayoutModes và 19 Transitions, đồng thời mở Remotion Studio cho Human trực tiếp đánh giá:
 
 ```bash
 # Chạy suite đánh giá tự động -> Tự động mở Remotion Studio GUI (giữ eval/out sạch 100%)
@@ -125,7 +128,7 @@ pnpm --filter @chronoviet/remotion-engine eval -- --no-studio
 
 ---
 
-## 🚀 Lệnh Thường Dùng Cho Developer
+## 🚀 5. Lệnh Thường Dùng Cho Developer (CLI Commands)
 
 ```bash
 # 1. Xem trực quan giao diện (Remotion Studio GUI Port 9876)
@@ -158,3 +161,10 @@ pnpm --filter @chronoviet/remotion-engine typecheck
 # 6. Setup mock assets cho Remotion Engine
 pnpm --filter @chronoviet/remotion-engine setup-assets
 ```
+
+---
+
+## 📄 6. Giấy Phép (License)
+
+Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**.
+

@@ -232,28 +232,25 @@ export async function searchDenseVector(
       .slice(0, 1024)
       .concat(new Array(Math.max(0, 1024 - resolvedEmbedding.length)).fill(0));
 
-    const vecRows = await withTransaction(async (execQuery) => {
-      await execQuery('SET LOCAL hnsw.ef_search = 100;');
-      return execQuery<{
-        id: string;
-        title: string;
-        text_content: string;
-        dynasty?: string;
-        source_reliability?: string;
-        parent_chunk_id?: string;
-        time_start?: number;
-        time_end?: number;
-        epoch_ids?: string[];
-        dist: number;
-      }>(
-        `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, embedding <=> $1::vector AS dist
-         FROM document_chunks
-         WHERE embedding IS NOT NULL
-         ORDER BY dist ASC
-         LIMIT $2;`,
-        [JSON.stringify(adaptedEmbedding), topK]
-      );
-    });
+    const vecRows = await query<{
+      id: string;
+      title: string;
+      text_content: string;
+      dynasty?: string;
+      source_reliability?: string;
+      parent_chunk_id?: string;
+      time_start?: number;
+      time_end?: number;
+      epoch_ids?: string[];
+      dist: number;
+    }>(
+      `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, embedding <=> $1::vector AS dist
+       FROM document_chunks
+       WHERE embedding IS NOT NULL
+       ORDER BY dist ASC
+       LIMIT $2;`,
+      [JSON.stringify(adaptedEmbedding), topK]
+    );
 
     if (vecRows && vecRows.length > 0) {
       return vecRows.map((r: any, idx: number) => ({
@@ -303,7 +300,7 @@ function sanitizeTsToken(token: string): string {
 
 /**
  * Builds enhanced PostgreSQL tsquery string injecting whitelisted multi-word aliases (>= 2 words)
- * with conjunctive '&' grouping per alias and disjunctive '|' across aliases.
+ * compatible with websearch_to_tsquery OR syntax.
  */
 export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: string[]): string {
   const sanitized = sanitizeFtsQuery(queryText);
@@ -317,8 +314,7 @@ export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: str
     .filter((t) => t.length >= 2);
 
   const allBaseTokens = Array.from(new Set([...baseTokens, ...unaccentedBaseTokens]));
-  const baseClause = allBaseTokens.length > 0 ? allBaseTokens.join(' | ') : '';
-  const aliasClauses: string[] = [];
+  const clauses: string[] = [...allBaseTokens];
 
   if (detectedEntityIds && detectedEntityIds.length > 0) {
     const seenAliases = new Set<string>();
@@ -354,21 +350,13 @@ export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: str
         if (seenAliases.has(normalizedAlias)) continue;
         seenAliases.add(normalizedAlias);
 
-        const unaccentedWords = removeVietnameseAccents(normalizedAlias)
-          .split(/\s+/)
-          .map(sanitizeTsToken)
-          .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
+        const unaccentedAlias = removeVietnameseAccents(normalizedAlias).replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
+        const cleanAlias = normalizedAlias.replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
 
-        const accentedWords = normalizedAlias
-          .split(/\s+/)
-          .map(sanitizeTsToken)
-          .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
-
-        // Strictly whitelist multi-word aliases (>= 2 high-signal tokens)
-        if (unaccentedWords.length >= 2) {
-          aliasClauses.push(`(${unaccentedWords.join(' & ')})`);
-          if (accentedWords.join(' ') !== unaccentedWords.join(' ')) {
-            aliasClauses.push(`(${accentedWords.join(' & ')})`);
+        if (unaccentedAlias.split(/\s+/).length >= 2) {
+          clauses.push(`"${unaccentedAlias}"`);
+          if (cleanAlias !== unaccentedAlias) {
+            clauses.push(`"${cleanAlias}"`);
           }
           entityInjectedCount++;
         }
@@ -376,9 +364,9 @@ export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: str
     }
   }
 
-  const parts = [baseClause, ...aliasClauses].filter(Boolean);
+  const parts = clauses.filter(Boolean);
   if (parts.length === 0) return '';
-  return parts.join(' | ');
+  return parts.join(' OR ');
 }
 
 /**
@@ -398,80 +386,30 @@ export async function searchLexicalFTS(
 
   const pgConnected = await isPgAvailable();
   if (pgConnected) {
-    const tsQueryStr = buildEnhancedFtsQuery(queryText, detectedEntityIds);
+    const tsQueryStr = buildEnhancedFtsQuery(queryText, detectedEntityIds) || sanitizedQuery;
     let ftsRows: any[] = [];
-    if (tsQueryStr) {
-      try {
-        ftsRows = await query<{
-          id: string;
-          title: string;
-          text_content: string;
-          dynasty?: string;
-          source_reliability?: string;
-          parent_chunk_id?: string;
-          time_start?: number;
-          time_end?: number;
-          epoch_ids?: string[];
-          rank: number;
-        }>(
-          `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, ts_rank_cd(tsv, to_tsquery('simple', $1)) AS rank
-           FROM document_chunks
-           WHERE tsv @@ to_tsquery('simple', $1)
-           ORDER BY rank DESC
-           LIMIT $2;`,
-          [tsQueryStr, topK]
-        );
-      } catch {
-        ftsRows = [];
-      }
-    }
-
-    if (!ftsRows || ftsRows.length === 0) {
-      try {
-        ftsRows = await query<{
-          id: string;
-          title: string;
-          text_content: string;
-          dynasty?: string;
-          source_reliability?: string;
-          parent_chunk_id?: string;
-          time_start?: number;
-          time_end?: number;
-          epoch_ids?: string[];
-          rank: number;
-        }>(
-          `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, ts_rank_cd(tsv, websearch_to_tsquery('simple', $1)) AS rank
-           FROM document_chunks
-           WHERE tsv @@ websearch_to_tsquery('simple', $1)
-           ORDER BY rank DESC
-           LIMIT $2;`,
-          [sanitizedQuery, topK]
-        );
-      } catch {
-        try {
-          ftsRows = await query<{
-            id: string;
-            title: string;
-            text_content: string;
-            dynasty?: string;
-            source_reliability?: string;
-            parent_chunk_id?: string;
-            time_start?: number;
-            time_end?: number;
-            epoch_ids?: string[];
-            rank: number;
-          }>(
-            `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, ts_rank_cd(tsv, plainto_tsquery('simple', $1)) AS rank
-             FROM document_chunks
-             WHERE tsv @@ plainto_tsquery('simple', $1)
-             ORDER BY rank DESC
-             LIMIT $2;`,
-            [sanitizedQuery, topK]
-          );
-        } catch {
-          ftsRows = [];
-        }
-      }
+    try {
+      ftsRows = await query<{
+        id: string;
+        title: string;
+        text_content: string;
+        dynasty?: string;
+        source_reliability?: string;
+        parent_chunk_id?: string;
+        time_start?: number;
+        time_end?: number;
+        epoch_ids?: string[];
+        rank: number;
+      }>(
+        `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, ts_rank_cd(tsv, websearch_to_tsquery('simple', $1)) AS rank
+         FROM document_chunks
+         WHERE tsv @@ websearch_to_tsquery('simple', $1)
+         ORDER BY rank DESC
+         LIMIT $2;`,
+        [tsQueryStr, topK]
+      );
+    } catch {
+      ftsRows = [];
     }
 
     if (ftsRows && ftsRows.length > 0) {

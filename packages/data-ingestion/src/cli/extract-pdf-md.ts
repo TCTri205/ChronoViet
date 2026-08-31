@@ -1,6 +1,6 @@
 /**
  * CLI Command: Extract Raw Text from PDFs and Save as Clean Markdown Files
- * Usage: node packages/rag-engine/dist/cli/extract-pdf-md.js
+ * Usage: pnpm extract:pdf or pnpm --filter @chronoviet/data-ingestion extract:pdf
  */
 
 import path from 'path';

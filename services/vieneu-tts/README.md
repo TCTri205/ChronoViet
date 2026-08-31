@@ -1,14 +1,16 @@
-# VieNeu TTS Microservice (Python FastAPI & ONNX)
+# `services/vieneu-tts`
 
-Dịch vụ Tổng hợp Giọng đọc Tiếng Việt AI (Text-to-Speech) chuyên dụng cho hệ thống **ChronoViet**. Tích hợp mô hình thần kinh **VieNeu ONNX Engine / Piper ONNX** (24kHz PCM-16 / NeuCodec) kết hợp thuật toán tính toán mốc thời gian phụ đề (Word Timestamps Alignment) chính xác cho tiến trình dựng video tự động trong **Remotion**.
+> **VieNeu TTS Microservice (Python FastAPI & ONNX)**  
+> Dịch vụ Tổng hợp Giọng đọc Tiếng Việt AI (Text-to-Speech) chuyên dụng cho hệ thống **ChronoViet**. Tích hợp mô hình thần kinh **VieNeu ONNX Engine / Piper ONNX** (24kHz PCM-16 / NeuCodec) kết hợp thuật toán tính toán mốc thời gian phụ đề (Word Timestamps Alignment) chính xác cho tiến trình dựng video tự động trong **Remotion**.
 
-> 💡 **Lưu ý Kiến trúc:**
+> [!NOTE]
+> **Lưu ý Kiến trúc:**
 > - Toàn bộ Node.js Client Wrapper, Fallback Synthetic Audio Generator và hàm quy đổi timestamp sang Remotion frames nằm tập trung tại [`packages/infra/src/tts/`](../../packages/infra/src/tts/).
 > - Thư mục này (`services/vieneu-tts`) chứa thuần túy **Python FastAPI Microservice** (cổng `8080`).
 
 ---
 
-## 🏗️ Kiến Trúc Tổng Thể
+## 🏗️ 1. Kiến Trúc Tổng Thể (Service Architecture)
 
 ```mermaid
 graph TD
@@ -31,11 +33,12 @@ graph TD
 
 ---
 
-## 📋 Data Contract & Zod Schemas (`@chronoviet/shared-spec`)
+## 📋 2. Hợp Đồng Dữ Liệu & Zod Schemas (`@chronoviet/shared-spec`)
 
 Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai báo tại [`packages/shared-spec`](../../packages/shared-spec):
 
 ### Request Payload (`VieNeuTTSRequestSchema`)
+
 ```typescript
 {
   text: string;                  // Nội dung câu cần đọc (bắt buộc)
@@ -48,6 +51,7 @@ Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai bá
 ```
 
 ### Response Payload (`VieNeuTTSResponseSchema`)
+
 ```typescript
 {
   status: 'SUCCESS' | 'ERROR';
@@ -66,7 +70,7 @@ Tất cả dữ liệu đầu vào và đầu ra tuân thủ Zod Schema khai bá
 
 ---
 
-## 🚀 Hướng Dẫn Khởi Chạy (Quickstart)
+## 🚀 3. Hướng Dẫn Khởi Chạy (Quickstart & Commands)
 
 ```bash
 # Cách 1: Khởi chạy nhanh qua Unified AI CLI
@@ -80,8 +84,15 @@ pnpm ai:status
 ```
 
 Service mở cổng `8080`, lưu cache file WAV tại `./media/audio-cache/` và cung cấp các endpoint:
-- `GET /health` — Health check probe
-- `POST /api/v1/synthesize` — Tổng hợp giọng đọc và sinh word timestamps
-- `GET /static/audio/:filename` — Tải và stream file âm thanh WAV
+* `GET /health` — Health check probe
+* `POST /api/v1/synthesize` — Tổng hợp giọng đọc và sinh word timestamps
+* `GET /static/audio/:filename` — Tải và stream file âm thanh WAV
+
+---
+
+## 📄 4. Giấy Phép (License)
+
+Dịch vụ thuộc sở hữu nội bộ của **ChronoViet Monorepo**.
+
 
 

@@ -18,28 +18,18 @@ import {
   MODERN_POLITICAL_LEGAL_LEXICON,
   removeVietnameseAccents,
   REIGN_ERA_DICTIONARY,
+  ExtractedQueryInfo,
+  HistoricalTemporalInfo,
+  HistoricalPremiseValidationResult,
 } from '@chronoviet/shared-spec';
 import { extractHistoricalCandidateSpans } from '@chronoviet/data-ingestion';
+import { globalCacheManager } from './cache-manager.js';
 
-export interface ExtractedQueryInfo {
-  entityIds: string[];
-  entityNames: string[];
-  keywords: string[];
-  extractedYears: number[];
-  temporalRange?: { start: number; end: number };
-}
-
-export interface HistoricalTemporalInfo {
-  extractedYears: number[];
-  temporalRange?: { start: number; end: number };
-}
-
-export interface HistoricalPremiseValidationResult {
-  hasPremiseConflict: boolean;
-  conflictReason?: string;
-  suggestedRefutationTopic?: string;
-  conflictType?: 'ANACHRONISTIC_WEAPONRY_TECH' | 'MYTHOLOGY_HISTORICAL_INCOMPATIBILITY' | 'CHRONOLOGY_MISMATCH';
-}
+export type {
+  ExtractedQueryInfo,
+  HistoricalTemporalInfo,
+  HistoricalPremiseValidationResult,
+};
 
 const ROMAN_NUMERAL_MAP: Record<string, number> = {
   i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10,
@@ -181,6 +171,18 @@ export function extractQueryEntities(queryText: string): ExtractedQueryInfo {
     return { entityIds: [], entityNames: [], keywords: [], extractedYears: [] };
   }
 
+  const cacheKey = removeVietnameseAccents(queryText).toLowerCase().trim();
+  const cached = globalCacheManager.queryNERCache.get(cacheKey);
+  if (cached) {
+    return {
+      entityIds: [...cached.entityIds],
+      entityNames: [...cached.entityNames],
+      keywords: [...cached.keywords],
+      extractedYears: [...cached.extractedYears],
+      temporalRange: cached.temporalRange ? { ...cached.temporalRange } : undefined,
+    };
+  }
+
   const entityIds: string[] = [];
   const entityNames: string[] = [];
 
@@ -236,13 +238,16 @@ export function extractQueryEntities(queryText: string): ExtractedQueryInfo {
   // 4. Temporal Extraction (< 0.1ms)
   const temporalInfo = extractHistoricalYears(queryText);
 
-  return {
+  const result: ExtractedQueryInfo = {
     entityIds,
     entityNames,
     keywords,
     extractedYears: temporalInfo.extractedYears,
     temporalRange: temporalInfo.temporalRange,
   };
+
+  globalCacheManager.queryNERCache.set(cacheKey, { ...result });
+  return result;
 }
 
 /**
@@ -257,9 +262,27 @@ export function validateQueryHistoricalPremises(
     return { hasPremiseConflict: false };
   }
 
+  const cacheKey = removeVietnameseAccents(queryText).toLowerCase().trim();
+  const cached = globalCacheManager.queryNERCache.get(cacheKey);
+  if (cached?.premiseValidation) {
+    return cached.premiseValidation;
+  }
+
   const info = extractedInfo || extractQueryEntities(queryText);
   const qLower = queryText.toLowerCase();
   const qUnaccented = removeVietnameseAccents(qLower);
+
+  const cacheAndReturn = (res: HistoricalPremiseValidationResult): HistoricalPremiseValidationResult => {
+    if (cached) {
+      cached.premiseValidation = res;
+    } else {
+      globalCacheManager.queryNERCache.set(cacheKey, {
+        ...info,
+        premiseValidation: res,
+      });
+    }
+    return res;
+  };
 
   // Check 1: Mythological Entities paired with Modern Treaties/Conferences/Events
   for (const myth of MYTHOLOGICAL_ENTITIES_LEXICON) {
@@ -273,12 +296,12 @@ export function validateQueryHistoricalPremises(
         const treatyUnaccentedPattern = new RegExp(`(?<![\\p{L}\\p{N}])${treatyUnaccented}(?![\\p{L}\\p{N}])`, 'iu');
         if (treatyPattern.test(qLower) || treatyUnaccentedPattern.test(qUnaccented)) {
           const canonicalMyth = resolveCanonicalEntity(myth).canonicalName;
-          return {
+          return cacheAndReturn({
             hasPremiseConflict: true,
             conflictType: 'MYTHOLOGY_HISTORICAL_INCOMPATIBILITY',
             conflictReason: `Nhân vật thần thoại/truyền thuyết (${canonicalMyth}) không thể tham gia hoặc ký kết sự kiện lịch sử (${treaty}).`,
             suggestedRefutationTopic: `${canonicalMyth} là nhân vật thần thoại/truyền thuyết, không tham gia sự kiện lịch sử ${treaty}.`,
-          };
+          });
         }
       }
     }
@@ -300,12 +323,12 @@ export function validateQueryHistoricalPremises(
     for (const entId of info.entityIds) {
       const person = HISTORICAL_PERSON_DICTIONARY[entId];
       if (person && person.timeRange && person.timeRange.end !== undefined && person.timeRange.end < 1850) {
-        return {
+        return cacheAndReturn({
           hasPremiseConflict: true,
           conflictType: 'ANACHRONISTIC_WEAPONRY_TECH',
           conflictReason: `Vũ khí/công nghệ hiện đại (${matchedTech}) không tồn tại trong thời kỳ của ${person.canonicalName} (${person.dynasty || 'cổ-trung đại'}).`,
           suggestedRefutationTopic: `Thời kỳ của ${person.canonicalName} chưa có ${matchedTech}.`,
-        };
+        });
       }
     }
 
@@ -317,12 +340,12 @@ export function validateQueryHistoricalPremises(
       if (qLower.includes(battle) || qUnaccented.includes(removeVietnameseAccents(battle))) {
         const maxYear = info.extractedYears.length > 0 ? Math.max(...info.extractedYears) : 0;
         if (maxYear < 1850) {
-          return {
+          return cacheAndReturn({
             hasPremiseConflict: true,
             conflictType: 'ANACHRONISTIC_WEAPONRY_TECH',
             conflictReason: `Vũ khí/công nghệ hiện đại (${matchedTech}) không thể xuất hiện trong trận ${battle}.`,
             suggestedRefutationTopic: `Trong trận đánh ${battle}, quân dân ta không sử dụng ${matchedTech}.`,
-          };
+          });
         }
       }
     }
@@ -338,12 +361,12 @@ export function validateQueryHistoricalPremises(
         for (const yr of info.extractedYears) {
           if (yr > 0 && (yr < person.timeRange.start - 60 || yr > person.timeRange.end + 60)) {
             if (Math.abs(yr - person.timeRange.start) > 100 && Math.abs(yr - person.timeRange.end) > 100) {
-              return {
+              return cacheAndReturn({
                 hasPremiseConflict: true,
                 conflictType: 'CHRONOLOGY_MISMATCH',
                 conflictReason: `Năm ${yr} mâu thuẫn hoàn toàn với thời đại của ${person.canonicalName} (${person.timeRange.start}-${person.timeRange.end}, ${person.dynasty || ''}).`,
                 suggestedRefutationTopic: `${person.canonicalName} không sống vào năm ${yr}.`,
-              };
+              });
             }
           }
         }
@@ -351,5 +374,5 @@ export function validateQueryHistoricalPremises(
     }
   }
 
-  return { hasPremiseConflict: false };
+  return cacheAndReturn({ hasPremiseConflict: false });
 }

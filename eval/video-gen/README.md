@@ -49,7 +49,7 @@ flowchart TD
 ## 2. Test Datasets
 
 ### A. End-to-End Topics (`datasets/video-gen-test-cases.json`)
-Contains 20 curated historical topics across 5 video types:
+Contains 22 curated historical topics (`vg_01` to `vg_22`) across 5 video types:
 - `DYNASTY` (e.g., *Hồng Bàng - Văn Lang*, *Lý Nam Đế - Vạn Xuân*, *Đinh Bộ Lĩnh - Hoa Lư*)
 - `BATTLE` (e.g., *Hai Bà Trưng - Mê Linh*, *Bạch Đằng 938/981/1288*, *Điện Biên Phủ 1954*)
 - `BIOGRAPHY` (e.g., *Bà Triệu*, *Lý Thường Kiệt*, *Quang Trung - Nguyễn Huệ*)
@@ -117,9 +117,9 @@ pnpm eval:video:stage2 -- --clean
 
 ## 5. Preflight Requirements
 
-- **Stage 1 (`pnpm eval:video:stage1`)**: Requires PostgreSQL (`pgvector`), Embedding Server (port 8090), and LLM (port 8080/Ollama).
-- **Stage 2 (`pnpm eval:video:stage2` / `pnpm eval:video:golden`)**: Requires LLM (port 8080), VLM Inspector (port 8096/Qwen2-VL), and Search Providers (falls back cleanly to Wikimedia Commons & Curated Catalog if external search APIs are offline).
-- **Master Video Suite (`pnpm eval:video`)**: Requires all above services.
+- **Stage 1 (`pnpm eval:video:stage1`)**: Requires PostgreSQL (`pgvector` via `pnpm stack:infra`), Embedding Server (Port 8090 via `pnpm ai:emb`), and Primary LLM (Port 8092 via `pnpm ai:llm`).
+- **Stage 2 (`pnpm eval:video:stage2` / `pnpm eval:video:golden`)**: Requires Primary LLM & Unified Multimodal VLM Inspector (Port 8092 via `pnpm ai:llm`), Redis (Port 6379), and Search Providers (falls back cleanly to Wikimedia Commons & Curated Catalog if external search APIs are offline).
+- **Master Video Suite (`pnpm eval:video`)**: Requires all above services plus VieNeu TTS (Port 8080 via `pnpm ai:tts`).
 
 ---
 

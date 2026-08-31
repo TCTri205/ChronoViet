@@ -173,7 +173,7 @@ export const DEITY_TITLE_MAPPINGS: Record<string, { canonicalId: string; canonic
   'tiền ngô vương': { canonicalId: 'person_ngo_quyen', canonicalName: 'Ngô Quyền' },
   'triệu việt vương': { canonicalId: 'person_trieu_quang_phuc', canonicalName: 'Triệu Quang Phục' },
   'mai hắc đế': { canonicalId: 'person_mai_thuc_loan', canonicalName: 'Mai Thúc Loan' },
-  'lý nam đế': { canonicalId: 'person_ly_bi', canonicalName: 'Lý Bí' },
+  'lý nam đế': { canonicalId: 'person_ly_nam_de', canonicalName: 'Lý Nam Đế' },
   'tản viên sơn thánh': { canonicalId: 'person_son_tinh', canonicalName: 'Sơn Tinh' },
   'phù đổng thiên vương': { canonicalId: 'person_thanh_giong', canonicalName: 'Thánh Gióng' },
 };

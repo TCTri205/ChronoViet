@@ -235,24 +235,43 @@ pnpm test:spec | :infra | :ingest | :rag | :orchestrator | :vlm | :remotion | :w
 
 ### 📚 5. Pipeline Dữ Liệu & Nạp Tri Thức Lịch Sử (Data Ingestion)
 ```bash
-pnpm db:init         # Khởi tạo CSDL & Schema Vector/Graph (pgvector 1024d)
+pnpm db:init         # Khởi tạo CSDL & 11 Bảng Schema Vector/Graph (pgvector 1024d)
 pnpm db:health       # Audit sức khỏe DB (dangling refs, embeddings, chunks, entities, indexes)
-pnpm db:backup       # Sao lưu snapshot CSDL
-pnpm db:restore      # Khôi phục CSDL từ snapshot
+pnpm db:backup       # Sao lưu snapshot CSDL (backups/...)
+pnpm db:restore      # Khôi phục CSDL từ snapshot dump
 pnpm db:clean        # Dọn dẹp transactional: xóa trùng lặp, self-loops & dangling relations
-pnpm crawl:corpus    # Cào dữ liệu sử liệu từ corpus
+pnpm db:audit-quarantine # Rà soát và thăng cấp các triples trong quarantine store
+pnpm corpus:clean    # Dọn dẹp dữ liệu cào tạm và corpus thô
+pnpm reset:data      # Đặt lại dữ liệu dự án và checkpoints
+pnpm crawl:corpus    # Cào dữ liệu sử liệu từ corpus đơn lẻ
+pnpm crawl:all       # Cào tự động toàn bộ 15 thời kỳ lịch sử (Master Corpus Crawl)
 pnpm ingest:vector   # Stage 1: Nạp Chunks & Vector Store (BGE-M3 1024d) + Fast NER
 pnpm ingest:graph    # Stage 2: Nạp Knowledge Graph Triples bằng LLM 4B
-pnpm ingest:knowledge# Nạp trọn gói cả 2 Stage liên hoàn
+pnpm ingest:knowledge# Nạp trọn gói cả 2 Stage liên hoàn (Hỗ trợ Resume)
 pnpm rag:chat        # Chatbot tra cứu RAG trực tiếp trên Terminal
 ```
 
 ### 🧪 6. Đánh Giá Chất Lượng Từng Module (Evaluation & Benchmarks)
 ```bash
-# Đánh giá theo từng Module
-pnpm eval:ingest        # Đánh giá Data Ingestion (Vector, Graph, Triples, NER)
-pnpm eval:rag           # Đánh giá RAG Engine (11 tầng C0-C10 + System Ablation)
-pnpm eval:orchestrator  # Đánh giá Multi-Agent Orchestrator (A0-A5 + Ablation)
+# Đánh giá Data Ingestion Engine
+pnpm eval:ingest        # Master Data Ingestion Evaluation (Real Postgres DB)
+pnpm eval:ner           # Đánh giá nhận diện thực thể Fast NER (Micro Snippets)
+pnpm eval:triples       # Đánh giá trích xuất quan hệ Triples (Micro Snippets)
+pnpm eval:chunks        # Đánh giá đoạn văn bản sản xuất dài (60 Chunks / 15 Triều đại)
+pnpm eval:vector        # Đánh giá Vector Retrieval & độ phủ ngữ nghĩa
+pnpm eval:graph         # Đánh giá Knowledge Graph Triples & tính nhất quán
+
+# Đánh giá RAG Engine (11 tầng C0-C10 + System)
+pnpm eval:rag           # Master RAG Engine Benchmark (C0 - C10 + SYS)
+pnpm eval:rag:c0 .. :c10# Đánh giá các cấu phần RAG riêng lẻ (C0: Graph, C1: Chunking, ... C10: Robustness)
+pnpm eval:rag:sys       # RAG System Ablation & Latency Stress Test
+
+# Đánh giá Multi-Agent Orchestrator (A0-A5 + System)
+pnpm eval:orchestrator  # Master Orchestrator Benchmark (A0 - A5 + SYS)
+pnpm eval:orchestrator:a0 .. :a5 # Đánh giá các tác tử riêng lẻ (A0: Brief, A1: Chaptering, ... A5: Research)
+pnpm eval:orchestrator:sys # Multi-Agent Pipeline End-to-End Ablation
+
+# Đánh giá VLM Inspector & Remotion Render Engine
 pnpm eval:vlm           # Đánh giá VLM Inspector offline image scoring
 pnpm eval:remotion      # Đánh giá Remotion Video Engine
 

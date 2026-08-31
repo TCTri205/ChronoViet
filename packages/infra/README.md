@@ -5,7 +5,7 @@
 
 ---
 
-## 📌 1. Tổng Quan Kiến Trúc
+## 📌 1. Tổng Quan Kiến Trúc (Package Overview)
 
 Gói `@chronoviet/infra` đóng gói toàn bộ các tài nguyên runtime và stateful clients của hệ thống ChronoViet:
 
@@ -35,12 +35,48 @@ Gói `@chronoviet/infra` đóng gói toàn bộ các tài nguyên runtime và st
    - Quản lý toàn bộ metrics RED và USE của monorepo.
 10. **BullMQ Queues (`queues.ts`):**
     - Đóng gói hàng đợi `renderQueue` và các helper enqueue job render video Remotion.
-11. **AI Supervisor Dynamic JIT Model Eviction (`scripts/ai-supervisor.ts`):**
-    - Tự động unmount các mô hình trích xuất (Extraction Qwen 4B - Port 8094) và Reranker (Port 8096) sau khi hoàn tất batch ingestion/script generation, duy trì mức RAM nhàn rỗi $\le 8\text{GB}$.
+11. **Project Workspace & Media Storage (`workspace.ts`):**
+    - Quản lý cấu trúc thư mục `/media/projects/:id/` (`assets/`, `audio/`, `captions/`, `temp/`, `output/video.mp4`).
+12. **Realtime Pub/Sub Gateway Client (`realtime.ts`):**
+    - Helper phát và đăng ký nhận sự kiện WebSocket qua Redis channel `project_events:${projectId}`.
+13. **Audio Normalizer (`tts/audio-normalizer.ts`):**
+    - Chuẩn hóa âm lượng BGM (-14 LUFS) và SFX Peak (-6 LUFS) cho Remotion Render Engine.
+14. **Dynamic Concurrency Tuner (`config/concurrency-tuner.ts`):**
+    - Tự động tối ưu hóa batch size và concurrency theo dung lượng RAM/CPU khả dụng của máy chủ.
+15. **Preflight & Evaluation Helpers (`eval-preflight.ts`, `eval-cleaner.ts`):**
+    - Kiểm tra sức khỏe kết nối đa dịch vụ trước benchmark và helper dọn dẹp dữ liệu kiểm thử.
 
 ---
 
-## ⚡ 2. Hướng Dẫn Sử Dụng (Usage)
+## 📂 2. Cấu Trúc Thư Mục (Directory Architecture)
+
+```text
+packages/infra/
+├── src/
+│   ├── ai/                    # Hybrid LLM client, API key rotator, LLM judge
+│   ├── config/                # Environment config loader, concurrency tuner
+│   ├── db/                    # PostgreSQL connection pool, schema definitions, audit logging
+│   ├── telemetry/             # Prometheus metrics registry, structured logger
+│   ├── tts/                   # VieNeu TTS client, text normalizer, audio normalizer
+│   ├── circuit-breaker.ts     # Multi-subsystem fault tolerance circuit breakers
+│   ├── embeddings.ts          # Dense vector BGE-M3 embedding client & LRU cache
+│   ├── eval-cleaner.ts        # Database cleanup helper for benchmarks
+│   ├── eval-preflight.ts      # Multi-service health probe before evaluation
+│   ├── image-search.ts        # External image search wrapper
+│   ├── index.ts               # Package public exports entrypoint
+│   ├── queues.ts              # BullMQ queue producer client
+│   ├── realtime.ts            # Redis Pub/Sub realtime messaging helper
+│   ├── reranker-client.ts     # Local cross-encoder reranker client (Port 8096)
+│   ├── resource-sentinel.ts   # Distributed render mutex & memory pressure monitor
+│   ├── workspace.ts           # Media storage & project workspace manager
+│   └── __tests__/             # Infrastructure unit test suites (Vitest)
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## ⚡ 3. Hướng Dẫn Sử Dụng (Usage Example)
 
 ```typescript
 import {
@@ -65,7 +101,7 @@ const response = await callLlm({
 
 ---
 
-## ⚡ 3. Bộ Lệnh Kiểm Định & Phát Triển (CLI Commands)
+## ⚡ 4. Bộ Lệnh Kiểm Định & Phát Triển (CLI Commands)
 
 ```bash
 # Kiểm tra TypeScript
@@ -84,6 +120,6 @@ pnpm --filter @chronoviet/infra build
 
 ---
 
-## 📄 4. Giấy Phép (License)
+## 📄 5. Giấy Phép (License)
 
 Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**.

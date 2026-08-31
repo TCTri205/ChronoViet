@@ -739,6 +739,7 @@ export const HistoricalRelationTypeEnum = z.enum([
 
 export const CandidateEntitySpanSchema = z.object({
   text: z.string(),
+  cleanName: z.string().optional(),
   type: z.union([EntityTypeEnum, z.string()]),
   startOffset: z.number().int().nonnegative(),
   endOffset: z.number().int().nonnegative(),

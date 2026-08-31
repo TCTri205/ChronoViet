@@ -296,10 +296,10 @@ describe('Vector Search & Lexical FTS Retrieval', () => {
     const tsQuery = buildEnhancedFtsQuery('Vua Quang Trung', ['person_quang_trung']);
     expect(tsQuery).toContain('quang');
     expect(tsQuery).toContain('trung');
-    // Multi-word alias "Nguyễn Huệ" -> (nguyen & hue)
-    expect(tsQuery).toContain('nguyen & hue');
-    // Multi-word alias "Bắc Bình Vương" -> (bac & binh & vuong)
-    expect(tsQuery).toContain('bac & binh & vuong');
+    // Multi-word alias "Nguyễn Huệ" -> "nguyen hue" / "nguyễn huệ"
+    expect(tsQuery).toContain('"nguyen hue"');
+    // Multi-word alias "Bắc Bình Vương" -> "bac binh vuong" / "bắc bình vương"
+    expect(tsQuery).toContain('"bac binh vuong"');
   });
 
   it('should retrieve chunks via injected alias matching in lexical FTS search', async () => {

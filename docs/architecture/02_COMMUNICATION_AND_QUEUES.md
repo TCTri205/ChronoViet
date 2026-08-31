@@ -11,7 +11,7 @@ Hệ thống kết hợp 3 phương thức giao tiếp tùy theo tính chất đ
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ 1. RESTful API (HTTPS / JSON)                                                          │
 │    - Client ➔ API Gateway ➔ User Service / Chatbot RAG / LangGraph.js Orchestrator (Node.js).│
-│    - Orchestrator ➔ Gemini 3.6 Flash Cloud API (VLM Inspection Strategy 3+3 Candidates).│
+│    - Orchestrator ➔ Local VLM (Qwen 3.5 9B) / Multi-Provider Cloud Gateway (Agnes/Gemini).  │
 ├────────────────────────────────────────────────────────────────────────────────────────┤
 │ 2. Server-Sent Events (SSE) / WebSockets                                               │
 │    - SSE: Streaming câu trả lời từ RAG Chatbot real-time.                             │

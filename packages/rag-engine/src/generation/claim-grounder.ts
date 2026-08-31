@@ -38,6 +38,13 @@ export function extractClaims(text: string): string[] {
     .filter((s) => s.length > 10 && !s.startsWith('#'));
 }
 
+const ROMAN_MAP: Record<string, number> = {
+  i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10,
+  xi: 11, xii: 12, xiii: 13, xiv: 14, xv: 15, xvi: 16, xvii: 17, xviii: 18, xix: 19, xx: 20,
+};
+
+const CONTEXTUAL_ROMAN_REGEX = /(?:thế\s+k[ỷỉ]|thời|triều|đời|vua|lần\s+thứ|kháng\s+chiến\s+lần)\s+([ivxlcdm]+|\d+)/gi;
+
 /**
  * Calculates entailment score between a claim and an evidence text chunk
  */
@@ -53,6 +60,26 @@ export function calculateEntailment(claim: string, evidenceText: string): number
     const numbersInEv = claimNumbers.filter((num) => evLower.includes(num));
     if (numbersInEv.length === 0) {
       return 0.15; // Numeric conflict
+    }
+  }
+
+  // 1b. Contextual Roman Numeral / Century Verification (Guarded by historical prefixes)
+  CONTEXTUAL_ROMAN_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  const contextualTermsInClaim: string[] = [];
+  while ((match = CONTEXTUAL_ROMAN_REGEX.exec(cLower)) !== null) {
+    const rawVal = match[1].toLowerCase();
+    const arabicVal = ROMAN_MAP[rawVal] ? String(ROMAN_MAP[rawVal]) : rawVal;
+    contextualTermsInClaim.push(rawVal);
+    if (arabicVal !== rawVal) {
+      contextualTermsInClaim.push(arabicVal);
+    }
+  }
+
+  if (contextualTermsInClaim.length > 0) {
+    const anyFound = contextualTermsInClaim.some((n) => evLower.includes(n));
+    if (!anyFound) {
+      return 0.15; // Century / Era ordinal conflict
     }
   }
 

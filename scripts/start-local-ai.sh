@@ -73,6 +73,7 @@ if command -v llama-server >/dev/null 2>&1; then
     fi
     LLM_CTX_SIZE="${LLM_CTX_SIZE:-131072}"
     LOCAL_LLM_PARALLEL="${LOCAL_LLM_PARALLEL:-4}"
+    LOCAL_LLM_THREADS="${LOCAL_LLM_THREADS:-10}"
     llama-server \
       -m "${LLM_MODEL_PATH}" \
       --port "${LLM_PORT}" \
@@ -83,6 +84,7 @@ if command -v llama-server >/dev/null 2>&1; then
       --cache-type-v q8_0 \
       --cont-batching \
       --parallel "${LOCAL_LLM_PARALLEL}" \
+      --threads "${LOCAL_LLM_THREADS}" \
       ${EXTRA_ARGS} ${LLM_EXTRA_ARGS:-} &
     LLM_PID=$!
     echo "[Local AI] LLM/VLM server running with PID ${LLM_PID}"

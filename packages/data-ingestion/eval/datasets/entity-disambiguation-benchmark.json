@@ -1,41 +1,691 @@
 [
-  { "input": "Nguyễn Huệ", "expectedCanonicalId": "person_quang_trung", "expectedCanonicalName": "Quang Trung" },
-  { "input": "Quang Trung", "expectedCanonicalId": "person_quang_trung", "expectedCanonicalName": "Quang Trung" },
-  { "input": "Hồ Thơm", "expectedCanonicalId": "person_quang_trung", "expectedCanonicalName": "Quang Trung" },
-  { "input": "Bắc Bình Vương", "expectedCanonicalId": "person_quang_trung", "expectedCanonicalName": "Quang Trung" },
-  { "input": "Tây Sơn Vương", "expectedCanonicalId": "person_nguyen_nhac", "expectedCanonicalName": "Nguyễn Nhạc" },
-  { "input": "Nguyễn Nhạc", "expectedCanonicalId": "person_nguyen_nhac", "expectedCanonicalName": "Nguyễn Nhạc" },
-  { "input": "Trần Quốc Tuấn", "expectedCanonicalId": "person_tran_hung_dao", "expectedCanonicalName": "Trần Hưng Đạo" },
-  { "input": "Trần Hưng Đạo", "expectedCanonicalId": "person_tran_hung_dao", "expectedCanonicalName": "Trần Hưng Đạo" },
-  { "input": "Hưng Đạo Đại Vương", "expectedCanonicalId": "person_tran_hung_dao", "expectedCanonicalName": "Trần Hưng Đạo" },
-  { "input": "Đức Thánh Trần", "expectedCanonicalId": "person_tran_hung_dao", "expectedCanonicalName": "Trần Hưng Đạo" },
-  { "input": "Lê Lợi", "expectedCanonicalId": "person_le_loi", "expectedCanonicalName": "Lê Lợi" },
-  { "input": "Bình Định Vương", "expectedCanonicalId": "person_le_loi", "expectedCanonicalName": "Lê Lợi" },
-  { "input": "Lê Thái Tổ", "expectedCanonicalId": "person_le_loi", "expectedCanonicalName": "Lê Lợi" },
-  { "input": "Ngô Quyền", "expectedCanonicalId": "person_ngo_quyen", "expectedCanonicalName": "Ngô Quyền" },
-  { "input": "Tiền Ngô Vương", "expectedCanonicalId": "person_ngo_quyen", "expectedCanonicalName": "Ngô Quyền" },
-  { "input": "Nguyễn Trãi", "expectedCanonicalId": "person_nguyen_trai", "expectedCanonicalName": "Nguyễn Trãi" },
-  { "input": "Ức Trai", "expectedCanonicalId": "person_nguyen_trai", "expectedCanonicalName": "Nguyễn Trãi" },
-  { "input": "Lý Thái Tổ", "expectedCanonicalId": "person_ly_thai_to", "expectedCanonicalName": "Lý Thái Tổ" },
-  { "input": "Lý Công Uẩn", "expectedCanonicalId": "person_ly_thai_to", "expectedCanonicalName": "Lý Thái Tổ" },
-  { "input": "Đinh Bộ Lĩnh", "expectedCanonicalId": "person_dinh_tien_hoang", "expectedCanonicalName": "Đinh Tiên Hoàng" },
-  { "input": "Đinh Tiên Hoàng", "expectedCanonicalId": "person_dinh_tien_hoang", "expectedCanonicalName": "Đinh Tiên Hoàng" },
-  { "input": "Vạn Thắng Vương", "expectedCanonicalId": "person_dinh_tien_hoang", "expectedCanonicalName": "Đinh Tiên Hoàng" },
-  { "input": "Võ Nguyên Giáp", "expectedCanonicalId": "person_vo_nguyen_giap", "expectedCanonicalName": "Võ Nguyên Giáp" },
-  { "input": "Anh Văn", "expectedCanonicalId": "person_vo_nguyen_giap", "expectedCanonicalName": "Võ Nguyên Giáp" },
-  { "input": "Lê Hoàn", "expectedCanonicalId": "person_le_dai_hanh", "expectedCanonicalName": "Lê Đại Hành" },
-  { "input": "Lê Đại Hành", "expectedCanonicalId": "person_le_dai_hanh", "expectedCanonicalName": "Lê Đại Hành" },
-  { "input": "Triệu Thị Trinh", "expectedCanonicalId": "person_ba_trieu", "expectedCanonicalName": "Bà Triệu" },
-  { "input": "Bà Triệu", "expectedCanonicalId": "person_ba_trieu", "expectedCanonicalName": "Bà Triệu" },
-  { "input": "Trưng Trắc", "expectedCanonicalId": "person_hai_ba_trung", "expectedCanonicalName": "Hai Bà Trưng" },
-  { "input": "Trưng Nhị", "expectedCanonicalId": "person_hai_ba_trung", "expectedCanonicalName": "Hai Bà Trưng" },
-  { "input": "Thăng Long", "expectedCanonicalId": "loc_ha_noi", "expectedCanonicalName": "Hà Nội", "isLocation": true, "expectedModernLocation": "Hà Nội" },
-  { "input": "Đông Quan", "expectedCanonicalId": "loc_ha_noi", "expectedCanonicalName": "Hà Nội", "isLocation": true, "expectedModernLocation": "Hà Nội" },
-  { "input": "Đông Kinh", "expectedCanonicalId": "loc_ha_noi", "expectedCanonicalName": "Hà Nội", "isLocation": true, "expectedModernLocation": "Hà Nội" },
-  { "input": "Đại La", "expectedCanonicalId": "loc_ha_noi", "expectedCanonicalName": "Hà Nội", "isLocation": true, "expectedModernLocation": "Hà Nội" },
-  { "input": "Phú Xuân", "expectedCanonicalId": "loc_hue", "expectedCanonicalName": "Huế", "isLocation": true, "expectedModernLocation": "Huế" },
-  { "input": "Thuận Hóa", "expectedCanonicalId": "loc_hue", "expectedCanonicalName": "Huế", "isLocation": true, "expectedModernLocation": "Huế" },
-  { "input": "Sài Gòn", "expectedCanonicalId": "loc_ho_chi_minh", "expectedCanonicalName": "Thành phố Hồ Chí Minh", "isLocation": true, "expectedModernLocation": "Thành phố Hồ Chí Minh" },
-  { "input": "Gia Định", "expectedCanonicalId": "loc_ho_chi_minh", "expectedCanonicalName": "Thành phố Hồ Chí Minh", "isLocation": true, "expectedModernLocation": "Thành phố Hồ Chí Minh" },
-  { "input": "Hoa Lư", "expectedCanonicalId": "loc_ninh_binh", "expectedCanonicalName": "Ninh Bình", "isLocation": true, "expectedModernLocation": "Ninh Bình" }
+  {
+    "input": "Nguyễn Huệ",
+    "expectedCanonicalId": "person_quang_trung",
+    "expectedCanonicalName": "Quang Trung",
+    "category": "ROYAL_ALIAS"
+  },
+  {
+    "input": "Quang Trung",
+    "expectedCanonicalId": "person_quang_trung",
+    "expectedCanonicalName": "Quang Trung",
+    "category": "ROYAL_ALIAS"
+  },
+  {
+    "input": "Hồ Thơm",
+    "expectedCanonicalId": "person_quang_trung",
+    "expectedCanonicalName": "Quang Trung",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Bắc Bình Vương",
+    "expectedCanonicalId": "person_quang_trung",
+    "expectedCanonicalName": "Quang Trung",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Long Nhương tướng quân",
+    "expectedCanonicalId": "person_quang_trung",
+    "expectedCanonicalName": "Quang Trung",
+    "category": "MILITARY_RANK"
+  },
+  {
+    "input": "Nguyễn Nhạc",
+    "expectedCanonicalId": "person_nguyen_nhac",
+    "expectedCanonicalName": "Nguyễn Nhạc",
+    "category": "ROYAL_ALIAS"
+  },
+  {
+    "input": "Tây Sơn Vương",
+    "expectedCanonicalId": "person_nguyen_nhac",
+    "expectedCanonicalName": "Nguyễn Nhạc",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Trung Ương Hoàng Đế",
+    "expectedCanonicalId": "person_nguyen_nhac",
+    "expectedCanonicalName": "Nguyễn Nhạc",
+    "category": "ROYAL_ALIAS"
+  },
+  {
+    "input": "Nguyễn Lữ",
+    "expectedCanonicalId": "person_nguyen_lu",
+    "expectedCanonicalName": "Nguyễn Lữ",
+    "category": "ROYAL_ALIAS"
+  },
+  {
+    "input": "Đông Định Vương",
+    "expectedCanonicalId": "person_nguyen_lu",
+    "expectedCanonicalName": "Nguyễn Lữ",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Trần Quốc Tuấn",
+    "expectedCanonicalId": "person_tran_hung_dao",
+    "expectedCanonicalName": "Trần Hưng Đạo",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Trần Hưng Đạo",
+    "expectedCanonicalId": "person_tran_hung_dao",
+    "expectedCanonicalName": "Trần Hưng Đạo",
+    "category": "ROYAL_ALIAS"
+  },
+  {
+    "input": "Hưng Đạo Đại Vương",
+    "expectedCanonicalId": "person_tran_hung_dao",
+    "expectedCanonicalName": "Trần Hưng Đạo",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Đức Thánh Trần",
+    "expectedCanonicalId": "person_tran_hung_dao",
+    "expectedCanonicalName": "Trần Hưng Đạo",
+    "category": "FOLK_HONORIFIC"
+  },
+  {
+    "input": "Tiết chế Quốc công",
+    "expectedCanonicalId": "person_tran_hung_dao",
+    "expectedCanonicalName": "Trần Hưng Đạo",
+    "category": "MILITARY_RANK"
+  },
+  {
+    "input": "Trần Cảnh",
+    "expectedCanonicalId": "person_tran_thai_tong",
+    "expectedCanonicalName": "Trần Thái Tông",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Trần Thái Tông",
+    "expectedCanonicalId": "person_tran_thai_tong",
+    "expectedCanonicalName": "Trần Thái Tông",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Trần Hoảng",
+    "expectedCanonicalId": "person_tran_thanh_tong",
+    "expectedCanonicalName": "Trần Thánh Tông",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Trần Thánh Tông",
+    "expectedCanonicalId": "person_tran_thanh_tong",
+    "expectedCanonicalName": "Trần Thánh Tông",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Trần Khâm",
+    "expectedCanonicalId": "person_tran_nhan_tong",
+    "expectedCanonicalName": "Trần Nhân Tông",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Trần Nhân Tông",
+    "expectedCanonicalId": "person_tran_nhan_tong",
+    "expectedCanonicalName": "Trần Nhân Tông",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Trúc Lâm Đại Đầu Đà",
+    "expectedCanonicalId": "person_tran_nhan_tong",
+    "expectedCanonicalName": "Trần Nhân Tông",
+    "category": "RELIGIOUS_TITLE"
+  },
+  {
+    "input": "Phật Hoàng Trần Nhân Tông",
+    "expectedCanonicalId": "person_tran_nhan_tong",
+    "expectedCanonicalName": "Trần Nhân Tông",
+    "category": "RELIGIOUS_TITLE"
+  },
+  {
+    "input": "Trần Thủ Độ",
+    "expectedCanonicalId": "person_tran_thu_do",
+    "expectedCanonicalName": "Trần Thủ Độ",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Thái sư Trần Thủ Độ",
+    "expectedCanonicalId": "person_tran_thu_do",
+    "expectedCanonicalName": "Trần Thủ Độ",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Trần Quang Khải",
+    "expectedCanonicalId": "person_tran_quang_khai",
+    "expectedCanonicalName": "Trần Quang Khải",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Chiêu Minh Đại Vương",
+    "expectedCanonicalId": "person_tran_quang_khai",
+    "expectedCanonicalName": "Trần Quang Khải",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Trần Nhật Duật",
+    "expectedCanonicalId": "person_tran_nhat_duat",
+    "expectedCanonicalName": "Trần Nhật Duật",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Chiêu Văn Vương",
+    "expectedCanonicalId": "person_tran_nhat_duat",
+    "expectedCanonicalName": "Trần Nhật Duật",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Trần Khánh Dư",
+    "expectedCanonicalId": "person_tran_khanh_du",
+    "expectedCanonicalName": "Trần Khánh Dư",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Nhân Huệ Vương",
+    "expectedCanonicalId": "person_tran_khanh_du",
+    "expectedCanonicalName": "Trần Khánh Dư",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Trần Quốc Toản",
+    "expectedCanonicalId": "person_tran_quoc_toan",
+    "expectedCanonicalName": "Trần Quốc Toản",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Hoài Văn Hầu",
+    "expectedCanonicalId": "person_tran_quoc_toan",
+    "expectedCanonicalName": "Trần Quốc Toản",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Trần Bình Trọng",
+    "expectedCanonicalId": "person_tran_binh_trong",
+    "expectedCanonicalName": "Trần Bình Trọng",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Bảo Nghĩa Vương",
+    "expectedCanonicalId": "person_tran_binh_trong",
+    "expectedCanonicalName": "Trần Bình Trọng",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Lê Lợi",
+    "expectedCanonicalId": "person_le_loi",
+    "expectedCanonicalName": "Lê Lợi",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Lê Thái Tổ",
+    "expectedCanonicalId": "person_le_loi",
+    "expectedCanonicalName": "Lê Lợi",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Bình Định Vương",
+    "expectedCanonicalId": "person_le_loi",
+    "expectedCanonicalName": "Lê Lợi",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Thuận Thiên",
+    "expectedCanonicalId": "person_le_loi",
+    "expectedCanonicalName": "Lê Lợi",
+    "category": "REIGN_TITLE"
+  },
+  {
+    "input": "Lam Sơn Động Chủ",
+    "expectedCanonicalId": "person_le_loi",
+    "expectedCanonicalName": "Lê Lợi",
+    "category": "FOLK_HONORIFIC"
+  },
+  {
+    "input": "Nguyễn Trãi",
+    "expectedCanonicalId": "person_nguyen_trai",
+    "expectedCanonicalName": "Nguyễn Trãi",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Ức Trai",
+    "expectedCanonicalId": "person_nguyen_trai",
+    "expectedCanonicalName": "Nguyễn Trãi",
+    "category": "PEN_NAME"
+  },
+  {
+    "input": "Quan Phục hầu",
+    "expectedCanonicalId": "person_nguyen_trai",
+    "expectedCanonicalName": "Nguyễn Trãi",
+    "category": "NOBLE_TITLE"
+  },
+  {
+    "input": "Lê Tư Thành",
+    "expectedCanonicalId": "person_le_thanh_tong",
+    "expectedCanonicalName": "Lê Thánh Tông",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Lê Thánh Tông",
+    "expectedCanonicalId": "person_le_thanh_tong",
+    "expectedCanonicalName": "Lê Thánh Tông",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Quang Thuận",
+    "expectedCanonicalId": "person_le_thanh_tong",
+    "expectedCanonicalName": "Lê Thánh Tông",
+    "category": "REIGN_TITLE"
+  },
+  {
+    "input": "Hồng Đức",
+    "expectedCanonicalId": "person_le_thanh_tong",
+    "expectedCanonicalName": "Lê Thánh Tông",
+    "category": "REIGN_TITLE"
+  },
+  {
+    "input": "Lê Nguyên Long",
+    "expectedCanonicalId": "person_le_thai_tong",
+    "expectedCanonicalName": "Lê Thái Tông",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Lê Thái Tông",
+    "expectedCanonicalId": "person_le_thai_tong",
+    "expectedCanonicalName": "Lê Thái Tông",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Đại Bảo",
+    "expectedCanonicalId": "person_le_thai_tong",
+    "expectedCanonicalName": "Lê Thái Tông",
+    "category": "REIGN_TITLE"
+  },
+  {
+    "input": "Lý Công Uẩn",
+    "expectedCanonicalId": "person_ly_thai_to",
+    "expectedCanonicalName": "Lý Thái Tổ",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Lý Thái Tổ",
+    "expectedCanonicalId": "person_ly_thai_to",
+    "expectedCanonicalName": "Lý Thái Tổ",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Thuận Thiên hoàng đế thời Lý",
+    "expectedCanonicalId": "person_ly_thai_to",
+    "expectedCanonicalName": "Lý Thái Tổ",
+    "category": "REIGN_TITLE"
+  },
+  {
+    "input": "Lý Phật Mã",
+    "expectedCanonicalId": "person_ly_thai_tong",
+    "expectedCanonicalName": "Lý Thái Tông",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Lý Thái Tông",
+    "expectedCanonicalId": "person_ly_thai_tong",
+    "expectedCanonicalName": "Lý Thái Tông",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Lý Nhật Tôn",
+    "expectedCanonicalId": "person_ly_thanh_tong",
+    "expectedCanonicalName": "Lý Thánh Tông",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Lý Thánh Tông",
+    "expectedCanonicalId": "person_ly_thanh_tong",
+    "expectedCanonicalName": "Lý Thánh Tông",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Lý Càn Đức",
+    "expectedCanonicalId": "person_ly_nhan_tong",
+    "expectedCanonicalName": "Lý Nhân Tông",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Lý Nhân Tông",
+    "expectedCanonicalId": "person_ly_nhan_tong",
+    "expectedCanonicalName": "Lý Nhân Tông",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Lý Thường Kiệt",
+    "expectedCanonicalId": "person_ly_thuong_kiet",
+    "expectedCanonicalName": "Lý Thường Kiệt",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Ngô Tuấn",
+    "expectedCanonicalId": "person_ly_thuong_kiet",
+    "expectedCanonicalName": "Lý Thường Kiệt",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Thái úy Lý Thường Kiệt",
+    "expectedCanonicalId": "person_ly_thuong_kiet",
+    "expectedCanonicalName": "Lý Thường Kiệt",
+    "category": "MILITARY_RANK"
+  },
+  {
+    "input": "Ngô Quyền",
+    "expectedCanonicalId": "person_ngo_quyen",
+    "expectedCanonicalName": "Ngô Quyền",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Tiền Ngô Vương",
+    "expectedCanonicalId": "person_ngo_quyen",
+    "expectedCanonicalName": "Ngô Quyền",
+    "category": "ROYAL_ALIAS"
+  },
+  {
+    "input": "Đinh Bộ Lĩnh",
+    "expectedCanonicalId": "person_dinh_tien_hoang",
+    "expectedCanonicalName": "Đinh Tiên Hoàng",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Đinh Tiên Hoàng",
+    "expectedCanonicalId": "person_dinh_tien_hoang",
+    "expectedCanonicalName": "Đinh Tiên Hoàng",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Vạn Thắng Vương",
+    "expectedCanonicalId": "person_dinh_tien_hoang",
+    "expectedCanonicalName": "Đinh Tiên Hoàng",
+    "category": "FOLK_HONORIFIC"
+  },
+  {
+    "input": "Lê Hoàn",
+    "expectedCanonicalId": "person_le_dai_hanh",
+    "expectedCanonicalName": "Lê Đại Hành",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Lê Đại Hành",
+    "expectedCanonicalId": "person_le_dai_hanh",
+    "expectedCanonicalName": "Lê Đại Hành",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Thập đạo tướng quân Lê Hoàn",
+    "expectedCanonicalId": "person_le_dai_hanh",
+    "expectedCanonicalName": "Lê Đại Hành",
+    "category": "MILITARY_RANK"
+  },
+  {
+    "input": "Nguyễn Ánh",
+    "expectedCanonicalId": "person_gia_long",
+    "expectedCanonicalName": "Gia Long",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Gia Long",
+    "expectedCanonicalId": "person_gia_long",
+    "expectedCanonicalName": "Gia Long",
+    "category": "REIGN_TITLE"
+  },
+  {
+    "input": "Nguyễn Phúc Ánh",
+    "expectedCanonicalId": "person_gia_long",
+    "expectedCanonicalName": "Gia Long",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Thế Tổ Cao Hoàng Đế",
+    "expectedCanonicalId": "person_gia_long",
+    "expectedCanonicalName": "Gia Long",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Nguyễn Phúc Đảm",
+    "expectedCanonicalId": "person_minh_mang",
+    "expectedCanonicalName": "Minh Mạng",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Minh Mạng",
+    "expectedCanonicalId": "person_minh_mang",
+    "expectedCanonicalName": "Minh Mạng",
+    "category": "REIGN_TITLE"
+  },
+  {
+    "input": "Thánh Tổ Chương Hoàng Đế",
+    "expectedCanonicalId": "person_minh_mang",
+    "expectedCanonicalName": "Minh Mạng",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Nguyễn Phúc Thì",
+    "expectedCanonicalId": "person_tu_duc",
+    "expectedCanonicalName": "Tự Đức",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Tự Đức",
+    "expectedCanonicalId": "person_tu_duc",
+    "expectedCanonicalName": "Tự Đức",
+    "category": "REIGN_TITLE"
+  },
+  {
+    "input": "Dực Tông Anh Hoàng Đế",
+    "expectedCanonicalId": "person_tu_duc",
+    "expectedCanonicalName": "Tự Đức",
+    "category": "TEMPLE_NAME"
+  },
+  {
+    "input": "Phan Bội Châu",
+    "expectedCanonicalId": "person_phan_boi_chau",
+    "expectedCanonicalName": "Phan Bội Châu",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Sào Nam",
+    "expectedCanonicalId": "person_phan_boi_chau",
+    "expectedCanonicalName": "Phan Bội Châu",
+    "category": "PEN_NAME"
+  },
+  {
+    "input": "Phan Châu Trinh",
+    "expectedCanonicalId": "person_phan_chau_trinh",
+    "expectedCanonicalName": "Phan Châu Trinh",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Tây Hồ",
+    "expectedCanonicalId": "person_phan_chau_trinh",
+    "expectedCanonicalName": "Phan Châu Trinh",
+    "category": "PEN_NAME"
+  },
+  {
+    "input": "Hoàng Hoa Thám",
+    "expectedCanonicalId": "person_hoang_hoa_tham",
+    "expectedCanonicalName": "Hoàng Hoa Thám",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Đề Thám",
+    "expectedCanonicalId": "person_hoang_hoa_tham",
+    "expectedCanonicalName": "Hoàng Hoa Thám",
+    "category": "FOLK_HONORIFIC"
+  },
+  {
+    "input": "Hùm xám Yên Thế",
+    "expectedCanonicalId": "person_hoang_hoa_tham",
+    "expectedCanonicalName": "Hoàng Hoa Thám",
+    "category": "FOLK_HONORIFIC"
+  },
+  {
+    "input": "Hồ Chí Minh",
+    "expectedCanonicalId": "person_ho_chi_minh",
+    "expectedCanonicalName": "Hồ Chí Minh",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Nguyễn Sinh Cung",
+    "expectedCanonicalId": "person_ho_chi_minh",
+    "expectedCanonicalName": "Hồ Chí Minh",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Nguyễn Tất Thành",
+    "expectedCanonicalId": "person_ho_chi_minh",
+    "expectedCanonicalName": "Hồ Chí Minh",
+    "category": "ORIGINAL_NAME"
+  },
+  {
+    "input": "Nguyễn Ái Quốc",
+    "expectedCanonicalId": "person_ho_chi_minh",
+    "expectedCanonicalName": "Hồ Chí Minh",
+    "category": "PEN_NAME"
+  },
+  {
+    "input": "Bác Hồ",
+    "expectedCanonicalId": "person_ho_chi_minh",
+    "expectedCanonicalName": "Hồ Chí Minh",
+    "category": "FOLK_HONORIFIC"
+  },
+  {
+    "input": "Võ Nguyên Giáp",
+    "expectedCanonicalId": "person_vo_nguyen_giap",
+    "expectedCanonicalName": "Võ Nguyên Giáp",
+    "category": "HISTORICAL_PERSON"
+  },
+  {
+    "input": "Anh Văn",
+    "expectedCanonicalId": "person_vo_nguyen_giap",
+    "expectedCanonicalName": "Võ Nguyên Giáp",
+    "category": "FOLK_HONORIFIC"
+  },
+  {
+    "input": "Đại tướng Võ Nguyên Giáp",
+    "expectedCanonicalId": "person_vo_nguyen_giap",
+    "expectedCanonicalName": "Võ Nguyên Giáp",
+    "category": "MILITARY_RANK"
+  },
+  {
+    "input": "Thăng Long",
+    "expectedCanonicalId": "loc_thang_long",
+    "expectedCanonicalName": "Thăng Long",
+    "isLocation": true,
+    "expectedModernLocation": "Hà Nội"
+  },
+  {
+    "input": "Đông Đô",
+    "expectedCanonicalId": "loc_thang_long",
+    "expectedCanonicalName": "Thăng Long",
+    "isLocation": true,
+    "expectedModernLocation": "Hà Nội"
+  },
+  {
+    "input": "Đông Kinh",
+    "expectedCanonicalId": "loc_thang_long",
+    "expectedCanonicalName": "Thăng Long",
+    "isLocation": true,
+    "expectedModernLocation": "Hà Nội"
+  },
+  {
+    "input": "Đại La",
+    "expectedCanonicalId": "loc_thang_long",
+    "expectedCanonicalName": "Thăng Long",
+    "isLocation": true,
+    "expectedModernLocation": "Hà Nội"
+  },
+  {
+    "input": "Hoa Lư",
+    "expectedCanonicalId": "loc_hoa_lu",
+    "expectedCanonicalName": "Hoa Lư",
+    "isLocation": true,
+    "expectedModernLocation": "Ninh Bình"
+  },
+  {
+    "input": "Cổ Loa",
+    "expectedCanonicalId": "loc_thanh_co_loa",
+    "expectedCanonicalName": "thành Cổ Loa",
+    "isLocation": true,
+    "expectedModernLocation": "Đông Anh, Hà Nội"
+  },
+  {
+    "input": "Tây Đô",
+    "expectedCanonicalId": "loc_thanh_nha_ho",
+    "expectedCanonicalName": "Thành nhà Hồ",
+    "isLocation": true,
+    "expectedModernLocation": "Vĩnh Lộc, Thanh Hóa"
+  },
+  {
+    "input": "Thành Nhà Hồ",
+    "expectedCanonicalId": "loc_thanh_nha_ho",
+    "expectedCanonicalName": "Thành nhà Hồ",
+    "isLocation": true,
+    "expectedModernLocation": "Vĩnh Lộc, Thanh Hóa"
+  },
+  {
+    "input": "Phú Xuân",
+    "expectedCanonicalId": "loc_phu_xuan",
+    "expectedCanonicalName": "Phú Xuân",
+    "isLocation": true,
+    "expectedModernLocation": "Huế"
+  },
+  {
+    "input": "Thuận Hóa",
+    "expectedCanonicalId": "loc_thuan_hoa",
+    "expectedCanonicalName": "Thuận Hóa",
+    "isLocation": true,
+    "expectedModernLocation": "Thừa Thiên Huế / Quảng Trị"
+  },
+  {
+    "input": "Gia Định",
+    "expectedCanonicalId": "loc_gia_dinh",
+    "expectedCanonicalName": "Gia Định",
+    "isLocation": true,
+    "expectedModernLocation": "Thành phố Hồ Chí Minh"
+  },
+  {
+    "input": "Phiên An",
+    "expectedCanonicalId": "loc_gia_dinh",
+    "expectedCanonicalName": "Gia Định",
+    "isLocation": true,
+    "expectedModernLocation": "Thành phố Hồ Chí Minh"
+  },
+  {
+    "input": "sông Như Nguyệt",
+    "expectedCanonicalId": "loc_song_nhu_nguyet",
+    "expectedCanonicalName": "sông Như Nguyệt",
+    "isLocation": true,
+    "expectedModernLocation": "Sông Cầu"
+  },
+  {
+    "input": "Ải Chi Lăng",
+    "expectedCanonicalId": "loc_ai_chi_lang",
+    "expectedCanonicalName": "Ải Chi Lăng",
+    "isLocation": true,
+    "expectedModernLocation": "Lạng Sơn"
+  },
+  {
+    "input": "sông Gianh",
+    "expectedCanonicalId": "loc_song_gianh",
+    "expectedCanonicalName": "sông Gianh",
+    "isLocation": true,
+    "expectedModernLocation": "Quảng Bình"
+  },
+  {
+    "input": "Linh Giang",
+    "expectedCanonicalId": "loc_song_gianh",
+    "expectedCanonicalName": "sông Gianh",
+    "isLocation": true,
+    "expectedModernLocation": "Quảng Bình"
+  },
+  {
+    "input": "sông Bến Hải",
+    "expectedCanonicalId": "loc_song_ben_hai",
+    "expectedCanonicalName": "sông Bến Hải",
+    "isLocation": true,
+    "expectedModernLocation": "Quảng Trị"
+  }
 ]

@@ -1,7 +1,7 @@
 # Đặc Tả Kỹ Thuật: Quản Lý Người Dùng & Phân Quyền (User Auth & Access Control Spec)
 
 * **Tên tài liệu:** ChronoViet User Authentication, Permissions & Access Control Specification
-* **Trạng thái:** 🚀 Approved Technical Specification (Đã hoàn thiện & phê duyệt toàn diện)
+* **Trạng thái:** 📐 Target Architecture Specification (Quy chuẩn thiết kế mục tiêu — Hiện tại MVP vận hành chế độ Stateless / Open Access không yêu cầu login)
 * **Phiên bản:** v1.1
 * **Công nghệ cốt lõi:** Next.js 14 App Router, Auth.js / NextAuth v5 (Stateless JWT), Google OAuth 2.0, PostgreSQL (pgvector), Redis (BullMQ & Rate Limiter)
 * **Quy chuẩn SSOT:** [`packages/shared-spec`](../../packages/shared-spec), [`packages/infra`](../../packages/infra)

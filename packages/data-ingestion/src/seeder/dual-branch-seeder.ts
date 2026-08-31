@@ -159,72 +159,101 @@ export async function seedDualBranch(
     }
   } else if (childChunks.length > 0) {
     // Stage 2 (or Full): Parallel Child Chunk Triple Extraction via LLM / Cache
-    const activeTargetsCount = hybridInferenceDispatcher.getActiveTargets('llm').length;
-    const isLocalOnlyMode =
-      envConfig.INFERENCE_ROUTING_MODE === 'local_only' ||
-      (!envConfig.ENABLE_CLOUD_FALLBACK && envConfig.USE_LOCAL_LLM) ||
-      activeTargetsCount <= 1;
+    // 2a. Pre-resolve chunks from persistent disk cache (instant <1ms lookup)
+    const uncachedItems: { childIdx: number; chunk: ProcessedHierarchicalChunk }[] = [];
+    let initialCachedCount = 0;
 
-    const concurrency = isLocalOnlyMode
-      ? Math.min(16, Math.max(1, envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || envConfig.LOCAL_LLM_MAX_CONCURRENCY || 4))
-      : Math.min(16, Math.max(1, activeTargetsCount));
+    for (let i = 0; i < childChunks.length; i++) {
+      const chunk = childChunks[i];
+      const resultIdx = parentChunks.length + i;
 
-    log.info(
-      'dual_branch_seeder.extract_triples_parallel',
-      `Extracting triples for ${childChunks.length} child chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`,
-      { correlationId, childChunksCount: childChunks.length, concurrency, activeTargetsCount }
-    );
+      if (!options?.skipCache) {
+        const cached = await extractionCache.get(chunk.textContent);
+        if (cached !== null && Array.isArray(cached)) {
+          chunkResults[resultIdx] = { chunk, triples: cached };
+          initialCachedCount++;
+          metricsCollector.recordCache(true);
+          continue;
+        }
+      }
 
-    let nextChildIndex = 0;
-    let completedChildChunks = 0;
+      uncachedItems.push({ childIdx: i, chunk });
+    }
 
-    async function childExtractionWorker() {
-      while (nextChildIndex < childChunks.length) {
-        const childIdx = nextChildIndex++;
-        const chunk = childChunks[childIdx];
-        const resultIdx = parentChunks.length + childIdx;
-        const chunkStartTime = Date.now();
+    const cachedPercent = ((initialCachedCount / childChunks.length) * 100).toFixed(1);
 
-        try {
-          const triples = await extractTriplesFromTextAsync(chunk.textContent, {
-            ...options,
-            chunkId: chunk.id,
-          });
-          chunkResults[resultIdx] = { chunk, triples };
-          completedChildChunks++;
+    if (initialCachedCount > 0) {
+      log.info(
+        'dual_branch_seeder.cache_preload',
+        `Resume Check: Restored ${initialCachedCount}/${childChunks.length} child chunks from disk cache (${cachedPercent}%)`,
+        {
+          correlationId,
+          cachedCount: initialCachedCount,
+          totalCount: childChunks.length,
+          remainingCount: uncachedItems.length,
+          cachedPercent: Number(cachedPercent),
+        }
+      );
+    }
 
-          const meta = (triples as any)?._meta;
-          const isCached = meta?.cached === true;
-          metricsCollector.recordCache(isCached);
+    if (uncachedItems.length === 0) {
+      log.info(
+        'dual_branch_seeder.all_chunks_cached',
+        `All ${childChunks.length} child chunks successfully restored from cache (LLM extraction completely bypassed)`,
+        { correlationId, childChunksCount: childChunks.length }
+      );
+    } else {
+      const activeTargetsCount = hybridInferenceDispatcher.getActiveTargets('llm').length;
+      const isLocalOnlyMode =
+        envConfig.INFERENCE_ROUTING_MODE === 'local_only' ||
+        (!envConfig.ENABLE_CLOUD_FALLBACK && envConfig.USE_LOCAL_LLM) ||
+        activeTargetsCount <= 1;
 
-          const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
-          const providerName = meta?.provider || (isCached ? 'CACHED' : 'LOCAL_LLM');
-          const modelName = meta?.model ? ` (${meta.model})` : '';
-          const chunkDurationMs = (meta?.durationMs) ?? (Date.now() - chunkStartTime);
-          const chunkSec = (chunkDurationMs / 1000).toFixed(1);
+      const concurrency = isLocalOnlyMode
+        ? Math.min(16, Math.max(1, envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || envConfig.LOCAL_LLM_MAX_CONCURRENCY || 4))
+        : Math.min(16, Math.max(1, activeTargetsCount));
 
-          if (isCached) {
-            log.info(
-              'dual_branch_seeder.chunk_cached',
-              `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] (CACHED / RESUMED)`,
-              {
-                correlationId,
-                chunkIndex: completedChildChunks,
-                childChunksCount: childChunks.length,
-                chunkId: chunk.id,
-                triplesCount: triples.length,
-                provider: providerName,
-                model: meta?.model || 'CACHE',
-                cached: true,
-              }
-            );
-          } else {
+      log.info(
+        'dual_branch_seeder.extract_triples_parallel',
+        `Extracting triples for remaining ${uncachedItems.length}/${childChunks.length} child chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`,
+        { correlationId, remainingCount: uncachedItems.length, childChunksCount: childChunks.length, concurrency, activeTargetsCount }
+      );
+
+      let nextUncachedIndex = 0;
+      let completedUncachedChunks = 0;
+
+      async function childExtractionWorker() {
+        while (nextUncachedIndex < uncachedItems.length) {
+          const itemIdx = nextUncachedIndex++;
+          const { childIdx, chunk } = uncachedItems[itemIdx];
+          const resultIdx = parentChunks.length + childIdx;
+          const chunkStartTime = Date.now();
+
+          try {
+            const triples = await extractTriplesFromTextAsync(chunk.textContent, {
+              ...options,
+              chunkId: chunk.id,
+            });
+            chunkResults[resultIdx] = { chunk, triples };
+            completedUncachedChunks++;
+
+            const meta = (triples as any)?._meta;
+            const isCached = meta?.cached === true;
+            metricsCollector.recordCache(isCached);
+
+            const totalCompleted = initialCachedCount + completedUncachedChunks;
+            const percent = ((totalCompleted / childChunks.length) * 100).toFixed(1);
+            const providerName = meta?.provider || (isCached ? 'CACHED' : 'LOCAL_LLM');
+            const modelName = meta?.model ? ` (${meta.model})` : '';
+            const chunkDurationMs = (meta?.durationMs) ?? (Date.now() - chunkStartTime);
+            const chunkSec = (chunkDurationMs / 1000).toFixed(1);
+
             log.info(
               'dual_branch_seeder.chunk_success',
-              `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
+              `Child Chunk [${totalCompleted}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
               {
                 correlationId,
-                chunkIndex: completedChildChunks,
+                chunkIndex: totalCompleted,
                 childChunksCount: childChunks.length,
                 chunkId: chunk.id,
                 triplesCount: triples.length,
@@ -234,51 +263,52 @@ export async function seedDualBranch(
                 durationMs: chunkDurationMs,
               }
             );
-          }
-        } catch (err: any) {
-          completedChildChunks++;
-          const percent = ((completedChildChunks / childChunks.length) * 100).toFixed(1);
-          const conciseErrMsg = formatConciseError(err);
-          failedExtractionChunkIds.push(chunk.id);
+          } catch (err: any) {
+            completedUncachedChunks++;
+            const totalCompleted = initialCachedCount + completedUncachedChunks;
+            const percent = ((totalCompleted / childChunks.length) * 100).toFixed(1);
+            const conciseErrMsg = formatConciseError(err);
+            failedExtractionChunkIds.push(chunk.id);
 
-          const isStrictQuality = options?.strict !== false && (options?.strict === true || envConfig.EVAL_STRICT || !options?.allowFallback);
+            const isStrictQuality = options?.strict !== false && (options?.strict === true || envConfig.EVAL_STRICT || !options?.allowFallback);
 
-          if (isStrictQuality) {
-            log.error(
-              'dual_branch_seeder.chunk_failed_strict',
-              `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}] in STRICT mode: ${conciseErrMsg}. (Rule fallback rejected to maintain knowledge integrity)`,
-              {
-                correlationId,
-                chunkIndex: completedChildChunks,
-                childChunksCount: childChunks.length,
-                chunkId: chunk.id,
-                error: conciseErrMsg,
-              }
-            );
-            chunkResults[resultIdx] = { chunk, triples: [] };
-          } else {
-            const fallbackTriples = extractTriplesFromText(chunk.textContent);
-            log.warn(
-              'dual_branch_seeder.chunk_failed_salvaged',
-              `Child Chunk [${completedChildChunks}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples (--allow-fallback).`,
-              {
-                correlationId,
-                chunkIndex: completedChildChunks,
-                childChunksCount: childChunks.length,
-                chunkId: chunk.id,
-                error: conciseErrMsg,
-                salvagedCount: fallbackTriples.length,
-              }
-            );
-            chunkResults[resultIdx] = { chunk, triples: fallbackTriples };
+            if (isStrictQuality) {
+              log.error(
+                'dual_branch_seeder.chunk_failed_strict',
+                `Child Chunk [${totalCompleted}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}] in STRICT mode: ${conciseErrMsg}. (Rule fallback rejected to maintain knowledge integrity)`,
+                {
+                  correlationId,
+                  chunkIndex: totalCompleted,
+                  childChunksCount: childChunks.length,
+                  chunkId: chunk.id,
+                  error: conciseErrMsg,
+                }
+              );
+              chunkResults[resultIdx] = { chunk, triples: [] };
+            } else {
+              const fallbackTriples = extractTriplesFromText(chunk.textContent);
+              log.warn(
+                'dual_branch_seeder.chunk_failed_salvaged',
+                `Child Chunk [${totalCompleted}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples (--allow-fallback).`,
+                {
+                  correlationId,
+                  chunkIndex: totalCompleted,
+                  childChunksCount: childChunks.length,
+                  chunkId: chunk.id,
+                  error: conciseErrMsg,
+                  salvagedCount: fallbackTriples.length,
+                }
+              );
+              chunkResults[resultIdx] = { chunk, triples: fallbackTriples };
+            }
           }
         }
       }
-    }
 
-    const workerCount = Math.min(concurrency, childChunks.length);
-    const workers = Array.from({ length: workerCount }, () => childExtractionWorker());
-    await Promise.all(workers);
+      const workerCount = Math.min(concurrency, uncachedItems.length);
+      const workers = Array.from({ length: workerCount }, () => childExtractionWorker());
+      await Promise.all(workers);
+    }
   }
 
   metricsCollector.endStage('extraction');
@@ -855,6 +885,8 @@ export class DualBranchSeeder implements IIngestionPipeline {
     } else {
       filesToProcess.push(inputPath);
     }
+
+    filesToProcess.sort((a, b) => a.localeCompare(b));
 
     for (const filePath of filesToProcess) {
       const baseName = path.basename(filePath, path.extname(filePath));

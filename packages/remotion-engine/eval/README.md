@@ -18,14 +18,24 @@ Bộ đánh giá hoạt động theo 3 giai đoạn:
 
 ---
 
-## 📁 Directory Structure
+## 📁 Directory Structure & 8 Standardized Test Cases
 ```text
 eval/
 ├── README.md         # Tài liệu hướng dẫn đánh giá này
-├── test-cases/       # Kịch bản JSON v4.1 mẫu phủ 31 LayoutModes & 19 Transitions
+├── test-cases/       # 8 Kịch bản JSON v4.1 mẫu phủ 31 LayoutModes & 19 Transitions:
+│   ├── artifact_trong_dong_ngoc_lu.json  (Domain: ARTIFACT)
+│   ├── battle_bach_dang_938.json         (Domain: BATTLE)
+│   ├── battle_hai_ba_trung.json          (Domain: BATTLE)
+│   ├── battle_mongol_viet_2.json         (Domain: BATTLE)
+│   ├── biography_quang_trung.json        (Domain: BIOGRAPHY)
+│   ├── biography_tran_hung_dao.json      (Domain: BIOGRAPHY)
+│   ├── dynasty_nha_ly.json               (Domain: DYNASTY)
+│   └── mystery_le_chi_vien.json          (Domain: MYSTERY)
 ├── reports/          # Báo cáo kết quả kiểm định (JSON / Markdown)
+├── public/           # Mock Static Assets cho Studio Preview (`eval/public/assets`)
+├── scripts/          # Scripts khởi tạo mock assets (setup_assets.js)
 ├── out/              # Thư mục output sạch (Không chứa ảnh dư thừa)
-└── runner.ts         # Script kiểm định tự động & tự mở Remotion Studio
+└── runner.ts         # Script kiểm định tự động
 ```
 
 ---
@@ -34,27 +44,25 @@ eval/
 
 ### 1. Lệnh cơ bản (Chạy từ Root Monorepo)
 ```bash
-# Chạy suite eval tự động & mở Studio GUI từ root monorepo:
+# 1. Chạy suite eval tự động ở chế độ CI headless:
+pnpm eval:remotion
+# hoặc:
 pnpm --filter @chronoviet/remotion-engine eval
 
-# Chạy với vòng đời dọn dẹp sạch sẽ trước khi đánh giá:
+# 2. Khởi tạo mock assets cho Studio & Eval:
+pnpm --filter @chronoviet/remotion-engine setup-assets
+
+# 3. Mở giao diện tương tác Remotion Studio GUI (Port 9876):
+pnpm remotion:studio
+
+# 4. Chạy với vòng đời dọn dẹp sạch sẽ trước khi đánh giá:
 pnpm --filter @chronoviet/remotion-engine eval -- --fresh
 
-# Chỉ chạy dọn dẹp artifact rác:
+# 5. Chỉ chạy dọn dẹp artifact rác:
 pnpm --filter @chronoviet/remotion-engine eval -- --clean
 ```
-> Khi chạy lệnh trên: Hệ thống sẽ đánh giá tự động Phase 1 -> Báo cáo Phase 2 -> Tự động khởi chạy **Remotion Studio GUI** ở Phase 3.
 
-### 2. Tùy chỉnh Vị trí Thư mục & Chế độ Headless (Chạy tại Root Monorepo)
-```bash
-# Chỉ định thư mục test cases và thư mục báo cáo riêng:
-pnpm --filter @chronoviet/remotion-engine eval -- -t packages/remotion-engine/eval/test-cases -r packages/remotion-engine/eval/reports
-
-# Tắt tự động mở Studio GUI (dành cho môi trường CI/CD headless):
-pnpm --filter @chronoviet/remotion-engine eval -- --no-studio
-```
-
-### 3. Tham Số CLI cho `eval/runner.ts`:
+### 2. Tham Số CLI cho `eval/runner.ts`:
 | Tham số | Viết tắt | Mô tả | Mặc định |
 | :--- | :--- | :--- | :--- |
 | `--testCasesDir` | `-t` | Thư mục chứa các file JSON test cases | `eval/test-cases` |

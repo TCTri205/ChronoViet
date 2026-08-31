@@ -592,13 +592,16 @@ export async function launchLlmOnly() {
     '512',
     '--parallel',
     String(envConfig.LOCAL_LLM_PARALLEL || 4),
+    '--threads',
+    String(envConfig.LOCAL_LLM_THREADS || 10),
+    ...(envConfig.LLM_EXTRA_ARGS ? envConfig.LLM_EXTRA_ARGS.split(' ').filter(Boolean) : []),
   ];
   if (weights.mmprojPath) {
     extraArgs.push('--mmproj', weights.mmprojPath);
   }
 
   const proc = spawnLlamaService('Primary LLM', LLM_PORT, weights.llmPath, {
-    ctxSize: envConfig.LLM_CTX_SIZE || 32768,
+    ctxSize: envConfig.LLM_CTX_SIZE || 131072,
     extraArgs,
     tag: 'LLM-8092',
     tagColor: colors.cyan,

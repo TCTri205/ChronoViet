@@ -21,7 +21,7 @@ flowchart TB
     end
 
     subgraph ServiceLayer["3. CORE APP MONOLITH & AGENTIC LAYER"]
-        AppMonolith["ChronoViet App Monolith Server (Next.js / Fastify / TS)\n- Users Auth & Projects CRUD\n- RAG Engine (PostgreSQL pgvector)\n- Agentic Orchestrator (LangGraph.js 15 States & Postgres SSOT)\n- Hybrid Fact-Checker & Gemini Cloud VLM Inspector"]
+        AppMonolith["ChronoViet App Monolith Server (Next.js 14 App Router / TS)\n- Users Auth & Projects CRUD\n- RAG Engine (PostgreSQL pgvector)\n- Agentic Orchestrator (LangGraph.js 17 States & Postgres SSOT)\n- Hybrid Fact-Checker & Multi-Provider VLM Inspector"]
     end
 
     subgraph BrokerLayer["4. ASYNCHRONOUS BROKER & CACHE LAYER"]
@@ -297,7 +297,7 @@ flowchart TB
         end
 
         subgraph CoreServicesGroup["Core App Container"]
-            AppCont["ChronoViet App Monolith (Next.js / Fastify / TS)\n- Users Auth, Projects CRUD, RAG Engine & LangGraph Orchestrator\n- Limit: 1.5 CPUs / 2.0GB RAM"]
+            AppCont["ChronoViet App Monolith (Next.js 14 App Router / TS)\n- Users Auth, Projects CRUD, RAG Engine & LangGraph Orchestrator\n- Limit: 1.5 CPUs / 2.0GB RAM"]
         end
 
         subgraph WorkerGroup["Worker Containers (RESOURCE ISOLATED)"]
@@ -447,11 +447,14 @@ services:
     image: ghcr.io/ggerganov/llama.cpp:server-cuda
     container_name: local_ai_cuda_emb
     profiles:
+  local-ai-cuda-emb:
+    image: local-ai-cuda-base:latest
+    profiles:
       - ai
       - ai-cuda
       - prod-cuda
       - prod-all
-    restart: always
+    restart: unless-stopped
     ports:
       - "8090:8090"
     volumes:
@@ -460,12 +463,48 @@ services:
       -m /models/${LOCAL_EMBEDDING_MODEL:-bge-m3}.gguf
       --port 8090
       --embedding
-      --ctx-size ${EMBEDDING_CTX_SIZE:-4096}
+      --ctx-size ${EMBEDDING_CTX_SIZE:-8192}
       --n-gpu-layers 99
       --flash-attn
       --host 0.0.0.0
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8090/v1/models || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  local-ai-cuda-ext:
+    image: local-ai-cuda-base:latest
+    profiles:
+      - ai
+      - ai-cuda
+      - prod-cuda
+      - prod-all
+    restart: unless-stopped
+    ports:
+      - "8094:8094"
+    volumes:
+      - ./models:/models:ro
+    command: >
+      -m /models/${LOCAL_LLM_EXTRACTION_MODEL:-qwen3.5-4b-instruct-q4_k_m}.gguf
+      --port 8094
+      --ctx-size ${EXTRACTION_CTX_SIZE:-8192}
+      --n-gpu-layers 99
+      --flash-attn auto
+      --cont-batching
+      --parallel ${EXTRACTION_PARALLEL:-4}
+      --threads ${EXTRACTION_THREADS:-6}
+      --host 0.0.0.0
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8094/v1/models || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -484,7 +523,7 @@ services:
       dockerfile: Dockerfile.app
     profiles:
       - prod
-    restart: always
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -495,6 +534,9 @@ services:
       - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
       - LLM_BASE_URL=${LLM_BASE_URL:-http://local-ai-cuda-llm:8092}
       - EMBEDDING_API_URL=${EMBEDDING_API_URL:-http://local-ai-cuda-emb:8090/v1/embeddings}
+      - LOCAL_LLM_EXTRACTION_URL=${LOCAL_LLM_EXTRACTION_URL:-http://local-ai-cuda-ext:8094}
+      - AGNES_API_KEYS=${AGNES_API_KEYS:-}
+      - GEMINI_API_KEYS=${GEMINI_API_KEYS:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -517,18 +559,29 @@ services:
       dockerfile: Dockerfile.worker
     profiles:
       - prod
-    restart: always
+    restart: unless-stopped
     shm_size: '2gb'
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=production
+      - LOG_FORMAT=json
       - CONCURRENCY=1
+      - RENDER_CONCURRENCY=1
+      - WORKER_PROBE_PORT=3001
       - DATABASE_URL=postgres://chronoviet:${POSTGRES_PASSWORD:-${DB_PASSWORD:-chronoviet_secret}}@postgres:5432/chronoviet_db
       - REDIS_URL=redis://redis:6379
       - VIENEU_PYTHON_URL=http://vieneu-tts-service:8080
       - LLM_BASE_URL=${LLM_BASE_URL:-http://local-ai-cuda-llm:8092}
       - EMBEDDING_API_URL=${EMBEDDING_API_URL:-http://local-ai-cuda-emb:8090/v1/embeddings}
+      - AGNES_API_KEYS=${AGNES_API_KEYS:-}
+      - GEMINI_API_KEYS=${GEMINI_API_KEYS:-}
+      - TAVILY_API_KEYS=${TAVILY_API_KEYS:-}
+      - SERPAPI_API_KEYS=${SERPAPI_API_KEYS:-}
+      - BRAVE_API_KEYS=${BRAVE_API_KEYS:-}
+      - OPENAI_API_KEYS=${OPENAI_API_KEYS:-}
+      - OPENROUTER_API_KEYS=${OPENROUTER_API_KEYS:-}
+      - VLM_PROVIDER=${VLM_PROVIDER:-auto}
     depends_on:
       postgres:
         condition: service_healthy

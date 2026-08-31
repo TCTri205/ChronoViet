@@ -1,6 +1,6 @@
 /**
  * CLI Command: Re-resolve Entities & Graph Edges with Audit Trail & Database Cascade Merge
- * Usage: pnpm --filter @chronoviet/data-ingestion rag:re-resolve
+ * Usage: pnpm db:re-resolve or pnpm --filter @chronoviet/data-ingestion db:re-resolve
  */
 
 import { resolveCanonicalEntity } from '@chronoviet/shared-spec';

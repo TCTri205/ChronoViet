@@ -186,12 +186,65 @@ QUY TẮC:
               score: nliResult.entailmentScore,
               explanation: nliResult.explanation,
             });
-            if (nliResult.entailmentScore < 0.6 || nliResult.verdict === 'CONTRADICTION') {
-              escalationTier = Math.max(escalationTier, 3);
-              auditDetails += ` Critical NLI Entailment failure (score: ${nliResult.entailmentScore}); routed to human review. ${nliResult.explanation}`;
-            } else {
-              escalationTier = Math.max(escalationTier, 2);
-              auditDetails += ` NLI Entailment score: ${nliResult.entailmentScore}.`;
+
+            // Targeted Granular Scene/Chapter Patching
+            let patchedSuccessfully = false;
+            try {
+              const patchSystem = `Bạn là Chuyên gia Thẩm định và Hiệu đính Lịch sử ChronoViet.
+Nhiệm vụ: Sửa đúng câu/chi tiết lịch sử bị sai lệch/mâu thuẫn trong đoạn kịch bản mà KHÔNG làm thay đổi cấu trúc hay các phần đúng còn lại.
+QUY TẮC:
+1. Dựa trên BẰNG CHỨNG LỊCH SỬ XÁC THỰC được cung cấp để điều chỉnh dữ kiện mâu thuẫn.
+2. Giữ nguyên độ dài, phong cách kể chuyện hào hùng, không thêm bớt tình tiết ngoài sử liệu.
+3. Chỉ xuất đoạn kịch bản hoàn chỉnh sau khi vá lỗi, không giải thích.`;
+
+              const patchUser = `BẰNG CHỨNG LỊCH SỬ XÁC THỰC:
+${groundTruthChunks.slice(0, 5).join('\n')}
+
+LỖI PHÁT HIỆN:
+${nliResult.explanation || 'Dữ kiện mâu thuẫn với sử liệu.'}
+
+KỊCH BẢN CẦN VÁ LỖI (CHƯƠNG ${chapterIndex + 1}):
+"${script}"`;
+
+              const patchRes = await callLlm({
+                messages: [
+                  { role: 'system', content: patchSystem },
+                  { role: 'user', content: patchUser },
+                ],
+                temperature: 0.1,
+              });
+
+              const patchedScript = patchRes.content.trim();
+              if (patchedScript && patchedScript.length >= 20) {
+                const recheck = evaluateNliEntailmentScore({
+                  scriptClaim: patchedScript,
+                  groundTruthChunks,
+                  epochBounds:
+                    allYears.length > 0
+                      ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
+                      : undefined,
+                });
+
+                if (!recheck.isHallucinated || recheck.entailmentScore >= 0.7) {
+                  script = patchedScript;
+                  patchedSuccessfully = true;
+                  escalationTier = Math.max(escalationTier, 1);
+                  auditDetails += ` Targeted granular scene patch applied: resolved contradiction via historical grounding.`;
+                  nodeLog.info('orchestrator.granular_scene_patched', `Successfully repaired contradiction in chapter ${chapterIndex}`);
+                }
+              }
+            } catch (patchErr: any) {
+              nodeLog.warn('orchestrator.scene_patch_failed', `Targeted scene patch failed: ${patchErr.message}`);
+            }
+
+            if (!patchedSuccessfully) {
+              if (nliResult.entailmentScore < 0.6 || nliResult.verdict === 'CONTRADICTION') {
+                escalationTier = Math.max(escalationTier, 3);
+                auditDetails += ` Critical NLI Entailment failure (score: ${nliResult.entailmentScore}); routed to human review. ${nliResult.explanation}`;
+              } else {
+                escalationTier = Math.max(escalationTier, 2);
+                auditDetails += ` NLI Entailment score: ${nliResult.entailmentScore}.`;
+              }
             }
           }
         }

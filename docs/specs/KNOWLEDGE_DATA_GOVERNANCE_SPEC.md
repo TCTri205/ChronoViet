@@ -274,9 +274,9 @@ Trong sử liệu Việt Nam, danh xưng nhân vật có độ tin cậy và b�
 }
 ```
 
-### 4.4. Thuật Toán Hợp Giải Xung Đột Cạnh Khi Merge Node (`rag:re-resolve` Algorithm)
+### 4.4. Thuật Toán Hợp Giải Xung Đột Cạnh Khi Merge Node (`db:re-resolve` Algorithm)
 
-Khi chạy pipeline re-indexing (`pnpm --filter @chronoviet/data-ingestion rag:re-resolve`) để gộp các nút thực thể cũ:
+Khi chạy pipeline re-indexing (`pnpm db:re-resolve` hoặc `pnpm --filter @chronoviet/data-ingestion db:re-resolve`) để gộp các nút thực thể cũ:
 - **Cạnh không mâu thuẫn (cùng thuộc tính/giá trị):** Lấy $\max(\text{Confidence}_A, \text{Confidence}_B)$.
 - **Cạnh mâu thuẫn giá trị (vd: Nguồn A bảo sinh năm 1225, Nguồn B bảo sinh năm 1226):** **Tuyệt đối không ghi đè ngẫu nhiên.** Hệ thống tự động chuyển đổi thành 2 cạnh song song theo mô hình **Multi-Perspective Graph Edge** (Mục 5.2) kèm trích dẫn nguồn riêng biệt.
 
@@ -430,7 +430,7 @@ Khi thực hiện ingest văn bản sử ký:
 
 2. **Khi phát hiện mâu thuẫn sử liệu hoặc alias mới:**
    * Cập nhật từ điển ánh xạ tại [`packages/shared-spec/src/historical-entities.ts`](../../packages/shared-spec/src/historical-entities.ts).
-   * Chạy `pnpm --filter @chronoviet/data-ingestion rag:re-resolve` để cập nhật lại Đồ thị Tri thức hiện có.
+   * Chạy `pnpm db:re-resolve` (hoặc `pnpm --filter @chronoviet/data-ingestion db:re-resolve`) để cập nhật lại Đồ thị Tri thức hiện có.
 
 3. **Luồng Media/Hình Ảnh Tiếp Theo:**
    * Sau khi kịch bản được tạo xong từ dữ liệu RAG văn bản, **Module 3 (VLM Inspector Agent)** sẽ chịu trách nhiệm tìm kiếm/sinh ảnh phù hợp bối cảnh kịch bản và kiểm định giấy phép bản quyền hình ảnh độc lập.

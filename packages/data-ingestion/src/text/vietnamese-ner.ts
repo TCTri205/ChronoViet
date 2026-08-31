@@ -17,6 +17,11 @@ import {
   HISTORICAL_PERSON_DICTIONARY,
   HISTORICAL_LOCATION_DICTIONARY,
   HISTORICAL_LOCATION_MAPPINGS,
+  DYNASTY_DICTIONARY,
+  CORE_ORGS,
+  CORE_EVENTS,
+  CORE_ARTIFACTS,
+  CORE_DOCS,
   CAN_CHI_SET,
   PERSON_HONORIFICS_AND_RANKS,
   getCanonicalEntityIdPrefix,
@@ -85,18 +90,24 @@ class GazetteerTrie {
             const end = j;
             const matchedText = text.substring(start, end);
 
-            const entryNameLower = curr.entry.name.toLowerCase();
-            const isLordGeneric = entryNameLower === 'chúa trịnh' || entryNameLower === 'chúa nguyễn';
-            const remainder = text.substring(j);
-            const followedByCapitalized = /^\s+[A-ZÀ-Ỹ][a-zà-ỹ]+/u.test(remainder);
+            const isSingleWord = !curr.entry.name.includes(' ');
+            const isCapitalizedInText = /^[A-ZÀ-Ỹ]/u.test(matchedText);
+            if (isSingleWord && !isCapitalizedInText && (curr.entry.type === 'DYNASTY_ERA' || curr.entry.type === 'HISTORICAL_PERSON')) {
+              // Skip lowercase single-syllable common words (e.g. "đường", "ngô", "minh", "hồ")
+            } else {
+              const entryNameLower = curr.entry.name.toLowerCase();
+              const isLordGeneric = entryNameLower === 'chúa trịnh' || entryNameLower === 'chúa nguyễn';
+              const remainder = text.substring(j);
+              const followedByCapitalized = /^\s+[A-ZÀ-Ỹ][a-zà-ỹ]+/u.test(remainder);
 
-            if (!isLordGeneric || !followedByCapitalized) {
-              lastMatch = {
-                start,
-                end,
-                entry: curr.entry,
-                matchedText,
-              };
+              if (!isLordGeneric || !followedByCapitalized) {
+                lastMatch = {
+                  start,
+                  end,
+                  entry: curr.entry,
+                  matchedText,
+                };
+              }
             }
           }
         }
@@ -137,7 +148,7 @@ function initializeGazetteer() {
     }
   }
 
-  // 2. Location Dictionary & Mappings
+  // 2. Location Dictionary
   for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
     const entry: GazetteerEntry = {
       canonicalId: loc.entityId,
@@ -151,74 +162,65 @@ function initializeGazetteer() {
     }
   }
 
-  for (const map of HISTORICAL_LOCATION_MAPPINGS) {
-    const canonicalId = `loc_${slugify(map.canonicalModernName)}`;
+  // 3. Known Dynasties, Eras, Important Documents, Artifacts, Disambiguated Battles & Historic Locations
+  for (const dyn of Object.values(DYNASTY_DICTIONARY)) {
     const entry: GazetteerEntry = {
-      canonicalId,
-      name: map.canonicalModernName,
-      type: 'LOCATION',
-      aliases: [map.historicalName],
+      canonicalId: dyn.entityId,
+      name: dyn.canonicalName,
+      type: 'DYNASTY_ERA',
+      aliases: dyn.aliases || [],
     };
-    insertWithUnaccented(map.historicalName, entry);
-    insertWithUnaccented(map.canonicalModernName, entry);
+    insertWithUnaccented(dyn.canonicalName, entry);
+    for (const al of dyn.aliases || []) insertWithUnaccented(al, entry);
   }
 
-  // 3. Known Dynasties, Eras, Important Documents, Artifacts, Disambiguated Battles & Historic Locations
+  for (const org of CORE_ORGS) {
+    const entry: GazetteerEntry = {
+      canonicalId: org.id,
+      name: org.name,
+      type: 'ORGANIZATION',
+      aliases: org.aliases || [],
+    };
+    insertWithUnaccented(org.name, entry);
+    for (const al of org.aliases || []) insertWithUnaccented(al, entry);
+  }
+
+  for (const ev of CORE_EVENTS) {
+    const entry: GazetteerEntry = {
+      canonicalId: ev.id,
+      name: ev.name,
+      type: 'EVENT_BATTLE',
+      aliases: ev.aliases || [],
+    };
+    insertWithUnaccented(ev.name, entry);
+    for (const al of ev.aliases || []) insertWithUnaccented(al, entry);
+  }
+
+  for (const art of CORE_ARTIFACTS) {
+    const entry: GazetteerEntry = {
+      canonicalId: art.id,
+      name: art.name,
+      type: 'ARTIFACT',
+      aliases: art.aliases || [],
+    };
+    insertWithUnaccented(art.name, entry);
+    for (const al of art.aliases || []) insertWithUnaccented(al, entry);
+  }
+
+  for (const doc of CORE_DOCS) {
+    const entry: GazetteerEntry = {
+      canonicalId: doc.id,
+      name: doc.name,
+      type: 'DOCUMENT_CULTURE',
+      aliases: doc.aliases || [],
+    };
+    insertWithUnaccented(doc.name, entry);
+    for (const al of doc.aliases || []) insertWithUnaccented(al, entry);
+  }
+
   const CORE_HISTORICAL_ENTITIES: Array<{ name: string; type: string; aliases?: string[] }> = [
     { name: 'Hồng Bàng', type: 'DYNASTY_ERA', aliases: ['Thời kỳ Hồng Bàng', 'Thời đại Hồng Bàng', 'Hồng Bàng / Văn Lang'] },
     { name: 'Đông Sơn', type: 'DYNASTY_ERA', aliases: ['Văn hóa Đông Sơn'] },
-    { name: 'Văn Lang', type: 'DYNASTY_ERA', aliases: ['nhà nước Văn Lang'] },
-    { name: 'Âu Lạc', type: 'DYNASTY_ERA', aliases: ['nhà nước Âu Lạc'] },
-    { name: 'Vạn Xuân', type: 'DYNASTY_ERA', aliases: ['nhà nước Vạn Xuân'] },
-    { name: 'Đại Cồ Việt', type: 'DYNASTY_ERA', aliases: ['nhà nước Đại Cồ Việt'] },
-    { name: 'Đại Việt', type: 'DYNASTY_ERA', aliases: ['nước Đại Việt'] },
-    { name: 'Đại Nam', type: 'DYNASTY_ERA', aliases: ['nước Đại Nam'] },
-    { name: 'nhà Lý', type: 'DYNASTY_ERA', aliases: ['triều Lý', 'thời Lý'] },
-    { name: 'nhà Trần', type: 'DYNASTY_ERA', aliases: ['triều Trần', 'thời Trần'] },
-    { name: 'nhà Hồ', type: 'DYNASTY_ERA', aliases: ['triều Hồ', 'thời Hồ'] },
-    { name: 'nhà Lê', type: 'DYNASTY_ERA', aliases: ['triều Lê', 'thời Lê'] },
-    { name: 'nhà Lê Sơ', type: 'DYNASTY_ERA', aliases: ['triều Lê Sơ', 'thời Lê Sơ'] },
-    { name: 'nhà Mạc', type: 'DYNASTY_ERA', aliases: ['triều Mạc', 'thời Mạc'] },
-    { name: 'nhà Nguyễn', type: 'DYNASTY_ERA', aliases: ['triều Nguyễn', 'thời Nguyễn'] },
-    { name: 'nhà Tiền Lý', type: 'DYNASTY_ERA', aliases: ['triều Tiền Lý'] },
-    { name: 'nhà Đông Hán', type: 'DYNASTY_ERA' },
-    { name: 'nhà Đường', type: 'DYNASTY_ERA' },
-    { name: 'nhà Tống', type: 'DYNASTY_ERA' },
-    { name: 'quân Tống', type: 'DYNASTY_ERA' },
-    { name: 'nhà Minh', type: 'DYNASTY_ERA', aliases: ['quân Minh'] },
-    { name: 'Nam Hán', type: 'DYNASTY_ERA', aliases: ['quân Nam Hán'] },
-    { name: 'Đông Ngô', type: 'DYNASTY_ERA', aliases: ['quân Đông Ngô'] },
-    { name: 'Xiêm La', type: 'DYNASTY_ERA' },
-    { name: 'Việt Nam Dân chủ Cộng hòa', type: 'DYNASTY_ERA' },
-    { name: 'Đảng Cộng sản Việt Nam', type: 'ORGANIZATION' },
-    { name: 'Tây Sơn', type: 'ORGANIZATION', aliases: ['nhà Tây Sơn', 'triều Tây Sơn'] },
-    { name: 'quân Tây Sơn', type: 'ORGANIZATION' },
-    { name: 'nghĩa quân Tây Sơn', type: 'ORGANIZATION' },
-    { name: 'nghĩa quân Lam Sơn', type: 'ORGANIZATION' },
-    { name: 'quân Mãn Thanh', type: 'ORGANIZATION', aliases: ['quân Thanh'] },
-    { name: 'quân Nguyên Mông', type: 'ORGANIZATION', aliases: ['quân Mông Cổ', 'quân Nguyên'] },
-    { name: 'Hội Duy Tân', type: 'ORGANIZATION' },
-    { name: 'Hội Tao Đàn', type: 'ORGANIZATION' },
-    { name: 'chúa Nguyễn', type: 'ORGANIZATION' },
-    { name: 'chúa Trịnh', type: 'ORGANIZATION' },
-    { name: 'Thiền phái Trúc Lâm Yên Tử', type: 'ORGANIZATION', aliases: ['Trúc Lâm Yên Tử'] },
-    { name: 'Việt Nam Quốc dân Đảng', type: 'ORGANIZATION' },
-    { name: 'Hội Việt Nam Cách mạng Thanh niên', type: 'ORGANIZATION' },
-    { name: 'Quốc sử quán triều Nguyễn', type: 'ORGANIZATION' },
-    { name: 'Chiếu dời đô', type: 'DOCUMENT_CULTURE' },
-    { name: 'Hịch tướng sĩ', type: 'DOCUMENT_CULTURE' },
-    { name: 'Bình Ngô đại cáo', type: 'DOCUMENT_CULTURE' },
-    { name: 'Tuyên ngôn Độc lập', type: 'DOCUMENT_CULTURE' },
-    { name: 'Nam quốc sơn hà', type: 'DOCUMENT_CULTURE' },
-    { name: 'Luật Hồng Đức', type: 'DOCUMENT_CULTURE', aliases: ['Quốc triều hình luật'] },
-    { name: 'Đại Việt sử ký toàn thư', type: 'DOCUMENT_CULTURE' },
-    { name: 'Đại Nam thực lục', type: 'DOCUMENT_CULTURE' },
-    { name: 'Hiệp định Genève', type: 'DOCUMENT_CULTURE' },
-    { name: 'Hiệp định Paris', type: 'DOCUMENT_CULTURE' },
-    { name: 'Trống đồng Đông Sơn', type: 'ARTIFACT' },
-    { name: 'Nỏ Liên Châu', type: 'ARTIFACT', aliases: ['Nỏ thần', 'nỏ thần Liên Châu'] },
-    { name: 'Thông Bảo Hội Sao', type: 'ARTIFACT' },
-    { name: 'Xe tăng 390', type: 'ARTIFACT' },
     { name: 'Đàng Trong', type: 'LOCATION' },
     { name: 'Đàng Ngoài', type: 'LOCATION' },
     { name: 'Đông Anh', type: 'LOCATION' },
@@ -241,7 +243,7 @@ function initializeGazetteer() {
     { name: 'Hát Môn', type: 'LOCATION' },
     { name: 'Luy Lâu', type: 'LOCATION' },
     { name: 'Hoa Lư', type: 'LOCATION', aliases: ['cố đô Hoa Lư'] },
-    { name: 'Thăng Long', type: 'LOCATION', aliases: ['kinh thành Thăng Long', 'Đông Đô'] },
+    { name: 'Thăng Long', type: 'LOCATION', aliases: ['kinh thành Thăng Long', 'Đông Đô', 'Đại La', 'thành Đại La'] },
     { name: 'Đông Quan', type: 'LOCATION', aliases: ['thành Đông Quan'] },
     { name: 'Phú Xuân', type: 'LOCATION', aliases: ['kinh đô Phú Xuân'] },
     { name: 'Chi Lăng', type: 'LOCATION', aliases: ['ải Chi Lăng'] },
@@ -250,30 +252,23 @@ function initializeGazetteer() {
     { name: 'Đống Đa', type: 'LOCATION', aliases: ['gò Đống Đa'] },
     { name: 'Mường Thanh', type: 'LOCATION' },
     { name: 'Văn Miếu', type: 'LOCATION', aliases: ['Văn Miếu - Quốc Tử Giám'] },
+    { name: 'Phùng Nguyên', type: 'LOCATION', aliases: ['di chỉ Phùng Nguyên', 'Văn hóa Phùng Nguyên', 'văn hoá Phùng Nguyên'] },
+    { name: 'Đồng Đậu', type: 'LOCATION', aliases: ['di chỉ Đồng Đậu', 'Văn hóa Đồng Đậu', 'văn hoá Đồng Đậu'] },
+    { name: 'Gò Mun', type: 'LOCATION', aliases: ['di chỉ Gò Mun', 'Văn hóa Gò Mun', 'văn hoá Gò Mun'] },
+    { name: 'Sa Huỳnh', type: 'LOCATION', aliases: ['di chỉ Sa Huỳnh', 'Văn hóa Sa Huỳnh', 'văn hoá Sa Huỳnh'] },
+    { name: 'Óc Eo', type: 'LOCATION', aliases: ['di chỉ Óc Eo', 'Văn hóa Óc Eo', 'văn hoá Óc Eo'] },
+    { name: 'Quảng trường Ba Đình', type: 'LOCATION', aliases: ['Ba Đình', 'quảng trường Ba Đình'] },
+    { name: 'đầm Dạ Trạch', type: 'LOCATION', aliases: ['Dạ Trạch', 'Đầm Dạ Trạch'] },
+    { name: 'đầm Thị Nại', type: 'LOCATION', aliases: ['Thị Nại'] },
     { name: 'Mai Thúc Loan', type: 'HISTORICAL_PERSON', aliases: ['Mai Hắc Đế'] },
-    // Core Canonical Events
-    { name: 'Sáng lập nhà nước Văn Lang', type: 'EVENT_BATTLE', aliases: ['Dựng nước Văn Lang'] },
-    { name: 'Khởi nghĩa Hai Bà Trưng', type: 'EVENT_BATTLE', aliases: ['Khởi nghĩa Mê Linh'] },
-    { name: 'Khởi nghĩa Bà Triệu', type: 'EVENT_BATTLE' },
-    { name: 'Khởi nghĩa Lý Bí', type: 'EVENT_BATTLE', aliases: ['Khởi nghĩa Vạn Xuân'] },
-    { name: 'Chiến thắng Bạch Đằng năm 938', type: 'EVENT_BATTLE', aliases: ['Trận Bạch Đằng (938)', 'Trận Bạch Đằng năm 938', 'Chiến thắng Bạch Đằng 938'] },
-    { name: 'Trận Bạch Đằng năm 981', type: 'EVENT_BATTLE', aliases: ['Trận Bạch Đằng (981)', 'Chiến thắng Bạch Đằng 981'] },
-    { name: 'Trận Bạch Đằng năm 1288', type: 'EVENT_BATTLE', aliases: ['Trận Bạch Đằng (1288)', 'Chiến thắng Bạch Đằng 1288', 'Đại thắng Bạch Đằng 1288'] },
-    { name: 'Dẹp loạn 12 sứ quân', type: 'EVENT_BATTLE' },
-    { name: 'Khởi nghĩa Lam Sơn', type: 'EVENT_BATTLE' },
-    { name: 'Chiến dịch Chi Lăng - Xương Giang', type: 'EVENT_BATTLE', aliases: ['Trận Chi Lăng - Xương Giang'] },
-    { name: 'Hội thề Đông Quan', type: 'EVENT_BATTLE' },
-    { name: 'Trận Ngọc Hồi - Đống Đa', type: 'EVENT_BATTLE', aliases: ['Chiến thắng Ngọc Hồi - Đống Đa', 'Đại thắng Ngọc Hồi - Đống Đa'] },
-    { name: 'Chiến dịch Điện Biên Phủ', type: 'EVENT_BATTLE', aliases: ['Trận Điện Biên Phủ'] },
-    { name: 'Chiến dịch Biên giới Thu Đông 1950', type: 'EVENT_BATTLE', aliases: ['Chiến dịch Biên giới 1950'] },
-    { name: 'Chiến dịch Hồ Chí Minh', type: 'EVENT_BATTLE' },
-    { name: 'Hội nghị Diên Hồng', type: 'EVENT_BATTLE' },
-    { name: 'Hội nghị Bình Than', type: 'EVENT_BATTLE' },
+    { name: 'Hồ Nguyên Trừng', type: 'HISTORICAL_PERSON' },
+    { name: 'đình Tây Đằng', type: 'LOCATION', aliases: ['đình làng Tây Đằng', 'Đình Tây Đằng'] },
   ];
 
   for (const ent of CORE_HISTORICAL_ENTITIES) {
+    const resolved = resolveCanonicalEntity(ent.name);
     const prefix = getCanonicalEntityIdPrefix(ent.type);
-    const canonicalId = `${prefix}${slugify(ent.name)}`;
+    const canonicalId = (resolved && resolved.entityId) ? resolved.entityId : `${prefix}${slugify(ent.name)}`;
     const entry: GazetteerEntry = {
       canonicalId,
       name: ent.name,
@@ -307,9 +302,6 @@ export const GENERIC_EXCLUSION_TERMS = new Set([
   'sông', 'núi', 'thành', 'huyện', 'tỉnh', 'châu', 'lộ', 'phủ', 'quận', 'trận', 'cuộc',
   'hoàng', 'đế', 'vương', 'tổng', 'chiến', 'biên', 'du', 'mới', 'bắc', 'nam', 'ngoài',
   'chủ', 'tư', 'tổ', 'thủy', 'khởi', 'phong', 'xe', 'hiệp', 'đại', 'tuyên', 'độc', 'quảng', 'quốc',
-  'pháp', 'trung quốc', 'nhật bản', 'thụy sĩ', 'đông dương', 'ba đình', 'đổi mới',
-  'hoành sơn', 'tân an - gò công', 'lê - trịnh', 'trịnh - nguyễn', 'pháp - tây ban nha',
-  'bình tây đại', 'tao đàn nhị thập bát',
   'trình bày', 'diễn biến', 'kết quả', 'ý nghĩa', 'nguyên nhân', 'bối cảnh', 'chi tiết',
   'đặc điểm', 'sự kiện', 'địa danh', 'nhân vật', 'thảo luận', 'phân tích', 'đánh giá',
   'nội dung', 'vai trò', 'bài học'
@@ -335,8 +327,12 @@ export function slugify(text: string): string {
 }
 
 export function buildCanonicalId(name: string, entityType: string): string {
+  let cleanName = name.trim();
+  if (entityType === 'HISTORICAL_PERSON') {
+    cleanName = cleanName.replace(/^(?:Nhân\s+Huệ\s+Vương|Chiêu\s+Minh\s+Đại\s+Vương|Chiêu\s+Văn\s+Vương|Bình\s+Định\s+Vương|Bố\s+Cái\s+Đại\s+Vương|Tiền\s+Ngô\s+Vương|Vạn\s+Thắng\s+Vương|Hưng\s+Đạo\s+Đại\s+Vương|Hưng\s+Đạo\s+Vương|Đức\s+Thánh\s+Trần|Đức\s+Thánh|Vua|Hoàng\s+đế|Thái\s+sư|Tướng\s+quân|Đại\s+vương|Chúa|Thượng\s+hoàng|Thái\s+úy|Tổng\s+binh|Đại\s+tướng|Thủ\s+tướng|Anh\s+hùng|Sứ\s+thần|Sử\s+gia|Sử\s+thần|Tăng\s+thống|Trạng\s+nguyên|Bảng\s+nhãn|Danh\s+sĩ|Nữ\s+tướng)\s+/i, '');
+  }
   const prefix = getCanonicalEntityIdPrefix(entityType);
-  const slug = slugify(name);
+  const slug = slugify(cleanName);
   return `${prefix}${slug}`;
 }
 
@@ -350,13 +346,13 @@ const HISTORICAL_PREFIX_PATTERNS: Array<{
 }> = [
   // Events / Battles / Movements / Conferences / Campaigns
   {
-    regex: /(?<![\p{L}\p{N}])(?:Trận\s+(?:đánh\s+)?|Chiến\s+dịch\s+|Chiến\s+thắng\s+|Đại\s+thắng\s+|Cuộc\s+khởi\s+nghĩa\s+|Khởi\s+nghĩa\s+|Hội\s+nghị\s+|Đại\s+hội\s+|Phong\s+trào\s+|Sáng\s+lập\s+|Dựng\s+nước\s+|Lập\s+nước\s+|Lập\s+nên\s+|Lập\s+triều\s+|Thành\s+lập\s+|Đắp\s+lũy\s+|Xây\s+thành\s+|Đánh\s+tan\s+|Dẹp\s+loạn\s+)(?:(?:phòng\s+tuyến\s+|bán\s+đảo\s+|trên\s+không\s+|sông\s+|núi\s+|thành\s+|cửa\s+|đèo\s+|ải\s+|biên\s+giới\s+)?(?:[\p{Lu}]{2,}|[\p{Lu}][\p{Ll}]*|[\p{Lu}\d]+)(?:[\s\-–—]+(?:phòng\s+tuyến\s+|bán\s+đảo\s+|trên\s+không\s+|sông\s+|núi\s+|thành\s+|cửa\s+|đèo\s+|ải\s+|biên\s+giới\s+)?(?:[\p{Lu}]{2,}|[\p{Lu}][\p{Ll}]*|[\p{Lu}\d][\p{Ll}\d]*|[\p{Lu}\d]+)){0,4}(?:\s+trên\s+không)?)/gu,
+    regex: /(?<![\p{L}\p{N}])(?:[tT]rận\s+(?:đánh\s+)?|[cC]hiến\s+dịch\s+|[cC]hiến\s+thắng\s+|[đĐ]ại\s+thắng\s+|[cC]uộc\s+khởi\s+nghĩa\s+|[kK]hởi\s+nghĩa\s+|[cC]uộc\s+chiến\s+(?:đấu|tranh)\s+|[cC]hiến\s+(?:đấu|tranh)\s+|[hH]ội\s+nghị\s+|[đĐ]ại\s+hội\s+|[pP]hong\s+trào\s+)(?:(?:phòng\s+tuyến\s+|bán\s+đảo\s+|trên\s+không\s+|sông\s+|núi\s+|thành\s+|cửa\s+|đèo\s+|ải\s+|biên\s+giới\s+)?(?:[\p{Lu}]{2,}|[\p{Lu}][\p{Ll}]*|[\p{Lu}\d]+)(?:[\s\-–—]+(?:phòng\s+tuyến\s+|bán\s+đảo\s+|trên\s+không\s+|sông\s+|núi\s+|thành\s+|cửa\s+|đèo\s+|ải\s+|biên\s+giới\s+)?(?:[\p{Lu}]{2,}|[\p{Lu}][\p{Ll}]*|[\p{Lu}\d][\p{Ll}\d]*|[\p{Lu}\d]+)){0,4}(?:\s+trên\s+không)?)/gu,
     type: 'EVENT_BATTLE',
     includePrefixInText: true,
   },
   // Documents / Culture
   {
-    regex: /(?<![\p{L}\p{N}])(?:Chiếu\s+|Hịch\s+|Tuyên\s+ngôn\s+|Hiệp\s+định\s+|Bộ\s+luật\s+|Luật\s+|Đại\s+cáo\s+|Bài\s+thơ\s+|Tác\s+phẩm\s+)([\p{Lu}][\p{Ll}]*(?:[\s\-–—]+[\p{Lu}][\p{Ll}]*){0,6})/gu,
+    regex: /(?<![\p{L}\p{N}])(?:[cC]hiếu\s+|[hH]ịch\s+|[tT]uyên\s+ngôn\s+|[hH]iệp\s+định\s+|[bB]ộ\s+luật\s+|[bB]ộ\s+Luật\s+|[lL]uật\s+|[đĐ]ại\s+cáo\s+|[bB]ài\s+thơ\s+|[tT]ác\s+phẩm\s+)([\p{Lu}][\p{Ll}]*(?:[\s\-–—]+(?:[\p{Lu}][\p{Ll}]*|luật\s+lệ|toàn\s+thư|thực\s+lục|cương\s+mục|kháng\s+chiến|hành\s+quân)){0,6})/gu,
     type: 'DOCUMENT_CULTURE',
     includePrefixInText: true,
   },
@@ -368,15 +364,21 @@ const HISTORICAL_PREFIX_PATTERNS: Array<{
   },
   // Person Titles & Honorifics
   {
-    regex: /(?<![\p{L}\p{N}])(?:Vua\s+|Hoàng\s+đế\s+|Thái\s+thượng\s+hoàng\s+|Chúa\s+|Đại\s+vương\s+|Vương\s+|Thái\s+sư\s+|Thái\s+úy\s+|Tiết\s+chế\s+|Quốc\s+công\s+|Đại\s+tướng\s+|Tướng\s+|Đô\s+đốc\s+|Nữ\s+tướng\s+|Trạng\s+Trình\s+|Trạng\s+nguyên\s+|Sử\s+quan\s+|Chủ\s+tịch\s+|Bác\s+|Bắc\s+Bình\s+Vương\s+|Hưng\s+Đạo\s+Đại\s+Vương\s+|Hưng\s+Đạo\s+Vương\s+|Bình\s+Định\s+Vương\s+|Vạn\s+Thắng\s+Vương\s+|Tiền\s+Ngô\s+Vương\s+|Triệu\s+Việt\s+Vương\s+|Bố\s+Cái\s+Đại\s+Vương\s+|Mai\s+Hắc\s+Đế\s+|Lý\s+Nam\s+Đế\s+|Đức\s+Thánh\s+Trần\s+|Đức\s+Thánh\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
+    regex: /(?<![\p{L}\p{N}])(?:Tổng\s+Bí\s+thư\s+|Tổng\s+bí\s+thư\s+|Thủ\s+tướng\s+|Vua\s+|Hoàng\s+đế\s+|Thái\s+thượng\s+hoàng\s+|Chúa\s+|Đại\s+vương\s+|Vương\s+|Thái\s+sư\s+|Thái\s+úy\s+|Tiết\s+chế\s+|Quốc\s+công\s+|Đại\s+tướng\s+|Tướng\s+|Đô\s+đốc\s+|Nữ\s+tướng\s+|Trạng\s+Trình\s+|Trạng\s+nguyên\s+|Lưỡng\s+quốc\s+Trạng\s+nguyên\s+|Bảng\s+nhãn\s+|Trạng\s+Bùng\s+|Danh\s+sĩ\s+|Sử\s+thần\s+|Sử\s+gia\s+|Sử\s+quan\s+|Chủ\s+tịch\s+|Bác\s+|Chiêu\s+Minh\s+Đại\s+Vương\s+|Chiêu\s+Văn\s+Vương\s+|Bắc\s+Bình\s+Vương\s+|Hưng\s+Đạo\s+Đại\s+Vương\s+|Hưng\s+Đạo\s+Vương\s+|Bình\s+Định\s+Vương\s+|Vạn\s+Thắng\s+Vương\s+|Tiền\s+Ngô\s+Vương\s+|Triệu\s+Việt\s+Vương\s+|Bố\s+Cái\s+Đại\s+Vương\s+|Mai\s+Hắc\s+Đế\s+|Lý\s+Nam\s+Đế\s+|Đức\s+Thánh\s+Trần\s+|Đức\s+Thánh\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
     type: 'HISTORICAL_PERSON',
     includePrefixInText: false,
   },
-  // Locations / Citadels / Rivers / Mountains
+  // Physical Geographical Locations & Monuments (Keep prefix like "sông Bạch Đằng", "núi Sóc Sơn")
   {
-    regex: /(?<![\p{L}\p{N}])(?:thành\s+|Thành\s+|căn\s+cứ\s+|Căn\s+cứ\s+|ải\s+|Ải\s+|núi\s+|Núi\s+|sông\s+|Sông\s+|bán\s+đảo\s+|Bán\s+đảo\s+|quần\s+đảo\s+|Quần\s+đảo\s+|phủ\s+|Phủ\s+|lộ\s+|Lộ\s+|châu\s+|Châu\s+|địa\s+đạo\s+|Đường\s+mòn\s+|Đường\s+|Đền\s+|Chùa\s+|Văn\s+Miếu\s+|Quảng\s+trường\s+|Dinh\s+|Nhà\s+máy\s+Thủy\s+điện\s+|ấp\s+|Ấp\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
+    regex: /(?<![\p{L}\p{N}])(?:(?<![đĐ]ổi\s+tên\s+)(?:thành\s+|Thành\s+)(?!phố\s+)|căn\s+cứ\s+|Căn\s+cứ\s+|ải\s+|Ải\s+|núi\s+|Núi\s+|sông\s+|Sông\s+|bán\s+đảo\s+|Bán\s+đảo\s+|quần\s+đảo\s+|Quần\s+đảo\s+|địa\s+đạo\s+|Đường\s+mòn\s+|Đường\s+|Đền\s+|Chùa\s+|Văn\s+Miếu\s+|Quảng\s+trường\s+|Dinh\s+|Nhà\s+máy\s+Thủy\s+điện\s+|ấp\s+|Ấp\s+|đầm\s+|Đầm\s+|khu\s+mộ\s+chum\s+|di\s+chỉ\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
     type: 'LOCATION',
     includePrefixInText: true,
+  },
+  // Administrative Regions (Strip prefix like "tỉnh Thanh Hóa" -> "Thanh Hóa")
+  {
+    regex: /(?<![\p{L}\p{N}])(?:thành\s+phố\s+|Thành\s+phố\s+|tỉnh\s+|Tỉnh\s+|huyện\s+|Huyện\s+|xứ\s+|Xứ\s+|đất\s+|Đất\s+|vùng\s+|Vùng\s+|(?<![cC]hính\s+)phủ\s+|(?<![cC]hính\s+)Phủ\s+|lộ\s+|Lộ\s+|châu\s+|Châu\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
+    type: 'LOCATION',
+    includePrefixInText: false,
   },
 ];
 
@@ -384,6 +386,14 @@ const HISTORICAL_PREFIX_PATTERNS: Array<{
  * Proper Noun Regex (Tier 3) with Unicode Word Boundaries
  */
 const VI_PROPER_NOUN_REGEX = /(?<![\p{L}\p{N}])([\p{Lu}][\p{Ll}]*(?:[\s\-–—]+[\p{Lu}][\p{Ll}]*){1,6})(?![\p{L}\p{N}])/gu;
+
+const ALL_EXTENDED_HONORIFICS = [
+  ...PERSON_HONORIFICS_AND_RANKS,
+  'Tổng Bí thư', 'Tổng bí thư', 'Thủ tướng', 'Chủ tịch', 'Bà', 'Ông',
+  'Lễ Thành Hầu', 'Chí sĩ', 'Bác học', 'Đại thi hào', 'Danh nhân',
+  'Sử gia', 'Sử thần', 'Sử quan', 'Hào kiệt', 'Thái thú', 'Thứ sử',
+  'Thượng thư', 'Tướng quốc', 'Đại tư đồ', 'Tiết độ sứ', 'Bác'
+];
 
 /**
  * Strict validity check for extracted entity span
@@ -397,6 +407,11 @@ export function isValidCandidateSpan(text: string): boolean {
   const cleanLower = clean.toLowerCase();
   if (GENERIC_EXCLUSION_TERMS.has(cleanLower)) return false;
   if (CAN_CHI_SET.has(cleanLower)) return false;
+
+  // Reject temporal phrases (e.g. "Năm Tân Dậu", "Mùa đông", "Tháng ba")
+  if (/^(?:năm|mùa|tháng|ngày|thời kỳ|niên hiệu)\s+/i.test(cleanLower)) {
+    return false;
+  }
 
   const words = clean.split(/\s+/);
   if (words.length > 8) return false;
@@ -425,6 +440,16 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
     const rawSpanText = text.substring(m.start, m.end);
     if (!isValidCandidateSpan(rawSpanText)) continue;
 
+    // For PERSON: preserve distinct surface ID for aliases (e.g. Thục Phán -> person_thuc_phan)
+    // For DYNASTY_ERA, EVENT_BATTLE, ARTIFACT, DOCUMENT_CULTURE: always use master canonicalId
+    const isPerson = m.entry.type === 'HISTORICAL_PERSON';
+    let cleanSpanName = rawSpanText;
+    if (isPerson) {
+      cleanSpanName = rawSpanText.replace(/^(?:quốc\s+sư|thiền\s+sư|sư|thầy\s+giáo|thầy|vua|hoàng\s+đế|thái\s+tử|hoàng\s+tử|chúa|đại\s+tướng|tướng|thái\s+úy|thái\s+sư|bình\s+định\s+vương|bắc\s+bình\s+vương|nam\s+việt\s+vương|vạn\s+thắng\s+vương)\s+/i, '').trim();
+    }
+    const isPersonAlias = isPerson && slugify(cleanSpanName) !== slugify(m.entry.name);
+    const suggestedId = isPersonAlias ? buildCanonicalId(cleanSpanName, m.entry.type) : m.entry.canonicalId;
+
     rawSpans.push({
       text: rawSpanText,
       type: m.entry.type,
@@ -432,7 +457,7 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
       endOffset: m.end,
       confidence: 0.99,
       sourceLayer: 'GAZETTEER',
-      suggestedCanonicalId: m.entry.canonicalId,
+      suggestedCanonicalId: suggestedId,
       priority: 30,
     });
   }
@@ -460,9 +485,23 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
         spanText = groupText;
       }
 
-      // If span is a Document/Culture and starts with "Bài thơ " or "Bộ luật "
-      if (rule.type === 'DOCUMENT_CULTURE' && (spanText.startsWith('Bài thơ ') || spanText.startsWith('Bộ luật '))) {
-        const prefixLen = 8;
+      // If span is a Document/Culture and starts with common generic nouns
+      if (rule.type === 'DOCUMENT_CULTURE') {
+        const docPrefixes = ['Bài thơ ', 'bài thơ ', 'Bộ luật ', 'bộ luật ', 'Tác phẩm ', 'tác phẩm ', 'Sách ', 'sách ', 'Tiểu thuyết lịch sử ', 'tiểu thuyết lịch sử '];
+        for (const dp of docPrefixes) {
+          if (spanText.startsWith(dp)) {
+            const prefixLen = dp.length;
+            spanText = spanText.substring(prefixLen).trim();
+            startOffset += prefixLen;
+            endOffset = startOffset + spanText.length;
+            break;
+          }
+        }
+      }
+
+      // If span is an EVENT_BATTLE and starts with "cuộc " or "Cuộc "
+      if (rule.type === 'EVENT_BATTLE' && (spanText.startsWith('cuộc ') || spanText.startsWith('Cuộc '))) {
+        const prefixLen = 5;
         spanText = spanText.substring(prefixLen).trim();
         startOffset += prefixLen;
         endOffset = startOffset + spanText.length;
@@ -470,7 +509,14 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
 
       if (!isValidCandidateSpan(spanText)) continue;
 
-      const canonicalId = buildCanonicalId(spanText, rule.type);
+      const canonicalInfo = resolveCanonicalEntity(spanText);
+      const isPerson = (canonicalInfo?.type || rule.type) === 'HISTORICAL_PERSON';
+      let cleanSpanName = spanText;
+      if (isPerson) {
+        cleanSpanName = spanText.replace(/^(?:quốc\s+sư|thiền\s+sư|sư|thầy\s+giáo|thầy|vua|hoàng\s+đế|thái\s+tử|hoàng\s+tử|chúa|đại\s+tướng|tướng|thái\s+úy|thái\s+sư|bình\s+định\s+vương|bắc\s+bình\s+vương|nam\s+việt\s+vương|vạn\s+thắng\s+vương)\s+/i, '').trim();
+      }
+      const isPersonAlias = isPerson && canonicalInfo && slugify(canonicalInfo.canonicalName) !== slugify(cleanSpanName);
+      const canonicalId = (canonicalInfo && !isPersonAlias) ? canonicalInfo.entityId : buildCanonicalId(cleanSpanName, rule.type);
       rawSpans.push({
         text: spanText,
         type: rule.type,
@@ -499,16 +545,18 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
 
     if (!isValidCandidateSpan(spanText)) continue;
 
-    // Skip if this span falls inside any Layer 1/2 span
-    const insideHigherLayer = higherLayerSpans.some(
-      (h) => startOffset >= h.startOffset && endOffset <= h.endOffset
+    // Skip if this span overlaps with any Layer 1/2 span
+    const overlapsHigherLayer = higherLayerSpans.some(
+      (h) => Math.max(startOffset, h.startOffset) < Math.min(endOffset, h.endOffset)
     );
-    if (insideHigherLayer) continue;
+    if (overlapsHigherLayer) continue;
 
     // Infer taxonomy type from text features
     const inferredType = inferEntityTypeFromName(spanText);
     const canonicalInfo = resolveCanonicalEntity(spanText);
-    const canonicalId = canonicalInfo ? canonicalInfo.entityId : buildCanonicalId(spanText, inferredType);
+    const isPerson = (canonicalInfo?.type || inferredType) === 'HISTORICAL_PERSON';
+    const isPersonAlias = isPerson && canonicalInfo && slugify(canonicalInfo.canonicalName) !== slugify(spanText);
+    const canonicalId = (canonicalInfo && !isPersonAlias) ? canonicalInfo.entityId : buildCanonicalId(spanText, inferredType);
 
     rawSpans.push({
       text: spanText,
@@ -526,16 +574,20 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
   // Layer 4: Strip leading person honorifics from person spans
   // -------------------------------------------------------------
   for (const span of rawSpans) {
-    if (span.type === 'HISTORICAL_PERSON') {
+    if (span.type === 'HISTORICAL_PERSON' || span.type === 'UNKNOWN') {
       const spanNorm = span.text.normalize('NFC');
       const spanLower = spanNorm.toLowerCase();
-      for (const h of PERSON_HONORIFICS_AND_RANKS) {
+      for (const h of ALL_EXTENDED_HONORIFICS) {
         const hLower = h.toLowerCase().normalize('NFC');
         if (spanLower.startsWith(`${hLower} `) && spanNorm.length > hLower.length + 2) {
           const stripped = spanNorm.substring(hLower.length + 1).trim();
           if (stripped.length >= 2) {
             span.startOffset += (span.text.length - stripped.length);
             span.text = stripped;
+            span.type = 'HISTORICAL_PERSON';
+            const reCanon = resolveCanonicalEntity(stripped);
+            const isReAlias = reCanon && slugify(reCanon.canonicalName) !== slugify(stripped);
+            span.suggestedCanonicalId = (reCanon && !isReAlias) ? reCanon.entityId : buildCanonicalId(stripped, 'HISTORICAL_PERSON');
             break;
           }
         }
@@ -582,7 +634,7 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
         // If outer is EVENT_BATTLE: allow PERSON in any event, or LOCATION in Khởi nghĩa / Chiến dịch
         if (
           (span.type === 'HISTORICAL_PERSON' && overlapping.type === 'EVENT_BATTLE') ||
-          (span.type === 'LOCATION' && overlapping.type === 'EVENT_BATTLE' && (overlapping.text.startsWith('Khởi nghĩa') || overlapping.text.startsWith('Chiến dịch')))
+          (span.type === 'LOCATION' && overlapping.type === 'EVENT_BATTLE' && (overlapping.text.toLowerCase().includes('khởi nghĩa') || overlapping.text.toLowerCase().includes('chiến dịch') || overlapping.text.toLowerCase().includes('căn cứ')))
         ) {
           finalSpans.push({
             text: span.text,

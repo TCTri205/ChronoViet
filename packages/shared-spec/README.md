@@ -39,14 +39,45 @@ Gói `@chronoviet/shared-spec` đóng vai trò là **Hợp đồng Dữ liệu D
    * `VieNeuTTSRequestSchema` & `VieNeuTTSResponseSchema`: Data contract giao tiếp với VieNeu TTS Engine.
    * `WordTimestamp`: Mốc thời gian bắt đầu/kết thúc (ms) của từng từ cho hiệu ứng Caption Karaoke.
 
-5. **Environment Configuration Schema:**
+5. **Historical Dictionaries & Linguistics (`src/dictionaries.ts`):**
+   * Danh xưng phong kiến (`HISTORICAL_HONORIFICS`), từ khóa vai trò lịch sử (`HISTORICAL_ROLE_KEYWORDS`).
+   * Bộ Stopwords tiếng Việt (`VIETNAMESE_STOPWORDS`), hệ Can Chi (`CAN_CHI_STEMS_BRANCHES`), bản đồ chuẩn hóa địa danh/chính tả (`SPELLING_NORMALIZATION_MAP`).
+
+6. **Master Historical Ontology & Entities Seed (`src/historical-entities.ts`):**
+   * Danh mục thực thể lịch sử hạt nhân (`CANONICAL_HISTORICAL_ENTITIES`, `CANONICAL_ENTITIES_LOOKUP`).
+   * Quan hệ mẫu (`HISTORICAL_RELATIONSHIPS_SEED`), danh mục 15 thời kỳ lịch sử (`HISTORICAL_EPOCHS_CATALOG`).
+
+7. **Realtime & Streaming Event Contracts (`src/realtime.ts`):**
+   * SSE/WebSocket Event Schemas (`ChatStreamEvent`, `GenerationProgressEvent`, `VideoGenerationStreamEvent`, `SSEEventSchema`).
+
+8. **Environment Configuration Schema:**
    * `EnvSchema` & `EnvConfig`: Định nghĩa và parse toàn bộ biến môi trường của hệ thống.
 
 ---
 
-## ⚡ 3. Hướng Dẫn Sử Dụng (Usage)
+## 📂 3. Cấu Trúc Thư Mục (Directory Architecture)
 
-Import trực tiếp trong bất kỳ package nào trong monorepo:
+```text
+packages/shared-spec/
+├── src/
+│   ├── config.ts              # System limits, thresholds & timeouts
+│   ├── dictionaries.ts        # Historical honorifics, can-chi, stopwords & spelling maps
+│   ├── env.ts                 # Zod schema for environment variables
+│   ├── historical-entities.ts # Master canonical entities & epochs catalog
+│   ├── index.ts               # Main package export entrypoint
+│   ├── interfaces.ts          # Pure TypeScript interfaces & data contracts
+│   ├── realtime.ts            # SSE and WebSocket streaming event schemas
+│   ├── schema.ts              # Central Zod validation schemas (v4.1 SSOT)
+│   └── __tests__/             # Contract validation test suites (Vitest)
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## ⚡ 4. Hướng Dẫn Sử Dụng (Usage & Subpath Exports)
+
+Import trực tiếp từ root package hoặc qua subpath exports:
 
 ```typescript
 import {
@@ -55,19 +86,18 @@ import {
   ChunkMetadataSchema,
   TimelineScene,
   getCanonicalEntityIdPrefix,
-  EnvSchema,
+  CANONICAL_HISTORICAL_ENTITIES,
+  HISTORICAL_HONORIFICS,
 } from '@chronoviet/shared-spec';
 
-// Sử dụng Enum hoặc Helper
-const prefix = getCanonicalEntityIdPrefix('HISTORICAL_PERSON'); // 'person_'
-
-// Validate runtime data
-const metadata = ChunkMetadataSchema.parse(rawData);
+// Hoặc import qua subpath
+import { ChronoVideoScriptSchema } from '@chronoviet/shared-spec/schema';
+import type { TimelineSceneContract } from '@chronoviet/shared-spec/interfaces';
 ```
 
 ---
 
-## ⚡ 4. Bộ Lệnh Kiểm Định & Phát Triển (CLI Commands)
+## ⚡ 5. Bộ Lệnh Kiểm Định & Phát Triển (CLI Commands)
 
 ```bash
 # Kiểm tra TypeScript (Fast Contract Check)
@@ -86,7 +116,7 @@ pnpm --filter @chronoviet/shared-spec build
 
 ---
 
-## 📄 5. Giấy Phép (License)
+## 📄 6. Giấy Phép (License)
 
 Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**.
 

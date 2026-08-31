@@ -81,6 +81,26 @@ export const CHUNK_CHILD_OVERLAP_WORDS = 40;
 // 1. Chrono-RAG Engine Interface (`packages/rag-engine`)
 // ============================================================================
 
+export interface ExtractedQueryInfo {
+  entityIds: string[];
+  entityNames: string[];
+  keywords: string[];
+  extractedYears: number[];
+  temporalRange?: { start: number; end: number };
+}
+
+export interface HistoricalTemporalInfo {
+  extractedYears: number[];
+  temporalRange?: { start: number; end: number };
+}
+
+export interface HistoricalPremiseValidationResult {
+  hasPremiseConflict: boolean;
+  conflictReason?: string;
+  suggestedRefutationTopic?: string;
+  conflictType?: 'ANACHRONISTIC_WEAPONRY_TECH' | 'MYTHOLOGY_HISTORICAL_INCOMPATIBILITY' | 'CHRONOLOGY_MISMATCH';
+}
+
 export interface IRagEngine {
   search(request: RagSearchRequestInput): Promise<RagSearchResponse>;
   generateAnswer?(request: HistoricalAnswerGenerationRequest): Promise<HistoricalAnswerResponse>;

@@ -33,19 +33,24 @@ Hệ thống **ChronoViet** áp dụng chiến lược lưu trữ tối giản h
 ## 2. Chi Tiết Các Cơ Sở Dữ Liệu
 
 ### 2.1. PostgreSQL + pgvector (SSOT Duy Nhất Cho Data, State Checkpoint & Vector Search)
-* **Nhiệm vụ:** Đóng vai trò cơ sở dữ liệu quan hệ trung tâm (SSOT) cho toàn bộ hệ thống, lưu vết 15 trạng thái LangGraph (`INIT` → `COMPLETED`/`FAILED`), đồng thời thực hiện tìm kiếm vector tri thức RAG thông qua plugin `pgvector`.
+* **Nhiệm vụ:** Đóng vai trò cơ sở dữ liệu quan hệ trung tâm (SSOT) cho toàn bộ hệ thống, lưu vết 17 trạng thái LangGraph (`INIT` → `COMPLETED`/`FAILED`), đồng thời thực hiện tìm kiếm vector tri thức RAG thông qua extension `pgvector`.
 * **Cấu hình Vector Search (`pgvector`):**
   * Extension: `CREATE EXTENSION IF NOT EXISTS vector;`
   * Model Embedding: `BAAI/bge-m3` (SSOT 1024-dim Dense Vector Space).
-  * Indexing: `HNSW` index với `m=16`, `ef_construction=64` trên vector column `embedding vector(1024)` giúp truy vấn similarity k-NN dưới 5ms ngay trong Postgres.
-* **Các Bảng Chính (Main Tables):**
-  * `users` (`id`, `email`, `password_hash`, `role`, `created_at`)
-  * `video_projects` (`id`, `user_id`, `title`, `video_type`, `template_id`, `status`, `json_spec_v4`, `created_at`)
-  * `document_chunks` (`id`, `title`, `text_content`, `dynasty`, `key_figures`, `embedding vector(1024)`)
-  * `checkpoints` & `checkpoint_blobs` (LangGraph State Checkpointer - Lưu vết 100% biến trạng thái từng bước agent)
-  * `render_jobs` (`id`, `project_id`, `status`, `duration_seconds`, `output_url`, `error_log`, `started_at`, `finished_at`)
-  * `audit_assets` (`id`, `scene_id`, `asset_url`, `vlm_score`, `license_type`, `reasons`)
-  * `entity_audit_logs` (`id`, `entity_id`, `action`, `changes_payload`, `performed_by`, `created_at`)
+  * Indexing: `HNSW` index với `m = 32`, `ef_construction = 128` trên vector column `embedding vector(1024)` (`vector_cosine_ops`), hỗ trợ truy vấn k-NN cực nhanh và ổn định.
+* **11 Bảng CSDL Chuẩn Hóa & Materialized View (`packages/infra/src/db/schema.ts`):**
+  1. `entities`: Lưu danh mục thực thể lịch sử (nhân vật, sự kiện, triều đại, địa danh, di vật).
+  2. `relationships`: Cấu trúc đồ thị tri thức với 8 quan hệ chuẩn (`LED_BY`, `PART_OF`, `HAPPENED_IN`, `HAPPENED_AT`, `SAME_AS_LOCATION`, `ALIAS_OF`, `ROYAL_LINEAGE`, `MENTIONED_IN`).
+  3. `document_chunks`: Các đoạn văn bản sử liệu kèm embedding vector 1024d, dynasty, metadata và phân cấp cha-con.
+  4. `entity_chunks`: Bảng quan hệ N-N liên kết thực thể với các chunk văn bản.
+  5. `entity_audit_logs`: Nhật ký kiểm định dữ liệu và thay đổi thực thể.
+  6. `orchestrator_checkpoints`: Trạng thái checkpoint LangGraph lưu vết 100% dữ liệu pipeline từng bước agent.
+  7. `quarantine_triples`: Vùng cách ly các bộ ba thực thể vi phạm quy tắc hướng hoặc thiếu độ tin cậy.
+  8. `unmapped_entities`: Vùng lưu trữ thực thể chưa phân giải disambiguation phục vụ hậu kiểm.
+  9. `conversations`: Danh sách phiên hội thoại NotebookLM RAG Chatbot.
+  10. `conversation_messages`: Chi tiết tin nhắn, trích dẫn sử liệu và citation sources.
+  11. `video_briefs`: Hồ sơ yêu cầu tạo video lịch sử từ hội thoại chat.
+  * **Materialized View:** `mv_dynasty_lineage_paths`: View phả hệ dòng tộc triều đại tiền tính toán cho BFS/CTE.
 
 ### 2.2. Unified Redis Database (Broker Queue & Multi-Layer Cache)
 * **Nhiệm vụ:** Đảm nhận đồng thời việc lưu vết hàng đợi BullMQ Jobs (với `appendonly yes`), lưu trữ bộ đệm (Prompt Cache, Asset VLM Scores), và truyền thông điệp real-time qua PubSub.

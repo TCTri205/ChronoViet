@@ -121,3 +121,11 @@ pnpm --filter @chronoviet/agent-orchestrator test:eval
 # 6. Tắt AI giải phóng RAM sau khi hoàn tất benchmark
 pnpm ai:stop
 ```
+
+---
+
+## 6. Reports & Artifacts (`eval/reports/`)
+
+- `orchestrator-benchmark-report.json`: Aggregate JSON report for all component tiers A0–A5 and SYS ablation.
+- `orchestrator-regression-report.json`: Automated blocking gates status for CI/CD pipeline.
+- `orchestration-eval-report.json`: Historical long-form video benchmark results from `eval/runner.ts`.

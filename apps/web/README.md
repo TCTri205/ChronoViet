@@ -1,6 +1,7 @@
-# @chronoviet/web — Web Application, API & Realtime Gateway
+# `@chronoviet/web`
 
-Ứng dụng Web chính (App Monolith) của nền tảng **ChronoViet**. Kết hợp giao diện người dùng **NotebookLM Heritage Workspace** (Next.js 14 App Router, React 18, Tailwind CSS, shadcn/ui) và Tầng điều phối Backend (RESTful API, Server-Sent Events SSE, WebSocket Gateway kết nối Redis PubSub, BullMQ Job Producer).
+> **ChronoViet Web Application, API & Realtime Gateway**  
+> Ứng dụng Web chính (App Monolith) của nền tảng **ChronoViet**. Kết hợp giao diện người dùng **NotebookLM Heritage Workspace** (Next.js 14 App Router, React 18, Tailwind CSS, shadcn/ui) và Tầng điều phối Backend (RESTful API, Server-Sent Events SSE, WebSocket Gateway kết nối Redis PubSub, BullMQ Job Producer).
 
 ---
 
@@ -41,29 +42,38 @@ Toàn bộ giao diện áp dụng bảng màu Di Sản Sơn Mài & Hoàng Kim:
 | `--emerald-jade` | `#1B4D3E` | Trạng thái hoàn tất thành công |
 
 **Typography Chuẩn Việt**:
-- Display & Tiêu đề: `Playfair Display` (Serif di sản, uy nghiêm)
-- Giao diện & Nội dung: `Be Vietnam Pro` (Sans-serif chuẩn dấu tiếng Việt)
-- Metadata & Bộ đếm: `JetBrains Mono` (`tabular-nums` chống rung màn hình)
+* Display & Tiêu đề: `Playfair Display` (Serif di sản, uy nghiêm)
+* Giao diện & Nội dung: `Be Vietnam Pro` (Sans-serif chuẩn dấu tiếng Việt)
+* Metadata & Bộ đếm: `JetBrains Mono` (`tabular-nums` chống rung màn hình)
 
 ---
 
 ## 🔌 3. Kiến Trúc Backend API & Realtime Gateway
 
-```
+```text
 Client (Browser)
    │
    ├── [POST] /api/v1/chat ───────────► Chrono-RAG Engine (Stream tokens & Citations)
-   ├── [POST] /api/v1/projects ───────► LangGraph Orchestrator (12 Node State Machine)
-   ├── [GET]  /api/v1/projects/:id ────► Load Project Schema v4.1 & Metadata
-   ├── [GET]  /api/v1/projects/:id/stream ──► SSE Stream (12 Node status events)
-   ├── [POST] /api/v1/projects/:id/render ──► BullMQ Producer (queue.add -> remotion-render-queue)
+   ├── [GET, POST] /api/v1/conversations ──► Quản lý phiên hội thoại lịch sử đa lượt
+   ├── [GET, DELETE] /api/v1/conversations/:id ──► Chi tiết hoặc xóa phiên hội thoại
+   ├── [GET, POST] /api/v1/conversations/:id/messages ──► Lấy lịch sử hoặc thêm tin nhắn
+   ├── [POST] /api/v1/tts ────────────► VieNeu TTS Audio Synthesis
+   ├── [GET, POST] /api/v1/projects ──► Danh sách dự án (phân trang + cache) hoặc tạo mới
+   ├── [GET, PATCH, DELETE] /api/v1/projects/:id ──► Metadata, cập nhật hoặc xóa project
+   ├── [GET]  /api/v1/projects/:id/stream ──► SSE Stream (17-state agent events)
+   ├── [POST] /api/v1/projects/:id/render ──► BullMQ Producer (remotion-render-queue)
+   ├── [POST] /api/v1/projects/:id/abort ──► Dừng/hủy khẩn cấp render & giải phóng lock
+   ├── [POST] /api/v1/projects/:id/resume ──► Tiếp tục pipeline sau khi Human duyệt kịch bản
    ├── [GET]  /api/v1/projects/:id/video ───► HTTP Range Stream (video.mp4)
+   ├── [GET]  /api/healthz ───────────► Liveness probe
+   ├── [GET]  /api/readyz ────────────► Readiness probe (Redis, Postgres, TTS, LLM)
+   ├── [GET]  /api/metrics ───────────► Prometheus scraping endpoint
    └── [WS]   /ws/projects/:id ◄────── Redis PubSub Gateway (project_events:${projectId})
 ```
 
 ---
 
-## 📁 4. Cấu Trúc Thư Mục
+## 📁 4. Cấu Trúc Thư Mục (Directory Architecture)
 
 ```text
 apps/web/
@@ -72,9 +82,15 @@ apps/web/
 │   │   ├── globals.css                # Heritage Dark Theme, Noise Overlay & shadcn variables
 │   │   ├── layout.tsx                 # Root Layout, Next Google Fonts, Toaster
 │   │   ├── page.tsx                   # Master Workspace (Resizable Split, Tabs, Floating Dock)
-│   │   └── api/v1/                    # RESTful & SSE API Endpoints
-│   │       ├── chat/route.ts          # RAG Chat Stream
-│   │       └── projects/              # Projects CRUD, Stream, Render & Video endpoints
+│   │   └── api/
+│   │       ├── healthz/route.ts       # Liveness probe
+│   │       ├── metrics/route.ts       # Prometheus metrics endpoint
+│   │       ├── readyz/route.ts        # Readiness health probe (DB, Redis, LLM, TTS)
+│   │       └── v1/                    # RESTful & SSE API Endpoints
+│   │           ├── chat/route.ts      # RAG Chat Stream
+│   │           ├── conversations/     # Conversations & Messages CRUD
+│   │           ├── projects/          # Projects CRUD, Stream, Render, Abort, Resume & Video
+│   │           └── tts/route.ts       # VieNeu TTS direct endpoint
 │   ├── components/
 │   │   ├── ui/                        # shadcn/ui Primitives (button, card, dialog, sheet...)
 │   │   ├── layout/                    # Header (Multi-Node Health), Sidebar (Project History)
@@ -82,6 +98,7 @@ apps/web/
 │   │   ├── video/                     # VideoGeneratorPanel, LiveAgentStepper, RenderProgressBar
 │   │   └── player/                    # VideoPlayer, KaraokeSubtitles, AttributionDrawer
 │   ├── lib/
+│   │   ├── project-cache.ts           # In-memory directory cache & invalidation
 │   │   ├── queues.ts                  # BullMQ Producer (remotion-render-queue)
 │   │   ├── redis.ts                   # IORedis Client instance
 │   │   └── utils.ts                   # cn tailwind helper
@@ -97,7 +114,7 @@ apps/web/
 
 ---
 
-## 🚀 5. Lệnh Phát Triển & Kiểm Thử
+## 🚀 5. Lệnh Phát Triển & Kiểm Thử (CLI Commands)
 
 ```bash
 # Chạy Dev Server (Next.js + Custom WS Server)
@@ -124,3 +141,10 @@ pnpm --filter @chronoviet/web eval
 # Build Production
 pnpm --filter @chronoviet/web build
 ```
+
+---
+
+## 📄 6. Giấy Phép (License)
+
+Gói thuộc sở hữu nội bộ của **ChronoViet Monorepo**.
+

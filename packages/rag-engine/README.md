@@ -17,8 +17,9 @@ Gói `@chronoviet/rag-engine` đảm nhận nhiệm vụ truy xuất dữ liệu
 * **In-Memory LRU Embedding Cache:** Bộ nhớ đệm LRU Cache (`SimpleLRUCache`, 500 mục) lưu trữ vector embedding của các câu hỏi phổ biến, đạt độ trễ truy xuất sub-millisecond ($< 0.1\text{ms}$).
 * **Pure Local Cross-Encoder Reranker & Sentence-Boundary Truncation:** Xếp hạng ngữ nghĩa chuyên sâu bằng mô hình Cross-Encoder cục bộ (`Qwen3-Reranker-0.6B` / `bge-reranker-v2-m3` GGUF Q8_0 qua `POST /v1/rerank` trên `llama-server` Metal Engine, Port 8096), pool tối đa 5 candidates (`RERANK_CANDIDATE_POOL`), cắt ngắn an toàn theo ranh giới câu (`truncateToSentenceBoundary`) $\le 700\text{ ký tự}$ (đạt SLA p95 $\le 300\text{ms}$), kết hợp Multi-Factor Fusion (75% AI Score + 15% Cấp sử liệu LEVEL_1/2/3 + 5% Co-retrieval Boost) và bảo toàn danh xưng lịch sử 2 ký tự (*Lê, Lý, Hồ, Ba, Đô, Võ*).
 * **Query-Adaptive Dynamic RRF (Reciprocal Rank Fusion):** Tự động điều chỉnh trọng số kết hợp: nâng BM25 lên $70\%$ ($w_{\text{sparse}} = 0.7, w_{\text{dense}} = 0.3$) khi phát hiện câu hỏi chứa mốc năm lịch sử (`extractHistoricalYears > 0`); nâng trọng số Graph lên $50\%$ ($w_{\text{graph}} = 0.5$) khi hỏi về phả hệ, thế thứ, dòng tộc.
-* **Token-Budgeted Context Assembly (`maxTokens`):** Bộ đóng gói context tính toán ngân sách token động (~3.5 ký tự/token tiếng Việt), tuân thủ nghiêm ngặt `request.maxTokens` (mặc định 2048) và luôn đảm bảo giữ lại tối thiểu Top-1 thực thể.
-* **High-Recall HNSW & Database Reverse Index:** Bổ sung reverse B-Tree index `idx_entity_chunks_chunk_id`, `idx_chunks_reliability` và nâng cấp cấu hình HNSW ($m=32, \text{ef\_construction}=128, \text{ef\_search}=100$).
+* **Context-Synthesizer & Token Budgeting:** Tổng hợp ngữ cảnh đa nguồn (Dense, Sparse, Graph), cân đối token budget động theo tỷ lệ vàng ($130-160\text{ WPM}$).
+* **Historical Prompt Engine & System Persona (`src/generation/`):** Tiêm Persona chuyên gia sử học Việt Nam, định dạng trích dẫn chuẩn hóa `[1]`, `[2]`, và quy tắc phân định rõ giữa chính sử và dã sử/truyền thuyết dân gian.
+* **NLI Claim Grounder & Hallucination Elimination:** Thẩm định từng mệnh đề suy luận trước khi phát sinh phản hồi cuối cùng, đảm bảo Hallucination Rate $\le 5\%$.
 * **Fail-Fast Preflight Probes in Evaluation:** Các bộ đo chẩn đoán (C4, C5, C6) tích hợp kiểm tra sức khỏe hạ tầng (DB & Cross-Encoder Port) trước khi chạy benchmark, chặn đứng hiện tượng báo cáo điểm 0 và độ trễ giả lập.
 * **Citation Traceability & Accuracy:** Đảm bảo tính chính xác lịch sử 100%, truy xuất nguồn gốc trích dẫn đầy đủ và loại bỏ suy đoán sai (Hallucination Rate 0%).
 * **Shared Database Layer:** Tận dụng Lớp Cơ sở dữ liệu PostgreSQL & In-Memory Store trung tâm từ [`@chronoviet/infra`](../infra) (connection pool `pg`, transaction helper `withTransaction`) quản lý các bảng tri thức `document_chunks`, `entities`, `relationships`, `entity_chunks` và `entity_audit_logs`.
@@ -32,11 +33,21 @@ Gói `@chronoviet/rag-engine` đảm nhận nhiệm vụ truy xuất dữ liệu
 ```text
 packages/rag-engine/
 ├── src/
+│   ├── cli/                           # Bộ lệnh CLI Chatbot tương tác
+│   │   └── chat-cli.ts                # Terminal RAG Chatbot (pnpm rag:chat)
+│   │
+│   ├── generation/                    # Động Cơ Sinh Câu Trả Lời & Thẩm Định Mệnh Đề
+│   │   ├── answer-generator.ts        # Streaming Answer Generation với Citation Anchoring
+│   │   ├── claim-grounder.ts          # NLI Claim Verification & Citation Mapper
+│   │   ├── context-synthesizer.ts     # Context Assembly & Dynamic Token Budgeting
+│   │   └── prompt-engine.ts           # Historical Persona & Prompt Template Builder
+│   │
 │   ├── retrieval/                     # Động Cơ Truy Xuất Tri Thức (Mô-đun 1)
 │   │   ├── vector-search.ts           # pgvector HNSW Dense, BM25 FTS Sanitization & LRU Cache
 │   │   ├── graph-cte-search.ts        # Directed BFS Graph Traversal (Visited-Set, Budget, Timeout)
 │   │   ├── question-ner.ts            # Phân tích câu hỏi & nhận dạng thực thể NER (< 1ms)
 │   │   ├── chunk-retriever.ts         # Graph-Guided Chunk Retrieval với Calibrated Score
+│   │   ├── cache-manager.ts           # EmbeddingVectorCache & LRUCacheWithTTL
 │   │   └── reranker.ts                # Pure Local Cross-Encoder Reranker & Multi-Factor Fusion
 │   │
 │   ├── rag-engine.ts                  # Class điều phối chính ChronoRagEngine (Singleton Schema Init)
