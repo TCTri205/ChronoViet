@@ -34,7 +34,13 @@ import {
   createLogger,
   formatConciseError,
 } from '@chronoviet/infra';
-import { extractHistoricalCandidateSpans, slugify, buildCanonicalId, isValidCandidateSpan } from './text/vietnamese-ner.js';
+import {
+  extractHistoricalCandidateSpans,
+  slugify,
+  buildCanonicalId,
+  isValidCandidateSpan,
+  sanitizeMarkdownFormatting,
+} from './text/vietnamese-ner.js';
 import { extractionCache } from './cache/extraction-cache.js';
 
 export function isValidEntityName(name: string): boolean {
@@ -117,12 +123,12 @@ export function isHistorianCommentaryText(text: string): boolean {
 /**
  * Action verbs required for LED_BY relations
  */
-const ACTION_VERBS_LED_BY = /\b(lãnh đạo|chỉ huy|thống lĩnh|cầm quân|tướng quân|chủ tướng|thống suất|đốc suất|soạn thảo|khởi xướng|dấy binh|đứng đầu|cầm đầu|tiên phong|chủ trì|chủ mưu)\b/i;
+const ACTION_VERBS_LED_BY = /\b(lãnh đạo|chỉ huy|thống lĩnh|cầm quân|tướng quân|chủ tướng|thống suất|đốc suất|soạn thảo|khởi xướng|dấy binh|đứng đầu|cầm đầu|tiên phong|chủ trì|chủ mưu|mở khoa thi|khởi công|chỉ đạo)\b/i;
 
 /**
  * Action verbs required for MENTIONED_IN relations
  */
-const ACTION_VERBS_MENTIONED_IN = /\b(chép|ghi|viết|biên soạn|soạn thảo|theo|trong|trích|bàn rằng|luận rằng|sử chép|cương mục|toàn thư|sách|văn bia|chiếu|hịch|cáo)\b/i;
+const ACTION_VERBS_MENTIONED_IN = /\b(chép|ghi|viết|biên soạn|soạn thảo|san định|làm thành|tổng kết|ban hành|phê duyệt|theo|trong|trích|bàn rằng|luận rằng|sử chép|cương mục|toàn thư|sách|văn bia|chiếu|hịch|cáo|bài thơ|luật|luật lệ)\b/i;
 
 /**
  * Vietnamese historical entity prefixes to strip during mention normalization
@@ -150,6 +156,12 @@ export const FOREIGN_DYNASTIES_SET = new Set([
   'dynasty_nha_duong',
   'dynasty_trieu_da',
   'dynasty_nha_trieu',
+  'dynasty_bac_thuoc',
+  'dynasty_thoi_ky_bac_thuoc',
+  'dynasty_phap_thuoc',
+  'epoch_bac_thuoc_1',
+  'epoch_bac_thuoc_2',
+  'epoch_bac_thuoc_3',
 ]);
 
 export const FOREIGN_COMMANDERS_SET = new Set([
@@ -324,6 +336,27 @@ export function snapMentionToCandidate(
     }
   }
 
+  // 3b. Contextual Event / Action / Construction snapping to single matching candidate
+  if (
+    lowerRaw.includes('cong_trinh') ||
+    lowerRaw.includes('xay_dung') ||
+    lowerRaw.includes('khoi_cong') ||
+    lowerRaw.includes('dai_cong_trinh') ||
+    lowerRaw.includes('chien_dich') ||
+    lowerRaw.includes('khoi_nghia') ||
+    lowerRaw.includes('tran_danh')
+  ) {
+    const eventCandidates = candidateSpans.filter((c) => c.type === 'EVENT_BATTLE' || c.suggestedCanonicalId?.startsWith('event_'));
+    if (eventCandidates.length === 1) {
+      const singleEvent = eventCandidates[0];
+      return {
+        id: singleEvent.suggestedCanonicalId || buildCanonicalId(singleEvent.text, singleEvent.type),
+        name: singleEvent.text,
+        type: singleEvent.type,
+      };
+    }
+  }
+
   // 4. When candidate spans are present, strictly reject hallucinations outside the candidate pool
   if (candidateSpans.length > 0) {
     return null;
@@ -381,12 +414,13 @@ export function extractSyntacticParentheticalTriples(
   const seenKeys = new Set<string>();
 
   // 1. Parenthetical patterns: Outer ( [prefix] Inner )
-  const PARENTHESIS_REGEX = /([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)\s*\(\s*(?:nay\s+thuộc|nay\s+là|vốn\s+là|tức|tên\s+thật\s+là|hiệu\s+là|húy\s+là)?\s*([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)\s*\)/gu;
+  const PARENTHESIS_REGEX = /([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)\s*\(\s*(nay\s+thuộc|nay\s+là|vốn\s+là|tức|tên\s+thật\s+là|hiệu\s+là|húy\s+là)?\s*([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)\s*\)/gu;
 
   let match: RegExpExecArray | null;
   while ((match = PARENTHESIS_REGEX.exec(text)) !== null) {
     let outerRaw = match[1].trim();
-    const innerRaw = match[2].trim();
+    const prefix = (match[2] || '').trim();
+    const innerRaw = match[3].trim();
     if (!outerRaw || !innerRaw || outerRaw.length < 2 || innerRaw.length < 2) continue;
 
     // Isolate immediately preceding titlecased entity name
@@ -407,11 +441,12 @@ export function extractSyntacticParentheticalTriples(
       ? { id: 'loc_' + innerSnapped.id.replace(/^unknown_/, ''), name: innerSnapped.name, type: 'LOCATION' }
       : (innerSnapped || { id: `loc_${slugify(innerRaw)}`, name: innerRaw, type: 'LOCATION' });
 
-    // If both are LOCATION: SAME_AS_LOCATION (Historical Loc -> Modern Loc)
+    // If both are LOCATION:
     if (resolvedOuter.id.startsWith('loc_') && resolvedInner.id.startsWith('loc_')) {
+      const rel: HistoricalRelationType = /thuộc/i.test(prefix) ? 'HAPPENED_AT' : 'SAME_AS_LOCATION';
       const triple = validateAndCanonicalizeTriple(
         resolvedOuter,
-        'SAME_AS_LOCATION',
+        rel,
         resolvedInner,
         1.0
       );
@@ -441,16 +476,19 @@ export function extractSyntacticParentheticalTriples(
     }
   }
 
-  // 2. Inline drift patterns: [Cổ danh] ... (?:và|đến|sau|thời)?\s*nay\s+(?:là|thuộc)\s+([Hiện danh])
-  const MULTI_TOPONYM_REGEX = /(?:kinh\s+đô|thành|cố\s+đô|kinh\s+thành)?\s*([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)\s+(?:sau\s+thời\s+[^,.]*?|\s+sau\s+này\s+)?(?:gọi\s+là|đổi\s+tên\s+thành|thành)\s+([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)\s*(?:,\s*|\s+và\s+)?nay\s+(?:là|thuộc)\s+(?:thành\s+phố\s+|tỉnh\s+|huyện\s+|thị\s+xã\s+)?([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+)/gu;
+  // 2. Inline drift patterns: [Cổ danh] ... (?:và|đến|sau|thời)?\s*(nay là|nay thuộc)\s+([Hiện danh])
+  const MULTI_TOPONYM_REGEX = /(?:kinh\s+đô|thành|cố\s+đô|kinh\s+thành)?\s*([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)\s+(?:sau\s+thời\s+[^,.]*?|\s+sau\s+này\s+)?(?:gọi\s+là|đổi\s+tên\s+thành|thành)\s+([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)\s*(?:,\s*|\s+và\s+)?(nay\s+là|nay\s+thuộc)\s+(?:thành\s+phố\s+|tỉnh\s+|huyện\s+|thị\s+xã\s+)?([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+)/gu;
   while ((match = MULTI_TOPONYM_REGEX.exec(text)) !== null) {
     const rawOld1 = match[1].trim();
     const rawOld2 = match[2].trim();
-    const rawNew = match[3].trim();
+    const connector = match[3].trim();
+    const rawNew = match[4].trim();
 
     const old1Snapped = snapMentionToCandidate(rawOld1, candidateSpans);
     const old2Snapped = snapMentionToCandidate(rawOld2, candidateSpans);
     const newSnapped = snapMentionToCandidate(rawNew, candidateSpans);
+
+    const rel: HistoricalRelationType = /thuộc/i.test(connector) ? 'HAPPENED_AT' : 'SAME_AS_LOCATION';
 
     for (const oldSnapped of [old1Snapped, old2Snapped]) {
       const resolvedOld = (oldSnapped && oldSnapped.id.startsWith('unknown_'))
@@ -458,7 +496,7 @@ export function extractSyntacticParentheticalTriples(
         : oldSnapped;
 
       if (resolvedOld && newSnapped && resolvedOld.id.startsWith('loc_') && newSnapped.id.startsWith('loc_') && resolvedOld.id !== newSnapped.id) {
-        const triple = validateAndCanonicalizeTriple(resolvedOld, 'SAME_AS_LOCATION', newSnapped, 1.0);
+        const triple = validateAndCanonicalizeTriple(resolvedOld, rel, newSnapped, 1.0);
         if (triple) {
           const key = `${triple.sourceEntityId}:${triple.relationType}:${triple.targetEntityId}`;
           if (!seenKeys.has(key)) {
@@ -470,10 +508,11 @@ export function extractSyntacticParentheticalTriples(
     }
   }
 
-  const INLINE_TOPONYM_REGEX = /(?:kinh\s+đô|thành|vùng\s+đất|cố\s+đô|kinh\s+thành|thương\s+cảng)?\s*([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)(?:,\s*|\s+sau\s+[^,.]*?|\s+và\s+|\s+đến\s+)?nay\s+(?:là|thuộc)\s+(?:thành\s+phố\s+|tỉnh\s+|huyện\s+|thị\s+xã\s+)?([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+)/gu;
+  const INLINE_TOPONYM_REGEX = /(?:kinh\s+đô|thành|vùng\s+đất|cố\s+đô|kinh\s+thành|thương\s+cảng)?\s*([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+?)(?:,\s*|\s+sau\s+[^,.]*?|\s+và\s+|\s+đến\s+)?(nay\s+là|nay\s+thuộc)\s+(?:thành\s+phố\s+|tỉnh\s+|huyện\s+|thị\s+xã\s+)?([A-ZÀ-Ỹ][a-zà-ỹA-ZÀ-Ỹ0-9\s\-]+)/gu;
   while ((match = INLINE_TOPONYM_REGEX.exec(text)) !== null) {
     const rawOld = match[1].trim();
-    const rawNew = match[2].trim();
+    const connector = match[2].trim();
+    const rawNew = match[3].trim();
     if (!rawOld || !rawNew || rawOld.length < 2 || rawNew.length < 2) continue;
 
     const oldSnapped = snapMentionToCandidate(rawOld, candidateSpans);
@@ -484,9 +523,10 @@ export function extractSyntacticParentheticalTriples(
       : oldSnapped;
 
     if (resolvedOld && newSnapped && resolvedOld.id.startsWith('loc_') && newSnapped.id.startsWith('loc_') && resolvedOld.id !== newSnapped.id) {
+      const rel: HistoricalRelationType = /thuộc/i.test(connector) ? 'HAPPENED_AT' : 'SAME_AS_LOCATION';
       const triple = validateAndCanonicalizeTriple(
         resolvedOld,
-        'SAME_AS_LOCATION',
+        rel,
         newSnapped,
         1.0
       );
@@ -1244,6 +1284,22 @@ export function validateAndCanonicalizeTriple(
         tName = tCanon.canonicalName || tName;
       }
     }
+
+    // 6. Resolve Locations
+    if (sId.startsWith('loc_') || source.type === 'LOCATION') {
+      const sCanon = resolveCanonicalEntity(sName) || resolveCanonicalEntity(sId);
+      if (sCanon && sCanon.entityId && sCanon.entityId.startsWith('loc_')) {
+        sId = sCanon.entityId;
+        sName = sCanon.canonicalName || sName;
+      }
+    }
+    if (tId.startsWith('loc_') || target.type === 'LOCATION') {
+      const tCanon = resolveCanonicalEntity(tName) || resolveCanonicalEntity(tId);
+      if (tCanon && tCanon.entityId && tCanon.entityId.startsWith('loc_')) {
+        tId = tCanon.entityId;
+        tName = tCanon.canonicalName || tName;
+      }
+    }
   }
 
   // Normalize Relation by Entity Target Ontology Type:
@@ -1283,10 +1339,42 @@ export function validateAndCanonicalizeTriple(
     tId = tempId;
     tName = tempName;
   }
+  if (rel === 'LED_BY' && sId.startsWith('person_') && tId.startsWith('doc_')) {
+    rel = 'MENTIONED_IN';
+  }
+  if (rel === 'LED_BY' && sId.startsWith('doc_') && tId.startsWith('person_')) {
+    rel = 'MENTIONED_IN';
+    const tempId = sId;
+    const tempName = sName;
+    sId = tId;
+    sName = tName;
+    tId = tempId;
+    tName = tempName;
+  }
+  if (rel === 'MENTIONED_IN' && sId.startsWith('doc_') && tId.startsWith('person_')) {
+    const tempId = sId;
+    const tempName = sName;
+    sId = tId;
+    sName = tName;
+    tId = tempId;
+    tName = tempName;
+  }
+  if (rel === 'MENTIONED_IN' && sId.startsWith('doc_') && (tId.startsWith('dynasty_') || tId.startsWith('epoch_'))) {
+    rel = 'HAPPENED_IN';
+  }
+  if (rel === 'MENTIONED_IN' && (sId.startsWith('dynasty_') || sId.startsWith('epoch_')) && tId.startsWith('doc_')) {
+    rel = 'HAPPENED_IN';
+    const tempId = sId;
+    const tempName = sName;
+    sId = tId;
+    sName = tName;
+    tId = tempId;
+    tName = tempName;
+  }
 
   // 1. LED_BY: Event / Battle / Campaign / Organization -> Person / Organization
   if (rel === 'LED_BY') {
-    if (sId.startsWith('person_') && (tId.startsWith('event_') || tId.startsWith('org_'))) {
+    if ((sId.startsWith('person_') || sId.startsWith('org_')) && tId.startsWith('event_')) {
       const tempId = sId;
       const tempName = sName;
       sId = tId;
@@ -1415,6 +1503,9 @@ export function validateAndCanonicalizeTriple(
 
   // 7. PART_OF: Entity -> Dynasty / Org / State / Event
   if (rel === 'PART_OF') {
+    if (sId.startsWith('loc_') && (tId.startsWith('dynasty_') || tId.startsWith('epoch_') || tId.startsWith('loc_'))) {
+      return null;
+    }
     if (sId.startsWith('dynasty_') && tId.startsWith('loc_')) {
       return null;
     }
@@ -1470,27 +1561,50 @@ export function validateAndCanonicalizeTriple(
 
   // Type consistency guard for ALIAS_OF & SAME_AS_LOCATION
   if (rel === 'ALIAS_OF') {
-    if (!sId.startsWith('person_') || !tId.startsWith('person_')) {
+    const isPerson = sId.startsWith('person_') && tId.startsWith('person_');
+    const isLoc = sId.startsWith('loc_') && tId.startsWith('loc_');
+    const isOrg = sId.startsWith('org_') && tId.startsWith('org_');
+    if (!isPerson && !isLoc && !isOrg) {
       return null;
     }
-    // ALIAS_OF Directional Convention: (Surface Alias -> Master Canonical Person ID)
+    // ALIAS_OF Directional Convention: (Surface Alias -> Master Canonical ID)
     const origSName = sName;
     const origTName = tName;
     const sCanon = resolveCanonicalEntity(origSName) || resolveCanonicalEntity(sId);
     const tCanon = resolveCanonicalEntity(origTName) || resolveCanonicalEntity(tId);
     const master = tCanon?.entityId ? tCanon : (sCanon?.entityId ? sCanon : null);
+
+    const typePrefix = isLoc ? 'loc_' : (isOrg ? 'org_' : 'person_');
+
     if (master) {
-      tId = master.entityId;
-      tName = master.canonicalName;
       let aliasName = origSName;
       if (slugify(origSName) === slugify(master.canonicalName) && slugify(origTName) !== slugify(master.canonicalName)) {
         aliasName = origTName;
-      } else if (slugify(origSName) !== slugify(master.canonicalName)) {
+      } else if (slugify(origTName) === slugify(master.canonicalName) && slugify(origSName) !== slugify(master.canonicalName)) {
         aliasName = origSName;
+      } else {
+        const sIsCanon = origSName.toLowerCase() === master.canonicalName.toLowerCase();
+        const tIsCanon = origTName.toLowerCase() === master.canonicalName.toLowerCase();
+        if (sIsCanon && !tIsCanon) {
+          aliasName = origTName;
+        } else if (tIsCanon && !sIsCanon) {
+          aliasName = origSName;
+        } else {
+          aliasName = origSName !== master.canonicalName ? origSName : origTName;
+        }
       }
-      sId = `person_${slugify(aliasName)}`;
+
+      sId = `${typePrefix}${slugify(aliasName)}`;
       sName = aliasName;
+      tId = master.entityId;
+      tName = master.canonicalName;
+    } else {
+      if (sId === tId && origSName !== origTName) {
+        sId = `${typePrefix}${slugify(origSName)}`;
+        tId = `${typePrefix}${slugify(origTName)}`;
+      }
     }
+
     if (sId === tId) {
       return null;
     }
@@ -1499,8 +1613,37 @@ export function validateAndCanonicalizeTriple(
     if (!sId.startsWith('loc_') || !tId.startsWith('loc_')) {
       return null;
     }
-    // Specific monuments/fortresses/temples located in a district/province must be HAPPENED_AT, not SAME_AS_LOCATION
-    const MONUMENT_PREFIXES = ['loc_thanh_', 'loc_den_', 'loc_chua_', 'loc_lang_', 'loc_don_', 'loc_dinh_', 'loc_thuy_dien_', 'loc_ben_', 'loc_cau_', 'loc_nha_rong', 'loc_the_mieu'];
+    // Check if mapping is a known historical location mapping (e.g. Thang Long <-> Ha Noi, Tay Do <-> Can Tho/Thanh Hoa, Phong Khe <-> Dong Anh)
+    const isKnownLocationMapping = (s: string, t: string) => {
+      const pair = `${s}::${t}`;
+      const revPair = `${t}::${s}`;
+      const ALLOWED_MAPPINGS = new Set([
+        'loc_thang_long::loc_ha_noi', 'loc_ha_noi::loc_thang_long',
+        'loc_dai_la::loc_ha_noi', 'loc_ha_noi::loc_dai_la',
+        'loc_dong_kinh::loc_ha_noi', 'loc_ha_noi::loc_dong_kinh',
+        'loc_dong_quan::loc_ha_noi', 'loc_ha_noi::loc_dong_quan',
+        'loc_tong_binh::loc_ha_noi', 'loc_ha_noi::loc_tong_binh',
+        'loc_tay_do::loc_can_tho', 'loc_can_tho::loc_tay_do',
+        'loc_tay_do::loc_thanh_hoa', 'loc_thanh_hoa::loc_tay_do',
+        'loc_phong_khe::loc_dong_anh', 'loc_dong_anh::loc_phong_khe',
+        'loc_phong_khe::loc_ha_noi', 'loc_ha_noi::loc_phong_khe',
+        'loc_ha_tay::loc_ha_noi', 'loc_ha_noi::loc_ha_tay',
+        'loc_phu_xuan::loc_hue', 'loc_hue::loc_phu_xuan',
+        'loc_thuan_hoa::loc_hue', 'loc_hue::loc_thuan_hoa',
+        'loc_hoa_lu::loc_ninh_binh', 'loc_ninh_binh::loc_hoa_lu',
+        'loc_sai_gon::loc_ho_chi_minh', 'loc_ho_chi_minh::loc_sai_gon',
+        'loc_gia_dinh::loc_ho_chi_minh', 'loc_ho_chi_minh::loc_gia_dinh',
+      ]);
+      return ALLOWED_MAPPINGS.has(pair) || ALLOWED_MAPPINGS.has(revPair);
+    };
+
+    // Reject distinct historical capitals / separate major cities UNLESS they have historical correspondence
+    const DISTINCT_CITIES = new Set(['loc_hoa_lu', 'loc_thang_long', 'loc_hue', 'loc_sai_gon', 'loc_da_nang', 'loc_ha_noi', 'loc_can_tho', 'loc_quy_nhon', 'loc_viet_tri']);
+    if (DISTINCT_CITIES.has(sId) && DISTINCT_CITIES.has(tId) && sId !== tId && !isKnownLocationMapping(sId, tId)) {
+      return null;
+    }
+    // Specific religious/smaller monuments located in a district/province must be HAPPENED_AT, not SAME_AS_LOCATION
+    const MONUMENT_PREFIXES = ['loc_den_', 'loc_chua_', 'loc_lang_', 'loc_don_', 'loc_dinh_', 'loc_thuy_dien_', 'loc_ben_', 'loc_cau_', 'loc_nha_rong', 'loc_the_mieu'];
     if (MONUMENT_PREFIXES.some(p => sId.startsWith(p))) {
       rel = 'HAPPENED_AT';
     }
@@ -1636,13 +1779,6 @@ export function extractTriplesFromText(text: string, options?: { headingAnchorYe
       const pId = p.suggestedCanonicalId || `person_${slugify(p.text)}`;
       const locId = loc.suggestedCanonicalId || `loc_${slugify(loc.text)}`;
 
-      // If an event in this sentence already connects this person (LED_BY) and location (HAPPENED_AT), avoid redundant person HAPPENED_AT
-      const hasConnectingEvent = triples.some(
-        (t) => t.relationType === 'LED_BY' && t.targetEntityId === pId
-      ) && triples.some(
-        (t) => t.relationType === 'HAPPENED_AT' && t.targetEntityId === locId && t.sourceEntityId.startsWith('event_')
-      );
-      if (hasConnectingEvent) continue;
       if (
         STRICT_LOC_PREP_INNER.test(mid) ||
         /\b(tại|ở|về|đến|xây|dựng|đóng\s+đô|dời\s+đô|định\s+đô|lên\s+ngôi|chiếm|đại\s+phá|đánh\s+tan|phất\s+cờ|khởi\s+nghĩa|dấy\s+binh|quê|sinh|mất|hy\s+sinh|căn\s+cứ|hoạt\s+động|lãnh\s+đạo|hành\s+quân|tiến\s+về|tiến\s+quân|trên)\b/i.test(mid)
@@ -2028,7 +2164,7 @@ export async function extractTriplesWithLLMDetailed(
   // Deduplicate unique candidate entities for compact prompt while preserving natural reading order
   const seenCandidateKeys = new Set<string>();
   const uniqueCandidateSpans = candidateSpans.filter((c) => {
-    const key = `${c.type}:${(c.suggestedCanonicalId || c.text).toLowerCase()}`;
+    const key = `${c.type}:${c.text.trim().toLowerCase()}`;
     if (seenCandidateKeys.has(key)) return false;
     seenCandidateKeys.add(key);
     return true;
@@ -2036,10 +2172,11 @@ export async function extractTriplesWithLLMDetailed(
 
   const promptCandidateSpans = uniqueCandidateSpans.slice(0, MAX_CANDIDATE_SPANS_IN_PROMPT);
 
-  // Pure Geographic Distractor Guard: If text has only locations and no historical events/actions/sites, return 0 triples
+  // Pure Geographic Distractor Guard: If text has only locations and no historical events/actions/sites/toponyms, return 0 triples
   const hasHistoricalTypes = promptCandidateSpans.some((c) => c.type !== 'LOCATION');
-  const HISTORICAL_ACTION_KEYWORDS = /\b(chiến thắng|đại thắng|đánh tan|đánh đuổi|khởi nghĩa|dấy binh|đóng đô|dời đô|lên ngôi|sáng lập|thành lập|trị vì|xây dựng|khánh thành|chiếm|giải phóng|ký kết|ban hành|soạn thảo|tác phẩm|tiêu biểu|đối đầu|phò tá|tu hành|được tôn|sáng chế|lập ra|lập nên|khẩn hoang|đúc|phong cho|họp|hội nghị|vương triều|triều đại|công cuộc|thuộc|tọa lạc|nằm tại|trên dòng|thương cảng|kinh thành|đô thành|di tích|thành trì|cổ thành|thành cổ|đồn|bến|cửa biển|chiến dịch|trận|bùng nổ|xâm lược|phản công|gia nhập)\b/i;
-  if (!hasHistoricalTypes && !HISTORICAL_ACTION_KEYWORDS.test(text)) {
+  const locSpans = promptCandidateSpans.filter((s) => s.type === 'LOCATION');
+  const HISTORICAL_ACTION_KEYWORDS = /\b(chiến thắng|đại thắng|đánh tan|đánh đuổi|khởi nghĩa|dấy binh|đóng đô|dời đô|lên ngôi|sáng lập|thành lập|trị vì|xây dựng|khánh thành|chiếm|giải phóng|ký kết|ban hành|soạn thảo|tác phẩm|tiêu biểu|đối đầu|phò tá|tu hành|được tôn|sáng chế|lập ra|lập nên|khẩn hoang|đúc|phong cho|họp|hội nghị|vương triều|triều đại|công cuộc|thuộc|tọa lạc|nằm tại|trên dòng|thương cảng|kinh thành|đô thành|di tích|thành trì|cổ thành|thành cổ|đồn|bến|cửa biển|chiến dịch|trận|bùng nổ|xâm lược|phản công|gia nhập|gọi là|còn gọi|đổi tên|tên là|mang tên|tên gọi|tên cũ|huyết mạch|tuyến đường|tuyến|địa giới|hành chính|xưa nay|tương ứng|vốn là|trước đây)\b/i;
+  if (!hasHistoricalTypes && !HISTORICAL_ACTION_KEYWORDS.test(text) && locSpans.length < 2) {
     return {
       triples: [],
       candidateSpans,
@@ -2050,7 +2187,6 @@ export async function extractTriplesWithLLMDetailed(
   // Build categorized representation for clean LLM context
   const enumMap = new Map<string, CandidateEntitySpan>();
   const personSpans = promptCandidateSpans.filter((s) => s.type === 'HISTORICAL_PERSON');
-  const locSpans = promptCandidateSpans.filter((s) => s.type === 'LOCATION');
   const dynSpans = promptCandidateSpans.filter((s) => s.type === 'DYNASTY_ERA');
   const evSpans = promptCandidateSpans.filter((s) => s.type === 'EVENT_BATTLE');
   const orgSpans = promptCandidateSpans.filter((s) => s.type === 'ORGANIZATION');
@@ -2058,6 +2194,14 @@ export async function extractTriplesWithLLMDetailed(
   const docSpans = promptCandidateSpans.filter((s) => s.type === 'DOCUMENT_CULTURE');
 
   const buildDistinctSpanId = (span: CandidateEntitySpan): string => {
+    // If multiple candidate spans share the same suggestedCanonicalId, disambiguate using text slug
+    const sameCanonicalCount = promptCandidateSpans.filter(
+      (c) => c.suggestedCanonicalId && c.suggestedCanonicalId === span.suggestedCanonicalId
+    ).length;
+    if (sameCanonicalCount > 1) {
+      const prefix = getCanonicalEntityIdPrefix(span.type);
+      return `${prefix}${slugify(span.text)}`;
+    }
     return span.suggestedCanonicalId || buildCanonicalId(span.text, span.type);
   };
 
@@ -2086,84 +2230,109 @@ export async function extractTriplesWithLLMDetailed(
     enumMap.set(normalizeHistoricalMention(span.text).toLowerCase(), span);
   });
 
+  // Register contextual epithets and title pronouns to the leading person in snippet
+  const leadPerson = personSpans[0];
+  if (leadPerson) {
+    const ANAPHORA_SYNONYMS = [
+      'người đứng đầu chính phủ',
+      'người đứng đầu',
+      'vị tư lệnh',
+      'tư lệnh',
+      'tổng tư lệnh',
+      'vị tổng tư lệnh',
+      'vị thủ lĩnh',
+      'vị thủ lĩnh cần vương',
+      'thủ lĩnh cần vương',
+      'vị anh hùng áo vải',
+      'anh hùng áo vải',
+      'người anh hùng áo vải',
+      'vị anh hùng',
+      'người anh hùng dân tộc',
+      'vị danh tướng',
+      'vị tướng lĩnh',
+      'vị lãnh tụ',
+      'lãnh tụ',
+      'nhà vua',
+      'hoàng đế',
+      'vua',
+      'vị hoàng đế',
+      'quân vương',
+      'chúa tiên',
+      'vạn thắng vương',
+      'bình định vương',
+      'hưng đạo đại vương',
+      'hưng đạo vương',
+      'đức thánh trần',
+    ];
+    for (const syn of ANAPHORA_SYNONYMS) {
+      if (!enumMap.has(syn)) {
+        enumMap.set(syn, leadPerson);
+      }
+    }
+  }
+
   try {
-    const systemPrompt = `Bạn là hệ thống trích xuất Đồ thị Tri thức Lịch sử Việt Nam (ChronoViet Knowledge Graph).
-Nhiệm vụ: Phân tích ngữ nghĩa văn bản và trích xuất TOÀN BỘ các bộ ba quan hệ (triples: s -> r -> o) giữa các thực thể đã cho.
+    const systemPrompt = `Bạn là Extraction Engine trích xuất Đồ thị Tri thức Lịch sử Việt Nam (ChronoViet Knowledge Graph).
+Nhiệm vụ: Trích xuất TOÀN BỘ các bộ ba quan hệ ngữ nghĩa (s -> r -> o) giữa các thực thể đã cho trong danh sách.
 
-8 LOẠI QUAN HỆ CHUẨN TRONG TAXONOMY (s -> r -> o):
-1. LED_BY: [Trận đánh / Sự kiện / Khởi nghĩa / Chiến dịch / Tổ chức] -> LED_BY -> [Tướng lĩnh / Người lãnh đạo / Tổ chức]
-2. HAPPENED_AT: [Nhân vật / Sự kiện / Di tích / Công trình / Sông / Núi / Địa danh con / Cổ vật / Văn kiện / Tổ chức] -> HAPPENED_AT -> [Địa danh / Tỉnh / Huyện / Thành phố]
-3. HAPPENED_IN: [Sự kiện / Trận đánh / Cổ vật / Tác phẩm / Văn kiện / Di tích / Địa danh lịch sử] -> HAPPENED_IN -> [Triều đại / Thời kỳ / Kỷ nguyên]
-4. PART_OF: [Nhân vật / Vua sáng lập / Quan lại / Tướng lĩnh / Tổ chức / Quốc gia / Người tham gia] -> PART_OF -> [Triều đại / Quốc gia / Tổ chức / Phong trào / Hội nghị]
-5. SAME_AS_LOCATION: [Địa danh cổ / Cố danh] -> SAME_AS_LOCATION -> [Địa danh hiện đại tương ứng trong bài]
-6. ALIAS_OF: [Tên khác / Tên húy / Tự hiệu / Tên danh xưng] -> ALIAS_OF -> [Tên chuẩn chính thức]
+8 LOẠI QUAN HỆ CHUẨN:
+1. LED_BY: [Trận đánh / Khởi nghĩa / Chiến dịch / Tổ chức / Công trình / Khoa thi] -> LED_BY -> [Người chỉ huy / Lãnh đạo / Chủ trì]
+2. HAPPENED_AT: [Nhân vật / Sự kiện / Địa danh con / Di tích / Công trình / Văn kiện / Cổ vật] -> HAPPENED_AT -> [Địa danh / Tỉnh / Huyện / Núi / Sông]
+3. HAPPENED_IN: [Sự kiện / Di tích / Văn kiện / Bộ luật / Cổ vật / Tác phẩm] -> HAPPENED_IN -> [Triều đại / Thời kỳ / Kỷ nguyên]
+4. PART_OF: [Nhân vật / Người tham gia / Quốc gia / Vua / Tướng / Người đỗ đạt] -> PART_OF -> [Triều đại / Tổ chức / Phong trào / Khoa thi / Tổ chức quốc tế]
+5. SAME_AS_LOCATION: [Địa danh cổ / Cố danh / Tên cũ] -> SAME_AS_LOCATION -> [Địa danh hiện đại / Tên mới]
+6. ALIAS_OF: [Tên khác / Tên húy / Tự hiệu / Danh hiệu / Tuyến đường khác] -> ALIAS_OF -> [Tên chuẩn chính thức]
 7. ROYAL_LINEAGE: [Vua con / Người kế vị] -> ROYAL_LINEAGE -> [Vua cha / Tiền nhân]
-8. MENTIONED_IN: [Tác giả / Nhân vật ban hành / Ký kết / Nhân vật xuất hiện / Triều đại] -> MENTIONED_IN -> [Tác phẩm / Chiếu / Hịch / Bộ luật / Hiệp định / Sách lịch sử]
+8. MENTIONED_IN: [Tác giả / Người ban hành / Soạn thảo / Ký kết / Quốc gia / Nhân vật xuất hiện] -> MENTIONED_IN -> [Tác phẩm / Bộ luật / Chiếu / Hịch / Văn kiện / Hiệp định / Di chúc]
 
-QUY TRÌNH RÀ SOÁT ĐẦY ĐỦ (EXHAUSTIVE EXTRACTION):
-Một văn bản thường chứa đồng thời NHIỀU quan hệ (từ 1 đến 4 bộ ba). TUYỆT ĐỐI KHÔNG ĐƯỢC chỉ trích xuất 1 quan hệ rồi dừng lại. Hãy rà soát tuần tự:
-- Với TỪNG NHÂN VẬT / VUA:
-  + Nêu tên khác, tên thật, tên húy, tự hiệu, danh hiệu ("tức là", "tên thật là", "được tôn xưng là")? => [Tên phụ / Tên hiệu] -> ALIAS_OF -> [Tên chuẩn chính]
-  + Phục vụ triều đại nào, sáng lập triều đại nào, thuộc triều đại/thời kỳ nào ("vua nhà Lý", "nhà Hồ", "triều Nguyễn", "nhà Tây Sơn", "thời Bắc thuộc"), tham gia tổ chức/phong trào nào? => [Nhân vật] -> PART_OF -> [Triều đại/Tổ chức]
-  + Đóng đô, dời đô, định đô, lên ngôi, hoạt động, giao chiến, cày ruộng, hy sinh, lãnh đạo ở địa danh nào? => [Nhân vật] -> HAPPENED_AT -> [Địa danh]
-  + Soạn thảo, ban hành, ký kết, công bố, hoặc được ghi chép trong văn kiện/tác phẩm/sách sử nào? => [Nhân vật] -> MENTIONED_IN -> [Văn kiện/Tác phẩm/Sách]
-  + Nối ngôi, kế vị ai? => [Vua con] -> ROYAL_LINEAGE -> [Vua cha]
-- Với TỪNG SỰ KIỆN / CHIẾN DỊCH / KHỞI NGHĨA / DẸP LOẠN / TỔ CHỨC:
-  + Ai lãnh đạo / chỉ huy / khởi xướng / thực hiện? => [Sự kiện/Tổ chức] -> LED_BY -> [Nhân vật]
-  + Diễn ra tại đâu? => [Sự kiện] -> HAPPENED_AT -> [Địa danh]
-  + Diễn ra vào thời kỳ/triều đại nào? => [Sự kiện] -> HAPPENED_IN -> [Triều đại]
-- Với TỪNG ĐỊA DANH / DI TÍCH / CÔNG TRÌNH / SÔNG / NÚI:
-  + Nằm tại / thuộc / trên địa bàn tỉnh/huyện lớn nào? => [Địa danh con] -> HAPPENED_AT -> [Địa danh mẹ]
-  + Nêu tên cổ và địa danh hiện đại ("xưa nay thuộc", "ngày nay là", "tương ứng với", "địa phận huyện... tỉnh...")? => [Địa danh cổ] -> SAME_AS_LOCATION -> [Địa danh hiện đại]
-- Với TỪNG CỔ VẬT / TÁC PHẨM / BỘ LUẬT / VĂN KIỆN:
-  + Thuộc triều đại/thời kỳ nào? => [Cổ vật/Văn kiện] -> HAPPENED_IN -> [Triều đại]
-  + Được tìm thấy / lưu giữ / ký kết / ban hành tại đâu? => [Cổ vật/Văn kiện] -> HAPPENED_AT -> [Địa danh]
+QUY TẮC RÀ SOÁT VÉT CẠN (EXHAUSTIVE EXTRACTION):
+- Dời đô từ A về B: Trích xuất [Nhân vật] HAPPENED_AT [A], [Nhân vật] HAPPENED_AT [B], và nếu có Chiếu dời đô: [Chiếu dời đô] HAPPENED_AT [A] và [Chiếu dời đô] HAPPENED_AT [B].
+- Kinh lược / Mở đất / Lập phủ tại A: [Nhân vật] HAPPENED_AT [A] và [Nhân vật] PART_OF [Triều đại/Chúa].
+- Soạn thảo / Ban hành / San định Văn kiện / Bộ luật: [Nhân vật] MENTIONED_IN [Văn kiện], [Văn kiện] HAPPENED_IN [Triều đại].
+- Mở khoa thi / Tham gia phong trào: [Khoa thi] LED_BY [Vua/Chủ trì], [Người đỗ đạt] PART_OF [Khoa thi].
+- Quốc gia gia nhập Tổ chức Quốc tế / Ký Điều ước: [Quốc gia] PART_OF [Tổ chức quốc tế], [Quốc gia] MENTIONED_IN [Hiệp định/Điều ước].
+- Đồng tham chiếu (Anaphora): Đại từ/danh xưng tôn xưng (Vị danh tướng, Vị thủ lĩnh, Tổng Tư lệnh, Hoàng đế, Người đứng đầu chính phủ...) quy về ID nhân vật chủ thể đã nêu trước đó.
 
-CÁC NGUYÊN TẮC PHỦ ĐỊNH BẮT BUỘC (ANTI-PATTERNS):
-- Triều đại KHÔNG BAO GIỜ là PART_OF của Địa danh.
-- Khi nhân vật chống giặc / đánh tan giặc, TUYỆT ĐỐI KHÔNG ĐƯỢC gán nhân vật PART_OF hoặc LED_BY quân xâm lược.
-- Hai địa danh xuất phát - đích đến khi hành quân, xuất quân, đánh chiếm (từ A ra/vào/đến B) KHÔNG ĐƯỢC gán HAPPENED_AT lẫn nhau.
-- Tác phẩm/Văn kiện không tự LED_BY nhân vật (Nhân vật soạn thảo Văn kiện => [Nhân vật] MENTIONED_IN [Văn kiện]).
-- Sử dụng ID hoặc Tên thực thể đã cho làm giá trị cho "s" và "o".
+RÀNG BUỘC PHỦ ĐỊNH (ANTI-PATTERNS):
+- CHỈ sử dụng ID thực thể có trong danh sách được cấp hoặc xuất hiện trong văn bản. TUYỆT ĐỐI KHÔNG tự bịa thực thể mới.
+- Triều đại KHÔNG BAO GIỜ là PART_OF của Địa danh (và ngược lại).
+- Không gán tướng lĩnh/nhân vật PART_OF hoặc LED_BY quân xâm lược.
 
-VÍ DỤ 1 (ĐẦY ĐỦ QUAN HỆ NHÂN VẬT, TRIỀU ĐẠI VÀ ĐỊA BÀN):
-Văn bản: "Vua An Dương Vương xây thành Cổ Loa tại Đông Anh để củng cố phòng thủ nhà nước Âu Lạc."
+VÍ DỤ MẪU (GENERIC SLOTS):
+Ví dụ 1 (Nhân vật, Địa bàn, Triều đại & Công trình):
+Văn bản: "Vua An Dương Vương xây Loa Thành tại Phong Khê để bảo vệ nhà nước Âu Lạc."
 {"triples": [
   {"s": "person_an_duong_vuong", "r": "PART_OF", "o": "dynasty_au_lac"},
-  {"s": "loc_thanh_co_loa", "r": "HAPPENED_AT", "o": "loc_dong_anh"},
-  {"s": "person_an_duong_vuong", "r": "HAPPENED_AT", "o": "loc_thanh_co_loa"}
+  {"s": "person_an_duong_vuong", "r": "HAPPENED_AT", "o": "loc_thanh_co_loa"},
+  {"s": "loc_thanh_co_loa", "r": "HAPPENED_AT", "o": "loc_phong_khe"},
+  {"s": "loc_thanh_co_loa", "r": "HAPPENED_IN", "o": "dynasty_au_lac"}
 ]}
 
-VÍ DỤ 2 (SỰ KIỆN, LÃNH ĐẠO VÀ ĐỊA BÀN):
-Văn bản: "Năm 938, Ngô Quyền chỉ huy trận Bạch Đằng đại phá quân Nam Hán trên sông Bạch Đằng."
-{"triples": [
-  {"s": "event_bach_dang_938", "r": "LED_BY", "o": "person_ngo_quyen"},
-  {"s": "event_bach_dang_938", "r": "HAPPENED_AT", "o": "loc_song_bach_dang"}
-]}
-
-VÍ DỤ 3 (TÊN GỌI KHÁC / ALIAS_OF & ĐỊA DANH CỔ / SAME_AS_LOCATION & QUY THUỘC TRIỀU ĐẠI):
-Văn bản: "Thục Phán tức vua An Dương Vương lập nhà nước Âu Lạc tại đất Phong Khê nay thuộc Đông Anh."
-{"triples": [
-  {"s": "person_thuc_phan", "r": "ALIAS_OF", "o": "person_an_duong_vuong"},
-  {"s": "person_an_duong_vuong", "r": "PART_OF", "o": "dynasty_au_lac"},
-  {"s": "loc_phong_khe", "r": "SAME_AS_LOCATION", "o": "loc_dong_anh"}
-]}
-
-VÍ DỤ 4 (KẾ VỊ & DÒNG DÕI HOÀNG TỘC - ROYAL_LINEAGE & TRIỀU ĐẠI):
-Văn bản: "Vua Hồ Quý Ly nhường ngôi cho con trai là Hồ Hán Thương nối nghiệp trị vì nhà Hồ."
-{"triples": [
-  {"s": "person_ho_han_thuong", "r": "ROYAL_LINEAGE", "o": "person_ho_quy_ly"},
-  {"s": "person_ho_han_thuong", "r": "PART_OF", "o": "dynasty_nha_ho"},
-  {"s": "person_ho_quy_ly", "r": "PART_OF", "o": "dynasty_nha_ho"}
-]}
-
-VÍ DỤ 5 (VĂN KIỆN, TÁC GIẢ, TRIỀU ĐẠI VÀ ĐỊA DANH):
-Văn bản: "Năm 1010, Lý Thái Tổ ban Chiếu dời đô quyết định dời kinh đô từ Hoa Lư về Thăng Long thuộc nhà Lý."
+Ví dụ 2 (Dời đô từ A về B & Chiếu dời đô):
+Văn bản: "Lý Thái Tổ ban Chiếu dời đô dời kinh đô từ Hoa Lư về Thăng Long."
 {"triples": [
   {"s": "person_ly_thai_to", "r": "MENTIONED_IN", "o": "doc_chieu_doi_do"},
-  {"s": "doc_chieu_doi_do", "r": "HAPPENED_IN", "o": "dynasty_nha_ly"},
+  {"s": "person_ly_thai_to", "r": "HAPPENED_AT", "o": "loc_hoa_lu"},
   {"s": "person_ly_thai_to", "r": "HAPPENED_AT", "o": "loc_thang_long"},
-  {"s": "person_ly_thai_to", "r": "PART_OF", "o": "dynasty_nha_ly"}
+  {"s": "doc_chieu_doi_do", "r": "HAPPENED_AT", "o": "loc_hoa_lu"},
+  {"s": "doc_chieu_doi_do", "r": "HAPPENED_AT", "o": "loc_thang_long"}
+]}
+
+Ví dụ 3 (Đồng tham chiếu, Khởi nghĩa & Nhiều nhân vật):
+Văn bản: "Phan Đình Phùng lãnh đạo khởi nghĩa Hương Khê. Vị thủ lĩnh đã cùng Cao Thắng xây căn cứ tại Vụ Quang Hà Tĩnh."
+{"triples": [
+  {"s": "event_khoi_nghia_huong_khe", "r": "LED_BY", "o": "person_phan_dinh_phung"},
+  {"s": "person_phan_dinh_phung", "r": "HAPPENED_AT", "o": "loc_vu_quang"},
+  {"s": "person_phan_dinh_phung", "r": "HAPPENED_AT", "o": "loc_ha_tinh"},
+  {"s": "person_cao_thang", "r": "HAPPENED_AT", "o": "loc_vu_quang"},
+  {"s": "loc_vu_quang", "r": "HAPPENED_AT", "o": "loc_ha_tinh"}
+]}
+
+Ví dụ 4 (Quốc gia gia nhập Tổ chức Quốc tế / Ký Điều ước):
+Văn bản: "Việt Nam chính thức gia nhập WTO và ký kết Hiệp định BTA mở ra thời kỳ hội nhập."
+{"triples": [
+  {"s": "dynasty_viet_nam", "r": "PART_OF", "o": "org_wto"},
+  {"s": "dynasty_viet_nam", "r": "MENTIONED_IN", "o": "doc_hiep_dinh_bta"}
 ]}
 
 ĐẦU RA DUY NHẤT (JSON):
@@ -2222,15 +2391,26 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
       rawName?: string,
       rawId?: string
     ): { id: string; name: string; type?: string } | null => {
-      const s = (rawId || rawName || '').trim();
+      const raw = (rawId || rawName || '').trim();
+      if (!raw) return null;
+      const s = raw.replace(/^(?:\[?id[:_\s-]*|entity[:_\s-]*)/i, '').replace(/[\])]+$/, '').trim();
       if (!s) return null;
       const sLower = s.toLowerCase();
+      const rawLower = raw.toLowerCase();
 
       // 1. Direct slot code or distinct ID lookup in enumMap
       if (enumMap.has(sLower)) {
         const matched = enumMap.get(sLower)!;
         return {
-          id: matched.suggestedCanonicalId || buildCanonicalId(matched.text, matched.type),
+          id: buildDistinctSpanId(matched),
+          name: matched.text,
+          type: matched.type,
+        };
+      }
+      if (enumMap.has(rawLower)) {
+        const matched = enumMap.get(rawLower)!;
+        return {
+          id: buildDistinctSpanId(matched),
           name: matched.text,
           type: matched.type,
         };
@@ -2242,20 +2422,20 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
         if (enumMap.has(code)) {
           const matched = enumMap.get(code)!;
           return {
-            id: matched.suggestedCanonicalId || buildCanonicalId(matched.text, matched.type),
+            id: buildDistinctSpanId(matched),
             name: matched.text,
             type: matched.type,
           };
         }
       }
 
-      // 2. Direct ID lookup in Candidate Spans
+      // 2. Direct ID lookup in Candidate Spans by distinctId or suggestedCanonicalId
       const candidateById = candidateSpans.find(
-        (c) => c.suggestedCanonicalId?.toLowerCase() === sLower
+        (c) => buildDistinctSpanId(c).toLowerCase() === sLower || c.suggestedCanonicalId?.toLowerCase() === sLower
       );
       if (candidateById) {
         return {
-          id: candidateById.suggestedCanonicalId!,
+          id: buildDistinctSpanId(candidateById),
           name: candidateById.text,
           type: candidateById.type,
         };
@@ -2267,7 +2447,7 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
       );
       if (candidateByText) {
         return {
-          id: candidateByText.suggestedCanonicalId || buildCanonicalId(candidateByText.text, candidateByText.type),
+          id: buildDistinctSpanId(candidateByText),
           name: candidateByText.text,
           type: candidateByText.type,
         };
@@ -2275,38 +2455,21 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
 
       // 4. Mention snapping fallback
       const snapped = snapMentionToCandidate(s, candidateSpans);
-      let resolved = snapped ? { id: snapped.id, name: snapped.name, type: snapped.type } : null;
-
-      if (!resolved) {
-        if (isKnownMasterEntity(s)) {
-          const directCanon = resolveCanonicalEntity(s);
-          if (directCanon && directCanon.entityId && !directCanon.entityId.startsWith('unknown_')) {
-            const isPrimary = slugify(directCanon.canonicalName) === slugify(s);
-            resolved = {
-              id: isPrimary ? directCanon.entityId : buildCanonicalId(s, directCanon.type),
-              name: s,
-              type: directCanon.type,
-            };
-          }
-        }
+      if (snapped) {
+        return { id: snapped.id, name: snapped.name, type: snapped.type };
       }
 
-      if (!resolved) return null;
-
-      // 5. Canonical Master Ontology Normalization (only for primary entity names)
-      const canon = resolveCanonicalEntity(resolved.name) || resolveCanonicalEntity(resolved.id);
-      if (canon && canon.entityId && !canon.entityId.startsWith('unknown_')) {
-        const isPrimary = slugify(canon.canonicalName) === slugify(resolved.name);
-        if (isPrimary || resolved.id.startsWith('unknown_')) {
-          return {
-            id: canon.entityId,
-            name: canon.canonicalName || resolved.name,
-            type: canon.type || resolved.type,
-          };
-        }
+      const directCanon = resolveCanonicalEntity(s) || resolveCanonicalEntity(normalizeHistoricalMention(s));
+      if (directCanon && directCanon.entityId && !directCanon.entityId.startsWith('unknown_')) {
+        const isPrimary = slugify(directCanon.canonicalName) === slugify(s);
+        return {
+          id: isPrimary ? directCanon.entityId : buildCanonicalId(s, directCanon.type),
+          name: directCanon.canonicalName || s,
+          type: directCanon.type,
+        };
       }
 
-      return resolved;
+      return null;
     };
 
     const NEGATION_PATTERNS = /\b(không|chẳng|chưa|chưa từng|bác bỏ|phản đối|bất thành|thất bại|không thể|không phải|không được|bất phân|không phục)\b/i;
@@ -2443,7 +2606,7 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
         }
       }
 
-      // 3. Add deterministic spatial hierarchy triples
+      // 3. Complementary Residual Extraction for remaining high-precision syntactic patterns
       const spatialTriples = extractSpatialHierarchyTriples(text, candidateSpans);
       for (const spt of spatialTriples) {
         const key = `${spt.sourceEntityId}:${spt.relationType}:${spt.targetEntityId}`;
@@ -2453,7 +2616,6 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
         }
       }
 
-      // 4. Add deterministic document authorship and dynastic triples
       const docTriples = extractSyntacticDocumentTriples(text, candidateSpans);
       for (const dt of docTriples) {
         const key = `${dt.sourceEntityId}:${dt.relationType}:${dt.targetEntityId}`;
@@ -2466,7 +2628,12 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
       const dynTriples = extractSyntacticDynasticTriples(text, candidateSpans);
       for (const dynt of dynTriples) {
         const key = `${dynt.sourceEntityId}:${dynt.relationType}:${dynt.targetEntityId}`;
-        if (!seenKeys.has(key) && !hasPair(dynt.sourceEntityId, dynt.targetEntityId)) {
+        const hasExistingDynasty = validatedTriples.some(
+          (vt) =>
+            vt.sourceEntityId.toLowerCase() === dynt.sourceEntityId.toLowerCase() &&
+            (vt.relationType === 'PART_OF' || vt.relationType === 'HAPPENED_IN')
+        );
+        if (!seenKeys.has(key) && !hasPair(dynt.sourceEntityId, dynt.targetEntityId) && !hasExistingDynasty) {
           seenKeys.add(key);
           validatedTriples.push(dynt);
         }
@@ -2476,7 +2643,7 @@ Hãy rà soát kỹ từng thực thể (Địa bàn HAPPENED_AT, Lãnh đạo L
     };
 
     // Execute Unified Single-Pass Extraction with Qwen 3.5 4B
-    const res = await callLlm(systemPrompt, 0.0, 750);
+    const res = await callLlm(systemPrompt, 0.0, 450);
     let parsedResult = parseAndValidateResult(res.content || '');
 
     // Persist to Disk Cache (unless skipCache is requested)
@@ -2558,10 +2725,34 @@ export async function extractTriplesFromTextDetailedAsync(
     }
   };
 
-  // 1. Add LLM Triples (which already include deterministic syntactic, lineage, and spatial triples)
+  // 1. Add LLM Triples (which already include deterministic syntactic and lineage triples)
   if (llmTriples && Array.isArray(llmTriples) && llmTriples.length > 0) {
     for (const t of llmTriples) {
       addTriple(t);
+    }
+    // Safely merge deterministic triples (ALIAS_OF, SAME_AS_LOCATION, ROYAL_LINEAGE, or high-confidence LED_BY) for untouched pairs
+    const hasPair = (idA: string, idB: string) => {
+      const a = idA.toLowerCase();
+      const b = idB.toLowerCase();
+      return finalTriples.some((vt) => {
+        const va = vt.sourceEntityId.toLowerCase();
+        const vb = vt.targetEntityId.toLowerCase();
+        return (va === a && vb === b) || (va === b && vb === a);
+      });
+    };
+    for (const ft of fastPathTriples) {
+      if (!hasPair(ft.sourceEntityId, ft.targetEntityId)) {
+        if (
+          ft.relationType === 'ALIAS_OF' ||
+          ft.relationType === 'SAME_AS_LOCATION' ||
+          ft.relationType === 'ROYAL_LINEAGE' ||
+          ft.relationType === 'MENTIONED_IN' ||
+          ft.relationType === 'HAPPENED_IN' ||
+          ft.confidence >= 0.95
+        ) {
+          addTriple(ft);
+        }
+      }
     }
   } else {
     // 2. Fallback to Fast-Path Triples ONLY when LLM is unavailable or produces no output

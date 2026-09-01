@@ -2098,5 +2098,177 @@
     ],
     "expectedDynasty": "Hiện đại",
     "minTargetRank": 5
+  },
+  {
+    "id": "VEC_ENRICH_001_HINH_THU",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "NHA_LY",
+    "query": "Bộ luật Hình thư ban hành năm 1042 dưới thời vua Lý Thái Tông bộ luật thành văn đầu tiên của Đại Việt",
+    "expectedKeywords": [
+      "Hình thư",
+      "Lý Thái Tông",
+      "Minh Đạo",
+      "luật pháp"
+    ],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_002_QUOC_TU_GIAM",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "NHA_LY",
+    "query": "Vua Lý Thánh Tông xây dựng Văn Miếu năm 1070 và vua Lý Nhân Tông lập Quốc Tử Giám năm 1076",
+    "expectedKeywords": [
+      "Văn Miếu",
+      "Quốc Tử Giám",
+      "Lý Thánh Tông",
+      "Lý Nhân Tông"
+    ],
+    "expectedDynasty": "Nhà Lý",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_003_TAM_KHOI_NGUYEN_HIEN",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "NHA_TRAN",
+    "query": "Khoa thi Tam khôi năm Đinh Mùi 1247 thời Trần Thái Tông lấy Trạng nguyên Nguyễn Hiền Bảng nhãn Lê Văn Hưu",
+    "expectedKeywords": [
+      "Nguyễn Hiền",
+      "Lê Văn Hưu",
+      "Trần Thái Tông",
+      "Tam khôi"
+    ],
+    "expectedDynasty": "Nhà Trần",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_004_TIEN_GIAY_NHA_HO",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "NHA_HO",
+    "query": "Hồ Quý Ly phát hành tiền giấy Thông bảo hội sao năm 1396 cấm tiêu tiền đồng và đặt kho Ngao Trì",
+    "expectedKeywords": [
+      "tiền giấy",
+      "Thông bảo hội sao",
+      "Hồ Quý Ly",
+      "kho Ngao Trì"
+    ],
+    "expectedDynasty": "Nhà Hồ",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_005_LUAT_HONG_DUC",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "NHA_LE_SO",
+    "query": "Bộ Quốc triều hình luật còn gọi là Luật Hồng Đức do vua Lê Thánh Tông ban hành năm 1483",
+    "expectedKeywords": [
+      "Quốc triều hình luật",
+      "Luật Hồng Đức",
+      "Lê Thánh Tông",
+      "Hồng Đức"
+    ],
+    "expectedDynasty": "Nhà Lê Sơ",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_006_BIA_TIEN_SI_1442",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "NHA_LE_SO",
+    "query": "Lê Thánh Tông khởi xướng cho dựng bia tiến sĩ tại Văn Miếu Quốc Tử Giám vinh danh khoa thi Nhâm Tuất 1442",
+    "expectedKeywords": [
+      "bia tiến sĩ",
+      "Văn Miếu",
+      "Quốc Tử Giám",
+      "1442",
+      "Lê Thánh Tông"
+    ],
+    "expectedDynasty": "Nhà Lê Sơ",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_007_PHO_HIEN_HOI_AN",
+    "category": "GEOGRAPHICAL_MIGRATION_AND_RENAMING",
+    "era": "NAM_BAC_TRIEU_TRINH_NGUYEN",
+    "query": "Sự phồn thịnh của thương cảng Phố Hiến ở Đàng Ngoài và đô thị thương mại quốc tế Hội An ở Đàng Trong",
+    "expectedKeywords": [
+      "Phố Hiến",
+      "Hội An",
+      "Đàng Trong",
+      "Đàng Ngoài"
+    ],
+    "expectedDynasty": "Lê Trung Hưng / Chúa Trịnh / Chúa Nguyễn",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_008_NGUYEN_HUU_CANH",
+    "category": "GEOGRAPHICAL_MIGRATION_AND_RENAMING",
+    "era": "NAM_BAC_TRIEU_TRINH_NGUYEN",
+    "query": "Lễ Thành Hầu Nguyễn Hữu Cảnh kinh lược phương Nam xác lập chủ quyền và lập phủ Gia Định năm 1698",
+    "expectedKeywords": [
+      "Nguyễn Hữu Cảnh",
+      "Gia Định",
+      "phương Nam",
+      "chúa Nguyễn"
+    ],
+    "expectedDynasty": "Lê Trung Hưng / Chúa Trịnh / Chúa Nguyễn",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_009_LUAT_GIA_LONG",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "NHA_NGUYEN_DOC_LAP",
+    "query": "Bộ luật Hoàng Việt luật lệ hay luật Gia Long do Tổng trấn Bắc Thành Nguyễn Văn Thành chủ biên ban hành năm 1815",
+    "expectedKeywords": [
+      "Hoàng Việt luật lệ",
+      "Gia Long",
+      "Nguyễn Văn Thành",
+      "nhà Nguyễn"
+    ],
+    "expectedDynasty": "Nhà Nguyễn",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_010_DOI_HOANG_SA_PHAM_HUU_NHAT",
+    "category": "POLICY_MILITARY_INSTITUTION",
+    "era": "NHA_NGUYEN_DOC_LAP",
+    "query": "Hoạt động của Đội Hoàng Sa và Đội Bắc Hải Thủy quân Suất đội Phạm Hữu Nhật cắm mốc dựng bia Vạn lý ba bình",
+    "expectedKeywords": [
+      "Hoàng Sa",
+      "Phạm Hữu Nhật",
+      "Vạn lý ba bình",
+      "Minh Mạng"
+    ],
+    "expectedDynasty": "Nhà Nguyễn",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_011_PHONG_TRAO_THO_MOI",
+    "category": "DOCUMENT_CULTURE_LITERATURE",
+    "era": "PHAP_THUOC_CAN_DAI",
+    "query": "Phong trào Thơ Mới 1932 đến 1945 bài thơ Tình già của Phan Khôi và tập Thi nhân Việt Nam của Hoài Thanh",
+    "expectedKeywords": [
+      "Thơ Mới",
+      "Phan Khôi",
+      "Thi nhân Việt Nam",
+      "Hoài Thanh",
+      "Xuân Diệu"
+    ],
+    "expectedDynasty": "Pháp thuộc cận đại",
+    "minTargetRank": 3
+  },
+  {
+    "id": "VEC_ENRICH_012_DE_CUONG_VAN_HOA_1943",
+    "category": "DOCUMENT_CULTURE_LITERATURE",
+    "era": "PHAP_THUOC_CAN_DAI",
+    "query": "Đề cương Văn hóa Việt Nam năm 1943 do Tổng Bí thư Trường Chinh soạn thảo với ba nguyên tắc Dân tộc hóa Đại chúng hóa Khoa học hóa",
+    "expectedKeywords": [
+      "Đề cương Văn hóa",
+      "1943",
+      "Trường Chinh",
+      "Dân tộc hóa",
+      "Đại chúng hóa",
+      "Khoa học hóa"
+    ],
+    "expectedDynasty": "Pháp thuộc cận đại",
+    "minTargetRank": 3
   }
 ]

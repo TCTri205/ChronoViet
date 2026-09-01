@@ -135,4 +135,42 @@ export const ENTITY_DISAMBIGUATION_DATA: EntityDisambiguationTestCase[] = [
   { input: 'sông Gianh', expectedCanonicalId: 'loc_song_gianh', expectedCanonicalName: 'sông Gianh', isLocation: true, expectedModernLocation: 'Quảng Bình' },
   { input: 'Linh Giang', expectedCanonicalId: 'loc_song_gianh', expectedCanonicalName: 'sông Gianh', isLocation: true, expectedModernLocation: 'Quảng Bình' },
   { input: 'sông Bến Hải', expectedCanonicalId: 'loc_song_ben_hai', expectedCanonicalName: 'sông Bến Hải', isLocation: true, expectedModernLocation: 'Quảng Trị' },
+
+  // 9. Danh nhân Văn hóa, Tư tưởng, Khoa cử & Pháp luật
+  { input: 'Chu Văn An', expectedCanonicalId: 'person_chu_van_an', expectedCanonicalName: 'Chu Văn An', category: 'HISTORICAL_PERSON' },
+  { input: 'Tiều Ẩn', expectedCanonicalId: 'person_chu_van_an', expectedCanonicalName: 'Chu Văn An', category: 'PEN_NAME' },
+  { input: 'Tư nghiệp Chu Văn An', expectedCanonicalId: 'person_chu_van_an', expectedCanonicalName: 'Chu Văn An', category: 'OFFICIAL_TITLE' },
+  { input: 'Lê Quý Đôn', expectedCanonicalId: 'person_le_quy_don', expectedCanonicalName: 'Lê Quý Đôn', category: 'HISTORICAL_PERSON' },
+  { input: 'Quế Đường', expectedCanonicalId: 'person_le_quy_don', expectedCanonicalName: 'Lê Quý Đôn', category: 'PEN_NAME' },
+  { input: 'Lê Văn Thịnh', expectedCanonicalId: 'person_le_van_thinh', expectedCanonicalName: 'Lê Văn Thịnh', category: 'HISTORICAL_PERSON' },
+  { input: 'Trạng nguyên Lê Văn Thịnh', expectedCanonicalId: 'person_le_van_thinh', expectedCanonicalName: 'Lê Văn Thịnh', category: 'ACADEMIC_TITLE' },
+  { input: 'Nguyễn Hiền', expectedCanonicalId: 'person_nguyen_hien', expectedCanonicalName: 'Nguyễn Hiền', category: 'HISTORICAL_PERSON' },
+  { input: 'Trạng nguyên Nguyễn Hiền', expectedCanonicalId: 'person_nguyen_hien', expectedCanonicalName: 'Nguyễn Hiền', category: 'ACADEMIC_TITLE' },
+  { input: 'Nguyễn Văn Thành', expectedCanonicalId: 'person_nguyen_van_thanh', expectedCanonicalName: 'Nguyễn Văn Thành', category: 'HISTORICAL_PERSON' },
+  { input: 'Tổng trấn Nguyễn Văn Thành', expectedCanonicalId: 'person_nguyen_van_thanh', expectedCanonicalName: 'Nguyễn Văn Thành', category: 'OFFICIAL_TITLE' },
+  { input: 'Đào Duy Từ', expectedCanonicalId: 'person_dao_duy_tu', expectedCanonicalName: 'Đào Duy Từ', category: 'HISTORICAL_PERSON' },
+  { input: 'Lộc Khê hầu Đào Duy Từ', expectedCanonicalId: 'person_dao_duy_tu', expectedCanonicalName: 'Đào Duy Từ', category: 'NOBLE_TITLE' },
+
+  // 10. Danh nhân Văn hóa Cách mạng 1943 & Phong trào Thơ Mới (1932-1945)
+  { input: 'Trường Chinh', expectedCanonicalId: 'person_truong_chinh', expectedCanonicalName: 'Trường Chinh', category: 'HISTORICAL_PERSON' },
+  { input: 'Đặng Xuân Khu', expectedCanonicalId: 'person_truong_chinh', expectedCanonicalName: 'Trường Chinh', category: 'ORIGINAL_NAME' },
+  { input: 'Tổng Bí thư Trường Chinh', expectedCanonicalId: 'person_truong_chinh', expectedCanonicalName: 'Trường Chinh', category: 'OFFICIAL_TITLE' },
+  { input: 'Phan Khôi', expectedCanonicalId: 'person_phan_khoi', expectedCanonicalName: 'Phan Khôi', category: 'HISTORICAL_PERSON' },
+  { input: 'Thế Lữ', expectedCanonicalId: 'person_the_lu', expectedCanonicalName: 'Thế Lữ', category: 'PEN_NAME' },
+  { input: 'Nguyễn Thứ Lễ', expectedCanonicalId: 'person_the_lu', expectedCanonicalName: 'Thế Lữ', category: 'ORIGINAL_NAME' },
+  { input: 'Hoài Thanh', expectedCanonicalId: 'person_hoai_thanh', expectedCanonicalName: 'Hoài Thanh', category: 'PEN_NAME' },
+  { input: 'Nguyễn Đức Nguyên', expectedCanonicalId: 'person_hoai_thanh', expectedCanonicalName: 'Hoài Thanh', category: 'ORIGINAL_NAME' },
+  { input: 'Xuân Diệu', expectedCanonicalId: 'person_xuan_dieu', expectedCanonicalName: 'Xuân Diệu', category: 'HISTORICAL_PERSON' },
+  { input: 'Huy Cận', expectedCanonicalId: 'person_huy_can', expectedCanonicalName: 'Huy Cận', category: 'HISTORICAL_PERSON' },
+  { input: 'Hàn Mặc Tử', expectedCanonicalId: 'person_han_mac_tu', expectedCanonicalName: 'Hàn Mặc Tử', category: 'PEN_NAME' },
+  { input: 'Nguyễn Trọng Trí', expectedCanonicalId: 'person_han_mac_tu', expectedCanonicalName: 'Hàn Mặc Tử', category: 'ORIGINAL_NAME' },
+  { input: 'Chế Lan Viên', expectedCanonicalId: 'person_che_lan_vien', expectedCanonicalName: 'Chế Lan Viên', category: 'PEN_NAME' },
+  { input: 'Phan Ngọc Hoan', expectedCanonicalId: 'person_che_lan_vien', expectedCanonicalName: 'Chế Lan Viên', category: 'ORIGINAL_NAME' },
+
+  // 11. Nhân vật Khai phá Cương vực & Biển đảo
+  { input: 'Nguyễn Hữu Cảnh', expectedCanonicalId: 'person_nguyen_huu_canh', expectedCanonicalName: 'Nguyễn Hữu Cảnh', category: 'HISTORICAL_PERSON' },
+  { input: 'Lễ Thành Hầu', expectedCanonicalId: 'person_nguyen_huu_canh', expectedCanonicalName: 'Nguyễn Hữu Cảnh', category: 'NOBLE_TITLE' },
+  { input: 'Lễ Công Nguyễn Hữu Cảnh', expectedCanonicalId: 'person_nguyen_huu_canh', expectedCanonicalName: 'Nguyễn Hữu Cảnh', category: 'NOBLE_TITLE' },
+  { input: 'Phạm Hữu Nhật', expectedCanonicalId: 'person_pham_huu_nhat', expectedCanonicalName: 'Phạm Hữu Nhật', category: 'HISTORICAL_PERSON' },
+  { input: 'Suất đội Phạm Hữu Nhật', expectedCanonicalId: 'person_pham_huu_nhat', expectedCanonicalName: 'Phạm Hữu Nhật', category: 'MILITARY_RANK' },
 ];

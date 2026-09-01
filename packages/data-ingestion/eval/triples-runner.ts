@@ -6,10 +6,10 @@
 
 import fs from 'fs';
 import path from 'path';
-import { GoldenTripleBenchmarkItem } from '@chronoviet/shared-spec';
+import { GoldenTripleBenchmarkItem, resolveCanonicalEntity, getCanonicalEntityIdPrefix } from '@chronoviet/shared-spec';
 import { isLLMServiceHealthy } from '@chronoviet/infra';
 import { extractTriplesFromTextAsync, ExtractedTriple } from '../src/triple-extractor.js';
-import { extractHistoricalCandidateSpans } from '../src/text/vietnamese-ner.js';
+import { extractHistoricalCandidateSpans, slugify } from '../src/text/vietnamese-ner.js';
 import { computeStrictTripleMetrics, StrictTripleMetrics, computeGraphTransitiveClosure } from './metrics.js';
 import { findMonorepoRoot } from '../src/utils/path-utils.js';
 import { loadGoldenTriplesBenchmark } from './ner-runner.js';
@@ -126,17 +126,40 @@ export async function runTriplesEval() {
       }));
 
       const validEntityIdsInSnippet = new Set<string>();
+      const addValidIdAndAliases = (rawIdOrName?: string) => {
+        if (!rawIdOrName) return;
+        const norm = rawIdOrName.trim().toLowerCase();
+        validEntityIdsInSnippet.add(norm);
+        const canon = resolveCanonicalEntity(rawIdOrName);
+        if (canon && canon.entityId && !canon.entityId.startsWith('unknown_')) {
+          const canonId = canon.entityId.toLowerCase();
+          validEntityIdsInSnippet.add(canonId);
+          if (Array.isArray(canon.aliases)) {
+            for (const alias of canon.aliases) {
+              validEntityIdsInSnippet.add(alias.toLowerCase());
+              const prefix = getCanonicalEntityIdPrefix(canon.type);
+              validEntityIdsInSnippet.add(`${prefix}${slugify(alias)}`.toLowerCase());
+            }
+          }
+        }
+      };
+
       for (const e of snippet.groundTruthEntities) {
-        validEntityIdsInSnippet.add(e.id.trim().toLowerCase());
-        if (e.canonicalId) validEntityIdsInSnippet.add(e.canonicalId.trim().toLowerCase());
+        addValidIdAndAliases(e.id);
+        addValidIdAndAliases(e.name);
+        if (e.canonicalId) addValidIdAndAliases(e.canonicalId);
+        if (Array.isArray(e.aliases)) {
+          for (const a of e.aliases) addValidIdAndAliases(a);
+        }
       }
       for (const gt of snippet.groundTruthTriples) {
-        if (gt.sourceEntityId) validEntityIdsInSnippet.add(gt.sourceEntityId.trim().toLowerCase());
-        if (gt.targetEntityId) validEntityIdsInSnippet.add(gt.targetEntityId.trim().toLowerCase());
+        if (gt.sourceEntityId) addValidIdAndAliases(gt.sourceEntityId);
+        if (gt.targetEntityId) addValidIdAndAliases(gt.targetEntityId);
       }
       const rawCandidateSpans = extractHistoricalCandidateSpans(text);
       for (const cs of rawCandidateSpans) {
-        if (cs.suggestedCanonicalId) validEntityIdsInSnippet.add(cs.suggestedCanonicalId.trim().toLowerCase());
+        addValidIdAndAliases(cs.text);
+        if (cs.suggestedCanonicalId) addValidIdAndAliases(cs.suggestedCanonicalId);
       }
 
       const metrics = computeStrictTripleMetrics(

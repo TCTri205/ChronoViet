@@ -104,7 +104,7 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     entityId: 'person_quang_trung',
     canonicalName: 'Quang Trung',
     type: 'HISTORICAL_PERSON',
-    aliases: ['Nguyễn Huệ', 'Hồ Thơm', 'Bắc Bình Vương', 'Vua Quang Trung', 'Quang Trung Hoàng Đế', 'Long Nhương Tướng Quân', 'Long Nhượng Tướng Quân'],
+    aliases: ['Nguyễn Huệ', 'Hồ Thơm', 'Bắc Bình Vương', 'Vua Quang Trung', 'Quang Trung Hoàng Đế', 'Long Nhương Tướng Quân', 'Long Nhượng Tướng Quân', 'Anh hùng áo vải'],
     timeRange: { start: 1753, end: 1792 },
     dynasty: 'Nhà Tây Sơn',
   },
@@ -208,7 +208,7 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     entityId: 'person_hai_ba_trung',
     canonicalName: 'Hai Bà Trưng',
     type: 'HISTORICAL_PERSON',
-    aliases: ['Trưng Trắc', 'Trưng Nhị', 'Trưng Vương', 'Hai Bà Trưng'],
+    aliases: ['Trưng Trắc', 'Trưng Nhị', 'Trưng Vương', 'Hai Bà Trưng', 'Trưng Nữ Vương'],
     timeRange: { start: 14, end: 43 },
     dynasty: 'Trưng Nữ Vương',
   },
@@ -224,7 +224,7 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     entityId: 'person_an_duong_vuong',
     canonicalName: 'An Dương Vương',
     type: 'HISTORICAL_PERSON',
-    aliases: ['Thục Phán', 'Thục Phán An Dương Vương'],
+    aliases: ['Thục Phán', 'Thục Phán An Dương Vương', 'Thục Vương', 'Vua Thục', 'An Dương Vương'],
     timeRange: { start: -257, end: -208 },
     dynasty: 'Âu Lạc',
     isMythological: false,
@@ -654,7 +654,7 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     entityId: 'person_phan_dinh_phung',
     canonicalName: 'Phan Đình Phùng',
     type: 'HISTORICAL_PERSON',
-    aliases: [],
+    aliases: ['Cụ Phan Đình Phùng'],
     timeRange: { start: 1847, end: 1896 },
     dynasty: 'Thời kỳ Pháp thuộc',
   },
@@ -914,6 +914,158 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     timeRange: { start: 1650, end: 1700 },
     dynasty: 'Chúa Nguyễn',
   },
+  'person_ho_xuan_huong': {
+    entityId: 'person_ho_xuan_huong',
+    canonicalName: 'Hồ Xuân Hương',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Bà Chúa Thơ Nôm', 'Xuân Hương'],
+    timeRange: { start: 1772, end: 1822 },
+    dynasty: 'Nhà Tây Sơn',
+  },
+  'person_nguyen_dinh_chieu': {
+    entityId: 'person_nguyen_dinh_chieu',
+    canonicalName: 'Nguyễn Đình Chiểu',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Cụ Đồ Chiểu', 'Đồ Chiểu'],
+    timeRange: { start: 1822, end: 1888 },
+    dynasty: 'Nhà Nguyễn',
+  },
+  'person_vo_thi_sau': {
+    entityId: 'person_vo_thi_sau',
+    canonicalName: 'Võ Thị Sáu',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Chị Sáu', 'Nữ anh hùng Võ Thị Sáu'],
+    timeRange: { start: 1933, end: 1952 },
+    dynasty: 'Thời kỳ Hiện đại',
+  },
+  'person_nguyen_thi_ut': {
+    entityId: 'person_nguyen_thi_ut',
+    canonicalName: 'Nguyễn Thị Út',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Chị Út Tịch', 'Út Tịch'],
+    timeRange: { start: 1931, end: 1968 },
+    dynasty: 'Thời kỳ Hiện đại',
+  },
+  'person_ton_duc_thang': {
+    entityId: 'person_ton_duc_thang',
+    canonicalName: 'Tôn Đức Thắng',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Bác Tôn', 'Chủ tịch Tôn Đức Thắng'],
+    timeRange: { start: 1888, end: 1980 },
+    dynasty: 'Thời kỳ Hiện đại',
+  },
+  'person_nguyen_thi_suot': {
+    entityId: 'person_nguyen_thi_suot',
+    canonicalName: 'Nguyễn Thị Suốt',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Mẹ Suốt'],
+    timeRange: { start: 1906, end: 1968 },
+    dynasty: 'Thời kỳ Hiện đại',
+  },
+  'person_nguyen_thi_thu': {
+    entityId: 'person_nguyen_thi_thu',
+    canonicalName: 'Nguyễn Thị Thứ',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Mẹ Thứ', 'Mẹ Việt Nam anh hùng Nguyễn Thị Thứ'],
+    timeRange: { start: 1904, end: 2010 },
+    dynasty: 'Thời kỳ Hiện đại',
+  },
+  'person_nguyen_van_thanh': {
+    entityId: 'person_nguyen_van_thanh',
+    canonicalName: 'Nguyễn Văn Thành',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Tổng trấn Nguyễn Văn Thành', 'Tổng trấn Bắc Thành Nguyễn Văn Thành', 'Tổng trấn Bắc Thành'],
+    timeRange: { start: 1758, end: 1817 },
+    dynasty: 'Nhà Nguyễn',
+  },
+  'person_truong_chinh': {
+    entityId: 'person_truong_chinh',
+    canonicalName: 'Trường Chinh',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Đặng Xuân Khu', 'Tổng Bí thư Trường Chinh', 'Anh Năm'],
+    timeRange: { start: 1907, end: 1988 },
+    dynasty: 'Thời kỳ Hiện đại',
+  },
+  'person_phan_khoi': {
+    entityId: 'person_phan_khoi',
+    canonicalName: 'Phan Khôi',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['nhà báo Phan Khôi'],
+    timeRange: { start: 1887, end: 1959 },
+    dynasty: 'Thời kỳ Pháp thuộc',
+  },
+  'person_the_lu': {
+    entityId: 'person_the_lu',
+    canonicalName: 'Thế Lữ',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Nguyễn Thứ Lễ', 'nhà thơ Thế Lữ'],
+    timeRange: { start: 1907, end: 1989 },
+    dynasty: 'Thời kỳ Pháp thuộc / Hiện đại',
+  },
+  'person_hoai_thanh': {
+    entityId: 'person_hoai_thanh',
+    canonicalName: 'Hoài Thanh',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Nguyễn Đức Nguyên', 'nhà phê bình Hoài Thanh'],
+    timeRange: { start: 1909, end: 1982 },
+    dynasty: 'Thời kỳ Pháp thuộc / Hiện đại',
+  },
+  'person_pham_huu_nhat': {
+    entityId: 'person_pham_huu_nhat',
+    canonicalName: 'Phạm Hữu Nhật',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Suất đội Phạm Hữu Nhật', 'Thủy quân Suất đội Phạm Hữu Nhật'],
+    timeRange: { start: 1804, end: 1854 },
+    dynasty: 'Nhà Nguyễn',
+  },
+  'person_le_van_thinh': {
+    entityId: 'person_le_van_thinh',
+    canonicalName: 'Lê Văn Thịnh',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Trạng nguyên Lê Văn Thịnh', 'Thái sư Lê Văn Thịnh'],
+    timeRange: { start: 1050, end: 1096 },
+    dynasty: 'Nhà Lý',
+  },
+  'person_nguyen_hien': {
+    entityId: 'person_nguyen_hien',
+    canonicalName: 'Nguyễn Hiền',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Trạng nguyên Nguyễn Hiền', 'Trạng nguyên trẻ tuổi nhất'],
+    timeRange: { start: 1234, end: 1256 },
+    dynasty: 'Nhà Trần',
+  },
+  'person_xuan_dieu': {
+    entityId: 'person_xuan_dieu',
+    canonicalName: 'Xuân Diệu',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Ngô Xuân Diệu', 'nhà thơ Xuân Diệu'],
+    timeRange: { start: 1916, end: 1985 },
+    dynasty: 'Thời kỳ Pháp thuộc / Hiện đại',
+  },
+  'person_huy_can': {
+    entityId: 'person_huy_can',
+    canonicalName: 'Huy Cận',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Cù Huy Cận', 'nhà thơ Huy Cận'],
+    timeRange: { start: 1919, end: 2005 },
+    dynasty: 'Thời kỳ Pháp thuộc / Hiện đại',
+  },
+  'person_han_mac_tu': {
+    entityId: 'person_han_mac_tu',
+    canonicalName: 'Hàn Mặc Tử',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Nguyễn Trọng Trí', 'Hàn Mạc Tử'],
+    timeRange: { start: 1912, end: 1940 },
+    dynasty: 'Thời kỳ Pháp thuộc',
+  },
+  'person_che_lan_vien': {
+    entityId: 'person_che_lan_vien',
+    canonicalName: 'Chế Lan Viên',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Phan Ngọc Hoan', 'nhà thơ Chế Lan Viên'],
+    timeRange: { start: 1920, end: 1989 },
+    dynasty: 'Thời kỳ Pháp thuộc / Hiện đại',
+  },
 };
 
 /**
@@ -1046,6 +1198,48 @@ export const HISTORICAL_LOCATION_MAPPINGS: HistoricalLocationMapping[] = [
     dynasty: 'Bắc thuộc lần 2',
     timeRange: { start: 248, end: 248 },
   },
+  {
+    historicalName: 'Tây Đô',
+    canonicalModernName: 'Cần Thơ',
+    dynasty: 'Cận - Hiện đại',
+    timeRange: { start: 1900, end: 2026 },
+  },
+  {
+    historicalName: 'Phong Khê',
+    canonicalModernName: 'Đông Anh',
+    dynasty: 'Âu Lạc',
+    timeRange: { start: -257, end: -179 },
+  },
+  {
+    historicalName: 'Hà Tây',
+    canonicalModernName: 'Hà Nội',
+    dynasty: 'Hiện đại',
+    timeRange: { start: 1965, end: 2008 },
+  },
+  {
+    historicalName: 'Thủ Dầu Một',
+    canonicalModernName: 'Bình Dương',
+    dynasty: 'Cận - Hiện đại',
+    timeRange: { start: 1860, end: 2026 },
+  },
+  {
+    historicalName: 'Kinh thành Huế',
+    canonicalModernName: 'Huế',
+    dynasty: 'Nhà Nguyễn',
+    timeRange: { start: 1802, end: 1945 },
+  },
+  {
+    historicalName: 'núi Nưa',
+    canonicalModernName: 'Nông Cống',
+    dynasty: 'Bắc thuộc lần 2',
+    timeRange: { start: 248, end: 248 },
+  },
+  {
+    historicalName: 'Vụ Quang',
+    canonicalModernName: 'Hà Tĩnh',
+    dynasty: 'Cận đại',
+    timeRange: { start: 1885, end: 1896 },
+  },
 ];
 
 /**
@@ -1176,7 +1370,79 @@ export const HISTORICAL_LOCATION_DICTIONARY: Record<string, HistoricalEntityInfo
     entityId: 'loc_dong_anh',
     canonicalName: 'Đông Anh',
     type: 'LOCATION',
-    aliases: ['huyện Đông Anh'],
+    aliases: ['huyện Đông Anh', 'Đông Anh'],
+  },
+  'loc_ha_tay': {
+    entityId: 'loc_ha_tay',
+    canonicalName: 'Hà Tây',
+    type: 'LOCATION',
+    aliases: ['tỉnh Hà Tây', 'Hà Tây', 'xứ Đoài'],
+  },
+  'loc_phong_khe': {
+    entityId: 'loc_phong_khe',
+    canonicalName: 'Phong Khê',
+    type: 'LOCATION',
+    aliases: ['đất Phong Khê', 'kinh đô Phong Khê', 'Phong Khê'],
+  },
+  'loc_van_mieu': {
+    entityId: 'loc_van_mieu',
+    canonicalName: 'Văn Miếu',
+    type: 'LOCATION',
+    aliases: ['Văn Miếu Thăng Long', 'Văn Miếu - Quốc Tử Giám', 'Văn Miếu'],
+  },
+  'loc_the_mieu': {
+    entityId: 'loc_the_mieu',
+    canonicalName: 'Thế Miếu',
+    type: 'LOCATION',
+    aliases: ['sân Thế Miếu', 'Thế Miếu'],
+  },
+  'loc_thu_dau_mot': {
+    entityId: 'loc_thu_dau_mot',
+    canonicalName: 'Thủ Dầu Một',
+    type: 'LOCATION',
+    aliases: ['Thủ Dầu Một', 'đất Thủ Dầu Một', 'thành phố Thủ Dầu Một'],
+  },
+  'loc_binh_duong': {
+    entityId: 'loc_binh_duong',
+    canonicalName: 'Bình Dương',
+    type: 'LOCATION',
+    aliases: ['tỉnh Bình Dương', 'Bình Dương'],
+  },
+  'loc_kinh_thanh_hue': {
+    entityId: 'loc_kinh_thanh_hue',
+    canonicalName: 'Kinh thành Huế',
+    type: 'LOCATION',
+    aliases: ['Kinh thành Huế', 'kinh thành Huế', 'Hoàng thành Huế'],
+  },
+  'loc_nui_nua': {
+    entityId: 'loc_nui_nua',
+    canonicalName: 'núi Nưa',
+    type: 'LOCATION',
+    aliases: ['núi Nưa', 'Núi Nưa', 'ngàn Nưa'],
+  },
+  'loc_nong_cong': {
+    entityId: 'loc_nong_cong',
+    canonicalName: 'Nông Cống',
+    type: 'LOCATION',
+    aliases: ['huyện Nông Cống', 'Nông Cống'],
+  },
+  'loc_vu_quang': {
+    entityId: 'loc_vu_quang',
+    canonicalName: 'Vụ Quang',
+    type: 'LOCATION',
+    aliases: ['Vũ Quang', 'căn cứ Vụ Quang', 'Vụ Quang'],
+  },
+  'loc_duong_truong_son': {
+    entityId: 'loc_duong_truong_son',
+    canonicalName: 'đường Trường Sơn',
+    type: 'LOCATION',
+    aliases: ['Đường Trường Sơn', 'đường Trường Sơn', 'tuyến lửa Trường Sơn'],
+  },
+  'loc_duong_mon_ho_chi_minh': {
+    entityId: 'loc_duong_mon_ho_chi_minh',
+    canonicalName: 'đường mòn Hồ Chí Minh',
+    type: 'LOCATION',
+    aliases: ['Đường mòn Hồ Chí Minh', 'đường mòn Hồ Chí Minh', 'tuyến đường Hồ Chí Minh'],
   },
   'loc_giao_chau': {
     entityId: 'loc_giao_chau',
@@ -1225,12 +1491,6 @@ export const HISTORICAL_LOCATION_DICTIONARY: Record<string, HistoricalEntityInfo
     canonicalName: 'Quảng trường Ba Đình',
     type: 'LOCATION',
     aliases: ['Ba Đình'],
-  },
-  'loc_duong_truong_son': {
-    entityId: 'loc_duong_truong_son',
-    canonicalName: 'Đường mòn Hồ Chí Minh',
-    type: 'LOCATION',
-    aliases: ['Đường Trường Sơn', 'đường Trường Sơn'],
   },
   'loc_viet_bac': {
     entityId: 'loc_viet_bac',
@@ -1308,7 +1568,7 @@ export const HISTORICAL_LOCATION_DICTIONARY: Record<string, HistoricalEntityInfo
     entityId: 'loc_tay_do',
     canonicalName: 'Tây Đô',
     type: 'LOCATION',
-    aliases: [],
+    aliases: ['đất Tây Đô', 'Tây Đô', 'thành Tây Đô'],
   },
   'loc_dien_bien_phu': {
     entityId: 'loc_dien_bien_phu',
@@ -1574,12 +1834,6 @@ export const HISTORICAL_LOCATION_DICTIONARY: Record<string, HistoricalEntityInfo
     type: 'LOCATION',
     aliases: ['phòng tuyến Tam Điệp'],
   },
-  'loc_kinh_thanh_hue': {
-    entityId: 'loc_kinh_thanh_hue',
-    canonicalName: 'Kinh thành Huế',
-    type: 'LOCATION',
-    aliases: ['Hoàng thành Huế'],
-  },
   'loc_song_huong': {
     entityId: 'loc_song_huong',
     canonicalName: 'sông Hương',
@@ -1768,9 +2022,9 @@ export const HISTORICAL_LOCATION_DICTIONARY: Record<string, HistoricalEntityInfo
   },
   'loc_ba_dinh': {
     entityId: 'loc_ba_dinh',
-    canonicalName: 'Ba Đình',
+    canonicalName: 'Quảng trường Ba Đình',
     type: 'LOCATION',
-    aliases: ['Quảng trường Ba Đình', 'quảng trường Ba Đình'],
+    aliases: ['Quảng trường Ba Đình', 'quảng trường Ba Đình', 'quận Ba Đình', 'Ba Đình'],
   },
   'loc_da_trach': {
     entityId: 'loc_da_trach',
@@ -1782,19 +2036,13 @@ export const HISTORICAL_LOCATION_DICTIONARY: Record<string, HistoricalEntityInfo
     entityId: 'loc_can_tho',
     canonicalName: 'Cần Thơ',
     type: 'LOCATION',
-    aliases: ['thành phố Cần Thơ'],
+    aliases: ['thành phố Cần Thơ', 'tỉnh Cần Thơ', 'Cần Thơ'],
   },
   'loc_nha_rong': {
     entityId: 'loc_nha_rong',
     canonicalName: 'bến Nhà Rồng',
     type: 'LOCATION',
     aliases: ['Nhà Rồng', 'Bến Nhà Rồng', 'Bến Cảng Nhà Rồng', 'bến cảng Nhà Rồng'],
-  },
-  'loc_vu_quang': {
-    entityId: 'loc_vu_quang',
-    canonicalName: 'Vũ Quang',
-    type: 'LOCATION',
-    aliases: ['căn cứ Vũ Quang', 'Vụ Quang'],
   },
   'loc_chi_linh': {
     entityId: 'loc_chi_linh',
@@ -1864,13 +2112,13 @@ export function inferEntityTypeFromName(name: string): EntityType {
     return 'EVENT_BATTLE';
   }
   // Archaeology / Historical Sites / Culture / Locations (Check BEFORE generic surnames)
-  if (/(?:^|\s)(văn hóa|di chỉ|khu di tích|di tích|khu mộ|mái đá|hang|sông|núi|ải|thành|đô|trấn|phủ|huyện|tỉnh|làng|xã|đàng|đông kinh|đông quan|thăng long|hà nội|phong châu|mê linh|hát môn|luy lâu|phú xuân|mường thanh|ngọc hồi|đống đa|chi lăng|xương giang|bạch đằng|như nguyệt|cổ loa|tây đô|hoa lư|huế|sài gòn|gia định|điện|lầu|các|cửa|cầu|cung|đồn|bến|cảng|đèo|hồ\s+(?:hoàn\s+kiếm|tây|ba\s+bể|gươm|trúc\s+bạch|kẻ\s+gỗ|dầu\s+tiếng|trị\s+an|thủy\s+điện|nước)|lăng|miếu|đền|chùa|quảng trường|dinh|hoàng thành|kinh thành|cố đô|quần đảo|bán đảo|địa đạo|đường mòn|đoài|xứ|kinh bắc|sơn nam|ái châu|hoan châu|trấn man|bắc hà|nam hà|trung kỳ|bắc kỳ|nam kỳ|thanh hóa|thái bình|quảng ninh|nghệ an|hải phòng|nam định|hải dương|bắc ninh|bắc giang|lạng sơn|cao bằng|hà giang|yên bái|tuyên quang|phú thọ|vĩnh phúc|hà nam|ninh bình|hà tĩnh|quảng bình|quảng trị|quảng nam|đà nẵng|quảng ngãi|bình định|phú yên|khánh hòa|ninh thuận|bình thuận|kon tum|gia lai|đắk lắk|đắk nông|lâm đồng|bình phước|tây ninh|bình dương|đồng nai|bà rịa|long an|tiền giang|bến tre|trà vinh|vĩnh long|đồng tháp|an giang|kiên giang|cần thơ|hậu giang|sóc trăng|bạc liêu|cà mau|điện biên|lai châu|sơn la|hòa bình|lào cai|đông anh|phú điền|đường lâm|tân sở|giao châu|mỏ cày|dinh độc lập|thủy điện|phùng nguyên|đồng đậu|gò mun|sa huỳnh|óc eo|hang xóm trại|mái đá làng vành|mỹ sơn|ba thê|việt nam)(?:$|\s)/i.test(norm)) {
+  if (/(?:^|\s)(văn hóa|di chỉ|khu di tích|di tích|khu mộ|mái đá|hang|sông|núi|ải|thành|đô|trấn|phủ|huyện|tỉnh|làng|xã|đàng|đông kinh|đông quan|thăng long|hà nội|phong châu|mê linh|hát môn|luy lâu|phú xuân|mường thanh|ngọc hồi|đống đa|chi lăng|xương giang|bạch đằng|như nguyệt|cổ loa|tây đô|hoa lư|huế|sài gòn|gia định|điện|lầu|các|cửa|cầu|cung|đồn|bến|cảng|đèo|hồ\s+(?:hoàn\s+kiếm|tây|ba\s+bể|gươm|trúc\s+bạch|kẻ\s+gỗ|dầu\s+tiếng|trị\s+an|thủy\s+điện|nước)|lăng|miếu|đền|chùa|quảng trường|dinh|hoàng thành|kinh thành|cố đô|quần đảo|bán đảo|địa đạo|đường mòn|đoài|xứ|kinh bắc|sơn nam|ái châu|hoan châu|trấn man|bắc hà|nam hà|trung kỳ|bắc kỳ|nam kỳ|thanh hóa|thái bình|quảng ninh|nghệ an|hải phòng|nam định|hải dương|bắc ninh|bắc giang|lạng sơn|cao bằng|hà giang|yên bái|tuyên quang|phú thọ|vĩnh phúc|hà nam|ninh bình|hà tĩnh|quảng bình|quảng trị|quảng nam|đà nẵng|quảng ngãi|bình định|phú yên|khánh hòa|ninh thuận|bình thuận|kon tum|gia lai|đắk lắk|đắk nông|lâm đồng|bình phước|tây ninh|bình dương|đồng nai|bà rịa|long an|tiền giang|bến tre|trà vinh|vĩnh long|đồng tháp|an giang|kiên giang|cần thơ|hậu giang|sóc trăng|bạc liêu|cà mau|điện biên|lai châu|sơn la|hòa bình|lào cai|đông anh|phú điền|đường lâm|tân sở|giao châu|mỏ cày|dinh độc lập|thủy điện|phùng nguyên|đồng đậu|gò mun|sa huỳnh|óc eo|hang xóm trại|mái đá làng vành|mỹ sơn|ba thê|việt nam|nông cống)(?:$|\s)/i.test(norm)) {
     return 'LOCATION';
   }
   if (/(?:^|\s)(ngọc ấn|kim ấn|quốc ấn|ấn tín|văn bia|tấm bia|sắc phong|trống đồng|vũ khí|bảo vật|thần khí|nỏ thần|nỏ|xe tăng|thông bảo|súng thần cơ|thái bình hưng bảo)(?:$|\s)/i.test(norm)) {
     return 'ARTIFACT';
   }
-  if (/(?:^|\s)(bình ngô|hịch tướng sĩ|hịch|chiếu|đại cáo|tuyên ngôn|bản kỷ|tác phẩm|bộ luật|luật hồng đức|hình luật|hiệp định|toàn thư|cương mục|thực lục|tiêu án|chí lược|văn tập|bài thơ|hòa ước|sớ|lời kêu gọi|hoàng lê nhất thống chí|lĩnh nam chích quái|thiền uyển tập anh|truyện kiều)(?:$|\s)/i.test(norm)) {
+  if (/(?:^|\s)(bình ngô|hịch tướng sĩ|hịch|chiếu|đại cáo|tuyên ngôn|bản kỷ|tác phẩm|bộ luật|luật hồng đức|hình luật|hình thư|hiệp định|toàn thư|cương mục|thực lục|tiêu án|chí lược|văn tập|bài thơ|hòa ước|sớ|lời kêu gọi|hoàng lê nhất thống chí|lĩnh nam chích quái|thiền uyển tập anh|truyện kiều|đề cương|thi nhân|tình già)(?:$|\s)/i.test(norm)) {
     return 'DOCUMENT_CULTURE';
   }
   if (/(?:^|\s)(triều|nhà|thời|kỷ|kỷ nguyên|hồng bàng|văn lang|âu lạc|vạn xuân|đại cồ việt|đại việt|đại nam|đại ngu|đông sơn|xiêm la|đông ngô|đông hán|tiền lý|lê sơ|việt nam dân chủ cộng hòa|đàng trong|đàng ngoài|chúa trịnh|chúa nguyễn)(?:$|\s)/i.test(norm)) {
@@ -1905,14 +2153,17 @@ export const DYNASTY_DICTIONARY: Record<string, { entityId: string; canonicalNam
   'dynasty_dai_co_viet': { entityId: 'dynasty_dai_co_viet', canonicalName: 'Đại Cồ Việt', aliases: ['nhà nước Đại Cồ Việt', 'Đại Cồ Việt'] },
   'dynasty_dai_viet': { entityId: 'dynasty_dai_viet', canonicalName: 'Đại Việt', aliases: ['nước Đại Việt', 'Đại Việt'] },
   'dynasty_dai_nam': { entityId: 'dynasty_dai_nam', canonicalName: 'Đại Nam', aliases: ['nước Đại Nam', 'Đại Nam'] },
-  'dynasty_tay_son': { entityId: 'dynasty_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn', 'triều đại Tây Sơn'] },
-  'dynasty_nha_tay_son': { entityId: 'dynasty_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn', 'triều đại Tây Sơn'] },
+  'dynasty_tay_son': { entityId: 'dynasty_nha_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn', 'triều đại Tây Sơn'] },
+  'dynasty_nha_tay_son': { entityId: 'dynasty_nha_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn', 'triều đại Tây Sơn'] },
   'dynasty_xiem_la': { entityId: 'dynasty_xiem_la', canonicalName: 'Xiêm La', aliases: ['quân Xiêm', 'Xiêm'] },
   'dynasty_dong_han': { entityId: 'dynasty_dong_han', canonicalName: 'nhà Đông Hán', aliases: ['Đông Hán', 'quân Đông Hán', 'triều Đông Hán'] },
   'dynasty_nha_dong_han': { entityId: 'dynasty_dong_han', canonicalName: 'nhà Đông Hán', aliases: ['Đông Hán', 'quân Đông Hán', 'triều Đông Hán'] },
   'dynasty_dong_ngo': { entityId: 'dynasty_dong_ngo', canonicalName: 'Đông Ngô', aliases: ['quân Đông Ngô', 'nhà Đông Ngô', 'triều Đông Ngô'] },
   'dynasty_nha_tien_ly': { entityId: 'dynasty_nha_tien_ly', canonicalName: 'nhà Tiền Lý', aliases: ['triều Tiền Lý', 'Tiền Lý'] },
   'dynasty_nha_le_so': { entityId: 'dynasty_nha_le_so', canonicalName: 'nhà Lê Sơ', aliases: ['triều Lê Sơ', 'Lê Sơ', 'triều Hậu Lê (Lê sơ)', 'Hậu Lê', 'nhà Hậu Lê'] },
+  'dynasty_le_trung_hung': { entityId: 'dynasty_le_trung_hung', canonicalName: 'Lê Trung Hưng', aliases: ['thời Lê Trung Hưng', 'nhà Lê Trung Hưng', 'triều Lê Trung Hưng', 'triều đình Lê Trung Hưng', 'Lê Trung Hưng', 'thời kỳ Lê Trung Hưng'] },
+  'dynasty_nha_hau_le': { entityId: 'dynasty_nha_le_so', canonicalName: 'nhà Hậu Lê', aliases: ['Hậu Lê', 'nhà Hậu Lê', 'triều Hậu Lê', 'thời Hậu Lê'] },
+  'dynasty_nha_le': { entityId: 'dynasty_nha_le_so', canonicalName: 'nhà Lê', aliases: ['triều Lê', 'thời Lê', 'nhà Lê'] },
   'dynasty_viet_nam_dan_chu_cong_hoa': { entityId: 'dynasty_viet_nam_dan_chu_cong_hoa', canonicalName: 'Việt Nam Dân chủ Cộng hòa', aliases: [] },
   'dynasty_nha_duong': { entityId: 'dynasty_nha_duong', canonicalName: 'nhà Đường', aliases: ['triều Đường', 'Đường'] },
   'dynasty_nha_dinh': { entityId: 'dynasty_nha_dinh', canonicalName: 'nhà Đinh', aliases: ['triều Đinh', 'thời Đinh', 'Nhà Đinh', 'triều đại nhà Đinh'] },
@@ -1962,6 +2213,8 @@ export const CORE_ORGS: Array<{ id: string; name: string; aliases: string[] }> =
   { id: 'org_tay_ban_nha', name: 'Tây Ban Nha', aliases: ['liên quân Tây Ban Nha', 'quân Tây Ban Nha'] },
   { id: 'org_chinh_phu_cach_mang_lam_thoi', name: 'Chính phủ Cách mạng lâm thời Cộng hòa miền Nam Việt Nam', aliases: ['Chính phủ Cách mạng lâm thời', 'Chính phủ Cách mạng Lâm thời Cộng hòa miền Nam Việt Nam', 'Chính phủ lâm thời'] },
   { id: 'org_ngo_gia_van_phai', name: 'Ngô gia văn phái', aliases: ['Ngô Gia Văn Phái', 'nhóm Ngô gia văn phái'] },
+  { id: 'org_hoi_van_hoa_cuu_quoc', name: 'Hội Văn hóa Cứu quốc Việt Nam', aliases: ['Hội Văn hóa Cứu quốc', 'Hội Văn Hóa Cứu Quốc', 'org_hoi_van_hoa_cuu_quoc_viet_nam'] },
+  { id: 'org_tu_luc_van_doan', name: 'Tự Lực Văn Đoàn', aliases: ['Tự Lực văn đoàn', 'nhóm Tự Lực Văn Đoàn', 'Tự Lực Văn đoàn'] },
 ];
 
 export const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[] }> = [
@@ -2009,12 +2262,15 @@ export const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[] }>
   { id: 'event_30_thang_4_1975', name: 'Ngày 30 tháng 4 năm 1975', aliases: ['30 tháng 4 năm 1975', '30/4/1975', 'ngày 30 tháng 4 năm 1975'] },
   { id: 'event_duong_day_500kv', name: 'Đường dây 500kV Bắc - Nam', aliases: ['Đường dây 500 kV Bắc - Nam', 'Đường dây 500kV', 'đường dây 500kV Bắc - Nam', 'đường dây 500kV'] },
   { id: 'event_doi_moi', name: 'Công cuộc Đổi mới', aliases: ['Đổi mới', 'thời kỳ Đổi mới', 'công cuộc Đổi mới'] },
+  { id: 'event_khoa_thi_tam_khoi', name: 'Khoa thi Tam khôi', aliases: ['khoa thi Tam khôi', 'Tam khôi', 'khoa thi Tam Khôi', 'event_tam_khoi'] },
+  { id: 'event_khoa_thi_thai_hoc_sinh', name: 'Khoa thi Thái học sinh', aliases: ['khoa thi Thái học sinh'] },
+  { id: 'event_khoa_thi_1075', name: 'Khoa thi Minh kinh bác học năm 1075', aliases: ['khoa thi Minh kinh bác học', 'khoa thi năm 1075'] },
 ];
 
 export const CORE_ARTIFACTS: Array<{ id: string; name: string; aliases: string[] }> = [
   { id: 'artifact_trong_dong_dong_son', name: 'Trống đồng Đông Sơn', aliases: ['Trống đồng Ngọc Lũ', 'Trống đồng Sông Đà', 'Trống đồng Hoàng Hạ'] },
   { id: 'artifact_no_lien_chau', name: 'Nỏ Liên Châu', aliases: ['Nỏ thần', 'Nỏ thần Liên Châu'] },
-  { id: 'artifact_thong_bao_hoi_sao', name: 'Thông Bảo Hội Sao', aliases: ['tiền Thông Bảo Hội Sao'] },
+  { id: 'artifact_thong_bao_hoi_sao', name: 'Thông Bảo Hội Sao', aliases: ['tiền Thông Bảo Hội Sao', 'Thông bảo hội sao', 'tiền giấy Thông bảo hội sao', 'tiền giấy'] },
   { id: 'artifact_xe_tang_390', name: 'Xe tăng 390', aliases: [] },
   { id: 'artifact_thai_binh_hung_bao', name: 'Thái Bình Hưng Bảo', aliases: ['tiền Thái Bình Hưng Bảo', 'tiền Thái Bình', 'Thái Bình hưng bảo', 'artifact_tien_thai_binh'] },
   { id: 'artifact_sung_than_co', name: 'súng Thần cơ Thương pháo', aliases: ['Súng Thần Cơ', 'súng Thần cơ'] },
@@ -2027,6 +2283,7 @@ export const CORE_DOCS: Array<{ id: string; name: string; aliases: string[] }> =
   { id: 'doc_binh_ngo_dai_cao', name: 'Bình Ngô đại cáo', aliases: [] },
   { id: 'doc_tuyen_ngon_doc_lap', name: 'Tuyên ngôn Độc lập', aliases: ['Bản Tuyên ngôn Độc lập', 'Bản Tuyên ngôn độc lập'] },
   { id: 'doc_nam_quoc_son_ha', name: 'Nam quốc sơn hà', aliases: [] },
+  { id: 'doc_hinh_thu', name: 'Hình thư', aliases: ['sách Hình thư', 'luật Hình thư', 'Hình thư thời Lý', 'doc_hinh_thu'] },
   { id: 'doc_luat_hong_duc', name: 'Luật Hồng Đức', aliases: ['Quốc triều hình luật', 'doc_quoc_trieu_hinh_luat', 'bộ luật Hồng Đức', 'Bộ luật Hồng Đức', 'Bộ Luật Hồng Đức'] },
   { id: 'doc_dai_viet_su_ky', name: 'Đại Việt Sử Ký', aliases: ['Đại Việt sử ký', 'sách Đại Việt Sử Ký', 'bộ Đại Việt sử ký', 'doc_dai_viet_su_ky'] },
   { id: 'doc_dai_viet_su_ky_toan_thu', name: 'Đại Việt sử ký toàn thư', aliases: ['Toàn Thư', 'Đại Việt Sử Ký Toàn Thư'] },
@@ -2037,7 +2294,7 @@ export const CORE_DOCS: Array<{ id: string; name: string; aliases: string[] }> =
   { id: 'doc_hong_duc_ban_do', name: 'Hồng Đức bản đồ', aliases: ['bản đồ Hồng Đức'] },
   { id: 'doc_chieu_cau_hien', name: 'Chiếu Cầu Hiền', aliases: ['Chiếu cầu hiền', 'Chiếu khuyến học'] },
   { id: 'doc_chieu_can_vuong', name: 'Chiếu Cần Vương', aliases: ['chiếu Cần Vương', 'Dụ Cần Vương'] },
-  { id: 'doc_hoang_trieu_luat_le', name: 'Hoàng triều luật lệ', aliases: ['Luật Gia Long', 'bộ luật Gia Long', 'doc_luat_gia_long', 'Hoàng Việt luật lệ', 'bộ luật Hoàng Việt luật lệ'] },
+  { id: 'doc_hoang_trieu_luat_le', name: 'Hoàng triều luật lệ', aliases: ['Luật Gia Long', 'bộ luật Gia Long', 'doc_luat_gia_long', 'Hoàng Việt luật lệ', 'bộ luật Hoàng Việt luật lệ', 'doc_hoang_viet_luat_le'] },
   { id: 'doc_hoa_uoc_harmand', name: 'Hòa ước Quý Mùi', aliases: ['Hòa ước Harmand', 'Hòa ước Harmand 1883', 'Hòa ước Quý Mùi 1883'] },
   { id: 'doc_hiep_dinh_paris_1973', name: 'Hiệp định Paris năm 1973', aliases: ['Hiệp định Paris', 'Hiệp định Paris 1973'] },
   { id: 'doc_bia_tien_si_1442', name: 'Bia Tiến sĩ khoa Nhâm Tuất 1442', aliases: ['Bia Tiến sĩ', 'Bia Tiến sĩ khoa Nhâm Tuất'] },
@@ -2054,6 +2311,9 @@ export const CORE_DOCS: Array<{ id: string; name: string; aliases: string[] }> =
   { id: 'doc_binh_ngo_sach', name: 'Bình Ngô sách', aliases: ['Bình Ngô Sách', 'doc_binh_ngo_sach'] },
   { id: 'doc_lam_son_thuc_luc', name: 'Lam Sơn thực lục', aliases: ['Lam Sơn Thực Lục', 'tác phẩm Lam Sơn thực lục', 'doc_lam_son_thuc_luc'] },
   { id: 'doc_truyen_kieu', name: 'Truyện Kiều', aliases: ['Đoạn trường tân thanh', 'truyện Kiều', 'doc_truyen_kieu'] },
+  { id: 'doc_de_cuong_van_hoa_1943', name: 'Đề cương Văn hóa Việt Nam', aliases: ['Đề cương Văn hóa Việt Nam 1943', 'Đề cương Văn hóa', 'Đề cương văn hóa 1943', 'Đề cương văn hóa'] },
+  { id: 'doc_thi_nhan_viet_nam', name: 'Thi nhân Việt Nam', aliases: ['cuốn Thi nhân Việt Nam', 'sách Thi nhân Việt Nam'] },
+  { id: 'doc_tinh_gia', name: 'Tình già', aliases: ['bài thơ Tình già'] },
 ];
 
 // Pre-computed O(1) In-Memory Lookup Index for Entity Resolution
@@ -2093,16 +2353,17 @@ function initFastEntityMap(): void {
     }
   }
 
+  const AMBIGUOUS_SINGLE_WORD_LOCS = new Set(['tiền', 'hậu', 'đà', 'hồng', 'mã', 'cả', 'lô', 'thao', 'đáy']);
   for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
     register(loc.canonicalName, loc.entityId, loc.canonicalName);
     const stripped = loc.canonicalName.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|huyện|làng|căn cứ)\s+/i, '');
-    if (stripped !== loc.canonicalName && stripped.toLowerCase() !== 'nhà hồ' && stripped.toLowerCase() !== 'huế') {
+    if (stripped !== loc.canonicalName && stripped.toLowerCase() !== 'nhà hồ' && stripped.toLowerCase() !== 'huế' && !AMBIGUOUS_SINGLE_WORD_LOCS.has(stripped.toLowerCase())) {
       register(stripped, loc.entityId, loc.canonicalName);
     }
     for (const alias of loc.aliases) {
       register(alias, loc.entityId, loc.canonicalName);
       const strippedAlias = alias.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|huyện|làng|căn cứ)\s+/i, '');
-      if (strippedAlias !== alias && strippedAlias.toLowerCase() !== 'nhà hồ' && strippedAlias.toLowerCase() !== 'huế') {
+      if (strippedAlias !== alias && strippedAlias.toLowerCase() !== 'nhà hồ' && strippedAlias.toLowerCase() !== 'huế' && !AMBIGUOUS_SINGLE_WORD_LOCS.has(strippedAlias.toLowerCase())) {
         register(strippedAlias, loc.entityId, loc.canonicalName);
       }
     }
@@ -2191,6 +2452,42 @@ function initFastEntityMap(): void {
   register('loc_dam_da_trach', 'loc_da_trach', 'Dạ Trạch');
   register('event_tran_van_don', 'event_van_don', 'Trận Vân Đồn');
   register('event_tran_bo_co', 'event_bo_co', 'Trận Bô Cô');
+  register('Lê Trung Hưng', 'dynasty_le_trung_hung', 'Lê Trung Hưng');
+  register('triều đình Lê Trung Hưng', 'dynasty_le_trung_hung', 'Lê Trung Hưng');
+  register('thời Lê Trung Hưng', 'dynasty_le_trung_hung', 'Lê Trung Hưng');
+  register('dynasty_le_trung_hung', 'dynasty_le_trung_hung', 'Lê Trung Hưng');
+  register('Hà Tây', 'loc_ha_tay', 'Hà Tây');
+  register('tỉnh Hà Tây', 'loc_ha_tay', 'Hà Tây');
+  register('loc_ha_tay', 'loc_ha_tay', 'Hà Tây');
+  register('Ba Đình', 'loc_ba_dinh', 'Quảng trường Ba Đình');
+  register('Quảng trường Ba Đình', 'loc_ba_dinh', 'Quảng trường Ba Đình');
+  register('quảng trường Ba Đình', 'loc_ba_dinh', 'Quảng trường Ba Đình');
+  register('loc_ba_dinh', 'loc_ba_dinh', 'Quảng trường Ba Đình');
+  register('Phong Khê', 'loc_phong_khe', 'Phong Khê');
+  register('đất Phong Khê', 'loc_phong_khe', 'Phong Khê');
+  register('loc_phong_khe', 'loc_phong_khe', 'Phong Khê');
+  register('Tây Đô', 'loc_tay_do', 'Tây Đô');
+  register('đất Tây Đô', 'loc_tay_do', 'Tây Đô');
+  register('loc_tay_do', 'loc_tay_do', 'Tây Đô');
+  register('Cần Thơ', 'loc_can_tho', 'Cần Thơ');
+  register('thành phố Cần Thơ', 'loc_can_tho', 'Cần Thơ');
+  register('loc_can_tho', 'loc_can_tho', 'Cần Thơ');
+  register('Văn Miếu', 'loc_van_mieu', 'Văn Miếu');
+  register('Văn Miếu Thăng Long', 'loc_van_mieu', 'Văn Miếu');
+  register('loc_van_mieu', 'loc_van_mieu', 'Văn Miếu');
+  register('Thế Miếu', 'loc_the_mieu', 'Thế Miếu');
+  register('sân Thế Miếu', 'loc_the_mieu', 'Thế Miếu');
+  register('loc_the_mieu', 'loc_the_mieu', 'Thế Miếu');
+  register('lũy Thầy', 'loc_luy_thay', 'lũy Thầy');
+  register('Lũy Thầy', 'loc_luy_thay', 'lũy Thầy');
+  register('loc_luy_thay', 'loc_luy_thay', 'lũy Thầy');
+  register('person_bo_cai_dai_vuong', 'person_phung_hung', 'Phùng Hưng');
+  register('Bố Cái Đại Vương', 'person_phung_hung', 'Phùng Hưng');
+  register('Bình Ngô sách', 'doc_binh_ngo_sach', 'Bình Ngô sách');
+  register('doc_binh_ngo_sach', 'doc_binh_ngo_sach', 'Bình Ngô sách');
+  register('nghĩa quân Lam Sơn', 'org_nghia_quan_lam_son', 'nghĩa quân Lam Sơn');
+  register('Nghĩa quân Lam Sơn', 'org_nghia_quan_lam_son', 'nghĩa quân Lam Sơn');
+  register('org_nghia_quan_lam_son', 'org_nghia_quan_lam_son', 'nghĩa quân Lam Sơn');
   register('org_dang_cong_san_viet_nam', 'org_dang_cong_san_vn', 'Đảng Cộng sản Việt Nam');
   register('Việt Nam', 'dynasty_viet_nam', 'Việt Nam');
   register('Triều Tiên', 'loc_trieu_tien', 'Triều Tiên');
@@ -2198,10 +2495,10 @@ function initFastEntityMap(): void {
   register('Đại La', 'loc_thang_long', 'Thăng Long');
   register('loc_dai_la', 'loc_thang_long', 'Thăng Long');
   register('phủ Thừa Thiên', 'loc_thua_thien', 'Thừa Thiên');
-  register('Thừa Thiên', 'loc_thua_thien', 'Thừa Thiên');
-  register('loc_phu_thua_thien', 'loc_thua_thien', 'Thừa Thiên');
-  register('Thủy điện Hòa Bình', 'loc_hoa_binh', 'Hòa Bình');
-  register('loc_thuy_dien_hoa_binh', 'loc_hoa_binh', 'Hòa Bình');
+  register('Thủy điện Hòa Bình', 'loc_thuy_dien_hoa_binh', 'Thủy điện Hòa Bình');
+  register('loc_thuy_dien_hoa_binh', 'loc_thuy_dien_hoa_binh', 'Thủy điện Hòa Bình');
+  register('Nhà máy Thủy điện Hòa Bình', 'loc_thuy_dien_hoa_binh', 'Thủy điện Hòa Bình');
+  register('Nhà máy thủy điện Hòa Bình', 'loc_thuy_dien_hoa_binh', 'Thủy điện Hòa Bình');
   register('Phong trào Đông Du', 'org_dong_du', 'Phong trào Đông Du');
   register('phong trào Đông Du', 'org_dong_du', 'Phong trào Đông Du');
   register('Đông Du', 'org_dong_du', 'Phong trào Đông Du');
@@ -2233,22 +2530,27 @@ function initFastEntityMap(): void {
   register('Vũ Quang', 'loc_vu_quang', 'Vũ Quang');
   register('căn cứ Vũ Quang', 'loc_vu_quang', 'Vũ Quang');
   register('loc_can_cu_vu_quang', 'loc_vu_quang', 'Vũ Quang');
-  register('Đường Trường Sơn', 'loc_duong_mon_ho_chi_minh', 'Đường mòn Hồ Chí Minh');
-  register('đường Trường Sơn', 'loc_duong_mon_ho_chi_minh', 'Đường mòn Hồ Chí Minh');
-  register('loc_duong_truong_son', 'loc_duong_mon_ho_chi_minh', 'Đường mòn Hồ Chí Minh');
-  register('Đường mòn Hồ Chí Minh', 'loc_duong_mon_ho_chi_minh', 'Đường mòn Hồ Chí Minh');
+  register('Đường Trường Sơn', 'loc_duong_truong_son', 'đường Trường Sơn');
+  register('đường Trường Sơn', 'loc_duong_truong_son', 'đường Trường Sơn');
+  register('loc_duong_truong_son', 'loc_duong_truong_son', 'đường Trường Sơn');
+  register('Đường mòn Hồ Chí Minh', 'loc_duong_mon_ho_chi_minh', 'đường mòn Hồ Chí Minh');
+  register('đường mòn Hồ Chí Minh', 'loc_duong_mon_ho_chi_minh', 'đường mòn Hồ Chí Minh');
+  register('loc_duong_mon_ho_chi_minh', 'loc_duong_mon_ho_chi_minh', 'đường mòn Hồ Chí Minh');
   register('loc_thanh_tay_do', 'loc_thanh_nha_ho', 'Thành nhà Hồ');
   register('loc_co_do_hoa_lu', 'loc_hoa_lu', 'Hoa Lư');
   register('loc_thanh_hoa_lu', 'loc_hoa_lu', 'Hoa Lư');
-  register('loc_ha_noi', 'loc_thang_long', 'Thăng Long');
-  register('Hà Nội', 'loc_thang_long', 'Thăng Long');
-  register('thành phố Hà Nội', 'loc_thang_long', 'Thăng Long');
-  register('Thành phố Hà Nội', 'loc_thang_long', 'Thăng Long');
-  register('loc_dong_kinh', 'loc_thang_long', 'Thăng Long');
+  register('cố đô Hoa Lư', 'loc_hoa_lu', 'Hoa Lư');
+  register('loc_ha_noi', 'loc_ha_noi', 'Hà Nội');
+  register('Hà Nội', 'loc_ha_noi', 'Hà Nội');
+  register('thành phố Hà Nội', 'loc_ha_noi', 'Hà Nội');
+  register('Thành phố Hà Nội', 'loc_ha_noi', 'Hà Nội');
+  register('loc_dong_kinh', 'loc_dong_kinh', 'Đông Kinh');
   register('loc_dong_do', 'loc_thang_long', 'Thăng Long');
-  register('loc_thanh_co_loa', 'loc_co_loa', 'Cổ Loa');
+  register('loc_co_loa', 'loc_thanh_co_loa', 'thành Cổ Loa');
+  register('loc_thanh_co_loa', 'loc_thanh_co_loa', 'thành Cổ Loa');
   register('person_thuc_phan', 'person_an_duong_vuong', 'An Dương Vương');
-  register('person_le_loi', 'person_le_thai_to', 'Lê Thái Tổ');
+  register('person_le_thai_to', 'person_le_loi', 'Lê Lợi');
+  register('Lê Thái Tổ', 'person_le_loi', 'Lê Lợi');
   register('person_nguyen_hue', 'person_quang_trung', 'Quang Trung');
   register('person_nguyen_anh', 'person_gia_long', 'Gia Long');
   register('person_tran_quoc_tuan', 'person_tran_hung_dao', 'Trần Hưng Đạo');
@@ -2267,19 +2569,84 @@ function initFastEntityMap(): void {
   register('Loa Thành', 'loc_thanh_co_loa', 'thành Cổ Loa');
   register('loc_loa_thanh', 'loc_thanh_co_loa', 'thành Cổ Loa');
   register('thành Loa', 'loc_thanh_co_loa', 'thành Cổ Loa');
-  register('Nữ Vương', 'person_hai_ba_trung', 'Hai Bà Trưng');
   register('Trưng Nữ Vương', 'person_hai_ba_trung', 'Hai Bà Trưng');
   register('Vạn Thắng Vương', 'person_dinh_tien_hoang', 'Đinh Tiên Hoàng');
   register('Hưng Đạo Đại Vương', 'person_tran_hung_dao', 'Trần Hưng Đạo');
-  register('Bình Định Vương', 'person_le_loi', 'Lê Thái Tổ');
+  register('Bình Định Vương', 'person_le_loi', 'Lê Lợi');
   register('Bắc Bình Vương', 'person_quang_trung', 'Quang Trung');
-  register('Vị thủ lĩnh Cần Vương', 'person_phan_dinh_phung', 'Phan Đình Phùng');
-  register('Tổng Tư lệnh', 'person_vo_nguyen_giap', 'Võ Nguyên Giáp');
+  register('dynasty_tay_son', 'dynasty_nha_tay_son', 'Nhà Tây Sơn');
+  register('Tây Sơn', 'dynasty_nha_tay_son', 'Nhà Tây Sơn');
+  register('nhà Tây Sơn', 'dynasty_nha_tay_son', 'Nhà Tây Sơn');
   register('súng Thần cơ', 'artifact_sung_than_co', 'súng Thần cơ');
   register('sông Như Nguyệt', 'loc_song_nhu_nguyet', 'sông Như Nguyệt');
   register('Sông Như Nguyệt', 'loc_song_nhu_nguyet', 'sông Như Nguyệt');
-  register('Vạn Kiếp', 'loc_van_kiep', 'Vạn Kiếp');
   register('Bộ luật Hồng Đức', 'doc_luat_hong_duc', 'Bộ luật Hồng Đức');
+  register('núi Yên Tử', 'loc_yen_tu', 'Yên Tử');
+  register('loc_nui_yen_tu', 'loc_yen_tu', 'Yên Tử');
+  register('ải Chi Lăng', 'loc_chi_lang', 'Chi Lăng');
+  register('loc_ai_chi_lang', 'loc_chi_lang', 'Chi Lăng');
+  register('Chi Lăng', 'loc_chi_lang', 'Chi Lăng');
+  register('loc_chi_lang', 'loc_chi_lang', 'Chi Lăng');
+  register('event_chien_dich_bien_gioi', 'event_bien_gioi_1950', 'Chiến dịch Biên Giới');
+  register('Chiến dịch Biên Giới', 'event_bien_gioi_1950', 'Chiến dịch Biên Giới');
+  register('Chiến dịch Biên giới', 'event_bien_gioi_1950', 'Chiến dịch Biên Giới');
+  register('event_bien_gioi_1950', 'event_bien_gioi_1950', 'Chiến dịch Biên Giới');
+  register('Đảng Cộng sản Việt Nam', 'org_dang_cong_san_vn', 'Đảng Cộng sản Việt Nam');
+  register('org_dang_cong_san_viet_nam', 'org_dang_cong_san_vn', 'Đảng Cộng sản Việt Nam');
+  register('org_dang_cong_san_vn', 'org_dang_cong_san_vn', 'Đảng Cộng sản Việt Nam');
+  register('doc_binh_ngo_dai_cao', 'doc_binh_ngo', 'Bình Ngô đại cáo');
+  register('doc_binh_ngo', 'doc_binh_ngo', 'Bình Ngô đại cáo');
+  register('Bình Ngô Đại Cáo', 'doc_binh_ngo', 'Bình Ngô đại cáo');
+  register('bài cáo Bình Ngô', 'doc_binh_ngo', 'Bình Ngô đại cáo');
+  register('doc_bo_luat_hong_duc', 'doc_luat_hong_duc', 'Bộ luật Hồng Đức');
+  register('doc_luat_hong_duc', 'doc_luat_hong_duc', 'Bộ luật Hồng Đức');
+  register('Hiệp định Geneva', 'doc_hiep_dinh_geneve_1954', 'Hiệp định Genève 1954');
+  register('Hiệp định Genève', 'doc_hiep_dinh_geneve_1954', 'Hiệp định Genève 1954');
+  register('Hiệp định Genève năm 1954', 'doc_hiep_dinh_geneve_1954', 'Hiệp định Genève 1954');
+  register('doc_hiep_dinh_geneve_1954', 'doc_hiep_dinh_geneve_1954', 'Hiệp định Genève 1954');
+  register('doc_hiep_dinh_paris_1973', 'doc_hiep_dinh_paris', 'Hiệp định Paris 1973');
+  register('Hiệp định Paris năm 1973', 'doc_hiep_dinh_paris', 'Hiệp định Paris 1973');
+  register('Hiệp định Paris', 'doc_hiep_dinh_paris', 'Hiệp định Paris 1973');
+  register('doc_hiep_dinh_paris', 'doc_hiep_dinh_paris', 'Hiệp định Paris 1973');
+  register('Cố đô Hoa Lư', 'loc_hoa_lu', 'Hoa Lư');
+  register('loc_co_do_hoa_lu', 'loc_hoa_lu', 'Hoa Lư');
+  register('loc_hoa_lu', 'loc_hoa_lu', 'Hoa Lư');
+  register('Thành Tây Đô', 'loc_thanh_tay_do', 'Thành Tây Đô');
+  register('loc_thanh_tay_do', 'loc_thanh_tay_do', 'Thành Tây Đô');
+  register('loc_thanh_nha_ho', 'loc_thanh_tay_do', 'Thành Tây Đô');
+  register('tiền Thái Bình Hưng Bảo', 'artifact_tien_thai_binh', 'tiền Thái Bình Hưng Bảo');
+  register('artifact_tien_thai_binh', 'artifact_tien_thai_binh', 'tiền Thái Bình Hưng Bảo');
+  register('súng Thần cơ', 'artifact_sung_than_co', 'súng Thần cơ');
+  register('artifact_sung_than_co', 'artifact_sung_than_co', 'súng Thần cơ');
+  register('Hội Tao Đàn', 'org_hoi_tao_dan', 'Hội Tao Đàn');
+  register('org_hoi_tao_dan', 'org_hoi_tao_dan', 'Hội Tao Đàn');
+  register('Thân Nhân Trung', 'person_than_nhan_trung', 'Thân Nhân Trung');
+  register('person_than_nhan_trung', 'person_than_nhan_trung', 'Thân Nhân Trung');
+  register('Võ Văn Kiệt', 'person_vo_van_kiet', 'Võ Văn Kiệt');
+  register('Thủ tướng Võ Văn Kiệt', 'person_vo_van_kiet', 'Võ Văn Kiệt');
+  register('person_vo_van_kiet', 'person_vo_van_kiet', 'Võ Văn Kiệt');
+  register('Đường dây 500kV Bắc Nam', 'event_duong_day_500kv', 'Đường dây 500kV');
+  register('Đường dây 500kV', 'event_duong_day_500kv', 'Đường dây 500kV');
+  register('event_duong_day_500kv', 'event_duong_day_500kv', 'Đường dây 500kV');
+  register('Binh Thư Yếu Lược', 'doc_binh_thu_yeu_luoc', 'Binh Thư Yếu Lược');
+  register('doc_binh_thu_yeu_luoc', 'doc_binh_thu_yeu_luoc', 'Binh Thư Yếu Lược');
+  register('Hiệp định Thương mại Việt - Mỹ', 'doc_hiep_dinh_bta', 'Hiệp định BTA');
+  register('Hiệp định BTA', 'doc_hiep_dinh_bta', 'Hiệp định BTA');
+  register('doc_hiep_dinh_bta', 'doc_hiep_dinh_bta', 'Hiệp định BTA');
+  register('WTO', 'org_wto', 'Tổ chức Thương mại Thế giới');
+  register('Tổ chức Thương mại Thế giới', 'org_wto', 'Tổ chức Thương mại Thế giới');
+  register('Tổ chức Thương mại Thế giới WTO', 'org_wto', 'Tổ chức Thương mại Thế giới');
+  register('org_wto', 'org_wto', 'Tổ chức Thương mại Thế giới');
+  register('Việt Nam Dân chủ Cộng hòa', 'dynasty_viet_nam_dan_chu_cong_hoa', 'Việt Nam Dân chủ Cộng hòa');
+  register('dynasty_viet_nam_dan_chu_cong_hoa', 'dynasty_viet_nam_dan_chu_cong_hoa', 'Việt Nam Dân chủ Cộng hòa');
+  register('org_viet_nam_dan_chu_cong_hoa', 'dynasty_viet_nam_dan_chu_cong_hoa', 'Việt Nam Dân chủ Cộng hòa');
+  register('Căn cứ Vụ Quang Hà Tĩnh', 'loc_ha_tinh', 'Hà Tĩnh');
+  register('loc_can_cu_vu_quang_ha_tinh', 'loc_ha_tinh', 'Hà Tĩnh');
+  register('Dinh Độc Lập', 'loc_dinh_doc_lap', 'Dinh Độc Lập');
+  register('loc_dinh_doc_lap', 'loc_dinh_doc_lap', 'Dinh Độc Lập');
+  register('Văn Tiến Dũng', 'person_van_tien_dung', 'Văn Tiến Dũng');
+  register('Đại tướng Văn Tiến Dũng', 'person_van_tien_dung', 'Văn Tiến Dũng');
+  register('person_van_tien_dung', 'person_van_tien_dung', 'Văn Tiến Dũng');
 }
 
 initFastEntityMap();

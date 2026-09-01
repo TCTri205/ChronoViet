@@ -43,7 +43,7 @@ describe('Metadata Enricher & Chronology Unit Tests', () => {
       // 1650: Trinh - Nguyen
       expect(findHistoricalEpoch(1650)?.dynastyId).toBe('dynasty_le_trung_hung');
       // 1789: Tay Son
-      expect(findHistoricalEpoch(1789)?.dynastyId).toBe('dynasty_tay_son');
+      expect(findHistoricalEpoch(1789)?.dynastyId).toBe('dynasty_nha_tay_son');
       // 1820: Nguyen
       expect(findHistoricalEpoch(1820)?.dynastyId).toBe('dynasty_nguyen');
       // 1954: Modern

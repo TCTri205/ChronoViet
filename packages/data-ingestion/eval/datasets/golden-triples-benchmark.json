@@ -211,7 +211,7 @@
         "confidence": 1
       },
       {
-        "sourceEntityId": "person_thuc_phan",
+        "sourceEntityId": "person_an_duong_vuong",
         "relationType": "PART_OF",
         "targetEntityId": "dynasty_au_lac",
         "isDirectional": true,
@@ -471,6 +471,14 @@
         "aliases": [],
         "startOffset": 65,
         "endOffset": 73
+      },
+      {
+        "id": "loc_phong_chau",
+        "name": "Phong Châu",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 91,
+        "endOffset": 101
       }
     ],
     "groundTruthTriples": [
@@ -485,6 +493,27 @@
         "sourceEntityId": "person_hung_vuong",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_linh_nam_chich_quai",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_hung_vuong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_phong_chau",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_linh_nam_chich_quai",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_van_lang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_linh_nam_chich_quai",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_phong_chau",
         "isDirectional": true,
         "confidence": 1
       }
@@ -1412,6 +1441,34 @@
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_ly_thai_to",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hoa_lu",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_chieu_doi_do",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hoa_lu",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_chieu_doi_do",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_chieu_doi_do",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_ly",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Ly Thai To moving capital to Thang Long"
@@ -1446,6 +1503,14 @@
         "aliases": [],
         "startOffset": 73,
         "endOffset": 82
+      },
+      {
+        "id": "loc_song_nhu_nguyet",
+        "name": "sông Như Nguyệt",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 48,
+        "endOffset": 63
       }
     ],
     "groundTruthTriples": [
@@ -1453,6 +1518,13 @@
         "sourceEntityId": "event_phong_tuyen_nhu_nguyet",
         "relationType": "LED_BY",
         "targetEntityId": "person_ly_thuong_kiet",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_phong_tuyen_nhu_nguyet",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_nhu_nguyet",
         "isDirectional": true,
         "confidence": 1
       }
@@ -1501,6 +1573,13 @@
         "sourceEntityId": "doc_nam_quoc_son_ha",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_song_nhu_nguyet",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_ly_thuong_kiet",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_nam_quoc_son_ha",
         "isDirectional": true,
         "confidence": 1
       }
@@ -1738,6 +1817,14 @@
         "endOffset": 75
       },
       {
+        "id": "event_khoa_thi_1075",
+        "name": "khoa thi Minh kinh bác học",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 28,
+        "endOffset": 54
+      },
+      {
         "id": "loc_thang_long",
         "name": "Thăng Long",
         "type": "LOCATION",
@@ -1751,6 +1838,34 @@
         "sourceEntityId": "person_le_van_thinh",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_ly_nhan_tong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoa_thi_1075",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_le_van_thinh",
+        "relationType": "PART_OF",
+        "targetEntityId": "event_khoa_thi_1075",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoa_thi_1075",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_ly_nhan_tong",
         "isDirectional": true,
         "confidence": 1
       }
@@ -1871,6 +1986,13 @@
       {
         "sourceEntityId": "person_tran_hung_dao",
         "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_tran",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_hich_tuong_si",
+        "relationType": "HAPPENED_IN",
         "targetEntityId": "dynasty_nha_tran",
         "isDirectional": true,
         "confidence": 1
@@ -2054,6 +2176,22 @@
         "endOffset": 45
       },
       {
+        "id": "dynasty_nha_tran",
+        "name": "thời Trần",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 46,
+        "endOffset": 55
+      },
+      {
+        "id": "loc_chi_linh",
+        "name": "Chí Linh",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 76,
+        "endOffset": 84
+      },
+      {
         "id": "loc_hai_duong",
         "name": "Hải Dương",
         "type": "LOCATION",
@@ -2064,21 +2202,49 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "loc_van_kiep",
-        "relationType": "SAME_AS_LOCATION",
-        "targetEntityId": "loc_hai_duong",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
         "sourceEntityId": "person_tran_hung_dao",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_van_kiep",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_tran_hung_dao",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_tran",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_van_kiep",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_chi_linh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_chi_linh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hai_duong",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_van_kiep",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_chi_linh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_van_kiep",
+        "relationType": "SAME_AS_LOCATION",
+        "targetEntityId": "loc_hai_duong",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
-    "notes": "Van Kiep corresponds to modern Hai Duong"
+    "notes": "Van Kiep military headquarters in Chi Linh Hai Duong"
   },
   {
     "id": "TC_EP05_006",
@@ -2132,6 +2298,34 @@
         "sourceEntityId": "person_tran_nhan_tong",
         "relationType": "PART_OF",
         "targetEntityId": "dynasty_nha_tran",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_thien_phai_truc_lam",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_tran_nhan_tong",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_tran_nhan_tong",
+        "relationType": "PART_OF",
+        "targetEntityId": "org_thien_phai_truc_lam",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_thien_phai_truc_lam",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_tran",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_thien_phai_truc_lam",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_yen_tu",
         "isDirectional": true,
         "confidence": 1
       }
@@ -2225,7 +2419,7 @@
         "endOffset": 56
       },
       {
-        "id": "loc_nui_yen_tu",
+        "id": "loc_yen_tu",
         "name": "núi Yên Tử",
         "type": "LOCATION",
         "aliases": [],
@@ -2244,7 +2438,7 @@
       {
         "sourceEntityId": "person_tran_nhan_tong",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_nui_yen_tu",
+        "targetEntityId": "loc_yen_tu",
         "isDirectional": true,
         "confidence": 1
       }
@@ -2257,7 +2451,7 @@
     "sourceText": "Trần Quốc Tuấn thống lĩnh quân đội nhà Trần ba lần đánh tan quân xâm lược phương Bắc. #### Chiến Trận",
     "groundTruthEntities": [
       {
-        "id": "person_tran_quoc_tuan",
+        "id": "person_tran_hung_dao",
         "name": "Trần Quốc Tuấn",
         "type": "HISTORICAL_PERSON",
         "aliases": [
@@ -2277,7 +2471,7 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "person_tran_quoc_tuan",
+        "sourceEntityId": "person_tran_hung_dao",
         "relationType": "PART_OF",
         "targetEntityId": "dynasty_nha_tran",
         "isDirectional": true,
@@ -2467,7 +2661,7 @@
     "groundTruthTriples": [
       {
         "sourceEntityId": "loc_thanh_tay_do",
-        "relationType": "SAME_AS_LOCATION",
+        "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_vinh_loc",
         "isDirectional": true,
         "confidence": 1
@@ -2702,7 +2896,7 @@
     "sourceText": "Lê Lợi xưng Bình Định Vương lãnh đạo Khởi nghĩa Lam Sơn tại vùng núi Lam Sơn Thanh Hóa.",
     "groundTruthEntities": [
       {
-        "id": "person_le_thai_to",
+        "id": "person_le_loi",
         "name": "Lê Lợi",
         "type": "HISTORICAL_PERSON",
         "aliases": [
@@ -2741,7 +2935,7 @@
       {
         "sourceEntityId": "event_khoi_nghia_lam_son",
         "relationType": "LED_BY",
-        "targetEntityId": "person_le_thai_to",
+        "targetEntityId": "person_le_loi",
         "isDirectional": true,
         "confidence": 1
       },
@@ -2930,7 +3124,7 @@
         "endOffset": 11
       },
       {
-        "id": "doc_binh_ngo_dai_cao",
+        "id": "doc_binh_ngo",
         "name": "Bình Ngô đại cáo",
         "type": "DOCUMENT_CULTURE",
         "aliases": [],
@@ -2950,12 +3144,12 @@
       {
         "sourceEntityId": "person_nguyen_trai",
         "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_binh_ngo_dai_cao",
+        "targetEntityId": "doc_binh_ngo",
         "isDirectional": true,
         "confidence": 1
       },
       {
-        "sourceEntityId": "doc_binh_ngo_dai_cao",
+        "sourceEntityId": "doc_binh_ngo",
         "relationType": "HAPPENED_IN",
         "targetEntityId": "dynasty_dai_viet",
         "isDirectional": true,
@@ -2978,7 +3172,7 @@
         "endOffset": 14
       },
       {
-        "id": "person_le_thai_to",
+        "id": "person_le_loi",
         "name": "Lê Lợi",
         "type": "HISTORICAL_PERSON",
         "aliases": [],
@@ -3018,7 +3212,7 @@
         "confidence": 1
       },
       {
-        "sourceEntityId": "person_le_thai_to",
+        "sourceEntityId": "person_le_loi",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_lam_son",
         "isDirectional": true,
@@ -3049,7 +3243,7 @@
         "endOffset": 47
       },
       {
-        "id": "person_le_thai_to",
+        "id": "person_le_loi",
         "name": "Lê Thái Tổ",
         "type": "HISTORICAL_PERSON",
         "aliases": [],
@@ -3066,7 +3260,7 @@
         "confidence": 1
       },
       {
-        "sourceEntityId": "person_le_thai_to",
+        "sourceEntityId": "person_le_loi",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_lam_son_thuc_luc",
         "isDirectional": true,
@@ -3146,6 +3340,27 @@
         "targetEntityId": "loc_thanh_hoa",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_trai",
+        "relationType": "PART_OF",
+        "targetEntityId": "event_khoi_nghia_lam_son",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_trai",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thanh_hoa",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_le_loi",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thanh_hoa",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Insurrection leadership and strategist participation"
@@ -3204,7 +3419,7 @@
     "sourceText": "Lê Thái Tổ lên ngôi hoàng đế sáng lập triều đại nhà Lê Sơ và định đô tại Thăng Long.",
     "groundTruthEntities": [
       {
-        "id": "person_le_thai_to",
+        "id": "person_le_loi",
         "name": "Lê Thái Tổ",
         "type": "HISTORICAL_PERSON",
         "aliases": [
@@ -3234,14 +3449,14 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "person_le_thai_to",
+        "sourceEntityId": "person_le_loi",
         "relationType": "PART_OF",
         "targetEntityId": "dynasty_nha_le_so",
         "isDirectional": true,
         "confidence": 1
       },
       {
-        "sourceEntityId": "person_le_thai_to",
+        "sourceEntityId": "person_le_loi",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
@@ -3264,7 +3479,7 @@
         "endOffset": 17
       },
       {
-        "id": "doc_bo_luat_hong_duc",
+        "id": "doc_luat_hong_duc",
         "name": "Bộ luật Hồng Đức",
         "type": "DOCUMENT_CULTURE",
         "aliases": [
@@ -3286,7 +3501,7 @@
       {
         "sourceEntityId": "person_le_thanh_tong",
         "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_bo_luat_hong_duc",
+        "targetEntityId": "doc_luat_hong_duc",
         "isDirectional": true,
         "confidence": 1
       },
@@ -3324,9 +3539,9 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "person_le_loi",
+        "sourceEntityId": "person_le_thai_to",
         "relationType": "ALIAS_OF",
-        "targetEntityId": "person_le_thai_to",
+        "targetEntityId": "person_le_loi",
         "isDirectional": true,
         "confidence": 1
       }
@@ -3339,7 +3554,7 @@
     "sourceText": "Vua Lê Thái Tổ truyền ngôi cho con trai thứ là thái tử Lê Nguyên Long tức vua Lê Thái Tông.",
     "groundTruthEntities": [
       {
-        "id": "person_le_thai_to",
+        "id": "person_le_loi",
         "name": "Lê Thái Tổ",
         "type": "HISTORICAL_PERSON",
         "aliases": [],
@@ -3367,7 +3582,7 @@
       {
         "sourceEntityId": "person_le_thai_tong",
         "relationType": "ROYAL_LINEAGE",
-        "targetEntityId": "person_le_thai_to",
+        "targetEntityId": "person_le_loi",
         "isDirectional": true,
         "confidence": 1
       },
@@ -4115,6 +4330,13 @@
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_quang_trung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Quang Trung at Ngoc Hoi Dong Da battle"
@@ -4347,6 +4569,13 @@
     "groundTruthTriples": [
       {
         "sourceEntityId": "person_ngo_thi_nham",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_tay_son",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_quang_trung",
         "relationType": "PART_OF",
         "targetEntityId": "dynasty_nha_tay_son",
         "isDirectional": true,
@@ -4747,6 +4976,13 @@
         "targetEntityId": "dynasty_nha_nguyen",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_gia_long",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_nguyen",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Nguyen Du authors Truyen Kieu in Nguyen dynasty"
@@ -5041,6 +5277,20 @@
         "targetEntityId": "org_dong_du",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dong_du",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_nhat_ban",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_phan_boi_chau",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_nhat_ban",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Phan Boi Chau founds Dong Du movement"
@@ -5061,7 +5311,7 @@
         "endOffset": 14
       },
       {
-        "id": "org_duy_tan",
+        "id": "org_hoi_duy_tan",
         "name": "Phong trào Duy Tân",
         "type": "ORGANIZATION",
         "aliases": [],
@@ -5073,7 +5323,7 @@
       {
         "sourceEntityId": "person_phan_chau_trinh",
         "relationType": "PART_OF",
-        "targetEntityId": "org_duy_tan",
+        "targetEntityId": "org_hoi_duy_tan",
         "isDirectional": true,
         "confidence": 1
       }
@@ -5122,6 +5372,13 @@
         "sourceEntityId": "event_khoi_nghia_yen_bai",
         "relationType": "LED_BY",
         "targetEntityId": "person_nguyen_thai_hoc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_thai_hoc",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_yen_bai",
         "isDirectional": true,
         "confidence": 1
       }
@@ -5351,6 +5608,13 @@
         "targetEntityId": "person_nguyen_thai_hoc",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoi_nghia_yen_bai",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_yen_bai",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Anti-colonial rebellion leadership"
@@ -5561,7 +5825,7 @@
         "endOffset": 24
       },
       {
-        "id": "event_chien_dich_bien_gioi",
+        "id": "event_bien_gioi_1950",
         "name": "Chiến dịch Biên Giới",
         "type": "EVENT_BATTLE",
         "aliases": [],
@@ -5579,14 +5843,14 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "event_chien_dich_bien_gioi",
+        "sourceEntityId": "event_bien_gioi_1950",
         "relationType": "LED_BY",
         "targetEntityId": "person_vo_nguyen_giap",
         "isDirectional": true,
         "confidence": 1
       },
       {
-        "sourceEntityId": "event_chien_dich_bien_gioi",
+        "sourceEntityId": "event_bien_gioi_1950",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_cao_bang",
         "isDirectional": true,
@@ -5601,7 +5865,7 @@
     "sourceText": "Chính phủ Việt Nam Dân Chủ Cộng Hòa cử phái đoàn tham gia đàm phán ký kết Hiệp định Genève năm 1954.",
     "groundTruthEntities": [
       {
-        "id": "org_viet_nam_dan_chu_cong_hoa",
+        "id": "dynasty_viet_nam_dan_chu_cong_hoa",
         "name": "Việt Nam Dân Chủ Cộng Hòa",
         "type": "ORGANIZATION",
         "aliases": [],
@@ -5619,7 +5883,7 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "org_viet_nam_dan_chu_cong_hoa",
+        "sourceEntityId": "dynasty_viet_nam_dan_chu_cong_hoa",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_hiep_dinh_geneve_1954",
         "isDirectional": true,
@@ -5715,6 +5979,20 @@
         "targetEntityId": "person_vo_nguyen_giap",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dien_bien_phu",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_ho_chi_minh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dien_bien_phu",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dien_bien_phu",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Supreme command and strategic campaign victory"
@@ -5796,6 +6074,13 @@
         "targetEntityId": "loc_sai_gon",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_van_tien_dung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_sai_gon",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Van Tien Dung leads Ho Chi Minh campaign"
@@ -5872,9 +6157,9 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "loc_duong_mon_ho_chi_minh",
+        "sourceEntityId": "loc_duong_truong_son",
         "relationType": "ALIAS_OF",
-        "targetEntityId": "loc_duong_truong_son",
+        "targetEntityId": "loc_duong_mon_ho_chi_minh",
         "isDirectional": true,
         "confidence": 1
       }
@@ -5953,7 +6238,7 @@
         "endOffset": 56
       },
       {
-        "id": "doc_hiep_dinh_paris_1973",
+        "id": "doc_hiep_dinh_paris",
         "name": "Hiệp định Paris năm 1973",
         "type": "DOCUMENT_CULTURE",
         "aliases": [],
@@ -5972,7 +6257,7 @@
       {
         "sourceEntityId": "person_nguyen_thi_binh",
         "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_hiep_dinh_paris_1973",
+        "targetEntityId": "doc_hiep_dinh_paris",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6083,7 +6368,7 @@
     "sourceText": "Tài liệu lưu trữ: Hiệp định Paris năm 1973 ký kết lập lại hòa bình tại Việt Nam.",
     "groundTruthEntities": [
       {
-        "id": "doc_hiep_dinh_paris_1973",
+        "id": "doc_hiep_dinh_paris",
         "name": "Hiệp định Paris năm 1973",
         "type": "DOCUMENT_CULTURE",
         "aliases": [],
@@ -6103,7 +6388,7 @@
       {
         "sourceEntityId": "dynasty_viet_nam",
         "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_hiep_dinh_paris_1973",
+        "targetEntityId": "doc_hiep_dinh_paris",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6132,6 +6417,14 @@
         "endOffset": 56
       },
       {
+        "id": "event_dai_hoi_vi",
+        "name": "Đại hội Đảng lần thứ VI",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 61,
+        "endOffset": 85
+      },
+      {
         "id": "loc_thang_long",
         "name": "Hà Nội",
         "type": "LOCATION",
@@ -6150,6 +6443,27 @@
       },
       {
         "sourceEntityId": "person_nguyen_van_linh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_doi_moi",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dai_hoi_vi",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_nguyen_van_linh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dai_hoi_vi",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
@@ -6220,6 +6534,13 @@
         "targetEntityId": "org_wto",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_wto",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_viet_nam",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Vietnam joins WTO in modern era"
@@ -6286,6 +6607,13 @@
         "targetEntityId": "doc_hiep_dinh_bta",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_hiep_dinh_bta",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_viet_nam",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Vietnam-US BTA Trade Agreement"
@@ -6310,14 +6638,6 @@
         "aliases": [],
         "startOffset": 54,
         "endOffset": 61
-      },
-      {
-        "id": "loc_hoa_binh",
-        "name": "Hòa Bình",
-        "type": "LOCATION",
-        "aliases": [],
-        "startOffset": 18,
-        "endOffset": 26
       }
     ],
     "groundTruthTriples": [
@@ -6329,9 +6649,9 @@
         "confidence": 1
       },
       {
-        "sourceEntityId": "loc_thuy_dien_hoa_binh",
+        "sourceEntityId": "loc_song_da",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_hoa_binh",
+        "targetEntityId": "loc_thuy_dien_hoa_binh",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6344,7 +6664,7 @@
     "sourceText": "Đảng Cộng sản Việt Nam lãnh đạo nhân dân cả nước vượt qua khủng hoảng kinh tế bước vào thời kỳ phát triển.",
     "groundTruthEntities": [
       {
-        "id": "org_dang_cong_san_viet_nam",
+        "id": "org_dang_cong_san_vn",
         "name": "Đảng Cộng sản Việt Nam",
         "type": "ORGANIZATION",
         "aliases": [],
@@ -6362,7 +6682,7 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "org_dang_cong_san_viet_nam",
+        "sourceEntityId": "org_dang_cong_san_vn",
         "relationType": "PART_OF",
         "targetEntityId": "dynasty_viet_nam",
         "isDirectional": true,
@@ -6410,7 +6730,7 @@
         "endOffset": 78
       },
       {
-        "id": "loc_thang_long",
+        "id": "loc_ha_noi",
         "name": "Hà Nội",
         "type": "LOCATION",
         "aliases": [],
@@ -6429,7 +6749,7 @@
       {
         "sourceEntityId": "person_nguyen_van_linh",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long",
+        "targetEntityId": "loc_ha_noi",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6486,6 +6806,14 @@
         "endOffset": 18
       },
       {
+        "id": "loc_phong_khe",
+        "name": "Phong Khê",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 38,
+        "endOffset": 47
+      },
+      {
         "id": "loc_thanh_co_loa",
         "name": "Loa Thành",
         "type": "LOCATION",
@@ -6515,7 +6843,21 @@
       {
         "sourceEntityId": "person_an_duong_vuong",
         "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_phong_khe",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_an_duong_vuong",
+        "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_thanh_co_loa",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_thanh_co_loa",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_phong_khe",
         "isDirectional": true,
         "confidence": 1
       },
@@ -6562,6 +6904,14 @@
         ],
         "startOffset": 101,
         "endOffset": 109
+      },
+      {
+        "id": "loc_hat_mon",
+        "name": "Hát Môn",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 58,
+        "endOffset": 65
       }
     ],
     "groundTruthTriples": [
@@ -6569,6 +6919,20 @@
         "sourceEntityId": "person_hai_ba_trung",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_me_linh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_hai_ba_trung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hat_mon",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_hai_ba_trung",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_hai_ba_trung",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6592,7 +6956,7 @@
         "endOffset": 12
       },
       {
-        "id": "loc_co_do_hoa_lu",
+        "id": "loc_hoa_lu",
         "name": "Hoa Lư",
         "type": "LOCATION",
         "aliases": [],
@@ -6627,7 +6991,7 @@
       {
         "sourceEntityId": "person_dinh_tien_hoang",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_co_do_hoa_lu",
+        "targetEntityId": "loc_hoa_lu",
         "isDirectional": true,
         "confidence": 1
       },
@@ -6705,6 +7069,20 @@
         "targetEntityId": "dynasty_nha_ly",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_ly_thuong_kiet",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_nam_quoc_son_ha",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_nam_quoc_son_ha",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_nhu_nguyet",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Level 5 Co-reference: vị danh tướng -> Lý Thường Kiệt"
@@ -6734,6 +7112,14 @@
         "endOffset": 76
       },
       {
+        "id": "loc_van_kiep",
+        "name": "Vạn Kiếp",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 101,
+        "endOffset": 109
+      },
+      {
         "id": "doc_binh_thu_yeu_luoc",
         "name": "Binh Thư Yếu Lược",
         "type": "DOCUMENT_CULTURE",
@@ -6751,9 +7137,30 @@
         "confidence": 1
       },
       {
+        "sourceEntityId": "person_tran_hung_dao",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_van_kiep",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_tran_hung_dao",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_binh_thu_yeu_luoc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
         "sourceEntityId": "doc_binh_thu_yeu_luoc",
         "relationType": "HAPPENED_IN",
         "targetEntityId": "dynasty_nha_tran",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_binh_thu_yeu_luoc",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_van_kiep",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6818,6 +7225,13 @@
         "confidence": 1
       },
       {
+        "sourceEntityId": "person_ho_nguyen_trung",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_ho",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
         "sourceEntityId": "artifact_sung_than_co",
         "relationType": "HAPPENED_IN",
         "targetEntityId": "dynasty_nha_ho",
@@ -6844,6 +7258,14 @@
         "endOffset": 6
       },
       {
+        "id": "event_khoi_nghia_lam_son",
+        "name": "khởi nghĩa Lam Sơn",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 16,
+        "endOffset": 34
+      },
+      {
         "id": "loc_chi_lang",
         "name": "Chi Lăng",
         "type": "LOCATION",
@@ -6866,9 +7288,26 @@
         "aliases": [],
         "startOffset": 159,
         "endOffset": 170
+      },
+      {
+        "id": "doc_binh_ngo_dai_cao",
+        "name": "bài cáo Bình Ngô",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [
+          "Bình Ngô đại cáo"
+        ],
+        "startOffset": 176,
+        "endOffset": 192
       }
     ],
     "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_khoi_nghia_lam_son",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_le_loi",
+        "isDirectional": true,
+        "confidence": 1
+      },
       {
         "sourceEntityId": "person_le_loi",
         "relationType": "HAPPENED_AT",
@@ -6889,6 +7328,27 @@
         "targetEntityId": "dynasty_nha_le_so",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_trai",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_binh_ngo_dai_cao",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_le_loi",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_binh_ngo_dai_cao",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_binh_ngo_dai_cao",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_le_so",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Level 5 Co-reference: Bình Định Vương -> Lê Lợi"
@@ -6903,7 +7363,8 @@
         "name": "Lê Thánh Tông",
         "type": "HISTORICAL_PERSON",
         "aliases": [
-          "Hoàng đế"
+          "Hoàng đế",
+          "Vua Lê Thánh Tông"
         ],
         "startOffset": 4,
         "endOffset": 17
@@ -6923,13 +7384,42 @@
         "aliases": [],
         "startOffset": 117,
         "endOffset": 132
+      },
+      {
+        "id": "org_hoi_tao_dan",
+        "name": "Hội Tao Đàn",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 97,
+        "endOffset": 108
       }
     ],
     "groundTruthTriples": [
       {
+        "sourceEntityId": "person_le_thanh_tong",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_luat_hong_duc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_hoi_tao_dan",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_le_thanh_tong",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_than_nhan_trung",
+        "relationType": "PART_OF",
+        "targetEntityId": "org_hoi_tao_dan",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
         "sourceEntityId": "doc_luat_hong_duc",
         "relationType": "HAPPENED_IN",
-        "targetEntityId": "person_le_thanh_tong",
+        "targetEntityId": "dynasty_nha_le_so",
         "isDirectional": true,
         "confidence": 1
       }
@@ -7013,6 +7503,14 @@
         "endOffset": 10
       },
       {
+        "id": "loc_nui_ban",
+        "name": "núi Bân",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 33,
+        "endOffset": 40
+      },
+      {
         "id": "dynasty_nha_tay_son",
         "name": "Tây Sơn",
         "type": "DYNASTY_ERA",
@@ -7041,6 +7539,34 @@
       },
       {
         "sourceEntityId": "person_quang_trung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_nui_ban",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_quang_trung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_quan_man_thanh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "dynasty_nha_tay_son",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_quang_trung",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "dynasty_nha_tay_son",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
@@ -7123,6 +7649,22 @@
         "endOffset": 115
       },
       {
+        "id": "event_khoi_nghia_huong_khe",
+        "name": "khởi nghĩa Hương Khê",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 30,
+        "endOffset": 50
+      },
+      {
+        "id": "loc_vu_quang",
+        "name": "Vụ Quang",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 163,
+        "endOffset": 171
+      },
+      {
         "id": "loc_ha_tinh",
         "name": "Hà Tĩnh",
         "type": "LOCATION",
@@ -7133,7 +7675,63 @@
     ],
     "groundTruthTriples": [
       {
+        "sourceEntityId": "event_khoi_nghia_huong_khe",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_phan_dinh_phung",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
         "sourceEntityId": "person_phan_dinh_phung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_vu_quang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_phan_dinh_phung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ha_tinh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_cao_thang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_vu_quang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_cao_thang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ha_tinh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_vu_quang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ha_tinh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_cao_thang",
+        "relationType": "PART_OF",
+        "targetEntityId": "event_khoi_nghia_huong_khe",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_phong_trao_can_vuong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_vu_quang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_phong_trao_can_vuong",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_ha_tinh",
         "isDirectional": true,
@@ -7159,19 +7757,51 @@
         "endOffset": 24
       },
       {
-        "id": "event_chien_dich_dien_bien_phu",
+        "id": "event_dien_bien_phu",
         "name": "Chiến dịch Điện Biên Phủ",
         "type": "EVENT_BATTLE",
-        "aliases": [],
+        "aliases": [
+          "Chiến dịch Điện Biên Phủ",
+          "event_chien_dich_dien_bien_phu"
+        ],
         "startOffset": 43,
         "endOffset": 67
+      },
+      {
+        "id": "loc_muong_phang",
+        "name": "Mường Phăng",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 93,
+        "endOffset": 104
       }
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "event_chien_dich_dien_bien_phu",
+        "sourceEntityId": "event_dien_bien_phu",
         "relationType": "LED_BY",
         "targetEntityId": "person_vo_nguyen_giap",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_vo_nguyen_giap",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_muong_phang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dien_bien_phu",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_muong_phang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_dien_bien_phu",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dien_bien_phu",
         "isDirectional": true,
         "confidence": 1
       }
@@ -7240,6 +7870,20 @@
         "targetEntityId": "loc_sai_gon",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_van_tien_dung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_sai_gon",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_van_tien_dung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dinh_doc_lap",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Level 5 Co-reference: Vị tư lệnh -> Văn Tiến Dũng"
@@ -7259,9 +7903,602 @@
         ],
         "startOffset": 10,
         "endOffset": 21
+      },
+      {
+        "id": "event_duong_day_500kv",
+        "name": "Đường dây 500kV Bắc Nam",
+        "type": "EVENT_BATTLE",
+        "aliases": [],
+        "startOffset": 63,
+        "endOffset": 86
       }
     ],
-    "groundTruthTriples": [],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_duong_day_500kv",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_vo_van_kiet",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
     "notes": "Level 5 Co-reference: người đứng đầu chính phủ -> Võ Văn Kiệt"
+  },
+  {
+    "id": "TC_ENRICH_001_HINH_THU",
+    "epochId": "EPOCH_04",
+    "sourceText": "Năm 1042, vua Lý Thái Tông sai san định luật lệnh làm thành sách Hình thư của Đại Việt và đổi niên hiệu là Minh Đạo.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ly_thai_tong",
+        "name": "Lý Thái Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 14,
+        "endOffset": 26
+      },
+      {
+        "id": "doc_hinh_thu",
+        "name": "Hình thư",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 65,
+        "endOffset": 73
+      },
+      {
+        "id": "dynasty_nha_ly",
+        "name": "Đại Việt",
+        "type": "DYNASTY_ERA",
+        "aliases": [
+          "nhà Lý",
+          "dynasty_dai_viet"
+        ],
+        "startOffset": 78,
+        "endOffset": 86
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_ly_thai_tong",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_ly",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_ly_thai_tong",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_hinh_thu",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_hinh_thu",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_ly",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ly Thai Tong and Hinh Thu legal code"
+  },
+  {
+    "id": "TC_ENRICH_002_TAM_KHOI_NGUYEN_HIEN",
+    "epochId": "EPOCH_05",
+    "sourceText": "Năm 1247, vua Trần Thái Tông mở khoa thi Tam khôi lấy đỗ Trạng nguyên Nguyễn Hiền và Bảng nhãn Lê Văn Hưu.",
+    "groundTruthEntities": [
+      {
+        "id": "person_tran_thai_tong",
+        "name": "Trần Thái Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 14,
+        "endOffset": 28
+      },
+      {
+        "id": "person_nguyen_hien",
+        "name": "Nguyễn Hiền",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 70,
+        "endOffset": 81
+      },
+      {
+        "id": "person_le_van_huu",
+        "name": "Lê Văn Hưu",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 95,
+        "endOffset": 105
+      },
+      {
+        "id": "event_khoa_thi_tam_khoi",
+        "name": "Tam khôi",
+        "type": "EVENT_BATTLE",
+        "aliases": [
+          "khoa thi Tam khôi"
+        ],
+        "startOffset": 41,
+        "endOffset": 49
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "event_khoa_thi_tam_khoi",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_tran_thai_tong",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_hien",
+        "relationType": "PART_OF",
+        "targetEntityId": "event_khoa_thi_tam_khoi",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_le_van_huu",
+        "relationType": "PART_OF",
+        "targetEntityId": "event_khoa_thi_tam_khoi",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Tran Thai Tong examination and Nguyen Hien Trang Nguyen"
+  },
+  {
+    "id": "TC_ENRICH_003_TIEN_GIAY_NHA_HO",
+    "epochId": "EPOCH_06",
+    "sourceText": "Hồ Quý Ly ban hành tiền giấy Thông bảo hội sao năm 1396 và tập trung tiền đồng về kho Ngao Trì tại Thăng Long.",
+    "groundTruthEntities": [
+      {
+        "id": "person_ho_quy_ly",
+        "name": "Hồ Quý Ly",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 9
+      },
+      {
+        "id": "artifact_thong_bao_hoi_sao",
+        "name": "Thông bảo hội sao",
+        "type": "ARTIFACT",
+        "aliases": [
+          "tiền giấy"
+        ],
+        "startOffset": 29,
+        "endOffset": 46
+      },
+      {
+        "id": "loc_thang_long",
+        "name": "Thăng Long",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 99,
+        "endOffset": 109
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_ho_quy_ly",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "artifact_thong_bao_hoi_sao",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Ho Quy Ly and Thong bao hoi sao paper currency"
+  },
+  {
+    "id": "TC_ENRICH_004_LUAT_HONG_DUC",
+    "epochId": "EPOCH_08",
+    "sourceText": "Vua Lê Thánh Tông ban hành bộ Quốc triều hình luật thường gọi là Luật Hồng Đức năm 1483 để củng cố phép nước Đại Việt.",
+    "groundTruthEntities": [
+      {
+        "id": "person_le_thanh_tong",
+        "name": "Lê Thánh Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 4,
+        "endOffset": 17
+      },
+      {
+        "id": "doc_luat_hong_duc",
+        "name": "Quốc triều hình luật",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [
+          "Luật Hồng Đức"
+        ],
+        "startOffset": 30,
+        "endOffset": 50
+      },
+      {
+        "id": "dynasty_nha_le_so",
+        "name": "Đại Việt",
+        "type": "DYNASTY_ERA",
+        "aliases": [
+          "nhà Lê Sơ",
+          "Lê Sơ",
+          "dynasty_dai_viet"
+        ],
+        "startOffset": 109,
+        "endOffset": 117
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_le_thanh_tong",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_le_so",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_le_thanh_tong",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_luat_hong_duc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_luat_hong_duc",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_le_so",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Le Thanh Tong and Hong Duc Code"
+  },
+  {
+    "id": "TC_ENRICH_005_BIA_TIEN_SI_1442",
+    "epochId": "EPOCH_08",
+    "sourceText": "Năm 1484, Lê Thánh Tông khởi xướng dựng bia tiến sĩ tại Văn Miếu Quốc Tử Giám ghi danh các tiến sĩ khoa Nhâm Tuất 1442.",
+    "groundTruthEntities": [
+      {
+        "id": "person_le_thanh_tong",
+        "name": "Lê Thánh Tông",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 10,
+        "endOffset": 23
+      },
+      {
+        "id": "loc_van_mieu",
+        "name": "Văn Miếu",
+        "type": "LOCATION",
+        "aliases": [
+          "Văn Miếu Quốc Tử Giám"
+        ],
+        "startOffset": 56,
+        "endOffset": 64
+      },
+      {
+        "id": "loc_thang_long",
+        "name": "Quốc Tử Giám",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 65,
+        "endOffset": 77
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_le_thanh_tong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_van_mieu",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_le_thanh_tong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_van_mieu",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_le_thanh_tong",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_bia_tien_si_1442",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_bia_tien_si_1442",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_van_mieu",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Le Thanh Tong erects 1442 doctoral stele at Quoc Tu Giam"
+  },
+  {
+    "id": "TC_ENRICH_006_NGUYEN_HUU_CANH",
+    "epochId": "EPOCH_09",
+    "sourceText": "Lễ Thành Hầu Nguyễn Hữu Cảnh vâng mệnh chúa Nguyễn vào kinh lược phương Nam và lập phủ Gia Định năm 1698.",
+    "groundTruthEntities": [
+      {
+        "id": "person_nguyen_huu_canh",
+        "name": "Nguyễn Hữu Cảnh",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Lễ Thành Hầu"
+        ],
+        "startOffset": 13,
+        "endOffset": 28
+      },
+      {
+        "id": "dynasty_chua_nguyen",
+        "name": "chúa Nguyễn",
+        "type": "DYNASTY_ERA",
+        "aliases": [],
+        "startOffset": 39,
+        "endOffset": 50
+      },
+      {
+        "id": "loc_gia_dinh",
+        "name": "phủ Gia Định",
+        "type": "LOCATION",
+        "aliases": [
+          "Gia Định"
+        ],
+        "startOffset": 83,
+        "endOffset": 95
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_nguyen_huu_canh",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_chua_nguyen",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_huu_canh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_gia_dinh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Nguyen Huu Canh establishes Gia Dinh prefecture"
+  },
+  {
+    "id": "TC_ENRICH_007_LUAT_GIA_LONG",
+    "epochId": "EPOCH_11",
+    "sourceText": "Năm 1815, vua Gia Long ban hành Hoàng Việt luật lệ do Tổng trấn Bắc Thành Nguyễn Văn Thành chủ trì biên soạn.",
+    "groundTruthEntities": [
+      {
+        "id": "person_gia_long",
+        "name": "Gia Long",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 14,
+        "endOffset": 22
+      },
+      {
+        "id": "person_nguyen_van_thanh",
+        "name": "Nguyễn Văn Thành",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 74,
+        "endOffset": 90
+      },
+      {
+        "id": "doc_hoang_viet_luat_le",
+        "name": "Hoàng Việt luật lệ",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [
+          "Luật Gia Long"
+        ],
+        "startOffset": 32,
+        "endOffset": 50
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_gia_long",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_hoang_viet_luat_le",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_van_thanh",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_hoang_viet_luat_le",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Gia Long and Hoang Viet luat le by Nguyen Van Thanh"
+  },
+  {
+    "id": "TC_ENRICH_008_HOANG_SA_PHAM_HUU_NHAT",
+    "epochId": "EPOCH_11",
+    "sourceText": "Năm 1836, vua Minh Mạng phái Thủy quân Suất đội Phạm Hữu Nhật dẫn thuyền chiến ra quần đảo Hoàng Sa đo đạc hải trình và dựng bia mốc chủ quyền.",
+    "groundTruthEntities": [
+      {
+        "id": "person_minh_mang",
+        "name": "Minh Mạng",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 14,
+        "endOffset": 23
+      },
+      {
+        "id": "person_pham_huu_nhat",
+        "name": "Phạm Hữu Nhật",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [
+          "Suất đội Phạm Hữu Nhật"
+        ],
+        "startOffset": 48,
+        "endOffset": 61
+      },
+      {
+        "id": "loc_hoang_sa",
+        "name": "Hoàng Sa",
+        "type": "LOCATION",
+        "aliases": [],
+        "startOffset": 91,
+        "endOffset": 99
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_pham_huu_nhat",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hoang_sa",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_minh_mang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hoang_sa",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Minh Mang and Pham Huu Nhat expedition to Hoang Sa"
+  },
+  {
+    "id": "TC_ENRICH_009_PHONG_TRAO_THO_MOI",
+    "epochId": "EPOCH_12",
+    "sourceText": "Phan Khôi mở đầu phong trào Thơ Mới năm 1932 bằng bài thơ Tình già, sau đó nhà phê bình Hoài Thanh tổng kết phong trào qua cuốn Thi nhân Việt Nam.",
+    "groundTruthEntities": [
+      {
+        "id": "person_phan_khoi",
+        "name": "Phan Khôi",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 0,
+        "endOffset": 9
+      },
+      {
+        "id": "person_hoai_thanh",
+        "name": "Hoài Thanh",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 88,
+        "endOffset": 98
+      },
+      {
+        "id": "doc_tinh_gia",
+        "name": "Tình già",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [
+          "bài thơ Tình già"
+        ],
+        "startOffset": 58,
+        "endOffset": 66
+      },
+      {
+        "id": "doc_thi_nhan_viet_nam",
+        "name": "Thi nhân Việt Nam",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 128,
+        "endOffset": 145
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_phan_khoi",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_tinh_gia",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_hoai_thanh",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_thi_nhan_viet_nam",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_phong_trao_tho_moi",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_phan_khoi",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Phan Khoi and Hoai Thanh in Tho Moi movement"
+  },
+  {
+    "id": "TC_ENRICH_010_DE_CUONG_VAN_HOA_1943",
+    "epochId": "EPOCH_12",
+    "sourceText": "Năm 1943, Tổng Bí thư Trường Chinh soạn thảo Đề cương Văn hóa Việt Nam và lãnh đạo thành lập Hội Văn hóa Cứu quốc Việt Nam.",
+    "groundTruthEntities": [
+      {
+        "id": "person_truong_chinh",
+        "name": "Trường Chinh",
+        "type": "HISTORICAL_PERSON",
+        "aliases": [],
+        "startOffset": 22,
+        "endOffset": 34
+      },
+      {
+        "id": "doc_de_cuong_van_hoa_1943",
+        "name": "Đề cương Văn hóa Việt Nam",
+        "type": "DOCUMENT_CULTURE",
+        "aliases": [],
+        "startOffset": 45,
+        "endOffset": 70
+      },
+      {
+        "id": "org_hoi_van_hoa_cuu_quoc",
+        "name": "Hội Văn hóa Cứu quốc Việt Nam",
+        "type": "ORGANIZATION",
+        "aliases": [],
+        "startOffset": 93,
+        "endOffset": 122
+      }
+    ],
+    "groundTruthTriples": [
+      {
+        "sourceEntityId": "person_truong_chinh",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_de_cuong_van_hoa_1943",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_truong_chinh",
+        "relationType": "PART_OF",
+        "targetEntityId": "org_hoi_van_hoa_cuu_quoc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_hoi_van_hoa_cuu_quoc",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_truong_chinh",
+        "isDirectional": true,
+        "confidence": 1
+      }
+    ],
+    "notes": "Truong Chinh drafts Cultural Outline 1943"
   }
 ]
