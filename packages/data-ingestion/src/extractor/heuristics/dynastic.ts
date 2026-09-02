@@ -73,7 +73,7 @@ export function extractSyntacticDynasticTriples(
         continue;
       }
 
-      if (/\b(thuộc|thời|nhà|triều|dưới\s+thời|đúc\s+dưới|đúc|ra\s+đời|lưu\s+hành|trang\s+bị|chế\s+tạo|sáng\s+chế|ban\s+hành|ngâm|đọc|sáng\s+tác|viết|ba\s+quân|khích\s+lệ|cổ\s+vũ)\b/i.test(mid) || mid === '') {
+      if (/(?<!\p{L})(thuộc|thời|nhà|triều|dưới\s+thời|đúc\s+dưới|đúc|ra\s+đời|lưu\s+hành|trang\s+bị|chế\s+tạo|sáng\s+chế|ban\s+hành|ngâm|đọc|sáng\s+tác|viết|ba\s+quân|khích\s+lệ|cổ\s+vũ)(?!\p{L})/iu.test(mid) || mid === '') {
         const itemId = item.suggestedCanonicalId || `${item.type === 'DOCUMENT_CULTURE' ? 'doc_' : 'artifact_'}${slugify(item.text)}`;
         const dynId = dyn.suggestedCanonicalId || `dynasty_${slugify(dyn.text)}`;
         const t = validateAndCanonicalizeTriple(

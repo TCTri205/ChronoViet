@@ -271,8 +271,7 @@ export function extractSyntacticParentheticalTriples(
         const charDist = locB.startOffset - locA.endOffset;
         if (charDist > 120 || charDist < 0) continue;
         const mid = text.substring(locA.endOffset, locB.startOffset);
-        if (mid.includes('\n') || mid.includes('.')) continue;
-        const LOC_ALIAS_PATTERN = /\b(?:còn\s+được\s+gọi\s+là|còn\s+gọi\s+là|còn\s+có\s+tên\s+là|tên\s+gọi\s+khác\s+là)\b/i;
+        const LOC_ALIAS_PATTERN = /(?<!\p{L})(?:còn\s+được\s+gọi\s+là|còn\s+gọi\s+là|còn\s+có\s+tên(?:\s+gọi)?(?:\s+lịch\s+sử)?\s+là|tên\s+gọi\s+khác\s+là)(?!\p{L})/iu;
         if (LOC_ALIAS_PATTERN.test(mid)) {
           const sId = locA.suggestedCanonicalId || `loc_${slugify(locA.text)}`;
           const tId = locB.suggestedCanonicalId || `loc_${slugify(locB.text)}`;

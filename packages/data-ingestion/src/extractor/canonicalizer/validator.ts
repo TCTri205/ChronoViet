@@ -141,6 +141,8 @@ export function validateAndCanonicalizeTriple(
         tName = tCanon.canonicalName || tName;
       }
     }
+    if (sId === 'event_tran_thanh_da_bang') sId = 'event_thanh_da_bang';
+    if (tId === 'event_tran_thanh_da_bang') tId = 'event_thanh_da_bang';
 
     // 5. Resolve Documents & Artifacts
     if (sId.startsWith('doc_') || source.type === 'DOCUMENT_CULTURE') {

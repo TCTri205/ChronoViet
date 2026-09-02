@@ -362,6 +362,14 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     timeRange: { start: 1791, end: 1841 },
     dynasty: 'Nhà Nguyễn',
   },
+  'person_tu_duc': {
+    entityId: 'person_tu_duc',
+    canonicalName: 'Tự Đức',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Nguyễn Phúc Thì', 'Nguyễn Phúc Hồng Nhậm', 'Vua Tự Đức', 'Tự Đức Hoàng Đế', 'Hoàng đế Tự Đức'],
+    timeRange: { start: 1829, end: 1883 },
+    dynasty: 'Nhà Nguyễn',
+  },
   'person_pham_van_dong': {
     entityId: 'person_pham_van_dong',
     canonicalName: 'Phạm Văn Đồng',
@@ -1311,6 +1319,12 @@ export const HISTORICAL_LOCATION_DICTIONARY: Record<string, HistoricalEntityInfo
     canonicalName: 'Huế',
     type: 'LOCATION',
     aliases: ['thành phố Huế', 'Cố đô Huế'],
+  },
+  'loc_khiem_lang': {
+    entityId: 'loc_khiem_lang',
+    canonicalName: 'Khiêm Lăng',
+    type: 'LOCATION',
+    aliases: ['lăng Tự Đức', 'Khiêm Cung', 'Khiêm lăng'],
   },
   'loc_ho_chi_minh': {
     entityId: 'loc_ho_chi_minh',
@@ -2578,6 +2592,14 @@ function initFastEntityMap(): void {
   register('súng Thần cơ', 'artifact_sung_than_co', 'súng Thần cơ');
   register('sông Như Nguyệt', 'loc_song_nhu_nguyet', 'sông Như Nguyệt');
   register('Sông Như Nguyệt', 'loc_song_nhu_nguyet', 'sông Như Nguyệt');
+  register('event_thanh_da_bang', 'event_tran_thanh_da_bang', 'Trận thành Đa Bang');
+  register('event_tran_thanh_da_bang', 'event_tran_thanh_da_bang', 'Trận thành Đa Bang');
+  register('thành Đa Bang', 'loc_thanh_da_bang', 'thành Đa Bang');
+  register('Khiêm Lăng', 'loc_khiem_lang', 'Khiêm Lăng');
+  register('loc_khiem_lang', 'loc_khiem_lang', 'Khiêm Lăng');
+  register('Tự Đức', 'person_tu_duc', 'Tự Đức');
+  register('Vua Tự Đức', 'person_tu_duc', 'Tự Đức');
+  register('person_tu_duc', 'person_tu_duc', 'Tự Đức');
   register('Bộ luật Hồng Đức', 'doc_luat_hong_duc', 'Bộ luật Hồng Đức');
   register('núi Yên Tử', 'loc_yen_tu', 'Yên Tử');
   register('loc_nui_yen_tu', 'loc_yen_tu', 'Yên Tử');
