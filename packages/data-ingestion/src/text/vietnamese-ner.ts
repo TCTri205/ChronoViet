@@ -351,7 +351,7 @@ export function buildCanonicalId(name: string, entityType: string): string {
   let cleanName = name.trim();
   const prefix = getCanonicalEntityIdPrefix(entityType);
   if (entityType === 'HISTORICAL_PERSON') {
-    cleanName = cleanName.replace(/^(?:Nhân\s+Huệ\s+Vương|Chiêu\s+Minh\s+Đại\s+Vương|Chiêu\s+Văn\s+Vương|Bình\s+Định\s+Vương|Bố\s+Cái\s+Đại\s+Vương|Tiền\s+Ngô\s+Vương|Vạn\s+Thắng\s+Vương|Hưng\s+Đạo\s+Đại\s+Vương|Hưng\s+Đạo\s+Vương|Đức\s+Thánh\s+Trần|Đức\s+Thánh|Vua|Hoàng\s+đế|Thái\s+sư|Tướng\s+quân|Đại\s+vương|Chúa|Thượng\s+hoàng|Thái\s+úy|Tổng\s+binh|Đại\s+tướng|Thủ\s+tướng|Anh\s+hùng|Sứ\s+thần|Sử\s+gia|Sử\s+thần|Tăng\s+thống|Trạng\s+nguyên|Bảng\s+nhãn|Danh\s+sĩ|Nữ\s+tướng)\s+/i, '');
+    cleanName = cleanName.replace(/^(?:Nhân\s+Huệ\s+Vương|Chiêu\s+Minh\s+Đại\s+Vương|Chiêu\s+Văn\s+Vương|Bình\s+Định\s+Vương|Bố\s+Cái\s+Đại\s+Vương|Tiền\s+Ngô\s+Vương|Vạn\s+Thắng\s+Vương|Hưng\s+Đạo\s+Đại\s+Vương|Hưng\s+Đạo\s+Vương|Đức\s+Thánh\s+Trần|Đức\s+Thánh|Vua|Hoàng\s+đế|Thái\s+sư|Tướng\s+quân|Đại\s+vương|Chúa|Thượng\s+hoàng|Thái\s+úy|Tổng\s+binh|Tổng\s+trấn(?:\s+Bắc\s+Thành)?|Tổng\s+đốc|Tuần\s+phủ|Đại\s+tướng|Thủ\s+tướng|Anh\s+hùng|Sứ\s+thần|Sử\s+gia|Sử\s+thần|Tăng\s+thống|Trạng\s+nguyên|Bảng\s+nhãn|Danh\s+sĩ|Nữ\s+tướng)\s+/i, '');
   }
   let slug = slugify(cleanName);
   slug = slug.replace(/^(?:person|loc|event|dynasty|org|artifact|doc)_+/g, '');
@@ -402,9 +402,9 @@ const HISTORICAL_PREFIX_PATTERNS: Array<{
     type: 'DYNASTY_ERA',
     includePrefixInText: true,
   },
-  // Administrative Regions (Strip prefix like "tỉnh Thanh Hóa" -> "Thanh Hóa")
+  // Administrative Regions & Headquarters (Strip prefix like "tỉnh Thanh Hóa" -> "Thanh Hóa", "sở chỉ huy Mường Phăng" -> "Mường Phăng")
   {
-    regex: /(?<![\p{L}\p{N}])(?:thành\s+phố\s+|Thành\s+phố\s+|tỉnh\s+|Tỉnh\s+|huyện\s+|Huyện\s+|xứ\s+|Xứ\s+|đất\s+|Đất\s+|vùng\s+|Vùng\s+|(?<![cC]hính\s+)phủ\s+|(?<![cC]hính\s+)Phủ\s+|lộ\s+|Lộ\s+|châu\s+|Châu\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
+    regex: /(?<![\p{L}\p{N}])(?:sở\s+chỉ\s+huy\s+|Sở\s+chỉ\s+huy\s+|sở\s+chỉ\s+huy\s+chiến\s+dịch\s+|doanh\s+trại\s+|Doanh\s+trại\s+|đồn\s+lũy\s+|thành\s+phố\s+|Thành\s+phố\s+|tỉnh\s+|Tỉnh\s+|huyện\s+|Huyện\s+|xứ\s+|Xứ\s+|đất\s+|Đất\s+|vùng\s+|Vùng\s+|(?<![cC]hính\s+)phủ\s+|(?<![cC]hính\s+)Phủ\s+|lộ\s+|Lộ\s+|châu\s+|Châu\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
     type: 'LOCATION',
     includePrefixInText: false,
   },
@@ -468,6 +468,9 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
     const rawSpanText = text.substring(m.start, m.end);
     if (!isValidCandidateSpan(rawSpanText)) continue;
 
+    const isPerson = m.entry.type === 'HISTORICAL_PERSON';
+    const canonicalId = m.entry.canonicalId;
+
     rawSpans.push({
       text: rawSpanText,
       type: m.entry.type,
@@ -475,7 +478,7 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
       endOffset: m.end,
       confidence: 0.99,
       sourceLayer: 'GAZETTEER',
-      suggestedCanonicalId: m.entry.canonicalId,
+      suggestedCanonicalId: canonicalId,
       priority: 30,
     });
   }
@@ -533,8 +536,7 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
       if (isPerson) {
         cleanSpanName = spanText.replace(/^(?:quốc\s+sư|thiền\s+sư|sư|thầy\s+giáo|thầy|vua|hoàng\s+đế|thái\s+tử|hoàng\s+tử|chúa|đại\s+tướng|tướng|thái\s+úy|thái\s+sư|bình\s+định\s+vương|bắc\s+bình\s+vương|nam\s+việt\s+vương|vạn\s+thắng\s+vương)\s+/i, '').trim();
       }
-      const isPersonAlias = isPerson && canonicalInfo && slugify(canonicalInfo.canonicalName) !== slugify(cleanSpanName);
-      const canonicalId = (canonicalInfo && !isPersonAlias) ? canonicalInfo.entityId : buildCanonicalId(cleanSpanName, rule.type);
+      const canonicalId = (canonicalInfo && !canonicalInfo.entityId.startsWith('unknown_')) ? canonicalInfo.entityId : buildCanonicalId(cleanSpanName, rule.type);
       rawSpans.push({
         text: spanText,
         type: rule.type,
@@ -557,9 +559,17 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
   VI_PROPER_NOUN_REGEX.lastIndex = 0;
   let pnMatch: RegExpExecArray | null;
   while ((pnMatch = VI_PROPER_NOUN_REGEX.exec(text)) !== null) {
-    const spanText = pnMatch[0].trim();
-    const startOffset = pnMatch.index;
-    const endOffset = startOffset + pnMatch[0].length;
+    let spanText = pnMatch[0].trim();
+    let startOffset = pnMatch.index;
+    let endOffset = startOffset + pnMatch[0].length;
+
+    // Strip leading capitalized prepositions at sentence/clause start (e.g. "Tại Vạn Kiếp" -> "Vạn Kiếp", "Ở Hoa Lư" -> "Hoa Lư")
+    const prepMatch = /^(?:Tại|Ở|Từ|Về|Đến|Trên|Dưới|Trong|Ngoài|Cùng|Với|Theo|Qua|Sau|Trước)\s+/i.exec(spanText);
+    if (prepMatch) {
+      const pLen = prepMatch[0].length;
+      spanText = spanText.substring(pLen).trim();
+      startOffset += pLen;
+    }
 
     if (!isValidCandidateSpan(spanText)) continue;
 
@@ -570,10 +580,18 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
     if (overlapsHigherLayer) continue;
 
     // Infer taxonomy type from text features
-    const inferredType = inferEntityTypeFromName(spanText);
+    let inferredType = inferEntityTypeFromName(spanText);
     const canonicalInfo = resolveCanonicalEntity(spanText);
-    const effectiveType = canonicalInfo?.type || inferredType;
-    const canonicalId = canonicalInfo ? canonicalInfo.entityId : buildCanonicalId(spanText, effectiveType);
+    if (canonicalInfo?.entityId.startsWith('loc_')) inferredType = 'LOCATION';
+    else if (canonicalInfo?.entityId.startsWith('person_')) inferredType = 'HISTORICAL_PERSON';
+    else if (canonicalInfo?.entityId.startsWith('dynasty_')) inferredType = 'DYNASTY_ERA';
+    else if (canonicalInfo?.entityId.startsWith('doc_')) inferredType = 'DOCUMENT_CULTURE';
+    else if (canonicalInfo?.entityId.startsWith('event_')) inferredType = 'EVENT_BATTLE';
+    else if (canonicalInfo?.entityId.startsWith('artifact_')) inferredType = 'ARTIFACT';
+    else if (canonicalInfo?.entityId.startsWith('org_')) inferredType = 'ORGANIZATION';
+
+    const effectiveType = (canonicalInfo?.type && canonicalInfo.type !== 'UNKNOWN') ? canonicalInfo.type : inferredType;
+    const canonicalId = (canonicalInfo && !canonicalInfo.entityId.startsWith('unknown_')) ? canonicalInfo.entityId : buildCanonicalId(spanText, effectiveType);
 
     rawSpans.push({
       text: spanText,
@@ -656,11 +674,18 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
       // If current span is nested inside existing longer span:
       const isSpanNestedInOverlapping = span.startOffset >= overlapping.startOffset && span.endOffset <= overlapping.endOffset;
       if (isSpanNestedInOverlapping) {
-        // If outer is EVENT_BATTLE, ORGANIZATION, or DOCUMENT_CULTURE: allow nested sub-entities (HISTORICAL_PERSON, LOCATION, DYNASTY_ERA, ARTIFACT, DOCUMENT_CULTURE)
-        if (
-          (overlapping.type === 'EVENT_BATTLE' || overlapping.type === 'ORGANIZATION' || overlapping.type === 'DOCUMENT_CULTURE') &&
-          (span.type === 'HISTORICAL_PERSON' || span.type === 'DYNASTY_ERA' || span.type === 'LOCATION' || span.type === 'ARTIFACT' || span.type === 'DOCUMENT_CULTURE')
-        ) {
+        // Allowed nested sub-entities:
+        // - EVENT_BATTLE: can contain HISTORICAL_PERSON, LOCATION, ARTIFACT
+        // - ORGANIZATION: can contain HISTORICAL_PERSON, LOCATION
+        // - DOCUMENT_CULTURE: can contain HISTORICAL_PERSON (authors/subjects)
+        // - Disallow same-type nesting (e.g. DOCUMENT in DOCUMENT, LOCATION in LOCATION)
+        // - Disallow generic national/dynastic qualifiers nested inside titles (e.g. "Việt Nam" in "Thi nhân Việt Nam")
+        const isAllowedSubEntity =
+          (overlapping.type === 'EVENT_BATTLE' && (span.type === 'HISTORICAL_PERSON' || span.type === 'LOCATION' || span.type === 'ARTIFACT')) ||
+          (overlapping.type === 'ORGANIZATION' && (span.type === 'HISTORICAL_PERSON' || span.type === 'LOCATION')) ||
+          (overlapping.type === 'DOCUMENT_CULTURE' && span.type === 'HISTORICAL_PERSON');
+
+        if (isAllowedSubEntity) {
           finalSpans.push({
             text: span.text,
             type: span.type,
@@ -670,6 +695,8 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
             sourceLayer: span.sourceLayer,
             suggestedCanonicalId: span.suggestedCanonicalId,
             priority: span.priority,
+            isEnclosedModifier: true,
+            enclosingSpanText: overlapping.text,
           });
         }
         continue;
@@ -678,8 +705,15 @@ export function extractHistoricalCandidateSpans(text: string): CandidateEntitySp
       // If existing span is nested inside current longer span:
       const isOverlappingNestedInSpan = overlapping.startOffset >= span.startOffset && overlapping.endOffset <= span.endOffset;
       if (isOverlappingNestedInSpan) {
-        // If outer is EVENT_BATTLE or ORGANIZATION and inner has distinct type, keep both
-        if (span.type !== overlapping.type && (span.type === 'EVENT_BATTLE' || span.type === 'ORGANIZATION')) {
+        // If outer is EVENT_BATTLE or ORGANIZATION and inner has distinct allowed type, keep both
+        const isAllowedInner =
+          (span.type === 'EVENT_BATTLE' && (overlapping.type === 'HISTORICAL_PERSON' || overlapping.type === 'LOCATION' || overlapping.type === 'ARTIFACT')) ||
+          (span.type === 'ORGANIZATION' && (overlapping.type === 'HISTORICAL_PERSON' || overlapping.type === 'LOCATION')) ||
+          (span.type === 'DOCUMENT_CULTURE' && overlapping.type === 'HISTORICAL_PERSON');
+
+        if (isAllowedInner) {
+          overlapping.isEnclosedModifier = true;
+          overlapping.enclosingSpanText = span.text;
           finalSpans.push({
             text: span.text,
             type: span.type,

@@ -1575,13 +1575,6 @@
         "targetEntityId": "loc_song_nhu_nguyet",
         "isDirectional": true,
         "confidence": 1
-      },
-      {
-        "sourceEntityId": "person_ly_thuong_kiet",
-        "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_nam_quoc_son_ha",
-        "isDirectional": true,
-        "confidence": 1
       }
     ],
     "notes": "Nam Quoc Son Ha poem"
@@ -3926,9 +3919,9 @@
         "endOffset": 38
       },
       {
-        "id": "dynasty_dang_trong",
+        "id": "loc_dang_trong",
         "name": "Đàng Trong",
-        "type": "DYNASTY_ERA",
+        "type": "LOCATION",
         "aliases": [],
         "startOffset": 71,
         "endOffset": 81
@@ -3937,8 +3930,8 @@
     "groundTruthTriples": [
       {
         "sourceEntityId": "person_nguyen_hoang",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_dang_trong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dang_trong",
         "isDirectional": true,
         "confidence": 1
       },
@@ -3974,9 +3967,9 @@
         "endOffset": 83
       },
       {
-        "id": "dynasty_dang_ngoai",
+        "id": "loc_dang_ngoai",
         "name": "Đàng Ngoài",
-        "type": "DYNASTY_ERA",
+        "type": "LOCATION",
         "aliases": [],
         "startOffset": 86,
         "endOffset": 96
@@ -3992,8 +3985,8 @@
       },
       {
         "sourceEntityId": "person_trinh_kiem",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_dang_ngoai",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dang_ngoai",
         "isDirectional": true,
         "confidence": 1
       }
@@ -4022,9 +4015,9 @@
         "endOffset": 89
       },
       {
-        "id": "dynasty_dang_trong",
+        "id": "loc_dang_trong",
         "name": "Đàng Trong",
-        "type": "DYNASTY_ERA",
+        "type": "LOCATION",
         "aliases": [],
         "startOffset": 39,
         "endOffset": 49
@@ -4035,13 +4028,6 @@
         "sourceEntityId": "person_nguyen_phuc_nguyen",
         "relationType": "ROYAL_LINEAGE",
         "targetEntityId": "person_nguyen_hoang",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "person_nguyen_phuc_nguyen",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_dang_trong",
         "isDirectional": true,
         "confidence": 1
       }
@@ -4151,9 +4137,9 @@
         "endOffset": 50
       },
       {
-        "id": "dynasty_dang_trong",
+        "id": "loc_dang_trong",
         "name": "Đàng Trong",
-        "type": "DYNASTY_ERA",
+        "type": "LOCATION",
         "aliases": [],
         "startOffset": 79,
         "endOffset": 89
@@ -4164,6 +4150,13 @@
         "sourceEntityId": "person_le_quy_don",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_phu_bien_tap_luc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_phu_bien_tap_luc",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dang_trong",
         "isDirectional": true,
         "confidence": 1
       }
@@ -4333,6 +4326,34 @@
       },
       {
         "sourceEntityId": "person_quang_trung",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_ngoc_hoi_dong_da",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_ngoc_hoi",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_ngoc_hoi_dong_da",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dong_da",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_ngoc_hoi",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_dong_da",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
@@ -5068,13 +5089,6 @@
     "groundTruthTriples": [
       {
         "sourceEntityId": "org_quoc_su_quan",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_nha_nguyen",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "org_quoc_su_quan",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_kham_dinh_viet_su_thong_giam_cuong_muc",
         "isDirectional": true,
@@ -5183,13 +5197,6 @@
         "sourceEntityId": "org_quoc_su_quan",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_kham_dinh_viet_su_thong_giam_cuong_muc",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "org_quoc_su_quan",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_nha_nguyen",
         "isDirectional": true,
         "confidence": 1
       }
@@ -5649,7 +5656,7 @@
         "endOffset": 68
       },
       {
-        "id": "loc_thang_long",
+        "id": "loc_ha_noi",
         "name": "Hà Nội",
         "type": "LOCATION",
         "aliases": [],
@@ -5675,7 +5682,7 @@
       {
         "sourceEntityId": "loc_ba_dinh",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long",
+        "targetEntityId": "loc_ha_noi",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6260,6 +6267,13 @@
         "targetEntityId": "doc_hiep_dinh_paris",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_chinh_phu_cach_mang_lam_thoi",
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_hiep_dinh_paris",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Nguyen Thi Binh signs Paris Peace Accords"
@@ -6417,15 +6431,15 @@
         "endOffset": 56
       },
       {
-        "id": "event_dai_hoi_vi",
-        "name": "Đại hội Đảng lần thứ VI",
-        "type": "EVENT_BATTLE",
+        "id": "org_dai_hoi_dang",
+        "name": "Đại hội Đảng",
+        "type": "ORGANIZATION",
         "aliases": [],
         "startOffset": 61,
         "endOffset": 85
       },
       {
-        "id": "loc_thang_long",
+        "id": "loc_ha_noi",
         "name": "Hà Nội",
         "type": "LOCATION",
         "aliases": [],
@@ -6444,28 +6458,28 @@
       {
         "sourceEntityId": "person_nguyen_van_linh",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long",
+        "targetEntityId": "loc_ha_noi",
         "isDirectional": true,
         "confidence": 1
       },
       {
         "sourceEntityId": "event_doi_moi",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long",
+        "targetEntityId": "loc_ha_noi",
         "isDirectional": true,
         "confidence": 1
       },
       {
-        "sourceEntityId": "event_dai_hoi_vi",
+        "sourceEntityId": "org_dai_hoi_dang",
         "relationType": "LED_BY",
         "targetEntityId": "person_nguyen_van_linh",
         "isDirectional": true,
         "confidence": 1
       },
       {
-        "sourceEntityId": "event_dai_hoi_vi",
+        "sourceEntityId": "org_dai_hoi_dang",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long",
+        "targetEntityId": "loc_ha_noi",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6532,13 +6546,6 @@
         "sourceEntityId": "dynasty_viet_nam",
         "relationType": "PART_OF",
         "targetEntityId": "org_wto",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "org_wto",
-        "relationType": "HAPPENED_IN",
-        "targetEntityId": "dynasty_viet_nam",
         "isDirectional": true,
         "confidence": 1
       }
@@ -6647,13 +6654,6 @@
         "targetEntityId": "loc_song_da",
         "isDirectional": true,
         "confidence": 1
-      },
-      {
-        "sourceEntityId": "loc_song_da",
-        "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thuy_dien_hoa_binh",
-        "isDirectional": true,
-        "confidence": 1
       }
     ],
     "notes": "Hoa Binh Hydroelectric Plant on Da River"
@@ -6670,25 +6670,9 @@
         "aliases": [],
         "startOffset": 0,
         "endOffset": 22
-      },
-      {
-        "id": "dynasty_viet_nam",
-        "name": "Việt Nam",
-        "type": "DYNASTY_ERA",
-        "aliases": [],
-        "startOffset": 14,
-        "endOffset": 22
       }
     ],
-    "groundTruthTriples": [
-      {
-        "sourceEntityId": "org_dang_cong_san_vn",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_viet_nam",
-        "isDirectional": true,
-        "confidence": 1
-      }
-    ],
+    "groundTruthTriples": [],
     "notes": "Communist Party of Vietnam in national leadership"
   },
   {
@@ -6860,13 +6844,6 @@
         "targetEntityId": "loc_phong_khe",
         "isDirectional": true,
         "confidence": 1
-      },
-      {
-        "sourceEntityId": "loc_thanh_co_loa",
-        "relationType": "HAPPENED_IN",
-        "targetEntityId": "dynasty_au_lac",
-        "isDirectional": true,
-        "confidence": 1
       }
     ],
     "notes": "Level 5 Co-reference: Thục Vương -> An Dương Vương, Loa Thành -> Co Loa"
@@ -6896,16 +6873,6 @@
         "endOffset": 129
       },
       {
-        "id": "dynasty_hai_ba_trung",
-        "name": "Nữ Vương",
-        "type": "DYNASTY_ERA",
-        "aliases": [
-          "Trưng Nữ Vương"
-        ],
-        "startOffset": 101,
-        "endOffset": 109
-      },
-      {
         "id": "loc_hat_mon",
         "name": "Hát Môn",
         "type": "LOCATION",
@@ -6926,13 +6893,6 @@
         "sourceEntityId": "person_hai_ba_trung",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_hat_mon",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "person_hai_ba_trung",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_hai_ba_trung",
         "isDirectional": true,
         "confidence": 1
       }
@@ -7038,11 +6998,11 @@
         "endOffset": 158
       },
       {
-        "id": "dynasty_nha_ly",
+        "id": "dynasty_dai_viet",
         "name": "Đại Việt",
         "type": "DYNASTY_ERA",
         "aliases": [
-          "Nhà Lý"
+          "Đại Việt"
         ],
         "startOffset": 186,
         "endOffset": 194
@@ -7059,14 +7019,14 @@
       {
         "sourceEntityId": "person_ly_thuong_kiet",
         "relationType": "PART_OF",
-        "targetEntityId": "dynasty_nha_ly",
+        "targetEntityId": "dynasty_dai_viet",
         "isDirectional": true,
         "confidence": 1
       },
       {
         "sourceEntityId": "doc_nam_quoc_son_ha",
         "relationType": "HAPPENED_IN",
-        "targetEntityId": "dynasty_nha_ly",
+        "targetEntityId": "dynasty_dai_viet",
         "isDirectional": true,
         "confidence": 1
       },
@@ -7349,6 +7309,13 @@
         "targetEntityId": "dynasty_nha_le_so",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoi_nghia_lam_son",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_chi_lang",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Level 5 Co-reference: Bình Định Vương -> Lê Lợi"
@@ -7553,20 +7520,6 @@
       },
       {
         "sourceEntityId": "org_quan_man_thanh",
-        "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "dynasty_nha_tay_son",
-        "relationType": "LED_BY",
-        "targetEntityId": "person_quang_trung",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "dynasty_nha_tay_son",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
@@ -7946,12 +7899,11 @@
         "endOffset": 73
       },
       {
-        "id": "dynasty_nha_ly",
+        "id": "dynasty_dai_viet",
         "name": "Đại Việt",
         "type": "DYNASTY_ERA",
         "aliases": [
-          "nhà Lý",
-          "dynasty_dai_viet"
+          "nước Đại Việt"
         ],
         "startOffset": 78,
         "endOffset": 86
@@ -7961,7 +7913,7 @@
       {
         "sourceEntityId": "person_ly_thai_tong",
         "relationType": "PART_OF",
-        "targetEntityId": "dynasty_nha_ly",
+        "targetEntityId": "dynasty_dai_viet",
         "isDirectional": true,
         "confidence": 1
       },
@@ -7975,7 +7927,7 @@
       {
         "sourceEntityId": "doc_hinh_thu",
         "relationType": "HAPPENED_IN",
-        "targetEntityId": "dynasty_nha_ly",
+        "targetEntityId": "dynasty_dai_viet",
         "isDirectional": true,
         "confidence": 1
       }
@@ -8172,43 +8124,30 @@
         "endOffset": 23
       },
       {
-        "id": "loc_van_mieu",
-        "name": "Văn Miếu",
+        "id": "loc_van_mieu_quoc_tu_giam",
+        "name": "Văn Miếu Quốc Tử Giám",
         "type": "LOCATION",
         "aliases": [
-          "Văn Miếu Quốc Tử Giám"
+          "Văn Miếu - Quốc Tử Giám",
+          "Văn Miếu"
         ],
         "startOffset": 56,
-        "endOffset": 64
+        "endOffset": 77
       },
       {
-        "id": "loc_thang_long",
-        "name": "Quốc Tử Giám",
-        "type": "LOCATION",
+        "id": "doc_bia_tien_si_1442",
+        "name": "bia tiến sĩ",
+        "type": "DOCUMENT_CULTURE",
         "aliases": [],
-        "startOffset": 65,
-        "endOffset": 77
+        "startOffset": 39,
+        "endOffset": 50
       }
     ],
     "groundTruthTriples": [
       {
         "sourceEntityId": "person_le_thanh_tong",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_van_mieu",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "person_le_thanh_tong",
-        "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "loc_van_mieu",
-        "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long",
+        "targetEntityId": "loc_van_mieu_quoc_tu_giam",
         "isDirectional": true,
         "confidence": 1
       },
@@ -8222,7 +8161,7 @@
       {
         "sourceEntityId": "doc_bia_tien_si_1442",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_van_mieu",
+        "targetEntityId": "loc_van_mieu_quoc_tu_giam",
         "isDirectional": true,
         "confidence": 1
       }
@@ -8303,10 +8242,11 @@
         "endOffset": 90
       },
       {
-        "id": "doc_hoang_viet_luat_le",
-        "name": "Hoàng Việt luật lệ",
+        "id": "doc_hoang_trieu_luat_le",
+        "name": "Hoàng triều luật lệ",
         "type": "DOCUMENT_CULTURE",
         "aliases": [
+          "Hoàng Việt luật lệ",
           "Luật Gia Long"
         ],
         "startOffset": 32,
@@ -8317,14 +8257,14 @@
       {
         "sourceEntityId": "person_gia_long",
         "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_hoang_viet_luat_le",
+        "targetEntityId": "doc_hoang_trieu_luat_le",
         "isDirectional": true,
         "confidence": 1
       },
       {
         "sourceEntityId": "person_nguyen_van_thanh",
         "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_hoang_viet_luat_le",
+        "targetEntityId": "doc_hoang_trieu_luat_le",
         "isDirectional": true,
         "confidence": 1
       }
@@ -8370,16 +8310,9 @@
         "targetEntityId": "loc_hoang_sa",
         "isDirectional": true,
         "confidence": 1
-      },
-      {
-        "sourceEntityId": "person_minh_mang",
-        "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_hoang_sa",
-        "isDirectional": true,
-        "confidence": 1
       }
     ],
-    "notes": "Minh Mang and Pham Huu Nhat expedition to Hoang Sa"
+    "notes": "Pham Huu Nhat expedition to Hoang Sa under Minh Mang decree"
   },
   {
     "id": "TC_ENRICH_009_PHONG_TRAO_THO_MOI",

@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';
 import { ExtractionCache } from '../cache/extraction-cache.js';
-import { ExtractedTriple } from '../triple-extractor.js';
+import { ExtractedTriple } from '../extractor/types.js';
 
 describe('ExtractionCache Unit Tests', () => {
   let tempDir: string;

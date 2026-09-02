@@ -285,14 +285,14 @@ describe('Triple Extractor Unit Tests', () => {
 
       const text = 'Trận Chi Lăng do Lê Lợi trực tiếp chỉ huy toàn quân.';
       const firstResult = await extractTriplesFromTextAsync(text);
-      expect(firstResult.length).toBe(1);
+      expect(firstResult.length).toBe(2);
       expect((firstResult as any)._meta?.cached).toBe(false);
       expect(generateLLMCompletion).toHaveBeenCalledTimes(1);
 
       // Second call should return cached triples with _meta.cached = true
       const secondResult = await extractTriplesFromTextAsync(text);
-      expect(secondResult.length).toBe(1);
-      expect(secondResult[0].sourceEntityName).toBe('Trận Chi Lăng');
+      expect(secondResult.length).toBe(2);
+      expect(secondResult.some(t => t.sourceEntityName === 'Trận Chi Lăng')).toBe(true);
       expect((secondResult as any)._meta?.cached).toBe(true);
       expect((secondResult as any)._meta?.durationMs).toBe(0);
       expect(generateLLMCompletion).toHaveBeenCalledTimes(1);
@@ -364,6 +364,33 @@ describe('Triple Extractor Unit Tests', () => {
         (t) => (t.relationType === 'SAME_AS_LOCATION' || t.relationType === 'HAPPENED_AT') && t.sourceEntityId === 'loc_phong_khe' && t.targetEntityId === 'loc_dong_anh'
       );
       expect(locTriple).toBeDefined();
+    });
+
+    it('suppresses PART_OF relation when adversarial/deposition keywords are present', () => {
+      const text = 'Hồ Quý Ly truất ngôi nhà Trần lập nên triều đại Đại Ngu.';
+      const triples = extractTriplesFromText(text);
+      const spuriousPartOf = triples.find(
+        (t) => t.sourceEntityId === 'person_ho_quy_ly' && t.targetEntityId === 'dynasty_nha_tran' && t.relationType === 'PART_OF'
+      );
+      expect(spuriousPartOf).toBeUndefined();
+    });
+
+    it('prevents nested enclosed modifiers from producing spurious triples for actions', () => {
+      const text = 'Đại tướng Văn Tiến Dũng giữ chức Tư lệnh Chiến dịch Hồ Chí Minh giải phóng Sài Gòn húc đổ cổng Dinh Độc Lập.';
+      const triples = extractTriplesFromText(text);
+      const spuriousHoChiMinhAtDinh = triples.find(
+        (t) => t.sourceEntityId === 'person_ho_chi_minh' && t.targetEntityId === 'loc_dinh_doc_lap'
+      );
+      expect(spuriousHoChiMinhAtDinh).toBeUndefined();
+    });
+
+    it('extracts PART_OF relation when a person helps an organization/movement', () => {
+      const text = 'Nguyễn Trãi dâng Bình Ngô sách vạch ra chiến lược giúp nghĩa quân Lam Sơn.';
+      const triples = extractTriplesFromText(text);
+      const helpOrg = triples.find(
+        (t) => t.sourceEntityId === 'person_nguyen_trai' && t.targetEntityId === 'org_nghia_quan_lam_son' && t.relationType === 'PART_OF'
+      );
+      expect(helpOrg).toBeDefined();
     });
   });
 

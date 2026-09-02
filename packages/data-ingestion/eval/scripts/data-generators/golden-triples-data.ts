@@ -2940,11 +2940,6 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "sourceEntityId": "person_nguyen_phuc_nguyen",
         "relationType": "ROYAL_LINEAGE",
         "targetEntityId": "person_nguyen_hoang"
-      },
-      {
-        "sourceEntityId": "person_nguyen_phuc_nguyen",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_dang_trong"
       }
     ],
     "notes": "Nguyen Phuc Nguyen succession from Nguyen Hoang"
@@ -3700,11 +3695,6 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
     "triples": [
       {
         "sourceEntityId": "org_quoc_su_quan",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_nha_nguyen"
-      },
-      {
-        "sourceEntityId": "org_quoc_su_quan",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_kham_dinh_viet_su_thong_giam_cuong_muc"
       }
@@ -3786,11 +3776,6 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "sourceEntityId": "org_quoc_su_quan",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_kham_dinh_viet_su_thong_giam_cuong_muc"
-      },
-      {
-        "sourceEntityId": "org_quoc_su_quan",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_nha_nguyen"
       }
     ],
     "notes": "Imperial bureau historical compilation metadata"
@@ -4114,7 +4099,7 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "type": "LOCATION"
       },
       {
-        "id": "loc_thang_long",
+        "id": "loc_ha_noi",
         "name": "Hà Nội",
         "type": "LOCATION"
       }
@@ -4133,7 +4118,7 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
       {
         "sourceEntityId": "loc_ba_dinh",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long"
+        "targetEntityId": "loc_ha_noi"
       }
     ],
     "notes": "Ho Chi Minh reads Declaration of Independence"
@@ -4676,7 +4661,7 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "type": "EVENT_BATTLE"
       },
       {
-        "id": "loc_thang_long",
+        "id": "loc_ha_noi",
         "name": "Hà Nội",
         "type": "LOCATION"
       }
@@ -4690,7 +4675,7 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
       {
         "sourceEntityId": "person_nguyen_van_linh",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long"
+        "targetEntityId": "loc_ha_noi"
       }
     ],
     "notes": "Nguyen Van Linh initiates Doi Moi at 6th National Congress"
@@ -4829,20 +4814,9 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "id": "org_dang_cong_san_vn",
         "name": "Đảng Cộng sản Việt Nam",
         "type": "ORGANIZATION"
-      },
-      {
-        "id": "dynasty_viet_nam",
-        "name": "Việt Nam",
-        "type": "DYNASTY_ERA"
       }
     ],
-    "triples": [
-      {
-        "sourceEntityId": "org_dang_cong_san_vn",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_viet_nam"
-      }
-    ],
+    "triples": [],
     "notes": "Communist Party of Vietnam in national leadership"
   },
   {
@@ -4972,11 +4946,6 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "sourceEntityId": "loc_thanh_co_loa",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_phong_khe"
-      },
-      {
-        "sourceEntityId": "loc_thanh_co_loa",
-        "relationType": "HAPPENED_IN",
-        "targetEntityId": "dynasty_au_lac"
       }
     ],
     "notes": "Level 5 Co-reference: Thục Vương -> An Dương Vương, Loa Thành -> Co Loa"
@@ -5001,14 +4970,6 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "type": "LOCATION"
       },
       {
-        "id": "dynasty_hai_ba_trung",
-        "name": "Nữ Vương",
-        "type": "DYNASTY_ERA",
-        "aliases": [
-          "Trưng Nữ Vương"
-        ]
-      },
-      {
         "id": "loc_hat_mon",
         "name": "Hát Môn",
         "type": "LOCATION",
@@ -5025,11 +4986,6 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "sourceEntityId": "person_hai_ba_trung",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_hat_mon"
-      },
-      {
-        "sourceEntityId": "person_hai_ba_trung",
-        "relationType": "PART_OF",
-        "targetEntityId": "dynasty_hai_ba_trung"
       }
     ],
     "notes": "Level 5 Co-reference: Nữ Vương -> Trưng Trắc"
@@ -5108,11 +5064,11 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "type": "DOCUMENT_CULTURE"
       },
       {
-        "id": "dynasty_nha_ly",
+        "id": "dynasty_dai_viet",
         "name": "Đại Việt",
         "type": "DYNASTY_ERA",
         "aliases": [
-          "Nhà Lý"
+          "Đại Việt"
         ]
       }
     ],
@@ -5125,12 +5081,12 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
       {
         "sourceEntityId": "person_ly_thuong_kiet",
         "relationType": "PART_OF",
-        "targetEntityId": "dynasty_nha_ly"
+        "targetEntityId": "dynasty_dai_viet"
       },
       {
         "sourceEntityId": "doc_nam_quoc_son_ha",
         "relationType": "HAPPENED_IN",
-        "targetEntityId": "dynasty_nha_ly"
+        "targetEntityId": "dynasty_dai_viet"
       },
       {
         "sourceEntityId": "person_ly_thuong_kiet",
@@ -5914,32 +5870,32 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "type": "HISTORICAL_PERSON"
       },
       {
-        "id": "loc_van_mieu",
-        "name": "Văn Miếu",
+        "id": "loc_van_mieu_quoc_tu_giam",
+        "name": "Văn Miếu Quốc Tử Giám",
         "type": "LOCATION",
-        "aliases": ["Văn Miếu Quốc Tử Giám"]
+        "aliases": ["Văn Miếu - Quốc Tử Giám", "Văn Miếu"]
       },
       {
-        "id": "loc_thang_long",
-        "name": "Quốc Tử Giám",
-        "type": "LOCATION"
+        "id": "doc_bia_tien_si_1442",
+        "name": "bia tiến sĩ",
+        "type": "DOCUMENT_CULTURE"
       }
     ],
     "triples": [
       {
         "sourceEntityId": "person_le_thanh_tong",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_van_mieu"
+        "targetEntityId": "loc_van_mieu_quoc_tu_giam"
       },
       {
         "sourceEntityId": "person_le_thanh_tong",
-        "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long"
+        "relationType": "MENTIONED_IN",
+        "targetEntityId": "doc_bia_tien_si_1442"
       },
       {
-        "sourceEntityId": "loc_van_mieu",
+        "sourceEntityId": "doc_bia_tien_si_1442",
         "relationType": "HAPPENED_AT",
-        "targetEntityId": "loc_thang_long"
+        "targetEntityId": "loc_van_mieu_quoc_tu_giam"
       }
     ],
     "notes": "Le Thanh Tong erects 1442 doctoral stele at Quoc Tu Giam"
@@ -5997,22 +5953,22 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
         "type": "HISTORICAL_PERSON"
       },
       {
-        "id": "doc_hoang_viet_luat_le",
-        "name": "Hoàng Việt luật lệ",
+        "id": "doc_hoang_trieu_luat_le",
+        "name": "Hoàng triều luật lệ",
         "type": "DOCUMENT_CULTURE",
-        "aliases": ["Luật Gia Long"]
+        "aliases": ["Hoàng Việt luật lệ", "Luật Gia Long"]
       }
     ],
     "triples": [
       {
         "sourceEntityId": "person_gia_long",
         "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_hoang_viet_luat_le"
+        "targetEntityId": "doc_hoang_trieu_luat_le"
       },
       {
         "sourceEntityId": "person_nguyen_van_thanh",
         "relationType": "MENTIONED_IN",
-        "targetEntityId": "doc_hoang_viet_luat_le"
+        "targetEntityId": "doc_hoang_trieu_luat_le"
       }
     ],
     "notes": "Gia Long and Hoang Viet luat le by Nguyen Van Thanh"

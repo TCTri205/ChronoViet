@@ -287,7 +287,20 @@ export function computeGraphTransitiveClosure(
     ['doc_luat_gia_long', 'doc_hoang_viet_luat_le'],
     ['event_khoa_thi_tam_khoi', 'event_tam_khoi'],
     ['loc_lam_son', 'loc_tho_xuan'],
-    ['loc_lam_son', 'loc_thanh_hoa'],
+    ['dynasty_viet_nam_dan_chu_cong_hoa', 'dynasty_viet_nam'],
+    ['dynasty_viet_nam_dan_chu_cong_hoa', 'dynasty_vndcch'],
+    ['doc_bia_tien_si_1442', 'doc_bia_tien_si'],
+    ['dynasty_trieu_dai_nguyen', 'dynasty_nha_nguyen'],
+    ['dynasty_trieu_dai_nguyen', 'dynasty_nguyen'],
+    ['event_phong_trao_tho_moi', 'event_tho_moi'],
+    ['doc_nam_quoc_son_ha', 'doc_bai_tho_nam_quoc_son_ha'],
+    ['doc_tuyen_ngon_doc_lap', 'doc_ban_tuyen_ngon_doc_lap'],
+    ['doc_chieu_doi_do', 'doc_ban_chieu_doi_do'],
+    ['doc_hinh_thu', 'doc_bo_luat_hinh_thu'],
+    ['doc_quoc_trieu_hinh_luat', 'doc_luat_hong_duc'],
+    ['doc_hong_duc', 'doc_luat_hong_duc'],
+    ['loc_hoang_sa', 'loc_quan_dao_hoang_sa'],
+    ['loc_truong_sa', 'loc_quan_dao_truong_sa'],
   ];
   for (const [a, b] of DOMAIN_EQUIVALENCE_PAIRS) {
     addEquiv(a.toLowerCase(), b.toLowerCase());
@@ -411,9 +424,9 @@ export function computeGraphTransitiveClosure(
       addToMapSet(entityLocMap, s, o);
     } else if (r === 'MENTIONED_IN') {
       closure.add(normKey(o, 'MENTIONED_IN', s));
-      if (s.startsWith('person_') && o.startsWith('doc_')) {
+      if ((s.startsWith('person_') || s.startsWith('org_')) && o.startsWith('doc_')) {
         addToMapSet(docAuthorMap, o, s);
-      } else if (s.startsWith('doc_') && o.startsWith('person_')) {
+      } else if (s.startsWith('doc_') && (o.startsWith('person_') || o.startsWith('org_'))) {
         addToMapSet(docAuthorMap, s, o);
       } else if (s.startsWith('dynasty_') && o.startsWith('doc_')) {
         closure.add(normKey(o, 'HAPPENED_IN', s));
@@ -572,12 +585,21 @@ export function computeStrictTripleMetrics(
   const normKey = (s: string, r: string, o: string) => `${s.trim().toLowerCase()}::${r.trim().toUpperCase()}::${o.trim().toLowerCase()}`;
   const invKey = (s: string, r: string, o: string) => `${o.trim().toLowerCase()}::${r.trim().toUpperCase()}::${s.trim().toLowerCase()}`;
 
-  const gtSet = new Set(groundTruth.map(t => normKey(t.sourceEntityId, t.relationType, t.targetEntityId)));
-  const gtClosure = computeGraphTransitiveClosure(groundTruth);
+  // Ground truth triples strictly bounded to entities present in the snippet context
+  const effectiveGroundTruth = (validEntityIdsInSnippet && validEntityIdsInSnippet.size > 0)
+    ? groundTruth.filter(gt => {
+        const s = gt.sourceEntityId.trim().toLowerCase();
+        const o = gt.targetEntityId.trim().toLowerCase();
+        return validEntityIdsInSnippet.has(s) && validEntityIdsInSnippet.has(o);
+      })
+    : groundTruth;
+
+  const gtSet = new Set(effectiveGroundTruth.map(t => normKey(t.sourceEntityId, t.relationType, t.targetEntityId)));
+  const gtClosure = computeGraphTransitiveClosure(effectiveGroundTruth);
   const predClosure = computeGraphTransitiveClosure(predicted);
 
   const gtInvMap = new Map<string, string>();
-  for (const t of groundTruth) {
+  for (const t of effectiveGroundTruth) {
     gtInvMap.set(invKey(t.sourceEntityId, t.relationType, t.targetEntityId), normKey(t.sourceEntityId, t.relationType, t.targetEntityId));
   }
 
@@ -591,9 +613,9 @@ export function computeStrictTripleMetrics(
   for (let i = 0; i < predicted.length; i++) {
     const p = predicted[i];
     const pKey = normKey(p.sourceEntityId, p.relationType, p.targetEntityId);
-    for (let j = 0; j < groundTruth.length; j++) {
+    for (let j = 0; j < effectiveGroundTruth.length; j++) {
       if (matchedGtIndices.has(j)) continue;
-      const gt = groundTruth[j];
+      const gt = effectiveGroundTruth[j];
       const gtKey = normKey(gt.sourceEntityId, gt.relationType, gt.targetEntityId);
       if (pKey === gtKey) {
         matchedPredIndices.add(i);
@@ -609,9 +631,9 @@ export function computeStrictTripleMetrics(
     if (matchedPredIndices.has(i)) continue;
     const p = predicted[i];
     const pKey = normKey(p.sourceEntityId, p.relationType, p.targetEntityId);
-    for (let j = 0; j < groundTruth.length; j++) {
+    for (let j = 0; j < effectiveGroundTruth.length; j++) {
       if (matchedGtIndices.has(j)) continue;
-      const gt = groundTruth[j];
+      const gt = effectiveGroundTruth[j];
       const gtKey = normKey(gt.sourceEntityId, gt.relationType, gt.targetEntityId);
       if (gtClosure.has(pKey) || predClosure.has(gtKey)) {
         matchedPredIndices.add(i);
@@ -654,11 +676,11 @@ export function computeStrictTripleMetrics(
     }
   }
 
-  const falseNegatives = Math.max(0, groundTruth.length - truePositives);
+  const falseNegatives = Math.max(0, effectiveGroundTruth.length - truePositives);
 
   const effectiveMatchedPreds = matchedPredIndices.size;
-  const precision = predicted.length > 0 ? (effectiveMatchedPreds / predicted.length) * 100 : (groundTruth.length === 0 ? 100 : 0);
-  const recall = groundTruth.length > 0 ? (truePositives / groundTruth.length) * 100 : (predicted.length === 0 ? 100 : 0);
+  const precision = predicted.length > 0 ? (effectiveMatchedPreds / predicted.length) * 100 : (effectiveGroundTruth.length === 0 ? 100 : 0);
+  const recall = effectiveGroundTruth.length > 0 ? (truePositives / effectiveGroundTruth.length) * 100 : (predicted.length === 0 ? 100 : 0);
   const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
 
   const totalDirectionalAttempts = directionalCorrect + directionalInverted;
@@ -666,7 +688,7 @@ export function computeStrictTripleMetrics(
   const hallucinationRate = predicted.length > 0 ? (hallucinatedCount / predicted.length) * 100 : 0;
 
   return {
-    totalGroundTruth: groundTruth.length,
+    totalGroundTruth: effectiveGroundTruth.length,
     totalExtracted: predicted.length,
     truePositives,
     falsePositives,

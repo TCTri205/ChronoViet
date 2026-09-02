@@ -2153,8 +2153,8 @@ export const DYNASTY_DICTIONARY: Record<string, { entityId: string; canonicalNam
   'dynasty_dai_co_viet': { entityId: 'dynasty_dai_co_viet', canonicalName: 'Đại Cồ Việt', aliases: ['nhà nước Đại Cồ Việt', 'Đại Cồ Việt'] },
   'dynasty_dai_viet': { entityId: 'dynasty_dai_viet', canonicalName: 'Đại Việt', aliases: ['nước Đại Việt', 'Đại Việt'] },
   'dynasty_dai_nam': { entityId: 'dynasty_dai_nam', canonicalName: 'Đại Nam', aliases: ['nước Đại Nam', 'Đại Nam'] },
-  'dynasty_tay_son': { entityId: 'dynasty_nha_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn', 'triều đại Tây Sơn'] },
-  'dynasty_nha_tay_son': { entityId: 'dynasty_nha_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn', 'triều đại Tây Sơn'] },
+  'dynasty_tay_son': { entityId: 'dynasty_nha_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn', 'triều đại Tây Sơn', 'thời Tây Sơn', 'thời kỳ Tây Sơn'] },
+  'dynasty_nha_tay_son': { entityId: 'dynasty_nha_tay_son', canonicalName: 'Nhà Tây Sơn', aliases: ['Tây Sơn', 'nhà Tây Sơn', 'triều Tây Sơn', 'triều đại Tây Sơn', 'thời Tây Sơn', 'thời kỳ Tây Sơn'] },
   'dynasty_xiem_la': { entityId: 'dynasty_xiem_la', canonicalName: 'Xiêm La', aliases: ['quân Xiêm', 'Xiêm'] },
   'dynasty_dong_han': { entityId: 'dynasty_dong_han', canonicalName: 'nhà Đông Hán', aliases: ['Đông Hán', 'quân Đông Hán', 'triều Đông Hán'] },
   'dynasty_nha_dong_han': { entityId: 'dynasty_dong_han', canonicalName: 'nhà Đông Hán', aliases: ['Đông Hán', 'quân Đông Hán', 'triều Đông Hán'] },
@@ -2204,8 +2204,6 @@ export const CORE_ORGS: Array<{ id: string; name: string; aliases: string[] }> =
   { id: 'org_qdndvn', name: 'Quân đội Nhân dân Việt Nam', aliases: ['Quân đội nhân dân Việt Nam', 'quân đội nhân dân Việt Nam', 'QĐNDVN', 'quân đội ta'] },
   { id: 'org_doan_559', name: 'Đoàn 559', aliases: ['Bộ đội Trường Sơn', 'đoàn 559'] },
   { id: 'org_wto', name: 'Tổ chức Thương mại Thế giới', aliases: ['WTO', 'Tổ chức Thương mại Thế giới WTO', 'Tổ chức Thương mại Thế giới (WTO)'] },
-  { id: 'org_chua_nguyen', name: 'chúa Nguyễn', aliases: [] },
-  { id: 'org_chua_trinh', name: 'chúa Trịnh', aliases: [] },
   { id: 'org_tay_son', name: 'nghĩa quân Tây Sơn', aliases: ['quân Tây Sơn', 'thủy quân Tây Sơn', 'phong trào Tây Sơn', 'tượng binh Tây Sơn'] },
   { id: 'org_doi_hoang_sa', name: 'Đội Hoàng Sa', aliases: ['Hải đội Hoàng Sa', 'hải đội Hoàng Sa', 'org_hai_doi_hoang_sa', 'đội Hoàng Sa'] },
   { id: 'org_dong_kinh_nghia_thuc', name: 'Đông Kinh Nghĩa Thục', aliases: ['trường Đông Kinh Nghĩa Thục'] },
@@ -2286,7 +2284,7 @@ export const CORE_DOCS: Array<{ id: string; name: string; aliases: string[] }> =
   { id: 'doc_hinh_thu', name: 'Hình thư', aliases: ['sách Hình thư', 'luật Hình thư', 'Hình thư thời Lý', 'doc_hinh_thu'] },
   { id: 'doc_luat_hong_duc', name: 'Luật Hồng Đức', aliases: ['Quốc triều hình luật', 'doc_quoc_trieu_hinh_luat', 'bộ luật Hồng Đức', 'Bộ luật Hồng Đức', 'Bộ Luật Hồng Đức'] },
   { id: 'doc_dai_viet_su_ky', name: 'Đại Việt Sử Ký', aliases: ['Đại Việt sử ký', 'sách Đại Việt Sử Ký', 'bộ Đại Việt sử ký', 'doc_dai_viet_su_ky'] },
-  { id: 'doc_dai_viet_su_ky_toan_thu', name: 'Đại Việt sử ký toàn thư', aliases: ['Toàn Thư', 'Đại Việt Sử Ký Toàn Thư'] },
+  { id: 'doc_dai_viet_su_ky_toan_thu', name: 'Đại Việt sử ký toàn thư', aliases: ['sách Đại Việt Sử Ký Toàn Thư', 'Đại Việt Sử Ký Toàn Thư', 'bộ Đại Việt sử ký toàn thư', 'bộ Đại Việt Sử Ký Toàn Thư', 'doc_dai_viet_su_ky_toan_thu'] },
   { id: 'doc_dai_nam_thuc_luc', name: 'Đại Nam thực lục', aliases: [] },
   { id: 'doc_kham_dinh_viet_su_thong_giam_cuong_muc', name: 'Khâm định Việt sử thông giám cương mục', aliases: ['Khâm định Việt sử', 'Cương Mục', 'Việt sử thông giám cương mục'] },
   { id: 'doc_hiep_dinh_geneve_1954', name: 'Hiệp định Genève', aliases: ['Hiệp định Geneva', 'Hiệp định Giơ-ne-vơ', 'doc_hiep_dinh_geneve'] },
@@ -2669,7 +2667,7 @@ export function resolveEntityAlias(aliasOrName: string, entityType?: string): En
     return directMatch;
   }
 
-  const strippedNorm = normInput.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh)\s+/, '');
+  const strippedNorm = normInput.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|thời kỳ|thời đại|thời|triều đại|triều|nhà)\s+/, '');
   const unaccentedStrippedNorm = strippedNorm.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd');
   const strippedMatch = FAST_ENTITY_MAP.get(strippedNorm) || FAST_ENTITY_MAP.get(unaccentedStrippedNorm);
   if (strippedMatch) {

@@ -747,6 +747,8 @@ export const CandidateEntitySpanSchema = z.object({
   sourceLayer: z.enum(['GAZETTEER', 'RULE_PREFIX', 'PROPER_NOUN_REGEX', 'HYBRID']).default('GAZETTEER'),
   suggestedCanonicalId: z.string().optional(),
   priority: z.number().optional(),
+  isEnclosedModifier: z.boolean().optional(),
+  enclosingSpanText: z.string().optional(),
 });
 
 export const GoldenBenchmarkEntitySchema = z.object({
