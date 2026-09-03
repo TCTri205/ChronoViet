@@ -2,8 +2,12 @@
  * Embedding Service & Math Utilities: Dense Vectors (BAAI/bge-m3 compatible) & Cosine Distance
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+import { createHash } from 'crypto';
 import { envConfig } from './config.js';
 import { logFallbackAlert, createLogger } from './logger.js';
+import { findMonorepoRoot } from './workspace.js';
 import {
   checkEmbeddingCircuitState,
   recordEmbeddingCircuitSuccess,
@@ -82,6 +86,71 @@ export const embeddingCache = new Map<string, number[]>();
 export const MAX_CACHE_SIZE = 5000;
 let warnedMissingApiUrl = false;
 let warnedFailedApiUrl = false;
+let diskEmbeddingDir: string | null = null;
+
+function getDiskEmbeddingDir(): string {
+  if (!diskEmbeddingDir) {
+    const root = findMonorepoRoot();
+    diskEmbeddingDir = path.join(root, '.cache', 'embeddings');
+  }
+  return diskEmbeddingDir;
+}
+
+function computeEmbeddingHash(model: string, text: string): string {
+  return createHash('sha256').update(`${model}:${text.trim()}`).digest('hex');
+}
+
+export function getEmbeddingFromDisk(model: string, text: string): number[] | null {
+  if (process.env.VITEST || envConfig.NODE_ENV === 'test') return null;
+  try {
+    const dir = getDiskEmbeddingDir();
+    const hash = computeEmbeddingHash(model, text);
+    const filePath = path.join(dir, `${hash}.json`);
+    if (!fs.existsSync(filePath)) return null;
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const parsed = JSON.parse(content);
+    if (parsed && Array.isArray(parsed.vec) && parsed.vec.length === EMBEDDING_DIMENSION) {
+      return parsed.vec;
+    }
+  } catch {
+    // Non-fatal disk cache miss
+  }
+  return null;
+}
+
+export function saveEmbeddingToDisk(model: string, text: string, vector: number[]): void {
+  if (
+    !model ||
+    model.includes('pseudo') ||
+    model.includes('fallback') ||
+    process.env.VITEST ||
+    envConfig.NODE_ENV === 'test'
+  ) {
+    return;
+  }
+  try {
+    const dir = getDiskEmbeddingDir();
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const hash = computeEmbeddingHash(model, text);
+    const filePath = path.join(dir, `${hash}.json`);
+    const tmpPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 6)}.tmp`;
+    fs.writeFileSync(tmpPath, JSON.stringify({ model, vec: vector }), 'utf-8');
+    fs.renameSync(tmpPath, filePath);
+  } catch {
+    // Non-fatal disk write error
+  }
+}
+
+export function clearDiskEmbeddingCache(): void {
+  try {
+    const dir = getDiskEmbeddingDir();
+    if (fs.existsSync(dir)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  } catch {}
+}
 
 /**
  * Evicts oldest cache entries (FIFO/LRU partial eviction) on capacity overflow.
@@ -97,11 +166,14 @@ export function evictOldestCacheEntries(count = Math.floor(MAX_CACHE_SIZE * 0.2)
   }
 }
 
-function setEmbeddingCache(key: string, vector: number[]): void {
+function setEmbeddingCache(key: string, vector: number[], model = 'bge-m3', persistToDisk = true): void {
   if (embeddingCache.size >= MAX_CACHE_SIZE) {
     evictOldestCacheEntries();
   }
   embeddingCache.set(key, vector);
+  if (persistToDisk) {
+    saveEmbeddingToDisk(model, key, vector);
+  }
 }
 
 function normalizeVector(vector: number[]): number[] {
@@ -135,15 +207,25 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     return embeddingCache.get(trimmed)!;
   }
 
+  const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
+  const diskCached = getEmbeddingFromDisk(resolvedEmbeddingModel, trimmed);
+  if (diskCached) {
+    if (embeddingCache.size >= MAX_CACHE_SIZE) {
+      evictOldestCacheEntries();
+    }
+    embeddingCache.set(trimmed, diskCached);
+    return diskCached;
+  }
+
   const startTime = performance.now();
   const apiUrl = envConfig.EMBEDDING_API_URL;
   const circuitState = checkEmbeddingCircuitState();
   const isCircuitOpen = circuitState === 'FAST_FAIL';
-  const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
 
   if (!apiUrl || isCircuitOpen) {
     const allowSynthetic = Boolean(envConfig.ALLOW_SYNTHETIC_EMBEDDINGS) || process.env.ALLOW_SYNTHETIC_EMBEDDINGS === 'true';
-    if (envConfig.EVAL_STRICT) {
+    const isStrict = Boolean(envConfig.EVAL_STRICT) || process.env.EVAL_STRICT === 'true';
+    if (isStrict) {
       throw new Error('[EVAL_STRICT] Embedding server unavailable during evaluation; fallback disabled');
     }
     const isProdFailLoud =
@@ -173,7 +255,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       warnedMissingApiUrl = true;
     }
     const fallbackVec = generatePseudoRandomEmbedding(trimmed);
-    setEmbeddingCache(trimmed, fallbackVec);
+    setEmbeddingCache(trimmed, fallbackVec, 'pseudo-random-fallback', false);
     embeddingRequestsTotal.inc({ model: 'pseudo-random-fallback', status: 'fallback' });
     embeddingDurationSeconds.observe({ model: 'pseudo-random-fallback' }, (performance.now() - startTime) / 1000);
     return fallbackVec;
@@ -250,7 +332,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     embeddingRequestsTotal.inc({ model: resolvedEmbeddingModel, status: 'success' });
     embeddingDurationSeconds.observe({ model: resolvedEmbeddingModel }, (performance.now() - startTime) / 1000);
 
-    setEmbeddingCache(trimmed, normalized);
+    setEmbeddingCache(trimmed, normalized, resolvedEmbeddingModel, true);
     return normalized;
   } catch (err) {
     recordEmbeddingCircuitFailure(err);
@@ -259,15 +341,21 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
     const errMsg = err instanceof Error ? err.message : String(err);
     const allowSynthetic = Boolean(envConfig.ALLOW_SYNTHETIC_EMBEDDINGS) || process.env.ALLOW_SYNTHETIC_EMBEDDINGS === 'true';
-    if (envConfig.EVAL_STRICT) {
-      throw new Error(`[EVAL_STRICT] Embedding server unavailable during evaluation; pseudo-random fallback disabled: ${errMsg}`);
+    const isStrict = Boolean(envConfig.EVAL_STRICT) || process.env.EVAL_STRICT === 'true';
+    if (isStrict) {
+      log.error('embedding.strict_rejection', 'Embedding API call failed under strict eval mode; synthetic fallback blocked', {
+        error: errMsg,
+        apiUrl,
+        model: resolvedEmbeddingModel,
+      });
+      throw new Error(`[EVAL_STRICT] Embedding request failed: ${errMsg}. Fallback disabled.`);
     }
     const isCatchProdFailLoud =
       (envConfig.NODE_ENV === 'production' || process.env.NODE_ENV === 'production') &&
       !allowSynthetic &&
       !process.env.VITEST;
     if (isCatchProdFailLoud) {
-      log.error('embedding.production_failed', 'Embedding API request failed in production; failing loud', {
+      log.error('embedding.production_rejection', 'Embedding API call failed and ALLOW_SYNTHETIC_EMBEDDINGS is false; failing loud', {
         error: errMsg,
         apiUrl,
         model: resolvedEmbeddingModel,
@@ -290,7 +378,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       warnedFailedApiUrl = true;
     }
     const fallbackVec = generatePseudoRandomEmbedding(trimmed);
-    setEmbeddingCache(trimmed, fallbackVec);
+    setEmbeddingCache(trimmed, fallbackVec, 'pseudo-random-fallback', false);
     return fallbackVec;
   }
 }
@@ -310,7 +398,9 @@ export async function generateEmbeddingsBatch(
   const uncachedIndices: number[] = [];
   const uncachedTexts: string[] = [];
 
-  // 1. Check cache first
+  const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
+
+  // 1. Check cache first (L1 Memory Map + L2 Disk Cache)
   for (let i = 0; i < texts.length; i++) {
     const trimmed = (texts[i] || '').trim();
     if (!trimmed) {
@@ -318,8 +408,17 @@ export async function generateEmbeddingsBatch(
     } else if (embeddingCache.has(trimmed)) {
       results[i] = embeddingCache.get(trimmed)!;
     } else {
-      uncachedIndices.push(i);
-      uncachedTexts.push(trimmed);
+      const diskCached = getEmbeddingFromDisk(resolvedEmbeddingModel, trimmed);
+      if (diskCached) {
+        results[i] = diskCached;
+        if (embeddingCache.size >= MAX_CACHE_SIZE) {
+          evictOldestCacheEntries();
+        }
+        embeddingCache.set(trimmed, diskCached);
+      } else {
+        uncachedIndices.push(i);
+        uncachedTexts.push(trimmed);
+      }
     }
   }
 
@@ -329,15 +428,24 @@ export async function generateEmbeddingsBatch(
 
   const apiUrl = envConfig.EMBEDDING_API_URL;
   const isCircuitOpen = checkEmbeddingCircuitState() === 'FAST_FAIL';
-  const resolvedEmbeddingModel = envConfig.LOCAL_EMBEDDING_MODEL || envConfig.LOCAL_EMBEDDING_DEFAULT || 'bge-m3';
   const isOllamaEmbeddingsEndpoint = apiUrl?.includes('11434') || apiUrl?.includes('/api/embeddings');
 
   // 2. Native Multi-Text Batch Embedding via OpenAI-compatible endpoint (Parallel Multi-Batch Pool)
   if (apiUrl && !isCircuitOpen && !isOllamaEmbeddingsEndpoint) {
     const targetApiUrl = apiUrl;
-    const batchSize = envConfig.EMBEDDING_BATCH_SIZE || 16;
+    const maxItemsPerBatch = envConfig.EMBEDDING_BATCH_SIZE || 16;
     const timeoutMs = envConfig.NODE_ENV === 'test' ? 1000 : (envConfig.EMBEDDING_TIMEOUT_MS || 60000);
-    const maxChars = Number(envConfig.EMBEDDING_MAX_CHARS) || Number(process.env.EMBEDDING_MAX_CHARS) || 24000;
+    // BGE-M3 native context is 8,192 tokens (~18,000 Vietnamese characters).
+    // Ensure no single item exceeds model context.
+    const maxSingleChars = Math.min(
+      Number(envConfig.EMBEDDING_MAX_CHARS) || 18000,
+      18000
+    );
+    // Dynamic Token/Character Budget per batch request:
+    // Keep total characters in a single HTTP request <= 18,000 chars (~7,000 tokens).
+    // Large parent chunks (~14,000 chars) are automatically isolated into 1-item batches.
+    // Smaller child chunks (~2,000 chars) are packed up to maxItemsPerBatch (e.g. 8-10 items).
+    const maxBatchChars = 18000;
     const concurrencySlots = envConfig.EMBEDDING_CONCURRENCY || 4;
 
     interface BatchTask {
@@ -346,31 +454,69 @@ export async function generateEmbeddingsBatch(
     }
 
     const tasks: BatchTask[] = [];
-    for (let bStart = 0; bStart < uncachedTexts.length; bStart += batchSize) {
-      tasks.push({
-        sliceTexts: uncachedTexts.slice(bStart, bStart + batchSize),
-        indices: uncachedIndices.slice(bStart, bStart + batchSize),
-      });
+    let currentSlice: string[] = [];
+    let currentIndices: number[] = [];
+    let currentChars = 0;
+
+    for (let i = 0; i < uncachedTexts.length; i++) {
+      let text = uncachedTexts[i];
+      if (text.length > maxSingleChars) {
+        text = text.slice(0, maxSingleChars);
+      }
+      const textLen = text.length;
+
+      if (
+        currentSlice.length > 0 &&
+        (currentSlice.length >= maxItemsPerBatch || currentChars + textLen > maxBatchChars)
+      ) {
+        tasks.push({ sliceTexts: currentSlice, indices: currentIndices });
+        currentSlice = [];
+        currentIndices = [];
+        currentChars = 0;
+      }
+
+      currentSlice.push(text);
+      currentIndices.push(uncachedIndices[i]);
+      currentChars += textLen;
+    }
+
+    if (currentSlice.length > 0) {
+      tasks.push({ sliceTexts: currentSlice, indices: currentIndices });
     }
 
     let nextTaskIdx = 0;
     let nativeBatchSuccess = true;
 
-    const targetUrl = apiUrl;
     async function batchWorker() {
       while (nextTaskIdx < tasks.length && nativeBatchSuccess) {
         const task = tasks[nextTaskIdx++];
-        const sanitizedSlice = task.sliceTexts.map((t) => (t.length > maxChars ? t.slice(0, maxChars) : t));
+        if (!task) break;
 
         try {
-          const res = await fetch(targetUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: resolvedEmbeddingModel, input: sanitizedSlice }),
-            signal: AbortSignal.timeout(timeoutMs),
-          });
+          let res: Response | null = null;
+          let fetchError: unknown = null;
 
-          if (!res.ok) throw new Error(`Batch embedding HTTP ${res.status}: ${res.statusText}`);
+          // Retry transient network hiccups once with backoff
+          for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+              res = await fetch(targetApiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: resolvedEmbeddingModel, input: task.sliceTexts }),
+                signal: AbortSignal.timeout(timeoutMs),
+              });
+              if (res.ok) break;
+            } catch (err) {
+              fetchError = err;
+              if (attempt === 0) await new Promise((r) => setTimeout(r, 500));
+            }
+          }
+
+          if (!res || !res.ok) {
+            const statusText = res ? `HTTP ${res.status}: ${res.statusText}` : String(fetchError);
+            throw new Error(`Batch embedding ${statusText}`);
+          }
+
           const data = (await res.json()) as any;
 
           if (data.data && Array.isArray(data.data) && data.data.length === task.sliceTexts.length) {
@@ -381,7 +527,7 @@ export async function generateEmbeddingsBatch(
                 const normalized = normalizeVector(adapted);
                 const origIdx = task.indices[k];
                 results[origIdx] = normalized;
-                setEmbeddingCache(task.sliceTexts[k], normalized);
+                setEmbeddingCache(task.sliceTexts[k], normalized, resolvedEmbeddingModel, true);
               } else {
                 throw new Error('Malformed vector in batch response');
               }
@@ -391,7 +537,21 @@ export async function generateEmbeddingsBatch(
             throw new Error('Batch response length mismatch');
           }
         } catch (err) {
-          recordEmbeddingCircuitFailure(err);
+          const errMsg = err instanceof Error ? err.message : String(err);
+          log.warn('embedding.batch_task_failed', 'Native batch task failed; delegating remaining items to individual handler', {
+            error: errMsg,
+            taskSize: task.sliceTexts.length,
+          });
+
+          const isConnectionError =
+            errMsg.includes('ECONNREFUSED') ||
+            errMsg.includes('ENOTFOUND') ||
+            errMsg.includes('ETIMEDOUT') ||
+            errMsg.includes('fetch failed');
+
+          if (isConnectionError) {
+            recordEmbeddingCircuitFailure(err);
+          }
           nativeBatchSuccess = false;
           break;
         }
@@ -407,10 +567,19 @@ export async function generateEmbeddingsBatch(
     }
   }
 
-  // 3. Fallback: Concurrency-bounded Individual Generation
-  for (let i = 0; i < uncachedIndices.length; i += concurrency) {
-    const batchIndices = uncachedIndices.slice(i, i + concurrency);
-    const batchTexts = uncachedTexts.slice(i, i + concurrency);
+  // 3. Fallback: Concurrency-bounded Individual Generation for any unfilled indices
+  const pendingIndices: number[] = [];
+  const pendingTexts: string[] = [];
+  for (let i = 0; i < texts.length; i++) {
+    if (!results[i]) {
+      pendingIndices.push(i);
+      pendingTexts.push((texts[i] || '').trim());
+    }
+  }
+
+  for (let i = 0; i < pendingIndices.length; i += concurrency) {
+    const batchIndices = pendingIndices.slice(i, i + concurrency);
+    const batchTexts = pendingTexts.slice(i, i + concurrency);
     const batchResults = await Promise.all(batchTexts.map((t) => generateEmbedding(t)));
     for (let j = 0; j < batchResults.length; j++) {
       results[batchIndices[j]] = batchResults[j];

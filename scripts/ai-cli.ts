@@ -443,9 +443,9 @@ export function spawnLlamaService(
 // SERVICE LAUNCHERS
 // ==============================================================================
 export function getExtractionLlamaConfig() {
-  const parallel = envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 12;
-  const minRequiredCtx = parallel * 4096; // Guarantee at least 4,096 tokens per slot
-  const extCtxSize = Math.max(envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 49152, minRequiredCtx);
+  const parallel = envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 14;
+  const minRequiredCtx = parallel * 8192; // Guarantee at least 8,192 tokens per slot (safely fits 4,108 prompt + output)
+  const extCtxSize = Math.max(envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 114688, minRequiredCtx);
   const extExtraArgs: string[] = [
     '--cache-type-k',
     'q8_0',
@@ -459,22 +459,23 @@ export function getExtractionLlamaConfig() {
     '--parallel',
     String(parallel),
     '--threads',
-    String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 8),
+    String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 14),
     ...(envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS ? envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS.split(' ').filter(Boolean) : []),
   ];
   return { extCtxSize, extExtraArgs };
 }
 
 export function getEmbeddingLlamaConfig() {
-  const embCtxSize = envConfig.EMBEDDING_CTX_SIZE || 4096;
+  const parallel = envConfig.LOCAL_EMBEDDING_PARALLEL || 4;
+  const embCtxSize = Math.max(envConfig.EMBEDDING_CTX_SIZE || 32768, parallel * 8192);
   const embExtraArgs: string[] = [
     '--batch-size',
-    '2048',
+    '8192',
     '--ubatch-size',
-    '2048',
+    '8192',
     '--cont-batching',
     '--parallel',
-    String(envConfig.LOCAL_EMBEDDING_PARALLEL || 4),
+    String(parallel),
     '--threads',
     String(envConfig.LOCAL_EMBEDDING_THREADS || 6),
     ...(envConfig.LOCAL_EMBEDDING_EXTRA_ARGS ? envConfig.LOCAL_EMBEDDING_EXTRA_ARGS.split(' ').filter(Boolean) : []),

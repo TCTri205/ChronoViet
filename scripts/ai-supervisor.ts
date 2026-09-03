@@ -284,10 +284,10 @@ export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank')
     key === 'llm'
       ? (envConfig.LLM_CTX_SIZE || 131072)
       : key === 'extraction'
-      ? (envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 8192)
+      ? Math.max(envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 114688, (envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 14) * 8192)
       : key === 'rerank'
       ? 8192
-      : (envConfig.EMBEDDING_CTX_SIZE || 8192);
+      : Math.max(envConfig.EMBEDDING_CTX_SIZE || 32768, (envConfig.LOCAL_EMBEDDING_PARALLEL || 4) * 8192);
 
   const args = [
     '-m',
@@ -317,17 +317,17 @@ export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank')
       ? [
           '--cont-batching',
           '--parallel',
-          String(envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 4),
+          String(envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 14),
           '--threads',
-          String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 6),
+          String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 14),
         ]
       : []),
     ...(key === 'rerank' || key === 'emb'
       ? [
           '--batch-size',
-          String(ctxSize),
+          String(key === 'emb' ? 8192 : ctxSize),
           '--ubatch-size',
-          String(ctxSize),
+          String(key === 'emb' ? 8192 : ctxSize),
           '--cont-batching',
           '--parallel',
           String(key === 'rerank' ? envConfig.LOCAL_RERANK_PARALLEL || 4 : envConfig.LOCAL_EMBEDDING_PARALLEL || 4),

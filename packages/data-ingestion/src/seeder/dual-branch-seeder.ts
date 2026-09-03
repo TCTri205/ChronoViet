@@ -45,6 +45,7 @@ import {
 import { PdfExtractor } from '../pdf/pdf-extractor.js';
 import { parseFrontmatter } from '../utils/text-utils.js';
 import { extractionCache } from '../cache/extraction-cache.js';
+import { ingestionManifest } from '../cache/ingestion-manifest.js';
 
 const log = createLogger({ service: 'data-ingestion' });
 
@@ -59,6 +60,14 @@ export interface IngestionDocMetadata {
   pageNumber?: number;
   location?: string;
   keyFigures?: string[];
+}
+
+export interface DualBranchSeedOptions extends IngestionOptions, ExtractionOptions {
+  docProgress?: {
+    docNum: number;
+    totalDocs: number;
+    title: string;
+  };
 }
 
 export interface DualBranchSeedResult {
@@ -83,7 +92,7 @@ export interface DualBranchSeedResult {
 export async function seedDualBranch(
   content: string,
   metadata: IngestionDocMetadata,
-  options?: ExtractionOptions
+  options?: DualBranchSeedOptions
 ): Promise<DualBranchSeedResult> {
   const startTime = Date.now();
   const metricsCollector = new IngestionMetricsCollector(options?.correlationId);
@@ -91,6 +100,9 @@ export async function seedDualBranch(
 
   try {
     const cleanedText = normalizeText(content);
+    const docPrefix = options?.docProgress
+      ? `[Doc ${options.docProgress.docNum}/${options.docProgress.totalDocs}: ${options.docProgress.title}] `
+      : '';
 
   // 1. Dynamic Hierarchical Temporal Chunking
   metricsCollector.startStage('chunking');
@@ -136,7 +148,7 @@ export async function seedDualBranch(
   // Stage 1 Fast-Path NER for Parent Chunks (2,000–3,000 words) — Entity linking only (No unverified rule triples for KG)
   log.info(
     'dual_branch_seeder.parent_chunks_ner',
-    `Processed ${parentChunks.length} parent chunks via Stage 1 Fast-Path NER (<1ms/chunk)`,
+    `${docPrefix}Processed ${parentChunks.length} parent chunks via Stage 1 Fast-Path NER (<1ms/chunk)`,
     { correlationId, parentChunksCount: parentChunks.length }
   );
   for (let i = 0; i < parentChunks.length; i++) {
@@ -149,7 +161,7 @@ export async function seedDualBranch(
     // Fast Path: Stage 1 Pure TS NER for Child Chunks (Bypass LLM, Vector only)
     log.info(
       'dual_branch_seeder.stage_vector_only',
-      `Stage 1 (Vector): Extracting Fast NER candidate entities for ${childChunks.length} child chunks (LLM bypassed)`,
+      `${docPrefix}Stage 1 (Vector): Extracting Fast NER candidate entities for ${childChunks.length} child chunks (LLM bypassed)`,
       { correlationId, childChunksCount: childChunks.length }
     );
     for (let i = 0; i < childChunks.length; i++) {
@@ -185,7 +197,7 @@ export async function seedDualBranch(
     if (initialCachedCount > 0) {
       log.info(
         'dual_branch_seeder.cache_preload',
-        `Resume Check: Restored ${initialCachedCount}/${childChunks.length} child chunks from disk cache (${cachedPercent}%)`,
+        `${docPrefix}Resume Check: Restored ${initialCachedCount}/${childChunks.length} child chunks from disk cache (${cachedPercent}%)`,
         {
           correlationId,
           cachedCount: initialCachedCount,
@@ -199,7 +211,7 @@ export async function seedDualBranch(
     if (uncachedItems.length === 0) {
       log.info(
         'dual_branch_seeder.all_chunks_cached',
-        `All ${childChunks.length} child chunks successfully restored from cache (LLM extraction completely bypassed)`,
+        `${docPrefix}All ${childChunks.length} child chunks successfully restored from cache (LLM extraction completely bypassed)`,
         { correlationId, childChunksCount: childChunks.length }
       );
     } else {
@@ -215,7 +227,7 @@ export async function seedDualBranch(
 
       log.info(
         'dual_branch_seeder.extract_triples_parallel',
-        `Extracting triples for remaining ${uncachedItems.length}/${childChunks.length} child chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`,
+        `${docPrefix}Extracting triples for remaining ${uncachedItems.length}/${childChunks.length} child chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`,
         { correlationId, remainingCount: uncachedItems.length, childChunksCount: childChunks.length, concurrency, activeTargetsCount }
       );
 
@@ -250,7 +262,7 @@ export async function seedDualBranch(
 
             log.info(
               'dual_branch_seeder.chunk_success',
-              `Child Chunk [${totalCompleted}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
+              `${docPrefix}Child Chunk [${totalCompleted}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
               {
                 correlationId,
                 chunkIndex: totalCompleted,
@@ -490,7 +502,7 @@ export async function seedDualBranch(
 
       log.info(
         'embedding.batch_completed',
-        `Generated embeddings sub-batch [${batchIndex}/${totalBatches}] (${subBatchTexts.length} vectors) in ${batchDurationMs}ms (${vectorsPerSec} vec/s)`,
+        `${docPrefix}Generated embeddings sub-batch [${batchIndex}/${totalBatches}] (${subBatchTexts.length} vectors) in ${batchDurationMs}ms (${vectorsPerSec} vec/s)`,
         {
           correlationId,
           batchIndex,
@@ -800,7 +812,7 @@ export async function seedDualBranch(
   const durationMs = Date.now() - startTime;
   const telemetry = metricsCollector.getTelemetryReport(durationMs);
 
-  log.info('ingest.doc_seeding_completed', 'Completed dual-branch seeding for document', {
+  log.info('ingest.doc_seeding_completed', `${docPrefix}Completed dual-branch seeding for document`, {
     correlationId,
     title: metadata.title,
     parentChunks: parentChunks.length,
@@ -888,7 +900,11 @@ export class DualBranchSeeder implements IIngestionPipeline {
 
     filesToProcess.sort((a, b) => a.localeCompare(b));
 
-    for (const filePath of filesToProcess) {
+    const totalDocs = filesToProcess.length;
+
+    for (let docIdx = 0; docIdx < filesToProcess.length; docIdx++) {
+      const filePath = filesToProcess[docIdx];
+      const docNum = docIdx + 1;
       const baseName = path.basename(filePath, path.extname(filePath));
       const registeredMeta = this.pdfExtractor.getMetadata(baseName);
 
@@ -928,14 +944,37 @@ export class DualBranchSeeder implements IIngestionPipeline {
       }
 
       if (!content || content.trim().length === 0) {
-        log.warn('seeder.empty_document_skipped', 'Skipping empty document', { filePath });
+        log.warn('seeder.empty_document_skipped', `[Doc ${docNum}/${totalDocs}: ${title || baseName}] Skipping empty document`, { filePath });
         continue;
       }
 
       const wordCount = content.trim().split(/\s+/).length;
       if (wordCount < 15 && (content.includes('...') || content.toLowerCase().includes('chưa có nội dung') || content.toLowerCase().includes('trống'))) {
-        log.warn('seeder.stub_skipped', 'Skipping placeholder/stub document', { filePath, wordCount });
+        log.warn('seeder.stub_skipped', `[Doc ${docNum}/${totalDocs}: ${title || baseName}] Skipping placeholder/stub document`, { filePath, wordCount });
         continue;
+      }
+
+      // Document-Level Checkpoint check: skip already completed documents in 0ms
+      const isForce = Boolean(options?.force);
+      const targetStage = options?.stage || 'all';
+      const pgConnected = await isPgAvailable();
+      if (!isForce) {
+        const isDocDone = await ingestionManifest.isDocumentCompleted(
+          baseName,
+          filePath,
+          targetStage,
+          pgConnected,
+          title
+        );
+        if (isDocDone) {
+          log.info(
+            'seeder.doc_skipped_checkpoint',
+            `[Doc ${docNum}/${totalDocs}: ${title}] Document already fully ingested -> SKIPPED (0ms)`,
+            { docNum, totalDocs, title, sourceName: baseName }
+          );
+          documentsProcessed++;
+          continue;
+        }
       }
 
       const seedResult = await seedDualBranch(
@@ -948,10 +987,30 @@ export class DualBranchSeeder implements IIngestionPipeline {
         },
         {
           ...options,
+          docProgress: { docNum, totalDocs, title },
           skipMvRefresh: true, // Batch mode: skip per-doc MV refresh; refreshed once at end of batch
-          correlationId: options?.correlationId || `${batchCorrelationId}-doc-${documentsProcessed + 1}`,
+          correlationId: options?.correlationId || `${batchCorrelationId}-doc-${docNum}`,
         }
       );
+
+      // Record document completion in persistent checkpoint manifest
+      try {
+        const fileStat = await fs.stat(filePath);
+        await ingestionManifest.recordDocumentCompleted({
+          sourceName: baseName,
+          title,
+          filePath,
+          fileMtimeMs: Math.floor(fileStat.mtimeMs),
+          chunksCount: seedResult.chunksIngested,
+          stage: targetStage,
+          completedAt: new Date().toISOString(),
+        });
+      } catch (manifestErr) {
+        log.warn('seeder.manifest_record_failed', 'Failed to update document checkpoint manifest', {
+          sourceName: baseName,
+          error: manifestErr,
+        });
+      }
 
       documentsProcessed++;
       chunksCreated += seedResult.chunksIngested;

@@ -7,7 +7,7 @@
 import { spawn, execSync, ChildProcess } from 'child_process';
 import * as path from 'path';
 import { isPgAvailable, envConfig, createLogger } from '@chronoviet/infra';
-import { resolveWeights, checkLlamaCli, spawnLlamaService } from './ai-cli.js';
+import { resolveWeights, checkLlamaCli, spawnLlamaService, getExtractionLlamaConfig } from './ai-cli.js';
 
 const log = createLogger({ service: 'dev-data' });
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -86,15 +86,7 @@ async function runDevData() {
   activeProcesses.push(embProc);
 
   // 4. Launch Extraction server
-  const extCtxSize = envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 8192;
-  const extExtraArgs: string[] = [
-    '--cont-batching',
-    '--parallel',
-    String(envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 4),
-    '--threads',
-    String(envConfig.LOCAL_LLM_EXTRACTION_THREADS || 6),
-    ...(envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS ? envConfig.LOCAL_LLM_EXTRACTION_EXTRA_ARGS.split(' ').filter(Boolean) : []),
-  ];
+  const { extCtxSize, extExtraArgs } = getExtractionLlamaConfig();
 
   const extProc = spawnLlamaService('Extraction LLM', EXTRACTION_PORT, weights.extPath, {
     ctxSize: extCtxSize,

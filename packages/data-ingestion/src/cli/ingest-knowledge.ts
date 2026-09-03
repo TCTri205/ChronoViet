@@ -16,9 +16,11 @@ import {
   isEmbeddingServiceHealthy,
   isLLMServiceHealthy,
   flushAllQuarantines,
+  clearDiskEmbeddingCache,
 } from '@chronoviet/infra';
 import { runReResolve } from './re-resolve-cli.js';
 import { extractionCache } from '../cache/extraction-cache.js';
+import { ingestionManifest } from '../cache/ingestion-manifest.js';
 
 const log = createLogger({ service: 'data-ingestion' });
 
@@ -188,8 +190,10 @@ async function main() {
 
     // 3. If force/clean specified, reset tables & clear cache to ensure fresh ingestion
     if (cliOptions.force) {
-      log.info('ingest.force_reset', 'Force mode enabled: clearing extraction cache and truncating database tables');
+      log.info('ingest.force_reset', 'Force mode enabled: clearing extraction & embedding caches, manifest, and truncating database tables');
       await extractionCache.clear();
+      await ingestionManifest.clear();
+      clearDiskEmbeddingCache();
       const pgConnected = await isPgAvailable();
       if (pgConnected) {
         await query(
@@ -203,7 +207,9 @@ async function main() {
       await flushAllQuarantines();
     } else {
       const cacheStats = await extractionCache.getStats();
-      log.info('ingest.resume_mode', 'Resume mode active (cached chunk extractions will be reused to bypass LLM extraction latency)', {
+      const completedDocsCount = await ingestionManifest.getCompletedCount();
+      log.info('ingest.resume_mode', 'Resume mode active (cached documents, chunks & embeddings will be reused)', {
+        completedDocumentsCount: completedDocsCount,
         cachedChunksCount: cacheStats.count,
         cacheDir: cacheStats.dir,
       });
