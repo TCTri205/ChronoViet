@@ -141,8 +141,6 @@ export function validateAndCanonicalizeTriple(
         tName = tCanon.canonicalName || tName;
       }
     }
-    if (sId === 'event_tran_thanh_da_bang') sId = 'event_thanh_da_bang';
-    if (tId === 'event_tran_thanh_da_bang') tId = 'event_thanh_da_bang';
 
     // 5. Resolve Documents & Artifacts
     if (sId.startsWith('doc_') || source.type === 'DOCUMENT_CULTURE') {
@@ -446,6 +444,9 @@ export function validateAndCanonicalizeTriple(
     }
     const INTERNATIONAL_ORGS = new Set(['org_wto', 'org_asean', 'org_lhq', 'org_lien_hop_quoc']);
     if (sId.startsWith('dynasty_') && (tId.startsWith('doc_') || tId.startsWith('artifact_') || (tId.startsWith('org_') && !INTERNATIONAL_ORGS.has(tId)))) {
+      return null;
+    }
+    if (sId.startsWith('dynasty_') && tId.startsWith('dynasty_')) {
       return null;
     }
     if (sId.startsWith('loc_') && (tId.startsWith('dynasty_') || tId.startsWith('epoch_') || tId.startsWith('loc_'))) {

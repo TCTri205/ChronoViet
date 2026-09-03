@@ -33,7 +33,7 @@ export function extractSyntacticDynasticTriples(
       const charDist = maxOffset - minOffset;
       if (charDist > 120 || charDist < 0) continue;
       const mid = text.substring(minOffset, maxOffset).trim();
-      if (mid.includes('\n')) continue;
+      if (mid.includes('\n') || mid.includes('.')) continue;
 
       // Meta-discourse protection: Historians discussing past eras should NOT be assigned PART_OF that dynasty
       if (HISTORICAL_COMMENTARY_PATTERN.test(mid) || HISTORICAL_COMMENTARY_PATTERN.test(text.substring(Math.max(0, p.startOffset - 25), Math.min(text.length, p.endOffset + 25)))) {
@@ -64,12 +64,19 @@ export function extractSyntacticDynasticTriples(
       const minOffset = Math.min(dyn.endOffset, item.endOffset);
       const maxOffset = Math.max(dyn.startOffset, item.startOffset);
       const charDist = maxOffset - minOffset;
-      if (charDist > 120 || charDist < 0) continue;
+      if (charDist > 160 || charDist < 0) continue;
       const mid = text.substring(minOffset, maxOffset).trim();
-      if (mid.includes('\n') || mid.includes('.')) continue;
+      const dotCount = (mid.match(/\./g) || []).length;
+      if (mid.includes('\n') || dotCount > 1) continue;
+      if (dotCount === 1 && !/(?:chế\s+tạo|sáng\s+chế|đúc|ban\s+hành|biên\s+soạn|soạn\s+thảo)/i.test(mid)) continue;
 
       // Meta-discourse protection: Commentary books/documents discussing past eras should NOT have HAPPENED_IN that dynasty
       if (HISTORICAL_COMMENTARY_PATTERN.test(mid) || HISTORICAL_COMMENTARY_PATTERN.test(text.substring(Math.max(0, item.startOffset - 25), Math.min(text.length, item.endOffset + 25)))) {
+        continue;
+      }
+
+      const dynContext = text.substring(Math.max(0, dyn.startOffset - 20), dyn.endOffset);
+      if (/(?:truất\s+ngôi|lật\s+đổ|thay\s+thế|lật\s+nhà|chấm\s+dứt)/i.test(dynContext)) {
         continue;
       }
 

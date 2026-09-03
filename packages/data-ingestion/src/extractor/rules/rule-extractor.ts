@@ -208,9 +208,9 @@ export function extractTriplesFromText(text: string, options?: { headingAnchorYe
     }
   }
 
-  // 2b. Link Persons -> Locations (HAPPENED_AT) with Prepositions & Actions (Bi-directional)
-  const STRICT_LOC_PREP_INNER = /^(?:,\s*)?(?:ở\s+tại|ở|tại|đóng\s+đô\s+ở|định\s+đô\s+ở|đóng\s+đô\s+tại|quê\s+ở|sinh\s+tại|mất\s+tại|hy\s+sinh\s+tại|dời\s+đô\s+về|dời\s+đô|đóng\s+quân\s+tại|đóng\s+quân\s+ở|căn\s+cứ|dựng\s+cờ\s+ở|lên\s+ngôi\s+ở|xây|xây\s+dựng|cho\s+xây\s+dựng|cho\s+xây|cho\s+đúc|cho\s+đặt|làm\s+nơi\s+an\s+nghỉ|đắp|lập|dấy\s+binh\s+khởi\s+nghĩa\s+tại|khởi\s+nghĩa\s+tại|lập\s+căn\s+cứ\s+tại|hoạt\s+động\s+tại|tu\s+hành\s+tại|lãnh\s+đạo\s+tại|mở\s+trường\s+tại|ra\s+đi\s+tìm\s+đường\s+cứu\s+nước\s+tại|đọc\s+tuyên\s+ngôn\s+tại|hội\s+đàm\s+tại|tập\s+kết\s+tại|(?:chỉ\s+huy\s+)?(?:tiến\s+về|tiến\s+quân\s+về|tiến\s+đánh|đánh\s+chiếm|giải\s+phóng|hành\s+quân\s+về|hành\s+quân\s+đến|tiến\s+vào))(?:\s+(?:thành\s+phố|tỉnh|huyện|thị\s+xã|vùng|đất))?\s*$/i;
-  for (const p of persons) {
+  // 2b. Link Persons & Organizations -> Locations (HAPPENED_AT) with Prepositions & Actions (Bi-directional)
+  const STRICT_LOC_PREP_INNER = /^(?:,\s*)?(?:ở\s+tại|ở|tại|đóng\s+đô\s+ở|định\s+đô\s+ở|đóng\s+đô\s+tại|quê\s+ở|sinh\s+tại|mất\s+tại|hy\s+sinh\s+tại|dời\s+đô\s+về|dời\s+đô|đóng\s+quân\s+tại|đóng\s+quân\s+ở|căn\s+cứ|bản\s+doanh(?:\s+của)?|dựng\s+cờ\s+ở|lên\s+ngôi\s+ở|xây|xây\s+dựng|cho\s+xây\s+dựng|cho\s+xây|cho\s+đúc|cho\s+đặt|làm\s+nơi\s+an\s+nghỉ|đắp|lập|dấy\s+binh\s+khởi\s+nghĩa\s+tại|khởi\s+nghĩa\s+tại|lập\s+căn\s+cứ\s+tại|hoạt\s+động\s+tại|tu\s+hành\s+tại|lãnh\s+đạo\s+tại|mở\s+trường\s+tại|ra\s+đi\s+tìm\s+đường\s+cứu\s+nước\s+tại|đọc\s+tuyên\s+ngôn\s+tại|hội\s+đàm\s+tại|tập\s+kết\s+tại|(?:chỉ\s+huy\s+)?(?:tiến\s+về|tiến\s+quân\s+về|tiến\s+đánh|đánh\s+chiếm|giải\s+phóng|hành\s+quân\s+về|hành\s+quân\s+đến|tiến\s+vào))(?:\s+(?:thành\s+phố|tỉnh|huyện|thị\s+xã|vùng|đất))?\s*$/i;
+  for (const p of [...persons, ...orgs]) {
     for (const loc of locations) {
       const minOffset = Math.min(p.endOffset, loc.endOffset);
       const maxOffset = Math.max(p.startOffset, loc.startOffset);
@@ -223,29 +223,30 @@ export function extractTriplesFromText(text: string, options?: { headingAnchorYe
       // was the direct object/recipient of the prior action, not the subject of the ensuing action at loc!
       if (/^(?:rồi|sau\s+đó)\s+/i.test(mid) && p.endOffset <= loc.startOffset) continue;
 
-      // Anti-clique: If there is an intermediate location between p and loc, loc is a spatial modifier of that location, not p!
-      const hasIntermediateLoc = locations.some((other) => other !== loc && other.startOffset >= minOffset && other.endOffset <= maxOffset);
-      if (hasIntermediateLoc) continue;
+      // Meta-discourse protection: Historians discussing events/locations should NOT be located there
+      const HISTORICAL_COMMENTARY_PATTERN = /(?<!\p{L})(luận\s+bàn|bàn\s+về|khảo\s+cứu|khảo\s+tả|ghi\s+chép\s+về|viết\s+về|chép\s+lại|nhắc\s+đến|đánh\s+giá)(?!\p{L})/iu;
+      if (HISTORICAL_COMMENTARY_PATTERN.test(mid) || HISTORICAL_COMMENTARY_PATTERN.test(text.substring(Math.max(0, p.startOffset - 25), Math.min(text.length, p.endOffset + 25)))) {
+        continue;
+      }
 
-      // Inverted Locative Topic support: "Tại/Ở [Loc], [Person]..."
+      // Inverted topic structure: "Tại [Loc], [Person] đã hoàn thành [Artifact/Doc]"
       let isInvertedTopic = false;
       if (loc.endOffset <= p.startOffset) {
-        const preLocText = text.substring(Math.max(0, loc.startOffset - 35), loc.startOffset).trim();
-        const hasInvertedLocPrep = /(?:^|[.\n?!]\s*)(?:tại|ở|trên|từ|về|đến|bên)(?:\s+(?:sở\s+chỉ\s+huy|chiến\s+lũy|căn\s+cứ|doanh\s+trại|vùng|mặt\s+trận|thành|cửa))?\s*$/iu.test(preLocText) ||
-          /(?<!\p{L})(tại|ở|trên)(?:\s+(?:sở\s+chỉ\s+huy|chiến\s+lũy|căn\s+cứ|doanh\s+trại|vùng|mặt\s+trận|thành|cửa))?(?!\p{L})/iu.test(preLocText);
-        const isLocCommaPerson = /^(?:,\s*)?(?:thì|đã|liền)?\s*$/i.test(mid) || mid === ',' || mid === '';
-        if (hasInvertedLocPrep && isLocCommaPerson) {
+        const preLocText = text.substring(Math.max(0, loc.startOffset - 30), loc.startOffset).trim();
+        const hasInvertedLocPrep = /(?:^|[.\n?!]\s*)(?:tại|ở|trên|từ|về|đến|trong|ngay\s+tại|ngay\s+ở)\s*$/iu.test(preLocText) ||
+          /(?<!\p{L})(tại|ở|trên)(?!\p{L})/iu.test(preLocText);
+        const postPersonText = text.substring(p.endOffset, Math.min(text.length, p.endOffset + 50));
+        const hasActionVerb = /(hoàn\s+thành|soạn|viết|sáng\s+tác|chế\s+tạo|đúc|lãnh\s+đạo|chỉ\s+huy|đóng\s+quân|đặt\s+bản\s+doanh|chống|đánh)/i.test(postPersonText) ||
+          /(hoàn\s+thành|soạn|viết|sáng\s+tác|chế\s+tạo|đúc|lãnh\s+đạo|chỉ\s+huy|đóng\s+quân|đặt\s+bản\s+doanh|chống|đánh)/i.test(mid);
+        if (hasInvertedLocPrep && hasActionVerb) {
           isInvertedTopic = true;
         }
       }
 
-      // Guard: If there is an Event in the sentence linking this person (as commander) to this location,
-      // and mid contains battle leadership verbs rather than personal stay/residence, avoid emitting duplicate Person HAPPENED_AT Location.
-      const hasBattleEventAtLoc = events.some((ev) => {
-        const isNearPerson = Math.abs(ev.startOffset - p.endOffset) < 90 || Math.abs(p.startOffset - ev.endOffset) < 90;
-        const isNearLoc = Math.abs(ev.startOffset - loc.endOffset) < 90 || Math.abs(loc.startOffset - ev.endOffset) < 90;
-        return isNearPerson && isNearLoc;
-      });
+      // Check if location has an adjacent battle event (e.g., "Trận Bạch Đằng tại sông Bạch Đằng")
+      // In this case, commanders (e.g. "chỉ huy", "lãnh đạo") are linked via event.LED_BY, not person.HAPPENED_AT,
+      // UNLESS there is a personal residence/birth/death predicate like "quê ở", "sinh tại", "mất tại", "đóng đô".
+      const hasBattleEventAtLoc = events.some((e) => Math.abs(e.startOffset - loc.startOffset) < 40 || Math.abs(e.endOffset - loc.endOffset) < 40);
       const hasPersonalResidenceVerb = /(quê|sinh|mất|hy\s+sinh|đóng\s+đô|dời\s+đô|an\s+táng|tu\s+hành|lập\s+căn\s+cứ)/i.test(mid) ||
         /(quê|sinh|mất|hy\s+sinh|đóng\s+đô|dời\s+đô|an\s+táng|tu\s+hành|lập\s+căn\s+cứ)/i.test(text.substring(p.startOffset, Math.min(text.length, p.endOffset + 40)));
       if (hasBattleEventAtLoc && !hasPersonalResidenceVerb && /(chỉ\s+huy|lãnh\s+đạo|thống\s+lĩnh|cầm\s+quân)/i.test(mid)) {
@@ -255,12 +256,13 @@ export function extractTriplesFromText(text: string, options?: { headingAnchorYe
       if (
         isInvertedTopic ||
         STRICT_LOC_PREP_INNER.test(mid) ||
-        /(?<!\p{L})(tại|ở|về|đến|từ|xây|dựng|cho\s+xây|cho\s+đúc|cho\s+đặt|đóng\s+đô|dời\s+đô|định\s+đô|lên\s+ngôi|chiếm|đại\s+phá|đánh\s+tan|phất\s+cờ|khởi\s+nghĩa|dấy\s+binh|quê|sinh|mất|hy\s+sinh|căn\s+cứ|hoạt\s+động|lãnh\s+đạo|hành\s+quân|tiến\s+về|tiến\s+quân|trên)(?!\p{L})/iu.test(mid)
+        /(?<!\p{L})(tại|ở|về|đến|từ|xây|dựng|cho\s+xây|cho\s+đúc|cho\s+đặt|đóng\s+đô|dời\s+đô|định\s+đô|lên\s+ngôi|chiếm|đại\s+phá|đánh\s+tan|phất\s+cờ|khởi\s+nghĩa|dấy\s+binh|quê|sinh|mất|hy\s+sinh|căn\s+cứ|bản\s+doanh|hoạt\s+động|lãnh\s+đạo|hành\s+quân|tiến\s+về|tiến\s+quân|trên)(?!\p{L})/iu.test(mid)
       ) {
-        const pId = p.suggestedCanonicalId || `person_${slugify(p.text)}`;
+        const prefix = p.type === 'ORGANIZATION' ? 'org_' : 'person_';
+        const pId = p.suggestedCanonicalId || `${prefix}${slugify(p.text)}`;
         const locId = loc.suggestedCanonicalId || `loc_${slugify(loc.text)}`;
         const t = validateAndCanonicalizeTriple(
-          { id: pId, name: p.text, type: 'HISTORICAL_PERSON' },
+          { id: pId, name: p.text, type: p.type },
           'HAPPENED_AT',
           { id: locId, name: loc.text, type: 'LOCATION' },
           0.98,

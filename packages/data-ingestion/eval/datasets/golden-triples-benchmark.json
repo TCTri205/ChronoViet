@@ -505,13 +505,6 @@
       },
       {
         "sourceEntityId": "doc_linh_nam_chich_quai",
-        "relationType": "HAPPENED_IN",
-        "targetEntityId": "dynasty_van_lang",
-        "isDirectional": true,
-        "confidence": 1
-      },
-      {
-        "sourceEntityId": "doc_linh_nam_chich_quai",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_phong_chau",
         "isDirectional": true,
@@ -2047,6 +2040,20 @@
         "targetEntityId": "loc_song_bach_dang",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_tran_hung_dao",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_bach_dang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_quan_nguyen_mong",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_song_bach_dang",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Battle of Bach Dang 1288"
@@ -2231,7 +2238,7 @@
       },
       {
         "sourceEntityId": "loc_van_kiep",
-        "relationType": "SAME_AS_LOCATION",
+        "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_hai_duong",
         "isDirectional": true,
         "confidence": 1
@@ -2725,7 +2732,7 @@
     "sourceText": "Trận thành Đa Bang bùng nổ khi quân Minh do Trương Phụ chỉ huy tấn công phòng tuyến nhà Hồ.",
     "groundTruthEntities": [
       {
-        "id": "event_thanh_da_bang",
+        "id": "event_tran_thanh_da_bang",
         "name": "Trận thành Đa Bang",
         "type": "EVENT_BATTLE",
         "aliases": [],
@@ -2751,9 +2758,23 @@
     ],
     "groundTruthTriples": [
       {
-        "sourceEntityId": "event_thanh_da_bang",
+        "sourceEntityId": "event_tran_thanh_da_bang",
         "relationType": "HAPPENED_IN",
         "targetEntityId": "dynasty_nha_ho",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_tran_thanh_da_bang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thanh_da_bang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_truong_phu",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thanh_da_bang",
         "isDirectional": true,
         "confidence": 1
       }
@@ -2795,6 +2816,13 @@
         "sourceEntityId": "person_ngo_si_lien",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_dai_viet_su_ky_toan_thu",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "artifact_thong_bao_hoi_sao",
+        "relationType": "HAPPENED_IN",
+        "targetEntityId": "dynasty_nha_ho",
         "isDirectional": true,
         "confidence": 1
       }
@@ -3095,6 +3123,20 @@
       },
       {
         "sourceEntityId": "loc_chi_lang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_lang_son",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_lieu_thang",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_chi_lang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_chi_lang_xuong_giang",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_lang_son",
         "isDirectional": true,
@@ -3941,6 +3983,13 @@
         "targetEntityId": "loc_thuan_hoa",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_thuan_hoa",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_dang_trong",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Nguyen Hoang enters Thuan Hoa establishing Dang Trong"
@@ -3987,6 +4036,13 @@
         "sourceEntityId": "person_trinh_kiem",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_dang_ngoai",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_trinh_kiem",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_le_trung_hung",
         "isDirectional": true,
         "confidence": 1
       }
@@ -4224,6 +4280,20 @@
         "targetEntityId": "loc_quang_binh",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "loc_luy_thay",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_quang_binh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_phuc_nguyen",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_luy_thay",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Lord succession lineage and defensive wall construction"
@@ -4263,6 +4333,13 @@
         "sourceEntityId": "person_le_quy_don",
         "relationType": "MENTIONED_IN",
         "targetEntityId": "doc_phu_bien_tap_luc",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "doc_phu_bien_tap_luc",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hoang_sa",
         "isDirectional": true,
         "confidence": 1
       }
@@ -4701,6 +4778,13 @@
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_quan_man_thanh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Speedy campaign liberation of Thang Long"
@@ -5004,6 +5088,13 @@
         "targetEntityId": "dynasty_nha_nguyen",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_du",
+        "relationType": "PART_OF",
+        "targetEntityId": "dynasty_nha_nguyen",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Nguyen Du authors Truyen Kieu in Nguyen dynasty"
@@ -5158,6 +5249,13 @@
         "targetEntityId": "loc_hue",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "artifact_cuu_dinh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_the_mieu",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Nine Dynastic Urns casting and imperial temple complex"
@@ -5245,6 +5343,27 @@
       },
       {
         "sourceEntityId": "person_truong_dinh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_go_cong",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoi_nghia_chong_thuc_dan_phap",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_truong_dinh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoi_nghia_chong_thuc_dan_phap",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_tan_an",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoi_nghia_chong_thuc_dan_phap",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_go_cong",
         "isDirectional": true,
@@ -6961,6 +7080,13 @@
         "targetEntityId": "dynasty_dai_co_viet",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "artifact_tien_thai_binh",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_hoa_lu",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Level 5 Co-reference: Vạn Thắng Vương -> Đinh Bộ Lĩnh"
@@ -7524,6 +7650,27 @@
         "targetEntityId": "loc_thang_long",
         "isDirectional": true,
         "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_tay_son",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_quang_trung",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "org_tay_son",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_thang_long",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "person_nguyen_hue",
+        "relationType": "ALIAS_OF",
+        "targetEntityId": "person_quang_trung",
+        "isDirectional": true,
+        "confidence": 1
       }
     ],
     "notes": "Level 5 Co-reference: Vị anh hùng áo vải -> Nguyễn Huệ / Quang Trung"
@@ -7687,6 +7834,20 @@
         "sourceEntityId": "event_phong_trao_can_vuong",
         "relationType": "HAPPENED_AT",
         "targetEntityId": "loc_ha_tinh",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_khoi_nghia_huong_khe",
+        "relationType": "HAPPENED_AT",
+        "targetEntityId": "loc_vu_quang",
+        "isDirectional": true,
+        "confidence": 1
+      },
+      {
+        "sourceEntityId": "event_phong_trao_can_vuong",
+        "relationType": "LED_BY",
+        "targetEntityId": "person_phan_dinh_phung",
         "isDirectional": true,
         "confidence": 1
       }

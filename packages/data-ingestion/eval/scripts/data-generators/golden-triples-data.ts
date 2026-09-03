@@ -1992,7 +1992,7 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
     "sourceText": "Trận thành Đa Bang bùng nổ khi quân Minh do Trương Phụ chỉ huy tấn công phòng tuyến nhà Hồ.",
     "entities": [
       {
-        "id": "event_thanh_da_bang",
+        "id": "event_tran_thanh_da_bang",
         "name": "Trận thành Đa Bang",
         "type": "EVENT_BATTLE"
       },
@@ -2009,7 +2009,7 @@ export const GOLDEN_TRIPLES_DATA: SnippetInput[] = [
     ],
     "triples": [
       {
-        "sourceEntityId": "event_thanh_da_bang",
+        "sourceEntityId": "event_tran_thanh_da_bang",
         "relationType": "HAPPENED_IN",
         "targetEntityId": "dynasty_nha_ho"
       }
