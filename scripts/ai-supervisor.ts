@@ -282,7 +282,7 @@ export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank')
 
   const ctxSize =
     key === 'llm'
-      ? (envConfig.LLM_CTX_SIZE || 131072)
+      ? (envConfig.LLM_CTX_SIZE || 32768)
       : key === 'extraction'
       ? Math.max(envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 114688, (envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 14) * 8192)
       : key === 'rerank'
@@ -303,10 +303,14 @@ export async function startService(key: 'llm' | 'emb' | 'extraction' | 'rerank')
     ...(key === 'llm'
       ? [
           '--cache-type-k',
-          'q8_0',
+          process.env.LOCAL_LLM_KV_CACHE_TYPE || 'q8_0',
           '--cache-type-v',
-          'q8_0',
+          process.env.LOCAL_LLM_KV_CACHE_TYPE || 'q8_0',
           '--cont-batching',
+          '--batch-size',
+          '2048',
+          '--ubatch-size',
+          '512',
           '--parallel',
           String(envConfig.LOCAL_LLM_PARALLEL || 4),
           '--threads',
@@ -440,13 +444,17 @@ export function evictService(key: 'llm' | 'emb' | 'extraction' | 'rerank'): void
 export function checkIdleEviction(): void {
   if (AUTO_EVICT_MINUTES <= 0) return;
   const idleThresholdMs = AUTO_EVICT_MINUTES * 60 * 1000;
-  const specializedSeconds = process.env.AI_AUTO_EVICT_SPECIALIZED_SECONDS ? parseInt(process.env.AI_AUTO_EVICT_SPECIALIZED_SECONDS, 10) : 30;
-  const specializedIdleThresholdMs = Math.min(idleThresholdMs, specializedSeconds * 1000);
+  const specializedSeconds = process.env.AI_AUTO_EVICT_SPECIALIZED_SECONDS
+    ? parseInt(process.env.AI_AUTO_EVICT_SPECIALIZED_SECONDS, 10)
+    : 0;
+  const specializedIdleThresholdMs = specializedSeconds > 0 ? specializedSeconds * 1000 : idleThresholdMs;
   const now = Date.now();
 
   for (const key of ['llm', 'emb', 'extraction', 'rerank'] as const) {
     const svc = services[key];
-    const threshold = (key === 'extraction' || key === 'rerank') ? specializedIdleThresholdMs : idleThresholdMs;
+    // Only 'extraction' (4B batch ingestion LLM) is candidate for specialized shorter timeout if configured.
+    // Core interactive triad ('llm', 'emb', 'rerank') always uses the full idleThresholdMs.
+    const threshold = key === 'extraction' ? specializedIdleThresholdMs : idleThresholdMs;
     if (svc.status === 'RUNNING' && now - svc.lastActivityTime > threshold) {
       log.info('supervisor.idle_detected', `${svc.name} has been idle for >${Math.round(threshold / 1000)}s (${Math.round((now - svc.lastActivityTime) / 1000)}s)`);
       evictService(key);
@@ -503,7 +511,11 @@ export async function runSupervisor() {
   // Start initial services
   await startService('llm');
   await startService('emb');
-  await startService('extraction');
+  if (process.env.AI_AUTO_START_EXTRACTION === 'true') {
+    await startService('extraction');
+  } else {
+    log.info('supervisor.extraction_deferred', '⚡ Extraction LLM (Port 8094) deferred to on-demand data prep to save ~3.5GB RAM');
+  }
   await startService('rerank');
 
   // Start periodic idle eviction monitor (every 30s)

@@ -23,4 +23,6 @@ for i in {1..30}; do
 done
 
 echo "[VieNeu TTS] Notice: VieNeu TTS container took longer than expected to initialize; continuing with fallback."
+exit 1
+
 

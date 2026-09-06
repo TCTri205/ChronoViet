@@ -53,7 +53,7 @@ export const EnvSchema = z.object({
   LOCAL_LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(300000),
   LLM_BASE_URL: z.string().default('http://localhost:8092'),
   LLM_PORT: z.coerce.number().int().positive().default(8092),
-  LLM_CTX_SIZE: z.coerce.number().int().positive().default(131072),
+  LLM_CTX_SIZE: z.coerce.number().int().positive().default(32768),
   LOCAL_LLM_PARALLEL: z.coerce.number().int().positive().default(4),
   LOCAL_LLM_THREADS: z.coerce.number().int().positive().default(10),
   LLM_EXTRA_ARGS: z.string().optional(),

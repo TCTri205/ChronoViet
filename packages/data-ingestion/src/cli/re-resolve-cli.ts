@@ -96,7 +96,7 @@ export async function runReResolve(): Promise<{ resolvedEntitiesCount: number; a
             previous_state: { id: entity.id, name: entity.name, aliases: entity.aliases },
             new_state: { canonicalId: canonical.entityId, canonicalName: canonical.canonicalName, aliases: canonical.aliases },
             rationale: `Cascade re-resolved and merged entity '${entity.name}' (${entity.id}) to canonical ID '${canonical.entityId}'`,
-          });
+          }, execQuery);
           auditLogsCount++;
         });
       }

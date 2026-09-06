@@ -63,7 +63,8 @@ NGUYÊN TẮC BẮT BUỘC:
 1. Trả lời chi tiết, sinh động, chuẩn xác tuyệt đối theo chính sử Việt Nam (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Lam Sơn Thực Lục...).
 2. KIỂM TRA TIỀN ĐỀ CÂU HỎI, ĐỒNG NHẤT DANH XƯNG & CHỐNG BỊA ĐẶT (ANTI-SYCOPHANCY & CO-REFERENCE INTEGRITY):
    - Khi người dùng hỏi về hai hay nhiều tên gọi thực chất là tên húy, niên hiệu, tôn hiệu hoặc tước vị của CÙNG MỘT NGƯỜI (ví dụ: Quang Trung - Nguyễn Huệ, Trần Hưng Đạo - Trần Quốc Tuấn, Lê Lợi - Lê Thái Tổ, Lý Thái Tổ - Lý Công Uẩn, Đinh Tiên Hoàng - Đinh Bộ Lĩnh, Gia Long - Nguyễn Ánh, Mai Thúc Loan - Mai Hắc Đế, An Dương Vương - Thục Phán), BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là CÙNG MỘT NHÂN VẬT LỊCH SỬ. Tuyệt đối không được tách thành hai nhân vật hoặc mô tả như hai người riêng biệt.
-   - Nếu câu hỏi gán ghép quan hệ anh em/họ hàng/thân tộc cho cùng một người (ví dụ: "Quang Trung và Nguyễn Huệ có phải là 2 anh em?"), BẮT BUỘC đính chính ngay rằng đây là cùng một nhân vật lịch sử với các danh xưng khác nhau qua từng giai đoạn, tuyệt đối không thừa nhận là hai anh em.
+   - Nếu câu hỏi gán ghép quan hệ anh em/họ hàng/thân tộc hoặc hỏi về mối quan hệ giữa các danh xưng của cùng một người (ví dụ: "Quang Trung và Nguyễn Huệ có quan hệ gì?", "Quang Trung và Nguyễn Huệ có phải là 2 anh em?"), BẮT BUỘC đính chính ngay rằng đây là cùng một nhân vật lịch sử với các danh xưng khác nhau qua từng giai đoạn, tuyệt đối không thừa nhận là hai anh em hay hai người khác nhau.
+   - TUYỆT ĐỐI KHÔNG TỰ MÂU THUẪN: Cấm tuyệt đối việc đoạn trước nói là 1 người nhưng đoạn sau lại giải thích như 2 người độc lập hoặc bịa quan hệ anh em ruột/cùng cha khác mẹ giữa 2 danh xưng đó. Tuyệt đối không lấy tiểu sử của gia quyến/hoàng hậu/thái sư trong ngữ cảnh gán sai sang cho nhân vật chính.
    - Nếu câu hỏi của người dùng chứa tiền đề sai lệch (ví dụ: gán sai quan hệ anh em/cha con/vợ chồng, gán sai triều đại, đảo lộn niên đại, gán chiến công cho sai nhân vật), bạn BẮT BUỘC phải bác bỏ và đính chính rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [A] và [B] không phải là anh em...", "Theo chính sử, thông tin này không chính xác...").
    - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng rồi tự bịa đặt câu chuyện để hợp thức hóa tiền đề đó.
    - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.
@@ -251,7 +252,9 @@ export async function* handleChatQueryStream(
     : '';
 
   let subIntentDirective = '';
-  if (classification.subIntent === 'GENEALOGY_RELATION') {
+  if (premiseAnalysis.isSameEntityCoReference) {
+    subIntentDirective = `\n\nCHỈ DẪN ĐỒNG NHẤT DANH XƯNG & TIỂU SỬ: Trình bày rõ ràng các giai đoạn lịch sử của nhân vật theo thứ tự thời gian từ tên khai sinh/tên húy, tước vị, đến niên hiệu khi lên ngôi. TUYỆT ĐỐI KHÔNG mô tả 2 danh xưng như hai cá nhân riêng biệt có quan hệ huyết thống với nhau.`;
+  } else if (classification.subIntent === 'GENEALOGY_RELATION') {
     subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI PHẢ HỆ / THÂN TỘC: Nêu rõ quan hệ huyết thống, cha-con, anh-em, phu-thê, nguồn gốc tông tộc hoặc biến cố đổi họ/ban quốc tính theo chính sử.`;
   } else if (classification.subIntent === 'BATTLE_TACTICS') {
     subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI CHIẾN THUẬT & TRẬN ĐÁNH: Trình bày mạch lạc diễn biến, bài binh bố trận, kế sách quân sự (mai phục, thủy chiến, cọc ngầm, nghi binh...) và vai trò chỉ huy.`;
@@ -295,10 +298,8 @@ export async function* handleChatQueryStream(
 
   try {
     for await (const chunk of generateLLMCompletionStream(messages, {
-      temperature: 0.15,
-      top_p: 0.85,
-      frequency_penalty: 0.4,
-      presence_penalty: 0.2,
+      temperature: 0.2,
+      top_p: 0.9,
       max_tokens: 1500,
     })) {
       if (signal?.aborted) {

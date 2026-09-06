@@ -161,9 +161,6 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
   try {
     if (!pgPool) {
       pgPool = new Pool({ ...cfg, connectionTimeoutMillis: timeoutMs });
-      pgPool.on('connect', (client) => {
-        client.query('SET hnsw.ef_search = 100;').catch(() => {});
-      });
       pgPool.on('error', () => {
         pgConnected = false;
       });
@@ -265,14 +262,20 @@ export async function closePool(): Promise<void> {
   }
 }
 
-export async function logEntityAuditAction(params: DbEntityAuditLog): Promise<void> {
+export type QueryExecutor = <R = unknown>(text: string, params?: unknown[]) => Promise<R[]>;
+
+export async function logEntityAuditAction(
+  params: DbEntityAuditLog,
+  execQuery?: QueryExecutor
+): Promise<void> {
   const available = await isPgAvailable();
   const modifiedBy = params.modified_by || 'SYSTEM';
   const prevState = JSON.stringify(params.previous_state || {});
   const newState = JSON.stringify(params.new_state || {});
 
-  if (available && pgPool) {
-    await query(
+  if (available && (pgPool || execQuery)) {
+    const runQuery = execQuery || query;
+    await runQuery(
       `INSERT INTO entity_audit_logs (entity_id, action_type, modified_by, previous_state, new_state, rationale)
        VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6);`,
       [params.entity_id, params.action_type, modifiedBy, prevState, newState, params.rationale || '']

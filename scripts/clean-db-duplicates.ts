@@ -89,7 +89,7 @@ async function main() {
           dangling: 0,
         },
         rationale: 'Purged self-loop, dangling, and duplicate relationship edges from PostgreSQL production database.',
-      });
+      }, execQuery);
       console.log(`[+] Recorded audit log entry for entity: ${entity.id} (${entity.name})`);
     }
 

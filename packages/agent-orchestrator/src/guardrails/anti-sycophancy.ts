@@ -8,6 +8,7 @@ import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
 
 export interface PremiseAnalysisResult {
   isLeadingQuestion: boolean;
+  isSameEntityCoReference?: boolean;
   questionType?: 'KINSHIP' | 'IDENTITY' | 'DYNASTY' | 'CHRONOLOGY' | 'GENERAL';
   detectedEntities: string[];
   suggestedDirective: string;
@@ -15,6 +16,8 @@ export interface PremiseAnalysisResult {
 
 const KINSHIP_PATTERNS = [
   /(.+?)\s+và\s+(.+?)\s+(?:có\s+phải\s+(?:là\s+)?|là\s+có\s+phải\s+|là\s+|có\s+phải\s+)(?:2|hai)?\s*(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu)(?:\s+hả|\s+không|\s*\?)?/i,
+  /(.+?)\s+và\s+(.+?)\s+(?:có\s+quan\s+hệ|quan\s+hệ|mối\s+quan\s+hệ|có\s+liên\s+quan|liên\s+quan)\s+(?:gì|như\s+thế\s+nào|ra\s+sao|gì\s+với\s+nhau)(?:\s+với\s+nhau)?(?:\s+hả|\s+không|\s*\?)?/i,
+  /(?:mối\s+)?quan\s+hệ\s+(?:giữa\s+)?(.+?)\s+và\s+(.+?)(?:\s+là\s+gì|\s+như\s+thế\s+nào|\s*\?)?/i,
   /(.+?)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+?)(?:\s+không|\s+hả|\s*\?)?/i,
   /(.+?)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu|ông|bà|vợ|chồng)\s+của\s+(.+?)(?:\s+hả|\s+không|\s*\?)?/i,
   /(.+?)\s+là\s+anh\s+em\s+ruột\s+với\s+(.+?)(?:\s+hả|\s+không|\s*\?)?/i,
@@ -70,6 +73,7 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
       if (canon1.entityId && canon2.entityId && canon1.entityId === canon2.entityId) {
         return {
           isLeadingQuestion: true,
+          isSameEntityCoReference: true,
           questionType: 'KINSHIP',
           detectedEntities: [e1, e2].filter(Boolean),
           suggestedDirective: `BẮT BUỘC ĐÍNH CHÍNH CÙNG MỘT NGƯỜI (ANTI-CO-REFERENCE ERROR): "${e1}" và "${e2}" thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ (${canon1.canonicalName}), không phải là hai người khác nhau. BẮT BUỘC phải khẳng định ngay ở câu đầu tiên rằng đây là cùng một người (${e1} và ${e2} là các tên gọi, tên húy, niên hiệu, tôn hiệu hoặc tước hiệu khác nhau của cùng một nhân vật qua các thời kỳ), TUYỆT ĐỐI KHÔNG tách thành hai nhân vật hay nhận định là quan hệ anh em/họ hàng.`,
@@ -80,7 +84,25 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
         isLeadingQuestion: true,
         questionType: 'KINSHIP',
         detectedEntities: [e1, e2].filter(Boolean),
-        suggestedDirective: `BẮT BUỘC KIỂM TRA TIỀN ĐỀ QUAN HỆ THÂN TỘC: Người dùng đang hỏi dạng mớm về quan hệ họ hàng giữa "${e1}" và "${e2}". Nếu không có bằng chứng chính sử xác thực, BẮT BUỘC phải bác bỏ rõ ràng ngay đầu câu trả lời (ví dụ: "Không, ${e1} và ${e2} không phải là anh em/họ hàng..."). TUYỆT ĐỐI KHÔNG tự bịa đặt danh tính, tên khai sinh, năm sinh, niên hiệu, thứ bậc hoàng đế hoặc triều đại cho nhân vật không có trong chính sử. Nếu một trong các nhân vật không có trong chính sử, hãy nêu rõ "Trong chính sử không có ghi chép về nhân vật mang tên...".`,
+        suggestedDirective: `BẮT BUỘC KIỂM TRA TIỀN ĐỀ QUAN HỆ THÂN TỘC: Người dùng đang hỏi về quan hệ họ hàng giữa "${e1}" và "${e2}". Nếu không có bằng chứng chính sử xác thực, BẮT BUỘC phải bác bỏ rõ ràng ngay đầu câu trả lời (ví dụ: "Không, ${e1} và ${e2} không phải là anh em/họ hàng..."). TUYỆT ĐỐI KHÔNG tự bịa đặt danh tính, tên khai sinh, năm sinh, niên hiệu, thứ bậc hoàng đế hoặc triều đại cho nhân vật không có trong chính sử. Nếu một trong các nhân vật không có trong chính sử, hãy nêu rõ "Trong chính sử không có ghi chép về nhân vật mang tên...".`,
+      };
+    }
+  }
+
+  // 1b. Generic dual-entity co-reference check if query mentions two names separated by "và" / "với"
+  const andMatch = trimmed.match(/(.+?)\s+(?:và|với)\s+(.+?)(?:\s+|$|\?)/i);
+  if (andMatch) {
+    const e1 = cleanEntitySpan(andMatch[1] || '');
+    const e2 = cleanEntitySpan(andMatch[2] || '');
+    const canon1 = resolveCanonicalEntity(e1);
+    const canon2 = resolveCanonicalEntity(e2);
+    if (canon1.entityId && canon2.entityId && canon1.entityId === canon2.entityId) {
+      return {
+        isLeadingQuestion: true,
+        isSameEntityCoReference: true,
+        questionType: 'IDENTITY',
+        detectedEntities: [e1, e2].filter(Boolean),
+        suggestedDirective: `BẮT BUỘC ĐÍNH CHÍNH CÙNG MỘT NGƯỜI (ANTI-CO-REFERENCE ERROR): "${e1}" và "${e2}" thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ (${canon1.canonicalName}), không phải là hai người khác nhau. BẮT BUỘC phải khẳng định ngay ở câu đầu tiên rằng đây là cùng một người (${e1} và ${e2} là các tên gọi, tên húy, niên hiệu, tôn hiệu hoặc tước hiệu khác nhau của cùng một nhân vật qua các thời kỳ). TUYỆT ĐỐI KHÔNG tách thành hai nhân vật hay nhận định là quan hệ anh em/họ hàng/thân tộc.`,
       };
     }
   }

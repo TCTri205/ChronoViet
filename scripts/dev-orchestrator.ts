@@ -259,8 +259,8 @@ function startTtsService(): void {
 
   proc.stdout?.on('data', (d) => {
     const text = d.toString();
-    if (text.includes('8080') || text.includes('Uvicorn running') || text.includes('VieNeu')) {
-      updateStatus('tts', 'HEALTHY', 'Port 8080 Ready');
+    if (text.includes('Container is UP & HEALTHY') || text.includes('Uvicorn running on') || text.includes('Application startup complete')) {
+      updateStatus('tts', 'HEALTHY', 'Port 8080 Ready (Docker)');
       attachTtsLogs();
     }
     streamLog('TTS', colors.cyan, d);
@@ -268,12 +268,8 @@ function startTtsService(): void {
 
   proc.stderr?.on('data', (d) => streamLog('TTS', colors.cyan, d));
 
-  proc.on('exit', (code) => {
+  proc.on('exit', () => {
     if (isShuttingDown) return;
-    if (code === 0 && services.tts.status === 'HEALTHY') {
-      attachTtsLogs();
-      return;
-    }
     let attempts = 0;
     const probeTts = () => {
       if (isShuttingDown) return;
