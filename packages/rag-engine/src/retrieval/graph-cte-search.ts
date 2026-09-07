@@ -41,7 +41,18 @@ export interface GraphTraversalOptions {
 }
 
 /** Relation types traversed in the reverse direction (target -> source). */
-export const REVERSE_TRAVERSAL_RELATIONS = new Set(['LED_BY', 'PART_OF', 'ALIAS_OF']);
+export const REVERSE_TRAVERSAL_RELATIONS = new Set([
+  'LED_BY',
+  'PART_OF',
+  'ALIAS_OF',
+  'SPOUSE_OF',
+  'MARRIED_TO',
+  'PARENT_OF',
+  'CHILD_OF',
+  'SIBLING_OF',
+  'FOUNDED_BY',
+  'COMMANDED_BY',
+]);
 
 /** Low-signal relation types excluded by default from traversal (noise / hub explosion). */
 export const DEFAULT_EXCLUDED_RELATION_TYPES = new Set(['MENTIONED_IN', 'SAME_AS_LOCATION']);

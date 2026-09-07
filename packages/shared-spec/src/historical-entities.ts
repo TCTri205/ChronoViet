@@ -208,9 +208,33 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     entityId: 'person_hai_ba_trung',
     canonicalName: 'Hai Bà Trưng',
     type: 'HISTORICAL_PERSON',
-    aliases: ['Trưng Trắc', 'Trưng Nhị', 'Trưng Vương', 'Hai Bà Trưng', 'Trưng Nữ Vương'],
+    aliases: ['Hai Bà Trưng', 'chị em Trưng Trắc Trưng Nhị'],
     timeRange: { start: 14, end: 43 },
     dynasty: 'Trưng Nữ Vương',
+  },
+  'person_trung_trac': {
+    entityId: 'person_trung_trac',
+    canonicalName: 'Trưng Trắc',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Trưng Trắc', 'Bà Trưng Trắc', 'Trưng Nữ Vương', 'Trưng Hoàng Đế', 'Trưng Vương'],
+    timeRange: { start: 14, end: 43 },
+    dynasty: 'Trưng Nữ Vương',
+  },
+  'person_trung_nhi': {
+    entityId: 'person_trung_nhi',
+    canonicalName: 'Trưng Nhị',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Trưng Nhị', 'Bà Trưng Nhị', 'Phó tướng Trưng Nhị'],
+    timeRange: { start: 14, end: 43 },
+    dynasty: 'Trưng Nữ Vương',
+  },
+  'person_thi_sach': {
+    entityId: 'person_thi_sach',
+    canonicalName: 'Thi Sách',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Thi Sách', 'con trai Lạc tướng Chu Diên'],
+    timeRange: { start: 10, end: 40 },
+    dynasty: 'Thời kỳ Bắc thuộc',
   },
   'person_ly_thuong_kiet': {
     entityId: 'person_ly_thuong_kiet',
@@ -2290,11 +2314,11 @@ export const CORE_ARTIFACTS: Array<{ id: string; name: string; aliases: string[]
 ];
 
 export const CORE_DOCS: Array<{ id: string; name: string; aliases: string[] }> = [
-  { id: 'doc_chieu_doi_do', name: 'Chiếu dời đô', aliases: [] },
-  { id: 'doc_hich_tuong_si', name: 'Hịch tướng sĩ', aliases: [] },
-  { id: 'doc_binh_ngo_dai_cao', name: 'Bình Ngô đại cáo', aliases: [] },
-  { id: 'doc_tuyen_ngon_doc_lap', name: 'Tuyên ngôn Độc lập', aliases: ['Bản Tuyên ngôn Độc lập', 'Bản Tuyên ngôn độc lập'] },
-  { id: 'doc_nam_quoc_son_ha', name: 'Nam quốc sơn hà', aliases: [] },
+  { id: 'doc_chieu_doi_do', name: 'Chiếu dời đô', aliases: ['Thiên đô chiếu', 'doc_chieu_doi_do'] },
+  { id: 'doc_hich_tuong_si', name: 'Hịch tướng sĩ', aliases: ['Dụ chư tì tướng hịch văn', 'doc_hich_tuong_si'] },
+  { id: 'doc_binh_ngo_dai_cao', name: 'Bình Ngô đại cáo', aliases: ['Bình Ngô Đại Cáo', 'bài cáo Bình Ngô', 'doc_binh_ngo_dai_cao', 'doc_binh_ngo'] },
+  { id: 'doc_tuyen_ngon_doc_lap', name: 'Tuyên ngôn Độc lập', aliases: ['Bản Tuyên ngôn Độc lập', 'Bản Tuyên ngôn độc lập', 'doc_tuyen_ngon_doc_lap'] },
+  { id: 'doc_nam_quoc_son_ha', name: 'Nam quốc sơn hà', aliases: ['Bài thơ thần Nam quốc sơn hà', 'doc_nam_quoc_son_ha'] },
   { id: 'doc_hinh_thu', name: 'Hình thư', aliases: ['sách Hình thư', 'luật Hình thư', 'Hình thư thời Lý', 'doc_hinh_thu'] },
   { id: 'doc_luat_hong_duc', name: 'Luật Hồng Đức', aliases: ['Quốc triều hình luật', 'doc_quoc_trieu_hinh_luat', 'bộ luật Hồng Đức', 'Bộ luật Hồng Đức', 'Bộ Luật Hồng Đức'] },
   { id: 'doc_dai_viet_su_ky', name: 'Đại Việt Sử Ký', aliases: ['Đại Việt sử ký', 'sách Đại Việt Sử Ký', 'bộ Đại Việt sử ký', 'doc_dai_viet_su_ky'] },
@@ -2345,6 +2369,7 @@ function initFastEntityMap(): void {
   }
 
   for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
+    register(person.entityId, person.entityId, person.canonicalName);
     register(person.canonicalName, person.entityId, person.canonicalName);
     for (const alias of person.aliases) {
       register(alias, person.entityId, person.canonicalName);
@@ -2352,6 +2377,7 @@ function initFastEntityMap(): void {
   }
 
   for (const dyn of Object.values(DYNASTY_DICTIONARY)) {
+    register(dyn.entityId, dyn.entityId, dyn.canonicalName);
     register(dyn.canonicalName, dyn.entityId, dyn.canonicalName);
     for (const alias of dyn.aliases) {
       register(alias, dyn.entityId, dyn.canonicalName);
@@ -2359,6 +2385,7 @@ function initFastEntityMap(): void {
   }
 
   for (const org of CORE_ORGS) {
+    register(org.id, org.id, org.name);
     register(org.name, org.id, org.name);
     for (const alias of org.aliases) {
       register(alias, org.id, org.name);
@@ -2367,6 +2394,7 @@ function initFastEntityMap(): void {
 
   const AMBIGUOUS_SINGLE_WORD_LOCS = new Set(['tiền', 'hậu', 'đà', 'hồng', 'mã', 'cả', 'lô', 'thao', 'đáy']);
   for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
+    register(loc.entityId, loc.entityId, loc.canonicalName);
     register(loc.canonicalName, loc.entityId, loc.canonicalName);
     const stripped = loc.canonicalName.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|huyện|làng|căn cứ)\s+/i, '');
     if (stripped !== loc.canonicalName && stripped.toLowerCase() !== 'nhà hồ' && stripped.toLowerCase() !== 'huế' && !AMBIGUOUS_SINGLE_WORD_LOCS.has(stripped.toLowerCase())) {
@@ -2382,6 +2410,7 @@ function initFastEntityMap(): void {
   }
 
   for (const ev of CORE_EVENTS) {
+    register(ev.id, ev.id, ev.name);
     register(ev.name, ev.id, ev.name);
     const unhyphenated = ev.name.replace(/\s*[-–—]\s*/g, ' ');
     if (unhyphenated !== ev.name) {
@@ -2409,6 +2438,7 @@ function initFastEntityMap(): void {
   }
 
   for (const art of CORE_ARTIFACTS) {
+    register(art.id, art.id, art.name);
     register(art.name, art.id, art.name);
     for (const al of art.aliases) {
       register(al, art.id, art.name);
@@ -2416,6 +2446,7 @@ function initFastEntityMap(): void {
   }
 
   for (const d of CORE_DOCS) {
+    register(d.id, d.id, d.name);
     register(d.name, d.id, d.name);
     for (const al of d.aliases) {
       register(al, d.id, d.name);
@@ -2580,8 +2611,12 @@ function initFastEntityMap(): void {
   register('person_thuc_vuong', 'person_an_duong_vuong', 'An Dương Vương');
   register('Loa Thành', 'loc_thanh_co_loa', 'thành Cổ Loa');
   register('loc_loa_thanh', 'loc_thanh_co_loa', 'thành Cổ Loa');
-  register('thành Loa', 'loc_thanh_co_loa', 'thành Cổ Loa');
-  register('Trưng Nữ Vương', 'person_hai_ba_trung', 'Hai Bà Trưng');
+  register('Trưng Trắc', 'person_trung_trac', 'Trưng Trắc');
+  register('Bà Trưng Trắc', 'person_trung_trac', 'Trưng Trắc');
+  register('Trưng Nữ Vương', 'person_trung_trac', 'Trưng Trắc');
+  register('Trưng Nhị', 'person_trung_nhi', 'Trưng Nhị');
+  register('Bà Trưng Nhị', 'person_trung_nhi', 'Trưng Nhị');
+  register('Hai Bà Trưng', 'person_hai_ba_trung', 'Hai Bà Trưng');
   register('Vạn Thắng Vương', 'person_dinh_tien_hoang', 'Đinh Tiên Hoàng');
   register('Hưng Đạo Đại Vương', 'person_tran_hung_dao', 'Trần Hưng Đạo');
   register('Bình Định Vương', 'person_le_loi', 'Lê Lợi');
@@ -2786,6 +2821,21 @@ export function isKnownMasterEntity(nameOrId: string): boolean {
  * Resolves any name variant/alias to its Canonical Historical Entity representation
  */
 export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo {
+  if (HISTORICAL_PERSON_DICTIONARY[inputName]) return HISTORICAL_PERSON_DICTIONARY[inputName];
+  if (HISTORICAL_LOCATION_DICTIONARY[inputName]) return HISTORICAL_LOCATION_DICTIONARY[inputName];
+  if (DYNASTY_DICTIONARY[inputName]) {
+    const d = DYNASTY_DICTIONARY[inputName];
+    return { entityId: d.entityId, canonicalName: d.canonicalName, type: 'DYNASTY_ERA', aliases: d.aliases };
+  }
+  const directOrg = CORE_ORGS.find((o) => o.id === inputName);
+  if (directOrg) return { entityId: directOrg.id, canonicalName: directOrg.name, type: 'ORGANIZATION', aliases: directOrg.aliases };
+  const directEv = CORE_EVENTS.find((e) => e.id === inputName);
+  if (directEv) return { entityId: directEv.id, canonicalName: directEv.name, type: 'EVENT_BATTLE', aliases: directEv.aliases };
+  const directArt = CORE_ARTIFACTS.find((a) => a.id === inputName);
+  if (directArt) return { entityId: directArt.id, canonicalName: directArt.name, type: 'ARTIFACT', aliases: directArt.aliases };
+  const directDoc = CORE_DOCS.find((d) => d.id === inputName);
+  if (directDoc) return { entityId: directDoc.id, canonicalName: directDoc.name, type: 'DOCUMENT_CULTURE', aliases: directDoc.aliases };
+
   const inferredType = inferEntityTypeFromName(inputName);
   const aliasMapping = resolveEntityAlias(inputName, inferredType);
 
@@ -2812,7 +2862,14 @@ export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo 
   if (foundArt) return { entityId: foundArt.id, canonicalName: foundArt.name, type: 'ARTIFACT', aliases: foundArt.aliases };
 
   const foundDoc = CORE_DOCS.find((d) => d.id === aliasMapping.canonicalId);
-  if (foundDoc) return { entityId: foundDoc.id, canonicalName: foundDoc.name, type: 'DOCUMENT_CULTURE', aliases: foundDoc.aliases };
+  if (foundDoc) {
+    return {
+      entityId: foundDoc.id,
+      canonicalName: foundDoc.name,
+      type: 'DOCUMENT_CULTURE',
+      aliases: foundDoc.aliases,
+    };
+  }
 
   return {
     entityId: aliasMapping.canonicalId,
@@ -2894,5 +2951,39 @@ export function buildAliasTable(entityIds: string[]): Record<string, string[]> {
   }
 
   return aliasTable;
+}
+
+/**
+ * Canonical mapping between collective historical entities and their constituent members.
+ * Supports bidirectional expansion during knowledge graph traversal and entity retrieval.
+ */
+export const COLLECTIVE_ENTITY_MEMBERS: Record<string, string[]> = {
+  person_hai_ba_trung: ['person_trung_trac', 'person_trung_nhi'],
+  group_tay_son_tam_kiet: ['person_nguyen_hue', 'person_nguyen_nhac', 'person_nguyen_lu'],
+  group_truc_lam_tam_to: ['person_tran_nhan_tong', 'person_phap_loa', 'person_huyen_quang'],
+};
+
+/**
+ * Expands a list of entity IDs bidirectionally:
+ * - If a collective entity ID is present, appends its member entity IDs.
+ * - If any member entity ID is present, appends its parent collective entity ID.
+ */
+export function getExpandedCollectiveEntityIds(entityIds: string[]): string[] {
+  if (!entityIds || entityIds.length === 0) return [];
+  const result = new Set<string>(entityIds);
+
+  for (const id of entityIds) {
+    const members = COLLECTIVE_ENTITY_MEMBERS[id];
+    if (members) {
+      for (const m of members) result.add(m);
+    }
+    for (const [collectiveId, memberList] of Object.entries(COLLECTIVE_ENTITY_MEMBERS)) {
+      if (memberList.includes(id)) {
+        result.add(collectiveId);
+      }
+    }
+  }
+
+  return Array.from(result);
 }
 

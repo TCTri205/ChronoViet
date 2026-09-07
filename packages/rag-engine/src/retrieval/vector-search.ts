@@ -44,6 +44,7 @@ import {
   removeVietnameseAccents,
   HISTORICAL_PERSON_DICTIONARY,
   HISTORICAL_LOCATION_DICTIONARY,
+  resolveCanonicalEntity,
 } from '@chronoviet/shared-spec';
 
 import { globalCacheManager, LRUCacheWithTTL } from './cache-manager.js';
@@ -161,6 +162,8 @@ export async function searchHybridVectorAndBM25(
 
   denseResults.forEach((item, idx) => {
     const vecRank = idx + 1;
+    const reliabilityBoost = item.sourceReliability === 'LEVEL_1' ? 1.35 : 1.0;
+    const childBoost = item.parentChunkId ? 1.15 : 1.0;
     chunkMap.set(item.chunkId, {
       chunkId: item.chunkId,
       title: item.title,
@@ -171,14 +174,16 @@ export async function searchHybridVectorAndBM25(
       timeStart: item.timeStart,
       timeEnd: item.timeEnd,
       epochIds: item.epochIds,
-      score: vectorWeight / (rrfK + vecRank),
+      score: (vectorWeight / (rrfK + vecRank)) * reliabilityBoost * childBoost,
       rankVector: vecRank,
     });
   });
 
   ftsResults.forEach((item, idx) => {
     const ftsRank = idx + 1;
-    const ftsScore = ftsWeight / (rrfK + ftsRank);
+    const reliabilityBoost = item.sourceReliability === 'LEVEL_1' ? 1.35 : 1.0;
+    const childBoost = item.parentChunkId ? 1.15 : 1.0;
+    const ftsScore = (ftsWeight / (rrfK + ftsRank)) * reliabilityBoost * childBoost;
     const existing = chunkMap.get(item.chunkId);
     if (existing) {
       existing.score += ftsScore;
@@ -321,31 +326,15 @@ export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: str
 
     for (const entId of detectedEntityIds) {
       const candidates: string[] = [];
-      const personEnt = HISTORICAL_PERSON_DICTIONARY[entId];
-      if (personEnt?.aliases) {
-        candidates.push(...personEnt.aliases);
-      }
-      const locEnt = HISTORICAL_LOCATION_DICTIONARY[entId];
-      if (locEnt?.aliases) {
-        candidates.push(...locEnt.aliases);
-      }
-
-      if (!personEnt && !locEnt) {
-        for (const p of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
-          if (p.entityId === entId && p.aliases) {
-            candidates.push(...p.aliases);
-          }
-        }
-        for (const l of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
-          if (l.entityId === entId && l.aliases) {
-            candidates.push(...l.aliases);
-          }
-        }
+      const ent = resolveCanonicalEntity(entId);
+      if (ent) {
+        if (ent.aliases) candidates.push(...ent.aliases);
+        if (ent.canonicalName) candidates.push(ent.canonicalName);
       }
 
       let entityInjectedCount = 0;
       for (const alias of candidates) {
-        if (entityInjectedCount >= 3) break;
+        if (entityInjectedCount >= 4) break;
         const normalizedAlias = alias.trim().toLowerCase();
         if (seenAliases.has(normalizedAlias)) continue;
         seenAliases.add(normalizedAlias);
@@ -401,7 +390,10 @@ export async function searchLexicalFTS(
         epoch_ids?: string[];
         rank: number;
       }>(
-        `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, ts_rank_cd(tsv, websearch_to_tsquery('simple', $1)) AS rank
+        `SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, 
+                (ts_rank_cd(tsv, websearch_to_tsquery('simple', $1)) * 
+                 CASE WHEN source_reliability = 'LEVEL_1' THEN 1.35 ELSE 1.0 END *
+                 CASE WHEN parent_chunk_id IS NOT NULL THEN 1.15 ELSE 1.0 END) AS rank
          FROM document_chunks
          WHERE tsv @@ websearch_to_tsquery('simple', $1)
          ORDER BY rank DESC
@@ -436,16 +428,10 @@ export async function searchLexicalFTS(
   const extraAliasTerms: string[] = [];
   if (detectedEntityIds && detectedEntityIds.length > 0) {
     for (const entId of detectedEntityIds) {
-      const p = HISTORICAL_PERSON_DICTIONARY[entId];
-      if (p?.aliases) {
-        for (const a of p.aliases) {
-          const aWords = a.toLowerCase().split(/\s+/).filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
-          if (aWords.length >= 2) extraAliasTerms.push(...aWords);
-        }
-      }
-      const l = HISTORICAL_LOCATION_DICTIONARY[entId];
-      if (l?.aliases) {
-        for (const a of l.aliases) {
+      const ent = resolveCanonicalEntity(entId);
+      if (ent) {
+        const names = [ent.canonicalName, ...(ent.aliases || [])];
+        for (const a of names) {
           const aWords = a.toLowerCase().split(/\s+/).filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w));
           if (aWords.length >= 2) extraAliasTerms.push(...aWords);
         }

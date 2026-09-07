@@ -1,4 +1,5 @@
 import { isPgAvailable, query, inMemoryStore, DbDocumentChunk } from '@chronoviet/infra';
+import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
 
 import { VectorSearchResult, RRF_K } from './vector-search.js';
 
@@ -19,7 +20,8 @@ export async function getChunksForEntities(
   entityIds: string[],
   limit: number = 20,
   priorityEntityIds?: string[],
-  graphSignals?: Map<string, ChunkGraphSignal>
+  graphSignals?: Map<string, ChunkGraphSignal>,
+  targetYear?: number
 ): Promise<VectorSearchResult[]> {
   if (!entityIds || entityIds.length === 0 || limit <= 0) return [];
 
@@ -30,6 +32,17 @@ export async function getChunksForEntities(
     if (!sig) return { conf: 0.5, hop: 2 };
     return { conf: sig.maxConfidence, hop: sig.minHop };
   };
+
+  let resolvedYear = targetYear;
+  if (resolvedYear === undefined && priorityEntityIds && priorityEntityIds.length > 0) {
+    for (const pid of priorityEntityIds) {
+      const ent = resolveCanonicalEntity(pid);
+      if (ent?.timeRange?.start !== undefined) {
+        resolvedYear = ent.timeRange.start;
+        break;
+      }
+    }
+  }
 
   if (pgConnected) {
     const rows = await query<{
@@ -48,16 +61,22 @@ export async function getChunksForEntities(
        FROM document_chunks c
        INNER JOIN entity_chunks ec ON c.id = ec.chunk_id
        WHERE ec.entity_id = ANY($1)
-       ORDER BY
-         CASE WHEN ec.entity_id = ANY($2) THEN 0 ELSE 1 END ASC,
-         CASE c.source_reliability
-           WHEN 'LEVEL_1' THEN 1
-           WHEN 'LEVEL_2' THEN 2
-           ELSE 3
-         END ASC,
-         c.id ASC
-       LIMIT $3;`,
-      [entityIds, priorityEntityIds || [], limit * 3]
+        ORDER BY
+          CASE
+            WHEN ec.entity_id = $4 THEN 0
+            WHEN ec.entity_id = ANY($2) THEN 1
+            ELSE 2
+          END ASC,
+          CASE c.source_reliability
+            WHEN 'LEVEL_1' THEN 1
+            WHEN 'LEVEL_2' THEN 2
+            ELSE 3
+          END ASC,
+          ${typeof resolvedYear === 'number' ? `CASE WHEN c.time_start IS NOT NULL THEN ABS(c.time_start - ${resolvedYear}) ELSE 9999 END ASC,` : ''}
+          CASE WHEN c.parent_chunk_id IS NULL THEN 0 ELSE 1 END ASC,
+          c.id ASC
+        LIMIT $3;`,
+      [entityIds, priorityEntityIds || [], Math.max(80, limit * 4), priorityEntityIds?.[0] || '']
     );
 
     if (rows && rows.length > 0) {
@@ -126,12 +145,21 @@ export async function getChunksForEntities(
   };
 
   rawChunks.sort((a, b) => {
-    const aPriority = a.key_figures?.some((e) => prioritySet.has(e)) ? 0 : 1;
-    const bPriority = b.key_figures?.some((e) => prioritySet.has(e)) ? 0 : 1;
+    const primarySeed = priorityEntityIds?.[0];
+    const aPriority = primarySeed && a.key_figures?.includes(primarySeed) ? 0 : (a.key_figures?.some((e) => prioritySet.has(e)) ? 1 : 2);
+    const bPriority = primarySeed && b.key_figures?.includes(primarySeed) ? 0 : (b.key_figures?.some((e) => prioritySet.has(e)) ? 1 : 2);
     if (aPriority !== bPriority) return aPriority - bPriority;
     const rA = reliabilityOrder[a.source_reliability || 'LEVEL_1'] ?? 3;
     const rB = reliabilityOrder[b.source_reliability || 'LEVEL_1'] ?? 3;
     if (rA !== rB) return rA - rB;
+    if (typeof resolvedYear === 'number') {
+      const aDist = a.time_start != null ? Math.abs(a.time_start - resolvedYear) : 9999;
+      const bDist = b.time_start != null ? Math.abs(b.time_start - resolvedYear) : 9999;
+      if (aDist !== bDist) return aDist - bDist;
+    }
+    const aParent = a.parent_chunk_id == null ? 0 : 1;
+    const bParent = b.parent_chunk_id == null ? 0 : 1;
+    if (aParent !== bParent) return aParent - bParent;
     return a.id.localeCompare(b.id);
   });
 

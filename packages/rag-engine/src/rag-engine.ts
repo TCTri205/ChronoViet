@@ -11,6 +11,8 @@ import {
   resolveCanonicalEntity,
   HistoricalAnswerGenerationRequest,
   HistoricalAnswerResponse,
+  HISTORICAL_PERSON_DICTIONARY,
+  getExpandedCollectiveEntityIds,
 } from '@chronoviet/shared-spec';
 import {
   createLogger,
@@ -49,6 +51,16 @@ export const GRAPH_BRANCH_TIMEOUT_MS = process.env.GRAPH_BRANCH_TIMEOUT_MS
   : 350;
 export const GRAPH_BRANCH_MAX_NODES = 50;
 export const GRAPH_ONLY_CHUNK_CAP = 10;
+
+/**
+ * Strips raw crawl metadata headers such as:
+ * [Sử Liệu: ...] [Kỷ/Triều Đại: ...] [Nhân Vật: ...] [Thời Gian: ...]
+ * to avoid attention recency/primacy bias and false attribute leakage into the LLM context.
+ */
+export function sanitizeChunkTextForPrompt(text: string): string {
+  if (!text) return '';
+  return text.replace(/^(?:\[[^\]\n]+\]\s*)+/gu, '').trim();
+}
 
 let globalSchemaInitPromise: Promise<void> | null = null;
 
@@ -92,7 +104,11 @@ export class ChronoRagEngine implements IRagEngine {
 
     // Step 1: Question NER & Keyword Extraction (< 1ms)
     const queryInfo = extractQueryEntities(queryText);
-    const filterEntityIds = request.entityFilter || queryInfo.entityIds;
+    const rawFilter = request.entityFilter || queryInfo.entityIds;
+    const resolvedRaw = Array.from(
+      new Set(rawFilter.map((e: string) => resolveCanonicalEntity(e).entityId).filter(Boolean))
+    );
+    const filterEntityIds: string[] = getExpandedCollectiveEntityIds(resolvedRaw);
     const rerankTopK = request.rerankTopK || Math.min(8, Math.max(5, queryInfo.entityIds.length * 2));
 
     log.debug('rag.search_started', 'RAG search started', {
@@ -315,12 +331,13 @@ export class ChronoRagEngine implements IRagEngine {
           existing.score += graphBoost;
           existing.isCoRetrieved = true;
         } else if (graphChunks.indexOf(gCand) < GRAPH_ONLY_CHUNK_CAP) {
-          // Graph-only chunks enter the pool with a LOW score (below hybrid RRF scores) so
-          // they never crowd out better vector/FTS candidates; the cross-encoder can still
-          // promote them if genuinely relevant.
+          // Graph-only chunks enter the pool with a score competitive with hybrid candidates,
+          // ensuring they enter the Cross-Encoder candidate pool rather than being truncated prematurely.
+          const hop = gCand.hopCount ?? 1;
+          const graphConf = gCand.graphScore ?? 0.8;
           candidateMap.set(gCand.chunkId, {
             ...gCand,
-            score: 0.001 + (gCand.hopCount ?? 2) * 0.0005,
+            score: 0.010 * (graphConf / Math.max(1, hop)),
           });
         }
       }
@@ -335,11 +352,23 @@ export class ChronoRagEngine implements IRagEngine {
     allCandidates.sort((a, b) => b.score - a.score);
 
     // Step 5: Pure Model Cross-Encoder Reranker & Response Formatting
+    let effectiveQueryYears = queryInfo.extractedYears || [];
+    if (effectiveQueryYears.length === 0 && filterEntityIds.length > 0) {
+      for (const eid of filterEntityIds) {
+        const ent = resolveCanonicalEntity(eid);
+        if (ent?.timeRange?.start !== undefined) {
+          effectiveQueryYears = [ent.timeRange.start, ent.timeRange.end || ent.timeRange.start];
+          break;
+        }
+      }
+    }
+
+    const rerankPoolLimit = Math.max(12, rerankTopK * 2);
     const topChunks = await rerankCandidates(
       queryText,
       allCandidates,
-      rerankTopK,
-      queryInfo.extractedYears,
+      rerankPoolLimit,
+      effectiveQueryYears,
       request.subIntent
     );
 
@@ -355,16 +384,25 @@ export class ChronoRagEngine implements IRagEngine {
     });
 
     // Map top chunks to Verified Context Entities with maxTokens budget enforcement
-    const maxTokensBudget = request.maxTokens && request.maxTokens > 0 ? request.maxTokens : 2048;
+    const maxTokensBudget = request.maxTokens && request.maxTokens > 0 ? request.maxTokens : 3200;
     const VIETNAMESE_CHARS_PER_TOKEN = 3.5;
 
     const verifiedContext: HistoricalContextEntity[] = [];
     const citations: string[] = [];
     let accumulatedTokens = 0;
+    const sourceCountMap = new Map<string, number>();
 
     for (let idx = 0; idx < topChunks.length; idx++) {
       const chunk = topChunks[idx];
-      const cleanSummary = extractQueryRelevantExcerpt(chunk.textContent || '', queryText, 900);
+      // Source diversity: at most 2 chunks per source title/book prefix to prevent crowding out
+      const sourceKey = chunk.title.replace(/\s*-\s*Đoạn.*$/i, '').replace(/\s*\(Phần.*$/i, '').trim();
+      const currentCount = sourceCountMap.get(sourceKey) || 0;
+      if (currentCount >= 2 && topChunks.length > 3) {
+        continue;
+      }
+
+      const rawExcerpt = extractQueryRelevantExcerpt(chunk.textContent || '', queryText, 950);
+      const cleanSummary = sanitizeChunkTextForPrompt(rawExcerpt);
       const estimatedChunkTokens = Math.ceil(
         (cleanSummary.length + (chunk.title?.length || 0)) / VIETNAMESE_CHARS_PER_TOKEN
       );
@@ -373,6 +411,10 @@ export class ChronoRagEngine implements IRagEngine {
       if (verifiedContext.length > 0 && accumulatedTokens + estimatedChunkTokens > maxTokensBudget) {
         break;
       }
+      if (verifiedContext.length >= rerankTopK) {
+        break;
+      }
+      sourceCountMap.set(sourceKey, currentCount + 1);
 
       let matchedCanonicalName = '';
       let matchedAliases: string[] = [];

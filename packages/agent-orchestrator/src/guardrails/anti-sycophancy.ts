@@ -141,7 +141,7 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
         isLeadingQuestion: true,
         questionType: 'CHRONOLOGY',
         detectedEntities: ['Công nghệ vũ khí'],
-        suggestedDirective: 'BẮT BUỘC BÁC BỎ SAI LỆCH NIÊN ĐẠI CÔNG NGHỆ: Đính chính vũ khí và thời kỳ lịch sử chính xác.',
+        suggestedDirective: 'BẮT BUỘC BÁC BỎ SAI LỆCH NIÊN ĐẠI CÔNG NGHỆ: BẮT BUỘC phải bác bỏ rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, vào thời kỳ [X] hoàn toàn chưa có [vũ khí/công nghệ Y]..."). Nêu rõ vũ khí và bối cảnh lịch sử thực tế thời đó. TUYỆT ĐỐI KHÔNG giải thích dông dài hay mô tả thông số các loại máy bay, súng đạn hiện đại không liên quan.',
       };
     }
   }
@@ -153,7 +153,7 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
         isLeadingQuestion: true,
         questionType: 'GENERAL',
         detectedEntities: ['Truyền thuyết thần thoại'],
-        suggestedDirective: 'BẮT BUỘC PHÂN ĐỊNH DÃ SỬ & CHÍNH SỬ: Làm rõ ranh giới giữa biểu tượng thần thoại và sự kiện thực chứng trong chính sử.',
+        suggestedDirective: 'BẮT BUỘC PHÂN ĐỊNH DÃ SỬ & CHÍNH SỬ: Phân định rõ ranh giới giữa biểu tượng truyền thuyết thần thoại dân gian và sự kiện thực chứng trong chính sử. Bác bỏ các chi tiết gán ghép sai lệch về địa danh, nhân vật hoặc niên đại; nêu rõ địa danh và tình tiết lịch sử/dân gian chính xác.',
       };
     }
   }

@@ -32,6 +32,7 @@ export interface RunChatbotEvalOptions {
   category?: string;
   strict?: boolean;
   verbose?: boolean;
+  concurrency?: number;
 }
 
 export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}): Promise<BaseSuiteReport<ChatbotCaseResult>> {
@@ -68,11 +69,12 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
   ensureDirectory(outputsDir);
   ensureDirectory(reportsDir);
 
+  const concurrency = Math.max(1, options.concurrency ?? 1);
+  console.log(`Execution Mode: Concurrency = ${concurrency}`);
+
   const caseResults: ChatbotCaseResult[] = [];
 
-  // 3. Execute Each Test Case
-  for (let i = 0; i < testCases.length; i++) {
-    const tc = testCases[i];
+  const executeTestCase = async (tc: ChatbotTestCase, i: number): Promise<ChatbotCaseResult> => {
     console.log(`\n[${i + 1}/${testCases.length}] Running: ${tc.id} — "${tc.title}" (${tc.category})`);
 
     const turnHistory: ChatTurnContext[] = [];
@@ -156,7 +158,6 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
 
     // Evaluate single test case
     const caseResult = evaluateChatbotCase(tc, executedTurns);
-    caseResults.push(caseResult);
 
     // Save per-case raw execution artifact in outputs/
     const artifactPath = path.join(outputsDir, `${tc.id}.json`);
@@ -171,6 +172,26 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
     if (caseResult.errors && caseResult.errors.length > 0) {
       console.log(`     Errors: ${caseResult.errors.join('; ')}`);
     }
+
+    return caseResult;
+  };
+
+  // 3. Execute Cases with Controlled Concurrency
+  if (concurrency <= 1) {
+    for (let i = 0; i < testCases.length; i++) {
+      const res = await executeTestCase(testCases[i], i);
+      caseResults.push(res);
+    }
+  } else {
+    let nextIndex = 0;
+    const workers = Array.from({ length: Math.min(concurrency, testCases.length) }, async () => {
+      while (nextIndex < testCases.length) {
+        const i = nextIndex++;
+        const res = await executeTestCase(testCases[i], i);
+        caseResults.push(res);
+      }
+    });
+    await Promise.all(workers);
   }
 
   // 4. Compute Summary Metrics
@@ -231,10 +252,13 @@ if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWi
   const catArgIdx = args.indexOf('--category');
   const category = catArgIdx !== -1 ? args[catArgIdx + 1] : undefined;
 
+  const concArgIdx = args.indexOf('--concurrency');
+  const concurrency = concArgIdx !== -1 ? parseInt(args[concArgIdx + 1], 10) : undefined;
+
   const strict = args.includes('--strict');
   const verbose = args.includes('--verbose');
 
-  runChatbotEvaluation({ limit, category, strict, verbose })
+  runChatbotEvaluation({ limit, category, strict, verbose, concurrency })
     .then((report) => {
       if (!report.allPassed && strict) {
         process.exit(1);

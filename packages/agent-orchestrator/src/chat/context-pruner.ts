@@ -14,11 +14,11 @@ export interface ContextBudgetPlan {
 }
 
 export const DEFAULT_CONTEXT_BUDGET: ContextBudgetPlan = {
-  systemPersonaBudget: 300,
-  turn1AnchorBudget: 80,
-  ragContextBudget: 2100,
+  systemPersonaBudget: 350,
+  turn1AnchorBudget: 100,
+  ragContextBudget: 2800,
   historyBudget: 800,
-  generationBuffer: 900,
+  generationBuffer: 950,
 };
 
 /**

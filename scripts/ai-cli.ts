@@ -298,6 +298,7 @@ export async function showStatus() {
   console.log(`${colors.bright}Unified Commands (CLI: 'pnpm ai <cmd>' or npm scripts 'pnpm ai:<cmd>'):${colors.reset}`);
   console.log(` • ${colors.cyan}pnpm ai${colors.reset} / ${colors.cyan}pnpm ai:status${colors.reset} -> Check services health & loaded models`);
   console.log(` • ${colors.cyan}pnpm ai start${colors.reset} / ${colors.cyan}pnpm ai:start${colors.reset} -> Launch full AI stack (Embedding + LLM + Reranker + TTS)`);
+  console.log(` • ${colors.cyan}pnpm ai chat${colors.reset} / ${colors.cyan}pnpm ai:chat${colors.reset}   -> Launch Chat & RAG stack (Embedding: 8090 + LLM: 8092 + Reranker: 8096)`);
   console.log(` • ${colors.cyan}pnpm ai lite${colors.reset} / ${colors.cyan}pnpm ai:lite${colors.reset}     -> Launch lightweight pair: Embedding (8090) + Extraction (8094) (~3.1 GB)`);
   console.log(` • ${colors.cyan}pnpm ai emb${colors.reset} / ${colors.cyan}pnpm ai:emb${colors.reset}       -> Launch Embedding server (Port 8090) for Vector RAG`);
   console.log(` • ${colors.cyan}pnpm ai rerank${colors.reset} / ${colors.cyan}pnpm ai:rerank${colors.reset} -> Launch Reranker Engine (Port 8096) for Cross-Encoder`);
@@ -446,11 +447,12 @@ export function getExtractionLlamaConfig() {
   const parallel = envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || 14;
   const minRequiredCtx = parallel * 8192; // Guarantee at least 8,192 tokens per slot (safely fits 4,108 prompt + output)
   const extCtxSize = Math.max(envConfig.LOCAL_LLM_EXTRACTION_CTX_SIZE || 114688, minRequiredCtx);
+  const kvCache = envConfig.LOCAL_LLM_KV_CACHE_TYPE || 'q8_0';
   const extExtraArgs: string[] = [
     '--cache-type-k',
-    'q8_0',
+    kvCache,
     '--cache-type-v',
-    'q8_0',
+    kvCache,
     '--cont-batching',
     '--batch-size',
     '2048',
@@ -465,19 +467,20 @@ export function getExtractionLlamaConfig() {
   return { extCtxSize, extExtraArgs };
 }
 
-export function getEmbeddingLlamaConfig() {
-  const parallel = envConfig.LOCAL_EMBEDDING_PARALLEL || 4;
-  const embCtxSize = Math.max(envConfig.EMBEDDING_CTX_SIZE || 32768, parallel * 8192);
+export function getEmbeddingLlamaConfig(forChat = false) {
+  const parallel = forChat ? 2 : (envConfig.LOCAL_EMBEDDING_PARALLEL || 2);
+  const embCtxSize = forChat ? 4096 : Math.max(envConfig.EMBEDDING_CTX_SIZE || 16384, parallel * 8192);
+  const batchSize = forChat ? '2048' : '8192';
   const embExtraArgs: string[] = [
     '--batch-size',
-    '8192',
+    batchSize,
     '--ubatch-size',
-    '8192',
+    batchSize,
     '--cont-batching',
     '--parallel',
     String(parallel),
     '--threads',
-    String(envConfig.LOCAL_EMBEDDING_THREADS || 6),
+    String(forChat ? Math.min(4, envConfig.LOCAL_EMBEDDING_THREADS || 6) : (envConfig.LOCAL_EMBEDDING_THREADS || 6)),
     ...(envConfig.LOCAL_EMBEDDING_EXTRA_ARGS ? envConfig.LOCAL_EMBEDDING_EXTRA_ARGS.split(' ').filter(Boolean) : []),
   ];
   return { embCtxSize, embExtraArgs };
@@ -581,11 +584,12 @@ export async function launchLlmOnly() {
   console.log(`\n${colors.bright}${colors.cyan}=== Starting Primary LLM / VLM (Port ${LLM_PORT}) ===${colors.reset}`);
   console.log(`${colors.dim}Press Ctrl+C to terminate.${colors.reset}\n`);
 
+  const kvCache = envConfig.LOCAL_LLM_KV_CACHE_TYPE || 'q8_0';
   const extraArgs: string[] = [
     '--cache-type-k',
-    'q8_0',
+    kvCache,
     '--cache-type-v',
-    'q8_0',
+    kvCache,
     '--cont-batching',
     '--batch-size',
     '2048',
@@ -701,6 +705,98 @@ export async function launchTtsOnly() {
   process.on('SIGTERM', cleanup);
 }
 
+export async function launchChatStack() {
+  const weights = resolveWeights();
+  if (!weights.embPath || !weights.llmPath) {
+    console.error(`${colors.red}❌ ERROR: Required models for AI Chat/RAG not found in ./models.${colors.reset}`);
+    console.error(`Missing: ${!weights.embPath ? 'Embedding (BGE-M3) ' : ''}${!weights.llmPath ? 'Primary LLM (Qwen 9B)' : ''}`);
+    console.error(`Please run: ${colors.cyan}pnpm models:download${colors.reset}`);
+    process.exit(1);
+  }
+  if (!checkLlamaCli()) {
+    console.error(`${colors.red}❌ ERROR: llama-server executable not found in PATH.${colors.reset}`);
+    process.exit(1);
+  }
+
+  const procs: ChildProcess[] = [];
+
+  console.log(`\n${colors.bright}${colors.cyan}==============================================================================${colors.reset}`);
+  console.log(`${colors.bright}${colors.cyan} CHRONOVIET AI CHAT & RAG STACK (Embedding: 8090 + LLM: 8092 + Reranker: 8096)${colors.reset}`);
+  console.log(`${colors.dim} Memory Footprint: ~7 - 9 GB RAM | Optimized for Q&A, RAG Chat & Evaluation${colors.reset}`);
+  console.log(`${colors.bright}${colors.cyan}==============================================================================${colors.reset}\n`);
+
+  // 1. Embedding Server (Port 8090 - Optimized 1 Slot, 4096 Context for Chat)
+  const { embCtxSize, embExtraArgs } = getEmbeddingLlamaConfig(true);
+  procs.push(
+    spawnLlamaService('Embedding Server', EMBEDDING_PORT, weights.embPath, {
+      ctxSize: embCtxSize,
+      isEmbedding: true,
+      extraArgs: embExtraArgs,
+      tag: 'EMB-8090',
+      tagColor: colors.blue,
+    })
+  );
+
+  // 2. Primary LLM / VLM (Port 8092)
+  const kvCache = envConfig.LOCAL_LLM_KV_CACHE_TYPE || 'q8_0';
+  const extraArgs: string[] = [
+    '--cache-type-k',
+    kvCache,
+    '--cache-type-v',
+    kvCache,
+    '--cont-batching',
+    '--batch-size',
+    '2048',
+    '--ubatch-size',
+    '512',
+    '--parallel',
+    String(envConfig.LOCAL_LLM_PARALLEL || 4),
+    '--threads',
+    String(envConfig.LOCAL_LLM_THREADS || 10),
+    ...(envConfig.LLM_EXTRA_ARGS ? envConfig.LLM_EXTRA_ARGS.split(' ').filter(Boolean) : []),
+  ];
+  if (weights.mmprojPath) {
+    extraArgs.push('--mmproj', weights.mmprojPath);
+  }
+  procs.push(
+    spawnLlamaService('Primary LLM', LLM_PORT, weights.llmPath, {
+      ctxSize: envConfig.LLM_CTX_SIZE || 32768,
+      extraArgs,
+      tag: 'LLM-8092',
+      tagColor: colors.cyan,
+    })
+  );
+
+  // 3. Reranker Server (Port 8096, if weights exist)
+  if (weights.rerankPath) {
+    const { rerankCtxSize, rerankExtraArgs } = getRerankLlamaConfig();
+    procs.push(
+      spawnLlamaService('Reranker Engine', RERANK_PORT, weights.rerankPath, {
+        ctxSize: rerankCtxSize,
+        isReranking: true,
+        extraArgs: rerankExtraArgs,
+        tag: 'RERANK-8096',
+        tagColor: colors.yellow,
+      })
+    );
+  } else {
+    console.log(`${colors.yellow}⚠️  Reranker weights not found in ./models. Continuing without Port 8096 (Lexical+Dense RRF active).${colors.reset}`);
+  }
+
+  const cleanup = () => {
+    console.log(`\n${colors.yellow}[*] Shutting down AI Chat & RAG services...${colors.reset}`);
+    for (const p of procs) {
+      try {
+        p.kill('SIGTERM');
+      } catch {}
+    }
+    process.exit(0);
+  };
+
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+}
+
 export async function launchAll() {
   const weights = resolveWeights();
   if (!checkLlamaCli()) {
@@ -744,11 +840,12 @@ export async function launchAll() {
 
   // 2. Primary LLM / VLM
   if (weights.llmPath) {
+    const kvCache = envConfig.LOCAL_LLM_KV_CACHE_TYPE || 'q8_0';
     const extraArgs: string[] = [
       '--cache-type-k',
-      'q8_0',
+      kvCache,
       '--cache-type-v',
-      'q8_0',
+      kvCache,
       '--cont-batching',
       '--batch-size',
       '2048',
@@ -882,9 +979,13 @@ switch (command.toLowerCase()) {
     break;
 
   case 'llm':
-  case 'chat':
   case 'vlm':
     launchLlmOnly();
+    break;
+
+  case 'chat':
+  case 'rag':
+    launchChatStack();
     break;
 
   case 'lite':
@@ -897,7 +998,7 @@ switch (command.toLowerCase()) {
     break;
 
   default:
-    console.log(`Unknown command: "${command}". Available commands: status, start, all, stop, lite, emb, rerank, extract, llm, tts`);
+    console.log(`Unknown command: "${command}". Available commands: status, start, all, chat, rag, stop, lite, emb, rerank, extract, llm, tts`);
     showStatus();
     break;
 }

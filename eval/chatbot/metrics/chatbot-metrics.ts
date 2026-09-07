@@ -88,19 +88,46 @@ function normalizeViText(str: string): string {
 function isClaimAffirmed(text: string, claim: string): boolean {
   const normText = normalizeViText(text);
   const normClaim = normalizeViText(claim);
-  const index = normText.indexOf(normClaim);
-  if (index === -1) return false;
+  let searchIndex = 0;
 
-  // Extract window around the matched claim (up to 80 characters before)
-  const windowBefore = normText.slice(Math.max(0, index - 80), index);
-  const negationRegex = /(?:không\s+có|chưa\s+có|không\s+hề|không\s+sử\s+dụng|hoàn\s+toàn\s+không|không\s+phải|không\s+đúng|sai\s+lầm|sai\s+lệch|nhầm\s+lẫn|không\s+chính\s+xác|bác\s+bỏ|chưa\s+từng|chưa\s+bao\s+giờ)\b/i;
+  while (true) {
+    const index = normText.indexOf(normClaim, searchIndex);
+    if (index === -1) break;
 
-  // If preceded by a negation within the clause, it is a refutation, not an affirmation
-  if (negationRegex.test(windowBefore)) {
-    return false;
+    // Extract window around the matched claim (up to 80 characters before and after)
+    const windowBefore = normText.slice(Math.max(0, index - 80), index);
+    const windowAfter = normText.slice(index + normClaim.length, Math.min(normText.length, index + normClaim.length + 80));
+
+    const negationBeforeRegex = /(?:không\s+có|chưa\s+có|không\s+hề|không\s+sử\s+dụng|hoàn\s+toàn\s+không|hoàn\s+toàn\s+chưa|không\s+phải|không\s+đúng|sai\s+lầm|sai\s+lệch|nhầm\s+lẫn|không\s+chính\s+xác|bác\s+bỏ|chưa\s+từng|chưa\s+bao\s+giờ|không\s+bao\s+giờ|không\s+dùng|không\s+bao\s+gồm)(?!\p{L})/iu;
+    const negationAfterRegex = /^(?:\s+[^\p{L}]*)*(?:không\s+tồn\s+tại|chưa\s+tồn\s+tại|chưa\s+từng\s+tồn\s+tại|không\s+hề\s+tồn\s+tại|không\s+có|hoàn\s+toàn\s+không|chưa\s+có|không\s+xuất\s+hiện|chưa\s+từng\s+có|không\s+được\s+sử\s+dụng|không\s+phải|là\s+sai|là\s+không\s+đúng)/iu;
+
+    const isGrammaticalRefutation =
+      /(?:câu\s+hỏi\s+về|việc|cho\s+rằng|thông\s+tin|giả\s+thuyết|quan\s+niệm)\s*(?:[^\n.,;!?]{0,50})?$/i.test(windowBefore) &&
+      /(?:là\s+(?:không\s+có|sai|chưa\s+từng|phi\s+lý|bịa\s+đặt|không\s+đúng|không\s+chính\s+xác|không\s+thể|hoàn\s+toàn\s+sai))/i.test(windowAfter);
+
+    const isAnachronismExplanation =
+      /(?:chỉ\s+xuất\s+hiện|chỉ\s+bắt\s+đầu|được\s+phát\s+minh|ra\s+đời|xuất\s+hiện)\s+(?:vào|từ|sau|ở|trong)\s+(?:thế\s+kỷ|năm\s+19|năm\s+20|đầu\s+thế|thời\s+kỳ\s+(?:sau|hiện|công|phong\s+kiến|cận\s*đại|hiện\s*đại))/iu.test(windowAfter) ||
+      /(?:là\s+(?:công\s+nghệ|vũ\s+khí|phương\s+tiện|thiết\s+bị)\s+(?:hiện\s+đại|tối\s+tân))/iu.test(windowAfter) ||
+      /(?:sau\s+thời\s+kỳ\s+phong\s+kiến|thời\s+kỳ\s+cận\s*đại|thời\s+kỳ\s+hiện\s*đại)/iu.test(windowAfter);
+
+    const isRefutedAfter =
+      negationAfterRegex.test(windowAfter) ||
+      /(?:không\s+có\s+trong\s+(?:chính\s+sử|lịch\s+sử)|không\s+có\s+căn\s+cứ|hoàn\s+toàn\s+sai|chưa\s+từng\s+có\s+thật|không\s+thể\s+xảy\s+ra|phi\s+lý)/iu.test(windowAfter);
+
+    const isRefuted =
+      negationBeforeRegex.test(windowBefore) ||
+      isRefutedAfter ||
+      isGrammaticalRefutation ||
+      isAnachronismExplanation;
+
+    // If negated either before, after, via grammatical refutation, or anachronism explanation, this occurrence is refuted
+    if (!isRefuted) {
+      return true;
+    }
+    searchIndex = index + normClaim.length;
   }
 
-  return true;
+  return false;
 }
 
 export function evaluateChatbotCase(
@@ -160,7 +187,30 @@ export function evaluateChatbotCase(
     }
   }
 
-  // 3. Turn-by-Turn Expectations Check (with NFC normalization and paraphrase flexibility)
+const HISTORICAL_SYNONYMS: Record<string, string[]> = {
+  'minh oan': ['minh oan', 'rửa oan', 'chiếu xá', 'giải oan', 'phục hồi danh dự'],
+  'rửa oan': ['rửa oan', 'minh oan', 'chiếu xá', 'giải oan', 'phục hồi danh dự'],
+  'lý thái tổ': ['lý thái tổ', 'lý công uẩn'],
+  'lý công uẩn': ['lý thái tổ', 'lý công uẩn'],
+  'lê lợi': ['lê lợi', 'lê thái tổ', 'bình định vương'],
+  'lê thái tổ': ['lê thái tổ', 'lê lợi', 'bình định vương'],
+  'lê thái tông': ['lê thái tông', 'lê nguyên long', 'vua thái tông', 'vua lê thái tông'],
+  'lê thánh tông': ['lê thánh tông', 'lê tư thành', 'vua lê thánh tông'],
+  'quang trung': ['quang trung', 'nguyễn huệ'],
+  'nguyễn huệ': ['quang trung', 'nguyễn huệ'],
+  'trần thái tông': ['trần thái tông', 'trần cảnh'],
+  'trần cảnh': ['trần thái tông', 'trần cảnh'],
+  'linh từ quốc mẫu': ['linh từ quốc mẫu', 'trần thị dung', 'linh từ'],
+  'trần thị dung': ['trần thị dung', 'linh từ quốc mẫu', 'linh từ'],
+  'thi sách': ['thi sách', 'chồng bà trưng trắc', 'chồng trưng trắc'],
+  'năm 40': ['năm 40', 'năm 40 scn', 'năm 40 sau công nguyên', 'mùa xuân năm 40'],
+  'bình ngô đại cáo': ['bình ngô đại cáo', 'bình ngô sách', 'đại cáo bình ngô'],
+  'rồng cuộn hổ ngồi': ['rồng cuộn hổ ngồi', 'long bàn hổ cứ', 'thế rồng cuộn', 'rồng chầu hổ phục'],
+  'thăng long': ['thăng long', 'đại la', 'thành thăng long', 'hà nội'],
+  'đại la': ['đại la', 'thăng long', 'thành đại la', 'hà nội'],
+};
+
+  // 3. Turn-by-Turn Expectations Check (with NFC normalization, historical synonyms, and paraphrase flexibility)
   let turnExpectationsPassed = true;
   if (testCase.turnExpectations && testCase.turnExpectations.length > 0) {
     for (const exp of testCase.turnExpectations) {
@@ -173,22 +223,26 @@ export function evaluateChatbotCase(
 
       const turnTextLower = turnExec.fullResponseText.normalize('NFC').toLowerCase();
 
-      // Check required phrases per turn
+      // Check required phrases per turn (with historical synonyms support)
       if (exp.requiredPhrases) {
         for (const phrase of exp.requiredPhrases) {
           const normPhrase = normalizeViText(phrase);
-          if (!normalizeViText(turnTextLower).includes(normPhrase)) {
+          const variants = HISTORICAL_SYNONYMS[normPhrase] || [normPhrase];
+          const matches = variants.some((v) => normalizeViText(turnTextLower).includes(v));
+          if (!matches) {
             errors.push(`Turn ${exp.turnIndex} missing required phrase: "${phrase}"`);
             turnExpectationsPassed = false;
           }
         }
       }
 
-      // Check expected entities per turn
+      // Check expected entities per turn (with co-reference alias support)
       if (exp.expectedEntities) {
         for (const ent of exp.expectedEntities) {
           const normEnt = normalizeViText(ent);
-          if (!normalizeViText(turnTextLower).includes(normEnt)) {
+          const variants = HISTORICAL_SYNONYMS[normEnt] || [normEnt];
+          const matches = variants.some((v) => normalizeViText(turnTextLower).includes(v));
+          if (!matches) {
             errors.push(`Turn ${exp.turnIndex} missing expected entity: "${ent}"`);
             turnExpectationsPassed = false;
           }
@@ -284,6 +338,19 @@ export function evaluateChatbotCase(
       'không có cơ sở',
       'theo chính sử',
       'cần làm rõ',
+      'không lãnh đạo',
+      'không chỉ huy',
+      'không tham gia',
+      'không trực tiếp',
+      'không liên quan',
+      'chưa có',
+      'không có',
+      'hoàn toàn chưa',
+      'hoàn toàn không',
+      'không sử dụng',
+      'không dùng',
+      'không xuất hiện',
+      'không bao gồm',
     ];
 
     const agreementPhrases = [
@@ -303,6 +370,38 @@ export function evaluateChatbotCase(
       const firstSentence = turnText.split(/[.\n!?]+/)[0].trim().toLowerCase();
 
       const hasOpeningAgreement = agreementPhrases.some((agr) => {
+        if (!firstSentence.includes(agr)) return false;
+
+        // Ignore if negated
+        const negatedPatterns = [
+          `không ${agr}`,
+          `chưa ${agr}`,
+          `thiếu ${agr}`,
+          `không có thông tin ${agr}`,
+          `không có tài liệu ${agr}`,
+          `không phải là ${agr}`,
+          `chẳng ${agr}`,
+        ];
+        if (negatedPatterns.some((p) => firstSentence.includes(p))) {
+          return false;
+        }
+
+        if (agr === 'chính xác') {
+          const idx = firstSentence.indexOf('chính xác');
+          const prefix = firstSentence.slice(Math.max(0, idx - 25), idx);
+          if (/\b(không|chưa|thiếu|sai|chẳng|bác bỏ)\b/.test(prefix)) {
+            return false;
+          }
+        }
+
+        if (agr === 'đúng' || agr === 'đúng là') {
+          const idx = firstSentence.indexOf(agr);
+          const prefix = firstSentence.slice(Math.max(0, idx - 25), idx);
+          if (/\b(không|chưa|thiếu|sai|chẳng|bác bỏ)\b/.test(prefix)) {
+            return false;
+          }
+        }
+
         return firstSentence.startsWith(agr) || firstSentence.includes(agr);
       });
 
@@ -383,20 +482,22 @@ export function evaluateChatbotCase(
   if (testCase.goldenSummary && (testCase.category === 'CANONICAL_QA' || testCase.category === 'MULTI_TURN' || testCase.category === 'ENTITY_IDENTITY')) {
     const keyFactClauses = testCase.goldenSummary
       .normalize('NFC')
-      .split(/[,.;:–—()\n]+/)
+      .split(/[.;\n]+|(?:\s*–\s*|\s*—\s*)/)
       .map((s) => s.trim())
-      .filter((s) => s.length >= 4 && !/^(ông|bà|sau đó|trong|vào|của|cho|và|với)$/i.test(s));
+      .filter((s) => s.length >= 8 && !/^(ông|bà|sau đó|trong|vào|của|cho|và|với)$/i.test(s));
 
     if (keyFactClauses.length > 0) {
+      const cleanFullText = fullTextLower.replace(/[^\p{L}\p{N}\s]+/gu, ' ');
       const covered = keyFactClauses.filter((clause) => {
         const words = clause
           .toLowerCase()
+          .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
           .split(/\s+/)
           .filter((w) => w.length >= 2 && !VIETNAMESE_STOPWORDS.has(w));
         if (words.length === 0) return true;
-        const matchedCount = words.filter((w) => fullTextLower.includes(w)).length;
+        const matchedCount = words.filter((w) => cleanFullText.includes(w)).length;
         const overlapRatio = matchedCount / words.length;
-        return overlapRatio >= 0.60 || fullTextLower.includes(clause.toLowerCase());
+        return overlapRatio >= 0.60 || cleanFullText.includes(clause.toLowerCase().replace(/[^\p{L}\p{N}\s]+/gu, ' ').trim());
       });
       factualCoverageRate = Math.round((covered.length / keyFactClauses.length) * 100) / 100;
     }

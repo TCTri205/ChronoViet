@@ -70,7 +70,7 @@ async function runDevData() {
     '8192',
     '--cont-batching',
     '--parallel',
-    String(envConfig.LOCAL_EMBEDDING_PARALLEL || 4),
+    String(envConfig.LOCAL_EMBEDDING_PARALLEL || 2),
     '--threads',
     String(envConfig.LOCAL_EMBEDDING_THREADS || 6),
     ...(envConfig.LOCAL_EMBEDDING_EXTRA_ARGS ? envConfig.LOCAL_EMBEDDING_EXTRA_ARGS.split(' ').filter(Boolean) : []),

@@ -13,22 +13,22 @@ const log = createLogger({ service: 'rag-engine' });
 
 export const MAX_RERANK_CANDIDATE_POOL = process.env.RERANK_CANDIDATE_POOL
   ? parseInt(process.env.RERANK_CANDIDATE_POOL, 10)
-  : 25;
-export const MAX_CHUNK_CHAR_TRUNCATION = 750;
+  : 30;
+export const MAX_CHUNK_CHAR_TRUNCATION = 1800;
 export const MIN_RELEVANCE_SCORE_THRESHOLD = 0.15;
 
 export function calculateDynamicPoolSize(subIntent?: ChatSubIntent, rerankTopK: number = 5): number {
   let basePool = MAX_RERANK_CANDIDATE_POOL;
   if (subIntent === 'FACTOID_LOOKUP') {
-    basePool = 12;
-  } else if (subIntent === 'GENEALOGY_RELATION') {
-    basePool = 15;
-  } else if (subIntent === 'BATTLE_TACTICS') {
     basePool = 20;
-  } else if (subIntent === 'COMPARATIVE_SYNTHESIS') {
+  } else if (subIntent === 'GENEALOGY_RELATION') {
+    basePool = 22;
+  } else if (subIntent === 'BATTLE_TACTICS') {
     basePool = 25;
+  } else if (subIntent === 'COMPARATIVE_SYNTHESIS') {
+    basePool = 30;
   }
-  return Math.max(rerankTopK * 2, Math.min(MAX_RERANK_CANDIDATE_POOL, basePool));
+  return Math.max(rerankTopK * 3, Math.min(MAX_RERANK_CANDIDATE_POOL, basePool));
 }
 
 export interface RerankerStatus {
@@ -81,7 +81,7 @@ export function truncateToSentenceBoundary(
 export function extractQueryRelevantExcerpt(
   text: string,
   query: string,
-  maxChars: number = 800
+  maxChars: number = 1800
 ): string {
   if (!text || text.length <= maxChars) return text || '';
   if (!query || !query.trim()) return truncateToSentenceBoundary(text, maxChars);
@@ -103,12 +103,14 @@ export function extractQueryRelevantExcerpt(
   let bestPos = 0;
   let maxHits = 0;
 
-  for (let i = 0; i < textLower.length; i += 200) {
+  for (let i = 0; i < textLower.length; i += 100) {
     const window = textLower.slice(i, i + maxChars);
     let hits = 0;
     for (const kw of keywords) {
-      if (window.includes(kw)) {
+      let idx = window.indexOf(kw);
+      while (idx !== -1) {
         hits++;
+        idx = window.indexOf(kw, idx + kw.length);
       }
     }
     if (hits > maxHits) {
@@ -126,11 +128,12 @@ export function extractQueryRelevantExcerpt(
   const startOffset = Math.max(0, bestPos - 100);
   const rawExcerpt = text.slice(startOffset, startOffset + maxChars + 150);
 
-  // Snap start to first sentence boundary if we didn't start at beginning
+  // Snap start to first sentence boundary if we didn't start at beginning and boundary is before match
   let cleanStart = 0;
   if (startOffset > 0) {
+    const matchRelativeStart = bestPos - startOffset;
     const firstPeriod = rawExcerpt.search(/[.!?\n]\s+/);
-    if (firstPeriod !== -1 && firstPeriod < 150) {
+    if (firstPeriod !== -1 && firstPeriod < matchRelativeStart) {
       cleanStart = firstPeriod + 2;
     }
   }
@@ -151,18 +154,33 @@ export function extractQueryRelevantExcerpt(
 export function calculateTemporalMultiplier(
   queryYears: number[],
   chunkTimeStart?: number,
-  chunkTimeEnd?: number
+  chunkTimeEnd?: number,
+  chunkTitle?: string
 ): number {
   if (!queryYears || queryYears.length === 0) {
     return 1.0;
   }
 
-  if (chunkTimeStart === undefined && chunkTimeEnd === undefined) {
+  // If title has explicit 3-4 digit year (e.g. "Chiến tranh Biên giới 1979", "Bạch Đằng 1288"), prioritize that specific historical year
+  let effectiveStart = chunkTimeStart;
+  let effectiveEnd = chunkTimeEnd;
+  if (chunkTitle) {
+    const titleYears = chunkTitle.match(/\b(1\d{3}|20\d{2}|9\d{2})\b/g);
+    if (titleYears && titleYears.length > 0) {
+      const parsedTitleYear = parseInt(titleYears[0], 10);
+      if (!isNaN(parsedTitleYear)) {
+        effectiveStart = parsedTitleYear;
+        effectiveEnd = parsedTitleYear;
+      }
+    }
+  }
+
+  if (effectiveStart === undefined && effectiveEnd === undefined) {
     return 1.0;
   }
 
-  const start = chunkTimeStart !== undefined ? chunkTimeStart : chunkTimeEnd!;
-  const end = chunkTimeEnd !== undefined ? chunkTimeEnd : chunkTimeStart!;
+  const start = effectiveStart !== undefined ? effectiveStart : effectiveEnd!;
+  const end = effectiveEnd !== undefined ? effectiveEnd : effectiveStart!;
   const spanMin = Math.min(start, end);
   const spanMax = Math.max(start, end);
   const chunkMid = (spanMin + spanMax) / 2;
@@ -189,8 +207,14 @@ export function calculateTemporalMultiplier(
     return 1.00;
   } else if (minDelta <= 100) {
     return 0.85;
-  } else {
+  } else if (minDelta <= 500) {
     return 0.70;
+  } else if (minDelta <= 1000) {
+    // Severe Cross-Era Mismatch (e.g. 19th-20th century vs medieval)
+    return 0.05;
+  } else {
+    // Extreme Cross-Era Mismatch (e.g. Modern war chunk 1979 vs Ancient query 40 AD)
+    return 0.001;
   }
 }
 
@@ -264,7 +288,8 @@ export async function rerankCandidates(
       const temporalMultiplier = calculateTemporalMultiplier(
         queryYears,
         cand.timeStart,
-        cand.timeEnd
+        cand.timeEnd,
+        cand.title
       );
 
       // Multiplicative Bayesian Prior: Source priority and temporal grounding amplify relevant candidates

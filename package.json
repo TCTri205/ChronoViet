@@ -29,6 +29,7 @@
     "models:download:lite": "bash scripts/download-models.sh lite",
     "ai": "tsx scripts/ai-cli.ts",
     "ai:start": "tsx scripts/ai-cli.ts start",
+    "ai:chat": "tsx scripts/ai-cli.ts chat",
     "ai:lite": "tsx scripts/ai-cli.ts lite",
     "ai:status": "tsx scripts/ai-cli.ts status",
     "ai:stop": "tsx scripts/ai-cli.ts stop",

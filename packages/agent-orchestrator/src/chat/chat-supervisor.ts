@@ -10,6 +10,8 @@ import {
   GraphTripleItem,
   HistoricalCitationItem,
   isKnownMasterEntity,
+  HISTORICAL_PERSON_DICTIONARY,
+  resolveCanonicalEntity,
 } from '@chronoviet/shared-spec';
 import {
   createLogger,
@@ -20,7 +22,7 @@ import {
 } from '@chronoviet/infra';
 import { ChronoRagEngine } from '@chronoviet/rag-engine';
 import { classifyChatIntent, ChatIntent } from './intent-classifier.js';
-import { rewriteMultiTurnQuery, ChatTurnContext } from './query-rewriter.js';
+import { rewriteMultiTurnQuery, extractDialogueState, ChatTurnContext } from './query-rewriter.js';
 import {
   pruneConversationHistory,
   pruneRagContext,
@@ -35,7 +37,68 @@ const log = createLogger({ service: 'agent-orchestrator' });
 
 export function escapePromptXml(text: string): string {
   if (!text || typeof text !== 'string') return '';
-  return text.replace(/<\/?(?:historical_context|user_query|premise_directives|verified_rag_evidence|knowledge_graph_triples)[^>]*>/gi, '');
+  return text.replace(/<\/?(?:historical_context|user_query|premise_directives|verified_rag_evidence|knowledge_graph_triples|verified_master_entities|dialogue_context_banner)[^>]*>/gi, '');
+}
+
+export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): string {
+  const cards: string[] = [];
+  const seen = new Set<string>();
+
+  for (const item of entityNamesOrIds) {
+    if (!item || item.trim().length <= 2) continue;
+    const clean = item.trim();
+    const resolved = resolveCanonicalEntity(clean);
+    const entId = resolved.entityId;
+    const person = entId ? HISTORICAL_PERSON_DICTIONARY[entId] : undefined;
+
+    const matchedPerson =
+      person ||
+      Object.values(HISTORICAL_PERSON_DICTIONARY).find(
+        (p) =>
+          p.canonicalName.toLowerCase() === clean.toLowerCase() ||
+          p.aliases?.some((a) => a.toLowerCase() === clean.toLowerCase())
+      );
+
+    const target = matchedPerson || (resolved.entityId && !resolved.entityId.startsWith('ent_') ? resolved : undefined);
+    if (!target) continue;
+
+    if (!seen.has(target.entityId)) {
+      seen.add(target.entityId);
+      const lines: string[] = [];
+      const label =
+        target.type === 'DOCUMENT_CULTURE'
+          ? 'Văn kiện / Tác phẩm'
+          : target.type === 'LOCATION'
+          ? 'Địa danh lịch sử'
+          : target.type === 'EVENT_BATTLE'
+          ? 'Sự kiện / Chiến dịch'
+          : target.type === 'DYNASTY_ERA'
+          ? 'Triều đại / Thời kỳ'
+          : 'Nhân vật lịch sử';
+
+      lines.push(`- ${label}: ${target.canonicalName}`);
+      if (target.aliases && target.aliases.length > 0) {
+        lines.push(`  + Danh xưng / Tên gọi khác: ${target.aliases.slice(0, 6).join(', ')}`);
+      }
+      if (target.dynasty) {
+        lines.push(`  + Triều đại: ${target.dynasty}`);
+      }
+      if (target.timeRange && target.timeRange.start != null && target.timeRange.end != null) {
+        const start = target.timeRange.start;
+        const end = target.timeRange.end;
+        const startStr = start < 0 ? `${Math.abs(start)} TCN` : `${start} SCN`;
+        const endStr = end < 0 ? `${Math.abs(end)} TCN` : `${end} SCN`;
+        lines.push(`  + Niên đại chính sử: ${startStr} - ${endStr}`);
+        if (start > 0) {
+          lines.push(`  + Kỷ nguyên: Sau Công Nguyên (SCN / Dương lịch), TUYỆT ĐỐI KHÔNG ghi nhầm thành TCN.`);
+        }
+      }
+      cards.push(lines.join('\n'));
+    }
+  }
+
+  if (cards.length === 0) return '';
+  return `THẺ TRI THỨC LỊCH SỬ CHÍNH SỬ (GROUND TRUTH ENTITY CARDS):\n${cards.join('\n\n')}`;
 }
 
 export interface ChatSupervisorRequest {
@@ -60,31 +123,34 @@ export interface ChatExecutionResult {
 export const STATIC_SYSTEM_PERSONA_PROMPT = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu Lịch sử Việt Nam chuẩn mực, thông thái và khách quan.
 
 NGUYÊN TẮC BẮT BUỘC:
-1. Trả lời chi tiết, sinh động, chuẩn xác tuyệt đối theo chính sử Việt Nam (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Lam Sơn Thực Lục...).
-2. KIỂM TRA TIỀN ĐỀ CÂU HỎI, ĐỒNG NHẤT DANH XƯNG & CHỐNG BỊA ĐẶT (ANTI-SYCOPHANCY & CO-REFERENCE INTEGRITY):
-   - Khi người dùng hỏi về hai hay nhiều tên gọi thực chất là tên húy, niên hiệu, tôn hiệu hoặc tước vị của CÙNG MỘT NGƯỜI (ví dụ: Quang Trung - Nguyễn Huệ, Trần Hưng Đạo - Trần Quốc Tuấn, Lê Lợi - Lê Thái Tổ, Lý Thái Tổ - Lý Công Uẩn, Đinh Tiên Hoàng - Đinh Bộ Lĩnh, Gia Long - Nguyễn Ánh, Mai Thúc Loan - Mai Hắc Đế, An Dương Vương - Thục Phán), BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là CÙNG MỘT NHÂN VẬT LỊCH SỬ. Tuyệt đối không được tách thành hai nhân vật hoặc mô tả như hai người riêng biệt.
-   - Nếu câu hỏi gán ghép quan hệ anh em/họ hàng/thân tộc hoặc hỏi về mối quan hệ giữa các danh xưng của cùng một người (ví dụ: "Quang Trung và Nguyễn Huệ có quan hệ gì?", "Quang Trung và Nguyễn Huệ có phải là 2 anh em?"), BẮT BUỘC đính chính ngay rằng đây là cùng một nhân vật lịch sử với các danh xưng khác nhau qua từng giai đoạn, tuyệt đối không thừa nhận là hai anh em hay hai người khác nhau.
-   - TUYỆT ĐỐI KHÔNG TỰ MÂU THUẪN: Cấm tuyệt đối việc đoạn trước nói là 1 người nhưng đoạn sau lại giải thích như 2 người độc lập hoặc bịa quan hệ anh em ruột/cùng cha khác mẹ giữa 2 danh xưng đó. Tuyệt đối không lấy tiểu sử của gia quyến/hoàng hậu/thái sư trong ngữ cảnh gán sai sang cho nhân vật chính.
-   - Nếu câu hỏi của người dùng chứa tiền đề sai lệch (ví dụ: gán sai quan hệ anh em/cha con/vợ chồng, gán sai triều đại, đảo lộn niên đại, gán chiến công cho sai nhân vật), bạn BẮT BUỘC phải bác bỏ và đính chính rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [A] và [B] không phải là anh em...", "Theo chính sử, thông tin này không chính xác...").
-   - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng rồi tự bịa đặt câu chuyện để hợp thức hóa tiền đề đó.
+1. NGUYÊN TẮC TOÀN DIỆN LỊCH SỬ & RÀNG BUỘC SỬ LIỆU TUYỆT ĐỐI (STRICT IN-CONTEXT GROUNDING):
+   - Mọi mốc thời gian (niên đại chính xác), địa danh, kinh đô, nhân vật, tác phẩm và diễn biến cốt lõi BẮT BUỘC phải trích xuất và đối chiếu trực tiếp từ phần <verified_master_entities>, <verified_rag_evidence> và <knowledge_graph_triples>.
+   - Đối với các triều đại ngoại bang phương Bắc xâm lược: Nêu chính xác triều đại cụ thể (Ví dụ: nhà Đông Hán, nhà Đường, nhà Tống, nhà Nguyên/Mông Cổ, nhà Minh, nhà Thanh), không gọi chung chung là "nhà Hán" nếu ngữ cảnh xác định rõ là Đông Hán.
+   - Các năm lịch sử từ năm 1 trở đi thuộc kỷ nguyên Sau Công Nguyên (SCN / năm dương lịch), TUYỆT ĐỐI KHÔNG thêm "TCN" vào các sự kiện sau Công Nguyên (ví dụ: Khởi nghĩa Hai Bà Trưng năm 40 là năm 40 SCN).
+   - TUYỆT ĐỐI KHÔNG tự suy đoán, bịa đặt tên tuổi tướng lĩnh hoặc nhân vật không có trong sử liệu được cung cấp. Nếu ngữ cảnh thiếu thông tin chi tiết, BẮT BUỘC phải thông báo khách quan: "Sử liệu hiện có trong hệ thống chưa ghi nhận chi tiết này".
+   - Luôn trích dẫn danh xưng chính thức, tên tác phẩm cụ thể, áng văn hoặc văn kiện lịch sử xuất hiện trong ngữ cảnh thay vì dùng từ ngữ khái quát ("ông ấy", "văn bản này").
+   - Khi giải thích các áng văn kiện, chiếu cáo, lời thề xuất quân, hoặc bối cảnh địa thế/nguyên nhân sự kiện (như Chiếu dời đô, Lời thề Mê Linh, Hịch tướng sĩ, Bình Ngô đại cáo, v.v.): BẮT BUỘC trích dẫn các câu chữ, hình tượng kinh điển trong nguyên tác xuất hiện ở sử liệu (ví dụ: "rồng cuộn hổ ngồi", "Một xin rửa sạch nước thù...", "việc nhân nghĩa cốt ở yên dân"...) thay vì chỉ tóm tắt thuần túy.
+   - Khi trình bày về một vụ án, biến cố hoặc bi kịch lịch sử: Luôn nêu đầy đủ cả nguyên nhân trực tiếp (nạn nhân, người bị liên đới, vị vua trị vì bấy giờ) và hậu quả / việc minh oan sau này dựa trên sử liệu.
+   - Khi trình bày về trận đánh, chiến dịch hoặc cuộc kháng chiến: Trình bày mạch lạc bối cảnh, tướng lĩnh chủ chốt hai bên được ghi chép trong sử liệu, diễn biến chính, kế sách quân sự và ý nghĩa bước ngoặt lịch sử.
+
+2. QUY TẮC ĐỒNG NHẤT DANH XƯNG & THÂN TỘC PHONG KIẾN (NOMENCLATURE & ROYALTY INVARIANT):
+   - Trong lịch sử phong kiến Việt Nam, một nhân vật thường có nhiều tên gọi (tên húy/tên khai sinh, miếu hiệu, niên hiệu, tôn hiệu, tước vị). 
+   - Khi câu hỏi đề cập các danh xưng của CÙNG MỘT NGƯỜI, BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là cùng một nhân vật lịch sử (Ví dụ: Vua [Miếu hiệu] tên húy là [Tên húy]). Tuyệt đối không tách thành hai người riêng biệt hoặc mô tả như hai nhân vật có quan hệ huyết thống với nhau.
+   - CHỈ ĐƯỢC PHÉP ghi tên húy nếu tên đó xuất hiện trực tiếp trong sử liệu xác thực. Nếu không có tên húy trong ngữ cảnh, dùng miếu hiệu/danh xưng chính thức.
+   - Khi sử liệu ghi miếu hiệu vắn tắt (như Thái Tông, Thánh Tông, Nhân Tông, Anh Tông...), BẮT BUỘC đối chiếu cẩn trọng với mốc thời gian (năm xảy ra sự kiện) và thứ tự trị vì trong văn bản để xác định đúng vị vua, TUYỆT ĐỐI KHÔNG nhầm lẫn giữa các vị vua kế tiếp nhau trong cùng triều đại (ví dụ: Lê Thái Tổ -> Lê Thái Tông mất năm 1442 tại Lệ Chi Viên -> Lê Nhân Tông -> Lê Nghi Dân -> Lê Thánh Tông lên ngôi năm 1460 và giải oan cho Nguyễn Trãi năm 1464).
+
+3. QUY TẮC PHẢN BIỆN TIỀN ĐỀ SAI (UNIVERSAL ANTI-SYCOPHANCY & HISTORICAL REFUTATION):
+   - Nếu câu hỏi chứa tiền đề sai lệch (sai niên đại, gán nhầm sự kiện/địa bàn, gán sai chiến công hoặc đưa công nghệ/vũ khí/khái niệm hiện đại vào thời kỳ phong kiến/cổ đại), bạn BẮT BUỘC phải bác bỏ rõ ràng NGAY Ở CÂU ĐẦU TIÊN (Ví dụ: "Không, vào thời kỳ [X] hoàn toàn chưa có [Y]...", "Không, thông tin này không chính xác..."). Đồng thời đính chính rõ sự thật lịch sử dựa trên sử liệu.
+   - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng.
    - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.
-3. TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT THÂN TỘC, DANH TÍNH & CHIẾN TÍCH (ZERO HISTORICAL HALLUCINATION):
-   - Tuyệt đối không tự suy diễn hoặc bịa đặt tên khai sinh, năm sinh/mất, niên hiệu, thân phụ, anh em, hoặc vị thứ hoàng đế/vua chúa.
-   - NGUYÊN TẮC VỀ TÊN HÚY (TÊN KHAI SINH TRONG NGOẶC ĐƠN): CHỈ ĐƯỢC PHÉP ghi tên húy nếu tên đó XUẤT HIỆN TRỰC TIẾP trong "DỮ LIỆU SỬ LIỆU XÁC THỰC". Tuyệt đối không tự ghép họ tên (CẤM TỰ BỊA "Trần Thừa Thải", "Trần Thừa Bình" hay bất kỳ tên húy nào không có trong sử liệu). Nếu không có tên húy trong ngữ cảnh, CHỈ ĐƯỢC DÙNG MIẾU HIỆU/DANH XƯNG (Ví dụ: "Vua Trần Thái Tông", "Vua Trần Nhân Tông").
-   - Tuyệt đối không tự bịa đặt tên tướng lĩnh chỉ huy hư cấu hoặc gán sai địa danh/trận đánh (ví dụ: 3 lần chống Mông-Nguyên lần lượt do Vua Trần Thái Tông - Thái sư Trần Thủ Độ [lần 1 - Đông Bộ Đầu 1258], Vua Trần Nhân Tông - Thượng hoàng Trần Thánh Tông - Tiết chế Trần Quốc Tuấn [lần 2 - 1285 & lần 3 - Bạch Đằng 1288]. Trận Bạch Đằng lừng lẫy tiêu diệt Ô Mã Nhi là ở Lần 3 năm 1288, không phải Lần 2).
-   - Nếu một nhân vật hoặc mối quan hệ không có ghi chép trong chính sử, hãy nêu rõ "Không có ghi chép chính sử" thay vì tự suy diễn.
-4. NGUYÊN TẮC BỐI CẢNH LỊCH SỬ & CHỐNG SUY DIỄN PHI THỜI ĐẠI (ANTI-ANACHRONISM & FEUDAL SOCIETAL PARADIGM):
-   - Mọi lý giải về nhân khẩu học, sự phân bố dòng họ (đặc biệt là họ Nguyễn, họ Lê, họ Trần, họ Vũ/Võ...), thứ bậc xã hội và phong tục tập quán cổ truyền BẮT BUỘC phải dựa trên hệ quy chiếu chế độ phong kiến Nho giáo (văn hóa phụ hệ nghiêm ngặt - con mang họ cha theo huyết thống, lệnh cưỡng chế đổi họ khi vương triều sụp đổ, lệ ban quốc tính của hoàng tộc, và việc lập sổ đinh/sổ hộ tịch thời Pháp thuộc).
-   - TUYỆT ĐỐI KHÔNG áp dụng tư duy tự do cá nhân, xu hướng truyền thông, phim ảnh hay thói quen hiện đại vào lịch sử (ví dụ: TUYỆT ĐỐI KHÔNG giải thích rằng người dân "tự do chọn họ cho con cái", "chọn họ vì hâm mộ triều đại", hay "do ảnh hưởng từ phim ảnh").
-   - Khi giải thích vì sao họ Nguyễn chiếm tỷ lệ áp đảo (~38-40% dân số Việt Nam), BẮT BUỘC phải dựa trên các mốc lịch sử cốt lõi:
-     + Thái sư Trần Thủ Độ ép tôn thất nhà Lý đổi sang họ Nguyễn năm 1232 (kiêng húy Trần Lý và dứt lòng vọng Lý của dân chúng).
-     + Hậu duệ nhà Hồ (1407), nhà Mạc (1592) và Tây Sơn (1802) đổi sang họ Nguyễn để lánh nạn diệt vong.
-     + Tập tục Ban Quốc Tính thời Chúa Nguyễn và Triều Nguyễn cho công thần có công.
-     + Việc lập sổ đinh, căn cước hộ tịch thời Pháp thuộc gán họ của triều đại đang trị vì cho tầng lớp bần nông không có họ.
-5. Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả thuyết: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
-6. Nêu rõ niên đại, nhân vật, bối cảnh và ý nghĩa lịch sử.
-7. Trình bày đẹp mắt với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
-8. TUYỆT ĐỐI KHÔNG LẶP LẠI: Không lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.`;
+
+4. NGUYÊN TẮC BỐI CẢNH LỊCH SỬ & CHỐNG SUY DIỄN PHI THỜI ĐẠI (HISTORIOGRAPHICAL CONTEXT & ANTI-ANACHRONISM):
+   - Mọi lý giải về nhân khẩu học, sự phân bố dòng họ, thứ bậc xã hội và phong tục tập quán cổ truyền BẮT BUỘC phải dựa trên hệ quy chiếu chế độ phong kiến Nho giáo (các biến cố đổi họ lánh nạn, kiêng húy, ban quốc tính, hoặc sổ đinh hộ tịch). Tuyệt đối không áp dụng tư duy tự do cá nhân hoặc góc nhìn đạo đức hiện đại.
+   - Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả định: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
+
+5. NGUYÊN TẮC TRÌNH BÀY & CHỐNG LẶP LẠI (PRESENTATION INTEGRITY):
+   - Trình bày rõ ràng, mạch lạc với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
+   - TUYỆT ĐỐI KHÔNG lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.`;
 
 export async function* handleChatQueryStream(
   request: ChatSupervisorRequest
@@ -154,13 +220,50 @@ export async function* handleChatQueryStream(
     return;
   }
 
-  // 4. Entity Identity Fast Path (or deep historical query)
-  let searchTopic = query;
-  if (history.length > 0) {
-    searchTopic = rewriteMultiTurnQuery(query, history);
+  // 5. Entity Identity Fast Path (< 1ms with Primary Citations)
+  if (classification.intent === 'ENTITY_IDENTITY') {
+    const canonicalName = classification.matchedCanonicalName || query;
+    const fastMsg = classification.fastPathResponse;
+    if (fastMsg) {
+      const citations = [
+        `${canonicalName} [Nguồn: LEVEL_1]`,
+        'Đại Việt Sử Ký Toàn Thư [Nguồn: LEVEL_1]',
+        'Đại Nam Thực Lục [Nguồn: LEVEL_1]',
+      ];
+      yield { type: 'citation', citations };
+      yield { type: 'token', content: fastMsg };
+      yield {
+        type: 'done',
+        content: fastMsg,
+        citations,
+        conversationId,
+      };
+      return;
+    }
   }
 
-  // 5. Deep Chrono-RAG Search with Graph Triples
+  // 6. Premise Analysis, Dialogue State Tracking & Query Rewriting
+  const premiseAnalysis = analyzePremiseAndLeadingIntent(query);
+  const dialogueState = extractDialogueState(history, query);
+  let searchTopic = query;
+  if (history.length > 0) {
+    searchTopic = rewriteMultiTurnQuery(query, history, dialogueState);
+  }
+
+  const entitiesToFilter = Array.from(new Set([
+    ...premiseAnalysis.detectedEntities,
+    ...(dialogueState.primaryEntity ? [dialogueState.primaryEntity] : []),
+    ...dialogueState.veneratedEntities,
+    ...dialogueState.adversaryEntities,
+    ...dialogueState.activeDocuments,
+    ...dialogueState.activeLocations,
+  ]));
+
+  const resolvedFilterIds = entitiesToFilter
+    .map((e) => resolveCanonicalEntity(e).entityId)
+    .filter((id): id is string => Boolean(id) && !id.startsWith('ent_'));
+
+  // 7. Deep Chrono-RAG Search with Graph Triples
   const engine = ragEngine || new ChronoRagEngine();
   let verifiedCitations: string[] = [];
   let graphTriples: GraphTripleItem[] = [];
@@ -174,7 +277,9 @@ export async function* handleChatQueryStream(
       engine.search({
         query: searchTopic,
         subIntent: classification.subIntent,
-        rerankTopK: classification.subIntent === 'FACTOID_LOOKUP' ? 3 : 4,
+        rerankTopK: classification.subIntent === 'FACTOID_LOOKUP' ? 4 : 5,
+        maxTokens: 3200,
+        entityFilter: resolvedFilterIds.length > 0 ? resolvedFilterIds : undefined,
       }),
       new Promise<any>((_, reject) =>
         setTimeout(() => reject(new Error('RAG search timeout')), ragTimeoutMs)
@@ -193,10 +298,10 @@ export async function* handleChatQueryStream(
     }
 
     contextSnippets = (ragResponse.verifiedContext || [])
-      .map(
-        (v: any) =>
-          `### ${v.canonicalName}\n${v.summary}\n(Nguồn: ${v.citations.join(', ')})`
-      )
+      .map((v: any) => {
+        const cleanSummary = (v.summary || '').replace(/^(?:\[[^\]\n]+\]\s*)+/gu, '').trim();
+        return `### ${v.canonicalName}\n${cleanSummary}\n(Nguồn: ${v.citations.join(', ')})`;
+      })
       .join('\n\n');
 
     isFolkloreSource = (ragResponse.verifiedContext || []).some((v: any) =>
@@ -225,7 +330,6 @@ export async function* handleChatQueryStream(
 
   // 6. Build Context & Multi-turn Prompt
   const prunedHistory = pruneConversationHistory(history);
-  const premiseAnalysis = analyzePremiseAndLeadingIntent(query);
   const triplesText = pruneGraphTriples(graphTriples, 15, premiseAnalysis.detectedEntities);
   const unmappedEntities: string[] = [];
   for (const ent of premiseAnalysis.detectedEntities) {
@@ -269,6 +373,21 @@ export async function* handleChatQueryStream(
     : '') + unmappedDirectiveText + subIntentDirective + (ragFallbackDirective ? `\n\n${ragFallbackDirective}` : '');
 
   const contextSections: string[] = [];
+  if (dialogueState.contextBanner) {
+    contextSections.push(`<dialogue_context_banner>\n${dialogueState.contextBanner}\n</dialogue_context_banner>`);
+  }
+  const entitiesToLookup = Array.from(new Set([
+    ...premiseAnalysis.detectedEntities,
+    ...(dialogueState.primaryEntity ? [dialogueState.primaryEntity] : []),
+    ...dialogueState.veneratedEntities,
+    ...dialogueState.adversaryEntities,
+    ...dialogueState.activeDocuments,
+    ...dialogueState.activeLocations,
+  ]));
+  const dynamicEntityCards = buildDynamicEntityKnowledgeCards(entitiesToLookup);
+  if (dynamicEntityCards.trim()) {
+    contextSections.push(`<verified_master_entities>\n${dynamicEntityCards}\n</verified_master_entities>`);
+  }
   if (premiseDirectiveText.trim()) {
     contextSections.push(`<premise_directives>\n${premiseDirectiveText.trim()}\n</premise_directives>`);
   }

@@ -420,7 +420,7 @@ export type ChatSubIntent = z.infer<typeof ChatSubIntentSchema>;
 export const RagSearchRequestSchema = z.object({
   query: z.string().min(1),
   entityFilter: z.array(z.string()).optional(),
-  maxTokens: z.number().int().positive().optional().default(2048),
+  maxTokens: z.number().int().positive().optional().default(3200),
   rerankTopK: z.number().int().positive().optional().default(5),
   subIntent: ChatSubIntentSchema.optional(),
 });

@@ -84,6 +84,7 @@ pnpm remotion:studio # Remotion Studio UI (Port 9876)
 ### 3. AI & Infrastructure Management
 ```bash
 pnpm ai:start        # Start Full Local AI Stack (8090, 8092, 8096, 8080 + TTS)
+pnpm ai:chat         # Start Chat & RAG Stack (8090 + 8092 + 8096) (~7-9 GB RAM)
 pnpm ai:lite         # Start Lightweight Pair (8090 + 8094) (~3.1 GB RAM)
 pnpm ai:status       # Check AI port status (8090, 8092, 8094, 8096, 8080)
 pnpm ai:stop         # Stop all background AI & TTS processes

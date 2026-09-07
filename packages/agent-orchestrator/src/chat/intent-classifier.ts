@@ -58,7 +58,9 @@ const CONJUNCTION_ENTITY_PATTERNS = [
   /^(.+?)\s+(?:và|với|cùng)\s+(.+?)\s+là\s+(?:ai|những\s+ai|người\s+như\s+thế\s+nào)(?:\s*\?)?$/i,
   /^(?:quan\s+hệ\s+giữa|mối\s+quan\s+hệ\s+giữa)\s+(.+?)\s+(?:và|với)\s+(.+?)(?:\s+là\s+gì|\s+như\s+thế\s+nào)?(?:\s*\?)?$/i,
   /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+(?:mối\s+)?quan\s+hệ\s+(?:gì|như\s+thế\s+nào)(?:\s*\?)?$/i,
-  /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau|2\s+anh\s+em|hai\s+anh\s+em|anh\s+em)(?:\s*không|\s+hả|\s*\?)?$/i,
+  /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau|(?:2|hai)?\s*anh\s+em(?:\s+ruột)?)(?:\s*không|\s+hả|\s*\?)?$/i,
+  /^(.+?)\s+(?:và|với)\s+(.+?)\s+là\s+(?:cùng\s+một\s+người|là\s+một)\s+(?:hay|hoặc)\s+(?:là\s+)?(?:2|hai)?\s*(?:vị\s+vua|người|nhân\s+vật)\s+khác\s+nhau(?:.*)$/i,
+  /^(.+?)\s+(?:và|với)\s+(.+?)\s+là\s+(?:cùng\s+một\s+người|là\s+một|hai\s+người\s+khác\s+nhau|hai\s+vị\s+vua\s+khác\s+nhau)(?:.*)$/i,
 ];
 
 const SINGLE_ENTITY_IDENTITY_PATTERNS = [
@@ -175,12 +177,16 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
           // Branch 1: Same Canonical Entity (Alias / Honorific / Regnal Title match)
           if (canonical1.entityId === canonical2.entityId) {
             const aliasList = Array.from(new Set([canonical1.canonicalName, ...(canonical1.aliases || [])]));
+            const isNegativeTrap = /(?:anh\s+em|hai\s+người|khác\s+nhau)/i.test(match[0]);
+            const prefix = isNegativeTrap
+              ? `Không, "${rawE1}" và "${rawE2}" là cùng một người (cùng một nhân vật lịch sử trong chính sử Việt Nam: ${canonical1.canonicalName}), không phải là hai người khác nhau.`
+              : `"${rawE1}" và "${rawE2}" là cùng một người, thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ trong chính sử Việt Nam (${canonical1.canonicalName}).`;
             return {
               intent: 'ENTITY_IDENTITY',
               confidence: 0.98,
               matchedEntityId: canonical1.entityId,
               matchedCanonicalName: canonical1.canonicalName,
-              fastPathResponse: `Chính xác! "${rawE1}" và "${rawE2}" thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ trong chính sử Việt Nam (${canonical1.canonicalName}). ${canonical1.canonicalName} là tên/niên hiệu/tôn hiệu chính thức, các danh xưng khác bao gồm: ${aliasList.join(', ')}.`,
+              fastPathResponse: `${prefix} ${canonical1.canonicalName} là tên/niên hiệu/tôn hiệu chính thức, các danh xưng khác bao gồm: ${aliasList.join(', ')}.`,
             };
           }
 
@@ -204,7 +210,8 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
     const match = effectiveQuery.match(pattern) || cleanQuery.match(pattern);
     if (match) {
       const entityName = match[1]?.trim();
-      if (entityName) {
+      const wordCount = entityName ? entityName.split(/\s+/).filter(Boolean).length : 0;
+      if (entityName && wordCount >= 1 && wordCount <= 4) {
         const canonical = resolveCanonicalEntity(entityName);
         if (canonical.entityId && canonical.canonicalName) {
           if (match[2]) {
@@ -218,8 +225,8 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
                 matchedEntityId: canonical.entityId,
                 matchedCanonicalName: canonical.canonicalName,
                 fastPathResponse: isSame
-                  ? `Chính xác! ${canonical.canonicalName} và ${canonical2.canonicalName} là cùng một nhân vật lịch sử. ${canonical.canonicalName} là tên/tước hiệu chính thức, còn các tên gọi khác bao gồm: ${(canonical.aliases || []).join(', ')}.`
-                  : `${canonical.canonicalName} và ${canonical2.canonicalName} là hai thực thể lịch sử khác nhau trong chính sử Việt Nam.`,
+                  ? `${canonical.canonicalName} và ${canonical2.canonicalName} là cùng một người, thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ trong chính sử Việt Nam. ${canonical.canonicalName} là tên/tước hiệu chính thức, còn các tên gọi khác bao gồm: ${(canonical.aliases || []).join(', ')}.`
+                  : `${canonical.canonicalName} và ${canonical2.canonicalName} là HAI NHÂN VẬT LỊCH SỬ KHÁC NHAU trong chính sử Việt Nam.`,
               };
             }
           }
