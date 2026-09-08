@@ -1,9 +1,11 @@
 /**
  * Multi-Tier Intent Classifier & Fast-Path Router (<1ms execution)
  * SSOT for Chatbot query triage: CHITCHAT vs ENTITY_IDENTITY vs VIDEO_INTENT vs HISTORICAL_QUERY
+ * Implements Dual-Key Positive Gating to prevent ungrounded queries from triggering heavy RAG.
  */
 
-import { resolveCanonicalEntity, ChatIntent, ChatSubIntent } from '@chronoviet/shared-spec';
+import { resolveCanonicalEntity, isKnownMasterEntity, ChatIntent, ChatSubIntent } from '@chronoviet/shared-spec';
+import { normalizeResilientText } from './text-normalizer.js';
 
 export type { ChatIntent, ChatSubIntent };
 
@@ -29,18 +31,35 @@ const OUT_OF_DOMAIN_PATTERNS = [
   /(?:hàm\s+python|viết\s+hàm\s+python|dãy\s*số\s*fibonacci|đệ\s*quy\s*có\s*nhớ)/i,
 ];
 
-// Pure Chitchat & Greeting Patterns (Evaluated on normalized query string)
+// Pure Chitchat & Greeting Patterns (Evaluated on normalized query string and unaccented shadow)
 const PURE_CHITCHAT_PATTERNS = [
-  /^(?:xin\s+)?chào(?:\s+(?:bạn|bot|ad|admin|em|anh|chị|mọi\s+người|cả\s+nhà|chronoviet|nhé|nhe|nha|ạ))?$/i,
-  /^(?:hello|hi|hey|alo|halo)(?:\s+(?:bạn|bot|ad|admin|em|anh|chị|chronoviet|nhé|nhe|nha|ạ))?$/i,
+  /^(?:xin\s+)?chào(?:\s+(?:bạn|bot|ad|admin|em|anh|chị|mọi\s+người|cả\s+nhà|chronoviet|nhé|nhe|nha|ạ|\w+)){0,4}$/i,
+  /^(?:hello|hi|hey|alo|halo)(?:\s+(?:bạn|bot|ad|admin|em|anh|chị|chronoviet|nhé|nhe|nha|ạ|ơi|\w+)){0,4}$/i,
   /^(?:good\s+(?:morning|evening|afternoon|night))$/i,
   /^(?:rất\s+)?(?:cảm\s+ơn|cam\s+on|thank\s*you|thanks|thx)(?:\s+(?:bạn|bot|ad|admin|em|anh|chị|chronoviet|nhiều|nhe|nhé|nha|ạ|\w+)){0,4}$/i,
   /^(?:tạm\s+biệt|tam\s+biet|bye|goodbye|bye\s+bye|hẹn\s+gặp\s+lại)(?:\s+(?:bạn|bot|ad|admin|em|anh|chị|chronoviet|nhé|nhe|nha|ạ))?$/i,
   /(?:xin\s+)?chào(?:\s+bạn|\s+bot|\s+chronoviet)?[\s,;:!?-]+(?:bạn\s+là\s+ai|có\s+thể\s+giúp\s+gì|giúp\s+gì\s+cho\s+tôi|bạn\s+tên\s+gì)/i,
-  /^(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|bot|chronoviet)\s+là\s+ai(?:\s+(?:thế|vậy|hả|\?))?$/i,
-  /^(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|bot|chronoviet)\s+tên\s+(?:là\s+)?gì(?:\s+(?:thế|vậy|hả|\?))?$/i,
+  /^(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|bot|chronoviet|ad|admin|cậu|mày)\s+là\s+ai(?:\s+(?:thế|vậy|hả|nhỉ|dạ|\?))?$/i,
+  /^(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|bot|chronoviet|ad|admin|cậu|mày)\s+tên\s+(?:là\s+)?gì(?:\s+(?:thế|vậy|hả|nhỉ|dạ|\?))?$/i,
   /^(?:(?:hệ\s*thống\s+)?chronoviet\s+có\s+(?:những\s+)?(?:tính\s*năng|chức\s*năng|khả\s*năng|điểm)\s+gì|tính\s*năng\s+(?:của\s+)?(?:chronoviet|hệ\s*thống)|bạn\s+có\s+thể\s+làm\s+(?:được\s+)?gì)/i,
   /^(?:chronoviet\s+là\s+gì|giới\s+thiệu\s+(?:về\s+)?(?:bản\s+thân|bạn|chronoviet)|hướng\s+dẫn(?:\s+sử\s+dụng)?|giúp\s+tôi\s+với|help)$/i,
+];
+
+// Conversational Bot Identity & Persona Inquiry Patterns
+const BOT_IDENTITY_PATTERNS = [
+  /^(?:(?:cho\s+(?:mình|minh|tôi|toi|em)\s+hỏi|hỏi\s+chút|hỏi\s+xíu|làm\s+ơn\s+cho\s+biết|lam\s+on\s+cho\s+biet|phiền\s+bạn|phien\s+ban)\s*,?\s*)?(?:(?:xin\s+)?chào|chao|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|ban|bot|chronoviet|ad|admin|cậu|cau|mày|may)\s+(?:là\s+ai|la\s+ai|tên\s+(?:là\s+)?gì|ten\s+(?:la\s+)?gi)(?:\s+(?:thế|the|vậy|vay|hả|ha|nhỉ|nhi|dạ|da|nhờ|nho|\?))?$/i,
+  /^(?:(?:cho\s+(?:mình|minh|tôi|toi|em)\s+hỏi|làm\s+ơn\s+cho\s+biết|phiền\s+bạn)\s*,?\s*)?(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|ban|bot|chronoviet|ad|admin|cậu)\s+tên\s+(?:là\s+)?gì(?:\s+(?:thế|the|vậy|vay|hả|ha|nhỉ|dạ|\?))?$/i,
+  /^(?:who\s+are\s+you|who\s+is\s+chronoviet|what\s+is\s+chronoviet)\b/i,
+  /^(?:ai\s+đấy|ai\s+đó|ai\s+thế|ai\s+vậy|ai\s+day|ai\s+the|ai\s+vay)(?:\s*\?)?$/i,
+];
+
+// Unaccented shadow matches for greetings and identity
+const SHADOW_CHITCHAT_PATTERNS = [
+  /^(?:(?:cho\s+(?:minh|toi|em)\s+hoi|lam\s+on\s+cho\s+biet)\s*,?\s*)?(?:xin\s+)?chao(?:\s+(?:ban|bot|ad|admin|em|anh|chi|moi\s+nguoi|chronoviet|nhe|nha|a|\w+))?$/i,
+  /^(?:rat\s+)?(?:cam\s+on|thanks)(?:\s+(?:ban|bot|ad|admin|nhi\s*eu|nhe|nha|a|\w+)){0,4}$/i,
+  /^(?:tam\s+biet|bye|goodbye)(?:\s+(?:ban|bot|ad|admin|nhe|nha|a))?$/i,
+  /^(?:(?:cho\s+(?:minh|toi|em)\s+hoi|lam\s+on\s+cho\s+biet)\s*,?\s*)?(?:(?:xin\s+)?chao|hello|hi|hey|alo|halo)?\s*,?\s*(?:ban|bot|chronoviet)\s+la\s+ai(?:\s+(?:the|vay|ha|\?))?$/i,
+  /^(?:(?:cho\s+(?:minh|toi|em)\s+hoi|lam\s+on\s+cho\s+biet)\s*,?\s*)?(?:(?:xin\s+)?chao|hello|hi|hey|alo|halo)?\s*,?\s*(?:ban|bot|chronoviet)\s+ten\s+(?:la\s+)?gi(?:\s+(?:the|vay|ha|\?))?$/i,
 ];
 
 // Pleasantry Prefix Regex to strip before evaluating substantive historical/video intent
@@ -88,60 +107,147 @@ function stripPleasantryPrefix(text: string): { stripped: string; hasPrefix: boo
   return { stripped: text, hasPrefix: false };
 }
 
+// Unicode-safe word boundaries (since standard \b treats Vietnamese accented characters as non-word)
+const B_DELIM = '(?=$|[\\s,;!?.:~"\'/()\\-])';
+
+// Conversational and functional stopwords that should never be falsely matched as historical entities
+const CONVERSATIONAL_STOPWORDS = new Set([
+  'bạn', 'ban', 'banj', 'tôi', 'toi', 'tooi', 'mình', 'minh', 'minhj', 'cậu', 'cau', 'em', 'anh', 'chị', 'chi',
+  'bot', 'ad', 'admin', 'ai', 'gì', 'gi', 'nào', 'nao', 'sao', 'đâu', 'dau', 'thế', 'the',
+  'vậy', 'vay', 'chào', 'chao', 'hello', 'hi', 'hey', 'alo', 'halo', 'cảm ơn', 'cam on',
+  'tạm biệt', 'tam biet', 'hỏi', 'hoi', 'biết', 'biet', 'nghe', 'nói', 'noi', 'làm', 'lam',
+  'cho', 'về', 've', 'là', 'la', 'laf', 'có', 'co', 'được', 'duoc', 'xin'
+]);
+
+export interface ExtractedHistoricalEntity {
+  entityId: string;
+  canonicalName: string;
+  matchedText: string;
+}
+
+/**
+ * Extracts recognized master historical entities from queries using windowed n-gram matching (4 to 1 words).
+ * Filters out conversational pronouns and stopwords (e.g. preventing 'bạn' from colliding with 'núi Bân').
+ */
+export function extractHistoricalEntityFromQuery(text: string): ExtractedHistoricalEntity | null {
+  if (!text || typeof text !== 'string') return null;
+  const clean = text.replace(/[,;!?.:~"'/()\\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const tokens = clean.split(' ').filter(Boolean);
+  const n = tokens.length;
+
+  for (let len = Math.min(4, n); len >= 1; len--) {
+    for (let i = 0; i <= n - len; i++) {
+      const span = tokens.slice(i, i + len).join(' ');
+      const lowerSpan = span.toLowerCase();
+
+      if (CONVERSATIONAL_STOPWORDS.has(lowerSpan)) continue;
+      // Single-word candidates must be >= 3 characters and not conversational pronouns
+      if (len === 1 && (span.length < 3 || lowerSpan === 'bạn' || lowerSpan === 'ban')) continue;
+
+      if (isKnownMasterEntity(span)) {
+        const canonical = resolveCanonicalEntity(span);
+        if (canonical.entityId && canonical.canonicalName) {
+          return { entityId: canonical.entityId, canonicalName: canonical.canonicalName, matchedText: span };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Detects if the query contains verified historical temporal or domain lexical markers.
+ * Acts as Key 2 in Dual-Key Positive Gating.
+ */
+function hasHistoricalDomainSignals(text: string): boolean {
+  if (!text || typeof text !== 'string') return false;
+
+  // 1. Explicit calendar year numbers or BCE/CE notations (prevents arbitrary 3-digit quantities like 500 from firing RAG)
+  if (/(?:năm\s+)?(?:\d{1,4}\s*(?:tcn|trước\s+công\s+nguyên|trước\s+cn|scn|sau\s+công\s+nguyên))/i.test(text)) {
+    return true;
+  }
+  if (/\bnăm\s+[1-9]\d{1,3}\b/i.test(text)) {
+    return true;
+  }
+  if (/\b(?:1[0-9]{3}|20[0-2][0-9])\b(?!\s*(?:câu|bài|người|cái|đồng|k|triệu|nghìn|tỷ|usd|vnd))/i.test(text)) {
+    return true;
+  }
+
+  // 2. Centuries, Reign Eras, or Dynasties (Unicode-safe boundary)
+  const centuryRegex = new RegExp(`(?:thế\\s*kỷ|thế\\s*kỉ|tk)\\s*(?:thứ\\s*)?(?:[ivxlcdm]+|\\d{1,2})${B_DELIM}`, 'i');
+  if (centuryRegex.test(text)) {
+    return true;
+  }
+  const dynastyRegex = new RegExp(`(?:thời\\s*kỳ|triều\s*đại|niên\\s*hiệu|đời\\s*vua|nhà\\s+(?:lý|trần|lê|nguyễn|hồ|tiền\\s*lê|hậu\\s*lê|ngô|đinh|tây\\s*sơn|mạc))${B_DELIM}`, 'i');
+  if (dynastyRegex.test(text)) {
+    return true;
+  }
+
+  // 3. Historical roles and domain terminology
+  const roleRegex = new RegExp(`(?:vua|hoàng\\s*đế|thái\\s*thượng\\s*hoàng|chúa\\s+(?:trịnh|nguyễn)|danh\\s*tướng|tướng\\s*quân|tổng\\s*đốc|kinh\\s*thành|sử\\s*ký|chính\\s*sử|dã\\s*sử|lịch\\s*sử)${B_DELIM}`, 'i');
+  if (roleRegex.test(text)) {
+    return true;
+  }
+
+  // 4. Historical warfare and events terminology
+  const warfareRegex = new RegExp(`(?:chiến\\s*dịch|trận\\s*đánh|khởi\\s*nghĩa|chiến\\s*thắng|đại\\s*thắng|đại\\s*phá|cọc\\s*ngầm|chiếu\\s*dời\\s*đô|hịch\\s*tướng\\s*sĩ|bình\\s*ngô\\s*đại\\s*cáo|bài\\s*binh\\s*bố\\s*trận|mai\\s*phục|thủy\\s*chiến)${B_DELIM}`, 'i');
+  if (warfareRegex.test(text)) {
+    return true;
+  }
+
+  return false;
+}
+
 export function classifyChatIntent(query: string): IntentClassificationResult {
-  const trimmed = query.trim();
+  const { normalized, shadow } = normalizeResilientText(query);
+  const trimmed = normalized.trim();
+
   if (!trimmed) {
     return {
       intent: 'CHITCHAT',
       confidence: 1.0,
-      fastPathResponse: 'Xin chào! Tôi là ChronoViet AI — Trợ lý nghiên cứu lịch sử Việt Nam và sáng tạo video tự động. Tôi có thể giúp gì cho bạn hôm nay?',
     };
   }
 
   const cleanQuery = normalizeQueryText(trimmed);
+  const cleanShadow = normalizeQueryText(shadow);
 
-  // 1. Out of Domain Fast-Path (< 0.1ms)
+  // 1. Out of Domain Identification (< 0.1ms)
   for (const pattern of OUT_OF_DOMAIN_PATTERNS) {
-    if (pattern.test(cleanQuery) || pattern.test(trimmed)) {
+    if (pattern.test(cleanQuery) || pattern.test(trimmed) || pattern.test(cleanShadow)) {
       return {
         intent: 'OUT_OF_DOMAIN',
         confidence: 0.98,
-        fastPathResponse:
-          'Xin lỗi bạn, tôi là ChronoViet AI — Trợ lý chuyên sâu về Nghiên cứu Lịch sử Việt Nam và Sáng tạo Video Lịch sử. Yêu cầu này nằm ngoài phạm vi tri thức lịch sử của hệ thống (tôi không hỗ trợ tư vấn ẩm thực, tài chính/chứng khoán, hay lập trình chung). Bạn có thể hỏi tôi về các triều đại, nhân vật, sự kiện, chiến dịch và các mốc son hào hùng của lịch sử Việt Nam!',
       };
     }
   }
 
-  // 2. Pure Chitchat & Bot Identity Fast-Path (< 0.1ms)
-  for (const pattern of PURE_CHITCHAT_PATTERNS) {
-    if (pattern.test(cleanQuery) || pattern.test(trimmed)) {
-      if (/bạn\s+là\s+ai|bot\s+là\s+ai|bạn\s+tên\s+(?:là\s+)?gì|chronoviet\s+là\s+gì|giới\s+thiệu/i.test(cleanQuery)) {
-        return {
-          intent: 'CHITCHAT',
-          confidence: 0.99,
-          fastPathResponse:
-            'Tôi là ChronoViet — Trợ lý Lịch sử Việt Nam & Sản xuất Video tự động. Tôi kết hợp đồ thị tri thức (GraphRAG), hệ thống trích dẫn chính sử (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử) và AI để giúp bạn tra cứu sử liệu chính xác cũng như tạo dựng video lịch sử chuyên nghiệp chỉ với 1 cú nhấp chuột.',
-        };
-      }
-      if (/cảm\s+ơn|cam\s+on|thank/i.test(cleanQuery)) {
-        return {
-          intent: 'CHITCHAT',
-          confidence: 0.99,
-          fastPathResponse: 'Rất vui được hỗ trợ bạn khám phá lịch sử Việt Nam! Bạn có muốn tìm hiểu thêm về nhân vật hay trận đánh nào nữa không?',
-        };
-      }
-      if (/tạm\s+biệt|tam\s+biet|bye/i.test(cleanQuery)) {
-        return {
-          intent: 'CHITCHAT',
-          confidence: 0.99,
-          fastPathResponse: 'Tạm biệt bạn! Hẹn gặp lại trong các hành trình khám phá dòng chảy lịch sử Việt Nam hào hùng.',
-        };
-      }
+  // 2. Bot Identity & Conversational Persona Inquiry (< 0.1ms)
+  for (const pattern of BOT_IDENTITY_PATTERNS) {
+    if (pattern.test(cleanQuery) || pattern.test(trimmed) || pattern.test(cleanShadow)) {
       return {
         intent: 'CHITCHAT',
         confidence: 0.99,
-        fastPathResponse:
-          'Xin chào! Tôi là ChronoViet AI. Tôi có thể giúp bạn tra cứu nhân vật, chiến dịch, triều đại lịch sử Việt Nam với trích dẫn chính sử, hoặc hỗ trợ bạn tạo video lịch sử từ các cuộc trò chuyện này. Bạn muốn tìm hiểu chủ đề gì hôm nay?',
+      };
+    }
+  }
+
+  // 3. Pure Chitchat & Greetings (< 0.1ms)
+  for (const pattern of PURE_CHITCHAT_PATTERNS) {
+    if (pattern.test(cleanQuery) || pattern.test(trimmed)) {
+      return {
+        intent: 'CHITCHAT',
+        confidence: 0.95,
+      };
+    }
+  }
+
+  // Shadow chitchat matching for unaccented queries
+  for (const pattern of SHADOW_CHITCHAT_PATTERNS) {
+    if (pattern.test(cleanShadow) || pattern.test(shadow)) {
+      return {
+        intent: 'CHITCHAT',
+        confidence: 0.92,
       };
     }
   }
@@ -149,7 +255,7 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
   // Determine effective query by stripping pleasantry prefixes if present (e.g. "Chào bạn, Quang Trung và Nguyễn Huệ là ai?")
   const { stripped: effectiveQuery } = stripPleasantryPrefix(cleanQuery);
 
-  // 2. Video Production Intent (< 0.2ms)
+  // 4. Video Production Intent (< 0.2ms)
   for (const pattern of VIDEO_INTENT_PATTERNS) {
     const match = effectiveQuery.match(pattern) || trimmed.match(pattern);
     if (match) {
@@ -158,100 +264,93 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
         intent: 'VIDEO_INTENT',
         confidence: 0.95,
         suggestedTopic: topic || effectiveQuery,
-        fastPathResponse: `Tôi đã nhận diện yêu cầu sản xuất video về chủ đề: "${topic || effectiveQuery}". Bạn có thể chuyển trực tiếp sang tab Video Studio để bắt đầu quy trình tạo video tự động.`,
       };
     }
   }
 
-  // 3. Conjunction Coordinate Entity & Co-reference Fast-Path (< 0.5ms)
+  // 5. Conjunction Coordinate Entity & Co-reference Identification (< 0.5ms)
   for (const pattern of CONJUNCTION_ENTITY_PATTERNS) {
     const match = effectiveQuery.match(pattern) || cleanQuery.match(pattern);
     if (match) {
       const rawE1 = match[1]?.replace(/[?!.,;:]+$/g, '').trim();
       const rawE2 = match[2]?.replace(/[?!.,;:]+$/g, '').trim();
-      if (rawE1 && rawE2) {
+      if (rawE1 && rawE2 && isKnownMasterEntity(rawE1) && isKnownMasterEntity(rawE2)) {
         const canonical1 = resolveCanonicalEntity(rawE1);
         const canonical2 = resolveCanonicalEntity(rawE2);
 
         if (canonical1.entityId && canonical2.entityId) {
-          // Branch 1: Same Canonical Entity (Alias / Honorific / Regnal Title match)
-          if (canonical1.entityId === canonical2.entityId) {
-            const aliasList = Array.from(new Set([canonical1.canonicalName, ...(canonical1.aliases || [])]));
-            const isNegativeTrap = /(?:anh\s+em|hai\s+người|khác\s+nhau)/i.test(match[0]);
-            const prefix = isNegativeTrap
-              ? `Không, "${rawE1}" và "${rawE2}" là cùng một người (cùng một nhân vật lịch sử trong chính sử Việt Nam: ${canonical1.canonicalName}), không phải là hai người khác nhau.`
-              : `"${rawE1}" và "${rawE2}" là cùng một người, thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ trong chính sử Việt Nam (${canonical1.canonicalName}).`;
-            return {
-              intent: 'ENTITY_IDENTITY',
-              confidence: 0.98,
-              matchedEntityId: canonical1.entityId,
-              matchedCanonicalName: canonical1.canonicalName,
-              fastPathResponse: `${prefix} ${canonical1.canonicalName} là tên/niên hiệu/tôn hiệu chính thức, các danh xưng khác bao gồm: ${aliasList.join(', ')}.`,
-            };
-          }
-
-          // Branch 2: Distinct Entities asking "có phải cùng một người / là một không"
-          if (/cùng\s+một\s+người|là\s+một/i.test(match[0])) {
-            return {
-              intent: 'ENTITY_IDENTITY',
-              confidence: 0.95,
-              matchedEntityId: canonical1.entityId,
-              matchedCanonicalName: canonical1.canonicalName,
-              fastPathResponse: `Không, "${rawE1}" (${canonical1.canonicalName}) và "${rawE2}" (${canonical2.canonicalName}) là HAI NHÂN VẬT LỊCH SỬ KHÁC NHAU trong chính sử Việt Nam.`,
-            };
-          }
-        }
-      }
-    }
-  }
-
-  // 4. Single Entity Identity Fast-Path (< 0.5ms)
-  for (const pattern of SINGLE_ENTITY_IDENTITY_PATTERNS) {
-    const match = effectiveQuery.match(pattern) || cleanQuery.match(pattern);
-    if (match) {
-      const entityName = match[1]?.trim();
-      const wordCount = entityName ? entityName.split(/\s+/).filter(Boolean).length : 0;
-      if (entityName && wordCount >= 1 && wordCount <= 4) {
-        const canonical = resolveCanonicalEntity(entityName);
-        if (canonical.entityId && canonical.canonicalName) {
-          if (match[2]) {
-            const entityName2 = match[2].replace(/[?!.,;:]+$/g, '').trim();
-            const canonical2 = resolveCanonicalEntity(entityName2);
-            if (canonical2.entityId && canonical2.canonicalName) {
-              const isSame = canonical.entityId === canonical2.entityId;
-              return {
-                intent: 'ENTITY_IDENTITY',
-                confidence: 0.95,
-                matchedEntityId: canonical.entityId,
-                matchedCanonicalName: canonical.canonicalName,
-                fastPathResponse: isSame
-                  ? `${canonical.canonicalName} và ${canonical2.canonicalName} là cùng một người, thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ trong chính sử Việt Nam. ${canonical.canonicalName} là tên/tước hiệu chính thức, còn các tên gọi khác bao gồm: ${(canonical.aliases || []).join(', ')}.`
-                  : `${canonical.canonicalName} và ${canonical2.canonicalName} là HAI NHÂN VẬT LỊCH SỬ KHÁC NHAU trong chính sử Việt Nam.`,
-              };
-            }
-          }
-
-          const aliasText = canonical.aliases && canonical.aliases.length > 0
-            ? ` (còn được biết đến với các tên gọi: ${canonical.aliases.join(', ')})`
-            : '';
           return {
             intent: 'ENTITY_IDENTITY',
-            confidence: 0.92,
-            matchedEntityId: canonical.entityId,
-            matchedCanonicalName: canonical.canonicalName,
-            fastPathResponse: `${canonical.canonicalName}${aliasText} là một thực thể lịch sử quan trọng trong cơ sở dữ liệu tri thức ChronoViet. Dưới đây là thông tin chi tiết được trích xuất từ chính sử.`,
+            confidence: 0.95,
+            matchedEntityId: canonical1.entityId,
+            matchedCanonicalName: canonical1.canonicalName,
           };
         }
       }
     }
   }
 
-  // 5. Default: Deep Historical Query with Semantic Sub-Intent Classification
+  // 6. Single Entity Identity Identification (< 0.5ms) - Only for verified master entities
+  for (const pattern of SINGLE_ENTITY_IDENTITY_PATTERNS) {
+    const match = effectiveQuery.match(pattern) || cleanQuery.match(pattern);
+    if (match) {
+      const entityName = match[1]?.trim();
+      const wordCount = entityName ? entityName.split(/\s+/).filter(Boolean).length : 0;
+      if (entityName && wordCount >= 1 && wordCount <= 4 && isKnownMasterEntity(entityName)) {
+        const canonical = resolveCanonicalEntity(entityName);
+        if (canonical.entityId && canonical.canonicalName) {
+          return {
+            intent: 'ENTITY_IDENTITY',
+            confidence: 0.92,
+            matchedEntityId: canonical.entityId,
+            matchedCanonicalName: canonical.canonicalName,
+          };
+        }
+      }
+    }
+  }
+
+  // 7. Dual-Key Positive Gating & Sub-Intent Detection
+  const extractedEntity =
+    extractHistoricalEntityFromQuery(effectiveQuery) ||
+    extractHistoricalEntityFromQuery(cleanQuery);
+
+  const hasHistoricalEvidence =
+    Boolean(extractedEntity) ||
+    hasHistoricalDomainSignals(effectiveQuery) ||
+    hasHistoricalDomainSignals(cleanQuery);
+
   const subIntent = detectHistoricalSubIntent(effectiveQuery || cleanQuery);
+
+  if (hasHistoricalEvidence || subIntent !== 'GENERAL_OVERVIEW') {
+    return {
+      intent: 'HISTORICAL_QUERY',
+      subIntent,
+      confidence: 0.9,
+      matchedEntityId: extractedEntity?.entityId,
+      matchedCanonicalName: extractedEntity?.canonicalName,
+    };
+  }
+
+  // 8. Safe Conversational Fallback: Route conversational phrasing without historical signals to CHITCHAT (Dynamic LLM)
+  // Does NOT hardcode canned responses, allowing the LLM persona to answer dynamically and intelligently.
+  const words = cleanQuery.split(/\s+/).filter(Boolean);
+  const isConversational =
+    words.length <= 8 ||
+    /\b(bạn|ban|bot|chronoviet|mình|minh|tôi|toi|cậu|cau|em|anh|ad|admin)\b/i.test(cleanQuery) ||
+    /\b(bạn|ban|bot|chronoviet|mình|minh|tôi|toi|cậu|cau|em|anh|ad|admin)\b/i.test(shadow);
+
+  if (isConversational) {
+    return {
+      intent: 'CHITCHAT',
+      confidence: 0.85,
+    };
+  }
+
   return {
     intent: 'HISTORICAL_QUERY',
-    subIntent,
-    confidence: 0.9,
+    subIntent: 'GENERAL_OVERVIEW',
+    confidence: 0.7,
   };
 }
 

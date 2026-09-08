@@ -75,7 +75,7 @@ export async function GET() {
   // 2. Check PostgreSQL
   const pgStart = Date.now();
   try {
-    const available = await isPgAvailable(false);
+    const available = await isPgAvailable(true);
     if (available) {
       checks.postgres = {
         status: 'healthy',

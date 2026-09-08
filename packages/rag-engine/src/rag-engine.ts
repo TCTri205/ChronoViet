@@ -51,6 +51,7 @@ export const GRAPH_BRANCH_TIMEOUT_MS = process.env.GRAPH_BRANCH_TIMEOUT_MS
   : 350;
 export const GRAPH_BRANCH_MAX_NODES = 50;
 export const GRAPH_ONLY_CHUNK_CAP = 10;
+export const MIN_RELEVANCE_SCORE_CUTOFF = 0.35;
 
 /**
  * Strips raw crawl metadata headers such as:
@@ -394,6 +395,11 @@ export class ChronoRagEngine implements IRagEngine {
 
     for (let idx = 0; idx < topChunks.length; idx++) {
       const chunk = topChunks[idx];
+      // Hard Relevance Cutoff Gate: eliminate low-confidence candidates (score < 0.35)
+      if (typeof chunk.score === 'number' && chunk.score < MIN_RELEVANCE_SCORE_CUTOFF) {
+        continue;
+      }
+
       // Source diversity: at most 2 chunks per source title/book prefix to prevent crowding out
       const sourceKey = chunk.title.replace(/\s*-\s*Đoạn.*$/i, '').replace(/\s*\(Phần.*$/i, '').trim();
       const currentCount = sourceCountMap.get(sourceKey) || 0;

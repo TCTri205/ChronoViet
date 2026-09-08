@@ -22,7 +22,12 @@ import {
 } from '@chronoviet/infra';
 import { ChronoRagEngine } from '@chronoviet/rag-engine';
 import { classifyChatIntent, ChatIntent } from './intent-classifier.js';
-import { rewriteMultiTurnQuery, extractDialogueState, ChatTurnContext } from './query-rewriter.js';
+import {
+  rewriteMultiTurnQuery,
+  extractDialogueState,
+  isContinuationOrCoreferenceQuery,
+  ChatTurnContext,
+} from './query-rewriter.js';
 import {
   pruneConversationHistory,
   pruneRagContext,
@@ -150,7 +155,14 @@ NGUYÊN TẮC BẮT BUỘC:
 
 5. NGUYÊN TẮC TRÌNH BÀY & CHỐNG LẶP LẠI (PRESENTATION INTEGRITY):
    - Trình bày rõ ràng, mạch lạc với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
-   - TUYỆT ĐỐI KHÔNG lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.`;
+   - TUYỆT ĐỐI KHÔNG lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.
+
+6. QUY TẮC DANH TÍNH & NĂNG LỰC TRỢ LÝ (SYSTEM IDENTITY & CAPABILITIES):
+   - Bạn là ChronoViet AI — Trợ lý Nghiên cứu Lịch sử Việt Nam chuyên sâu và Sản xuất Video Lịch sử tự động.
+   - Phạm vi tri thức: Toàn bộ 15 thời kỳ lịch sử Việt Nam, từ thời đại Hồng Bàng, Văn Lang - Âu Lạc, 1000 năm Bắc thuộc, các triều đại phong kiến độc lập (Ngô, Đinh, Tiền Lê, Lý, Trần, Hồ, Hậu Lê, Mạc, Trịnh - Nguyễn phân tranh, Tây Sơn, Nguyễn), đến thời kỳ Pháp thuộc, hai cuộc kháng chiến chống Pháp - Mỹ và thời kỳ Hiện đại.
+   - Nguồn dữ liệu cốt lõi: Đồ thị tri thức (GraphRAG) được xây dựng từ các bộ chính sử kinh điển (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Đại Nam Thực Lục, v.v.).
+   - Tính năng tiêu biểu: Tra cứu và phản biện sử liệu với trích dẫn minh bạch, phân tích chiến thuật, đồng nhất danh xưng, và tự động chuyển hóa câu chuyện lịch sử thành kịch bản phân cảnh kèm video hoạt họa (Video Studio).
+   - Khi người dùng hỏi về danh tính, khả năng hỗ trợ, phạm vi tra cứu hoặc hướng dẫn sử dụng: Hãy tự tin, lịch thiệp và mạch lạc giới thiệu rõ ràng các năng lực và phạm vi trên.`;
 
 export async function* handleChatQueryStream(
   request: ChatSupervisorRequest
@@ -168,81 +180,197 @@ export async function* handleChatQueryStream(
     return;
   }
 
+  const prunedHistory = pruneConversationHistory(history);
+
   // 1. Intent Classification (< 1ms)
   const classification = classifyChatIntent(query);
+
+  // Multi-turn Continuation Guard: If classified as CHITCHAT but is a follow-up continuation
+  // with existing conversation history, elevate it to HISTORICAL_QUERY.
+  if (
+    classification.intent === 'CHITCHAT' &&
+    history.length > 0 &&
+    isContinuationOrCoreferenceQuery(query)
+  ) {
+    classification.intent = 'HISTORICAL_QUERY';
+    classification.subIntent = classification.subIntent || 'GENERAL_OVERVIEW';
+  }
+
   yield {
     type: 'intent',
     intent: classification.intent,
     content: classification.suggestedTopic || classification.matchedCanonicalName,
   };
 
-  // 2. Out-of-Domain Fast Path (< 1ms)
+  // 2. Out-of-Domain Route -> LLM Direct Persona Stream
   if (classification.intent === 'OUT_OF_DOMAIN') {
-    const oodMsg =
-      classification.fastPathResponse ||
-      'Xin lỗi bạn, tôi là ChronoViet AI — Trợ lý chuyên sâu về Nghiên cứu Lịch sử Việt Nam. Yêu cầu này nằm ngoài phạm vi tri thức lịch sử của hệ thống. Bạn có thể hỏi tôi về các triều đại, nhân vật, sự kiện hoặc trận đánh lịch sử Việt Nam!';
-    yield { type: 'token', content: oodMsg };
+    log.info('chat.out_of_domain_llm', `Handling out-of-domain query via LLM: "${query.slice(0, 50)}"`, {
+      conversationId,
+    });
+
+    const rawMessages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `${STATIC_SYSTEM_PERSONA_PROMPT}\n\nLƯU Ý QUAN TRỌNG: Câu hỏi này nằm ngoài phạm vi tri thức Lịch sử Việt Nam (ẩm thực thông thường, đầu tư tài chính/chứng khoán, lập trình công nghệ, v.v.). Hãy lịch sự, từ tốn từ chối trả lời nội dung ngoài phạm vi này theo đúng tư cách Trợ lý ChronoViet, đồng thời gợi ý người dùng các chủ đề lịch sử Việt Nam hấp dẫn có thể khám phá.`,
+      },
+      ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
+      { role: 'user', content: query },
+    ];
+    const messages = clampTotalPromptMessages(rawMessages, 4000);
+
+    let fullResponse = '';
+    const loopDetector = createStreamLoopDetector();
+
+    try {
+      for await (const chunk of generateLLMCompletionStream(messages, {
+        temperature: 0.3,
+        top_p: 0.9,
+        max_tokens: 800,
+      })) {
+        if (signal?.aborted) {
+          yield { type: 'error', error: 'Yêu cầu đã bị hủy trong quá trình sinh phản hồi' };
+          return;
+        }
+
+        const loopCheck = loopDetector.processChunk(chunk);
+        if (loopCheck.shouldTerminate) break;
+        if (loopCheck.shouldEmit && loopCheck.cleanChunk) {
+          fullResponse += loopCheck.cleanChunk;
+          yield { type: 'token', content: loopCheck.cleanChunk };
+        }
+      }
+    } catch (llmErr: any) {
+      log.error('chat.ood_llm_error', `LLM Stream error in out-of-domain mode: ${llmErr.message}`);
+      const fallback = 'Xin lỗi bạn, tôi là ChronoViet AI — Trợ lý chuyên sâu về Nghiên cứu Lịch sử Việt Nam. Yêu cầu này nằm ngoài phạm vi tri thức lịch sử của hệ thống. Bạn có thể hỏi tôi về các triều đại, nhân vật, sự kiện hoặc trận đánh lịch sử Việt Nam!';
+      yield { type: 'token', content: fallback };
+      fullResponse = fallback;
+    }
+
+    fullResponse = deduplicateRepetitiveText(fullResponse);
     yield { type: 'citation', citations: [] };
     yield {
       type: 'done',
-      content: oodMsg,
+      content: fullResponse,
+      citations: [],
       conversationId,
     };
     return;
   }
 
-  // 3. Chitchat Fast Path
+  // 3. Chitchat & Bot Capability Routing -> Direct LLM Stream (Tier 2 - No RAG search cost)
   if (classification.intent === 'CHITCHAT') {
-    const fastMsg = classification.fastPathResponse || 'Xin chào! Tôi có thể giúp gì cho bạn?';
-    yield { type: 'token', content: fastMsg };
+    log.info('chat.persona_direct_llm', `Handling conversational/persona query directly via LLM: "${query.slice(0, 50)}"`, {
+      conversationId,
+    });
+
+    const rawMessages: ChatMessage[] = [
+      { role: 'system', content: STATIC_SYSTEM_PERSONA_PROMPT },
+      ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
+      { role: 'user', content: query },
+    ];
+    const messages = clampTotalPromptMessages(rawMessages, 4000);
+
+    let fullResponse = '';
+    const loopDetector = createStreamLoopDetector();
+
+    try {
+      for await (const chunk of generateLLMCompletionStream(messages, {
+        temperature: 0.3,
+        top_p: 0.9,
+        max_tokens: 1200,
+      })) {
+        if (signal?.aborted) {
+          yield { type: 'error', error: 'Yêu cầu đã bị hủy trong quá trình sinh phản hồi' };
+          return;
+        }
+
+        const loopCheck = loopDetector.processChunk(chunk);
+        if (loopCheck.shouldTerminate) {
+          log.warn('chat.persona_loop_break', 'Repetition loop detected in persona stream, breaking early');
+          break;
+        }
+
+        if (loopCheck.shouldEmit && loopCheck.cleanChunk) {
+          fullResponse += loopCheck.cleanChunk;
+          yield { type: 'token', content: loopCheck.cleanChunk };
+        }
+      }
+    } catch (llmErr: any) {
+      log.error('chat.persona_llm_error', `LLM Stream error in persona mode: ${llmErr.message}`);
+      const fallback = 'Tôi là ChronoViet AI — Trợ lý chuyên sâu về Lịch sử Việt Nam và Sáng tạo Video tự động. Tôi có thể hỗ trợ bạn tra cứu các triều đại, nhân vật, sự kiện lịch sử hoặc tạo video!';
+      yield { type: 'token', content: fallback };
+      fullResponse = fallback;
+    }
+
+    fullResponse = deduplicateRepetitiveText(fullResponse);
+
     yield { type: 'citation', citations: [] };
     yield {
       type: 'done',
-      content: fastMsg,
+      content: fullResponse,
+      citations: [],
       conversationId,
     };
     return;
   }
 
-  // 4. Video Creation Fast Path
+  // 4. Video Creation Intent -> Direct LLM Stream
   if (classification.intent === 'VIDEO_INTENT') {
     const topic = classification.suggestedTopic || query;
-    const msg =
-      classification.fastPathResponse ||
-      `Đã nhận diện yêu cầu tạo video về chủ đề: "${topic}". Bạn có thể chọn thời lượng và phong cách trong Studio để bắt đầu tạo video.`;
-    yield { type: 'token', content: msg };
+    log.info('chat.video_intent_llm', `Handling video intent query via LLM: "${topic.slice(0, 50)}"`, {
+      conversationId,
+    });
+
+    const rawMessages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `${STATIC_SYSTEM_PERSONA_PROMPT}\n\nLƯU Ý QUAN TRỌNG: Người dùng đang muốn sản xuất video lịch sử về chủ đề: "${topic}". Hãy hào hứng xác nhận chủ đề, tóm tắt nhanh 2-3 phân cảnh lịch sử tiêu biểu/kịch tính nhất của chủ đề này, và hướng dẫn người dùng nhấn nút "Tạo Video" hoặc chuyển sang tab Video Studio để bắt đầu tạo kịch bản phân cảnh và render video tự động.`,
+      },
+      ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
+      { role: 'user', content: query },
+    ];
+    const messages = clampTotalPromptMessages(rawMessages, 4000);
+
+    let fullResponse = '';
+    const loopDetector = createStreamLoopDetector();
+
+    try {
+      for await (const chunk of generateLLMCompletionStream(messages, {
+        temperature: 0.3,
+        top_p: 0.9,
+        max_tokens: 1000,
+      })) {
+        if (signal?.aborted) {
+          yield { type: 'error', error: 'Yêu cầu đã bị hủy trong quá trình sinh phản hồi' };
+          return;
+        }
+
+        const loopCheck = loopDetector.processChunk(chunk);
+        if (loopCheck.shouldTerminate) break;
+        if (loopCheck.shouldEmit && loopCheck.cleanChunk) {
+          fullResponse += loopCheck.cleanChunk;
+          yield { type: 'token', content: loopCheck.cleanChunk };
+        }
+      }
+    } catch (llmErr: any) {
+      log.error('chat.video_llm_error', `LLM Stream error in video intent mode: ${llmErr.message}`);
+      const fallback = `Tôi đã nhận diện yêu cầu sản xuất video về chủ đề: "${topic}". Bạn có thể chuyển trực tiếp sang tab Video Studio để bắt đầu quy trình tạo video tự động.`;
+      yield { type: 'token', content: fallback };
+      fullResponse = fallback;
+    }
+
+    fullResponse = deduplicateRepetitiveText(fullResponse);
     yield { type: 'citation', citations: [] };
     yield {
       type: 'done',
-      content: msg,
+      content: fullResponse,
+      citations: [],
       conversationId,
     };
     return;
   }
 
-  // 5. Entity Identity Fast Path (< 1ms with Primary Citations)
-  if (classification.intent === 'ENTITY_IDENTITY') {
-    const canonicalName = classification.matchedCanonicalName || query;
-    const fastMsg = classification.fastPathResponse;
-    if (fastMsg) {
-      const citations = [
-        `${canonicalName} [Nguồn: LEVEL_1]`,
-        'Đại Việt Sử Ký Toàn Thư [Nguồn: LEVEL_1]',
-        'Đại Nam Thực Lục [Nguồn: LEVEL_1]',
-      ];
-      yield { type: 'citation', citations };
-      yield { type: 'token', content: fastMsg };
-      yield {
-        type: 'done',
-        content: fastMsg,
-        citations,
-        conversationId,
-      };
-      return;
-    }
-  }
-
-  // 6. Premise Analysis, Dialogue State Tracking & Query Rewriting
+  // 5. Premise Analysis, Dialogue State Tracking & Query Rewriting
   const premiseAnalysis = analyzePremiseAndLeadingIntent(query);
   const dialogueState = extractDialogueState(history, query);
   let searchTopic = query;
@@ -260,6 +388,7 @@ export async function* handleChatQueryStream(
   ]));
 
   const resolvedFilterIds = entitiesToFilter
+    .filter((e) => isKnownMasterEntity(e))
     .map((e) => resolveCanonicalEntity(e).entityId)
     .filter((id): id is string => Boolean(id) && !id.startsWith('ent_'));
 
@@ -289,14 +418,6 @@ export async function* handleChatQueryStream(
     verifiedCitations = ragResponse.citations || [];
     graphTriples = (ragResponse.triples as GraphTripleItem[]) || [];
 
-    // Emit triples and citations early
-    if (graphTriples.length > 0) {
-      yield { type: 'triples', triples: graphTriples };
-    }
-    if (verifiedCitations.length > 0) {
-      yield { type: 'citation', citations: verifiedCitations };
-    }
-
     contextSnippets = (ragResponse.verifiedContext || [])
       .map((v: any) => {
         const cleanSummary = (v.summary || '').replace(/^(?:\[[^\]\n]+\]\s*)+/gu, '').trim();
@@ -310,6 +431,17 @@ export async function* handleChatQueryStream(
 
     if (!contextSnippets || contextSnippets.trim().length === 0) {
       isRagFallback = true;
+      verifiedCitations = [];
+    }
+
+    // Emit triples and verified citations once context relevance is guaranteed
+    if (graphTriples.length > 0) {
+      yield { type: 'triples', triples: graphTriples };
+    }
+    if (verifiedCitations.length > 0 && !isRagFallback) {
+      yield { type: 'citation', citations: verifiedCitations };
+    } else {
+      yield { type: 'citation', citations: [] };
     }
   } catch (ragErr: any) {
     isRagFallback = true;
@@ -329,7 +461,6 @@ export async function* handleChatQueryStream(
   }
 
   // 6. Build Context & Multi-turn Prompt
-  const prunedHistory = pruneConversationHistory(history);
   const triplesText = pruneGraphTriples(graphTriples, 15, premiseAnalysis.detectedEntities);
   const unmappedEntities: string[] = [];
   for (const ent of premiseAnalysis.detectedEntities) {

@@ -9,6 +9,7 @@ export * from './chat/intent-classifier.js';
 export * from './chat/query-rewriter.js';
 export * from './chat/context-pruner.js';
 export * from './chat/chat-supervisor.js';
+export * from './chat/text-normalizer.js';
 export * from './brief/chat-to-brief-compiler.js';
 export * from './research/index.js';
 export * from './graph/nodes/index.js';

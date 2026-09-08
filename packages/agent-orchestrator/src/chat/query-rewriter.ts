@@ -197,11 +197,16 @@ export function extractRecentEntities(history: ChatTurnContext[]): string[] {
   return extractTypedRecentEntities(history).all;
 }
 
-const CONTINUATION_INTENT_REGEX =
+export const CONTINUATION_INTENT_REGEX =
   /^(?:sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao|như\s*thế\s*nào|kết\s*quả\s*thế\s*nào|ai\s*là|ai\s*đã|vị\s*vua\s*nào|người\s*nào|tướng\s*nào)/i;
 
-const PRONOUN_COREF_CHECK_REGEX =
+export const PRONOUN_COREF_CHECK_REGEX =
   /(?:ông\s*ấy|bà\s*ấy|vị\s*tướng|nhân\s*vật|hắn|hắn\s*ta|tên\s*tướng|tướng\s*giặc|quân\s*giặc|ngài|ông\s*ta|bà\s*ta|(?:^|[\s,;:.!?])ông(?:$|[\s,;:.!?])|(?:^|[\s,;:.!?])bà(?:$|[\s,;:.!?])|người\s*vợ|người\s*chồng|gia\s*tộc|sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao)/i;
+
+export function isContinuationOrCoreferenceQuery(query: string): boolean {
+  const trimmed = (query || '').trim();
+  return CONTINUATION_INTENT_REGEX.test(trimmed) || PRONOUN_COREF_CHECK_REGEX.test(trimmed);
+}
 
 /**
  * Rewrites a user query to be self-contained for RAG retrieval using Dialogue State Tracking

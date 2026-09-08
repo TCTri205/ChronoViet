@@ -2,7 +2,7 @@
 ## (Content Synthesis, Cross-Chapter Continuity, Robust Fact-Checking & Small LLM Pipeline v4.1)
 
 > **Trạng thái:** `[✅ IMPLEMENTED & VERIFIED 100% — LangGraph.js Multi-Agent Orchestrator & Sub-Intent Chatbot Pipeline v4.2]`
-> **Cập nhật:** Tích hợp **Sub-Intent Chatbot Supervisor** (`classifyChatIntent` + `detectHistoricalSubIntent`), **VLM Cascade Early-Exit ($\ge 85$)** giảm 80% tải thị giác, Chuẩn hóa StateGraph với `Annotation.Root()`, tích hợp Native Checkpointer kế thừa `MemorySaver` lưu trữ PostgreSQL + Local Disk, phân luồng song song (Fan-out / Fan-in) cho TTS & VLM, Folklore Guardrail Gate (`folklore-validator.ts`), NLI Entailment Judge (`nli-hallucination-judge.ts`) và Human-In-The-Loop Streaming support.
+> **Cập nhật:** Tích hợp **Tiered Intent Routing & LLM Persona Stream** (`classifyChatIntent` + `handleChatQueryStream` với Multi-turn Continuation Guard `isContinuationOrCoreferenceQuery`), **Sub-Intent Chatbot Supervisor**, **VLM Cascade Early-Exit ($\ge 85$)** giảm 80% tải thị giác, Chuẩn hóa StateGraph với `Annotation.Root()`, tích hợp Native Checkpointer kế thừa `MemorySaver` lưu trữ PostgreSQL + Local Disk, phân luồng song song (Fan-out / Fan-in) cho TTS & VLM, Folklore Guardrail Gate (`folklore-validator.ts`), NLI Entailment Judge (`nli-hallucination-judge.ts`) và Human-In-The-Loop Streaming support.
 
 ---
 
