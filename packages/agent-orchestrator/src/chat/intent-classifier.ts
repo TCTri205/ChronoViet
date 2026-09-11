@@ -669,6 +669,38 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
             primaryEntityId: canonical1.entityId,
             canonicalName: canonical1.canonicalName,
           };
+
+          // If entities are distinct and question asks about kinship, route to HISTORICAL_QUERY with GENEALOGY_RELATION
+          const isKinshipQuestion = /(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|dòng\s+họ|thân\s+tộc)/i.test(cleanSearchTopic || cleanQuery);
+          if (!signals.isCoReferenceIdentity && isKinshipQuestion) {
+            const compositeResult: CompositeIntentResult = {
+              primaryIntent: 'HISTORICAL_QUERY',
+              subIntent: 'GENEALOGY_RELATION',
+              confidence: 0.95,
+              clauses: detectedIntentClauses,
+              hasHistoricalInquiry: true,
+              hasGreetingOrIdentity: signals.hasChitchatGreeting,
+              hasOutOfDomain: signals.hasOutOfDomainTopic,
+              hasVideoRequest: signals.hasVideoGeneration,
+              cleanSearchTopics: [cleanSearchTopic],
+              videoHandover,
+              outOfDomainTopic,
+            };
+            return {
+              intent: 'HISTORICAL_QUERY',
+              subIntent: 'GENEALOGY_RELATION',
+              confidence: 0.95,
+              matchedEntityId: canonical1.entityId,
+              matchedCanonicalName: canonical1.canonicalName,
+              signals,
+              cleanSearchTopic,
+              videoBriefTopic,
+              outOfDomainTopic,
+              compositeResult,
+              videoHandover,
+            };
+          }
+
           const compositeResult: CompositeIntentResult = {
             primaryIntent: 'ENTITY_IDENTITY',
             confidence: 0.95,

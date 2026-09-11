@@ -137,7 +137,12 @@ export class ChronoRagEngine implements IRagEngine {
     });
 
     // Steps 2, 3, 4: Dual-Branch Parallel Execution (with Conditional Comparative Decomposition)
-    const isComparative = (detectQueryIntent(queryText) === 'COMPARATIVE' || request.subIntent === 'COMPARATIVE_SYNTHESIS') && filterEntityIds.length >= 2;
+    const isComparative =
+      (detectQueryIntent(queryText) === 'COMPARATIVE' ||
+        request.subIntent === 'COMPARATIVE_SYNTHESIS' ||
+        request.subIntent === 'GENEALOGY_RELATION' ||
+        filterEntityIds.length === 2) &&
+      filterEntityIds.length >= 2;
 
     let hybridCandidates: VectorSearchResult[] = [];
     let graphResult: { triples: GraphTriple[]; aliasTable: Record<string, string[]>; entityIds: string[] } = {
@@ -268,8 +273,7 @@ export class ChronoRagEngine implements IRagEngine {
         const queryIntent = detectQueryIntent(queryText);
         const isCausalOrOrigin =
           queryIntent === 'WHY_REASONING' ||
-          request.subIntent === 'GENEALOGY_RELATION' ||
-          /(?:nguồn\s*gốc|tại\s*sao|vì\s*sao|lý\s*do|nguyên\s*nhân|tập\s*tục|dòng\s*họ|biến\s*thiên|họ\s*nguyễn)/i.test(
+          /(?:nguồn\s*gốc|tại\s*sao|vì\s*sao|lý\s*do|nguyên\s*nhân|tập\s*tục|biến\s*thiên|họ\s*nguyễn)/i.test(
             queryText
           );
 

@@ -561,6 +561,22 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
       totalAliasesEstimated: 'Khoảng 150 đến 175 tên gọi, bút danh, bí danh theo các công trình nghiên cứu chính thức của Bảo tàng Hồ Chí Minh và giới sử học',
     },
   },
+  'person_le_do': {
+    entityId: 'person_le_do',
+    canonicalName: 'Lê Độ',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Lê Dậu', 'Anh hùng Lê Độ', 'Liệt sĩ Lê Độ', 'anh hùng Lê Độ'],
+    timeRange: { start: 1941, end: 1965 },
+    dynasty: 'Thời kỳ Hiện đại',
+    namingMetadata: {
+      archetype: 'MODERN_FIGURE',
+      birthName: 'Lê Dậu',
+      courtesyOrCommonName: 'Lê Độ',
+      familyLineage: {
+        father: 'Lê Duy Ban',
+      },
+    },
+  },
   'person_tran_thu_do': {
     entityId: 'person_tran_thu_do',
     canonicalName: 'Trần Thủ Độ',

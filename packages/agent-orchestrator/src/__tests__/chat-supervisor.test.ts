@@ -331,8 +331,14 @@ describe('Anti-Sycophancy & False Premise Guardrail', () => {
     // Distinct figures should trigger standard kinship verification directive
     const res3 = analyzePremiseAndLeadingIntent('Nguyễn Nhạc và Nguyễn Huệ là 2 anh em hả?');
     expect(res3.isLeadingQuestion).toBe(true);
-    expect(res3.suggestedDirective).toContain('TIỀN ĐỀ QUAN HỆ THÂN TỘC');
+    expect(res3.suggestedDirective).toContain('KIỂM CHỨNG QUAN HỆ LỊCH SỬ KHÁCH QUAN');
     expect(res3.suggestedDirective).not.toContain('ANTI-CO-REFERENCE ERROR');
+
+    // Multi-era figures should trigger chronological kinship refutation directive
+    const res4 = analyzePremiseAndLeadingIntent('Lê Lợi và Lê Độ có phải là 2 anh em hay không?');
+    expect(res4.isLeadingQuestion).toBe(true);
+    expect(res4.suggestedDirective).toContain('TIỀN ĐỀ QUAN HỆ THÂN TỘC');
+    expect(res4.suggestedDirective).toContain('KHÁC BIỆT THỜI ĐẠI');
   });
 
   it('detects leading dynasty questions', async () => {

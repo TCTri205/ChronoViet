@@ -37,6 +37,13 @@ function streamLog(tag: string, color: string, data: Buffer | string) {
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed) {
+      if (
+        trimmed.includes('GET /api/readyz 200') ||
+        trimmed.includes('GET /readyz 200') ||
+        trimmed.includes('GET /api/healthz 200')
+      ) {
+        continue;
+      }
       console.log(`${color}[${tag}]${colors.reset} ${trimmed}`);
     }
   }

@@ -231,7 +231,7 @@ describe('Intent Classifier & Fast-Path Router', () => {
     });
 
     it('identifies unindexed or fictitious entity inquiries and flags for semantic arbitration', () => {
-      const r1 = classifyChatIntent('Lê Độ là ai?');
+      const r1 = classifyChatIntent('Lê Văn Ảo là ai?');
       expect(r1.intent).toBe('HISTORICAL_QUERY');
       expect(r1.subIntent).toBe('FACTOID_LOOKUP');
       expect(r1.needsSemanticArbitration).toBe(true);

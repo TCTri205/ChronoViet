@@ -15,13 +15,13 @@ export interface PremiseAnalysisResult {
 }
 
 const KINSHIP_PATTERNS = [
-  /(.+?)\s+và\s+(.+?)\s+(?:có\s+phải\s+(?:là\s+)?|là\s+có\s+phải\s+|là\s+|có\s+phải\s+)(?:2|hai)?\s*(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s*\?)?/i,
-  /(.+?)\s+và\s+(.+?)\s+(?:có\s+quan\s+hệ|quan\s+hệ|mối\s+quan\s+hệ|có\s+liên\s+quan|liên\s+quan)\s+(?:gì|như\s+thế\s+nào|ra\s+sao|gì\s+với\s+nhau)(?:\s+với\s+nhau)?(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s*\?)?/i,
+  /(.+?)\s+và\s+(.+?)\s+(?:có\s+phải\s+(?:là\s+)?|là\s+có\s+phải\s+|là\s+|có\s+phải\s+)(?:2|hai)?\s*(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s+đúng\s+không|\s*\?)?/i,
+  /(.+?)\s+và\s+(.+?)\s+(?:có\s+quan\s+hệ|quan\s+hệ|mối\s+quan\s+hệ|có\s+liên\s+quan|liên\s+quan)\s+(?:gì|như\s+thế\s+nào|ra\s+sao|gì\s+với\s+nhau)(?:\s+với\s+nhau)?(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s+đúng\s+không|\s*\?)?/i,
   /(?:mối\s+)?quan\s+hệ\s+(?:giữa\s+)?(.+?)\s+và\s+(.+?)(?:\s+là\s+gì|\s+như\s+thế\s+nào|\s*\?)?/i,
-  /(.+?)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+?)(?:\s+không|\s+hay\s+không|\s+phải\s+không|\s+hả|\s*\?)?/i,
-  /(.+?)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu|ông|bà|vợ|chồng)\s+của\s+(.+?)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s*\?)?/i,
-  /(.+?)\s+là\s+anh\s+em\s+ruột\s+với\s+(.+?)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s*\?)?/i,
-  /(.+?)\s+và\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau)(?:\s+không|\s+hay\s+không|\s+phải\s+không|\s+hả|\s*\?)?/i,
+  /(.+?)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+?)(?:\s+không|\s+hay\s+không|\s+phải\s+không|\s+đúng\s+không|\s+hả|\s*\?)?/i,
+  /(.+?)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu|ông|bà|vợ|chồng)\s+của\s+(.+?)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s+đúng\s+không|\s*\?)?/i,
+  /(.+?)\s+là\s+anh\s+em\s+ruột\s+với\s+(.+?)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s+đúng\s+không|\s*\?)?/i,
+  /(.+?)\s+và\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau)(?:\s+không|\s+hay\s+không|\s+phải\s+không|\s+đúng\s+không|\s+hả|\s*\?)?/i,
 ];
 
 const DYNASTY_PATTERNS = [
@@ -88,16 +88,44 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
       const isKnown1 = isKnownMasterEntity(e1);
       const isKnown2 = isKnownMasterEntity(e2);
 
-      let suggestedDirective = `BẮT BUỘC KIỂM TRA TIỀN ĐỀ QUAN HỆ THÂN TỘC: Người dùng đang hỏi về quan hệ họ hàng giữa "${e1}" và "${e2}". Nếu không có bằng chứng lịch sử xác thực, hãy bác bỏ rõ ràng mối quan hệ này (ví dụ: "${e1} và ${e2} không phải là anh em/họ hàng...").`;
+      let suggestedDirective = '';
 
-      if (isKnown1 && !isKnown2) {
-        suggestedDirective += ` ĐẶC BIỆT: "${e2}" KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc của "${e1}". Hãy bác bỏ dứt khoát và chủ động trình bày thân tộc/anh em ruột thực sự của "${e1}" đã được chính sử ghi chép để làm rõ bối cảnh. TUYỆT ĐỐI KHÔNG phỏng đoán "${e2}" là ai hay cho rằng "${e2}" là tên gọi khác/bí danh của bất kỳ ai khác.`;
+      if (isKnown1 && isKnown2) {
+        const t1 = canon1.timeRange;
+        const t2 = canon2.timeRange;
+        let isDifferentEras = false;
+        let eraDiffDescription = '';
+
+        if (t1?.start !== undefined && t2?.start !== undefined) {
+          const s1 = t1.start;
+          const e1End = t1.end ?? t1.start;
+          const s2 = t2.start;
+          const e2End = t2.end ?? t2.start;
+
+          const gap = Math.max(0, s2 - e1End, s1 - e2End);
+          if (gap >= 80) {
+            isDifferentEras = true;
+            const fmtYear = (y: number) => (y < 0 ? `${Math.abs(y)} TCN` : `${y}`);
+            const timeDesc1 = t1.end ? `(khoảng ${fmtYear(s1)} - ${fmtYear(t1.end)})` : `(năm ${fmtYear(s1)})`;
+            const timeDesc2 = t2.end ? `(khoảng ${fmtYear(s2)} - ${fmtYear(t2.end)})` : `(năm ${fmtYear(s2)})`;
+            eraDiffDescription = `"${canon1.canonicalName}" ${timeDesc1} và "${canon2.canonicalName}" ${timeDesc2} sống cách nhau hơn ${Math.round(gap)} năm (thuộc hai thời kỳ lịch sử hoàn toàn khác nhau)`;
+          }
+        }
+
+        if (isDifferentEras) {
+          suggestedDirective = `BẮT BUỘC BÁC BỎ TIỀN ĐỀ QUAN HỆ THÂN TỘC DO KHÁC BIỆT THỜI ĐẠI: Người dùng đang hỏi về quan hệ họ hàng giữa "${e1}" và "${e2}". Cả hai nhân vật đều có thật trong lịch sử, nhưng ${eraDiffDescription}, do đó dứt khoát KHÔNG THỂ có quan hệ anh em, cha con hay thân tộc trực tiếp. BẮT BUỘC phải bác bỏ rõ ràng ngay từ đầu, khẳng định niên đại, bối cảnh lịch sử thực tế của từng nhân vật và làm rõ sự trùng hợp về họ (nếu có).`;
+        } else {
+          suggestedDirective = `KIỂM CHỨNG QUAN HỆ LỊCH SỬ KHÁCH QUAN: Người dùng đang hỏi về mối quan hệ giữa "${e1}" và "${e2}". Cả hai nhân vật đều có thật trong lịch sử và sống trong cùng thời kỳ. BẮT BUỘC đối chiếu kỹ thông tin trong <verified_master_entities> và <verified_rag_evidence> để xác định chính xác mối quan hệ:
+- Nếu thực sự là anh em ruột/thân tộc (ví dụ Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ là anh em Tây Sơn Tam Kiệt, con của Hồ Phi Phúc): BẮT BUỘC khẳng định rõ ràng mối quan hệ, nêu phụ mẫu và bối cảnh gia đình.
+- Nếu là hai nhân vật cùng thời nhưng không có quan hệ họ hàng (ví dụ đồng minh, tướng lĩnh, đối thủ chính trị, hoặc trùng họ khác dòng): giải thích rõ quan hệ thực tế giữa họ, không gán ghép sai lệch.
+- TUYỆT ĐỐI KHÔNG bác bỏ khi chưa kiểm tra thẻ thực thể và chứng cứ lịch sử.`;
+        }
+      } else if (isKnown1 && !isKnown2) {
+        suggestedDirective = `BẮT BUỘC BÁC BỎ QUAN HỆ VỚI NHÂN VẬT CHƯA XÁC MINH: Người dùng đang hỏi về quan hệ giữa "${e1}" và "${e2}". Trong đó, "${e1}" là nhân vật lịch sử có thật (${canon1.canonicalName}), còn "${e2}" KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc của "${e1}". Hãy bác bỏ dứt khoát quan hệ thân tộc và chủ động trình bày thân tộc/anh em ruột thực sự của "${canon1.canonicalName}" đã được chính sử ghi chép để làm rõ bối cảnh. TUYỆT ĐỐI KHÔNG phỏng đoán "${e2}" là ai hay cho rằng "${e2}" là tên gọi khác/bí danh của bất kỳ ai khác, và TUYỆT ĐỐI KHÔNG kết luận phủ định rằng "${e2}" hoàn toàn không tồn tại trong toàn bộ lịch sử Việt Nam (chỉ kết luận không có quan hệ thân tộc với "${e1}").`;
       } else if (!isKnown1 && isKnown2) {
-        suggestedDirective += ` ĐẶC BIỆT: "${e1}" KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc của "${e2}". Hãy bác bỏ dứt khoát và chủ động trình bày thân tộc/anh em ruột thực sự của "${e2}" đã được chính sử ghi chép để làm rõ bối cảnh. TUYỆT ĐỐI KHÔNG phỏng đoán "${e1}" là ai hay cho rằng "${e1}" là tên gọi khác/bí danh của bất kỳ ai khác.`;
-      } else if (isKnown1 && isKnown2) {
-        suggestedDirective += ` Cả hai nhân vật đều có thật trong lịch sử. Hãy phân biệt rõ bối cảnh, niên đại, triều đại và quan hệ thực tế giữa từng nhân vật để tránh nhầm lẫn.`;
+        suggestedDirective = `BẮT BUỘC BÁC BỎ QUAN HỆ VỚI NHÂN VẬT CHƯA XÁC MINH: Người dùng đang hỏi về quan hệ giữa "${e1}" và "${e2}". Trong đó, "${e2}" là nhân vật lịch sử có thật (${canon2.canonicalName}), còn "${e1}" KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc của "${e2}". Hãy bác bỏ dứt khoát quan hệ thân tộc và chủ động trình bày thân tộc/anh em ruột thực sự của "${canon2.canonicalName}" đã được chính sử ghi chép để làm rõ bối cảnh. TUYỆT ĐỐI KHÔNG phỏng đoán "${e1}" là ai hay cho rằng "${e1}" là tên gọi khác/bí danh của bất kỳ ai khác, và TUYỆT ĐỐI KHÔNG kết luận phủ định rằng "${e1}" hoàn toàn không tồn tại trong toàn bộ lịch sử Việt Nam (chỉ kết luận không có quan hệ thân tộc với "${e2}").`;
       } else {
-        suggestedDirective += ` Cả hai tên gọi đều chưa rõ trong chính sử, hãy nêu rõ giới hạn tư liệu và không tự suy đoán phả hệ hư cấu.`;
+        suggestedDirective = `BẮT BUỘC KIỂM TRA TƯ LIỆU LỊCH SỬ: Người dùng đang hỏi về quan hệ giữa "${e1}" và "${e2}". Cả hai tên gọi đều chưa rõ trong chính sử, hãy nêu rõ giới hạn tư liệu và không tự suy đoán phả hệ hư cấu.`;
       }
 
       return {

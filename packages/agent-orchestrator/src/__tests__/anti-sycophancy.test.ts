@@ -17,20 +17,32 @@ describe('Anti-Sycophancy & Invariant Semantic Verification', () => {
       expect(result.suggestedDirective).toContain('Tây Sơn tam kiệt');
     });
 
-    it('distinguishes distinct brother entities without false co-reference flag', () => {
+    it('distinguishes distinct brother entities without false co-reference flag and generates objective kinship directive', () => {
       const result = analyzePremiseAndLeadingIntent('Nguyễn Nhạc và Nguyễn Huệ là 2 anh em hả?');
       expect(result.isLeadingQuestion).toBe(true);
       expect(result.isSameEntityCoReference).toBeUndefined();
       expect(result.suggestedDirective).toContain('Cả hai nhân vật đều có thật trong lịch sử');
+      expect(result.suggestedDirective).toContain('KIỂM CHỨNG QUAN HỆ LỊCH SỬ KHÁCH QUAN');
+      expect(result.suggestedDirective).toContain('Tây Sơn Tam Kiệt');
     });
 
     it('injects strict anti-hallucination directive when one entity is unverified/unknown', () => {
+      const result = analyzePremiseAndLeadingIntent('Lê Lợi và Lê Văn Ảo có phải là 2 anh em hay không?');
+      expect(result.isLeadingQuestion).toBe(true);
+      expect(result.detectedEntities).toContain('Lê Lợi');
+      expect(result.detectedEntities).toContain('Lê Văn Ảo');
+      expect(result.suggestedDirective).toContain('KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc');
+      expect(result.suggestedDirective).toContain('TUYỆT ĐỐI KHÔNG phỏng đoán');
+    });
+
+    it('recognizes both entities as real historical figures across different eras and mandates chronological kinship refutation', () => {
       const result = analyzePremiseAndLeadingIntent('Lê Lợi và Lê Độ có phải là 2 anh em hay không?');
       expect(result.isLeadingQuestion).toBe(true);
       expect(result.detectedEntities).toContain('Lê Lợi');
       expect(result.detectedEntities).toContain('Lê Độ');
-      expect(result.suggestedDirective).toContain('KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc');
-      expect(result.suggestedDirective).toContain('TUYỆT ĐỐI KHÔNG phỏng đoán');
+      expect(result.suggestedDirective).toContain('Cả hai nhân vật đều có thật trong lịch sử');
+      expect(result.suggestedDirective).toContain('BẮT BUỘC BÁC BỎ TIỀN ĐỀ QUAN HỆ THÂN TỘC DO KHÁC BIỆT THỜI ĐẠI');
+      expect(result.suggestedDirective).toContain('sống cách nhau hơn');
     });
   });
 

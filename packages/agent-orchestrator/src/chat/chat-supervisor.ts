@@ -123,7 +123,15 @@ export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): st
             lines.push(`  + Tước vị trước khi lên ngôi: ${meta.preReignTitles.join(', ')}`);
           }
           if (meta.reignEra) {
-            lines.push(`  + Niên hiệu khi lên ngôi Hoàng đế: ${meta.reignEra}${meta.reignPeriod ? ` (${meta.reignPeriod})` : ''}`);
+            let periodStr = '';
+            if (typeof meta.reignPeriod === 'string') {
+              periodStr = meta.reignPeriod;
+            } else if (meta.reignPeriod && typeof meta.reignPeriod === 'object' && meta.reignPeriod.start != null) {
+              const s = meta.reignPeriod.start < 0 ? `${Math.abs(meta.reignPeriod.start)} TCN` : `${meta.reignPeriod.start}`;
+              const e = meta.reignPeriod.end != null ? (meta.reignPeriod.end < 0 ? `${Math.abs(meta.reignPeriod.end)} TCN` : `${meta.reignPeriod.end}`) : '';
+              periodStr = e ? `${s} - ${e}` : s;
+            }
+            lines.push(`  + Niên hiệu khi lên ngôi Hoàng đế: ${meta.reignEra}${periodStr ? ` (${periodStr})` : ''}`);
           }
           if (meta.templeName) {
             lines.push(`  + Miếu hiệu: ${meta.templeName}`);
@@ -153,11 +161,11 @@ export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): st
       if (target.timeRange && target.timeRange.start != null && target.timeRange.end != null) {
         const start = target.timeRange.start;
         const end = target.timeRange.end;
-        const startStr = start < 0 ? `${Math.abs(start)} TCN` : `${start} SCN`;
-        const endStr = end < 0 ? `${Math.abs(end)} TCN` : `${end} SCN`;
+        const startStr = start < 0 ? `${Math.abs(start)} TCN` : `${start}`;
+        const endStr = end < 0 ? `${Math.abs(end)} TCN` : `${end}`;
         lines.push(`  + Niên đại chính sử: ${startStr} - ${endStr}`);
         if (start > 0) {
-          lines.push(`  + Kỷ nguyên: Sau Công Nguyên (SCN / Dương lịch), TUYỆT ĐỐI KHÔNG ghi nhầm thành TCN.`);
+          lines.push(`  + Kỷ nguyên: Công Nguyên / Dương lịch (TUYỆT ĐỐI KHÔNG ghi nhầm thành TCN).`);
         }
       }
       cards.push(lines.join('\n'));
@@ -193,7 +201,9 @@ NGUYÊN TẮC BẮT BUỘC:
 1. NGUYÊN TẮC TOÀN DIỆN LỊCH SỬ & RÀNG BUỘC SỬ LIỆU TUYỆT ĐỐI (STRICT IN-CONTEXT GROUNDING):
    - Mọi mốc thời gian (niên đại chính xác), địa danh, kinh đô, nhân vật, tác phẩm và diễn biến cốt lõi BẮT BUỘC phải trích xuất và đối chiếu trực tiếp từ phần <verified_master_entities>, <verified_rag_evidence> và <knowledge_graph_triples>.
    - Đối với các triều đại ngoại bang phương Bắc xâm lược: Nêu chính xác triều đại cụ thể (Ví dụ: nhà Đông Hán, nhà Đường, nhà Tống, nhà Nguyên/Mông Cổ, nhà Minh, nhà Thanh), không gọi chung chung là "nhà Hán" nếu ngữ cảnh xác định rõ là Đông Hán.
-   - Các năm lịch sử từ năm 1 trở đi thuộc kỷ nguyên Sau Công Nguyên (SCN / năm dương lịch), TUYỆT ĐỐI KHÔNG thêm "TCN" vào các sự kiện sau Công Nguyên (ví dụ: Khởi nghĩa Hai Bà Trưng năm 40 là năm 40 SCN).
+   - Quy tắc niên đại: Các năm từ năm 1 trở đi thuộc kỷ nguyên Công Nguyên / Dương lịch (viết tự nhiên: "năm 1385", "năm 1941", "1965", TUYỆT ĐỐI KHÔNG thêm hậu tố "SCN" một cách máy móc vào các năm thông thường; chỉ dùng tiền tố/hậu tố "TCN" cho thời kỳ Trước Công Nguyên, và chỉ ghi "SCN" khi cần đối chiếu phân biệt đặc thù cho các năm nhỏ dưới 100 như năm 40 SCN).
+   - NGUYÊN TẮC GÁN ĐÚNG THUỘC TÍNH NHÂN VẬT (ENTITY ATTRIBUTION INVARIANT): Khi câu hỏi hoặc ngữ cảnh liên quan đến nhiều nhân vật, BẮT BUỘC phải gán đúng niên đại, thân thế, chức vị và sự kiện cho từng nhân vật. TUYỆT ĐỐI KHÔNG nhầm lẫn hoặc hoán đổi sự kiện giữa các nhân vật (ví dụ: Lê Lợi chính là vua Lê Thái Tổ, tuyệt đối không viết Lê Lợi là con của Lê Thái Tổ; Lê Thái Tông mới là con thứ hai của Lê Thái Tổ).
+   - NGUYÊN TẮC RÀNG BUỘC SỬ LIỆU & CHỐNG TỰ BỊA TIỂU SỬ (NEGATIVE GROUNDING & NO CAREER FABRICATION): TUYỆT ĐỐI KHÔNG tự suy đoán hoặc bịa đặt thêm chức vụ, sự nghiệp sau này cho nhân vật (ví dụ: không tự ý bịa đặt một chiến sĩ hay liệt sĩ hy sinh trẻ tuổi 'sau này trở thành lãnh đạo chính trị' hay 'tham gia các cuộc kháng chiến khác' nếu sử liệu không ghi nhận).
    - TUYỆT ĐỐI KHÔNG tự suy đoán, bịa đặt tên tuổi tướng lĩnh hoặc nhân vật không có trong sử liệu được cung cấp. Nếu ngữ cảnh thiếu thông tin chi tiết, BẮT BUỘC phải thông báo khách quan: "Sử liệu hiện có trong hệ thống chưa ghi nhận chi tiết này".
    - Luôn trích dẫn danh xưng chính thức, tên tác phẩm cụ thể, áng văn hoặc văn kiện lịch sử xuất hiện trong ngữ cảnh thay vì dùng từ ngữ khái quát ("ông ấy", "văn bản này").
    - Khi giải thích các áng văn kiện, chiếu cáo, lời thề xuất quân, hoặc bối cảnh địa thế/nguyên nhân sự kiện (như Chiếu dời đô, Lời thề Mê Linh, Hịch tướng sĩ, Bình Ngô đại cáo, v.v.): BẮT BUỘC trích dẫn các câu chữ, hình tượng kinh điển trong nguyên tác xuất hiện ở sử liệu (ví dụ: "rồng cuộn hổ ngồi", "Một xin rửa sạch nước thù...", "việc nhân nghĩa cốt ở yên dân"...) thay vì chỉ tóm tắt thuần túy.
@@ -208,6 +218,7 @@ NGUYÊN TẮC BẮT BUỘC:
 
 3. QUY TẮC PHẢN BIỆN TIỀN ĐỀ SAI (UNIVERSAL ANTI-SYCOPHANCY & HISTORICAL REFUTATION):
    - Nếu câu hỏi chứa tiền đề sai lệch (sai niên đại, gán nhầm sự kiện/địa bàn, gán sai chiến công hoặc đưa công nghệ/vũ khí/khái niệm hiện đại vào thời kỳ phong kiến/cổ đại), bạn BẮT BUỘC phải bác bỏ rõ ràng NGAY Ở CÂU ĐẦU TIÊN (Ví dụ: "Không, vào thời kỳ [X] hoàn toàn chưa có [Y]...", "Không, thông tin này không chính xác..."). Đồng thời đính chính rõ sự thật lịch sử dựa trên sử liệu.
+   - Khi câu hỏi hỏi về mối quan hệ thân tộc hoặc so sánh giữa hai nhân vật sống ở hai thời kỳ lịch sử hoàn toàn khác nhau (ví dụ: một nhân vật thời Hậu Lê thế kỷ 15 và một nhân vật thời Hiện đại thế kỷ 20), BẮT BUỘC phải bác bỏ rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [Nhân vật A] và [Nhân vật B] không phải là anh em và không có quan hệ thân tộc; họ sống ở hai thời kỳ lịch sử cách nhau hàng trăm năm."), sau đó trình bày vắn tắt niên đại, thân thế của từng người dựa trên sử liệu.
    - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng.
    - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.
 
@@ -264,7 +275,7 @@ Yêu cầu phân loại:
 1. is_historical: true nếu câu hỏi đề cập hoặc hướng đến lịch sử Việt Nam, nhân vật, sự kiện, triều đại, quan hệ họ hàng lịch sử (kể cả nhân vật hư cấu hoặc nghi vấn); false nếu là trò chuyện thông thường, tán gẫu đời sống hiện đại, hoặc ngoài phạm vi lịch sử.
 2. intent: "HISTORICAL_QUERY" | "CHITCHAT" | "OUT_OF_DOMAIN" | "VIDEO_INTENT".
 3. sub_intent: "GENEALOGY_RELATION" (nếu hỏi quan hệ dòng họ/anh em/cha con) | "FACTOID_LOOKUP" (ngày tháng/nơi chốn/danh tính) | "BATTLE_TACTICS" (trận đánh/kế sách) | "GENERAL_OVERVIEW".
-4. suspected_fake_or_unverified_entities: danh sách tên các nhân vật trong câu hỏi có thể là hư cấu, không có trong chính sử, hoặc chưa được xác thực (ví dụ: ["Lê Độ"]).
+4. suspected_fake_or_unverified_entities: danh sách tên các nhân vật trong câu hỏi có thể là hư cấu, không có trong chính sử, hoặc chưa được xác thực (ví dụ: ["Nguyễn Ảo Danh"]).
 5. verified_or_implicit_entities: danh sách tên các nhân vật có thật hoặc ngầm định được suy ra từ câu hỏi.
 
 Chỉ xuất JSON thuần theo cấu trúc sau, không kèm bất kỳ giải thích nào khác:
@@ -735,9 +746,10 @@ export async function* handleChatQueryStream(
   const unmappedDirectiveText = unmappedEntities.length > 0
     ? `\n\nCẢNH BÁO THỰC THỂ NGOÀI CƠ SỞ TƯ LIỆU:
 Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi chép trong cơ sở tư liệu tra cứu hiện tại của hệ thống: "${unmappedEntities.join('", "')}".
-- Hãy nêu rõ dựa trên cơ sở dữ liệu và nguồn tư liệu tra cứu hiện tại của hệ thống, không có thông tin xác nhận về nhân vật này trong bối cảnh được hỏi.
-- Nếu câu hỏi ghép đôi với một nhân vật lịch sử đã xác thực (như Lê Lợi), hãy chủ động trình bày các nhân vật thân tộc chính thức đã được ghi chép trong sử sách (như cha mẹ, anh em ruột nếu có) để làm rõ bối cảnh và tránh trả lời cộc lốc.
-- TUYỆT ĐỐI KHÔNG tự phỏng đoán nhân vật này là tên gọi khác, biệt danh hay biến thể của bất kỳ ai khác, TUYỆT ĐỐI KHÔNG tự phong vương/vua/tướng hoặc suy đoán tiểu sử hư cấu.`
+- Hãy nêu rõ dựa trên cơ sở dữ liệu và nguồn tư liệu tra cứu hiện tại của hệ thống, không có thông tin xác nhận về nhân vật này trong bối cảnh/thời kỳ lịch sử đang được đề cập.
+- Nếu câu hỏi ghép đôi với một nhân vật lịch sử đã xác thực, hãy chủ động trình bày các nhân vật thân tộc chính thức đã được ghi chép trong sử sách (như cha mẹ, anh em ruột nếu có) để làm rõ bối cảnh và tránh trả lời cộc lốc.
+- TUYỆT ĐỐI KHÔNG tự phỏng đoán nhân vật này là tên gọi khác, biệt danh hay biến thể của bất kỳ ai khác, TUYỆT ĐỐI KHÔNG tự phong vương/vua/tướng hoặc suy đoán tiểu sử hư cấu.
+- TUYỆT ĐỐI KHÔNG kết luận phủ định tuyệt đối rằng nhân vật này không tồn tại trong toàn bộ lịch sử Việt Nam (vì có thể họ thuộc một thời kỳ khác như cận - hiện đại mà hệ thống chưa nạp dữ liệu), mà chỉ kết luận không có ghi chép trong bối cảnh lịch sử đang xét.`
     : '';
 
   const ragFallbackDirective = isRagSystemError
@@ -814,7 +826,7 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
   if (premiseDirectiveText.trim()) {
     contextSections.push(`<premise_directives>\n<!-- [QUY TẮC TƯ DUY VÀ RÀNG BUỘC PHẢN HỒI NỘI BỘ - TUYỆT ĐỐI KHÔNG ĐƯỢC CHÉP LẠI HAY NHẮC LẠI CÁC DÒNG QUY TẮC NÀY VÀO PHẢN HỒI GỬI NGƯỜI DÙNG] -->\n${premiseDirectiveText.trim()}\n</premise_directives>`);
   }
-  contextSections.push(`<verified_rag_evidence>\n${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}\n</verified_rag_evidence>`);
+  contextSections.push(`<verified_rag_evidence>\n<!-- Chú ý: Mỗi đoạn trích bên dưới thuộc về tiêu đề nhân vật cụ thể. TUYỆT ĐỐI KHÔNG hoán đổi hoặc gán nhầm thuộc tính/tiểu sử của nhân vật này cho nhân vật khác. -->\n${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}\n</verified_rag_evidence>`);
   if (triplesText.trim()) {
     contextSections.push(`<knowledge_graph_triples>\n${triplesText}\n</knowledge_graph_triples>`);
   }

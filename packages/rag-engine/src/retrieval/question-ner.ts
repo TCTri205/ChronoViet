@@ -163,7 +163,8 @@ export const QUESTION_STOPWORDS = new Set([
   'ý', 'nghĩa', 'lịch', 'sử', 'trận', 'đánh', 'chiến', 'thắng',
   'do', 'nhà', 'nước', 'thuộc', 'thời', 'kỳ', 'bởi', 'vì', 'nên', 'mà',
   'các', 'những', 'rất', 'cũng', 'để', 'vẫn', 'từng', 'qua', 'lên', 'xuống',
-  'nơi', 'sau', 'trước', 'tháng', 'ngày'
+  'nơi', 'sau', 'trước', 'tháng', 'ngày',
+  'phải', 'không', 'chăng', 'đúng', 'sai', 'hay', 'liệu', 'anh', 'em'
 ]);
 
 export function extractQueryEntities(queryText: string): ExtractedQueryInfo {

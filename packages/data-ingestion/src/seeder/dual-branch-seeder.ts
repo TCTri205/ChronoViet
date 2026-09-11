@@ -153,7 +153,7 @@ export async function seedDualBranch(
   );
   for (let i = 0; i < parentChunks.length; i++) {
     const parentChunk = parentChunks[i];
-    const parentTriples = options?.regexOnly ? extractTriplesFromText(parentChunk.textContent) : [];
+    const parentTriples = extractTriplesFromText(parentChunk.textContent);
     chunkResults[i] = { chunk: parentChunk, triples: parentTriples };
   }
 
@@ -166,7 +166,7 @@ export async function seedDualBranch(
     );
     for (let i = 0; i < childChunks.length; i++) {
       const childChunk = childChunks[i];
-      const childTriples = options?.regexOnly ? extractTriplesFromText(childChunk.textContent) : [];
+      const childTriples = extractTriplesFromText(childChunk.textContent);
       chunkResults[parentChunks.length + i] = { chunk: childChunk, triples: childTriples };
     }
   } else if (childChunks.length > 0) {
@@ -911,7 +911,8 @@ export class DualBranchSeeder implements IIngestionPipeline {
       let content = '';
       let title = registeredMeta.title;
       let dynasty: string | undefined = registeredMeta.dynasty;
-      let sourceReliability: SourceReliability = registeredMeta.sourceReliability || 'LEVEL_1';
+      const isWikiPath = filePath.includes('/wiki/') || filePath.includes('\\wiki\\');
+      let sourceReliability: SourceReliability = registeredMeta.sourceReliability || (isWikiPath ? 'LEVEL_2' : 'LEVEL_1');
 
       if (filePath.endsWith('.pdf')) {
         const pdfBuf = await fs.readFile(filePath);
@@ -928,6 +929,8 @@ export class DualBranchSeeder implements IIngestionPipeline {
         if (fmMeta.dynasty) dynasty = fmMeta.dynasty;
         if (fmMeta.source_reliability === 'LEVEL_1' || fmMeta.source_reliability === 'LEVEL_2' || fmMeta.source_reliability === 'LEVEL_3') {
           sourceReliability = fmMeta.source_reliability;
+        } else if (fmMeta.source_url && String(fmMeta.source_url).includes('wikipedia')) {
+          sourceReliability = 'LEVEL_2';
         }
 
         if (filePath.endsWith('.json')) {

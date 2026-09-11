@@ -13,7 +13,7 @@ import {
   generateEmbedding,
 } from '@chronoviet/infra';
 
-import { QUESTION_STOPWORDS } from './question-ner.js';
+import { QUESTION_STOPWORDS, extractQueryEntities } from './question-ner.js';
 import { ChatSubIntent } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'rag-engine' });
@@ -357,6 +357,24 @@ export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: str
             phraseClauses.push(`"${cleanAlias}"`);
           }
           entityInjectedCount++;
+        }
+      }
+    }
+  }
+
+  // Also track words of any other recognized entities in the query text to prevent cross-entity token leakage
+  const allDetectedInQuery = extractQueryEntities(queryText);
+  const otherEntityIds = allDetectedInQuery.entityIds.filter((id) => !detectedEntityIds?.includes(id));
+  for (const otherEntId of otherEntityIds) {
+    const otherEnt = resolveCanonicalEntity(otherEntId);
+    if (otherEnt) {
+      const names = [otherEnt.canonicalName, ...(otherEnt.aliases || [])];
+      for (const n of names) {
+        for (const w of n.split(/\s+/)) {
+          if (w.length >= 2) {
+            entitySubwords.add(sanitizeTsToken(w));
+            entitySubwords.add(sanitizeTsToken(removeVietnameseAccents(w)));
+          }
         }
       }
     }
