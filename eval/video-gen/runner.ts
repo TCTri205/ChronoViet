@@ -21,6 +21,7 @@ import {
 } from '@chronoviet/agent-orchestrator';
 import {
   saveJsonArtifact,
+  saveSuiteEvaluationReport,
   generateMarkdownReport,
   printCliSummaryTable,
   ensureDirectory,
@@ -362,18 +363,21 @@ export async function runVideoGenerationEvaluation(
       durationMs,
       strict: options.strict ?? false,
       preflight,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh',
+      localTime: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      platform: `${process.platform}-${process.arch}`,
+      nodeVersion: process.version,
     },
     outputArtifactsDir: outputsDir,
   };
 
   // 6. Save Report Artifacts to reports/
-  const reportJsonPath = path.join(reportsDir, 'video-gen-eval-report.json');
-  const reportMdPath = path.join(reportsDir, 'video-gen-eval-report.md');
-  suiteReport.reportFilePath = reportJsonPath;
-
-  saveJsonArtifact(reportJsonPath, suiteReport);
-  const mdContent = generateMarkdownReport(suiteReport);
-  fs.writeFileSync(reportMdPath, mdContent, 'utf-8');
+  saveSuiteEvaluationReport({
+    report: suiteReport,
+    reportsDir,
+    baseFileName: 'video-gen-eval-report',
+    archiveHistory: true,
+  });
 
   printCliSummaryTable(suiteReport);
 

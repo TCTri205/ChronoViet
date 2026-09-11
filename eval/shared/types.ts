@@ -14,6 +14,10 @@ export interface EvalRunMetadata {
   strict: boolean;
   preflight: PreflightResult;
   version?: string;
+  timezone?: string;
+  localTime?: string;
+  platform?: string;
+  nodeVersion?: string;
 }
 
 export interface MetricScore {
@@ -24,6 +28,7 @@ export interface MetricScore {
   unit?: string;
   description?: string;
   details?: Record<string, any>;
+  category?: 'quality' | 'performance';
 }
 
 export interface LatencyProfile {
@@ -62,4 +67,6 @@ export interface BaseSuiteReport<TCaseResult extends BaseTestCaseResult = BaseTe
   metadata: EvalRunMetadata;
   outputArtifactsDir: string;
   reportFilePath?: string;
+  reportMdPath?: string;
+  historyReportPath?: string;
 }

@@ -18,6 +18,7 @@ export interface MasterEvalOptions {
   limit?: number;
   strict?: boolean;
   clean?: boolean;
+  suite?: 'core' | 'adversarial' | 'deep' | 'all' | string;
 }
 
 export async function runMasterEvaluation(options: MasterEvalOptions = {}) {
@@ -48,6 +49,8 @@ export async function runMasterEvaluation(options: MasterEvalOptions = {}) {
     chatReport = await runChatbotEvaluation({
       limit: options.limit,
       strict: options.strict,
+      suite: options.suite || 'all',
+      clean: options.clean,
     });
   }
 
@@ -107,7 +110,17 @@ if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWi
   const strict = args.includes('--strict');
   const clean = args.includes('--clean');
 
-  runMasterEvaluation({ chat, video, limit, strict, clean })
+  const suiteArgIdx = args.findIndex((a) => a === '--suite' || a.startsWith('--suite='));
+  let suite: string | undefined;
+  if (suiteArgIdx !== -1) {
+    if (args[suiteArgIdx].includes('=')) {
+      suite = args[suiteArgIdx].split('=')[1];
+    } else {
+      suite = args[suiteArgIdx + 1];
+    }
+  }
+
+  runMasterEvaluation({ chat, video, limit, strict, clean, suite })
     .then((res) => {
       if (!res.success && strict) {
         process.exit(1);

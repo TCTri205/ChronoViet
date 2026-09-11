@@ -18,6 +18,7 @@ import {
 } from '@chronoviet/agent-orchestrator';
 import {
   saveJsonArtifact,
+  saveSuiteEvaluationReport,
   generateMarkdownReport,
   printCliSummaryTable,
   ensureDirectory,
@@ -413,18 +414,21 @@ export async function runStage2VisualEvaluation(
       durationMs,
       strict: options.strict ?? false,
       preflight,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh',
+      localTime: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      platform: `${process.platform}-${process.arch}`,
+      nodeVersion: process.version,
     },
     outputArtifactsDir: stage2OutputsDir,
   };
 
   // 6. Save Report Artifacts to reports/
-  const reportJsonPath = path.join(reportsDir, 'stage2-visual-report.json');
-  const reportMdPath = path.join(reportsDir, 'stage2-visual-report.md');
-  suiteReport.reportFilePath = reportJsonPath;
-
-  saveJsonArtifact(reportJsonPath, suiteReport);
-  const mdContent = generateMarkdownReport(suiteReport);
-  fs.writeFileSync(reportMdPath, mdContent, 'utf-8');
+  saveSuiteEvaluationReport({
+    report: suiteReport,
+    reportsDir,
+    baseFileName: 'stage2-visual-report',
+    archiveHistory: true,
+  });
 
   printCliSummaryTable(suiteReport);
 

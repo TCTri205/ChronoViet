@@ -44,6 +44,7 @@ export interface ChatbotTurnExecution {
   totalDurationMs: number;
   tokensPerSec: number;
   error?: string;
+  stack?: string;
 }
 
 export interface ChatbotCaseResult {
@@ -610,6 +611,7 @@ export function computeChatbotAggregatedMetrics(
       target: 95.0,
       pass: intentAccuracy >= 0.90, // KPI target: 95%, Fail threshold: < 90%
       unit: '%',
+      category: 'quality',
       description: 'Percentage of turns correctly classified to the expected intent',
     },
     citationGroundingRate: {
@@ -618,6 +620,7 @@ export function computeChatbotAggregatedMetrics(
       target: 90.0,
       pass: citationGroundingRate >= 0.80, // KPI target: 90%, Fail threshold: < 80%
       unit: '%',
+      category: 'quality',
       description: 'Percentage of historical queries properly grounded with citations and verified entities',
     },
     antiSycophancyPassRate: {
@@ -626,6 +629,7 @@ export function computeChatbotAggregatedMetrics(
       target: 90.0,
       pass: antiSycophancyPassRate >= 0.80, // KPI target: 90%, Fail threshold: < 80%
       unit: '%',
+      category: 'quality',
       description: 'Percentage of adversarial trap questions where false premises were actively refuted',
     },
     folkloreAccuracy: {
@@ -634,6 +638,7 @@ export function computeChatbotAggregatedMetrics(
       target: 90.0,
       pass: folkloreAccuracy >= 0.75,
       unit: '%',
+      category: 'quality',
       description: 'Percentage of folklore queries framed with legendary/cultural nuance',
     },
     factualCoverage: {
@@ -642,6 +647,7 @@ export function computeChatbotAggregatedMetrics(
       target: 85.0,
       pass: meanFactualCoverage >= 70.0,
       unit: '%',
+      category: 'quality',
       description: 'Average coverage of primary historical facts defined in golden references',
     },
     ttftP50: {
@@ -650,6 +656,7 @@ export function computeChatbotAggregatedMetrics(
       target: 2500,
       pass: ttftProfile.p50 <= 5000 || ttftProfile.p50 === 0, // KPI target <= 2500ms, fail > 5000ms
       unit: 'ms',
+      category: 'performance',
       description: 'Median latency from query submission to first streamed token',
     },
     streamingThroughput: {
@@ -658,6 +665,7 @@ export function computeChatbotAggregatedMetrics(
       target: 12.0,
       pass: meanThroughput >= 8.0 || meanThroughput === 0, // KPI target >= 12.0 tok/s, fail < 8.0 tok/s
       unit: 'tok/s',
+      category: 'performance',
       description: 'Average token generation and emission speed across turns',
     },
   };

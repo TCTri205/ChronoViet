@@ -11,9 +11,11 @@ import { assertEvalPreflight } from '@chronoviet/infra';
 import { handleChatQueryStream, ChatTurnContext } from '@chronoviet/agent-orchestrator';
 import {
   saveJsonArtifact,
+  saveSuiteEvaluationReport,
   generateMarkdownReport,
   printCliSummaryTable,
   ensureDirectory,
+  cleanDirectory,
   BaseSuiteReport,
 } from '../shared/index.js';
 import {
@@ -34,6 +36,9 @@ export interface RunChatbotEvalOptions {
   verbose?: boolean;
   concurrency?: number;
   suite?: 'core' | 'adversarial' | 'deep' | 'all' | string;
+  clean?: boolean;
+  id?: string;
+  match?: string;
 }
 
 export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}): Promise<BaseSuiteReport<ChatbotCaseResult>> {
@@ -84,6 +89,23 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
   const datasetTotalCases = allDatasetCases.length;
   let testCases: ChatbotTestCase[] = [...allDatasetCases];
 
+  if (options.id) {
+    const targetId = options.id.trim();
+    testCases = testCases.filter((tc) => tc.id === targetId);
+    console.log(`Filtered by ID "${targetId}": ${testCases.length} test cases remaining.`);
+  }
+
+  if (options.match) {
+    const query = options.match.toLowerCase();
+    testCases = testCases.filter(
+      (tc) =>
+        tc.id.toLowerCase().includes(query) ||
+        tc.title.toLowerCase().includes(query) ||
+        tc.turns.some((t) => t.toLowerCase().includes(query))
+    );
+    console.log(`Filtered by pattern "${options.match}": ${testCases.length} test cases remaining.`);
+  }
+
   if (options.category) {
     const cat = options.category.toUpperCase();
     testCases = testCases.filter((tc) => tc.category.toUpperCase() === cat);
@@ -95,11 +117,22 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
     console.log(`Applied limit: running ${testCases.length} test cases.`);
   }
 
-  const isSubset = testCases.length < datasetTotalCases;
+  const isSubset =
+    testCases.length < datasetTotalCases ||
+    Boolean(options.id) ||
+    Boolean(options.match) ||
+    Boolean(options.category) ||
+    Boolean(options.limit);
 
-  const outputsDir = path.resolve(__dirname, 'outputs');
+  const outputsDir = path.resolve(__dirname, 'outputs', suiteName);
   const reportsDir = path.resolve(__dirname, 'reports');
-  ensureDirectory(outputsDir);
+
+  if (options.clean) {
+    cleanDirectory(outputsDir);
+    console.log(`Cleaned outputs directory: ${outputsDir}`);
+  } else {
+    ensureDirectory(outputsDir);
+  }
   ensureDirectory(reportsDir);
 
   const concurrency = Math.max(1, options.concurrency ?? 1);
@@ -174,6 +207,7 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
         });
       } catch (err: any) {
         const turnDuration = Date.now() - turnStart;
+        const errObj = err as Error;
         executedTurns.push({
           turnIndex: tIdx + 1,
           query: userQuery,
@@ -184,7 +218,8 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
           ttftMs: 0,
           totalDurationMs: turnDuration,
           tokensPerSec: 0,
-          error: err.message || String(err),
+          error: errObj?.message || String(err),
+          stack: errObj?.stack,
         });
       }
     }
@@ -244,6 +279,8 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
       limit: options.limit,
       category: options.category,
       strict: options.strict,
+      id: options.id,
+      match: options.match,
     },
     passedCases: aggregated.passedCases,
     failedCases: testCases.length - aggregated.passedCases,
@@ -258,19 +295,24 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
       durationMs,
       strict: options.strict ?? false,
       preflight,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh',
+      localTime: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+      platform: `${process.platform}-${process.arch}`,
+      nodeVersion: process.version,
     },
     outputArtifactsDir: outputsDir,
   };
 
-  // 5. Save Report Artifacts in reports/
+  // 5. Save Report Artifacts in reports/ (Canonical vs Subset + History Archiving)
   const reportSuffix = suiteName === 'core' ? '' : `-${suiteName}`;
-  const reportJsonPath = path.join(reportsDir, `chatbot-eval-report${reportSuffix}.json`);
-  const reportMdPath = path.join(reportsDir, `chatbot-eval-report${reportSuffix}.md`);
-  suiteReport.reportFilePath = reportJsonPath;
+  const baseFileName = `chatbot-eval-report${reportSuffix}`;
 
-  saveJsonArtifact(reportJsonPath, suiteReport);
-  const mdContent = generateMarkdownReport(suiteReport);
-  fs.writeFileSync(reportMdPath, mdContent, 'utf-8');
+  saveSuiteEvaluationReport({
+    report: suiteReport,
+    reportsDir,
+    baseFileName,
+    archiveHistory: true,
+  });
 
   printCliSummaryTable(suiteReport);
 
@@ -291,6 +333,19 @@ if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWi
 
   const strict = args.includes('--strict');
   const verbose = args.includes('--verbose');
+  const clean = args.includes('--clean');
+
+  const idArgIdx = args.findIndex((a) => a === '--id' || a.startsWith('--id='));
+  let id: string | undefined;
+  if (idArgIdx !== -1) {
+    id = args[idArgIdx].includes('=') ? args[idArgIdx].split('=')[1] : args[idArgIdx + 1];
+  }
+
+  const matchArgIdx = args.findIndex((a) => a === '--match' || a.startsWith('--match='));
+  let match: string | undefined;
+  if (matchArgIdx !== -1) {
+    match = args[matchArgIdx].includes('=') ? args[matchArgIdx].split('=')[1] : args[matchArgIdx + 1];
+  }
 
   const suiteArgIdx = args.findIndex((a) => a === '--suite' || a.startsWith('--suite='));
   let suite: string | undefined;
@@ -310,7 +365,7 @@ if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWi
     suite = 'core';
   }
 
-  runChatbotEvaluation({ limit, category, strict, verbose, concurrency, suite })
+  runChatbotEvaluation({ limit, category, strict, verbose, concurrency, suite, clean, id, match })
     .then((report) => {
       if (!report.allPassed && strict) {
         process.exit(1);
