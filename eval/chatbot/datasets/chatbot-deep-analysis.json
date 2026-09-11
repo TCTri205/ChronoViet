@@ -1,0 +1,222 @@
+[
+  {
+    "id": "cb_deep_01_compare_bach_dang_3_times",
+    "category": "CANONICAL_QA",
+    "title": "So sánh nghệ thuật quân sự bãi cọc sông Bạch Đằng qua 3 triều đại (938, 981, 1288)",
+    "turns": [
+      "Hãy so sánh chi tiết nghệ thuật quân sự và cách vận dụng trận địa cọc ngầm trên sông Bạch Đằng của Ngô Quyền (năm 938), Lê Hoàn (năm 981) và Trần Hưng Đạo (năm 1288). Phân tích rõ điểm kế thừa và sự phát triển sáng tạo qua từng thời kỳ."
+    ],
+    "expectedIntent": "HISTORICAL_QUERY",
+    "expectedEntities": ["Ngô Quyền", "Lê Hoàn", "Trần Hưng Đạo", "Bạch Đằng", "Nam Hán", "Nhà Tống", "Nguyên Mông", "Cọc ngầm", "Thủy triều"],
+    "expectedCitations": ["Đại Việt Sử Ký Toàn Thư", "Khâm Định Việt Sử Thông Giám Cương Mục"],
+    "antiSycophancyTrap": false,
+    "isFolklore": false,
+    "minWordCount": 250,
+    "requiredAspects": [
+      "Ngô Quyền 938",
+      "Lê Hoàn 981",
+      "Trần Hưng Đạo 1288",
+      "thủy triều",
+      "kế thừa",
+      "phát triển"
+    ],
+    "goldenSummary": "Phân tích so sánh toàn diện: Ngô Quyền (938) mở đầu sáng tạo cọc bịt sắt lợi dụng thủy triều tiêu diệt Hoằng Thao; Lê Hoàn (981) kế thừa địa thế Bạch Đằng phối hợp phục kích thủy bộ chém Hầu Nhân Bảo; Trần Hưng Đạo (1288) nâng tầm thành nghệ thuật quân sự đỉnh cao với quy mô bãi cọc liên hoàn (Yên Hưng), phối hợp thủy - bộ khép kín, triệt đường thoái lui bắt sống Ô Mã Nhi.",
+    "turnExpectations": [
+      {
+        "turnIndex": 1,
+        "requiredPhrases": ["938", "981", "1288", "cọc", "thủy triều"]
+      }
+    ]
+  },
+  {
+    "id": "cb_deep_02_ho_quy_ly_reforms_and_defeat",
+    "category": "CANONICAL_QA",
+    "title": "Phân tích nguyên nhân thất bại của nhà Hồ trước quân Minh: Cải cách và lòng dân",
+    "turns": [
+      "Phân tích nguyên nhân sâu xa vì sao cuộc cải cách táo bạo của Hồ Quý Ly (tiền giấy, hạn điền, thi cử) và hệ thống phòng thủ kiên cố (thành Tây Đô, súng thần cơ) lại nhanh chóng sụp đổ khi quân Minh xâm lược năm 1407. Ý nghĩa câu nói của Hồ Nguyên Trừng là gì?"
+    ],
+    "expectedIntent": "HISTORICAL_QUERY",
+    "expectedEntities": ["Hồ Quý Ly", "Hồ Nguyên Trừng", "Thông Bảo Hội Sao", "Nhà Minh", "Thành Tây Đô", "Súng Thần Cơ"],
+    "expectedCitations": ["Đại Việt Sử Ký Toàn Thư"],
+    "antiSycophancyTrap": false,
+    "isFolklore": false,
+    "minWordCount": 250,
+    "requiredAspects": [
+      "Hồ Quý Ly",
+      "Hồ Nguyên Trừng",
+      "Thần không sợ đánh",
+      "lòng dân",
+      "tiền giấy",
+      "quân Minh"
+    ],
+    "goldenSummary": "Cuộc cải cách của Hồ Quý Ly có nhiều điểm tiến bộ nhưng thực hiện vội vã, cưỡng bức, lại phế truất vua Trần khiến sĩ phu và nhân dân bất mãn. Dù có súng thần cơ và thành đá kiên cố, việc đánh mất thế trận lòng dân đúng như câu nói của Hồ Nguyên Trừng 'Thần không sợ đánh, chỉ sợ lòng dân không theo' là nguyên nhân cốt tử khiến nhà Hồ thất bại trước quân Minh.",
+    "turnExpectations": [
+      {
+        "turnIndex": 1,
+        "requiredPhrases": ["Hồ Nguyên Trừng", "lòng dân", "quân Minh"]
+      }
+    ]
+  },
+  {
+    "id": "cb_deep_03_historiography_gia_long_nguyen_anh",
+    "category": "CANONICAL_QA",
+    "title": "Đánh giá sử học toàn diện về vua Gia Long (Nguyễn Ánh)",
+    "turns": [
+      "Hãy trình bày một bài đánh giá sử học khách quan, toàn diện về vua Gia Long (Nguyễn Ánh), phân tích cả những công lao to lớn đối với cương thổ, chủ quyền biển đảo cũng như những hạn chế, vết gợn trong hành trình giành vương quyền."
+    ],
+    "expectedIntent": "HISTORICAL_QUERY",
+    "expectedEntities": ["Gia Long", "Nguyễn Ánh", "Việt Nam", "Hoàng Sa", "Trường Sa", "Nhà Nguyễn"],
+    "expectedCitations": ["Đại Nam Thực Lục"],
+    "antiSycophancyTrap": false,
+    "isFolklore": false,
+    "minWordCount": 250,
+    "requiredAspects": [
+      "Gia Long",
+      "thống nhất",
+      "quốc hiệu Việt Nam",
+      "Hoàng Sa",
+      "hạn chế"
+    ],
+    "goldenSummary": "Đánh giá khách quan: Về mặt công tích, Gia Long thống nhất giang sơn từ Ải Nam Quan đến Mũi Cà Mau sau hàng thế kỷ chia cắt, đặt quốc hiệu Việt Nam (1804), khẳng định và thực thi chủ quyền Hoàng Sa - Trường Sa, đặt nền móng hành chính. Về mặt hạn chế, việc cầu viện quân Xiêm (dẫn tới trận Rạch Gầm - Xoài Mút) và hiệp ước với Pháp là những vết gợn lịch sử lớn.",
+    "turnExpectations": [
+      {
+        "turnIndex": 1,
+        "requiredPhrases": ["thống nhất", "quốc hiệu", "Việt Nam"]
+      }
+    ]
+  },
+  {
+    "id": "cb_deep_04_trinh_nguyen_phan_tranh",
+    "category": "CANONICAL_QA",
+    "title": "Bối cảnh và tác động lịch sử sâu rộng của Trịnh - Nguyễn phân tranh",
+    "turns": [
+      "Phân tích nguyên nhân, đặc điểm cục diện Trịnh - Nguyễn phân tranh (sông Gianh, Lũy Thầy) và tác động của nó đối với quá trình mở cõi về phương Nam của dân tộc ta."
+    ],
+    "expectedIntent": "HISTORICAL_QUERY",
+    "expectedEntities": ["Trịnh Kiểm", "Nguyễn Hoàng", "Sông Gianh", "Lũy Thầy", "Đàng Trong", "Đàng Ngoài"],
+    "expectedCitations": ["Đại Việt Sử Ký Toàn Thư", "Phủ Biên Tạp Lục"],
+    "antiSycophancyTrap": false,
+    "isFolklore": false,
+    "minWordCount": 250,
+    "requiredAspects": [
+      "sông Gianh",
+      "Lũy Thầy",
+      "Đàng Trong",
+      "Đàng Ngoài",
+      "mở cõi"
+    ],
+    "goldenSummary": "Nguyên nhân từ sự tranh chấp quyền lực giữa hai dòng họ quyền thần sau khi nhà Mạc bị đẩy lùi. Lấy sông Gianh làm ranh giới và Lũy Thầy do Đào Duy Từ xây dựng làm thành lũy phòng thủ. Áp lực tồn tại buộc các chúa Nguyễn phải thực hiện chính sách khai hoang, dung hợp văn hóa và mở mang bờ cõi về phía Nam, tạo nên hình thể non sông trọn vẹn ngày nay.",
+    "turnExpectations": [
+      {
+        "turnIndex": 1,
+        "requiredPhrases": ["sông Gianh", "Đàng Trong", "Đàng Ngoài"]
+      }
+    ]
+  },
+  {
+    "id": "cb_deep_05_ideology_ly_tran",
+    "category": "CANONICAL_QA",
+    "title": "So sánh tư tưởng trị quốc và sức mạnh toàn dân giữa thời Lý và thời Trần",
+    "turns": [
+      "So sánh hệ tư tưởng trị quốc và tinh thần cố kết toàn dân giữa thời Lý (Phật giáo Quốc giáo, nhân ái) và thời Trần (Tam giáo đồng nguyên, Hội nghị Diên Hồng, Hào khí Đông A)."
+    ],
+    "expectedIntent": "HISTORICAL_QUERY",
+    "expectedEntities": ["Nhà Lý", "Nhà Trần", "Phật giáo", "Hội nghị Diên Hồng", "Hào khí Đông A", "Tam giáo"],
+    "expectedCitations": ["Đại Việt Sử Ký Toàn Thư"],
+    "antiSycophancyTrap": false,
+    "isFolklore": false,
+    "minWordCount": 250,
+    "requiredAspects": [
+      "thời Lý",
+      "thời Trần",
+      "Phật giáo",
+      "Hào khí Đông A",
+      "Diên Hồng"
+    ],
+    "goldenSummary": "Thời Lý lấy Phật giáo làm điểm tựa tinh thần chủ đạo, cai trị khoan dung, chuộng sự nhân đức và hòa ái. Thời Trần phát triển 'Tam giáo đồng nguyên' (Nho - Phật - Đạo song hành), phát huy cao độ tinh thần dân chủ quân chủ qua Hội nghị Bình Than và Hội nghị Diên Hồng, tạo nên sức mạnh 'Hào khí Đông A' vô địch 3 lần đại thắng Nguyên Mông.",
+    "turnExpectations": [
+      {
+        "turnIndex": 1,
+        "requiredPhrases": ["Phật giáo", "Hào khí Đông A", "Diên Hồng"]
+      }
+    ]
+  },
+  {
+    "id": "cb_compound_01_history_and_video",
+    "category": "VIDEO_INTENT",
+    "title": "Đa ý định: Vừa hỏi lịch sử vừa yêu cầu tạo video tóm tắt",
+    "turns": [
+      "Trận Điện Biên Phủ trên không năm 1972 diễn ra trong bao nhiêu ngày đêm và có ý nghĩa bước ngoặt gì? Hãy tạo luôn một video 3 phút tóm tắt trận đánh hào hùng này nhé."
+    ],
+    "expectedIntent": "VIDEO_INTENT",
+    "expectedIntents": ["VIDEO_INTENT", "HISTORICAL_QUERY"],
+    "expectedEntities": ["Điện Biên Phủ trên không", "Linebacker II", "B-52", "Hà Nội 1972"],
+    "expectedCitations": ["Lịch sử Quân sự Việt Nam"],
+    "antiSycophancyTrap": false,
+    "isFolklore": false,
+    "requiredAspects": [
+      "12 ngày đêm",
+      "B-52",
+      "Hiệp định Paris"
+    ],
+    "goldenSummary": "Nhận diện cả 2 ý định: Giải đáp câu hỏi lịch sử (chiến dịch 12 ngày đêm từ 18/12 đến 30/12/1972, bắn rơi nhiều pháo đài bay B-52, buộc Mỹ ký Hiệp định Paris 1973) đồng thời kích hoạt intent khởi tạo video 3 phút về trận Điện Biên Phủ trên không.",
+    "turnExpectations": [
+      {
+        "turnIndex": 1,
+        "requiredPhrases": ["12 ngày đêm", "B-52"]
+      }
+    ]
+  },
+  {
+    "id": "cb_compound_02_chitchat_and_history",
+    "category": "HISTORICAL_QUERY",
+    "title": "Đa ý định: Vừa chào hỏi vừa hỏi kiến thức lịch sử chuyên sâu",
+    "turns": [
+      "Chào bạn ChronoViet, hôm nay tôi có một câu hỏi: Bình Ngô Đại Cáo của Nguyễn Trãi được viết sau chiến thắng lịch sử nào và tại sao lại được đánh giá là bản Tuyên ngôn Độc lập thứ hai của Việt Nam?"
+    ],
+    "expectedIntent": "HISTORICAL_QUERY",
+    "expectedIntents": ["HISTORICAL_QUERY", "CHITCHAT"],
+    "expectedEntities": ["Nguyễn Trãi", "Bình Ngô Đại Cáo", "Khởi nghĩa Lam Sơn", "Chi Lăng - Xương Giang"],
+    "expectedCitations": ["Bình Ngô Đại Cáo", "Đại Việt Sử Ký Toàn Thư"],
+    "antiSycophancyTrap": false,
+    "isFolklore": false,
+    "requiredAspects": [
+      "Lam Sơn",
+      "Tuyên ngôn Độc lập",
+      "chủ quyền"
+    ],
+    "goldenSummary": "Đáp từ chào hỏi thân thiện và trả lời chuyên sâu: Bình Ngô Đại Cáo viết năm 1428 sau chiến thắng khởi nghĩa Lam Sơn (đỉnh cao là trận Chi Lăng - Xương Giang 1427). Được coi là bản Tuyên ngôn Độc lập thứ hai vì đã xác lập hoàn chỉnh các yếu tố quốc gia độc lập: nền văn hiến riêng, bờ cõi phân định, phong tục tập quán, các triều đại sánh ngang phương Bắc và hào kiệt từng thời.",
+    "turnExpectations": [
+      {
+        "turnIndex": 1,
+        "requiredPhrases": ["Lam Sơn", "Tuyên ngôn Độc lập", "văn hiến"]
+      }
+    ]
+  },
+  {
+    "id": "cb_compound_03_ood_pivot_to_history",
+    "category": "HISTORICAL_QUERY",
+    "title": "Đa ý định: Ngoài phạm vi nhưng khéo léo kết nối sang lịch sử",
+    "turns": [
+      "Tôi muốn hỏi về cách đầu tư chứng khoán, nhưng tiện thể bạn phân tích giúp tôi chính sách phát hành tiền giấy Thông Bảo Hội Sao thời nhà Hồ có điểm gì tương đồng với tài chính hiện đại?"
+    ],
+    "expectedIntent": "HISTORICAL_QUERY",
+    "expectedIntents": ["HISTORICAL_QUERY", "OUT_OF_DOMAIN"],
+    "expectedEntities": ["Hồ Quý Ly", "Thông Bảo Hội Sao", "Nhà Hồ", "tiền giấy"],
+    "expectedCitations": ["Đại Việt Sử Ký Toàn Thư"],
+    "antiSycophancyTrap": false,
+    "isFolklore": false,
+    "requiredAspects": [
+      "Thông Bảo Hội Sao",
+      "tiền giấy",
+      "Hồ Quý Ly"
+    ],
+    "goldenSummary": "Lịch sự từ chối tư vấn chứng khoán hiện đại, nhưng tập trung giải đáp phân tích chuyên sâu về tiền giấy Thông Bảo Hội Sao (1396): chính sách tiền tệ sớm nhất khu vực, thay thế tiền đồng bằng tiền giấy để tập trung đồng đúc vũ khí, cơ chế cưỡng bức thu hồi và bài học về niềm tin tiền tệ so với tài chính hiện đại.",
+    "turnExpectations": [
+      {
+        "turnIndex": 1,
+        "requiredPhrases": ["Thông Bảo Hội Sao", "tiền giấy"]
+      }
+    ]
+  }
+]

@@ -17,10 +17,11 @@ export interface ChatbotTurnExpectation {
 
 export interface ChatbotTestCase {
   id: string;
-  category: 'CANONICAL_QA' | 'MULTI_TURN' | 'ANTI_SYCOPHANCY' | 'FOLKLORE_MYTH' | 'VIDEO_INTENT' | 'CHITCHAT' | 'OUT_OF_DOMAIN' | 'ENTITY_IDENTITY';
+  category: 'CANONICAL_QA' | 'MULTI_TURN' | 'ANTI_SYCOPHANCY' | 'FOLKLORE_MYTH' | 'VIDEO_INTENT' | 'CHITCHAT' | 'OUT_OF_DOMAIN' | 'ENTITY_IDENTITY' | string;
   title: string;
   turns: string[];
-  expectedIntent: string;
+  expectedIntent?: string;
+  expectedIntents?: string[];
   expectedEntities: string[];
   expectedCitations: string[];
   antiSycophancyTrap: boolean | string;
@@ -28,6 +29,8 @@ export interface ChatbotTestCase {
   goldenSummary: string;
   turnExpectations?: ChatbotTurnExpectation[];
   forbiddenClaims?: string[];
+  minWordCount?: number;
+  requiredAspects?: string[];
 }
 
 export interface ChatbotTurnExecution {
@@ -57,6 +60,8 @@ export interface ChatbotCaseResult {
   turnExpectationsPassed: boolean;
   factualCoverageRate: number;
   meanTtftMs: number;
+  wordCountPassed?: boolean;
+  aspectCoverageRate?: number;
   errors?: string[];
   warnings?: string[];
 }
@@ -157,19 +162,26 @@ export function evaluateChatbotCase(
     }
   }
 
-  // 1. Intent Classification Check
+  // 1. Intent Classification Check (supports single expectedIntent or multiple allowed expectedIntents)
   let intentMatch = true;
-  if (testCase.expectedIntent && lastTurn?.detectedIntent) {
-    const expected = testCase.expectedIntent.toUpperCase();
-    const detected = lastTurn.detectedIntent.toUpperCase();
+  const rawAllowed = testCase.expectedIntents && testCase.expectedIntents.length > 0
+    ? testCase.expectedIntents
+    : testCase.expectedIntent
+      ? [testCase.expectedIntent]
+      : [];
 
-    // Map legacy HISTORICAL_QA to canonical HISTORICAL_QUERY
-    const normExpected = expected === 'HISTORICAL_QA' ? 'HISTORICAL_QUERY' : expected;
+  if (rawAllowed.length > 0 && lastTurn?.detectedIntent) {
+    const detected = lastTurn.detectedIntent.toUpperCase();
     const normDetected = detected === 'HISTORICAL_QA' ? 'HISTORICAL_QUERY' : detected;
 
-    intentMatch = normDetected === normExpected;
+    const normAllowed = rawAllowed.map((i) => {
+      const u = i.toUpperCase();
+      return u === 'HISTORICAL_QA' ? 'HISTORICAL_QUERY' : u;
+    });
+
+    intentMatch = normAllowed.includes(normDetected);
     if (!intentMatch) {
-      errors.push(`Intent mismatch: expected ${testCase.expectedIntent}, got ${lastTurn.detectedIntent}`);
+      errors.push(`Intent mismatch: expected [${normAllowed.join(', ')}], got ${lastTurn.detectedIntent}`);
     }
   }
 
@@ -508,6 +520,27 @@ const HISTORICAL_SYNONYMS: Record<string, string[]> = {
     }
   }
 
+  // 10. Deep Analysis Word Count & Aspect Coverage Check
+  let wordCountPassed = true;
+  if (testCase.minWordCount && testCase.minWordCount > 0) {
+    const wordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
+    wordCountPassed = wordCount >= testCase.minWordCount;
+    if (!wordCountPassed) {
+      warnings.push(`Response length (${wordCount} words) is below recommended minimum (${testCase.minWordCount} words)`);
+    }
+  }
+
+  let aspectCoverageRate: number | undefined;
+  if (testCase.requiredAspects && testCase.requiredAspects.length > 0) {
+    const matchedAspects = testCase.requiredAspects.filter((asp) =>
+      fullTextLower.includes(normalizeViText(asp))
+    );
+    aspectCoverageRate = Math.round((matchedAspects.length / testCase.requiredAspects.length) * 100) / 100;
+    if (aspectCoverageRate < 0.6) {
+      warnings.push(`Deep analysis aspect coverage ${(aspectCoverageRate * 100).toFixed(1)}% is below 60%`);
+    }
+  }
+
   const passed = errors.length === 0;
 
   return {
@@ -524,6 +557,8 @@ const HISTORICAL_SYNONYMS: Record<string, string[]> = {
     turnExpectationsPassed,
     factualCoverageRate,
     meanTtftMs,
+    wordCountPassed,
+    aspectCoverageRate,
     errors: errors.length > 0 ? errors : undefined,
     warnings: warnings.length > 0 ? warnings : undefined,
   };

@@ -15,20 +15,30 @@ The Chatbot Evaluation Suite evaluates live multi-turn historical dialogue again
 
 ---
 
-## 2. Test Datasets (`datasets/chatbot-test-cases.json`)
+## 2. Test Datasets & Modular Suites (`datasets/`)
 
-Contains 40 curated multi-turn dialogue test cases across 8 distinct categories:
+The evaluation datasets are modularized into 3 dedicated suites for targeted validation and fast developer iteration:
 
-| Category | Description | Primary Verification Target |
-|---|---|---|
-| `CANONICAL_QA` | Standard historical inquiries on key figures, battles, and epochs (Ngô Quyền, Đinh Bộ Lĩnh, Lê Hoàn, Lý Thường Kiệt, Trần Hưng Đạo, etc.). | Entity recall, historical fidelity, citation grounding. |
-| `ENTITY_IDENTITY` | Questions asking to disambiguate historical personages, reign titles, and aliases (e.g. Mai Thúc Loan vs. Mai Hắc Đế, Quang Trung vs. Nguyễn Huệ). | Canonical entity resolution, alias mapping. |
-| `MULTI_TURN` | Complex 2–4 turn dialogues testing context continuity, antecedent memory, and pronoun resolution across turns. | Context retention, co-reference resolution across turns. |
-| `ANTI_SYCOPHANCY` | Adversarial trap questions with subtle historical falsehoods, false anachronisms, or leading biased claims. | Anti-sycophancy refusal, factual correction rate without sycophancy. |
-| `FOLKLORE_MYTH` | Questions about legends, mythological traditions, and folkloric figures (Sơn Tinh - Thủy Tinh, An Dương Vương, Thánh Gióng, Lê Lợi trả gươm). | Clear demarcation between historical fact and mythological tradition. |
-| `VIDEO_INTENT` | User prompts indicating an explicit desire to create/render historical educational videos. | Intent classification accuracy (`VIDEO_INTENT` / `VIDEO_GENERATION_INTENT`). |
-| `CHITCHAT` | Conversational greetings and general inquiries. | Friendly historical assistant persona without hallucinating historical claims. |
-| `OUT_OF_DOMAIN` | Irrelevant non-historical questions (modern cooking, programming, general banter). | Graceful boundary management and redirect to Vietnamese history. |
+1. **Core Baseline Suite (`datasets/chatbot-core.json`)**:
+   - 40 canonical test cases across 8 standard categories (`CANONICAL_QA`, `ENTITY_IDENTITY`, `MULTI_TURN`, `ANTI_SYCOPHANCY`, `FOLKLORE_MYTH`, `VIDEO_INTENT`, `CHITCHAT`, `OUT_OF_DOMAIN`).
+   - Validates entity recall, primary source citations, and fundamental routing.
+
+2. **Adversarial & Multi-Turn Suite (`datasets/chatbot-adversarial.json`)**:
+   - 12 high-difficulty trap cases testing robust historical invariants:
+     - **Cross-Era Surname Clashes (Multi-century gap):** Lê Lợi vs. Lê Độ, Nguyễn Trãi vs. Nguyễn Du, Trần Hưng Đạo vs. Trần Phú (must refute kinship due to multi-century gap).
+     - **Authentic Kinship Affirmation:** Nguyễn Nhạc & Nguyễn Huệ, Trưng Trắc & Trưng Nhị, Trần Liễu & Trần Cảnh (must affirm true brotherhood/sisterhood, guarding against anti-sycophancy over-rejection).
+     - **Verified vs. Fictitious Persons:** Lê Lợi vs. Lê Văn Tèo (refutes fake relative, identifies true brothers in annals).
+     - **Sudden Topic Shifts:** Abrupt context shift from modern figures to medieval dynasties without context bleeding.
+     - **Complex Coreference:** Disambiguating pronouns ("ai trong hai người") between primary and secondary historical figures.
+     - **Persistence under Pressure:** Bot holds ground when users falsely insist on myths or internet rumors.
+
+3. **Deep Analysis & Multi-Intent Suite (`datasets/chatbot-deep-analysis.json`)**:
+   - 8 comprehensive synthesis cases requiring long-form analysis (>= 250-300 words) or handling compound intents:
+     - **Comparative Military Analyses:** Evolution of the Bạch Đằng naval stake strategy across 938, 981, and 1288.
+     - **Causal Historical Investigations:** Why Hồ Quý Ly's currency and administrative reforms failed before the Ming army.
+     - **Historiographical Evaluations:** Comprehensive evaluation of King Gia Long (Nguyễn Ánh) across territory, sovereignty, and foreign entanglements.
+     - **Geopolitical Studies:** Trịnh - Nguyễn phân tranh, sông Gianh, Lũy Thầy, and the southern territorial expansion.
+     - **Compound Multi-Intents:** Combining historical queries with video generation requests, or chitchat greetings with complex inquiries.
 
 ---
 
@@ -37,11 +47,12 @@ Contains 40 curated multi-turn dialogue test cases across 8 distinct categories:
 ### A. Functional Correctness Quality Gates (Strict 100% Pass)
 | Metric | Target KPI | Failure Threshold (Pass Gate) | Method |
 |---|:---:|:---:|---|
-| **Intent Accuracy** | $\ge 95.0\%$ | $< 90.0\%$ | Exact match against expected intent enum (`OUT_OF_DOMAIN`, `CHITCHAT`, `VIDEO_INTENT`, `HISTORICAL_QUERY`, `ENTITY_IDENTITY`) |
+| **Intent Accuracy** | $\ge 95.0\%$ | $< 90.0\%$ | Exact match or compound match against expected intent(s) |
 | **Citation Grounding Rate** | $\ge 90.0\%$ | $< 80.0\%$ | Percentage of turns with valid primary source citations and key entities |
 | **Anti-Sycophancy Pass Rate** | $\ge 90.0\%$ | $< 80.0\%$ | Detection and refusal of false historical premises and forbidden claims |
 | **Folklore Demarcation Rate** | $\ge 90.0\%$ | $< 75.0\%$ | Explicit qualification of folkloric / mythical elements |
 | **Key Fact Coverage Rate** | $\ge 85.0\%$ | $< 70.0\%$ | Semantic overlap against curated golden historical summaries |
+| **Deep Analysis Aspect Coverage** | $\ge 80.0\%$ | $< 60.0\%$ | Coverage of required thematic aspects in long-form synthesis cases |
 
 ### B. Hardware Latency & Streaming Performance Profile
 | Metric | Target KPI | Pass Gate Threshold | Method |
@@ -57,11 +68,22 @@ Contains 40 curated multi-turn dialogue test cases across 8 distinct categories:
 ### Command Line Interface:
 
 ```bash
-# Run full chatbot evaluation suite
+# Run Core Baseline Suite (default, 40 cases)
 pnpm eval:chat
+pnpm eval:chat:core
 
-# Run with limited number of test cases (fast check)
-pnpm eval:chat -- --limit 3
+# Run High-Difficulty Adversarial & Multi-Turn Suite (12 cases)
+pnpm eval:chat:adversarial
+
+# Run Deep Analysis & Long-Form Suite (8 cases)
+pnpm eval:chat:deep
+
+# Run All Suites (60 cases total)
+pnpm eval:chat:all
+
+# Fast check with limit on any suite
+pnpm eval:chat:adversarial -- --limit 3
+pnpm eval:chat:deep -- --limit 2
 
 # Run a specific category only
 pnpm eval:chat -- --category CANONICAL_QA

@@ -33,21 +33,54 @@ export interface RunChatbotEvalOptions {
   strict?: boolean;
   verbose?: boolean;
   concurrency?: number;
+  suite?: 'core' | 'adversarial' | 'deep' | 'all' | string;
 }
 
 export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}): Promise<BaseSuiteReport<ChatbotCaseResult>> {
   const startTime = new Date();
   const startTimeMs = Date.now();
 
-  console.log('\n🚀 Starting ChronoViet Chatbot & GraphRAG Evaluation Suite...');
+  const suiteName = (options.suite || 'core').toLowerCase();
+  console.log(`\n🚀 Starting ChronoViet Chatbot Evaluation Suite: [${suiteName.toUpperCase()}]...`);
 
   // 1. Preflight Health Checks
   const preflight = await assertEvalPreflight(['postgres', 'embedding', 'llm']);
 
-  // 2. Load Test Cases
-  const datasetPath = path.resolve(__dirname, 'datasets/chatbot-test-cases.json');
-  const rawData = fs.readFileSync(datasetPath, 'utf-8');
-  const allDatasetCases: ChatbotTestCase[] = JSON.parse(rawData);
+  // 2. Load Test Cases based on selected suite
+  const corePath = path.resolve(__dirname, 'datasets/chatbot-core.json');
+  const legacyPath = path.resolve(__dirname, 'datasets/chatbot-test-cases.json');
+  const advPath = path.resolve(__dirname, 'datasets/chatbot-adversarial.json');
+  const deepPath = path.resolve(__dirname, 'datasets/chatbot-deep-analysis.json');
+
+  const loadFile = (p: string): ChatbotTestCase[] => {
+    if (fs.existsSync(p)) {
+      return JSON.parse(fs.readFileSync(p, 'utf-8'));
+    }
+    return [];
+  };
+
+  let allDatasetCases: ChatbotTestCase[] = [];
+  if (suiteName === 'core') {
+    allDatasetCases = fs.existsSync(corePath) ? loadFile(corePath) : loadFile(legacyPath);
+  } else if (suiteName === 'adversarial' || suiteName === 'adv') {
+    allDatasetCases = loadFile(advPath);
+  } else if (suiteName === 'deep' || suiteName === 'analysis') {
+    allDatasetCases = loadFile(deepPath);
+  } else if (suiteName === 'all') {
+    const core = fs.existsSync(corePath) ? loadFile(corePath) : loadFile(legacyPath);
+    const adv = loadFile(advPath);
+    const deep = loadFile(deepPath);
+    allDatasetCases = [...core, ...adv, ...deep];
+  } else {
+    const customPath = path.resolve(__dirname, 'datasets', `chatbot-${suiteName}.json`);
+    if (fs.existsSync(customPath)) {
+      allDatasetCases = loadFile(customPath);
+    } else {
+      console.warn(`⚠️ Unknown suite "${suiteName}", falling back to core.`);
+      allDatasetCases = fs.existsSync(corePath) ? loadFile(corePath) : loadFile(legacyPath);
+    }
+  }
+
   const datasetTotalCases = allDatasetCases.length;
   let testCases: ChatbotTestCase[] = [...allDatasetCases];
 
@@ -230,8 +263,9 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
   };
 
   // 5. Save Report Artifacts in reports/
-  const reportJsonPath = path.join(reportsDir, 'chatbot-eval-report.json');
-  const reportMdPath = path.join(reportsDir, 'chatbot-eval-report.md');
+  const reportSuffix = suiteName === 'core' ? '' : `-${suiteName}`;
+  const reportJsonPath = path.join(reportsDir, `chatbot-eval-report${reportSuffix}.json`);
+  const reportMdPath = path.join(reportsDir, `chatbot-eval-report${reportSuffix}.md`);
   suiteReport.reportFilePath = reportJsonPath;
 
   saveJsonArtifact(reportJsonPath, suiteReport);
@@ -258,7 +292,25 @@ if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWi
   const strict = args.includes('--strict');
   const verbose = args.includes('--verbose');
 
-  runChatbotEvaluation({ limit, category, strict, verbose, concurrency })
+  const suiteArgIdx = args.findIndex((a) => a === '--suite' || a.startsWith('--suite='));
+  let suite: string | undefined;
+  if (suiteArgIdx !== -1) {
+    if (args[suiteArgIdx].includes('=')) {
+      suite = args[suiteArgIdx].split('=')[1];
+    } else {
+      suite = args[suiteArgIdx + 1];
+    }
+  } else if (args.includes('--all')) {
+    suite = 'all';
+  } else if (args.includes('--adversarial') || args.includes('--adv')) {
+    suite = 'adversarial';
+  } else if (args.includes('--deep') || args.includes('--analysis')) {
+    suite = 'deep';
+  } else if (args.includes('--core')) {
+    suite = 'core';
+  }
+
+  runChatbotEvaluation({ limit, category, strict, verbose, concurrency, suite })
     .then((report) => {
       if (!report.allPassed && strict) {
         process.exit(1);
