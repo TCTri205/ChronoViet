@@ -120,7 +120,7 @@
   "devDependencies": {
     "@chronoviet/infra": "workspace:*",
     "@chronoviet/shared-spec": "workspace:*",
-    "tsx": "^4.19.2",
+    "tsx": "^4.23.13",
     "typescript": "^5.3.3"
   },
   "engines": {
