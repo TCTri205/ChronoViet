@@ -79,17 +79,23 @@ async function main() {
       totalTopics: topicsToCrawl.length,
     });
   } else if (epoch) {
-    const epochEntry = getTopicsByEpoch(epoch);
-    if (epochEntry) {
-      topicsToCrawl = epochEntry.topics;
-      log.info('crawl.loading_epoch', 'Loading catalog for epoch', {
-        epochId: epochEntry.epochId,
-        epochName: epochEntry.epochName,
-        topicCount: epochEntry.topics.length,
-      });
-    } else {
-      log.warn('crawl.unknown_epoch', `Unknown Epoch identifier: "${epoch}". Expected values like "EPOCH_05" or "5"`);
+    const epochTokens = epoch.split(',').map((e) => e.trim()).filter(Boolean);
+    const accumulatedTopics = new Set<string>();
+
+    for (const ep of epochTokens) {
+      const epochEntry = getTopicsByEpoch(ep);
+      if (epochEntry) {
+        epochEntry.topics.forEach((t) => accumulatedTopics.add(t));
+        log.info('crawl.loading_epoch', 'Loading catalog for epoch', {
+          epochId: epochEntry.epochId,
+          epochName: epochEntry.epochName,
+          topicCount: epochEntry.topics.length,
+        });
+      } else {
+        log.warn('crawl.unknown_epoch', `Unknown Epoch identifier: "${ep}". Expected values like "EPOCH_05" or "5"`);
+      }
     }
+    topicsToCrawl = Array.from(accumulatedTopics);
   }
 
   if (topicsToCrawl.length === 0 && urls.length === 0) {

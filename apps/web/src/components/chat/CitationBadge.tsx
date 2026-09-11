@@ -42,12 +42,12 @@ export function parseRawCitation(c: any, index: number): CitationItem {
       sourceTitle: cleanTitle,
       annalsName:
         reliabilityLevel === 1
-          ? "Chính Sử Quốc Triều"
+          ? "Chính Sử / Khảo Chứng"
           : reliabilityLevel === 2
           ? "Khảo Cứu / Thứ Sử"
           : "Dã Sử & Truyền Thuyết",
-      dynasty: "Thời Cổ Trung Đại",
-      period: "Tiến trình Lịch sử Việt Nam",
+      dynasty: "Tiến trình Lịch sử Việt Nam",
+      period: "Lịch sử Việt Nam",
       reliabilityLevel,
       originalExcerpt: cleanTitle,
     };
@@ -67,9 +67,9 @@ export function parseRawCitation(c: any, index: number): CitationItem {
   return {
     id: c.id ?? index + 1,
     sourceTitle: cleanTitle,
-    annalsName: c.annalsName || (reliabilityLevel === 1 ? "Chính Sử" : "Tài liệu Khảo Cứu"),
-    dynasty: c.dynasty || "Thời Trần / Lê / Tây Sơn",
-    period: c.period || "Lịch Sử Cổ Trung Đại",
+    annalsName: c.annalsName || (reliabilityLevel === 1 ? "Chính Sử / Khảo Chứng" : "Tài liệu Khảo Cứu"),
+    dynasty: c.dynasty || "Tiến trình Lịch sử Việt Nam",
+    period: c.period || "Lịch sử Việt Nam",
     reliabilityLevel,
     originalExcerpt: c.originalExcerpt || c.excerpt || c.content || cleanTitle,
     confidenceScore: c.confidenceScore,

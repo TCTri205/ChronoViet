@@ -179,6 +179,15 @@ CHỈ DẪN LIÊN KẾT ĐA CHẶNG (MULTI-HOP LINKING):
 - Quy tắc bắt buộc: Câu đầu tiên trong câu trả lời PHẢI trực tiếp bác bỏ thông tin sai lệch này (ví dụ: "Không có sự kiện này trong lịch sử...", "Đây là thông tin sai lệch / nhầm lẫn thời kỳ..."). Tuyệt đối không thừa nhận hay đồng thuận với tiền đề sai. Sau đó trình bày rõ ràng: ${topic}.`;
   }
 
+  if (/(?:bao\s*nhiêu|tổng\s*(?:cộng|số)|mấy\s*(?:cái|tên|người|vị|trận|lần))/i.test(query)) {
+    suggestedMaxTokens = Math.max(suggestedMaxTokens, 850);
+    specificDirective += `\n
+CHỈ DẪN GIẢI ĐÁP CÂU HỎI ĐỊNH LƯỢNG & THỐNG KÊ (QUANTITATIVE REASONING):
+- Khi câu hỏi yêu cầu về số lượng hoặc con số thống kê ("bao nhiêu", "tổng cộng", "mấy"): BẮT BUỘC câu đầu tiên trong câu trả lời PHẢI trả lời trực diện con số tổng thể, số lượng xác thực hoặc khoảng ước lượng được sử liệu công nhận (ví dụ: tổng số đời vua, số lần kháng chiến, số lượng danh xưng/bút danh hoặc số lượng tướng lĩnh).
+- TUYỆT ĐỐI KHÔNG bỏ qua con số tổng thể để chỉ liệt kê danh sách mà không nêu số lượng.
+- Sau khi nêu con số tổng quát, mới tiến hành liệt kê chi tiết các mốc/danh xưng/sự kiện tiêu biểu nhất.`;
+  }
+
   const systemPrompt = `Bạn là ChronoViet AI — Chuyên gia Nghiên cứu & Lập Luận Lịch Sử Việt Nam. Nhiệm vụ của bạn là giải đáp câu hỏi của người dùng một cách chuẩn xác tuyệt đối, sâu sắc và đầy đủ cứ liệu lịch sử dựa trên các tư liệu chính thống được cung cấp.
 
 NGUYÊN TẮC BẮT BUỘC:
@@ -197,6 +206,8 @@ NGUYÊN TẮC BẮT BUỘC:
    - Tuyệt đối không đảo ngược mốc thời gian hay trình bày kết quả trước nguyên nhân làm sai lệch mạch lịch sử.
 6. PHÒNG VỆ VÀ BÁC BỎ BẪY ĐỐI KHÁNG / TIỀN GIẢ ĐỊNH SAI LỆCH (ADVERSARIAL REFUTATION):
    - Nếu câu hỏi chứa tiền giả định sai lệch (ví dụ: gán ghép vũ khí/công nghệ anachronism, nhân vật thần thoại ký hiệp ước, đảo lộn kết quả trận đánh), BẮT BUỘC phải bác bỏ rõ ràng ngay đầu câu và đính chính sự thật lịch sử chuẩn xác, TUYỆT ĐỐI KHÔNG thuận theo tiền giả định sai.
+7. ĐỊNH DẠNG DANH SÁCH MARKDOWN CHUẨN (MARKDOWN LIST FORMATTING):
+   - Mọi danh sách (dù dùng gạch đầu dòng '- ' hay đánh số '1. ', '2. ') BẮT BUỘC mỗi mục phải bắt đầu trên một dòng riêng biệt, có ngắt dòng rõ ràng (\\n\\n- hoặc \\n\\n1. ). TUYỆT ĐỐI KHÔNG viết các mục danh sách nối tiếp dính liền nhau trên cùng một dòng.
 ${specificDirective}
 
 NGỮ CẢNH TƯ LIỆU SỬ LIỆU:

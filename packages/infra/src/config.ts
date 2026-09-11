@@ -36,7 +36,9 @@ const rawProcessEnv: Record<string, string | undefined> = typeof process !== 'un
 const rawMode = rawProcessEnv.AI_EXECUTION_MODE;
 let resolvedMode: 'local_only' | 'fallback' | 'hybrid' | 'cloud_only';
 
-if (rawMode && ['local_only', 'fallback', 'hybrid', 'cloud_only'].includes(rawMode)) {
+if (rawMode === 'local_first' || rawMode === 'local_only') {
+  resolvedMode = 'local_only';
+} else if (rawMode && ['fallback', 'hybrid', 'cloud_only'].includes(rawMode)) {
   resolvedMode = rawMode as any;
 } else {
   // Deduce mode from subordinate flags for backward compatibility
@@ -97,8 +99,8 @@ switch (resolvedMode) {
 // Normalization & Backward-Compatibility aliases:
 // When AI_EXECUTION_MODE is explicitly provided, its master presets have authoritative precedence.
 // Subordinate flags only override presets when AI_EXECUTION_MODE was deduced or when non-conflicting.
-const effectiveUseLocalLlm = rawMode ? presetUseLocalLlm : (rawProcessEnv.USE_LOCAL_LLM ?? presetUseLocalLlm);
-const effectiveEnableCloudFallback = rawMode ? presetEnableCloudFallback : (rawProcessEnv.ENABLE_CLOUD_FALLBACK ?? presetEnableCloudFallback);
+const effectiveUseLocalLlm = resolvedMode === 'local_only' ? 'true' : (rawMode ? presetUseLocalLlm : (rawProcessEnv.USE_LOCAL_LLM ?? presetUseLocalLlm));
+const effectiveEnableCloudFallback = resolvedMode === 'local_only' ? 'false' : (rawMode ? presetEnableCloudFallback : (rawProcessEnv.ENABLE_CLOUD_FALLBACK ?? presetEnableCloudFallback));
 const effectiveInferenceRoutingMode = rawMode ? presetInferenceRoutingMode : (rawProcessEnv.INFERENCE_ROUTING_MODE ?? presetInferenceRoutingMode);
 const effectiveStandbyOnRender = rawMode ? presetStandbyOnRender : (rawProcessEnv.AI_STANDBY_ON_RENDER ?? presetStandbyOnRender);
 const effectiveVlmProvider = rawMode ? presetVlmProvider : (rawProcessEnv.VLM_PROVIDER ?? presetVlmProvider);

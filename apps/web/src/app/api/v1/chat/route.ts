@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       conversationId,
     });
 
-    // Load recent history from DB if conversationId is provided and explicitHistory is empty
+    // Load recent history from DB/inMemoryStore if conversationId is provided and explicitHistory is empty
     let historyTurns = explicitHistory;
     if (conversationId && historyTurns.length === 0) {
       try {
@@ -51,8 +51,12 @@ export async function POST(req: NextRequest) {
             `SELECT role, content FROM conversation_messages WHERE conversation_id = $1 ORDER BY created_at ASC LIMIT 10`,
             [conversationId]
           );
-          historyTurns = rows.map((r) => ({ role: r.role, content: r.content }));
-        } else {
+          if (rows.length > 0) {
+            historyTurns = rows.map((r) => ({ role: r.role, content: r.content }));
+          }
+        }
+        // Fallback to inMemoryStore if PG was empty or offline
+        if (historyTurns.length === 0) {
           historyTurns = inMemoryStore.conversationMessages
             .filter((m: any) => m.conversationId === conversationId)
             .map((m: any) => ({ role: m.role, content: m.content }));

@@ -96,7 +96,7 @@ async function main() {
     // Check if tables exist
     try {
       const res: any = await query(
-        "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'historical_entities';"
+        "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'entities';"
       );
       if (res.length === 0 || parseInt(res[0]?.count || '0', 10) === 0) {
         console.log(`${colors.yellow}[DB] ⚠️  Database tables not detected. Initializing schema...${colors.reset}`);
@@ -115,17 +115,42 @@ async function main() {
     ...process.env,
   };
 
+  const configuredMode = process.env.AI_EXECUTION_MODE;
+  const explicitCloudFallback = process.env.ENABLE_CLOUD_FALLBACK;
+
   if (isLlmRunning && isEmbRunning) {
     console.log(`${colors.green}[AI-PROBE] ✅ Local AI Stack Detected (LLM: 8092, Emb: 8090, TTS: ${isTtsRunning ? '8080' : 'Synthetic Fallback'}).${colors.reset}`);
-    devEnv.AI_EXECUTION_MODE = 'local_first';
-    devEnv.ENABLE_CLOUD_FALLBACK = 'true';
+    // Respect explicit user configuration from .env as SSOT
+    if (configuredMode) {
+      devEnv.AI_EXECUTION_MODE = configuredMode;
+      console.log(`${colors.dim}[AI-PROBE] Respecting .env configuration: AI_EXECUTION_MODE=${configuredMode}${colors.reset}`);
+    } else {
+      devEnv.AI_EXECUTION_MODE = 'local_only';
+    }
+    if (explicitCloudFallback !== undefined) {
+      devEnv.ENABLE_CLOUD_FALLBACK = explicitCloudFallback;
+    }
   } else {
     console.log(`${colors.cyan}[AI-PROBE] ℹ️  Local AI server not running on port 8092/8090.${colors.reset}`);
-    console.log(`${colors.cyan}[AI-PROBE] 💡 Enabling Smart Cloud Fallback mode (0% local GPU overhead).${colors.reset}`);
-    console.log(`${colors.dim}           Tip: Run 'pnpm ai:start' or 'pnpm ai' if you wish to run 100% Local AI.${colors.reset}`);
-    devEnv.AI_EXECUTION_MODE = 'hybrid';
-    devEnv.ENABLE_CLOUD_FALLBACK = 'true';
-    devEnv.USE_LOCAL_LLM = 'false';
+    if (configuredMode === 'local_only') {
+      console.log(`${colors.yellow}[AI-PROBE] ⚠️  AI_EXECUTION_MODE is set to 'local_only' in .env, but local AI servers (8092/8090) are offline!${colors.reset}`);
+      console.log(`${colors.yellow}           Start them with 'pnpm ai:chat' or change AI_EXECUTION_MODE in .env.${colors.reset}`);
+    } else {
+      console.log(`${colors.cyan}[AI-PROBE] 💡 Enabling Smart Cloud Fallback mode (0% local GPU overhead).${colors.reset}`);
+      console.log(`${colors.dim}           Tip: Run 'pnpm ai:start' or 'pnpm ai' if you wish to run 100% Local AI.${colors.reset}`);
+      devEnv.AI_EXECUTION_MODE = configuredMode || 'hybrid';
+      devEnv.ENABLE_CLOUD_FALLBACK = explicitCloudFallback || 'true';
+      devEnv.USE_LOCAL_LLM = 'false';
+    }
+  }
+
+  // 2.5. Synchronize & Build Workspace Packages (Eliminate stale dist in dev mode)
+  console.log(`${colors.blue}[BUILD]${colors.reset} Synchronizing workspace packages...`);
+  try {
+    execSync('pnpm --filter "./packages/*" run build', { cwd: ROOT_DIR, stdio: 'ignore' });
+    console.log(`${colors.green}[BUILD]${colors.reset} ✅ Workspace packages synchronized.`);
+  } catch (buildErr: any) {
+    console.log(`${colors.yellow}[BUILD]${colors.reset} ⚠️ Package build notice: ${buildErr.message}`);
   }
 
   // 3. Start Web UI

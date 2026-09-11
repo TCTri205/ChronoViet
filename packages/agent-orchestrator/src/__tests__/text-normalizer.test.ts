@@ -63,6 +63,20 @@ describe('Context-Aware Resilient Text Normalizer', () => {
     const res2 = normalizeResilientText('hello, banj laf ai?');
     expect(res2.normalized).toBe('hello, bạn là ai?');
     expect(res2.shadow).toBe('hello, ban la ai?');
+
+    const res3 = normalizeResilientText('bạn có đuowcj xem tài liệu này không?');
+    expect(res3.normalized).toBe('bạn có được xem tài liệu này không?');
+
+    const res4 = normalizeResilientText('liệu có dduowcj hay đươcj ko?');
+    expect(res4.normalized).toBe('liệu có được hay được không?');
+
+    const res5 = normalizeResilientText('nguwowif Vieejt Nam bieest khoong?');
+    expect(res5.normalized).toBe('người Việt Nam biết không?');
+  });
+
+  it('strictly preserves valid dictionary words with ambiguous meanings like thẻ bài', () => {
+    const res = normalizeResilientText('Vua ban thẻ bài bằng ngà voi và thẻ tre');
+    expect(res.normalized).toBe('Vua ban thẻ bài bằng ngà voi và thẻ tre');
   });
 
   it('collapses excessive repeated punctuation and spaces', () => {

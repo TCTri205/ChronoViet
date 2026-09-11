@@ -13,11 +13,18 @@ const log = createLogger({ service: 'infra-queues' });
 
 export const REMOTION_RENDER_QUEUE_NAME = 'remotion-render-queue';
 
-let renderQueue: Queue<RenderJobPayload> | null = null;
-let queueRedisClient: Redis | null = null;
+interface ChronoGlobalQueues {
+  __chronoviet_render_queue__?: Queue<RenderJobPayload> | null;
+  __chronoviet_queue_redis__?: Redis | null;
+}
+
+const chronoGlobalQueues = globalThis as unknown as ChronoGlobalQueues;
+
+let renderQueue: Queue<RenderJobPayload> | null = chronoGlobalQueues.__chronoviet_render_queue__ || null;
+let queueRedisClient: Redis | null = chronoGlobalQueues.__chronoviet_queue_redis__ || null;
 
 function getQueueRedisClient(redisUrl?: string): Redis {
-  if (!queueRedisClient) {
+  if (!chronoGlobalQueues.__chronoviet_queue_redis__) {
     const url = redisUrl || envConfig.REDIS_URL || process.env.REDIS_URL || 'redis://localhost:6379';
     const client = new (Redis as any)(url, {
       maxRetriesPerRequest: null,
@@ -27,15 +34,16 @@ function getQueueRedisClient(redisUrl?: string): Redis {
     client.on('error', (err: any) => {
       log.warn('queues.redis_error', `BullMQ Redis connection error: ${formatErrorMessage(err)}`);
     });
-    queueRedisClient = client;
+    chronoGlobalQueues.__chronoviet_queue_redis__ = client;
   }
+  queueRedisClient = chronoGlobalQueues.__chronoviet_queue_redis__ || null;
   return queueRedisClient as Redis;
 }
 
 export function getRenderQueue(redisUrl?: string): Queue<RenderJobPayload> {
-  if (!renderQueue) {
+  if (!chronoGlobalQueues.__chronoviet_render_queue__) {
     const connection = getQueueRedisClient(redisUrl);
-    renderQueue = new Queue<RenderJobPayload>(REMOTION_RENDER_QUEUE_NAME, {
+    const queue = new Queue<RenderJobPayload>(REMOTION_RENDER_QUEUE_NAME, {
       connection: connection as any,
       defaultJobOptions: {
         attempts: 3,
@@ -47,10 +55,12 @@ export function getRenderQueue(redisUrl?: string): Queue<RenderJobPayload> {
         removeOnFail: 50,
       },
     });
-    renderQueue.on('error', (err: any) => {
+    queue.on('error', (err: any) => {
       log.warn('queues.render_queue_error', `Render queue error: ${formatErrorMessage(err)}`);
     });
+    chronoGlobalQueues.__chronoviet_render_queue__ = queue;
   }
+  renderQueue = chronoGlobalQueues.__chronoviet_render_queue__ || null;
   return renderQueue;
 }
 

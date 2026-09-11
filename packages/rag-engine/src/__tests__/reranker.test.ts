@@ -282,4 +282,96 @@ describe('Pure Model Context Reranker', () => {
       res1288.find((c) => c.chunkId === 'chunk_bd_938')?.score || 0
     );
   });
+
+  it('infers temporal bounds from dynasty or epoch IDs when explicit years are absent', () => {
+    // Ho Chi Minh query (1890 - 1969) vs Nha Ho chunk (1400 - 1406, EPOCH_06)
+    const hoChiMinhYears = [1890, 1969];
+
+    const nhaHoMultiplier = calculateTemporalMultiplier(
+      hoChiMinhYears,
+      undefined,
+      undefined,
+      'Nha Ho - Đoạn 1.1',
+      'Nhà Hồ',
+      ['EPOCH_06']
+    );
+
+    // Delta between 1890 and 1406 is 484 years -> receives 0.70 penalty (or lower for cross-era)
+    expect(nhaHoMultiplier).toBeLessThanOrEqual(0.70);
+
+    // Modern chunk with EPOCH_13 (1945 - 2026) has 0 delta with 1969 -> receives full or boosted multiplier
+    const modernMultiplier = calculateTemporalMultiplier(
+      hoChiMinhYears,
+      undefined,
+      undefined,
+      'Ho Chi Minh - Đoạn 1.1',
+      'Thời kỳ Hiện đại',
+      ['EPOCH_13']
+    );
+    expect(modernMultiplier).toBeGreaterThanOrEqual(1.0);
+    expect(modernMultiplier).toBeGreaterThan(nhaHoMultiplier);
+  });
+
+  it('heavily separates low-score noise candidates from relevant ones in scoring', async () => {
+    const candidatesWithJunk: VectorSearchResult[] = [
+      {
+        chunkId: 'good_chunk_1',
+        title: 'Bác Hồ và chiến dịch Điện Biên Phủ',
+        textContent: 'Chủ tịch Hồ Chí Minh chủ trì cuộc họp chỉ đạo chiến dịch.',
+        sourceReliability: 'LEVEL_1',
+        score: 0.9,
+      },
+      {
+        chunkId: 'junk_chunk_3',
+        title: 'Một chủ đề xa lạ',
+        textContent: 'Nội dung hoàn toàn không liên quan gì đến Bác Hồ.',
+        sourceReliability: 'LEVEL_3',
+        score: 0.1,
+      },
+    ];
+
+    const results = await rerankCandidates(
+      'Bác Hồ là ai?',
+      candidatesWithJunk,
+      2
+    );
+
+    expect(results[0].chunkId).toBe('good_chunk_1');
+    expect(results[0].score).toBeGreaterThan(results[1].score);
+  });
+
+  it('should gracefully degrade with normalized scores (> 0.35) when Cross-Encoder service is offline', async () => {
+    // Force fetch to fail simulating offline reranker
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Connection refused (port 8096)')));
+
+    const candidates: VectorSearchResult[] = [
+      {
+        chunkId: 'fb_1',
+        title: 'Hồ Chí Minh - Tiểu sử',
+        textContent: 'Chủ tịch Hồ Chí Minh sinh năm 1890...',
+        sourceReliability: 'LEVEL_1',
+        score: 0.01639, // RRF rank 1 score
+      },
+      {
+        chunkId: 'fb_2',
+        title: 'Bác Hồ - Hoạt động',
+        textContent: 'Bác Hồ ra đi tìm đường cứu nước năm 1911...',
+        sourceReliability: 'LEVEL_2',
+        score: 0.01612, // RRF rank 2 score
+      },
+    ];
+
+    const results = await rerankCandidates('Bác Hồ là ai', candidates, 2);
+
+    expect(results.length).toBe(2);
+    // All candidates must survive MIN_RELEVANCE_SCORE_CUTOFF (0.35)
+    expect(results[0].score).toBeGreaterThanOrEqual(0.40);
+    expect(results[1].score).toBeGreaterThanOrEqual(0.40);
+    expect(results[0].score).toBeGreaterThan(results[1].score);
+
+    const status = getLastRerankerStatus();
+    expect(status.active).toBe(false);
+    expect(status.fallbackReason).toContain('Connection refused');
+  });
 });
+

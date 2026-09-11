@@ -414,6 +414,39 @@ export const ChatSubIntentSchema = z.enum([
 ]);
 export type ChatSubIntent = z.infer<typeof ChatSubIntentSchema>;
 
+export const VideoHandoverMetadataSchema = z.object({
+  topic: z.string(),
+  primaryEntityId: z.string().optional(),
+  canonicalName: z.string().optional(),
+  summary: z.string().optional(),
+});
+export type VideoHandoverMetadata = z.infer<typeof VideoHandoverMetadataSchema>;
+
+export const IntentClauseSchema = z.object({
+  intent: ChatIntentSchema,
+  subIntent: ChatSubIntentSchema.optional(),
+  confidence: z.number().min(0).max(1),
+  querySnippet: z.string(),
+  targetEntityId: z.string().optional(),
+  canonicalName: z.string().optional(),
+});
+export type IntentClause = z.infer<typeof IntentClauseSchema>;
+
+export const CompositeIntentResultSchema = z.object({
+  primaryIntent: ChatIntentSchema,
+  subIntent: ChatSubIntentSchema.optional(),
+  confidence: z.number().min(0).max(1),
+  clauses: z.array(IntentClauseSchema),
+  hasHistoricalInquiry: z.boolean(),
+  hasGreetingOrIdentity: z.boolean(),
+  hasOutOfDomain: z.boolean(),
+  hasVideoRequest: z.boolean(),
+  cleanSearchTopics: z.array(z.string()),
+  videoHandover: VideoHandoverMetadataSchema.optional(),
+  outOfDomainTopic: z.string().optional(),
+});
+export type CompositeIntentResult = z.infer<typeof CompositeIntentResultSchema>;
+
 // ==========================================
 // 5. RAG ENGINE SCHEMAS (`packages/rag-engine`)
 // ==========================================

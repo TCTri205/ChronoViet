@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   rewriteMultiTurnQuery,
   extractRecentEntities,
+  isTopicShiftQuery,
   ChatTurnContext,
 } from '../chat/query-rewriter.js';
 
@@ -144,5 +145,78 @@ describe('Multi-Turn Historical Query Rewriter', () => {
   it('leaves standalone self-contained queries untouched', () => {
     const standalone = 'Trận Ngọc Hồi Đống Đa diễn ra vào mùa xuân năm nào?';
     expect(rewriteMultiTurnQuery(standalone, [])).toBe(standalone);
+  });
+
+  it('rewrites query with discourse connectives like "vậy ông có những cái tên nào?"', () => {
+    const history: ChatTurnContext[] = [
+      {
+        role: 'user',
+        content: 'Bác Hồ là ai?',
+      },
+      {
+        role: 'assistant',
+        content: 'Hồ Chí Minh là lãnh tụ cách mạng vĩ đại của Việt Nam.',
+      },
+    ];
+
+    const rewritten = rewriteMultiTurnQuery(
+      'vậy ông có những cái tên nào? trong những giai đoạn nào?',
+      history
+    );
+    expect(rewritten).toContain('Hồ Chí Minh');
+    expect(rewritten).toMatch(/^Hồ Chí Minh có những cái tên nào/i);
+  });
+
+  it('preserves historical domain terms containing "thế" such as "Thế trận" and "Thế kỷ"', () => {
+    const battleQuery = 'Thế trận Bạch Đằng năm 938 diễn ra như thế nào?';
+    expect(rewriteMultiTurnQuery(battleQuery, [])).toBe(battleQuery);
+
+    const centuryQuery = 'Thế kỷ 10 có những triều đại nào?';
+    expect(rewriteMultiTurnQuery(centuryQuery, [])).toBe(centuryQuery);
+
+    const powerQuery = 'Thế lực nhà Mạc ở Cao Bằng tồn tại bao lâu?';
+    expect(rewriteMultiTurnQuery(powerQuery, [])).toBe(powerQuery);
+  });
+
+  describe('Topic Shift Detection', () => {
+    const history: ChatTurnContext[] = [
+      { role: 'user', content: 'Quang Trung và Nguyễn Huệ là ai?' },
+      { role: 'assistant', content: 'Quang Trung và Nguyễn Huệ là cùng một người, anh hùng áo vải cờ đào.' },
+    ];
+
+    it('identifies topic shift when query introduces explicit new historical entity without continuation pronouns', () => {
+      expect(isTopicShiftQuery('Lê Lợi và Lê Độ có phải là 2 anh em hay không?', history, ['Lê Lợi'])).toBe(true);
+      expect(isTopicShiftQuery('Trần Hưng Đạo đánh thắng quân Nguyên Mông mấy lần?', history, ['Trần Hưng Đạo'])).toBe(true);
+    });
+
+    it('correctly detects topic shift for interrogative queries introducing a new entity (e.g. "ai là người lãnh đạo đội quân Tây Sơn?")', () => {
+      const hoChiMinhHistory: ChatTurnContext[] = [
+        { role: 'user', content: 'Bác Hồ là ai?' },
+        { role: 'assistant', content: 'Hồ Chí Minh là lãnh tụ vĩ đại của dân tộc Việt Nam.' },
+        { role: 'user', content: 'ông có tất cả bao nhiêu cái tên/biệt danh?' },
+        { role: 'assistant', content: 'Hồ Chí Minh đã sử dụng khoảng 150-175 tên gọi và biệt danh.' },
+      ];
+
+      expect(
+        isTopicShiftQuery('ai là người lãnh đạo đội quân Tây Sơn?', hoChiMinhHistory, ['Tây Sơn'])
+      ).toBe(true);
+
+      const rewritten = rewriteMultiTurnQuery(
+        'ai là người lãnh đạo đội quân Tây Sơn?',
+        hoChiMinhHistory
+      );
+      expect(rewritten).not.toContain('Hồ Chí Minh');
+      expect(rewritten).toBe('ai là người lãnh đạo đội quân Tây Sơn?');
+    });
+
+    it('does NOT flag topic shift for continuation and pro-drop queries', () => {
+      expect(isTopicShiftQuery('Ông ấy mất năm nào?', history, [])).toBe(false);
+      expect(isTopicShiftQuery('Sau đó cuộc khởi nghĩa diễn ra ra sao?', history, [])).toBe(false);
+      expect(isTopicShiftQuery('Tại sao ngài lại quyết định tiến quân thần tốc?', history, [])).toBe(false);
+    });
+
+    it('returns false if there is no conversation history', () => {
+      expect(isTopicShiftQuery('Lê Lợi là ai?', [], ['Lê Lợi'])).toBe(false);
+    });
   });
 });

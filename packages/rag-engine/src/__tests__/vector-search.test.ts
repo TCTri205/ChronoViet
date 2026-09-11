@@ -292,14 +292,21 @@ describe('Vector Search & Lexical FTS Retrieval', () => {
     expect(cache.has('q4')).toBe(true);
   });
 
-  it('should build enhanced FTS tsquery with whitelisted multi-word aliases and conjunctive tokens', () => {
+  it('should build enhanced FTS tsquery with whitelisted multi-word aliases and prioritize entity phrases', () => {
     const tsQuery = buildEnhancedFtsQuery('Vua Quang Trung', ['person_quang_trung']);
-    expect(tsQuery).toContain('quang');
-    expect(tsQuery).toContain('trung');
+    // Non-entity qualifier preserved
+    expect(tsQuery).toContain('vua');
     // Multi-word alias "Nguyễn Huệ" -> "nguyen hue" / "nguyễn huệ"
     expect(tsQuery).toContain('"nguyen hue"');
     // Multi-word alias "Bắc Bình Vương" -> "bac binh vuong" / "bắc bình vương"
     expect(tsQuery).toContain('"bac binh vuong"');
+
+    // For Bác Hồ query, phrases are prioritized and single subword token "ho" is not isolated
+    const bacHoQuery = buildEnhancedFtsQuery('Bác Hồ là ai', ['person_ho_chi_minh']);
+    expect(bacHoQuery).toContain('"bac ho"');
+    expect(bacHoQuery).toContain('"ho chi minh"');
+    // Ensure no standalone ' ho ' or '^ho ' naked token
+    expect(bacHoQuery.split(' OR ')).not.toContain('ho');
   });
 
   it('should retrieve chunks via injected alias matching in lexical FTS search', async () => {

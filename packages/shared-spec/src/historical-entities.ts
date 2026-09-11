@@ -12,6 +12,34 @@ import {
 } from './dictionaries.js';
 
 
+export interface HistoricalPeriodAlias {
+  period: string; // e.g. "1901 (khi đi học)", "1911 (khi tìm đường cứu nước)", "1919 - 1941 (hoạt động quốc tế)"
+  name: string;   // e.g. "Nguyễn Tất Thành", "Văn Ba", "Nguyễn Ái Quốc"
+  context?: string;
+}
+
+export interface HistoricalPersonFamilyLineage {
+  father?: string;
+  mother?: string;
+  siblings?: string[];
+  spouses?: string[];
+  children?: string[];
+}
+
+export interface HistoricalPersonNamingMetadata {
+  archetype?: 'FEUDAL_FIGURE' | 'MODERN_FIGURE';
+  birthName?: string;            // e.g. "Hồ Thơm", "Lý Công Uẩn", "Nguyễn Sinh Cung"
+  courtesyOrCommonName?: string; // e.g. "Nguyễn Huệ", "Bác Hồ"
+  preReignTitles?: string[];     // e.g. ["Long Nhương Tướng Quân", "Bắc Bình Vương"]
+  reignEra?: string;             // e.g. "Quang Trung", "Thuận Thiên"
+  reignPeriod?: { start: number; end: number }; // e.g. { start: 1788, end: 1792 }
+  templeName?: string;           // e.g. "Lý Thái Tổ", "Đinh Tiên Hoàng"
+  posthumousName?: string;       // e.g. "Vũ Hoàng Đế"
+  periodAliases?: HistoricalPeriodAlias[]; // e.g. for modern figures: Nguyen Tat Thanh, Van Ba, Nguyen Ai Quoc, Ho Chi Minh
+  familyLineage?: HistoricalPersonFamilyLineage; // e.g. parents, siblings, spouses, children recorded in official annals
+  totalAliasesEstimated?: string; // e.g. estimated total number of names/pseudonyms recorded by historians/official institutions
+}
+
 export interface HistoricalEntityInfo {
   entityId: string;
   canonicalName: string;
@@ -20,6 +48,7 @@ export interface HistoricalEntityInfo {
   timeRange?: { start?: number; end?: number };
   dynasty?: string;
   isMythological?: boolean;
+  namingMetadata?: HistoricalPersonNamingMetadata;
 }
 
 export function removeVietnameseAccents(str: string): string {
@@ -107,6 +136,20 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Nguyễn Huệ', 'Hồ Thơm', 'Bắc Bình Vương', 'Vua Quang Trung', 'Quang Trung Hoàng Đế', 'Long Nhương Tướng Quân', 'Long Nhượng Tướng Quân', 'Anh hùng áo vải'],
     timeRange: { start: 1753, end: 1792 },
     dynasty: 'Nhà Tây Sơn',
+    namingMetadata: {
+      birthName: 'Hồ Thơm',
+      courtesyOrCommonName: 'Nguyễn Huệ',
+      preReignTitles: ['Long Nhương Tướng Quân', 'Bắc Bình Vương'],
+      reignEra: 'Quang Trung',
+      reignPeriod: { start: 1788, end: 1792 },
+      familyLineage: {
+        father: 'Hồ Phi Phúc',
+        mother: 'Nguyễn Thị Đồng',
+        siblings: ['Nguyễn Nhạc (Tây Sơn Vương)', 'Nguyễn Lữ (Đông Định Vương)'],
+        spouses: ['Phạm Thị Liên', 'Bùi Thị Nhạn', 'Lê Ngọc Hân (Công chúa Ngọc Hân)'],
+        children: ['Quang Toản (Cảnh Thịnh Hoàng đế)'],
+      },
+    },
   },
   'person_nguyen_nhac': {
     entityId: 'person_nguyen_nhac',
@@ -115,6 +158,18 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Tây Sơn Vương', 'Thái Đức Hoàng Đế', 'Vua Thái Đức'],
     timeRange: { start: 1743, end: 1793 },
     dynasty: 'Nhà Tây Sơn',
+    namingMetadata: {
+      birthName: 'Hồ Nhạc',
+      courtesyOrCommonName: 'Nguyễn Nhạc',
+      preReignTitles: ['Tây Sơn Vương'],
+      reignEra: 'Thái Đức',
+      reignPeriod: { start: 1778, end: 1793 },
+      familyLineage: {
+        father: 'Hồ Phi Phúc',
+        mother: 'Nguyễn Thị Đồng',
+        siblings: ['Nguyễn Huệ (Quang Trung Hoàng đế)', 'Nguyễn Lữ (Đông Định Vương)'],
+      },
+    },
   },
   'person_kinh_duong_vuong': {
     entityId: 'person_kinh_duong_vuong',
@@ -139,6 +194,18 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Trần Quốc Tuấn', 'Hưng Đạo Đại Vương', 'Hưng Đạo Vương', 'Đức Thánh Trần'],
     timeRange: { start: 1228, end: 1300 },
     dynasty: 'Nhà Trần',
+    namingMetadata: {
+      birthName: 'Trần Quốc Tuấn',
+      preReignTitles: ['Quốc công Tiết chế'],
+      templeName: 'Hưng Đạo Đại Vương',
+      familyLineage: {
+        father: 'An Sinh Vương Trần Liễu',
+        mother: 'Thiện Đạo Quốc mẫu',
+        siblings: ['Tuệ Trung Thượng Sĩ (Trần Tung)', 'Doãn Hiến vương Trần Quốc Khang'],
+        spouses: ['Thiên Thành Công chúa'],
+        children: ['Trần Quốc Nghiễn (Hưng Vũ vương)', 'Trần Quốc Hiện (Hưng Hiến vương)', 'Trần Quốc Tảng (Hưng Nhượng vương)', 'Trần Quốc Ánh (Hưng Trí vương)', 'Bảo Thánh Hoàng hậu Trần Khâm'],
+      },
+    },
   },
   'person_le_loi': {
     entityId: 'person_le_loi',
@@ -147,6 +214,19 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Lê Thái Tổ', 'Bình Định Vương', 'Vua Lê Lợi', 'Thái Tổ Hoàng đế'],
     timeRange: { start: 1385, end: 1433 },
     dynasty: 'Nhà Hậu Lê',
+    namingMetadata: {
+      birthName: 'Lê Lợi',
+      preReignTitles: ['Bình Định Vương'],
+      reignEra: 'Thuận Thiên',
+      templeName: 'Lê Thái Tổ',
+      reignPeriod: { start: 1428, end: 1433 },
+      familyLineage: {
+        father: 'Lê Khoáng (Lê Tuyên Tổ)',
+        mother: 'Trịnh Thị Ngọc Thương (Trinh Từ Hoàng thái hậu)',
+        siblings: ['Lê Học (Chiêu Tằng đại vương)', 'Lê Trừ (Hoằng Dụ đại vương)'],
+        children: ['Lê Tư Tề (Quận vương)', 'Lê Thái Tông (Lê Nguyên Long)'],
+      },
+    },
   },
   'person_ngo_quyen': {
     entityId: 'person_ngo_quyen',
@@ -163,6 +243,17 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Lý Công Uẩn', 'Vua Lý Thái Tổ', 'Thái Tổ Hoàng đế'],
     timeRange: { start: 974, end: 1028 },
     dynasty: 'Nhà Lý',
+    namingMetadata: {
+      birthName: 'Lý Công Uẩn',
+      reignEra: 'Thuận Thiên',
+      templeName: 'Lý Thái Tổ',
+      reignPeriod: { start: 1009, end: 1028 },
+      familyLineage: {
+        father: 'Hiển Khánh Vương',
+        mother: 'Phạm Thị',
+        children: ['Lý Thái Tông (Lý Phật Mã)'],
+      },
+    },
   },
   'person_dinh_tien_hoang': {
     entityId: 'person_dinh_tien_hoang',
@@ -171,6 +262,18 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Đinh Bộ Lĩnh', 'Vạn Thắng Vương', 'Đinh Tiên Hoàng Đế'],
     timeRange: { start: 924, end: 979 },
     dynasty: 'Nhà Đinh',
+    namingMetadata: {
+      birthName: 'Đinh Bộ Lĩnh',
+      preReignTitles: ['Vạn Thắng Vương'],
+      reignEra: 'Thái Bình',
+      templeName: 'Đinh Tiên Hoàng',
+      reignPeriod: { start: 968, end: 979 },
+      familyLineage: {
+        father: 'Đinh Công Trứ',
+        mother: 'Đàm Thị',
+        children: ['Đinh Liễn (Nam Việt vương)', 'Đinh Hạng Lang', 'Đinh Toàn (Đinh Phế Đế)'],
+      },
+    },
   },
   'person_nguyen_trai': {
     entityId: 'person_nguyen_trai',
@@ -252,6 +355,11 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     timeRange: { start: -257, end: -208 },
     dynasty: 'Âu Lạc',
     isMythological: false,
+    namingMetadata: {
+      birthName: 'Thục Phán',
+      reignEra: 'An Dương Vương',
+      reignPeriod: { start: -257, end: -208 },
+    },
   },
   'person_cao_lo': {
     entityId: 'person_cao_lo',
@@ -377,6 +485,12 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Nguyễn Ánh', 'Vua Gia Long', 'Gia Long Hoàng Đế'],
     timeRange: { start: 1762, end: 1820 },
     dynasty: 'Nhà Nguyễn',
+    namingMetadata: {
+      birthName: 'Nguyễn Ánh',
+      reignEra: 'Gia Long',
+      templeName: 'Thế Tổ',
+      reignPeriod: { start: 1802, end: 1820 },
+    },
   },
   'person_minh_mang': {
     entityId: 'person_minh_mang',
@@ -417,14 +531,35 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Mai Hắc Đế', 'Vua Mai Hắc Đế'],
     timeRange: { start: 670, end: 722 },
     dynasty: 'Thời kỳ Bắc thuộc',
+    namingMetadata: {
+      birthName: 'Mai Thúc Loan',
+      reignEra: 'Mai Hắc Đế',
+      reignPeriod: { start: 713, end: 722 },
+    },
   },
   'person_ho_chi_minh': {
     entityId: 'person_ho_chi_minh',
     canonicalName: 'Hồ Chí Minh',
     type: 'HISTORICAL_PERSON',
-    aliases: ['Bác Hồ', 'Nguyễn Ái Quốc', 'Nguyễn Tất Thành', 'Chủ tịch Hồ Chí Minh', 'Cụ Hồ'],
+    aliases: ['Bác Hồ', 'Nguyễn Ái Quốc', 'Nguyễn Tất Thành', 'Chủ tịch Hồ Chí Minh', 'Cụ Hồ', 'Văn Ba', 'Lý Thụy', 'Thầu Chín'],
     timeRange: { start: 1890, end: 1969 },
     dynasty: 'Thời kỳ Hiện đại',
+    namingMetadata: {
+      archetype: 'MODERN_FIGURE',
+      birthName: 'Nguyễn Sinh Cung (Nguyễn Sinh Côn)',
+      courtesyOrCommonName: 'Nguyễn Tất Thành, Nguyễn Ái Quốc, Bác Hồ',
+      periodAliases: [
+        { period: '1890 - 1901 (thuở nhỏ)', name: 'Nguyễn Sinh Cung (Nguyễn Sinh Côn)' },
+        { period: '1901 (khi bắt đầu đi học)', name: 'Nguyễn Tất Thành (do thân phụ Nguyễn Sinh Sắc đặt tên tự)' },
+        { period: '1911 (khi lên tàu Latouche-Tréville xuất dương)', name: 'Văn Ba (Anh Ba)' },
+        { period: '1919 - 1941 (hoạt động cách mạng quốc tế)', name: 'Nguyễn Ái Quốc' },
+        { period: '1924 - 1927 (hoạt động tại Quảng Châu)', name: 'Lý Thụy' },
+        { period: '1928 - 1929 (hoạt động tại Xiêm)', name: 'Thầu Chín' },
+        { period: 'Từ 1941 (về nước lập Mặt trận Việt Minh và lãnh đạo cách mạng)', name: 'Hồ Chí Minh' },
+        { period: 'Nhân dân tôn kính', name: 'Bác Hồ, Cụ Hồ' },
+      ],
+      totalAliasesEstimated: 'Khoảng 150 đến 175 tên gọi, bút danh, bí danh theo các công trình nghiên cứu chính thức của Bảo tàng Hồ Chí Minh và giới sử học',
+    },
   },
   'person_tran_thu_do': {
     entityId: 'person_tran_thu_do',
@@ -2392,7 +2527,7 @@ function initFastEntityMap(): void {
     }
   }
 
-  const AMBIGUOUS_SINGLE_WORD_LOCS = new Set(['tiền', 'hậu', 'đà', 'hồng', 'mã', 'cả', 'lô', 'thao', 'đáy']);
+  const AMBIGUOUS_SINGLE_WORD_LOCS = new Set(['tiền', 'hậu', 'đà', 'hồng', 'mã', 'cả', 'lô', 'thao', 'đáy', 'hương', 'tranh', 'gianh', 'vệ']);
   for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
     register(loc.entityId, loc.entityId, loc.canonicalName);
     register(loc.canonicalName, loc.entityId, loc.canonicalName);
@@ -2960,6 +3095,8 @@ export function buildAliasTable(entityIds: string[]): Record<string, string[]> {
 export const COLLECTIVE_ENTITY_MEMBERS: Record<string, string[]> = {
   person_hai_ba_trung: ['person_trung_trac', 'person_trung_nhi'],
   group_tay_son_tam_kiet: ['person_nguyen_hue', 'person_nguyen_nhac', 'person_nguyen_lu'],
+  org_tay_son: ['person_nguyen_nhac', 'person_nguyen_hue', 'person_nguyen_lu'],
+  dynasty_nha_tay_son: ['person_nguyen_nhac', 'person_nguyen_hue', 'person_nguyen_lu'],
   group_truc_lam_tam_to: ['person_tran_nhan_tong', 'person_phap_loa', 'person_huyen_quang'],
 };
 

@@ -20,6 +20,7 @@ import {
   isPgAvailable,
   initSchema,
   ingestHistoricalDocument,
+  query,
 } from '@chronoviet/infra';
 
 import { extractQueryEntities } from './retrieval/question-ner.js';
@@ -69,9 +70,25 @@ export async function ensureGlobalSchemaInitialized(): Promise<void> {
   if (!globalSchemaInitPromise) {
     globalSchemaInitPromise = (async () => {
       try {
-        await initSchema();
+        const pgUp = await isPgAvailable();
+        if (pgUp) {
+          // Fast check: verify if document_chunks table already exists to avoid heavy DDL metadata locks in runtime
+          const check = await query<{ exists: boolean }>(
+            `SELECT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_schema = 'public' AND table_name = 'document_chunks'
+            );`
+          ).catch(() => [{ exists: false }]);
+
+          if (!check[0]?.exists) {
+            await initSchema();
+          }
+        } else {
+          // Reset promise so next search request can re-attempt check once DB is healthy
+          globalSchemaInitPromise = null;
+        }
       } catch (err) {
-        log.warn('rag.schema_init_failed', 'Schema initialization failed; will retry on next request', {
+        log.warn('rag.schema_init_failed', 'Schema initialization check failed; will retry on next request', {
           error: err,
         });
         globalSchemaInitPromise = null;
@@ -392,11 +409,13 @@ export class ChronoRagEngine implements IRagEngine {
     const citations: string[] = [];
     let accumulatedTokens = 0;
     const sourceCountMap = new Map<string, number>();
+    const topCandidateScore = topChunks[0]?.score || 0;
+    const dynamicRelativeCutoff = Math.max(MIN_RELEVANCE_SCORE_CUTOFF, topCandidateScore * 0.45);
 
     for (let idx = 0; idx < topChunks.length; idx++) {
       const chunk = topChunks[idx];
-      // Hard Relevance Cutoff Gate: eliminate low-confidence candidates (score < 0.35)
-      if (typeof chunk.score === 'number' && chunk.score < MIN_RELEVANCE_SCORE_CUTOFF) {
+      // Hard Relevance Cutoff Gate & Dynamic Relative Cutoff: eliminate low-confidence candidates
+      if (typeof chunk.score === 'number' && (chunk.score < MIN_RELEVANCE_SCORE_CUTOFF || (idx > 0 && chunk.score < dynamicRelativeCutoff))) {
         continue;
       }
 
@@ -441,12 +460,18 @@ export class ChronoRagEngine implements IRagEngine {
       const canonicalName = matchedCanonicalName || canonical.canonicalName || chunk.title;
       const aliases = matchedAliases.length > 0 ? matchedAliases : canonical.aliases || [];
 
+      const cleanDocTitle = chunk.title
+        .replace(/\s*-\s*Đoạn\s+[\d.]+/gi, '')
+        .replace(/\s*\(Phần\s+\d+\)/gi, '')
+        .replace(/\s*-\s*Đoạn hợp nhất\s*\([\d.-]+\)/gi, '')
+        .trim() || chunk.title;
+
       verifiedContext.push({
         entityId: canonical.entityId,
         canonicalName,
         aliases,
         summary: cleanSummary,
-        citations: [`Tập sử liệu: ${chunk.title}`, `Mức độ tin cậy: ${chunk.sourceReliability || 'LEVEL_1'}`],
+        citations: [`Tập sử liệu: ${cleanDocTitle}`, `Mức độ tin cậy: ${chunk.sourceReliability || 'LEVEL_1'}`],
         confidenceScore: typeof chunk.score === 'number' && !isNaN(chunk.score)
           ? Math.min(1.0, Math.max(0.1, Number(chunk.score.toFixed(3))))
           : Math.min(1.0, 0.85 + (topChunks.length - idx) * 0.03),
@@ -460,7 +485,7 @@ export class ChronoRagEngine implements IRagEngine {
         epochIds: chunk.epochIds,
       });
 
-      citations.push(`${chunk.title} [Nguồn: ${chunk.sourceReliability || 'LEVEL_1'}]`);
+      citations.push(`${cleanDocTitle} [Nguồn: ${chunk.sourceReliability || 'LEVEL_1'}]`);
       accumulatedTokens += estimatedChunkTokens;
     }
 
@@ -476,7 +501,7 @@ export class ChronoRagEngine implements IRagEngine {
     return {
       verifiedContext,
       aliasTable: graphResult.aliasTable,
-      citations,
+      citations: Array.from(new Set(citations)),
       triples,
       retrievalLatencyMs,
     };

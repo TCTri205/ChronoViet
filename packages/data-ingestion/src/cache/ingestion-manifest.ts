@@ -87,6 +87,12 @@ export class IngestionManifest {
     if (stage === 'all' && checkpoint.stage !== 'all') {
       return false;
     }
+    if (stage === 'graph' && checkpoint.stage !== 'graph' && checkpoint.stage !== 'all') {
+      return false;
+    }
+    if (stage === 'vector' && checkpoint.stage !== 'vector' && checkpoint.stage !== 'all') {
+      return false;
+    }
 
     // Check if underlying file on disk was modified since completion
     try {
@@ -127,6 +133,18 @@ export class IngestionManifest {
    */
   public async recordDocumentCompleted(checkpoint: DocumentCheckpoint): Promise<void> {
     const manifest = await this.load();
+    const existing = manifest.completedDocuments[checkpoint.sourceName];
+    if (existing) {
+      if (
+        (existing.stage === 'vector' && checkpoint.stage === 'graph') ||
+        (existing.stage === 'graph' && checkpoint.stage === 'vector')
+      ) {
+        checkpoint.stage = 'all';
+      }
+      if (checkpoint.chunksCount === 0 && existing.chunksCount > 0) {
+        checkpoint.chunksCount = existing.chunksCount;
+      }
+    }
     manifest.completedDocuments[checkpoint.sourceName] = checkpoint;
     await this.save();
   }

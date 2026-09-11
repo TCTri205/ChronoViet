@@ -117,8 +117,15 @@ class InMemoryRagStore {
 
 export const inMemoryStore = new InMemoryRagStore();
 
-let pgPool: Pool | null = null;
-let pgConnected = false;
+interface ChronoGlobalDb {
+  __chronoviet_pg_pool__?: Pool | null;
+  __chronoviet_pg_connected__?: boolean;
+}
+
+const chronoGlobal = globalThis as unknown as ChronoGlobalDb;
+
+let pgPool: Pool | null = chronoGlobal.__chronoviet_pg_pool__ || null;
+let pgConnected = Boolean(chronoGlobal.__chronoviet_pg_connected__);
 let checkAttempted = false;
 let lastCheckTime = 0;
 const NEGATIVE_CACHE_TTL_MS = 1500;
@@ -139,6 +146,7 @@ export function getPoolConfig() {
 export async function isPgAvailable(forceCheck = false): Promise<boolean> {
   if (Boolean(envConfig.FORCE_OFFLINE) || Boolean(envConfig.SKIP_PG)) {
     pgConnected = false;
+    chronoGlobal.__chronoviet_pg_connected__ = false;
     checkAttempted = true;
     log.warn('db.pg_forced_offline', 'PostgreSQL disabled via FORCE_OFFLINE/SKIP_PG; using in-memory store', {
       forceOffline: Boolean(envConfig.FORCE_OFFLINE),
@@ -148,7 +156,11 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
   }
 
   const now = Date.now();
-  if (pgConnected && !forceCheck) return true;
+  if (chronoGlobal.__chronoviet_pg_connected__ && !forceCheck) {
+    pgConnected = true;
+    pgPool = chronoGlobal.__chronoviet_pg_pool__ || null;
+    return true;
+  }
   if (!pgConnected && checkAttempted && !forceCheck && now - lastCheckTime < NEGATIVE_CACHE_TTL_MS) {
     return false;
   }
@@ -159,12 +171,15 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
   const cfg = getPoolConfig();
   const timeoutMs = Math.max(2000, envConfig.PG_CONNECTION_TIMEOUT_MS || 5000);
   try {
-    if (!pgPool) {
-      pgPool = new Pool({ ...cfg, connectionTimeoutMillis: timeoutMs });
-      pgPool.on('error', () => {
+    if (!chronoGlobal.__chronoviet_pg_pool__) {
+      const newPool = new Pool({ ...cfg, connectionTimeoutMillis: timeoutMs });
+      newPool.on('error', () => {
         pgConnected = false;
+        chronoGlobal.__chronoviet_pg_connected__ = false;
       });
+      chronoGlobal.__chronoviet_pg_pool__ = newPool;
     }
+    pgPool = chronoGlobal.__chronoviet_pg_pool__;
 
     const client = await Promise.race([
       pgPool.connect(),
@@ -175,6 +190,7 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
     client.release();
     const wasConnected = pgConnected;
     pgConnected = true;
+    chronoGlobal.__chronoviet_pg_connected__ = true;
     if (!wasConnected) {
       log.info('db.pg_connected', 'PostgreSQL connection established', {
         host: cfg.host,
@@ -186,6 +202,7 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
   } catch (err) {
     const wasConnected = pgConnected;
     pgConnected = false;
+    chronoGlobal.__chronoviet_pg_connected__ = false;
     if (wasConnected || !checkAttempted) {
       log.warn('db.pg_unavailable', 'PostgreSQL unavailable; falling back to in-memory store', {
         error: err,
@@ -193,8 +210,9 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
         database: cfg.database,
       });
     }
-    if (pgPool) {
-      const poolToClose = pgPool;
+    if (chronoGlobal.__chronoviet_pg_pool__) {
+      const poolToClose = chronoGlobal.__chronoviet_pg_pool__;
+      chronoGlobal.__chronoviet_pg_pool__ = null;
       pgPool = null;
       poolToClose.end().catch(() => {});
     }
@@ -253,8 +271,11 @@ export async function initSchema(): Promise<boolean> {
 }
 
 export async function closePool(): Promise<void> {
-  if (pgPool) {
-    await pgPool.end();
+  const poolToClose = chronoGlobal.__chronoviet_pg_pool__ || pgPool;
+  if (poolToClose) {
+    await poolToClose.end().catch(() => {});
+    chronoGlobal.__chronoviet_pg_pool__ = null;
+    chronoGlobal.__chronoviet_pg_connected__ = false;
     pgPool = null;
     pgConnected = false;
     checkAttempted = false;
@@ -295,6 +316,6 @@ export async function logEntityAuditAction(
 }
 
 export function getDatabaseClient(): Pool | null {
-  return pgPool;
+  return chronoGlobal.__chronoviet_pg_pool__ || pgPool;
 }
 

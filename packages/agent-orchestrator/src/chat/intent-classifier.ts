@@ -4,10 +4,25 @@
  * Implements Dual-Key Positive Gating to prevent ungrounded queries from triggering heavy RAG.
  */
 
-import { resolveCanonicalEntity, isKnownMasterEntity, ChatIntent, ChatSubIntent } from '@chronoviet/shared-spec';
+import {
+  resolveCanonicalEntity,
+  isKnownMasterEntity,
+  ChatIntent,
+  ChatSubIntent,
+  CompositeIntentResult,
+  IntentClause,
+  VideoHandoverMetadata,
+} from '@chronoviet/shared-spec';
 import { normalizeResilientText } from './text-normalizer.js';
 
 export type { ChatIntent, ChatSubIntent };
+
+export interface IntentClassificationSignals {
+  hasChitchatGreeting: boolean;
+  hasVideoGeneration: boolean;
+  hasOutOfDomainTopic: boolean;
+  isCoReferenceIdentity: boolean;
+}
 
 export interface IntentClassificationResult {
   intent: ChatIntent;
@@ -17,6 +32,15 @@ export interface IntentClassificationResult {
   suggestedTopic?: string;
   matchedEntityId?: string;
   matchedCanonicalName?: string;
+  signals?: IntentClassificationSignals;
+  cleanSearchTopic?: string;
+  videoBriefTopic?: string;
+  outOfDomainTopic?: string;
+  needsSemanticArbitration?: boolean;
+  arbitratedEntities?: string[];
+  arbitratedFakeEntities?: string[];
+  compositeResult?: CompositeIntentResult;
+  videoHandover?: VideoHandoverMetadata;
 }
 
 // Out of Domain Patterns (Cooking recipes, Stock trading, Generic coding)
@@ -42,6 +66,8 @@ const PURE_CHITCHAT_PATTERNS = [
   /^(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|bot|chronoviet|ad|admin|cậu|mày)\s+là\s+ai(?:\s+(?:thế|vậy|hả|nhỉ|dạ|\?))?$/i,
   /^(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|bot|chronoviet|ad|admin|cậu|mày)\s+tên\s+(?:là\s+)?gì(?:\s+(?:thế|vậy|hả|nhỉ|dạ|\?))?$/i,
   /^(?:(?:hệ\s*thống\s+)?chronoviet\s+có\s+(?:những\s+)?(?:tính\s*năng|chức\s*năng|khả\s*năng|điểm)\s+gì|tính\s*năng\s+(?:của\s+)?(?:chronoviet|hệ\s*thống)|bạn\s+có\s+thể\s+làm\s+(?:được\s+)?gì)/i,
+  /^(?:phạm\s*vi\s+(?:tra\s*cứu|hỗ\s*trợ|kiến\s*thức|hoạt\s*động)|khả\s*năng\s+tra\s*cứu|bạn\s+có\s+thể\s+(?:giúp|làm)\s+(?:được\s+)?gì|bạn\s+(?:biết\s+gì|giúp\s+được\s+gì|làm\s+được\s+gì))/i,
+  /(?:phạm\s*vi\s+tra\s*cứu\s+(?:của\s+)?(?:bạn|bot|chronoviet|hệ\s*thống))/i,
   /^(?:chronoviet\s+là\s+gì|giới\s+thiệu\s+(?:về\s+)?(?:bản\s+thân|bạn|chronoviet)|hướng\s+dẫn(?:\s+sử\s+dụng)?|giúp\s+tôi\s+với|help)$/i,
 ];
 
@@ -65,6 +91,29 @@ const SHADOW_CHITCHAT_PATTERNS = [
 // Pleasantry Prefix Regex to strip before evaluating substantive historical/video intent
 const PLEASANTRY_PREFIX_REGEX = /^(?:xin\s+chào|chào\s+(?:bạn|bot|ad|admin|em|anh|chị|mọi\s+người|cả\s+nhà|chronoviet|ai)?|chào|hello|hi|hey|alo|halo|cho\s+(?:mình|tôi|em)\s+hỏi|làm\s+ơn\s+cho\s+biết|phiền\s+bạn)(?:[\s,;:!?-]+)/i;
 
+// Secondary Greeting / Pleasantry / Bot Identity Clauses (to strip from compound queries)
+const SECONDARY_GREETING_PREFIX_REGEX =
+  /^(?:(?:xin\s+)?chào(?:\s+(?:bạn|bot|ad|admin|em|anh|chị|mọi\s+người|cả\s+nhà|chronoviet|ai))?|hello|hi|hey|alo|halo)(?:[\s,;:!?-]+(?:bạn\s+là\s+ai|bạn\s+tên\s+(?:là\s+)?gì|bạn\s+có\s+thể\s+(?:làm|giúp)\s+(?:được\s+)?gì(?:\s+cho\s+tôi)?))?(?:[\s,;:!?-]+(?:và|với|cùng|nhân\s+tiện|tiện\s+thể|cho\s+(?:mình|tôi|em)\s+hỏi|hãy\s+cho\s+(?:mình|tôi|em)\s+biết|cho\s+biết|bạn\s+có\s+thể\s+cho\s+(?:tôi|mình|em)\s+biết))?\s*/i;
+
+const SECONDARY_BOT_IDENTITY_PREFIX_REGEX =
+  /^(?:(?:cho\s+(?:mình|tôi|em)\s+hỏi|làm\s+ơn\s+cho\s+biết|phiền\s+bạn)\s*,?\s*)?(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)?\s*,?\s*(?:bạn|bot|chronoviet|ad|admin|cậu)\s+(?:là\s+ai|tên\s+(?:là\s+)?gì|có\s+thể\s+giúp\s+gì(?:\s+cho\s+tôi)?)(?:[\s,;:!?-]+(?:và|với|cùng|nhân\s+tiện|tiện\s+thể|hãy\s+cho\s+(?:tôi|em|mình)\s+biết|cho\s+biết|bạn\s+có\s+thể\s+cho\s+(?:tôi|mình|em)\s+biết))?\s*/i;
+
+// Secondary Video Generation Suffix Clauses (to strip from compound queries)
+const SECONDARY_VIDEO_SUFFIX_REGEX =
+  /(?:[\s,;:!?-]+(?:và|đồng\s*thời|tiện\s*thể|nhân\s*tiện)?\s*(?:hãy\s+)?(?:tạo|làm|dựng|sản\s*xuất|generate|make)\s+(?:cho\s+tôi\s+)?(?:video|clip|phim|thước\s*phim)(?:\s+(?:về\s+(?:chủ\s+đề\s+này|nó|sự\s+kiện\s+này|nhân\s+vật\s+này)|ngắn|chi\s+tiết))?(?:\s+(?:giúp\s+tôi|nhé|nhe|nha|ạ|với))?[\s.?!]*)$/i;
+
+// Secondary Out-of-Domain Suffix Clauses (to strip from compound queries)
+const SECONDARY_OOD_SUFFIX_REGEX =
+  /(?:[\s,;:!?-]+(?:và\s+)?(?:nhân\s*tiện|tiện\s*thể|đồng\s*thời)?\s*(?:chỉ|hướng\s*dẫn|dạy|bày|nói|cho\s+(?:tôi|mình|em)\s+biết)\s+(?:cách\s+|công\s*thức\s+)?(?:tôi\s+)?(?:làm|nấu|chế\s*biến|pha|nướng|viết\s+code|đầu\s*tư).*)$/i;
+
+// Conversational Inquiry Prefix wrapper (e.g. "bạn có thể cho tôi biết Bác Hồ là ai không?")
+const CONVERSATIONAL_INQUIRY_WRAPPER_REGEX =
+  /^(?:bạn\s+có\s+thể\s+(?:cho\s+(?:tôi|mình|em)\s+biết|nói\s+(?:cho\s+)?(?:tôi|mình|em)\s+biết|giúp\s+tôi\s+biết)|cho\s+(?:tôi|mình|em)\s+biết|hãy\s+cho\s+(?:tôi|mình|em)\s+biết|cho\s+(?:tôi|mình|em)\s+hỏi|làm\s+ơn\s+cho\s+biết|hỏi\s+rằng|cho\s+hỏi)\s*/i;
+
+// Primary Video Intent Prefix: The user specifically starts by commanding a video production
+const PRIMARY_VIDEO_START_REGEX =
+  /^(?:(?:(?:xin\s+)?chào|hello|hi|hey|alo|halo)(?:\s+[a-zà-ỹ\w]+)?[\s,;:!?-]+)?(?:hãy\s+|bạn\s+có\s+thể\s+|giúp\s+tôi\s+)?(?:tạo|làm|sản\s*xuất|dựng|xây\s*dựng|generate|make|edit|chỉnh\s*sửa|chuyển|tổng\s*hợp|video\s*brief)\b/i;
+
 const VIDEO_INTENT_PATTERNS = [
   /(?:tạo|làm|sản\s*xuất|dựng|xây\s*dựng|generate|make|edit|chỉnh\s*sửa)(?:\s+[\wà-ỹ]+){0,4}\s+(?:video|clip|phim|thước\s*phim|dự\s*án\s*video|kịch\s*bản\s*video)(?:\s+(?:về|về\s+chủ\s+đề|kể\s+về))?\s*(.+)?/i,
   /(?:chuyển|tổng\s*hợp)\s+(?:thành|sang)\s+video\s*(.+)?/i,
@@ -72,19 +121,35 @@ const VIDEO_INTENT_PATTERNS = [
   /(?:phân\s*cảnh|chỉnh\s*sửa\s*phân\s*cảnh|kéo\s*dài\s*thêm|đổi\s*layout)/i,
 ];
 
+// Kinship, lineage, and family relations patterns (not conversational pronouns)
+export const KINSHIP_AND_RELATION_REGEX =
+  /(?:(?:2|hai)?\s*anh\s+em(?:\s+ruột)?|chị\s+em(?:\s+ruột)?|cha\s+con|mẹ\s+con|vợ\s+chồng|huynh\s+đệ|tỷ\s+muội|đồng\s+môn|thầy\s+trò|tướng\s+sĩ|quân\s+thần|dòng\s+họ|tông\s+tộc|anh\s+hùng|anh\s+ruột|em\s+ruột|anh\s+trai|em\s+trai|chị\s+gái|em\s+gái|ông\s+cháu|bà\s+cháu|tiền\s+bối|hậu\s+duệ|thân\s+tộc|phả\s+hệ|tổ\s+tiên|huyết\s+thống|cột\s+chèo)/i;
+
+// Substantive interrogative syntax (questions asking for facts, identities, locations, or dates)
+export const SUBSTANTIVE_QUESTION_REGEX =
+  /(?:có\s+phải(?:\s+là)?|phải\s+chăng|là\s+ai|ở\s+đâu|khi\s+nào|thời\s+nào|năm\s+nào|tại\s+sao|vì\s+sao|như\s+thế\s+nào|ra\s+sao|mấy\s+người|bao\s+nhiêu|ai\s+là|vị\s+vua|vị\s+tướng|nhân\s+vật|sự\s+kiện|chiến\s+công|công\s+tích|diễn\s+biến|kế\s+sách|trận\s+đánh)(?:$|[\s,;:.!?])/i;
+
+// Direct second-person address or personal chitchat aimed at the bot persona
+export const DIRECT_CONVERSATIONAL_ADDRESS_REGEX =
+  /(?:^(?:ơi\s+)?(?:bạn|bot|chronoviet|cậu|mày|ad|admin)\b|\b(?:ơi\s+)?(?:bạn|bot|chronoviet|cậu|mày|ad|admin)(?:$|[\s,;:.!?])|^(?:anh|em|chị)\s+ơi\b|\b(?:anh|em|chị)\s+ơi(?:$|[\s,;:.!?])|\b(?:tôi|mình|em)\s+(?:có\s+\d+\s+câu\s+hỏi\s+về\s+bạn|buồn|vui|chán|mệt|đang\s+rảnh|thích|ghét)\b)/i;
+
+// Casual chat remarks (weather, modern life complaints, short pleasantries without question syntax)
+export const CASUAL_REMARK_REGEX =
+  /(?:^|[\s,;:.!?])(?:nhà\s+lên\s+giá|giá\s+(?:nhà|xăng|vàng|đất|xe)|thời\s+tiết|trời\s+(?:nắng|mưa|đẹp|lạnh|nóng|âm\s+u|gió)|hôm\s+nay\s+(?:mệt|vui|buồn|chán|bận)|mệt\s+mỏi|chán\s+(?:quá|ghê|thế)|buồn\s+(?:quá|ngủ)|vui\s+quá|đói\s+bụng|đi\s+(?:ngủ|ăn|chơi)|chúc\s+ngủ\s+ngon|ha\s*ha|hi\s*hi|hê\s*hê|cũng\s+được|thế\s+à|vậy\s+à|ừ\s+nhỉ|ok\s+bạn|được\s+đấy)(?:$|[\s,;:.!?])|(?:\b(?:quá|lắm|ghê)\b.*(?:\b(?:nhỉ|nhe|nhé|nha|thế)\b)?$)/i;
+
 // Conjunction / Coordinate Entity Query Patterns ("A và B là ai", "quan hệ giữa A và B", "A và B có phải là 2 anh em...")
 const CONJUNCTION_ENTITY_PATTERNS = [
   /^(.+?)\s+(?:và|với|cùng)\s+(.+?)\s+là\s+(?:ai|những\s+ai|người\s+như\s+thế\s+nào)(?:\s*\?)?$/i,
   /^(?:quan\s+hệ\s+giữa|mối\s+quan\s+hệ\s+giữa)\s+(.+?)\s+(?:và|với)\s+(.+?)(?:\s+là\s+gì|\s+như\s+thế\s+nào)?(?:\s*\?)?$/i,
   /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+(?:mối\s+)?quan\s+hệ\s+(?:gì|như\s+thế\s+nào)(?:\s*\?)?$/i,
-  /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau|(?:2|hai)?\s*anh\s+em(?:\s+ruột)?)(?:\s*không|\s+hả|\s*\?)?$/i,
+  /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau|(?:2|hai)?\s*anh\s+em(?:\s+ruột)?)(?:\s*không|\s+hay\s+không|\s+phải\s+không|\s+hả|\s*\?)?$/i,
   /^(.+?)\s+(?:và|với)\s+(.+?)\s+là\s+(?:cùng\s+một\s+người|là\s+một)\s+(?:hay|hoặc)\s+(?:là\s+)?(?:2|hai)?\s*(?:vị\s+vua|người|nhân\s+vật)\s+khác\s+nhau(?:.*)$/i,
   /^(.+?)\s+(?:và|với)\s+(.+?)\s+là\s+(?:cùng\s+một\s+người|là\s+một|hai\s+người\s+khác\s+nhau|hai\s+vị\s+vua\s+khác\s+nhau)(?:.*)$/i,
 ];
 
 const SINGLE_ENTITY_IDENTITY_PATTERNS = [
-  /^([A-ZÀ-Ỹa-zà-ỹ\s0-9-]+)\s+là\s+ai(?:\s*\?)?$/i,
-  /^ai\s+là\s+([A-ZÀ-Ỹa-zà-ỹ\s0-9-]+)(?:\s*\?)?$/i,
+  /^([A-ZÀ-Ỹa-zà-ỹ\s0-9-]+)\s+là\s+ai(?:\s+(?:thế|vậy|không|hả|nhỉ|ạ))?(?:\s*\?)?$/i,
+  /^ai\s+là\s+([A-ZÀ-Ỹa-zà-ỹ\s0-9-]+)(?:\s+(?:thế|vậy|không|hả|nhỉ|ạ))?(?:\s*\?)?$/i,
   /^([A-ZÀ-Ỹa-zà-ỹ\s0-9-]+)\s+có\s+phải\s+(?:là\s+)?([A-ZÀ-Ỹa-zà-ỹ\s0-9-]+)(?:\s*không|\s*\?)?$/i,
   /^tên\s+thật\s+của\s+([A-ZÀ-Ỹa-zà-ỹ\s0-9-]+)\s+(?:là\s+gì|\?)/i,
   /^quê\s+quán\s+của\s+([A-ZÀ-Ỹa-zà-ỹ\s0-9-]+)\s+(?:ở\s+đâu|\?)/i,
@@ -105,6 +170,72 @@ function stripPleasantryPrefix(text: string): { stripped: string; hasPrefix: boo
     }
   }
   return { stripped: text, hasPrefix: false };
+}
+
+/**
+ * Splits a composite query into individual semantic clauses while safely preserving coordinate entities
+ * (e.g. "Quang Trung và Nguyễn Huệ", "Lê Lợi và Lê Độ").
+ */
+export function splitQueryIntoSemanticClauses(text: string): string[] {
+  // Never split coordinate entity questions
+  for (const pattern of CONJUNCTION_ENTITY_PATTERNS) {
+    if (pattern.test(text)) {
+      return [text];
+    }
+  }
+
+  // Split on sentence terminators: ? . ! ; \n
+  const sentences = text
+    .split(/[?.!\n;]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  const clauses: string[] = [];
+  for (const sentence of sentences) {
+    // Check compound comma connectives separating secondary clauses:
+    // e.g. "Vua Quang Trung mất năm nào, và nhân tiện chỉ tôi nấu phở bò"
+    const parts = sentence.split(
+      /,\s*(?:và|đồng\s*thời|nhân\s*tiện|tiện\s*thể|với\s*lại)\s+/i
+    );
+
+    if (parts.length > 1) {
+      for (const p of parts) {
+        const trimmed = p.trim();
+        if (trimmed.length > 0) clauses.push(trimmed);
+      }
+    } else {
+      clauses.push(sentence);
+    }
+  }
+  return clauses.length > 0 ? clauses : [text];
+}
+
+/**
+ * Surgically cleans an isolated historical clause by removing leading discourse connectives,
+ * conversational inquiry wrappers, and trailing particles.
+ */
+export function cleanHistoricalClause(text: string): string {
+  let cleaned = text.trim();
+  // 1. Strip leading connectives
+  cleaned = cleaned.replace(/^(?:và|với|cùng|nhân\s*tiện|tiện\s*thể|thế\s*thì|vậy\s*thì|vậy\s*cho\s*hỏi|tiện\s*thể\s*cho\s*hỏi|cho\s*hỏi)[\s,;:!?-]*/i, '').trim();
+  
+  // 2. Strip conversational inquiry wrappers
+  cleaned = cleaned.replace(/^(?:bạn\s+có\s+thể\s+(?:cho\s+(?:tôi|mình|em)\s+biết|nói\s+(?:cho\s+)?(?:tôi|mình|em)\s+biết|giúp\s+tôi\s+biết)|cho\s+(?:tôi|mình|em)\s+biết|hãy\s+cho\s+(?:tôi|mình|em)\s+biết|cho\s+(?:tôi|mình|em)\s+hỏi|làm\s+ơn\s+cho\s+biết|hỏi\s+rằng|cho\s+hỏi|bạn\s+có\s+(?:biết|nhớ)|bạn\s+biết\s+về|bạn\s+nghĩ\s+sao\s+về)\s*/i, '').trim();
+  
+  // 3. Strip pleasantry prefixes if still present
+  cleaned = cleaned.replace(/^(?:(?:xin\s+)?chào(?:\s+(?:bạn|bot|ad|admin|em|anh|chị|mọi\s+người|cả\s+nhà|chronoviet|ai))?|hello|hi|hey|alo|halo)[\s,;:!?-]*/i, '').trim();
+
+  // 4. Strip secondary question wrappers e.g. "bạn có biết"
+  cleaned = cleaned.replace(/^(?:bạn\s+có\s+biết|bạn\s+biết\s+gì\s+về|kể\s+về|kể\s+cho\s+(?:tôi|mình|em)\s+nghe\s+về)\s*/i, '').trim();
+  
+  // 5. Strip trailing question particles
+  cleaned = cleaned
+    .replace(/(?:[\s,;:!?-]+(?:và|với))+$/i, '')
+    .replace(/\s+(?:không|thế|vậy|nhỉ|hả|ạ)$/i, '')
+    .replace(/[?!.,;:]+$/g, '')
+    .trim();
+
+  return cleaned;
 }
 
 // Unicode-safe word boundaries (since standard \b treats Vietnamese accented characters as non-word)
@@ -212,65 +343,318 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
   const cleanQuery = normalizeQueryText(trimmed);
   const cleanShadow = normalizeQueryText(shadow);
 
-  // 1. Out of Domain Identification (< 0.1ms)
-  for (const pattern of OUT_OF_DOMAIN_PATTERNS) {
-    if (pattern.test(cleanQuery) || pattern.test(trimmed) || pattern.test(cleanShadow)) {
-      return {
-        intent: 'OUT_OF_DOMAIN',
-        confidence: 0.98,
-      };
+  // 1. Primary Video Intent: Queries that explicitly start with a direct video generation command
+  // E.g., "Tạo video về Chiến thắng Bạch Đằng năm 938" or "Hãy làm một video 3 phút về cuộc đời Trần Hưng Đạo"
+  if (PRIMARY_VIDEO_START_REGEX.test(cleanQuery)) {
+    for (const pattern of VIDEO_INTENT_PATTERNS) {
+      const match = cleanQuery.match(pattern) || trimmed.match(pattern);
+      if (match) {
+        const topic = (match[1] || cleanQuery).replace(/[?!.]/g, '').trim();
+        return {
+          intent: 'VIDEO_INTENT',
+          confidence: 0.95,
+          suggestedTopic: topic || cleanQuery,
+          signals: {
+            hasChitchatGreeting: PLEASANTRY_PREFIX_REGEX.test(cleanQuery),
+            hasVideoGeneration: true,
+            hasOutOfDomainTopic: false,
+            isCoReferenceIdentity: false,
+          },
+        };
+      }
     }
   }
 
-  // 2. Bot Identity & Conversational Persona Inquiry (< 0.1ms)
-  for (const pattern of BOT_IDENTITY_PATTERNS) {
-    if (pattern.test(cleanQuery) || pattern.test(trimmed) || pattern.test(cleanShadow)) {
+  // 2. Dual-Key Historical Evidence Detection (Master Entities + Domain/Warfare/Chronology Signals)
+  const initialExtracted =
+    extractHistoricalEntityFromQuery(cleanQuery) ||
+    extractHistoricalEntityFromQuery(cleanShadow);
+
+  const hasHistoricalEvidence =
+    Boolean(initialExtracted) ||
+    hasHistoricalDomainSignals(cleanQuery) ||
+    hasHistoricalDomainSignals(cleanShadow);
+
+  // 3. Non-Historical Queries Gating: If NO historical evidence is present, route purely among OOD, Chitchat, Video, or Fallback
+  if (!hasHistoricalEvidence) {
+    // 3a. Out of Domain Identification (< 0.1ms)
+    for (const pattern of OUT_OF_DOMAIN_PATTERNS) {
+      if (pattern.test(cleanQuery) || pattern.test(trimmed) || pattern.test(cleanShadow)) {
+        return {
+          intent: 'OUT_OF_DOMAIN',
+          confidence: 0.98,
+          signals: {
+            hasChitchatGreeting: false,
+            hasVideoGeneration: false,
+            hasOutOfDomainTopic: true,
+            isCoReferenceIdentity: false,
+          },
+        };
+      }
+    }
+
+    // 3b. Bot Identity & Conversational Persona Inquiry (< 0.1ms)
+    for (const pattern of BOT_IDENTITY_PATTERNS) {
+      if (pattern.test(cleanQuery) || pattern.test(trimmed) || pattern.test(cleanShadow)) {
+        return {
+          intent: 'CHITCHAT',
+          confidence: 0.99,
+          signals: {
+            hasChitchatGreeting: true,
+            hasVideoGeneration: false,
+            hasOutOfDomainTopic: false,
+            isCoReferenceIdentity: false,
+          },
+        };
+      }
+    }
+
+    // 3c. Pure Chitchat & Greetings (< 0.1ms)
+    for (const pattern of PURE_CHITCHAT_PATTERNS) {
+      if (pattern.test(cleanQuery) || pattern.test(trimmed)) {
+        return {
+          intent: 'CHITCHAT',
+          confidence: 0.95,
+          signals: {
+            hasChitchatGreeting: true,
+            hasVideoGeneration: false,
+            hasOutOfDomainTopic: false,
+            isCoReferenceIdentity: false,
+          },
+        };
+      }
+    }
+
+    // Shadow chitchat matching for unaccented queries
+    for (const pattern of SHADOW_CHITCHAT_PATTERNS) {
+      if (pattern.test(cleanShadow) || pattern.test(shadow)) {
+        return {
+          intent: 'CHITCHAT',
+          confidence: 0.92,
+          signals: {
+            hasChitchatGreeting: true,
+            hasVideoGeneration: false,
+            hasOutOfDomainTopic: false,
+            isCoReferenceIdentity: false,
+          },
+        };
+      }
+    }
+
+    // 3d. Video Intent without specific master entity (e.g. "hướng dẫn tạo video", "đổi layout phân cảnh")
+    for (const pattern of VIDEO_INTENT_PATTERNS) {
+      const match = cleanQuery.match(pattern) || trimmed.match(pattern);
+      if (match) {
+        const topic = (match[1] || cleanQuery).replace(/[?!.]/g, '').trim();
+        return {
+          intent: 'VIDEO_INTENT',
+          confidence: 0.95,
+          suggestedTopic: topic || cleanQuery,
+          signals: {
+            hasChitchatGreeting: false,
+            hasVideoGeneration: true,
+            hasOutOfDomainTopic: false,
+            isCoReferenceIdentity: false,
+          },
+        };
+      }
+    }
+
+    // 3e. Linguistic Disambiguation: Kinship vs Conversational Fallback
+    const hasKinshipOrRelation =
+      KINSHIP_AND_RELATION_REGEX.test(cleanQuery) ||
+      KINSHIP_AND_RELATION_REGEX.test(cleanShadow);
+
+    const hasSubstantiveQuestion =
+      SUBSTANTIVE_QUESTION_REGEX.test(cleanQuery) ||
+      SUBSTANTIVE_QUESTION_REGEX.test(cleanShadow);
+
+    const isDirectConversationalAddress =
+      DIRECT_CONVERSATIONAL_ADDRESS_REGEX.test(cleanQuery) ||
+      DIRECT_CONVERSATIONAL_ADDRESS_REGEX.test(cleanShadow);
+
+    const isCasualRemark =
+      CASUAL_REMARK_REGEX.test(cleanQuery) ||
+      CASUAL_REMARK_REGEX.test(cleanShadow);
+
+    // If query expresses kinship relations or substantive question structure without indexed entities,
+    // escalate to HISTORICAL_QUERY and tag for Tier 2 Semantic Arbitration
+    if (hasKinshipOrRelation || hasSubstantiveQuestion) {
+      return {
+        intent: 'HISTORICAL_QUERY',
+        subIntent: detectHistoricalSubIntent(cleanQuery),
+        confidence: 0.65,
+        needsSemanticArbitration: true,
+        cleanSearchTopic: cleanQuery,
+      };
+    }
+
+    // Direct conversational address or casual life remarks without question structure -> CHITCHAT
+    if (isDirectConversationalAddress || isCasualRemark) {
       return {
         intent: 'CHITCHAT',
-        confidence: 0.99,
+        confidence: 0.85,
+        signals: {
+          hasChitchatGreeting: true,
+          hasVideoGeneration: false,
+          hasOutOfDomainTopic: false,
+          isCoReferenceIdentity: false,
+        },
       };
+    }
+
+    // Ambiguous substantive phrase (e.g. unindexed person name, battle, or concept)
+    return {
+      intent: 'HISTORICAL_QUERY',
+      subIntent: 'GENERAL_OVERVIEW',
+      confidence: 0.7,
+      cleanSearchTopic: cleanQuery,
+      needsSemanticArbitration: true,
+    };
+  }
+
+  // 4. Substantive Historical Query Detected: Multi-Intent Signal Extraction & Surgical Cleansing
+  const signals: IntentClassificationSignals = {
+    hasChitchatGreeting: false,
+    hasVideoGeneration: false,
+    hasOutOfDomainTopic: false,
+    isCoReferenceIdentity: false,
+  };
+
+  let videoBriefTopic: string | undefined;
+  let outOfDomainTopic: string | undefined;
+  let substantiveTarget = cleanQuery;
+
+  // 4a. Isolate secondary video production suffix if present (e.g. "... và tạo video giúp tôi")
+  const videoMatch = substantiveTarget.match(SECONDARY_VIDEO_SUFFIX_REGEX);
+  if (videoMatch && videoMatch[0].length > 0 && videoMatch.index !== undefined) {
+    signals.hasVideoGeneration = true;
+    const strippedTopic = substantiveTarget.slice(0, videoMatch.index).trim();
+    if (strippedTopic.length >= 3) {
+      videoBriefTopic = strippedTopic;
+      substantiveTarget = strippedTopic;
     }
   }
 
-  // 3. Pure Chitchat & Greetings (< 0.1ms)
-  for (const pattern of PURE_CHITCHAT_PATTERNS) {
-    if (pattern.test(cleanQuery) || pattern.test(trimmed)) {
-      return {
+  // Isolate secondary out-of-domain suffix if present (e.g. "... và nhân tiện chỉ tôi nấu phở bò")
+  const oodMatch = substantiveTarget.match(SECONDARY_OOD_SUFFIX_REGEX);
+  if (oodMatch && oodMatch[0].length > 0 && oodMatch.index !== undefined) {
+    signals.hasOutOfDomainTopic = true;
+    outOfDomainTopic = oodMatch[0]
+      .replace(/^(?:[\s,;:!?-]+(?:và\s+)?(?:đồng\s*thời|tiện\s*thể|nhân\s*tiện)?\s*)/i, '')
+      .trim();
+    const strippedTopic = substantiveTarget.slice(0, oodMatch.index).trim();
+    if (strippedTopic.length >= 3) {
+      substantiveTarget = strippedTopic;
+    }
+  }
+
+  // 4b. Break down remaining query into semantic clauses for multi-intent triage
+  const rawClauses = splitQueryIntoSemanticClauses(substantiveTarget);
+  const detectedIntentClauses: IntentClause[] = [];
+  const historicalClauseCandidates: string[] = [];
+
+  for (const clause of rawClauses) {
+    const trimmedClause = clause.trim();
+    if (!trimmedClause) continue;
+
+    // Check OOD
+    let isOOD = false;
+    for (const pattern of OUT_OF_DOMAIN_PATTERNS) {
+      if (pattern.test(trimmedClause)) {
+        isOOD = true;
+        signals.hasOutOfDomainTopic = true;
+        outOfDomainTopic = trimmedClause
+          .replace(/^(?:[\s,;:!?-]+(?:và\s+)?(?:đồng\s*thời|tiện\s*thể|nhân\s*tiện)?\s*)/i, '')
+          .trim();
+        detectedIntentClauses.push({
+          intent: 'OUT_OF_DOMAIN',
+          confidence: 0.95,
+          querySnippet: trimmedClause,
+        });
+        break;
+      }
+    }
+    if (isOOD) continue;
+
+    // Check Video Intent
+    let isVideo = false;
+    for (const pattern of VIDEO_INTENT_PATTERNS) {
+      const vMatch = trimmedClause.match(pattern);
+      if (vMatch) {
+        isVideo = true;
+        signals.hasVideoGeneration = true;
+        videoBriefTopic = (vMatch[1] || trimmedClause).replace(/[?!.]/g, '').trim();
+        detectedIntentClauses.push({
+          intent: 'VIDEO_INTENT',
+          confidence: 0.95,
+          querySnippet: trimmedClause,
+        });
+        break;
+      }
+    }
+    if (isVideo) continue;
+
+    // Check Chitchat / Greeting / Identity / Scope inquiry
+    const isGreetingOrPersona =
+      PURE_CHITCHAT_PATTERNS.some((p) => p.test(trimmedClause)) ||
+      BOT_IDENTITY_PATTERNS.some((p) => p.test(trimmedClause)) ||
+      CASUAL_REMARK_REGEX.test(trimmedClause) ||
+      DIRECT_CONVERSATIONAL_ADDRESS_REGEX.test(trimmedClause) ||
+      /^(?:phạm\s*vi\s+(?:tra\s*cứu|hỗ\s*trợ|kiến\s*thức|hoạt\s*động|trợ\s*giúp)|khả\s*năng|bạn\s+có\s+thể\s+(?:giúp|làm)|bạn\s+là\s+ai|tính\s*năng)/i.test(trimmedClause);
+
+    const hasHistInClause =
+      Boolean(extractHistoricalEntityFromQuery(trimmedClause)) ||
+      hasHistoricalDomainSignals(trimmedClause);
+
+    if (isGreetingOrPersona && !hasHistInClause) {
+      signals.hasChitchatGreeting = true;
+      detectedIntentClauses.push({
         intent: 'CHITCHAT',
         confidence: 0.95,
-      };
+        querySnippet: trimmedClause,
+      });
+      continue;
     }
+
+    // Substantive historical/contextual clause (preserve multi-part questions)
+    historicalClauseCandidates.push(trimmedClause);
+    detectedIntentClauses.push({
+      intent: 'HISTORICAL_QUERY',
+      confidence: 0.9,
+      querySnippet: trimmedClause,
+    });
   }
 
-  // Shadow chitchat matching for unaccented queries
-  for (const pattern of SHADOW_CHITCHAT_PATTERNS) {
-    if (pattern.test(cleanShadow) || pattern.test(shadow)) {
-      return {
-        intent: 'CHITCHAT',
-        confidence: 0.92,
-      };
-    }
+  // Also check whole-query patterns for secondary greeting prefix
+  if (PLEASANTRY_PREFIX_REGEX.test(substantiveTarget) || SECONDARY_GREETING_PREFIX_REGEX.test(substantiveTarget)) {
+    signals.hasChitchatGreeting = true;
   }
 
-  // Determine effective query by stripping pleasantry prefixes if present (e.g. "Chào bạn, Quang Trung và Nguyễn Huệ là ai?")
-  const { stripped: effectiveQuery } = stripPleasantryPrefix(cleanQuery);
+  // 4c. Derive cleanSearchTopic:
+  // If the query contains conversational preambles, video suffix, or OOD clauses, isolate and join the substantive clauses.
+  // Otherwise, preserve the full original cleanQuery without destructive sentence dismantling.
+  let cleanSearchTopic = substantiveTarget;
+  const hasConversationalPreambleOrSuffix =
+    signals.hasChitchatGreeting || signals.hasVideoGeneration || signals.hasOutOfDomainTopic;
 
-  // 4. Video Production Intent (< 0.2ms)
-  for (const pattern of VIDEO_INTENT_PATTERNS) {
-    const match = effectiveQuery.match(pattern) || trimmed.match(pattern);
-    if (match) {
-      const topic = (match[1] || effectiveQuery).replace(/[?!.]/g, '').trim();
-      return {
-        intent: 'VIDEO_INTENT',
-        confidence: 0.95,
-        suggestedTopic: topic || effectiveQuery,
-      };
-    }
+  if (hasConversationalPreambleOrSuffix && historicalClauseCandidates.length > 0) {
+    cleanSearchTopic = historicalClauseCandidates
+      .map((c) => cleanHistoricalClause(c))
+      .filter((c) => c.length > 0)
+      .join(' ');
+  } else {
+    cleanSearchTopic = cleanHistoricalClause(substantiveTarget);
   }
 
-  // 5. Conjunction Coordinate Entity & Co-reference Identification (< 0.5ms)
+  // Fallback: If cleanSearchTopic is empty or was stripped completely, revert to cleanHistoricalClause on substantiveTarget
+  if (!cleanSearchTopic || cleanSearchTopic.length < 2) {
+    cleanSearchTopic = cleanHistoricalClause(substantiveTarget) || substantiveTarget;
+  }
+
+  // 4c. Conjunction / Coordinate Entity & Co-reference Identification (< 0.5ms)
   for (const pattern of CONJUNCTION_ENTITY_PATTERNS) {
-    const match = effectiveQuery.match(pattern) || cleanQuery.match(pattern);
+    const match = cleanSearchTopic.match(pattern) || cleanQuery.match(pattern);
     if (match) {
       const rawE1 = match[1]?.replace(/[?!.,;:]+$/g, '').trim();
       const rawE2 = match[2]?.replace(/[?!.,;:]+$/g, '').trim();
@@ -279,78 +663,122 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
         const canonical2 = resolveCanonicalEntity(rawE2);
 
         if (canonical1.entityId && canonical2.entityId) {
+          signals.isCoReferenceIdentity = canonical1.entityId === canonical2.entityId;
+          const videoHandover: VideoHandoverMetadata = {
+            topic: (signals.hasVideoGeneration && videoBriefTopic) ? videoBriefTopic : cleanSearchTopic,
+            primaryEntityId: canonical1.entityId,
+            canonicalName: canonical1.canonicalName,
+          };
+          const compositeResult: CompositeIntentResult = {
+            primaryIntent: 'ENTITY_IDENTITY',
+            confidence: 0.95,
+            clauses: detectedIntentClauses,
+            hasHistoricalInquiry: true,
+            hasGreetingOrIdentity: signals.hasChitchatGreeting,
+            hasOutOfDomain: signals.hasOutOfDomainTopic,
+            hasVideoRequest: signals.hasVideoGeneration,
+            cleanSearchTopics: [cleanSearchTopic],
+            videoHandover,
+            outOfDomainTopic,
+          };
           return {
             intent: 'ENTITY_IDENTITY',
             confidence: 0.95,
             matchedEntityId: canonical1.entityId,
             matchedCanonicalName: canonical1.canonicalName,
+            signals,
+            cleanSearchTopic,
+            videoBriefTopic,
+            outOfDomainTopic,
+            compositeResult,
+            videoHandover,
           };
         }
       }
     }
   }
 
-  // 6. Single Entity Identity Identification (< 0.5ms) - Only for verified master entities
+  // 4d. Single Entity Identity Identification (< 0.5ms) - Only for verified master entities
   for (const pattern of SINGLE_ENTITY_IDENTITY_PATTERNS) {
-    const match = effectiveQuery.match(pattern) || cleanQuery.match(pattern);
+    const match = cleanSearchTopic.match(pattern) || cleanQuery.match(pattern);
     if (match) {
       const entityName = match[1]?.trim();
       const wordCount = entityName ? entityName.split(/\s+/).filter(Boolean).length : 0;
       if (entityName && wordCount >= 1 && wordCount <= 4 && isKnownMasterEntity(entityName)) {
         const canonical = resolveCanonicalEntity(entityName);
         if (canonical.entityId && canonical.canonicalName) {
+          const videoHandover: VideoHandoverMetadata = {
+            topic: (signals.hasVideoGeneration && videoBriefTopic) ? videoBriefTopic : cleanSearchTopic,
+            primaryEntityId: canonical.entityId,
+            canonicalName: canonical.canonicalName,
+          };
+          const compositeResult: CompositeIntentResult = {
+            primaryIntent: 'ENTITY_IDENTITY',
+            confidence: 0.92,
+            clauses: detectedIntentClauses,
+            hasHistoricalInquiry: true,
+            hasGreetingOrIdentity: signals.hasChitchatGreeting,
+            hasOutOfDomain: signals.hasOutOfDomainTopic,
+            hasVideoRequest: signals.hasVideoGeneration,
+            cleanSearchTopics: [cleanSearchTopic],
+            videoHandover,
+            outOfDomainTopic,
+          };
           return {
             intent: 'ENTITY_IDENTITY',
             confidence: 0.92,
             matchedEntityId: canonical.entityId,
             matchedCanonicalName: canonical.canonicalName,
+            signals,
+            cleanSearchTopic,
+            videoBriefTopic,
+            outOfDomainTopic,
+            compositeResult,
+            videoHandover,
           };
         }
       }
     }
   }
 
-  // 7. Dual-Key Positive Gating & Sub-Intent Detection
-  const extractedEntity =
-    extractHistoricalEntityFromQuery(effectiveQuery) ||
-    extractHistoricalEntityFromQuery(cleanQuery);
+  // 4e. Standard Historical Query Routing with Sub-Intent Detection
+  const subIntent = detectHistoricalSubIntent(cleanSearchTopic || cleanQuery);
+  const targetEntity =
+    extractHistoricalEntityFromQuery(cleanSearchTopic) ||
+    initialExtracted;
 
-  const hasHistoricalEvidence =
-    Boolean(extractedEntity) ||
-    hasHistoricalDomainSignals(effectiveQuery) ||
-    hasHistoricalDomainSignals(cleanQuery);
+  const videoHandover: VideoHandoverMetadata = {
+    topic: (signals.hasVideoGeneration && videoBriefTopic) ? videoBriefTopic : cleanSearchTopic,
+    primaryEntityId: targetEntity?.entityId,
+    canonicalName: targetEntity?.canonicalName,
+  };
 
-  const subIntent = detectHistoricalSubIntent(effectiveQuery || cleanQuery);
-
-  if (hasHistoricalEvidence || subIntent !== 'GENERAL_OVERVIEW') {
-    return {
-      intent: 'HISTORICAL_QUERY',
-      subIntent,
-      confidence: 0.9,
-      matchedEntityId: extractedEntity?.entityId,
-      matchedCanonicalName: extractedEntity?.canonicalName,
-    };
-  }
-
-  // 8. Safe Conversational Fallback: Route conversational phrasing without historical signals to CHITCHAT (Dynamic LLM)
-  // Does NOT hardcode canned responses, allowing the LLM persona to answer dynamically and intelligently.
-  const words = cleanQuery.split(/\s+/).filter(Boolean);
-  const isConversational =
-    words.length <= 8 ||
-    /\b(bạn|ban|bot|chronoviet|mình|minh|tôi|toi|cậu|cau|em|anh|ad|admin)\b/i.test(cleanQuery) ||
-    /\b(bạn|ban|bot|chronoviet|mình|minh|tôi|toi|cậu|cau|em|anh|ad|admin)\b/i.test(shadow);
-
-  if (isConversational) {
-    return {
-      intent: 'CHITCHAT',
-      confidence: 0.85,
-    };
-  }
+  const compositeResult: CompositeIntentResult = {
+    primaryIntent: 'HISTORICAL_QUERY',
+    subIntent,
+    confidence: 0.9,
+    clauses: detectedIntentClauses,
+    hasHistoricalInquiry: true,
+    hasGreetingOrIdentity: signals.hasChitchatGreeting,
+    hasOutOfDomain: signals.hasOutOfDomainTopic,
+    hasVideoRequest: signals.hasVideoGeneration,
+    cleanSearchTopics: [cleanSearchTopic],
+    videoHandover,
+    outOfDomainTopic,
+  };
 
   return {
     intent: 'HISTORICAL_QUERY',
-    subIntent: 'GENERAL_OVERVIEW',
-    confidence: 0.7,
+    subIntent,
+    confidence: 0.9,
+    matchedEntityId: targetEntity?.entityId,
+    matchedCanonicalName: targetEntity?.canonicalName,
+    signals,
+    cleanSearchTopic,
+    videoBriefTopic,
+    outOfDomainTopic,
+    compositeResult,
+    videoHandover,
   };
 }
 
@@ -375,8 +803,8 @@ export function detectHistoricalSubIntent(queryText: string): ChatSubIntent {
     return 'COMPARATIVE_SYNTHESIS';
   }
 
-  // Factoid Lookup (Exact Dates, Regnal Eras, Birth/Death)
-  if (/(?:năm\s+nào|khi\s+nào|ở\s+đâu|bao\s+nhiêu|ai\s+là\s+người|niên\s+hiệu|tên\s+thật|thọ\s+bao\s+nhiêu|mất\s+năm|sinh\s+năm|tại\s+đâu|vào\s+thời\s+điểm\s+nào)/i.test(norm)) {
+  // Factoid Lookup (Exact Dates, Regnal Eras, Birth/Death, Identity)
+  if (/(?:là\s+ai|ai\s+là|năm\s+nào|khi\s+nào|ở\s+đâu|bao\s+nhiêu|ai\s+là\s+người|niên\s+hiệu|tên\s+thật|thọ\s+bao\s+nhiêu|mất\s+năm|sinh\s+năm|tại\s+đâu|vào\s+thời\s+điểm\s+nào)/i.test(norm)) {
     return 'FACTOID_LOOKUP';
   }
 

@@ -101,6 +101,12 @@ export function ChatContainer({
     const query = (textToSend || input).trim();
     if (!query || isLoading) return;
 
+    // Extract completed historical turns from client state to ensure resilient multi-turn continuity
+    const recentHistory = messages
+      .filter((m) => m.content && m.content.trim().length > 0)
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content }));
+
     const userMessage: MessageData = {
       id: `user_${Date.now()}`,
       conversationId: currentConversationId,
@@ -120,6 +126,7 @@ export function ChatContainer({
       conversationId: currentConversationId,
       role: "assistant",
       content: "",
+      statusText: "Đang tiếp nhận và phân tích câu hỏi...",
       citations: [],
       timestamp: new Date().toISOString(),
     };
@@ -132,6 +139,7 @@ export function ChatContainer({
         body: JSON.stringify({
           query,
           conversationId: currentConversationId,
+          history: recentHistory,
         }),
       });
 
@@ -143,7 +151,9 @@ export function ChatContainer({
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullText = "";
+        let currentStatusText = "Đang tra cứu sử liệu chính sử...";
         let citations: CitationItem[] = [];
+        let videoHandover: any = undefined;
 
         let streamBuffer = "";
         let lastRenderTime = 0;
@@ -169,14 +179,30 @@ export function ChatContainer({
                 if (parsed.type === "error" || parsed.error) {
                   const errorDesc = parsed.content || `⚠️ Không thể kết nối với mô hình AI (${parsed.error || 'Lỗi xử lý'}).`;
                   fullText = fullText ? `${fullText}\n\n${errorDesc}` : errorDesc;
+                } else if (parsed.type === "intent") {
+                  const topic = parsed.content || "";
+                  currentStatusText = topic
+                    ? `🔍 Đang tra cứu thực thể: ${topic}...`
+                    : "🔍 Đang phân loại ý định tra cứu...";
+                  if (parsed.videoHandover) {
+                    videoHandover = parsed.videoHandover;
+                  }
+                } else if (parsed.type === "triples") {
+                  const count = parsed.triples?.length || 0;
+                  currentStatusText = count > 0
+                    ? `🕸️ Đã nạp ${count} quan hệ từ Đồ thị Tri thức...`
+                    : "🕸️ Đang đối chiếu Đồ thị Tri thức...";
                 } else if (parsed.type === "token") {
                   const tokenText = parsed.content ?? parsed.token;
                   if (tokenText) {
                     fullText += tokenText;
                   }
                 } else if (parsed.type === "done") {
-                  if (!fullText && parsed.content) {
+                  if (parsed.content) {
                     fullText = parsed.content;
+                  }
+                  if (parsed.videoHandover) {
+                    videoHandover = parsed.videoHandover;
                   }
                 }
 
@@ -199,7 +225,9 @@ export function ChatContainer({
                   ? {
                       ...msg,
                       content: fullText,
+                      statusText: fullText ? undefined : currentStatusText,
                       citations: citations.length > 0 ? citations : msg.citations,
+                      videoHandover: videoHandover || msg.videoHandover,
                     }
                   : msg
               )
@@ -214,6 +242,7 @@ export function ChatContainer({
             try {
               const parsed = JSON.parse(dataStr);
               if (parsed.content) fullText += parsed.content;
+              if (parsed.videoHandover) videoHandover = parsed.videoHandover;
             } catch {
               fullText += dataStr;
             }
@@ -233,7 +262,9 @@ export function ChatContainer({
               ? {
                   ...msg,
                   content: fullText,
+                  statusText: undefined,
                   citations: citations.length > 0 ? citations : msg.citations,
+                  videoHandover: videoHandover || msg.videoHandover,
                 }
               : msg
           )
@@ -246,6 +277,7 @@ export function ChatContainer({
           msg.id === assistantMsgId
             ? {
                 ...msg,
+                statusText: undefined,
                 content:
                   msg.content ||
                   `🏛️ **Chiến thuật lịch sử liên quan đến "${query}":**\n\nQuốc công Tiết chế Trần Hưng Đạo đã vận dụng tài tình địa hình sông nước và quy luật thủy triều, cho cắm cọc vạt nhọn bịt sắt tại cửa sông. Khi thủy triều lên che lấp bãi cọc, quân ta cử thuyền nhẹ ra khiêu chiến rồi vờ rút lui, dụ địch vượt qua bãi cọc. Đến khi triều rút, thuyền giặc bị mắc cọc vỡ tan tác, quân ta tổng phản công đại thắng.`,

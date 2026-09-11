@@ -234,9 +234,14 @@ Mô-đun chịu trách nhiệm:
 ### 3.8. Web Chatbot Supervisor & Video Brief Compiler (`src/chat/` & `src/brief/`)
 * **Web Chatbot Supervisor (`chat/chat-supervisor.ts`):**
   - Trợ lý hội thoại lịch sử đa lượt hỗ trợ Server-Sent Events (SSE) Streaming.
-  - **2-Tier Cascading Intent Router (`IntentClassifier` - ADR-8):**
-    - **Tier 1 (Fast Regex Filter <1ms):** Lọc siêu tốc các câu `CHITCHAT`, `OUT_OF_SCOPE`, `AMBIGUOUS` mà không tốn token LLM.
-    - **Tier 2 (Semantic Sub-Intent Router):** Phân loại chuyên sâu các câu hỏi lịch sử thành 4 nhóm: `FACTOID_LOOKUP` (tra cứu sự kiện, niên đại), `GENEALOGY_RELATION` (thế thứ, dòng tộc), `BATTLE_TACTICS` (diễn biến trận đánh), `COMPARATIVE_SYNTHESIS` (so sánh đa thời kỳ) để phân bổ ngân sách tìm kiếm RAG động.
+  - **Entity-Anchor First Multi-Clause Router & Composite Intent Synthesizer (`IntentClassifier` - ADR-8 & ADR-15):**
+    - **Non-Destructive Semantic Clause Decomposition (`splitQueryIntoSemanticClauses`):** Tách câu phức/đa ý định dựa trên dấu câu ngắt câu (`?`, `.`, `!`, `;`, `\n`) và liên từ chuyển tiếp câu (`và`, `đồng thời`, `nhân tiện`, `với lại`), đồng thời bảo vệ các thực thể liên từ song song (ví dụ: *"Quang Trung và Nguyễn Huệ"* không bị cắt đôi).
+    - **Entity-Anchor Isolation (`cleanHistoricalClause`):** Định vị chính xác mệnh đề lịch sử dựa trên Master Historical Entities Table (`packages/shared-spec`). Tách rời các mệnh đề chào hỏi (`CHITCHAT`), hỏi phạm vi (`BOT_CAPABILITY_INQUIRY`) hoặc lạc đề (`OUT_OF_SCOPE`) mà không dùng chuỗi regex cắt xén xói mòn (anti-overfitting).
+    - **Pristine Search Topic Extraction:** Xuất ra `cleanSearchTopic` tinh khiết (ví dụ: `"Bác Hồ là ai"` thay vì chuỗi bị ô nhiễm bởi lời chào) chuyển trực tiếp cho BM25 + BGE-M3 Vector RAG, đảm bảo Recall $\ge 95\%$ ngay cả với câu hỏi hỗn hợp nhiều ý định.
+    - **2-Tier Cascading Intent Router:**
+      - **Tier 1 (Fast Regex Filter <1ms):** Lọc siêu tốc các câu thuần `CHITCHAT`, `OUT_OF_SCOPE`, `AMBIGUOUS` mà không tốn token LLM.
+      - **Tier 2 (Semantic Sub-Intent Router):** Phân loại chuyên sâu các câu hỏi lịch sử thành 4 nhóm: `FACTOID_LOOKUP` (tra cứu sự kiện, niên đại), `GENEALOGY_RELATION` (thế thứ, dòng tộc), `BATTLE_TACTICS` (diễn biến trận đánh), `COMPARATIVE_SYNTHESIS` (so sánh đa thời kỳ) để phân bổ ngân sách tìm kiếm RAG động.
+    - **Composite Intent & Video Handover Contract (`CompositeIntentResultSchema` & `VideoHandoverMetadataSchema`):** Gói toàn bộ danh sách mệnh đề (`clauses`), tín hiệu tổng hợp (`signals: hasHistorical, hasChitchat, hasCapabilityInquiry...`) và đối tượng `videoHandover` vào payload SSE (`intent` và `done` events). Frontend 1-click CTA tiêu thụ trực tiếp metadata này mà không cần cào trích xuất (anti-scraping).
   - **Static Prefix KV-Caching Architecture (ADR-14):**
     - Cố định 100% `SYSTEM_PERSONA_PREFIX` ở đầu System Prompt.
     - Chuyển toàn bộ ngữ cảnh động (RAG context, Graph triples, Entity warnings) vào tin nhắn User dưới thẻ XML-like `<historical_context>`, đảm bảo `llama-server` đạt $>95\%$ KV-Cache hit rate và giảm TTFT từ 30s xuống **$<2$ giây**.

@@ -4,7 +4,7 @@
  * and generates strict refusal & verification guidance for LLM prompts.
  */
 
-import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
+import { resolveCanonicalEntity, isKnownMasterEntity } from '@chronoviet/shared-spec';
 
 export interface PremiseAnalysisResult {
   isLeadingQuestion: boolean;
@@ -15,13 +15,13 @@ export interface PremiseAnalysisResult {
 }
 
 const KINSHIP_PATTERNS = [
-  /(.+?)\s+và\s+(.+?)\s+(?:có\s+phải\s+(?:là\s+)?|là\s+có\s+phải\s+|là\s+|có\s+phải\s+)(?:2|hai)?\s*(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu)(?:\s+hả|\s+không|\s*\?)?/i,
-  /(.+?)\s+và\s+(.+?)\s+(?:có\s+quan\s+hệ|quan\s+hệ|mối\s+quan\s+hệ|có\s+liên\s+quan|liên\s+quan)\s+(?:gì|như\s+thế\s+nào|ra\s+sao|gì\s+với\s+nhau)(?:\s+với\s+nhau)?(?:\s+hả|\s+không|\s*\?)?/i,
+  /(.+?)\s+và\s+(.+?)\s+(?:có\s+phải\s+(?:là\s+)?|là\s+có\s+phải\s+|là\s+|có\s+phải\s+)(?:2|hai)?\s*(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s*\?)?/i,
+  /(.+?)\s+và\s+(.+?)\s+(?:có\s+quan\s+hệ|quan\s+hệ|mối\s+quan\s+hệ|có\s+liên\s+quan|liên\s+quan)\s+(?:gì|như\s+thế\s+nào|ra\s+sao|gì\s+với\s+nhau)(?:\s+với\s+nhau)?(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s*\?)?/i,
   /(?:mối\s+)?quan\s+hệ\s+(?:giữa\s+)?(.+?)\s+và\s+(.+?)(?:\s+là\s+gì|\s+như\s+thế\s+nào|\s*\?)?/i,
-  /(.+?)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+?)(?:\s+không|\s+hả|\s*\?)?/i,
-  /(.+?)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu|ông|bà|vợ|chồng)\s+của\s+(.+?)(?:\s+hả|\s+không|\s*\?)?/i,
-  /(.+?)\s+là\s+anh\s+em\s+ruột\s+với\s+(.+?)(?:\s+hả|\s+không|\s*\?)?/i,
-  /(.+?)\s+và\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau)(?:\s+không|\s+hả|\s*\?)?/i,
+  /(.+?)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+của\s+(.+?)(?:\s+không|\s+hay\s+không|\s+phải\s+không|\s+hả|\s*\?)?/i,
+  /(.+?)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu|ông|bà|vợ|chồng)\s+của\s+(.+?)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s*\?)?/i,
+  /(.+?)\s+là\s+anh\s+em\s+ruột\s+với\s+(.+?)(?:\s+hả|\s+không|\s+hay\s+không|\s+phải\s+không|\s*\?)?/i,
+  /(.+?)\s+và\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau)(?:\s+không|\s+hay\s+không|\s+phải\s+không|\s+hả|\s*\?)?/i,
 ];
 
 const DYNASTY_PATTERNS = [
@@ -50,6 +50,7 @@ function cleanEntitySpan(span: string): string {
   return span
     .replace(/^(?:cho\s+(?:mình|tôi|em)\s+hỏi|bạn\s+ơi|bot\s+ơi|làm\s+ơn\s+cho\s+biết)\s+/i, '')
     .replace(/\s+(?:có\s+phải\s+(?:là\s+)?|có\s+phải|là\s+có\s+phải|là)$/i, '')
+    .replace(/\s+(?:hay\s+không|phải\s+không|không|hả|nhỉ|thế|ạ)$/i, '')
     .replace(/[?!.,;:]+$/g, '')
     .trim();
 }
@@ -71,20 +72,39 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
       const canon2 = resolveCanonicalEntity(e2);
 
       if (canon1.entityId && canon2.entityId && canon1.entityId === canon2.entityId) {
+        let suggestedDirective = `BẮT BUỘC ĐÍNH CHÍNH CÙNG MỘT NGƯỜI (ANTI-CO-REFERENCE ERROR): "${e1}" và "${e2}" thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ (${canon1.canonicalName}), không phải là hai người khác nhau. BẮT BUỘC phải khẳng định ngay ở câu đầu tiên rằng đây là cùng một người (${e1} và ${e2} là các tên gọi, tên húy, niên hiệu, tôn hiệu hoặc tước hiệu khác nhau của cùng một nhân vật qua các thời kỳ), TUYỆT ĐỐI KHÔNG tách thành hai nhân vật hay nhận định là quan hệ anh em/họ hàng.`;
+        if (canon1.entityId === 'person_quang_trung') {
+          suggestedDirective += ` ĐẶC BIỆT LƯU Ý MIỄN NHIỄM NHẦM LẪN SỬ LIỆU: Quang Trung và Nguyễn Huệ là cùng một người. Giai thoại 'anh em cột chèo' trong lịch sử là giữa Nguyễn Huệ và Nguyễn Ánh (cùng kết duyên với công chúa con vua Lê Hiển Tông), TUYỆT ĐỐI KHÔNG gán ghép cụm từ này cho Quang Trung và Nguyễn Huệ. Hai người anh em ruột cùng khởi nghĩa Tây Sơn với Nguyễn Huệ là Nguyễn Nhạc và Nguyễn Lữ (Tây Sơn tam kiệt).`;
+        }
         return {
           isLeadingQuestion: true,
           isSameEntityCoReference: true,
           questionType: 'KINSHIP',
           detectedEntities: [e1, e2].filter(Boolean),
-          suggestedDirective: `BẮT BUỘC ĐÍNH CHÍNH CÙNG MỘT NGƯỜI (ANTI-CO-REFERENCE ERROR): "${e1}" và "${e2}" thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ (${canon1.canonicalName}), không phải là hai người khác nhau. BẮT BUỘC phải khẳng định ngay ở câu đầu tiên rằng đây là cùng một người (${e1} và ${e2} là các tên gọi, tên húy, niên hiệu, tôn hiệu hoặc tước hiệu khác nhau của cùng một nhân vật qua các thời kỳ), TUYỆT ĐỐI KHÔNG tách thành hai nhân vật hay nhận định là quan hệ anh em/họ hàng.`,
+          suggestedDirective,
         };
+      }
+
+      const isKnown1 = isKnownMasterEntity(e1);
+      const isKnown2 = isKnownMasterEntity(e2);
+
+      let suggestedDirective = `BẮT BUỘC KIỂM TRA TIỀN ĐỀ QUAN HỆ THÂN TỘC: Người dùng đang hỏi về quan hệ họ hàng giữa "${e1}" và "${e2}". Nếu không có bằng chứng lịch sử xác thực, hãy bác bỏ rõ ràng mối quan hệ này (ví dụ: "${e1} và ${e2} không phải là anh em/họ hàng...").`;
+
+      if (isKnown1 && !isKnown2) {
+        suggestedDirective += ` ĐẶC BIỆT: "${e2}" KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc của "${e1}". Hãy bác bỏ dứt khoát và chủ động trình bày thân tộc/anh em ruột thực sự của "${e1}" đã được chính sử ghi chép để làm rõ bối cảnh. TUYỆT ĐỐI KHÔNG phỏng đoán "${e2}" là ai hay cho rằng "${e2}" là tên gọi khác/bí danh của bất kỳ ai khác.`;
+      } else if (!isKnown1 && isKnown2) {
+        suggestedDirective += ` ĐẶC BIỆT: "${e1}" KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc của "${e2}". Hãy bác bỏ dứt khoát và chủ động trình bày thân tộc/anh em ruột thực sự của "${e2}" đã được chính sử ghi chép để làm rõ bối cảnh. TUYỆT ĐỐI KHÔNG phỏng đoán "${e1}" là ai hay cho rằng "${e1}" là tên gọi khác/bí danh của bất kỳ ai khác.`;
+      } else if (isKnown1 && isKnown2) {
+        suggestedDirective += ` Cả hai nhân vật đều có thật trong lịch sử. Hãy phân biệt rõ bối cảnh, niên đại, triều đại và quan hệ thực tế giữa từng nhân vật để tránh nhầm lẫn.`;
+      } else {
+        suggestedDirective += ` Cả hai tên gọi đều chưa rõ trong chính sử, hãy nêu rõ giới hạn tư liệu và không tự suy đoán phả hệ hư cấu.`;
       }
 
       return {
         isLeadingQuestion: true,
         questionType: 'KINSHIP',
         detectedEntities: [e1, e2].filter(Boolean),
-        suggestedDirective: `BẮT BUỘC KIỂM TRA TIỀN ĐỀ QUAN HỆ THÂN TỘC: Người dùng đang hỏi về quan hệ họ hàng giữa "${e1}" và "${e2}". Nếu không có bằng chứng chính sử xác thực, BẮT BUỘC phải bác bỏ rõ ràng ngay đầu câu trả lời (ví dụ: "Không, ${e1} và ${e2} không phải là anh em/họ hàng..."). TUYỆT ĐỐI KHÔNG tự bịa đặt danh tính, tên khai sinh, năm sinh, niên hiệu, thứ bậc hoàng đế hoặc triều đại cho nhân vật không có trong chính sử. Nếu một trong các nhân vật không có trong chính sử, hãy nêu rõ "Trong chính sử không có ghi chép về nhân vật mang tên...".`,
+        suggestedDirective,
       };
     }
   }
@@ -177,3 +197,60 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
     suggestedDirective: '',
   };
 }
+
+export interface CoReferenceInvariantResult {
+  isValid: boolean;
+  sanitized: string;
+  violation?: string;
+}
+
+/**
+ * Invariant Semantic Verification for Co-Referent Historical Entities.
+ * When entity1 and entity2 are aliases of the same canonical persona (e.g. Quang Trung and Nguyễn Huệ),
+ * this guardrail ensures that the generated text does NOT contradict itself by asserting that entity1 and
+ * entity2 are bilateral distinct subjects, two different people, or brothers with each other.
+ * 
+ * NOTE: Anti-overfitting principle: This does NOT ban phrases like "hai anh em" or "anh em cột chèo" globally,
+ * preserving authentic historical facts (e.g. Nguyễn Nhạc and Nguyễn Huệ are brothers; Nguyễn Huệ and Nguyễn Ánh
+ * are brothers-in-law).
+ */
+export function verifyCoReferenceInvariant(
+  response: string,
+  entity1: string,
+  entity2: string,
+  canonicalName: string
+): CoReferenceInvariantResult {
+  if (!response || !entity1 || !entity2) {
+    return { isValid: true, sanitized: response };
+  }
+
+  const e1Escaped = entity1.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const e2Escaped = entity2.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // Bilateral contradiction patterns between the two aliases:
+  // e.g. "Quang Trung và Nguyễn Huệ là 2 anh em", "Quang Trung và Nguyễn Huệ là hai người khác nhau",
+  // "Quang Trung và Nguyễn Huệ là hai người anh em cột chèo"
+  const contradictionRegex = new RegExp(
+    `(?:${e1Escaped}\\s+và\\s+${e2Escaped}|${e2Escaped}\\s+và\\s+${e1Escaped})\\s+(?:là|thực\\s+chất\\s+là|vốn\\s+là)?\\s*(?:hai|2)?\\s*(?:người|vị\\s+vua|nhân\\s+vật)?\\s*(?:anh\\s+em(?:\\s+cột\\s+chèo|\\s+ruột)?|hai\\s+người\\s+khác\\s+nhau|2\\s+người\\s+khác\\s+nhau)`,
+    'gi'
+  );
+
+  if (contradictionRegex.test(response)) {
+    const violation = `Contradictory bilateral relation detected asserting that co-referent aliases "${entity1}" and "${entity2}" are distinct subjects.`;
+    const sanitized = response.replace(
+      contradictionRegex,
+      `${entity1} và ${entity2} thực chất là cùng một nhân vật lịch sử (${canonicalName}) qua các thời kỳ khác nhau`
+    );
+    return {
+      isValid: false,
+      sanitized,
+      violation,
+    };
+  }
+
+  return {
+    isValid: true,
+    sanitized: response,
+  };
+}
+

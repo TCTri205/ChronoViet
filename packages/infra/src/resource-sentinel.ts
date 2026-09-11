@@ -372,6 +372,16 @@ export class ResourceSentinel {
    * based on active Render Mutex or Host RAM pressure.
    */
   public static async shouldOffloadToCloud(): Promise<OffloadDecision> {
+    // 1. Strict SSOT rule: If Cloud Fallback is disabled or local_only mode is enforced in runtime, never offload
+    if (!this.customStandbyOnRender && !this.customMemoryProvider) {
+      if (envConfig.AI_EXECUTION_MODE === 'local_only' || !envConfig.ENABLE_CLOUD_FALLBACK) {
+        return {
+          shouldOffload: false,
+          reason: 'Cloud offload is disabled by configuration (AI_EXECUTION_MODE=local_only or ENABLE_CLOUD_FALLBACK=false)',
+        };
+      }
+    }
+
     const standbyEnabled = this.customStandbyOnRender ?? envConfig.AI_STANDBY_ON_RENDER;
     if (standbyEnabled) {
       const locked = await this.isRenderLocked();
@@ -384,10 +394,12 @@ export class ResourceSentinel {
     }
 
     const mem = this.getMemoryStatus();
-    if (mem.isUnderPressure) {
+    // On macOS / container environments, avoid false alarms from purgeable/inactive file caches
+    // by ensuring both percentage threshold and genuinely low physical free headroom (< 2000MB) are met.
+    if (mem.isUnderPressure && mem.freeMemoryMb < 2000) {
       return {
         shouldOffload: true,
-        reason: `Host memory under pressure (${mem.usedMemoryPercent}% used >= ${envConfig.MEMORY_PRESSURE_THRESHOLD_PCT}% threshold)`,
+        reason: `Host memory under pressure (${mem.usedMemoryPercent}% used >= ${envConfig.MEMORY_PRESSURE_THRESHOLD_PCT}% threshold, available ${mem.freeMemoryMb}MB)`,
       };
     }
 

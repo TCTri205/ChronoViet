@@ -314,6 +314,13 @@ function startApps(): void {
   killStalePort(3000);
   killStalePort(3001);
 
+  // Synchronize workspace packages so web & worker runtime never run stale dist
+  try {
+    execSync('pnpm --filter "./packages/*" run build', { cwd: ROOT_DIR, stdio: 'ignore' });
+  } catch (err: any) {
+    log.warn('orchestrator.sync_build_notice', `Workspace build notice: ${err.message}`);
+  }
+
   // Web App
   updateStatus('web', 'STARTING');
   const webProc = spawn('pnpm', ['--filter', '@chronoviet/web', 'dev'], {

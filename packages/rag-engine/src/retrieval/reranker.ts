@@ -5,7 +5,7 @@
  */
 
 import { rerankWithLocalCrossEncoder, createLogger } from '@chronoviet/infra';
-import { ChatSubIntent } from '@chronoviet/shared-spec';
+import { ChatSubIntent, HISTORICAL_CHRONOLOGY } from '@chronoviet/shared-spec';
 import { VectorSearchResult } from './vector-search.js';
 import { QUESTION_STOPWORDS } from './question-ner.js';
 
@@ -155,7 +155,9 @@ export function calculateTemporalMultiplier(
   queryYears: number[],
   chunkTimeStart?: number,
   chunkTimeEnd?: number,
-  chunkTitle?: string
+  chunkTitle?: string,
+  chunkDynasty?: string,
+  chunkEpochIds?: string[]
 ): number {
   if (!queryYears || queryYears.length === 0) {
     return 1.0;
@@ -171,6 +173,26 @@ export function calculateTemporalMultiplier(
       if (!isNaN(parsedTitleYear)) {
         effectiveStart = parsedTitleYear;
         effectiveEnd = parsedTitleYear;
+      }
+    }
+  }
+
+  // Fallback: Infer temporal bounds from chunk's epoch IDs or dynasty name when explicit years are absent
+  if (effectiveStart === undefined && effectiveEnd === undefined) {
+    if (chunkEpochIds && chunkEpochIds.length > 0) {
+      const matchedEpoch = HISTORICAL_CHRONOLOGY.find((e) => chunkEpochIds.includes(e.epochId));
+      if (matchedEpoch) {
+        effectiveStart = matchedEpoch.startYear;
+        effectiveEnd = matchedEpoch.endYear;
+      }
+    } else if (chunkDynasty) {
+      const lowerDynasty = chunkDynasty.toLowerCase().trim();
+      const matchedDynasty = HISTORICAL_CHRONOLOGY.find(
+        (e) => e.name.toLowerCase().includes(lowerDynasty) || e.dynastyName.toLowerCase().includes(lowerDynasty)
+      );
+      if (matchedDynasty) {
+        effectiveStart = matchedDynasty.startYear;
+        effectiveEnd = matchedDynasty.endYear;
       }
     }
   }
@@ -260,9 +282,12 @@ export async function rerankCandidates(
       fallbackReason: rerankErr?.message || String(rerankErr),
       timestamp: new Date().toISOString(),
     };
-    rerankResults = candidatePool.map((c, idx) => ({
+    // In fallback mode, candidatePool is already sorted descending by hybrid score.
+    // Map the hybrid ranks to a normalized confidence scale [0.50, 0.85] so they survive
+    // downstream MIN_RELEVANCE_SCORE_CUTOFF (0.35) while strictly preserving hybrid order.
+    rerankResults = candidatePool.map((_c, idx) => ({
       index: idx,
-      score: c.score || 0.5,
+      score: Math.max(0.40, 0.85 - idx * 0.03),
     }));
   }
 
@@ -284,12 +309,14 @@ export async function rerankCandidates(
       // Co-Retrieval Bonus (strictly based on explicit isCoRetrieved boolean flag)
       const coRetrievalBonus = cand.isCoRetrieved ? 0.05 : 0.0;
 
-      // Temporal Multiplier
+      // Temporal Multiplier (grounded with Title, TimeStart, TimeEnd, Dynasty, and EpochIds)
       const temporalMultiplier = calculateTemporalMultiplier(
         queryYears,
         cand.timeStart,
         cand.timeEnd,
-        cand.title
+        cand.title,
+        cand.dynasty,
+        cand.epochIds
       );
 
       // Multiplicative Bayesian Prior: Source priority and temporal grounding amplify relevant candidates

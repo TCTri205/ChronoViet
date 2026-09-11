@@ -137,4 +137,17 @@ describe('Shared Schemas Validation (Phase 1 SSOT)', () => {
     expect(parsed.assets.length).toBe(1);
     expect(parsed.allWhitelisted).toBe(true);
   });
+
+  it('should expand collective military and dynasty entities bidirectionally', async () => {
+    const { getExpandedCollectiveEntityIds } = await import('../historical-entities.js');
+    const expandedOrg = getExpandedCollectiveEntityIds(['org_tay_son']);
+    expect(expandedOrg).toContain('person_nguyen_nhac');
+    expect(expandedOrg).toContain('person_nguyen_hue');
+    expect(expandedOrg).toContain('person_nguyen_lu');
+
+    const expandedDynasty = getExpandedCollectiveEntityIds(['dynasty_nha_tay_son']);
+    expect(expandedDynasty).toContain('person_nguyen_nhac');
+    expect(expandedDynasty).toContain('person_nguyen_hue');
+    expect(expandedDynasty).toContain('person_nguyen_lu');
+  });
 });

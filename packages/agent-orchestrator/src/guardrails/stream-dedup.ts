@@ -132,3 +132,31 @@ export function deduplicateRepetitiveText(text: string): string {
 
   return resultParagraphs.join('\n\n');
 }
+
+/**
+ * Strips prompt directive prefixes or regurgitated system instructions if leaked by the LLM
+ */
+export function sanitizePromptDirectivesLeakage(text: string): string {
+  if (!text || !text.trim()) return text;
+  return text
+    .replace(/^(?:\[QUY TẮC[^\]]+\]\s*)+/gi, '')
+    .replace(/^(?:CHỈ DẪN [^:\n]+:\s*)+/gi, '')
+    .replace(/^(?:Trả lời trực diện, chính xác mốc năm[^\n]+\n*)+/gi, '')
+    .replace(/^(?:Đi thẳng vào trọng tâm, nêu rõ mốc năm[^\n]+\n*)+/gi, '')
+    .trim();
+}
+
+/**
+ * Normalizes inline-collapsed markdown lists into properly line-broken lists.
+ * Ensures items such as "...thuở nhỏ). 2. Nguyễn Tất Thành..." are cleanly broken into "\n\n2. Nguyễn Tất Thành".
+ */
+export function normalizeMarkdownListBreaks(text: string): string {
+  if (!text || !text.trim()) return text;
+  // 1. Separate inline numbered list items that were joined on a single line
+  let normalized = text.replace(/(?<=[.!?):;])\s{1,4}(?=\d+\.\s+[\p{Lu}A-ZÀ-Ỹ])/gu, '\n\n');
+
+  // 2. Separate inline bullet points joined on a single line
+  normalized = normalized.replace(/(?<=[.!?):;])\s{1,4}(?=[-•*]\s+[\p{Lu}A-ZÀ-Ỹ])/gu, '\n\n');
+
+  return normalized;
+}

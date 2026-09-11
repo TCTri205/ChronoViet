@@ -319,7 +319,8 @@ export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: str
     .filter((t) => t.length >= 2);
 
   const allBaseTokens = Array.from(new Set([...baseTokens, ...unaccentedBaseTokens]));
-  const clauses: string[] = [...allBaseTokens];
+  const phraseClauses: string[] = [];
+  const entitySubwords = new Set<string>();
 
   if (detectedEntityIds && detectedEntityIds.length > 0) {
     const seenAliases = new Set<string>();
@@ -328,8 +329,8 @@ export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: str
       const candidates: string[] = [];
       const ent = resolveCanonicalEntity(entId);
       if (ent) {
-        if (ent.aliases) candidates.push(...ent.aliases);
         if (ent.canonicalName) candidates.push(ent.canonicalName);
+        if (ent.aliases) candidates.push(...ent.aliases);
       }
 
       let entityInjectedCount = 0;
@@ -342,15 +343,35 @@ export function buildEnhancedFtsQuery(queryText: string, detectedEntityIds?: str
         const unaccentedAlias = removeVietnameseAccents(normalizedAlias).replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
         const cleanAlias = normalizedAlias.replace(/[^\p{L}\p{N}\s]/gu, ' ').trim();
 
+        // Track constitutive words of the recognized entity to avoid single-word dilution
+        for (const w of cleanAlias.split(/\s+/)) {
+          if (w.length >= 2) entitySubwords.add(sanitizeTsToken(w));
+        }
+        for (const w of unaccentedAlias.split(/\s+/)) {
+          if (w.length >= 2) entitySubwords.add(sanitizeTsToken(w));
+        }
+
         if (unaccentedAlias.split(/\s+/).length >= 2) {
-          clauses.push(`"${unaccentedAlias}"`);
+          phraseClauses.push(`"${unaccentedAlias}"`);
           if (cleanAlias !== unaccentedAlias) {
-            clauses.push(`"${cleanAlias}"`);
+            phraseClauses.push(`"${cleanAlias}"`);
           }
           entityInjectedCount++;
         }
       }
     }
+  }
+
+  // Tokens that are not part of the entity name act as thematic/context qualifiers
+  const nonEntityTokens = allBaseTokens.filter((t) => !entitySubwords.has(t));
+
+  let clauses: string[] = [];
+  if (phraseClauses.length > 0) {
+    // When recognized entity phrases exist, prioritize phrase matching and preserve context qualifiers
+    clauses = [...phraseClauses, ...nonEntityTokens];
+  } else {
+    // Standard unconstrained token matching
+    clauses = [...allBaseTokens];
   }
 
   const parts = clauses.filter(Boolean);

@@ -13,6 +13,12 @@ export interface MessageData {
   content: string;
   citations?: CitationItem[];
   timestamp?: string;
+  statusText?: string;
+  videoHandover?: {
+    topic: string;
+    primaryEntityId?: string;
+    canonicalName?: string;
+  };
 }
 
 export interface ChatMessageProps {
@@ -26,19 +32,34 @@ export function extractTopicFromMessage(text: string): string {
   const lines = text
     .split("\n")
     .map((l) => l.trim())
-    .filter((l) => l.length > 0 && !l.startsWith("⚠️") && !l.startsWith("*Hệ thống") && !l.startsWith("🏛️"));
+    .filter(
+      (l) =>
+        l.length > 0 &&
+        !l.startsWith("⚠️") &&
+        !l.startsWith("*Hệ thống") &&
+        !l.startsWith("🏛️") &&
+        !l.startsWith("Chào") &&
+        !l.startsWith("Xin chào") &&
+        !l.startsWith("Tôi là") &&
+        !l.startsWith("Bạn có thể") &&
+        !l.startsWith("Nguồn Sử Liệu")
+    );
 
-  if (lines.length > 0) {
-    const candidate = lines[0].replace(/^[#*`\-_:> ]+/g, "").replace(/[*`_]/g, "").trim();
-    if (candidate.length > 5 && candidate.length < 80) {
+  for (const line of lines) {
+    const candidate = line.replace(/^[#*`\-_:> ]+/g, "").replace(/[*`_]/g, "").trim();
+    // Look for lines that look like actual historical statements/entities
+    if (candidate.length > 5 && candidate.length < 80 && !/^(?:chào|tôi là|hãy|vui lòng)/i.test(candidate)) {
       return candidate;
     }
   }
 
-  const fallbackCandidate = text.split("\n")[0].replace(/[#*`⚠️🏛️]/g, "").trim();
-  return fallbackCandidate.length > 5 && fallbackCandidate.length < 80
-    ? fallbackCandidate
-    : "Sự kiện lịch sử từ đoạn hội thoại";
+  const fallbackCandidate = text.split("\n").find((l) => l.trim().length > 5 && !/^(?:🏛️|⚠️|chào|xin chào)/i.test(l.trim()));
+  if (fallbackCandidate) {
+    const clean = fallbackCandidate.replace(/^[#*`\-_:> ]+/g, "").replace(/[#*`⚠️🏛️]/g, "").trim();
+    if (clean.length > 5 && clean.length < 80) return clean;
+  }
+
+  return "Sự kiện lịch sử từ đoạn hội thoại";
 }
 
 function ChatMessageComponent({
@@ -77,9 +98,19 @@ function ChatMessageComponent({
         >
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
-          ) : (
+          ) : message.content ? (
             <div className="prose prose-invert max-w-none prose-sm text-text-primary prose-headings:font-headline prose-headings:text-gold-300 prose-a:text-primary prose-strong:text-gold-300">
               <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-text-muted text-xs py-0.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              <span className="font-medium text-primary/80 animate-pulse">
+                {message.statusText || "ChronoViet AI đang nghiên cứu sử liệu..."}
+              </span>
             </div>
           )}
 
@@ -108,7 +139,10 @@ function ChatMessageComponent({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onCreateVideoFromTopic(extractTopicFromMessage(message.content), message.conversationId)}
+              onClick={() => {
+                const chosenTopic = message.videoHandover?.topic || extractTopicFromMessage(message.content);
+                onCreateVideoFromTopic(chosenTopic, message.conversationId);
+              }}
               className="text-xs h-7 gap-1.5 border-primary/30 text-gold-300 hover:bg-primary/20 hover:text-white"
             >
               <Film className="w-3.5 h-3.5 text-primary" />

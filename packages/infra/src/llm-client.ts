@@ -881,6 +881,7 @@ async function* streamTargetCompletion(
       Authorization: `Bearer ${target.apiKey}`,
     };
 
+    const cloudMaxTokens = Math.max(maxTokens + 1500, 2048);
     const response = await fetch(remoteEndpoint, {
       method: 'POST',
       headers,
@@ -888,7 +889,7 @@ async function* streamTargetCompletion(
         model: target.model,
         messages,
         temperature,
-        max_tokens: maxTokens,
+        max_tokens: cloudMaxTokens,
         stream: true,
         ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
         ...(options.frequency_penalty !== undefined ? { frequency_penalty: options.frequency_penalty } : {}),
@@ -1038,6 +1039,10 @@ export async function* generateLLMCompletionStream(
               headers['X-Title'] = 'ChronoViet';
             }
 
+            // Reasoning models (e.g. Agnes / DeepSeek) emit reasoning tokens before content;
+            // grant ample headroom to prevent completion starvation.
+            const cloudMaxTokens = Math.max(maxTokens + 1500, 2048);
+
             const response = await fetch(remoteEndpoint, {
               method: 'POST',
               headers,
@@ -1045,7 +1050,7 @@ export async function* generateLLMCompletionStream(
                 model: remoteCfg.model,
                 messages,
                 temperature,
-                max_tokens: maxTokens,
+                max_tokens: cloudMaxTokens,
                 stream: true,
                 ...(options.top_p !== undefined ? { top_p: options.top_p } : {}),
                 ...(options.frequency_penalty !== undefined ? { frequency_penalty: options.frequency_penalty } : {}),

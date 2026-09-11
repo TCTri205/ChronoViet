@@ -11,6 +11,18 @@ vi.mock('@chronoviet/infra', async (importOriginal) => {
       yield 'năm 938 ';
       yield 'là một chiến thắng lịch sử.';
     }),
+    generateLLMCompletion: vi.fn().mockResolvedValue({
+      content: JSON.stringify({
+        is_historical: true,
+        intent: 'HISTORICAL_QUERY',
+        sub_intent: 'GENERAL_OVERVIEW',
+        suspected_fake_or_unverified_entities: [],
+        verified_or_implicit_entities: [],
+      }),
+      model: 'qwen-9b',
+      provider: 'local',
+      finishReason: 'stop',
+    }),
     callLlm: vi.fn().mockResolvedValue({
       content: 'Trận Bạch Đằng năm 938 là một chiến thắng vẻ vang.',
     }),
@@ -237,6 +249,33 @@ describe('Chat Supervisor Stream', () => {
 
     expect(events.some((e) => e.type === 'error' && e.error?.includes('hủy'))).toBe(true);
   });
+
+  it('handles ENTITY_IDENTITY co-reference query with adaptive lean budgeting', async () => {
+    const events = [];
+    for await (const chunk of handleChatQueryStream({
+      query: 'Quang Trung và Nguyễn Huệ có phải 2 anh em không?',
+      ragEngine: mockRagEngine,
+    })) {
+      events.push(chunk);
+    }
+
+    expect(events.some((e) => e.type === 'intent' && e.intent === 'ENTITY_IDENTITY')).toBe(true);
+    const lastSearchCall = (mockRagEngine.search as any).mock.calls.at(-1)[0];
+    expect(lastSearchCall.rerankTopK).toBeLessThanOrEqual(2);
+    expect(lastSearchCall.maxTokens).toBeLessThanOrEqual(600);
+  });
+
+  it('handles compound query with greeting and entity identity inquiry', async () => {
+    const events = [];
+    for await (const chunk of handleChatQueryStream({
+      query: 'hello, bạn là ai? và bạn có thể cho tôi biết Bác Hồ là ai không?',
+      ragEngine: mockRagEngine,
+    })) {
+      events.push(chunk);
+    }
+
+    expect(events.some((e) => e.type === 'intent' && e.intent === 'ENTITY_IDENTITY')).toBe(true);
+  });
 });
 
 describe('Video Brief Topic Isolation', () => {
@@ -459,6 +498,154 @@ describe('Real-World Typo & Resilient Fast Path Execution', () => {
     expect(result.intent).toBe('HISTORICAL_QUERY');
     expect(mockRag.search).toHaveBeenCalled();
   });
+
+  it('isolates entityFilter during multi-turn topic shift without cross-topic entity leakage', async () => {
+    const mockRag: IRagEngine = {
+      search: vi.fn().mockResolvedValue({
+        verifiedContext: [],
+        citations: [],
+        triples: [],
+      }),
+      ingestDocument: async () => {},
+    };
+
+    const history = [
+      { role: 'user' as const, content: 'Quang Trung và Nguyễn Huệ là ai?' },
+      { role: 'assistant' as const, content: 'Quang Trung là hoàng đế nhà Tây Sơn.' },
+    ];
+
+    await executeChatQuery({
+      query: 'Lê Lợi và Lê Độ có phải là 2 anh em hay không?',
+      history,
+      conversationId: 'test_topic_shift_001',
+      ragEngine: mockRag,
+    });
+
+    expect(mockRag.search).toHaveBeenCalled();
+    const searchCallArgs = (mockRag.search as any).mock.calls[0][0];
+    expect(searchCallArgs.entityFilter).toBeDefined();
+    // Must contain person_le_loi
+    expect(searchCallArgs.entityFilter).toContain('person_le_loi');
+    // Must NOT leak person_quang_trung or past entities
+    expect(searchCallArgs.entityFilter).not.toContain('person_quang_trung');
+  });
+
+  it('does not emit degradation warning disclaimer when RAG returns zero matching chunks cleanly', async () => {
+    const mockRag: IRagEngine = {
+      search: vi.fn().mockResolvedValue({
+        verifiedContext: [],
+        citations: [],
+        triples: [],
+      }),
+      ingestDocument: async () => {},
+    };
+
+    const result = await executeChatQuery({
+      query: 'Lê Lợi và Lê Độ có phải là 2 anh em hay không?',
+      conversationId: 'test_zero_context_001',
+      ragEngine: mockRag,
+    });
+
+    expect(result.fullText).not.toContain('Hệ thống tra cứu sử liệu chuyên sâu (Chrono-RAG) đang phản hồi chậm');
+  });
+
+  it('emits degradation warning disclaimer when RAG search throws a technical error or timeout', async () => {
+    const mockRag: IRagEngine = {
+      search: vi.fn().mockRejectedValue(new Error('RAG search timeout')),
+      ingestDocument: async () => {},
+    };
+
+    const result = await executeChatQuery({
+      query: 'Lê Lợi và Lê Độ có phải là 2 anh em hay không?',
+      conversationId: 'test_rag_timeout_001',
+      ragEngine: mockRag,
+    });
+
+    expect(result.fullText).toContain('Hệ thống tra cứu sử liệu chuyên sâu (Chrono-RAG) đang phản hồi chậm');
+  });
+
+  describe('Tier 2 Speculative Semantic Arbiter', () => {
+    it('routes ambiguous query to CHITCHAT when Tier 2 arbiter determines non-historical intent', async () => {
+      const { generateLLMCompletion } = await import('@chronoviet/infra');
+      vi.mocked(generateLLMCompletion).mockResolvedValueOnce({
+        content: JSON.stringify({
+          is_historical: false,
+          intent: 'CHITCHAT',
+          sub_intent: 'GENERAL_OVERVIEW',
+          suspected_fake_or_unverified_entities: [],
+          verified_or_implicit_entities: [],
+        }),
+        model: 'qwen-9b',
+        provider: 'local',
+        finishReason: 'stop',
+      });
+
+      const mockRag: IRagEngine = {
+        search: vi.fn(),
+        ingestDocument: async () => {},
+      };
+
+      const result = await executeChatQuery({
+        query: 'Hai con mèo nhà tôi có phải là anh em ruột không?',
+        conversationId: 'test_arbiter_chitchat_001',
+        ragEngine: mockRag,
+      });
+
+      expect(result.intent).toBe('CHITCHAT');
+      expect(mockRag.search).not.toHaveBeenCalled();
+    });
+
+    it('falls back safely to RAG when Tier 2 arbiter encounters an error or timeout', async () => {
+      const { generateLLMCompletion } = await import('@chronoviet/infra');
+      vi.mocked(generateLLMCompletion).mockRejectedValueOnce(new Error('Arbiter timeout'));
+
+      const mockRag: IRagEngine = {
+        search: vi.fn().mockResolvedValue({
+          verifiedContext: [],
+          citations: [],
+          triples: [],
+        }),
+        ingestDocument: async () => {},
+      };
+
+      const result = await executeChatQuery({
+        query: 'Lê Độ và Lê Đình có phải là 2 anh em không?',
+        conversationId: 'test_arbiter_fallback_001',
+        ragEngine: mockRag,
+      });
+
+      expect(result.intent).toBe('HISTORICAL_QUERY');
+      expect(mockRag.search).toHaveBeenCalled();
+    });
+  });
+
+  describe('List Formatting and Quantitative Grounding Guardrails', () => {
+    it('normalizes inline-collapsed numbered list items with proper double newlines', async () => {
+      const { normalizeMarkdownListBreaks } = await import('../index.js');
+      const raw = 'Nguyễn Sinh Cung (thuở nhỏ). 2. Nguyễn Tất Thành - Giai đoạn 1901. 3. Văn Ba - Năm 1911.';
+      const normalized = normalizeMarkdownListBreaks(raw);
+
+      expect(normalized).toContain('Nguyễn Sinh Cung (thuở nhỏ).\n\n2. Nguyễn Tất Thành');
+      expect(normalized).toContain('Giai đoạn 1901.\n\n3. Văn Ba');
+      expect(normalized.split('\n\n').length).toBe(3);
+    });
+
+    it('does not break decimal numbers or normal sentences', async () => {
+      const { normalizeMarkdownListBreaks } = await import('../index.js');
+      const raw = 'Điểm số là 3.5 điểm và tỷ lệ là 1.2%.';
+      const normalized = normalizeMarkdownListBreaks(raw);
+      expect(normalized).toBe(raw);
+    });
+
+    it('injects totalAliasesEstimated into master entity card for Ho Chi Minh', async () => {
+      const { buildDynamicEntityKnowledgeCards } = await import('../index.js');
+      const card = buildDynamicEntityKnowledgeCards(['Hồ Chí Minh']);
+
+      expect(card).toContain('Tổng số lượng tên gọi / bút danh / bí danh ước tính:');
+      expect(card).toContain('150 đến 175');
+    });
+  });
 });
+
 
 

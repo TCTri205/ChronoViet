@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { GraphTripleItemSchema, HistoricalCitationItemSchema } from './schema.js';
+import { GraphTripleItemSchema, HistoricalCitationItemSchema, VideoHandoverMetadataSchema } from './schema.js';
 
 // ============================================================================
 // 1. Render Event Schemas (Redis PubSub channel `project_events:${projectId}`)
@@ -103,6 +103,8 @@ export const ChatStreamResponseSchema = z.object({
   content: z.string().optional(),
   citations: z.array(z.union([z.string(), HistoricalCitationItemSchema])).optional(),
   intent: z.string().optional(),
+  compositeIntents: z.array(z.string()).optional(),
+  videoHandover: VideoHandoverMetadataSchema.optional(),
   triples: z.array(GraphTripleItemSchema).optional(),
   error: z.string().optional(),
   conversationId: z.string().optional(),

@@ -15,17 +15,23 @@ import {
 } from '@chronoviet/shared-spec';
 import {
   createLogger,
+  generateLLMCompletion,
   generateLLMCompletionStream,
   ChatMessage,
   envConfig,
   ragTimeoutsTotal,
 } from '@chronoviet/infra';
 import { ChronoRagEngine } from '@chronoviet/rag-engine';
-import { classifyChatIntent, ChatIntent } from './intent-classifier.js';
+import {
+  classifyChatIntent,
+  ChatIntent,
+  IntentClassificationResult,
+} from './intent-classifier.js';
 import {
   rewriteMultiTurnQuery,
   extractDialogueState,
   isContinuationOrCoreferenceQuery,
+  isTopicShiftQuery,
   ChatTurnContext,
 } from './query-rewriter.js';
 import {
@@ -35,8 +41,14 @@ import {
   clampTotalPromptMessages,
 } from './context-pruner.js';
 import { validateFolkloreHypothesisTone } from '../guardrails/folklore-validator.js';
-import { analyzePremiseAndLeadingIntent } from '../guardrails/anti-sycophancy.js';
-import { createStreamLoopDetector, deduplicateRepetitiveText } from '../guardrails/stream-dedup.js';
+import { analyzePremiseAndLeadingIntent, verifyCoReferenceInvariant } from '../guardrails/anti-sycophancy.js';
+import {
+  createStreamLoopDetector,
+  deduplicateRepetitiveText,
+  sanitizePromptDirectivesLeakage,
+  normalizeMarkdownListBreaks,
+} from '../guardrails/stream-dedup.js';
+import { normalizeResilientText } from './text-normalizer.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
 
@@ -82,7 +94,57 @@ export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): st
           : 'Nhân vật lịch sử';
 
       lines.push(`- ${label}: ${target.canonicalName}`);
-      if (target.aliases && target.aliases.length > 0) {
+      if (target.namingMetadata) {
+        const meta = target.namingMetadata;
+        if (meta.totalAliasesEstimated) {
+          lines.push(`  + Tổng số lượng tên gọi / bút danh / bí danh ước tính: ${meta.totalAliasesEstimated}`);
+        }
+        if (meta.archetype === 'MODERN_FIGURE' || (meta.periodAliases && meta.periodAliases.length > 0)) {
+          if (meta.birthName) {
+            lines.push(`  + Tên khai sinh / Tên thuở nhỏ: ${meta.birthName}`);
+          }
+          if (meta.periodAliases && meta.periodAliases.length > 0) {
+            lines.push(`  + Tên gọi và bí danh theo các thời kỳ hoạt động cách mạng:`);
+            for (const pa of meta.periodAliases) {
+              lines.push(`    * ${pa.period}: "${pa.name}"${pa.context ? ` (${pa.context})` : ''}`);
+            }
+          }
+          if (meta.courtesyOrCommonName) {
+            lines.push(`  + Danh xưng và tên thường gọi: ${meta.courtesyOrCommonName}`);
+          }
+        } else {
+          if (meta.birthName) {
+            lines.push(`  + Tên khai sinh / Tên húy: ${meta.birthName}`);
+          }
+          if (meta.courtesyOrCommonName) {
+            lines.push(`  + Tên thường gọi / Tên tự: ${meta.courtesyOrCommonName}`);
+          }
+          if (meta.preReignTitles && meta.preReignTitles.length > 0) {
+            lines.push(`  + Tước vị trước khi lên ngôi: ${meta.preReignTitles.join(', ')}`);
+          }
+          if (meta.reignEra) {
+            lines.push(`  + Niên hiệu khi lên ngôi Hoàng đế: ${meta.reignEra}${meta.reignPeriod ? ` (${meta.reignPeriod})` : ''}`);
+          }
+          if (meta.templeName) {
+            lines.push(`  + Miếu hiệu: ${meta.templeName}`);
+          }
+          if (meta.posthumousName) {
+            lines.push(`  + Thụy hiệu: ${meta.posthumousName}`);
+          }
+          if (meta.familyLineage) {
+            const fam = meta.familyLineage;
+            const famParts: string[] = [];
+            if (fam.father) famParts.push(`Thân phụ: ${fam.father}`);
+            if (fam.mother) famParts.push(`Thân mẫu: ${fam.mother}`);
+            if (fam.siblings && fam.siblings.length > 0) famParts.push(`Anh/em ruột: ${fam.siblings.join(', ')}`);
+            if (fam.spouses && fam.spouses.length > 0) famParts.push(`Phu thê: ${fam.spouses.join(', ')}`);
+            if (fam.children && fam.children.length > 0) famParts.push(`Con cái: ${fam.children.join(', ')}`);
+            if (famParts.length > 0) {
+              lines.push(`  + Thân tộc chính sử: ${famParts.join('; ')}`);
+            }
+          }
+        }
+      } else if (target.aliases && target.aliases.length > 0) {
         lines.push(`  + Danh xưng / Tên gọi khác: ${target.aliases.slice(0, 6).join(', ')}`);
       }
       if (target.dynasty) {
@@ -153,16 +215,119 @@ NGUYÊN TẮC BẮT BUỘC:
    - Mọi lý giải về nhân khẩu học, sự phân bố dòng họ, thứ bậc xã hội và phong tục tập quán cổ truyền BẮT BUỘC phải dựa trên hệ quy chiếu chế độ phong kiến Nho giáo (các biến cố đổi họ lánh nạn, kiêng húy, ban quốc tính, hoặc sổ đinh hộ tịch). Tuyệt đối không áp dụng tư duy tự do cá nhân hoặc góc nhìn đạo đức hiện đại.
    - Đối với tư liệu truyền thuyết hoặc dã sử (LEVEL_3): BẮT BUỘC dùng từ ngữ giả định: 'theo truyền thuyết', 'tương truyền', 'dân gian kể rằng'.
 
-5. NGUYÊN TẮC TRÌNH BÀY & CHỐNG LẶP LẠI (PRESENTATION INTEGRITY):
-   - Trình bày rõ ràng, mạch lạc với định dạng Markdown (tiêu đề, danh sách, in đậm từ khóa quan trọng).
+5. NGUYÊN TẮC TRÌNH BÀY & ĐỊNH DẠNG DANH SÁCH MARKDOWN (MARKDOWN LIST FORMATTING INTEGRITY):
+   - Trình bày rõ ràng, mạch lạc với định dạng Markdown chuẩn (tiêu đề, danh sách, in đậm từ khóa quan trọng).
+   - QUY TẮC BẮT BUỘC KHI VIẾT DANH SÁCH (STRICT LIST FORMATTING):
+     * MỌI danh sách (dù dùng gạch đầu dòng '- ' hay đánh số thứ tự '1. ', '2. ', '3. ') BẮT BUỘC mỗi mục phải bắt đầu trên một dòng riêng biệt, có ký tự xuống dòng ngắt quãng (\n\n- hoặc \n\n1. ).
+     * TUYỆT ĐỐI KHÔNG viết các mục danh sách nối tiếp dính liền nhau trên cùng một dòng hay trong cùng một đoạn văn (Ví dụ SAI: "1. Mục một. 2. Mục hai. 3. Mục ba.").
+     * Ví dụ ĐÚNG:
+       - **Mục 1**: Nội dung chi tiết...
+
+       - **Mục 2**: Nội dung chi tiết...
    - TUYỆT ĐỐI KHÔNG lặp lại nguyên văn các câu, đoạn văn hoặc danh sách đã trình bày trong cùng một câu trả lời.
 
 6. QUY TẮC DANH TÍNH & NĂNG LỰC TRỢ LÝ (SYSTEM IDENTITY & CAPABILITIES):
    - Bạn là ChronoViet AI — Trợ lý Nghiên cứu Lịch sử Việt Nam chuyên sâu và Sản xuất Video Lịch sử tự động.
-   - Phạm vi tri thức: Toàn bộ 15 thời kỳ lịch sử Việt Nam, từ thời đại Hồng Bàng, Văn Lang - Âu Lạc, 1000 năm Bắc thuộc, các triều đại phong kiến độc lập (Ngô, Đinh, Tiền Lê, Lý, Trần, Hồ, Hậu Lê, Mạc, Trịnh - Nguyễn phân tranh, Tây Sơn, Nguyễn), đến thời kỳ Pháp thuộc, hai cuộc kháng chiến chống Pháp - Mỹ và thời kỳ Hiện đại.
+   - Phạm vi tri thức: Toàn diện tiến trình lịch sử Việt Nam từ thời cổ đại (Hồng Bàng, Văn Lang - Âu Lạc), thời kỳ Bắc thuộc, các triều đại phong kiến độc lập đến thời cận - hiện đại.
    - Nguồn dữ liệu cốt lõi: Đồ thị tri thức (GraphRAG) được xây dựng từ các bộ chính sử kinh điển (Đại Việt Sử Ký Toàn Thư, Khâm Định Việt Sử Thông Giám Cương Mục, Đại Nam Thực Lục, v.v.).
    - Tính năng tiêu biểu: Tra cứu và phản biện sử liệu với trích dẫn minh bạch, phân tích chiến thuật, đồng nhất danh xưng, và tự động chuyển hóa câu chuyện lịch sử thành kịch bản phân cảnh kèm video hoạt họa (Video Studio).
-   - Khi người dùng hỏi về danh tính, khả năng hỗ trợ, phạm vi tra cứu hoặc hướng dẫn sử dụng: Hãy tự tin, lịch thiệp và mạch lạc giới thiệu rõ ràng các năng lực và phạm vi trên.`;
+   - Khi người dùng hỏi về danh tính, khả năng hỗ trợ, phạm vi tra cứu hoặc hướng dẫn sử dụng: Giới thiệu ngắn gọn, mạch lạc trong 1-2 câu ("Tôi là ChronoViet AI..."). ĐẶC BIỆT: Nếu câu hỏi có hỏi kèm một nhân vật, sự kiện hoặc chủ đề lịch sử cụ thể, CHỈ chào hỏi và giới thiệu tối đa 1 câu, sau đó tập trung toàn bộ phản hồi vào giải đáp chủ đề lịch sử được hỏi; TUYỆT ĐỐI KHÔNG liệt kê danh sách các triều đại để tối ưu tốc độ phản hồi.
+
+7. NGUYÊN TẮC GIẢI ĐÁP CÂU HỎI ĐỊNH LƯỢNG & THỐNG KÊ (QUANTITATIVE & STATISTICAL PRECISION):
+   - Khi người dùng hỏi về số lượng ("bao nhiêu", "tổng cộng bao nhiêu", "tất cả mấy cái tên/biệt danh/trận đánh/vị vua..."):
+     * BẮT BUỘC trả lời TRỰC DIỆN con số tổng quan, số lượng xác thực hoặc khoảng ước tính được chính sử / tư liệu lịch sử công nhận NGAY Ở CÂU MỞ ĐẦU (ví dụ: tổng số đời vua, số năm trị vì, số lượng tướng lĩnh/thân tộc, hoặc tổng số danh xưng/bí danh được giới sử học ghi nhận).
+     * TUYỆT ĐỐI KHÔNG bỏ qua câu hỏi số lượng để chỉ liệt kê danh sách vài ví dụ mà không nêu rõ con số tổng thể.
+     * Sau khi nêu con số tổng quan ở câu đầu, mới trình bày bối cảnh và liệt kê chi tiết các mốc/danh xưng/sự kiện tiêu biểu nhất.`;
+
+/**
+ * Tier 2 Speculative Semantic Arbiter using the primary local model (Qwen 3.5 9B).
+ * Only invoked for ambiguous queries where Tier 1 linguistic heuristic tagged needsSemanticArbitration: true.
+ * Evaluates semantic domain, extracts implicit or fake entities, and refines sub-intent.
+ * Guaranteed fast execution (< 4.5s timeout) with fail-safe fallback to RAG.
+ */
+async function arbitrateAmbiguousQueryWithLLM(
+  query: string,
+  classification: IntentClassificationResult,
+  signal?: AbortSignal,
+  recentHistoryContext?: string
+): Promise<IntentClassificationResult> {
+  const arbiterStartTime = Date.now();
+  try {
+    const historyBlock = recentHistoryContext
+      ? `\nNgữ cảnh hội thoại trước đó:\n${recentHistoryContext}\n`
+      : '';
+    const prompt = `Bạn là bộ phân loại ý định ngữ nghĩa cho hệ thống ChronoViet AI (Trợ lý Lịch sử Việt Nam).
+Hãy phân tích câu truy vấn sau của người dùng và trả về DUY NHẤT một JSON hợp lệ:
+Câu truy vấn: "${query}"${historyBlock}
+
+Yêu cầu phân loại:
+1. is_historical: true nếu câu hỏi đề cập hoặc hướng đến lịch sử Việt Nam, nhân vật, sự kiện, triều đại, quan hệ họ hàng lịch sử (kể cả nhân vật hư cấu hoặc nghi vấn); false nếu là trò chuyện thông thường, tán gẫu đời sống hiện đại, hoặc ngoài phạm vi lịch sử.
+2. intent: "HISTORICAL_QUERY" | "CHITCHAT" | "OUT_OF_DOMAIN" | "VIDEO_INTENT".
+3. sub_intent: "GENEALOGY_RELATION" (nếu hỏi quan hệ dòng họ/anh em/cha con) | "FACTOID_LOOKUP" (ngày tháng/nơi chốn/danh tính) | "BATTLE_TACTICS" (trận đánh/kế sách) | "GENERAL_OVERVIEW".
+4. suspected_fake_or_unverified_entities: danh sách tên các nhân vật trong câu hỏi có thể là hư cấu, không có trong chính sử, hoặc chưa được xác thực (ví dụ: ["Lê Độ"]).
+5. verified_or_implicit_entities: danh sách tên các nhân vật có thật hoặc ngầm định được suy ra từ câu hỏi.
+
+Chỉ xuất JSON thuần theo cấu trúc sau, không kèm bất kỳ giải thích nào khác:
+{
+  "is_historical": boolean,
+  "intent": "HISTORICAL_QUERY" | "CHITCHAT" | "OUT_OF_DOMAIN",
+  "sub_intent": "GENEALOGY_RELATION" | "FACTOID_LOOKUP" | "BATTLE_TACTICS" | "GENERAL_OVERVIEW",
+  "suspected_fake_or_unverified_entities": string[],
+  "verified_or_implicit_entities": string[]
+}`;
+
+    const res = await generateLLMCompletion(
+      [{ role: 'user', content: prompt }],
+      {
+        task: 'general', // Routes to Primary LLM (Qwen 3.5 9B, Port 8092)
+        temperature: 0.1,
+        max_tokens: 120,
+        timeoutMs: 4500,
+      }
+    );
+
+    const raw = res.content.trim();
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      log.info('chat.arbiter_success', `Tier 2 Arbiter completed in ${Date.now() - arbiterStartTime}ms`, {
+        is_historical: parsed.is_historical,
+        intent: parsed.intent,
+        suspectedFake: parsed.suspected_fake_or_unverified_entities,
+      });
+
+      const updatedIntent: ChatIntent =
+        parsed.intent === 'CHITCHAT' || parsed.intent === 'OUT_OF_DOMAIN' || parsed.intent === 'VIDEO_INTENT'
+          ? parsed.intent
+          : parsed.is_historical === false
+          ? 'CHITCHAT'
+          : 'HISTORICAL_QUERY';
+
+      return {
+        ...classification,
+        intent: updatedIntent,
+        subIntent: parsed.sub_intent || classification.subIntent,
+        needsSemanticArbitration: false,
+        arbitratedFakeEntities: Array.isArray(parsed.suspected_fake_or_unverified_entities)
+          ? parsed.suspected_fake_or_unverified_entities
+          : [],
+        arbitratedEntities: Array.isArray(parsed.verified_or_implicit_entities)
+          ? parsed.verified_or_implicit_entities
+          : [],
+      };
+    }
+  } catch (err: any) {
+    log.warn('chat.arbiter_fallback', `Tier 2 Arbiter timed out or failed (${err.message}). Safe fallback to RAG.`, {
+      latencyMs: Date.now() - arbiterStartTime,
+    });
+  }
+
+  // Fail-safe to RAG
+  return {
+    ...classification,
+    needsSemanticArbitration: false,
+  };
+}
 
 export async function* handleChatQueryStream(
   request: ChatSupervisorRequest
@@ -170,7 +335,10 @@ export async function* handleChatQueryStream(
   const { query, conversationId, history = [], signal, ragEngine } = request;
   const startTime = Date.now();
 
-  log.info('chat.supervisor_started', `Chat query received: "${query.slice(0, 50)}..."`, {
+  const { normalized: normalizedQuery } = normalizeResilientText(query);
+  const effectiveQuery = normalizedQuery.trim() || query.trim();
+
+  log.info('chat.supervisor_started', `Chat query received: "${effectiveQuery.slice(0, 50)}..."`, {
     conversationId,
     historyTurns: history.length,
   });
@@ -183,28 +351,52 @@ export async function* handleChatQueryStream(
   const prunedHistory = pruneConversationHistory(history);
 
   // 1. Intent Classification (< 1ms)
-  const classification = classifyChatIntent(query);
+  let classification = classifyChatIntent(effectiveQuery);
 
   // Multi-turn Continuation Guard: If classified as CHITCHAT but is a follow-up continuation
   // with existing conversation history, elevate it to HISTORICAL_QUERY.
   if (
     classification.intent === 'CHITCHAT' &&
     history.length > 0 &&
-    isContinuationOrCoreferenceQuery(query)
+    isContinuationOrCoreferenceQuery(effectiveQuery)
   ) {
     classification.intent = 'HISTORICAL_QUERY';
     classification.subIntent = classification.subIntent || 'GENERAL_OVERVIEW';
   }
 
+  // Multi-turn Fast-Path Co-reference: If query is flagged for semantic arbitration
+  // but is a clear follow-up continuation with conversation history, fast-path to HISTORICAL_QUERY
+  // and resolve anaphora deterministically via Dialogue State Tracking instead of blocking on Tier 2 LLM Arbiter.
+  if (
+    classification.needsSemanticArbitration &&
+    history.length > 0 &&
+    isContinuationOrCoreferenceQuery(effectiveQuery)
+  ) {
+    classification.needsSemanticArbitration = false;
+    classification.intent = 'HISTORICAL_QUERY';
+    classification.subIntent = classification.subIntent || 'GENERAL_OVERVIEW';
+  }
+
+  // Tier 2 Speculative Semantic Arbiter (Single Qwen 3.5 9B instance on Port 8092)
+  if (classification.needsSemanticArbitration && !signal?.aborted) {
+    const recentHistoryText = history.length > 0
+      ? history.slice(-2).map((t) => `${t.role === 'user' ? 'Người dùng' : 'Trợ lý'}: ${t.content.slice(0, 150)}`).join('\n')
+      : undefined;
+    classification = await arbitrateAmbiguousQueryWithLLM(effectiveQuery, classification, signal, recentHistoryText);
+  }
+
+  const compositeIntents = classification.compositeResult?.clauses.map((c) => c.intent) || [classification.intent];
   yield {
     type: 'intent',
     intent: classification.intent,
     content: classification.suggestedTopic || classification.matchedCanonicalName,
+    compositeIntents,
+    videoHandover: classification.videoHandover,
   };
 
   // 2. Out-of-Domain Route -> LLM Direct Persona Stream
   if (classification.intent === 'OUT_OF_DOMAIN') {
-    log.info('chat.out_of_domain_llm', `Handling out-of-domain query via LLM: "${query.slice(0, 50)}"`, {
+    log.info('chat.out_of_domain_llm', `Handling out-of-domain query via LLM: "${effectiveQuery.slice(0, 50)}"`, {
       conversationId,
     });
 
@@ -214,7 +406,7 @@ export async function* handleChatQueryStream(
         content: `${STATIC_SYSTEM_PERSONA_PROMPT}\n\nLƯU Ý QUAN TRỌNG: Câu hỏi này nằm ngoài phạm vi tri thức Lịch sử Việt Nam (ẩm thực thông thường, đầu tư tài chính/chứng khoán, lập trình công nghệ, v.v.). Hãy lịch sự, từ tốn từ chối trả lời nội dung ngoài phạm vi này theo đúng tư cách Trợ lý ChronoViet, đồng thời gợi ý người dùng các chủ đề lịch sử Việt Nam hấp dẫn có thể khám phá.`,
       },
       ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
-      { role: 'user', content: query },
+      { role: 'user', content: effectiveQuery },
     ];
     const messages = clampTotalPromptMessages(rawMessages, 4000);
 
@@ -246,27 +438,28 @@ export async function* handleChatQueryStream(
       fullResponse = fallback;
     }
 
-    fullResponse = deduplicateRepetitiveText(fullResponse);
+    fullResponse = normalizeMarkdownListBreaks(deduplicateRepetitiveText(fullResponse));
     yield { type: 'citation', citations: [] };
     yield {
       type: 'done',
       content: fullResponse,
       citations: [],
       conversationId,
+      videoHandover: classification.videoHandover,
     };
     return;
   }
 
   // 3. Chitchat & Bot Capability Routing -> Direct LLM Stream (Tier 2 - No RAG search cost)
   if (classification.intent === 'CHITCHAT') {
-    log.info('chat.persona_direct_llm', `Handling conversational/persona query directly via LLM: "${query.slice(0, 50)}"`, {
+    log.info('chat.persona_direct_llm', `Handling conversational/persona query directly via LLM: "${effectiveQuery.slice(0, 50)}"`, {
       conversationId,
     });
 
     const rawMessages: ChatMessage[] = [
       { role: 'system', content: STATIC_SYSTEM_PERSONA_PROMPT },
       ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
-      { role: 'user', content: query },
+      { role: 'user', content: effectiveQuery },
     ];
     const messages = clampTotalPromptMessages(rawMessages, 4000);
 
@@ -302,7 +495,7 @@ export async function* handleChatQueryStream(
       fullResponse = fallback;
     }
 
-    fullResponse = deduplicateRepetitiveText(fullResponse);
+    fullResponse = normalizeMarkdownListBreaks(deduplicateRepetitiveText(fullResponse));
 
     yield { type: 'citation', citations: [] };
     yield {
@@ -310,13 +503,14 @@ export async function* handleChatQueryStream(
       content: fullResponse,
       citations: [],
       conversationId,
+      videoHandover: classification.videoHandover,
     };
     return;
   }
 
   // 4. Video Creation Intent -> Direct LLM Stream
   if (classification.intent === 'VIDEO_INTENT') {
-    const topic = classification.suggestedTopic || query;
+    const topic = classification.suggestedTopic || effectiveQuery;
     log.info('chat.video_intent_llm', `Handling video intent query via LLM: "${topic.slice(0, 50)}"`, {
       conversationId,
     });
@@ -327,7 +521,7 @@ export async function* handleChatQueryStream(
         content: `${STATIC_SYSTEM_PERSONA_PROMPT}\n\nLƯU Ý QUAN TRỌNG: Người dùng đang muốn sản xuất video lịch sử về chủ đề: "${topic}". Hãy hào hứng xác nhận chủ đề, tóm tắt nhanh 2-3 phân cảnh lịch sử tiêu biểu/kịch tính nhất của chủ đề này, và hướng dẫn người dùng nhấn nút "Tạo Video" hoặc chuyển sang tab Video Studio để bắt đầu tạo kịch bản phân cảnh và render video tự động.`,
       },
       ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
-      { role: 'user', content: query },
+      { role: 'user', content: effectiveQuery },
     ];
     const messages = clampTotalPromptMessages(rawMessages, 4000);
 
@@ -359,32 +553,71 @@ export async function* handleChatQueryStream(
       fullResponse = fallback;
     }
 
-    fullResponse = deduplicateRepetitiveText(fullResponse);
+    fullResponse = normalizeMarkdownListBreaks(deduplicateRepetitiveText(fullResponse));
     yield { type: 'citation', citations: [] };
     yield {
       type: 'done',
       content: fullResponse,
       citations: [],
       conversationId,
+      videoHandover: classification.videoHandover,
     };
     return;
   }
 
   // 5. Premise Analysis, Dialogue State Tracking & Query Rewriting
-  const premiseAnalysis = analyzePremiseAndLeadingIntent(query);
-  const dialogueState = extractDialogueState(history, query);
-  let searchTopic = query;
-  if (history.length > 0) {
-    searchTopic = rewriteMultiTurnQuery(query, history, dialogueState);
+  const premiseAnalysis = analyzePremiseAndLeadingIntent(effectiveQuery);
+
+  // Ingest arbitrated fake or unverified entities into premiseAnalysis.detectedEntities
+  if (classification.arbitratedFakeEntities && classification.arbitratedFakeEntities.length > 0) {
+    for (const fakeEnt of classification.arbitratedFakeEntities) {
+      if (!premiseAnalysis.detectedEntities.includes(fakeEnt)) {
+        premiseAnalysis.detectedEntities.push(fakeEnt);
+      }
+    }
   }
+
+  const dialogueState = extractDialogueState(history, effectiveQuery);
+  let searchTopic = classification.cleanSearchTopic || effectiveQuery;
+  if (history.length > 0) {
+    searchTopic = rewriteMultiTurnQuery(searchTopic, history, dialogueState);
+    // Enrich videoHandover with multi-turn primary entity context if not specified explicitly
+    if (dialogueState.primaryEntity && !classification.videoHandover?.canonicalName) {
+      const canonical = dialogueState.primaryEntity;
+      const resolved = resolveCanonicalEntity(canonical);
+      classification.videoHandover = {
+        topic: searchTopic,
+        canonicalName: canonical,
+        primaryEntityId: resolved?.entityId || classification.videoHandover?.primaryEntityId,
+      };
+    }
+  }
+
+  const currentKnownEntities = premiseAnalysis.detectedEntities.filter((e) => isKnownMasterEntity(e));
+  if (
+    classification.matchedCanonicalName &&
+    isKnownMasterEntity(classification.matchedCanonicalName) &&
+    !currentKnownEntities.includes(classification.matchedCanonicalName)
+  ) {
+    currentKnownEntities.push(classification.matchedCanonicalName);
+  }
+  if (classification.arbitratedEntities && classification.arbitratedEntities.length > 0) {
+    for (const ent of classification.arbitratedEntities) {
+      if (isKnownMasterEntity(ent) && !currentKnownEntities.includes(ent)) {
+        currentKnownEntities.push(ent);
+      }
+    }
+  }
+
+  const isTopicShift = isTopicShiftQuery(effectiveQuery, history, currentKnownEntities);
 
   const entitiesToFilter = Array.from(new Set([
     ...premiseAnalysis.detectedEntities,
-    ...(dialogueState.primaryEntity ? [dialogueState.primaryEntity] : []),
-    ...dialogueState.veneratedEntities,
-    ...dialogueState.adversaryEntities,
-    ...dialogueState.activeDocuments,
-    ...dialogueState.activeLocations,
+    ...(isTopicShift ? [] : (dialogueState.primaryEntity ? [dialogueState.primaryEntity] : [])),
+    ...(isTopicShift ? [] : dialogueState.veneratedEntities),
+    ...(isTopicShift ? [] : dialogueState.adversaryEntities),
+    ...(isTopicShift ? [] : dialogueState.activeDocuments),
+    ...(isTopicShift ? [] : dialogueState.activeLocations),
   ]));
 
   const resolvedFilterIds = entitiesToFilter
@@ -392,13 +625,38 @@ export async function* handleChatQueryStream(
     .map((e) => resolveCanonicalEntity(e).entityId)
     .filter((id): id is string => Boolean(id) && !id.startsWith('ent_'));
 
+  // Adaptive Budgeting for ENTITY_IDENTITY vs standard HISTORICAL_QUERY
+  const isEntityIdentity = classification.intent === 'ENTITY_IDENTITY';
+  const isLeanIdentity =
+    isEntityIdentity &&
+    (Boolean(premiseAnalysis.isSameEntityCoReference) || Boolean(classification.signals?.isCoReferenceIdentity));
+
+  const maxRagTokens = isLeanIdentity ? 600 : isEntityIdentity ? 1200 : 3200;
+  const rerankTopK = isLeanIdentity
+    ? 2
+    : classification.subIntent === 'FACTOID_LOOKUP'
+    ? 4
+    : isEntityIdentity
+    ? 3
+    : 5;
+  const maxGenerationTokens = isLeanIdentity
+    ? 500
+    : classification.subIntent === 'FACTOID_LOOKUP'
+    ? 500
+    : classification.subIntent === 'GENEALOGY_RELATION' || isEntityIdentity
+    ? 750
+    : classification.subIntent === 'BATTLE_TACTICS'
+    ? 1200
+    : 1000;
+
   // 7. Deep Chrono-RAG Search with Graph Triples
   const engine = ragEngine || new ChronoRagEngine();
   let verifiedCitations: string[] = [];
   let graphTriples: GraphTripleItem[] = [];
   let contextSnippets = '';
   let isFolkloreSource = false;
-  let isRagFallback = false;
+  let isRagSystemError = false;
+  let isZeroContextFound = false;
 
   const ragTimeoutMs = envConfig.RAG_SEARCH_TIMEOUT_MS || 20000;
   try {
@@ -406,8 +664,8 @@ export async function* handleChatQueryStream(
       engine.search({
         query: searchTopic,
         subIntent: classification.subIntent,
-        rerankTopK: classification.subIntent === 'FACTOID_LOOKUP' ? 4 : 5,
-        maxTokens: 3200,
+        rerankTopK,
+        maxTokens: maxRagTokens,
         entityFilter: resolvedFilterIds.length > 0 ? resolvedFilterIds : undefined,
       }),
       new Promise<any>((_, reject) =>
@@ -430,7 +688,7 @@ export async function* handleChatQueryStream(
     );
 
     if (!contextSnippets || contextSnippets.trim().length === 0) {
-      isRagFallback = true;
+      isZeroContextFound = true;
       verifiedCitations = [];
     }
 
@@ -438,13 +696,13 @@ export async function* handleChatQueryStream(
     if (graphTriples.length > 0) {
       yield { type: 'triples', triples: graphTriples };
     }
-    if (verifiedCitations.length > 0 && !isRagFallback) {
+    if (verifiedCitations.length > 0 && !isZeroContextFound) {
       yield { type: 'citation', citations: verifiedCitations };
     } else {
       yield { type: 'citation', citations: [] };
     }
   } catch (ragErr: any) {
-    isRagFallback = true;
+    isRagSystemError = true;
     if (ragErr.message?.includes('RAG search timeout')) {
       ragTimeoutsTotal.inc();
     }
@@ -475,59 +733,93 @@ export async function* handleChatQueryStream(
   }
 
   const unmappedDirectiveText = unmappedEntities.length > 0
-    ? `\n\nCẢNH BÁO THỰC THỂ NGOÀI CHÍNH SỬ:\nCác tên/nhân vật sau xuất hiện trong câu hỏi nhưng KHÔNG TỒN TẠI trong cơ sở dữ liệu chính sử: "${unmappedEntities.join('", "')}". Bạn BẮT BUỘC phải nói rõ là trong chính sử không có ghi chép về nhân vật này, TUYỆT ĐỐI KHÔNG tự phong vương/vua/tướng hoặc suy đoán tiểu sử hư cấu.`
+    ? `\n\nCẢNH BÁO THỰC THỂ NGOÀI CƠ SỞ TƯ LIỆU:
+Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi chép trong cơ sở tư liệu tra cứu hiện tại của hệ thống: "${unmappedEntities.join('", "')}".
+- Hãy nêu rõ dựa trên cơ sở dữ liệu và nguồn tư liệu tra cứu hiện tại của hệ thống, không có thông tin xác nhận về nhân vật này trong bối cảnh được hỏi.
+- Nếu câu hỏi ghép đôi với một nhân vật lịch sử đã xác thực (như Lê Lợi), hãy chủ động trình bày các nhân vật thân tộc chính thức đã được ghi chép trong sử sách (như cha mẹ, anh em ruột nếu có) để làm rõ bối cảnh và tránh trả lời cộc lốc.
+- TUYỆT ĐỐI KHÔNG tự phỏng đoán nhân vật này là tên gọi khác, biệt danh hay biến thể của bất kỳ ai khác, TUYỆT ĐỐI KHÔNG tự phong vương/vua/tướng hoặc suy đoán tiểu sử hư cấu.`
     : '';
 
-  const ragFallbackDirective = isRagFallback
-    ? `\n\nCHỈ DẪN KHẨN CẤP KHI KHÔNG CÓ DỮ LIỆU RAG (ZERO-CONTEXT ANTI-HALLUCINATION GUARDRAILS):
-- CẢNH BÁO: Hiện tại hệ thống không thể trích xuất sử liệu xác thực (Chrono-RAG).
+  const ragFallbackDirective = isRagSystemError
+    ? `\n\nCHỈ DẪN KHẨN CẤP KHI KHÔNG CÓ DỮ LIỆU RAG DO SỰ CỐ KỸ THUẬT (ZERO-CONTEXT ANTI-HALLUCINATION GUARDRAILS):
+- CẢNH BÁO: Hiện tại hệ thống tra cứu sử liệu Chrono-RAG tạm thời gián đoạn kỹ thuật.
 - BẮT BUỘC chỉ trình bày các sự kiện, bối cảnh đại cương được giới sử học công nhận rộng rãi (ví dụ: Hội nghị Diên Hồng là do Vua Trần Nhân Tông và Thượng hoàng Trần Thánh Tông triệu tập các bô lão cả nước để hỏi kế đánh giặc, muôn người đồng thanh hô "ĐÁNH").
 - TUYỆT ĐỐI KHÔNG tự suy diễn, không tự bịa đặt tên tướng lĩnh hoặc gán ghép các nhân vật Mông Cổ/ngoại quốc không có căn cứ (như Mông Kha, Mông Kha Thiếp Mộc Nhi...).
 - Nếu không có tư liệu chắc chắn về một chi tiết cụ thể nào, BẮT BUỘC nêu rõ: "Cần tra cứu thêm chính sử để có thông tin chi tiết về...".`
+    : isZeroContextFound
+    ? `\n\nCHỈ DẪN KHI KHÔNG CÓ SỬ LIỆU PHÙ HỢP TRONG CƠ SỞ DỮ LIỆU (ZERO-CONTEXT GROUNDING):
+- HỆ THỐNG ĐÃ TRA CỨU: Cơ sở dữ liệu và nguồn tư liệu hiện tại của hệ thống đã được rà soát nhưng chưa tìm thấy tài liệu hay ghi chép nào phù hợp với nhân vật/sự kiện được hỏi.
+- BẮT BUỘC NÊU RÕ: Hãy thông báo rõ ràng cho người dùng rằng trong cơ sở tư liệu hiện có chưa ghi nhận thông tin này. Nếu câu hỏi liên quan đến một nhân vật lịch sử lớn, hãy cung cấp thông tin chính thống về nhân vật đó để hỗ trợ người dùng.
+- TUYỆT ĐỐI KHÔNG tự suy đoán, không tự phong vương/tướng, không tự bịa đặt tiểu sử hay gán ghép vào bất kỳ triều đại nào.`
     : '';
 
   let subIntentDirective = '';
   if (premiseAnalysis.isSameEntityCoReference) {
-    subIntentDirective = `\n\nCHỈ DẪN ĐỒNG NHẤT DANH XƯNG & TIỂU SỬ: Trình bày rõ ràng các giai đoạn lịch sử của nhân vật theo thứ tự thời gian từ tên khai sinh/tên húy, tước vị, đến niên hiệu khi lên ngôi. TUYỆT ĐỐI KHÔNG mô tả 2 danh xưng như hai cá nhân riêng biệt có quan hệ huyết thống với nhau.`;
+    subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: Đồng nhất danh xưng & tiểu sử - Trình bày rõ ràng các giai đoạn lịch sử của nhân vật theo thứ tự thời gian từ tên khai sinh/tên húy, tước vị, đến niên hiệu khi lên ngôi. TUYỆT ĐỐI KHÔNG mô tả 2 danh xưng như hai cá nhân riêng biệt có quan hệ huyết thống với nhau.]`;
   } else if (classification.subIntent === 'GENEALOGY_RELATION') {
-    subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI PHẢ HỆ / THÂN TỘC: Nêu rõ quan hệ huyết thống, cha-con, anh-em, phu-thê, nguồn gốc tông tộc hoặc biến cố đổi họ/ban quốc tính theo chính sử.`;
+    subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: Quan hệ phả hệ/thân tộc - Nêu rõ quan hệ huyết thống, cha-con, anh-em, phu-thê, nguồn gốc tông tộc hoặc biến cố đổi họ/ban quốc tính theo chính sử.]`;
   } else if (classification.subIntent === 'BATTLE_TACTICS') {
-    subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI CHIẾN THUẬT & TRẬN ĐÁNH: Trình bày mạch lạc diễn biến, bài binh bố trận, kế sách quân sự (mai phục, thủy chiến, cọc ngầm, nghi binh...) và vai trò chỉ huy.`;
+    subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: Chiến thuật & trận đánh - Trình bày mạch lạc diễn biến, bài binh bố trận, kế sách quân sự (mai phục, thủy chiến, cọc ngầm, nghi binh...) và vai trò chỉ huy.]`;
   } else if (classification.subIntent === 'FACTOID_LOOKUP') {
-    subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI TRA CỨU NIÊN ĐẠI / SỰ KIỆN: Trả lời trực diện, chính xác mốc năm, địa danh, niên hiệu hoặc nhân vật trước khi trình bày tóm lược bối cảnh.`;
+    subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: Tra cứu niên đại/sự kiện - Đi thẳng vào câu trả lời, nêu rõ mốc năm, địa danh, niên hiệu hoặc nhân vật cụ thể ngay từ đầu, sau đó tóm lược bối cảnh.]`;
   } else if (classification.subIntent === 'COMPARATIVE_SYNTHESIS') {
-    subIntentDirective = `\n\nCHỈ DẪN TRẢ LỜI SO SÁNH / ĐỐI CHIẾU: Phân tích rõ ràng các điểm tương đồng, dị biệt, bối cảnh lịch sử và ý nghĩa của từng đối tượng được đối chiếu.`;
+    subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: So sánh/đối chiếu - Phân tích rõ ràng các điểm tương đồng, dị biệt, bối cảnh lịch sử và ý nghĩa của từng đối tượng được đối chiếu.]`;
   }
 
-  const premiseDirectiveText = (premiseAnalysis.suggestedDirective
-    ? `CHỈ DẪN KIỂM CHỨNG TIỀN ĐỀ ĐẶC THÙ:\n${premiseAnalysis.suggestedDirective}\n\n`
-    : '') + unmappedDirectiveText + subIntentDirective + (ragFallbackDirective ? `\n\n${ragFallbackDirective}` : '');
+  let countingDirective = '';
+  if (/(?:bao\s*nhiêu|tổng\s*(?:cộng|số)|mấy\s*(?:cái|tên|người|vị|trận|lần))/i.test(effectiveQuery)) {
+    countingDirective = `\n\n[QUY TẮC NỘI BỘ BẮT BUỘC: Trả lời trực diện số lượng / thống kê - Người dùng đang hỏi câu hỏi định lượng ("bao nhiêu", "tổng cộng", "mấy").
+- CÂU ĐẦU TIÊN TRONG PHẢN HỒI BẮT BUỘC PHẢI TRẢ LỜI TRỰC DIỆN con số thống kê, số lượng cụ thể hoặc khoảng ước lượng tổng thể dựa trên sử liệu và thẻ tri thức đã cung cấp.
+- TUYỆT ĐỐI KHÔNG bỏ qua câu hỏi số lượng để đi thẳng vào liệt kê ví dụ cụ thể.
+- Sau khi khẳng định con số tổng thể, mới tiến hành liệt kê chi tiết các mốc/danh xưng/sự kiện tiêu biểu theo định dạng danh sách Markdown ngắt dòng rõ ràng.]`;
+  }
+
+  let multiIntentDirective = '';
+  if (classification.signals?.hasChitchatGreeting) {
+    multiIntentDirective += `\n\n[QUY TẮC NỘI BỘ: Chào hỏi kết hợp - Nếu người dùng có lời chào ở đầu câu, hãy mở đầu bằng 1 lời chào lịch thiệp ngắn gọn (1 câu), sau đó BẮT BUỘC trả lời đầy đủ câu hỏi lịch sử chính đi kèm (ví dụ: tiểu sử, sự nghiệp của nhân vật được hỏi). TUYỆT ĐỐI KHÔNG chỉ chào hỏi đơn thuần mà bỏ quên nội dung lịch sử.]`;
+  }
+  if (classification.signals?.hasOutOfDomainTopic && classification.outOfDomainTopic) {
+    multiIntentDirective += `\n\n[QUY TẮC NỘI BỘ: Ràng buộc phạm vi - Tập trung trả lời phần lịch sử chính, đồng thời lịch sự nhắc người dùng rằng ChronoViet là hệ thống chuyên biệt về Lịch sử Việt Nam nên không hỗ trợ chi tiết các nội dung ngoài lề ("${classification.outOfDomainTopic}").]`;
+  }
+  if (classification.signals?.hasVideoGeneration) {
+    multiIntentDirective += `\n\n[QUY TẮC NỘI BỘ: Kết hợp sản xuất video - Sau khi trình bày sự kiện lịch sử, hãy gợi ý người dùng nhấn nút "Tạo Video" hoặc chuyển sang tab Video Studio để bắt đầu tạo kịch bản phân cảnh.]`;
+  }
+
+  const premiseDirectiveText =
+    (premiseAnalysis.suggestedDirective
+      ? `[QUY TẮC NỘI BỘ KIỂM CHỨNG TIỀN ĐỀ ĐẶC THÙ]:\n${premiseAnalysis.suggestedDirective}\n\n`
+      : '') +
+    unmappedDirectiveText +
+    subIntentDirective +
+    countingDirective +
+    multiIntentDirective +
+    (ragFallbackDirective ? `\n\n${ragFallbackDirective}` : '');
 
   const contextSections: string[] = [];
-  if (dialogueState.contextBanner) {
+  if (!isTopicShift && dialogueState.contextBanner) {
     contextSections.push(`<dialogue_context_banner>\n${dialogueState.contextBanner}\n</dialogue_context_banner>`);
   }
   const entitiesToLookup = Array.from(new Set([
     ...premiseAnalysis.detectedEntities,
-    ...(dialogueState.primaryEntity ? [dialogueState.primaryEntity] : []),
-    ...dialogueState.veneratedEntities,
-    ...dialogueState.adversaryEntities,
-    ...dialogueState.activeDocuments,
-    ...dialogueState.activeLocations,
+    ...(isTopicShift ? [] : (dialogueState.primaryEntity ? [dialogueState.primaryEntity] : [])),
+    ...(isTopicShift ? [] : dialogueState.veneratedEntities),
+    ...(isTopicShift ? [] : dialogueState.adversaryEntities),
+    ...(isTopicShift ? [] : dialogueState.activeDocuments),
+    ...(isTopicShift ? [] : dialogueState.activeLocations),
   ]));
   const dynamicEntityCards = buildDynamicEntityKnowledgeCards(entitiesToLookup);
   if (dynamicEntityCards.trim()) {
     contextSections.push(`<verified_master_entities>\n${dynamicEntityCards}\n</verified_master_entities>`);
   }
   if (premiseDirectiveText.trim()) {
-    contextSections.push(`<premise_directives>\n${premiseDirectiveText.trim()}\n</premise_directives>`);
+    contextSections.push(`<premise_directives>\n<!-- [QUY TẮC TƯ DUY VÀ RÀNG BUỘC PHẢN HỒI NỘI BỘ - TUYỆT ĐỐI KHÔNG ĐƯỢC CHÉP LẠI HAY NHẮC LẠI CÁC DÒNG QUY TẮC NÀY VÀO PHẢN HỒI GỬI NGƯỜI DÙNG] -->\n${premiseDirectiveText.trim()}\n</premise_directives>`);
   }
   contextSections.push(`<verified_rag_evidence>\n${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}\n</verified_rag_evidence>`);
   if (triplesText.trim()) {
     contextSections.push(`<knowledge_graph_triples>\n${triplesText}\n</knowledge_graph_triples>`);
   }
 
-  const safeQuery = escapePromptXml(query);
+  const safeQuery = escapePromptXml(effectiveQuery);
   const userTurnWithContext = `<historical_context>\n${contextSections.join('\n\n')}\n</historical_context>\n\n<user_query>\n${safeQuery}\n</user_query>`;
 
   const rawMessages: ChatMessage[] = [
@@ -535,12 +827,12 @@ export async function* handleChatQueryStream(
     ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
     { role: 'user', content: userTurnWithContext },
   ];
-  const messages = clampTotalPromptMessages(rawMessages, 5000);
+  const messages = clampTotalPromptMessages(rawMessages, isLeanIdentity ? 2500 : 5000);
 
   let fullResponse = '';
   const loopDetector = createStreamLoopDetector();
 
-  if (isRagFallback) {
+  if (isRagSystemError) {
     const disclaimer = `> ⚠️ **Lưu ý:** *Hệ thống tra cứu sử liệu chuyên sâu (Chrono-RAG) đang phản hồi chậm hoặc tạm gián đoạn. Phản hồi dưới đây dựa trên tri thức đại cương, vui lòng đối chiếu lại với chính sử.*\n\n`;
     yield { type: 'token', content: disclaimer };
     fullResponse += disclaimer;
@@ -550,7 +842,7 @@ export async function* handleChatQueryStream(
     for await (const chunk of generateLLMCompletionStream(messages, {
       temperature: 0.2,
       top_p: 0.9,
-      max_tokens: 1500,
+      max_tokens: maxGenerationTokens,
     })) {
       if (signal?.aborted) {
         yield { type: 'error', error: 'Yêu cầu đã bị hủy trong quá trình sinh phản hồi' };
@@ -580,8 +872,34 @@ export async function* handleChatQueryStream(
     }
   }
 
-  // Deduplicate any repeated blocks in the accumulated response
-  fullResponse = deduplicateRepetitiveText(fullResponse);
+  // Zero-Content Resilience Guardrail: Prevent emitting empty response if model exhausts token budget or drops stream
+  if (!fullResponse.trim()) {
+    log.warn('chat.zero_content_stream_detected', 'LLM stream produced zero text tokens. Triggering fallback response.');
+    if (contextSnippets.trim()) {
+      const fallbackSummary = `🏛️ **Thông tin đối chiếu từ nguồn sử liệu Chrono-RAG:**\n\n${pruneRagContext(contextSnippets, 500)}`;
+      fullResponse = fallbackSummary;
+      yield { type: 'token', content: fallbackSummary };
+    } else {
+      const fallbackSummary = 'Hệ thống đã nhận diện yêu cầu nhưng quá trình phản hồi bị gián đoạn. Vui lòng thử lại với câu hỏi chi tiết hơn.';
+      fullResponse = fallbackSummary;
+      yield { type: 'token', content: fallbackSummary };
+    }
+  }
+
+  // Deduplicate any repeated blocks in the accumulated response & sanitize prompt leakage
+  fullResponse = normalizeMarkdownListBreaks(sanitizePromptDirectivesLeakage(deduplicateRepetitiveText(fullResponse)));
+
+  // Invariant Semantic Co-Reference Guardrail
+  if (premiseAnalysis.isSameEntityCoReference && premiseAnalysis.detectedEntities.length >= 2) {
+    const e1 = premiseAnalysis.detectedEntities[0];
+    const e2 = premiseAnalysis.detectedEntities[1];
+    const canon = resolveCanonicalEntity(e1);
+    const invariantCheck = verifyCoReferenceInvariant(fullResponse, e1, e2, canon.canonicalName);
+    if (!invariantCheck.isValid) {
+      log.warn('chat.coreference_invariant_violation_repaired', invariantCheck.violation || '');
+      fullResponse = invariantCheck.sanitized;
+    }
+  }
 
   // 7. Guardrails Verification: Folklore Check
   if (isFolkloreSource && fullResponse.trim()) {
@@ -591,9 +909,12 @@ export async function* handleChatQueryStream(
     }
   }
 
+  const charLength = fullResponse.length;
+  const estimatedTokens = Math.ceil(charLength / 3.5);
   log.info('chat.supervisor_completed', `Chat stream finished (${Date.now() - startTime}ms)`, {
     conversationId,
-    tokenLength: fullResponse.length,
+    charLength,
+    tokenLength: estimatedTokens,
   });
 
   yield {
@@ -602,6 +923,7 @@ export async function* handleChatQueryStream(
     citations: verifiedCitations,
     triples: graphTriples,
     conversationId,
+    videoHandover: classification.videoHandover,
   };
 }
 

@@ -197,15 +197,80 @@ export function extractRecentEntities(history: ChatTurnContext[]): string[] {
   return extractTypedRecentEntities(history).all;
 }
 
+export const DISCOURSE_CONNECTIVE_PREFIX_REGEX =
+  /^(?:vậy\s+thì|thế\s+thì|thế\s+nhưng|vậy\s+cho\s+(?:mình|tôi|em)\s+hỏi|nhân\s+tiện|tiện\s+thể|(?:vậy|thế|còn)(?!\s*(?:kỷ|kỉ|trận|lực|thần|tử|phả|nào|gì|bao\s*nhiêu|sao)))[\s,;:!?-]+/i;
+
 export const CONTINUATION_INTENT_REGEX =
   /^(?:sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao|như\s*thế\s*nào|kết\s*quả\s*thế\s*nào|ai\s*là|ai\s*đã|vị\s*vua\s*nào|người\s*nào|tướng\s*nào)/i;
 
 export const PRONOUN_COREF_CHECK_REGEX =
-  /(?:ông\s*ấy|bà\s*ấy|vị\s*tướng|nhân\s*vật|hắn|hắn\s*ta|tên\s*tướng|tướng\s*giặc|quân\s*giặc|ngài|ông\s*ta|bà\s*ta|(?:^|[\s,;:.!?])ông(?:$|[\s,;:.!?])|(?:^|[\s,;:.!?])bà(?:$|[\s,;:.!?])|người\s*vợ|người\s*chồng|gia\s*tộc|sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao)/i;
+  /(?:ông\s*ấy|bà\s*ấy|vị\s*tướng|nhân\s*vật|(?<!\p{L})(?:hắn|hắn\s*ta|ngài|ông|bà)(?!\p{L})|tên\s*tướng|tướng\s*giặc|quân\s*giặc|ông\s*ta|bà\s*ta|người\s*vợ|người\s*chồng|gia\s*tộc|sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao)/iu;
 
-export function isContinuationOrCoreferenceQuery(query: string): boolean {
+export function isContinuationOrCoreferenceQuery(
+  query: string,
+  explicitEntities: string[] = []
+): boolean {
   const trimmed = (query || '').trim();
-  return CONTINUATION_INTENT_REGEX.test(trimmed) || PRONOUN_COREF_CHECK_REGEX.test(trimmed);
+  const stripped = trimmed.replace(DISCOURSE_CONNECTIVE_PREFIX_REGEX, '').trim();
+
+  const hasExplicitSubject =
+    explicitEntities.length > 0 ||
+    /(?:(?<!\p{L})\p{Lu}\p{Ll}+(?:\s+\p{Lu}\p{Ll}+){1,3}(?!\p{L}))/u.test(stripped);
+
+  const hasAnaphora =
+    PRONOUN_COREF_CHECK_REGEX.test(trimmed) || PRONOUN_COREF_CHECK_REGEX.test(stripped);
+
+  // If query starts with interrogative continuation (e.g. "ai là", "vị vua nào"),
+  // but already has an explicit proper noun / entity and NO backwards anaphora, it's self-contained.
+  const hasInterrogativeContinuation =
+    CONTINUATION_INTENT_REGEX.test(trimmed) || CONTINUATION_INTENT_REGEX.test(stripped);
+
+  if (hasInterrogativeContinuation && hasExplicitSubject && !hasAnaphora) {
+    return false;
+  }
+
+  return hasInterrogativeContinuation || hasAnaphora;
+}
+
+/**
+ * Detects whether the current query represents a clean Topic Shift (introducing new explicit historical subjects)
+ * rather than continuing the previous conversation's focal entity.
+ */
+export function isTopicShiftQuery(
+  query: string,
+  history: ChatTurnContext[] = [],
+  currentExplicitEntities: string[] = []
+): boolean {
+  if (!history || history.length === 0) return false;
+  if (!currentExplicitEntities || currentExplicitEntities.length === 0) return false;
+
+  const state = extractDialogueState(history);
+  const previousEntities = [
+    state.primaryEntity,
+    ...state.veneratedEntities,
+    ...state.adversaryEntities,
+    ...state.activeDocuments,
+    ...state.activeLocations,
+  ]
+    .filter((e): e is string => Boolean(e))
+    .map((e) => e.toLowerCase());
+
+  // Check if current query introduces an entity absent from previous turns
+  const hasNewExplicitEntity = currentExplicitEntities.some(
+    (cur) => !previousEntities.some((prev) => prev.includes(cur.toLowerCase()) || cur.toLowerCase().includes(prev))
+  );
+
+  const hasAnaphora = PRONOUN_COREF_CHECK_REGEX.test(query);
+
+  if (hasNewExplicitEntity && !hasAnaphora) {
+    return true;
+  }
+
+  if (isContinuationOrCoreferenceQuery(query, currentExplicitEntities)) {
+    return false;
+  }
+
+  return hasNewExplicitEntity;
 }
 
 /**
@@ -222,10 +287,9 @@ export function rewriteMultiTurnQuery(
     return trimmed;
   }
 
-  const isContinuation = CONTINUATION_INTENT_REGEX.test(trimmed);
-  const hasPronoun = PRONOUN_COREF_CHECK_REGEX.test(trimmed);
+  const isContinuation = isContinuationOrCoreferenceQuery(trimmed);
 
-  if (!isContinuation && !hasPronoun) {
+  if (!isContinuation) {
     return trimmed;
   }
 
@@ -238,7 +302,12 @@ export function rewriteMultiTurnQuery(
     return trimmed;
   }
 
+  // Strip leading discourse connective if present (e.g. "vậy ông..." -> "ông...")
   let rewritten = trimmed;
+  const connectiveMatch = rewritten.match(DISCOURSE_CONNECTIVE_PREFIX_REGEX);
+  if (connectiveMatch) {
+    rewritten = rewritten.slice(connectiveMatch[0].length).trim();
+  }
 
   // 1. Adversary pronouns: "hắn", "hắn ta", "tên tướng đó", "tướng giặc đó" (excluding interrogative "tướng giặc nào")
   if (adversaryAnchor && /(?:hắn\s*ta|hắn|(?:tên\s*tướng|tướng\s*giặc|quân\s*giặc)\s+(?:này|đó|ấy))/i.test(rewritten)) {
@@ -257,7 +326,7 @@ export function rewriteMultiTurnQuery(
     );
   }
 
-  // 2. Relational kinship phrases: "người vợ của ông", "người chồng của bà", "gia tộc ông", "với gia tộc ông"
+  // 3. Relational kinship phrases: "người vợ của ông", "người chồng của bà", "gia tộc ông", "với gia tộc ông"
   if (veneratedAnchor) {
     rewritten = rewritten.replace(
       /(?:người\s*vợ|vợ|người\s*chồng|chồng|thân\s*phụ|thân\s*mẫu|cha|mẹ|anh|em|con|tướng|quân\s*sư|thầy|tác\s*phẩm|câu\s*nói|chiến\s*công|vai\s*trò|công\s*lao|gia\s*tộc)\s+(?:của\s+)?(?:ông\s*ấy|bà\s*ấy|ông|bà|ngài|vị\s*(?:tướng\s*)?(?:này|đó|ấy))/gi,
@@ -270,34 +339,28 @@ export function rewriteMultiTurnQuery(
     );
 
     // Leading subject: "Ông có...", "Bà có...", "Ngài..."
-    if (/^(?:ông\s*ấy|bà\s*ấy|vị\s*(?:tướng\s*)?(?:này|đó|ấy)|ông|bà|ngài)\s+/i.test(rewritten)) {
+    if (/^(?:ông\s*ấy|bà\s*ấy|vị\s*(?:tướng\s*)?(?:này|đó|ấy)|ông|bà|ngài)\s+/iu.test(rewritten)) {
       rewritten = rewritten.replace(
-        /^(?:ông\s*ấy|bà\s*ấy|vị\s*(?:tướng\s*)?(?:này|đó|ấy)|ông|bà|ngài)\s+/i,
+        /^(?:ông\s*ấy|bà\s*ấy|vị\s*(?:tướng\s*)?(?:này|đó|ấy)|ông|bà|ngài)\s+/iu,
         `${veneratedAnchor} `
       );
     }
   }
 
-  // 3. Continuation clauses with Pro-Drop (Ẩn chủ ngữ / Zero-Anaphora)
+  // 4. Continuation clauses with Pro-Drop (Ẩn chủ ngữ / Zero-Anaphora)
   if (CONTINUATION_INTENT_REGEX.test(rewritten)) {
     const stripped = rewritten.replace(CONTINUATION_INTENT_REGEX, '').trim();
     const hasExplicitProperNoun = /(?:[A-ZÀ-Ỹ][a-zà-ỹ]+(?:\s+[A-ZÀ-Ỹ][a-zà-ỹ]+)+)/.test(stripped);
 
     if (!hasExplicitProperNoun) {
       rewritten = `${primaryEntity}: ${rewritten}`;
-    } else {
-      // If query mentions an active location or concept, attach active document or person context
-      const docAnchor = state.activeDocuments[0] || veneratedAnchor;
-      if (docAnchor && !rewritten.toLowerCase().includes(docAnchor.toLowerCase())) {
-        rewritten = `${rewritten} (${docAnchor})`;
-      }
     }
   }
 
-  // 4. Remaining isolated pronouns
-  if (rewritten === trimmed && veneratedAnchor) {
+  // 5. Remaining isolated pronouns
+  if (veneratedAnchor) {
     const replaced = rewritten.replace(
-      /(?:ông\s*ấy|bà\s*ấy|vị\s*tướng\s*(?:này|đó|ấy)|nhân\s*vật\s*(?:này|đó|ấy))/i,
+      /(?:ông\s*ấy|bà\s*ấy|vị\s*tướng\s*(?:này|đó|ấy)|nhân\s*vật\s*(?:này|đó|ấy)|(?<!\p{L})(?:ông|bà|ngài)(?!\p{L}))/giu,
       veneratedAnchor
     );
     if (replaced !== rewritten) {

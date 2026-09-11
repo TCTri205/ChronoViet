@@ -37,6 +37,12 @@ import {
   ChatIntentSchema,
   ChatSubIntent,
   ChatSubIntentSchema,
+  VideoHandoverMetadata,
+  VideoHandoverMetadataSchema,
+  IntentClause,
+  IntentClauseSchema,
+  CompositeIntentResult,
+  CompositeIntentResultSchema,
 } from './schema.js';
 
 export type {
@@ -63,8 +69,18 @@ export type {
   HistoricalAnswerResponse,
   ChatIntent,
   ChatSubIntent,
+  VideoHandoverMetadata,
+  IntentClause,
+  CompositeIntentResult,
 };
-export { getCanonicalEntityIdPrefix, ChatIntentSchema, ChatSubIntentSchema };
+export {
+  getCanonicalEntityIdPrefix,
+  ChatIntentSchema,
+  ChatSubIntentSchema,
+  VideoHandoverMetadataSchema,
+  IntentClauseSchema,
+  CompositeIntentResultSchema,
+};
 
 // ============================================================================
 // Hierarchical Chunking Bounds (SSOT)
