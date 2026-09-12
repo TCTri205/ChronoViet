@@ -67,67 +67,40 @@ export interface InspectSceneResult {
   selectedLayoutMode: LayoutMode;
 }
 
-async function evaluateCandidateBatch(
-  candidates: VisualCandidate[],
+export function getProvenanceRank(c: VisualCandidate): number {
+  const provider = (c as any).provider || '';
+  const meta = `${c.imageUrl} ${c.sourceUrl || ''} ${c.candidateId || ''}`.toLowerCase();
+  if (provider === 'catalog' || meta.includes('catalog')) return 1;
+  if (provider === 'wikimedia' || meta.includes('wikimedia')) return 2;
+  return 3;
+}
+
+async function evaluateSingleCandidate(
+  cand: VisualCandidate,
   voiceoverText: string,
   batchNumber: 1 | 2,
   qualityGate: VisualQualityGate,
   context: { correlationId?: string; sceneId?: string; projectId?: string; targetAspectRatio?: string } = {}
-): Promise<VisualCandidate[]> {
-  const evaluated: VisualCandidate[] = [];
-
-  for (const cand of candidates) {
-    // 1. License Whitelist Filter (Layer 0)
-    const licenseAudit = qualityGate.auditLicense(cand.license);
-    if (!isWhitelistedLicense(cand.license) || !licenseAudit.compliant) {
-      evaluated.push({
-        ...cand,
-        candidateBatch: batchNumber,
-        verdict: 'REJECT',
-        score: {
-          historicalContextScore: 0,
-          visualNoiseScore: 0,
-          artisticFitScore: 0,
-          overallScore: 0,
-        },
-      });
-      continue;
-    }
-
-    // 2. Download / Local path presence check (Layer 1)
-    if (!cand.localPath && (cand.imageUrl.startsWith('http://') || cand.imageUrl.startsWith('https://'))) {
-      evaluated.push({
-        ...cand,
-        candidateBatch: batchNumber,
-        verdict: 'REJECT',
-        score: {
-          historicalContextScore: 0,
-          visualNoiseScore: 0,
-          artisticFitScore: 0,
-          overallScore: 0,
-        },
-      });
-      continue;
-    }
-
-    // 3. Technical Visual Quality Gate (Resolution & Aspect Ratio Check) (Layer 2)
-    if (cand.localPath) {
-      const dimensions = readImageDimensions(cand.localPath);
-      if (dimensions) {
-        const qualityResult = qualityGate.evaluateQuality(
-          dimensions.width,
-          dimensions.height,
-          context.targetAspectRatio || '16:9'
-        );
-        if (!qualityResult.passed) {
-          log.debug('vlm.quality_gate_rejected', `Candidate ${cand.candidateId} rejected by quality gate: ${qualityResult.rejectionReason}`, {
-            candidateId: cand.candidateId,
-            dimensions,
-            rejectionReason: qualityResult.rejectionReason,
-            correlationId: context.correlationId,
-            sceneId: context.sceneId,
-          });
-          evaluated.push({
+): Promise<{ evaluated: VisualCandidate; passed: boolean }> {
+  // 1. Technical Visual Quality Gate (Resolution & Aspect Ratio Check) (Layer 2)
+  if (cand.localPath) {
+    const dimensions = readImageDimensions(cand.localPath);
+    if (dimensions) {
+      const qualityResult = qualityGate.evaluateQuality(
+        dimensions.width,
+        dimensions.height,
+        context.targetAspectRatio || '16:9'
+      );
+      if (!qualityResult.passed) {
+        log.debug('vlm.quality_gate_rejected', `Candidate ${cand.candidateId} rejected by quality gate: ${qualityResult.rejectionReason}`, {
+          candidateId: cand.candidateId,
+          dimensions,
+          rejectionReason: qualityResult.rejectionReason,
+          correlationId: context.correlationId,
+          sceneId: context.sceneId,
+        });
+        return {
+          evaluated: {
             ...cand,
             candidateBatch: batchNumber,
             verdict: 'REJECT',
@@ -137,13 +110,15 @@ async function evaluateCandidateBatch(
               artisticFitScore: 0,
               overallScore: 0,
             },
-          });
-          continue;
-        }
+          },
+          passed: false,
+        };
       }
     }
+  }
 
-    // 4. VLM Semantic & Noise Scoring (Layer 3)
+  // 2. VLM Semantic & Noise Scoring (Layer 3)
+  try {
     const scoreResult = await scoreImageWithGemini(
       cand.localPath || cand.imageUrl,
       voiceoverText,
@@ -156,35 +131,53 @@ async function evaluateCandidateBatch(
       }
     );
 
-    evaluated.push({
-      ...cand,
-      candidateBatch: batchNumber,
-      focalPoint: scoreResult.focalPoint || cand.focalPoint || [0.5, 0.5],
-      score: {
-        historicalContextScore: scoreResult.historicalContextScore,
-        visualNoiseScore: scoreResult.visualNoiseScore,
-        artisticFitScore: scoreResult.artisticFitScore,
-        overallScore: scoreResult.totalScore,
+    const scoreThreshold = envConfig.VLM_SCORE_THRESHOLD ?? 60;
+    const passed = scoreResult.passed && (scoreResult.totalScore >= scoreThreshold);
+
+    return {
+      evaluated: {
+        ...cand,
+        candidateBatch: batchNumber,
+        focalPoint: scoreResult.focalPoint || cand.focalPoint || [0.5, 0.5],
+        score: {
+          historicalContextScore: scoreResult.historicalContextScore,
+          visualNoiseScore: scoreResult.visualNoiseScore,
+          artisticFitScore: scoreResult.artisticFitScore,
+          overallScore: scoreResult.totalScore,
+        },
+        verdict: passed ? 'PASS' : 'REJECT',
       },
-      verdict: scoreResult.passed ? 'PASS' : 'REJECT',
+      passed,
+    };
+  } catch (err: any) {
+    log.warn('vlm.scoring_error', `Error scoring candidate ${cand.candidateId}: ${err.message}`, {
+      candidateId: cand.candidateId,
+      error: err.message,
+      correlationId: context.correlationId,
+      sceneId: context.sceneId,
     });
-
-    // Cascade Evaluation Early Exit (Fast-path if score >= 85)
-    if (scoreResult.totalScore >= 85) {
-      log.debug('vlm.cascade_early_exit', `Candidate ${cand.candidateId} scored ${scoreResult.totalScore} >= 85; cascade early exit triggered`, {
-        candidateId: cand.candidateId,
-        score: scoreResult.totalScore,
-        sceneId: context.sceneId,
-      });
-      break;
-    }
+    return {
+      evaluated: {
+        ...cand,
+        candidateBatch: batchNumber,
+        verdict: 'REJECT',
+        score: {
+          historicalContextScore: 0,
+          visualNoiseScore: 0,
+          artisticFitScore: 0,
+          overallScore: 0,
+        },
+      },
+      passed: false,
+    };
   }
-
-  return evaluated;
 }
 
 /**
- * Executes the complete 3+3 candidate inspection workflow for a scene.
+ * Executes the lazy sequential candidate inspection workflow for a scene:
+ * - Pre-filters candidate pool by license in metadata before download
+ * - Sorts candidates by provenance (catalog > wikimedia > web search)
+ * - Evaluates candidate #1; if it fails technical checks or score gate, evaluates candidate #2 before falling back to PURE_CODE
  */
 export async function inspectSceneVisuals(
   projectId: string,
@@ -198,9 +191,15 @@ export async function inspectSceneVisuals(
     correlationId: options.correlationId,
   });
 
+  const qualityGate = new VisualQualityGate();
+  const getPureCodeLayout = () => {
+    const rawIndex = scene.sceneIndex ?? 0;
+    const rotationIndex = Math.abs(rawIndex) % PURE_CODE_LAYOUT_ROTATION.length;
+    return PURE_CODE_LAYOUT_ROTATION[rotationIndex];
+  };
+
   if (!candidatePool || candidatePool.length === 0) {
-    const rotationIndex = (scene.sceneIndex || 0) % PURE_CODE_LAYOUT_ROTATION.length;
-    const finalLayoutMode = PURE_CODE_LAYOUT_ROTATION[rotationIndex];
+    const finalLayoutMode = getPureCodeLayout();
     log.debug('vlm.empty_candidate_pool', `Empty candidate pool for scene ${scene.sceneId}; immediate PURE_CODE fallback: ${finalLayoutMode}`, {
       sceneId: scene.sceneId,
       finalLayoutMode,
@@ -222,10 +221,55 @@ export async function inspectSceneVisuals(
     };
   }
 
-  const qualityGate = new VisualQualityGate();
-  const midpoint = Math.max(1, Math.ceil(candidatePool.length / 2));
-  const batch1 = candidatePool.slice(0, midpoint);
-  const batch2 = candidatePool.slice(midpoint);
+  // 1. License Pre-Filter (Layer 0): Pre-filter metadata before downloading
+  const whitelistedCandidates: VisualCandidate[] = [];
+  const rejectedByLicense: VisualCandidate[] = [];
+
+  for (const cand of candidatePool) {
+    const licenseAudit = qualityGate.auditLicense(cand.license);
+    if (isWhitelistedLicense(cand.license) && licenseAudit.compliant) {
+      whitelistedCandidates.push(cand);
+    } else {
+      rejectedByLicense.push({
+        ...cand,
+        candidateBatch: 1,
+        verdict: 'REJECT',
+        score: {
+          historicalContextScore: 0,
+          visualNoiseScore: 0,
+          artisticFitScore: 0,
+          overallScore: 0,
+        },
+      });
+    }
+  }
+
+  if (whitelistedCandidates.length === 0) {
+    const finalLayoutMode = getPureCodeLayout();
+    log.warn('vlm.license_filter_all_failed', `All candidates failed license filter for scene ${scene.sceneId}; immediate PURE_CODE fallback: ${finalLayoutMode}`, {
+      sceneId: scene.sceneId,
+      finalLayoutMode,
+      correlationId: options.correlationId,
+    });
+    const updatedScene: SceneGeneration = {
+      ...scene,
+      candidates: rejectedByLicense,
+      selectedAsset: undefined,
+      layoutMode: finalLayoutMode,
+      contentType: 'PURE_CODE',
+      usePureCodeFallback: true,
+    };
+    return {
+      updatedScene,
+      inspectedCandidates: rejectedByLicense,
+      selectedCandidate: undefined,
+      isPureCodeFallback: true,
+      selectedLayoutMode: finalLayoutMode,
+    };
+  }
+
+  // 2. Sort candidate pool by provenance: catalog > wikimedia > web search
+  whitelistedCandidates.sort((a, b) => getProvenanceRank(a) - getProvenanceRank(b));
 
   const downloadOpts = {
     customBaseDir: options.customBaseDir,
@@ -240,54 +284,68 @@ export async function inspectSceneVisuals(
     targetAspectRatio: (scene as any).aspectRatio,
   };
 
-  // 1. Process Batch 1 (Parallel Download + Evaluation)
-  const downloadedBatch1 = await downloadCandidateBatch(projectId, batch1, downloadOpts);
-  const evaluatedBatch1 = await evaluateCandidateBatch(
-    downloadedBatch1,
-    scene.voiceoverText,
-    1,
-    qualityGate,
-    evalContext
-  );
+  // 3. Lazy Sequential VLM Curation (Evaluate candidate #1; if it fails technical checks or score gate, evaluate candidate #2 before falling back to PURE_CODE)
+  const inspected: VisualCandidate[] = [...rejectedByLicense];
+  let selectedCandidate: VisualCandidate | undefined = undefined;
 
-  // Sort Batch 1 by score descending
-  evaluatedBatch1.sort((a, b) => (b.score?.overallScore || 0) - (a.score?.overallScore || 0));
-  let topCandidate = evaluatedBatch1[0];
+  // We evaluate at most 2 candidates lazily
+  const candidatesToTry = whitelistedCandidates.slice(0, 2);
 
-  const allEvaluated: VisualCandidate[] = [...evaluatedBatch1];
+  for (let idx = 0; idx < candidatesToTry.length; idx++) {
+    const cand = candidatesToTry[idx];
+    const batchNum = (idx === 0 ? 1 : 2) as 1 | 2;
 
-  const scoreThreshold = envConfig.VLM_SCORE_THRESHOLD ?? 60;
+    // Download active candidate only
+    let downloadedCand = cand;
+    if (!cand.localPath) {
+      const [dl] = await downloadCandidateBatch(projectId, [cand], downloadOpts);
+      downloadedCand = dl || cand;
+    }
 
-  // 2. If Batch 1 top score < threshold and Batch 2 exists, process Batch 2
-  if ((!topCandidate || (topCandidate.score?.overallScore || 0) < scoreThreshold) && batch2.length > 0) {
-    log.debug('vlm.batch_2_triggered', `Batch 1 top score below ${scoreThreshold}; triggering 3 supplementary candidates (Batch 2)`, {
-      sceneId: scene.sceneId,
-      correlationId: options.correlationId,
-    });
+    // Check if download succeeded (if remote URL)
+    if (!downloadedCand.localPath && (downloadedCand.imageUrl.startsWith('http://') || downloadedCand.imageUrl.startsWith('https://'))) {
+      inspected.push({
+        ...downloadedCand,
+        candidateBatch: batchNum,
+        verdict: 'REJECT',
+        score: {
+          historicalContextScore: 0,
+          visualNoiseScore: 0,
+          artisticFitScore: 0,
+          overallScore: 0,
+        },
+      });
+      continue;
+    }
 
-    const downloadedBatch2 = await downloadCandidateBatch(projectId, batch2, downloadOpts);
-    const evaluatedBatch2 = await evaluateCandidateBatch(
-      downloadedBatch2,
+    // Evaluate single candidate (Technical Quality Gate + VLM Scoring)
+    const { evaluated, passed } = await evaluateSingleCandidate(
+      downloadedCand,
       scene.voiceoverText,
-      2,
+      batchNum,
       qualityGate,
       evalContext
     );
 
-    allEvaluated.push(...evaluatedBatch2);
-    allEvaluated.sort((a, b) => (b.score?.overallScore || 0) - (a.score?.overallScore || 0));
-    topCandidate = allEvaluated[0];
+    inspected.push(evaluated);
+
+    if (passed) {
+      selectedCandidate = evaluated;
+      log.debug('vlm.lazy_curation_passed', `Candidate ${evaluated.candidateId} passed with score ${evaluated.score?.overallScore}; stopping sequential evaluation`, {
+        sceneId: scene.sceneId,
+        candidateId: evaluated.candidateId,
+        score: evaluated.score?.overallScore,
+      });
+      break; // Lazy stop! Candidate #1 succeeded, no need to download or evaluate candidate #2.
+    }
   }
 
-  // 3. Check if we have an acceptable candidate
-  const isPureCodeFallback = !topCandidate || (topCandidate.score?.overallScore || 0) < scoreThreshold;
+  // Check if any candidate was successfully selected
+  const isPureCodeFallback = !selectedCandidate;
+  const finalLayoutMode = isPureCodeFallback ? getPureCodeLayout() : scene.layoutMode;
 
-  let finalLayoutMode = scene.layoutMode;
   if (isPureCodeFallback) {
-    const rawIndex = scene.sceneIndex ?? 0;
-    const rotationIndex = Math.abs(rawIndex) % PURE_CODE_LAYOUT_ROTATION.length;
-    finalLayoutMode = PURE_CODE_LAYOUT_ROTATION[rotationIndex];
-    log.warn('vlm.pure_code_fallback', `All candidates failed (<${scoreThreshold}); falling back to PURE_CODE Layout: ${finalLayoutMode}`, {
+    log.warn('vlm.pure_code_fallback', `All evaluated candidates failed; falling back to PURE_CODE Layout: ${finalLayoutMode}`, {
       sceneId: scene.sceneId,
       finalLayoutMode,
       correlationId: options.correlationId,
@@ -296,8 +354,8 @@ export async function inspectSceneVisuals(
 
   const updatedScene: SceneGeneration = {
     ...scene,
-    candidates: allEvaluated,
-    selectedAsset: isPureCodeFallback ? undefined : topCandidate,
+    candidates: inspected,
+    selectedAsset: isPureCodeFallback ? undefined : selectedCandidate,
     layoutMode: finalLayoutMode,
     contentType: isPureCodeFallback ? 'PURE_CODE' : 'IMAGE',
     usePureCodeFallback: isPureCodeFallback,
@@ -305,8 +363,8 @@ export async function inspectSceneVisuals(
 
   return {
     updatedScene,
-    inspectedCandidates: allEvaluated,
-    selectedCandidate: isPureCodeFallback ? undefined : topCandidate,
+    inspectedCandidates: inspected,
+    selectedCandidate: isPureCodeFallback ? undefined : selectedCandidate,
     isPureCodeFallback,
     selectedLayoutMode: finalLayoutMode,
   };

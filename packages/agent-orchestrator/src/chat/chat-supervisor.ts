@@ -213,6 +213,7 @@ NGUYÊN TẮC BẮT BUỘC:
 2. QUY TẮC ĐỒNG NHẤT DANH XƯNG & THÂN TỘC PHONG KIẾN (NOMENCLATURE & ROYALTY INVARIANT):
    - Trong lịch sử phong kiến Việt Nam, một nhân vật thường có nhiều tên gọi (tên húy/tên khai sinh, miếu hiệu, niên hiệu, tôn hiệu, tước vị). 
    - Khi câu hỏi đề cập các danh xưng của CÙNG MỘT NGƯỜI, BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là cùng một nhân vật lịch sử (Ví dụ: Vua [Miếu hiệu] tên húy là [Tên húy]). Tuyệt đối không tách thành hai người riêng biệt hoặc mô tả như hai nhân vật có quan hệ huyết thống với nhau.
+   - NGUYÊN LÝ BẤT BIẾN ĐỒNG NHẤT BẢN THỂ (CO-REFERENCE IDENTITY & KINSHIP INVARIANT): Một nhân vật lịch sử BẤT BIẾN không thể là cha, con, anh, em hay họ hàng của chính bản thân mình (Ví dụ: Đinh Tiên Hoàng và Đinh Bộ Lĩnh là cùng một người; Đinh Tiên Hoàng KHÔNG THỂ là con hay cha của Đinh Bộ Lĩnh. Thân phụ của Đinh Bộ Lĩnh là Đinh Công Trứ). BẮT BUỘC câu đầu tiên phải bác bỏ dứt khoát tiền đề sai lệch và khẳng định hai danh xưng là cùng một người.
    - CHỈ ĐƯỢC PHÉP ghi tên húy nếu tên đó xuất hiện trực tiếp trong sử liệu xác thực. Nếu không có tên húy trong ngữ cảnh, dùng miếu hiệu/danh xưng chính thức.
    - Khi sử liệu ghi miếu hiệu vắn tắt (như Thái Tông, Thánh Tông, Nhân Tông, Anh Tông...), BẮT BUỘC đối chiếu cẩn trọng với mốc thời gian (năm xảy ra sự kiện) và thứ tự trị vì trong văn bản để xác định đúng vị vua, TUYỆT ĐỐI KHÔNG nhầm lẫn giữa các vị vua kế tiếp nhau trong cùng triều đại (ví dụ: Lê Thái Tổ -> Lê Thái Tông mất năm 1442 tại Lệ Chi Viên -> Lê Nhân Tông -> Lê Nghi Dân -> Lê Thánh Tông lên ngôi năm 1460 và giải oan cho Nguyễn Trãi năm 1464).
 
@@ -636,20 +637,42 @@ export async function* handleChatQueryStream(
     .map((e) => resolveCanonicalEntity(e).entityId)
     .filter((id): id is string => Boolean(id) && !id.startsWith('ent_'));
 
+  // If the query mentions multiple entities (e.g. A and B in kinship, comparative, or premise queries)
+  // but not all of them could be resolved into known filter IDs, DO NOT restrict entityFilter to a subset.
+  // Letting entityFilter = undefined enables open hybrid BM25 + vector search across the entire corpus.
+  const hasUnresolvedEntityInMultiEntityQuery =
+    premiseAnalysis.detectedEntities.length >= 2 &&
+    resolvedFilterIds.length < premiseAnalysis.detectedEntities.length;
+
+  const effectiveEntityFilter =
+    hasUnresolvedEntityInMultiEntityQuery || resolvedFilterIds.length === 0
+      ? undefined
+      : resolvedFilterIds;
+
   // Adaptive Budgeting for ENTITY_IDENTITY vs standard HISTORICAL_QUERY
   const isEntityIdentity = classification.intent === 'ENTITY_IDENTITY';
   const isLeanIdentity =
     isEntityIdentity &&
     (Boolean(premiseAnalysis.isSameEntityCoReference) || Boolean(classification.signals?.isCoReferenceIdentity));
 
-  const maxRagTokens = isLeanIdentity ? 600 : isEntityIdentity ? 1200 : 3200;
+  const maxRagTokens = isLeanIdentity
+    ? 600
+    : isEntityIdentity
+    ? 1000
+    : classification.subIntent === 'FACTOID_LOOKUP'
+    ? 800
+    : classification.subIntent === 'GENEALOGY_RELATION'
+    ? 1200
+    : 3000;
+
   const rerankTopK = isLeanIdentity
     ? 2
-    : classification.subIntent === 'FACTOID_LOOKUP'
-    ? 4
-    : isEntityIdentity
+    : classification.subIntent === 'FACTOID_LOOKUP' || isEntityIdentity
+    ? 3
+    : classification.subIntent === 'GENEALOGY_RELATION'
     ? 3
     : 5;
+
   const maxGenerationTokens = isLeanIdentity
     ? 500
     : classification.subIntent === 'FACTOID_LOOKUP'
@@ -677,7 +700,7 @@ export async function* handleChatQueryStream(
         subIntent: classification.subIntent,
         rerankTopK,
         maxTokens: maxRagTokens,
-        entityFilter: resolvedFilterIds.length > 0 ? resolvedFilterIds : undefined,
+        entityFilter: effectiveEntityFilter,
       }),
       new Promise<any>((_, reject) =>
         setTimeout(() => reject(new Error('RAG search timeout')), ragTimeoutMs)

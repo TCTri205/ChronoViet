@@ -52,7 +52,7 @@ export const GRAPH_BRANCH_TIMEOUT_MS = process.env.GRAPH_BRANCH_TIMEOUT_MS
   : 350;
 export const GRAPH_BRANCH_MAX_NODES = 50;
 export const GRAPH_ONLY_CHUNK_CAP = 10;
-export const MIN_RELEVANCE_SCORE_CUTOFF = 0.35;
+export const MIN_RELEVANCE_SCORE_CUTOFF = 0.15;
 
 /**
  * Strips raw crawl metadata headers such as:
@@ -136,13 +136,20 @@ export class ChronoRagEngine implements IRagEngine {
       maxTokens: request.maxTokens,
     });
 
+    // Extract substantive (known/canonical) entities, filtering out ad-hoc 'unknown_' slugs
+    const substantiveEntityIds = filterEntityIds.filter((id) => !id.startsWith('unknown_'));
+    const isCoordinateSubjectQuery =
+      substantiveEntityIds.length >= 2 &&
+      /(?:\bvà\b|\bvới\b|\bcùng\b|so\s+sánh|vai\s+trò|phân\s+công|nhiệm\s+vụ|đối\s+đầu)/i.test(queryText);
+
     // Steps 2, 3, 4: Dual-Branch Parallel Execution (with Conditional Comparative Decomposition)
     const isComparative =
       (detectQueryIntent(queryText) === 'COMPARATIVE' ||
         request.subIntent === 'COMPARATIVE_SYNTHESIS' ||
         request.subIntent === 'GENEALOGY_RELATION' ||
-        filterEntityIds.length === 2) &&
-      filterEntityIds.length >= 2;
+        substantiveEntityIds.length === 2 ||
+        isCoordinateSubjectQuery) &&
+      (substantiveEntityIds.length >= 2 || filterEntityIds.length >= 2);
 
     let hybridCandidates: VectorSearchResult[] = [];
     let graphResult: { triples: GraphTriple[]; aliasTable: Record<string, string[]>; entityIds: string[] } = {
@@ -154,10 +161,13 @@ export class ChronoRagEngine implements IRagEngine {
     let timedOut = false;
 
     if (isComparative) {
-      const entA = filterEntityIds[0];
-      const entB = filterEntityIds[1];
-      const nameA = queryInfo.entityNames[0] || entA;
-      const nameB = queryInfo.entityNames[1] || entB;
+      const targetEntities = substantiveEntityIds.length >= 2 ? substantiveEntityIds : filterEntityIds;
+      const entA = targetEntities[0];
+      const entB = targetEntities[1];
+      const canonA = resolveCanonicalEntity(entA);
+      const canonB = resolveCanonicalEntity(entB);
+      const nameA = canonA.canonicalName || entA;
+      const nameB = canonB.canonicalName || entB;
 
       const subQueryA = `${queryText} ${nameA}`;
       const subQueryB = `${queryText} ${nameB}`;

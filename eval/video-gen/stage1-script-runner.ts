@@ -99,10 +99,14 @@ export async function runStage1ScriptEvaluation(
       }
       initProjectWorkspace(projectId, stage1OutputsDir);
 
+      const searchQuery = tc.searchKeywordsCheck && tc.searchKeywordsCheck.length > 0
+        ? `${tc.topic} ${tc.searchKeywordsCheck.join(' ')}`
+        : tc.topic;
+
       const ragSearchResult = await ragEngine.search({
-        query: tc.topic,
+        query: searchQuery,
         maxTokens: 3500,
-        rerankTopK: Math.max(6, Math.min(10, (tc.targetDurationMinutes || 2) * 2 + 2)),
+        rerankTopK: Math.max(8, Math.min(12, (tc.targetDurationMinutes || 2) * 2 + 4)),
       });
 
       const ragContext = {
@@ -320,14 +324,29 @@ export async function runStage1ScriptEvaluation(
   return suiteReport;
 }
 
-// Standalone CLI execution
 if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWith('stage1-script-runner.ts'))) {
   const args = process.argv.slice(2);
-  const limitArgIdx = args.indexOf('--limit');
-  const limit = limitArgIdx !== -1 ? parseInt(args[limitArgIdx + 1], 10) : undefined;
+  let limit: number | undefined;
+  const limitArg = args.find((a) => a === '--limit' || a.startsWith('--limit='));
+  if (limitArg) {
+    if (limitArg.includes('=')) {
+      limit = parseInt(limitArg.split('=')[1], 10);
+    } else {
+      const idx = args.indexOf(limitArg);
+      limit = parseInt(args[idx + 1], 10);
+    }
+  }
 
-  const typeArgIdx = args.indexOf('--type');
-  const type = typeArgIdx !== -1 ? args[typeArgIdx + 1] : undefined;
+  let type: string | undefined;
+  const typeArg = args.find((a) => a === '--type' || a.startsWith('--type='));
+  if (typeArg) {
+    if (typeArg.includes('=')) {
+      type = typeArg.split('=')[1];
+    } else {
+      const idx = args.indexOf(typeArg);
+      type = args[idx + 1];
+    }
+  }
 
   const strict = args.includes('--strict');
   const clean = args.includes('--clean');

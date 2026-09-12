@@ -234,8 +234,8 @@ export function evaluateVideoGenCase(
   const durationMin = actualDurationSec > 0 ? actualDurationSec / 60 : testCase.targetDurationMinutes;
   const actualWpm = durationMin > 0 ? Math.round(totalWordCount / durationMin) : 0;
 
-  // Target WPM is 145 (range 130 - 160)
-  const targetWpm = 145;
+  const templateId = (testCase as any).templateId || 'HISTORICAL_DOCUMENTARY';
+  const targetWpm = templateId === 'QUICK_SHORTS' ? 160 : (templateId === 'MODERN_NEWS' ? 150 : 145);
   const pacingDeviationPct = Math.round((Math.abs(actualWpm - targetWpm) / targetWpm) * 1000) / 10;
   // Pacing pass if within 15% deviation
   const pacingPassed = pacingDeviationPct <= 15.0;

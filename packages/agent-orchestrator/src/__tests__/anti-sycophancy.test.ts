@@ -82,5 +82,14 @@ describe('Anti-Sycophancy & Invariant Semantic Verification', () => {
       expect(res.isValid).toBe(true);
       expect(res.sanitized).toBe(validText);
     });
+
+    it('detects and sanitizes directional kinship assertion where one alias is claimed as child of another alias', () => {
+      const response = 'Đinh Tiên Hoàng chính là Đinh Bộ Lĩnh. Vì vậy, Đinh Tiên Hoàng là con trai của Đinh Bộ Lĩnh.';
+      const res = verifyCoReferenceInvariant(response, 'Đinh Tiên Hoàng', 'Đinh Bộ Lĩnh', 'Đinh Tiên Hoàng');
+      expect(res.isValid).toBe(false);
+      expect(res.violation).toContain('Contradictory directional kinship');
+      expect(res.sanitized).toContain('chính là Đinh Bộ Lĩnh (Đinh Tiên Hoàng), là cùng một người chứ không phải có quan hệ họ hàng hay cha con');
+      expect(res.sanitized).not.toContain('là con trai của Đinh Bộ Lĩnh');
+    });
   });
 });

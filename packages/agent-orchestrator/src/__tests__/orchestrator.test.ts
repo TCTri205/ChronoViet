@@ -111,7 +111,7 @@ vi.mock('@chronoviet/vlm-inspector', async () => {
 
 describe('Agent Orchestrator Unit Tests', () => {
   describe('Duration Reconciliation Node', () => {
-    it('should reconcile scene durations and maintain pacing error < 3%', async () => {
+    it('should reconcile scene durations in Mode A (<= 10% deviation) and maintain pacing error < 3%', async () => {
       const mockState: Partial<ChronoGraphState> = {
         projectId: 'test_reconciler_bounds',
         userPrompt: 'Test Prompt',
@@ -134,14 +134,14 @@ describe('Agent Orchestrator Unit Tests', () => {
           {
             sceneId: 'sc_001',
             sceneIndex: 0,
-            voiceoverText: 'Cảnh 1 siêu ngắn',
+            voiceoverText: 'Cảnh 1 dẫn nhập',
             layoutMode: 'HISTORICAL_FRAME',
             contentType: 'IMAGE',
             searchKeywords: ['ngô quyền'],
             candidates: [],
             usePureCodeFallback: false,
-            targetDurationSeconds: 10,
-            audioDurationSeconds: 8.2,
+            targetDurationSeconds: 20,
+            audioDurationSeconds: 19.2,
           },
           {
             sceneId: 'sc_002',
@@ -153,7 +153,7 @@ describe('Agent Orchestrator Unit Tests', () => {
             candidates: [],
             usePureCodeFallback: false,
             targetDurationSeconds: 40,
-            audioDurationSeconds: 38.6,
+            audioDurationSeconds: 39.0,
           },
         ],
         audioAssets: [],
@@ -166,6 +166,48 @@ describe('Agent Orchestrator Unit Tests', () => {
 
       const totalReconciled = result.scenes!.reduce((sum, s) => sum + s.targetDurationSeconds, 0);
       expect(Math.abs(totalReconciled - 60)).toBeLessThanOrEqual(1.8);
+    });
+
+    it('should apply Mode B audio-driven grounding with outro card on severe audio deviation (> 10%)', async () => {
+      const mockState: Partial<ChronoGraphState> = {
+        projectId: 'test_reconciler_mode_b',
+        targetDurationMinutes: 1, // 60s target
+        scenes: [
+          {
+            sceneId: 'sc_001',
+            sceneIndex: 0,
+            voiceoverText: 'Cảnh 1 ngắn',
+            layoutMode: 'HISTORICAL_FRAME',
+            contentType: 'IMAGE',
+            searchKeywords: ['ngô quyền'],
+            candidates: [],
+            usePureCodeFallback: false,
+            targetDurationSeconds: 15,
+            audioDurationSeconds: 10.0,
+          },
+          {
+            sceneId: 'sc_002',
+            sceneIndex: 1,
+            voiceoverText: 'Cảnh 2 ngắn',
+            layoutMode: 'HISTORICAL_FRAME',
+            contentType: 'IMAGE',
+            searchKeywords: ['ngô quyền'],
+            candidates: [],
+            usePureCodeFallback: false,
+            targetDurationSeconds: 20,
+            audioDurationSeconds: 15.0,
+          },
+        ],
+      };
+
+      const result = await durationReconciliationNode(mockState as ChronoGraphState);
+      expect(result.scenes).toBeDefined();
+      expect(result.scenes?.length).toBe(2);
+      // Mode B protects against dead silence by anchoring to speech + 1.5s outro card
+      const lastScene = result.scenes![1];
+      expect(lastScene.targetDurationSeconds).toBeGreaterThanOrEqual(16.5);
+      const totalReconciled = result.scenes!.reduce((sum, s) => sum + s.targetDurationSeconds, 0);
+      expect(totalReconciled).toBeLessThan(35); // No artificial visual padding up to 60s!
     });
 
     it('should protect audio duration when voiceover exceeds estimated target', async () => {

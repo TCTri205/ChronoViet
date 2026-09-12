@@ -185,5 +185,55 @@ Hy vọng kết quả này hữu ích cho pipeline ChronoViet!`;
       expect(result.selectedLayoutMode).toBe('STAT_CARD');
     });
   });
+
+  describe('Provenance Ranking & Lazy Sequential Inspection', () => {
+    it('should rank catalog > wikimedia > web search correctly', async () => {
+      const { getProvenanceRank } = await import('../inspector-pipeline.js');
+
+      const catalogCand: any = {
+        candidateId: 'cand_catalog_1',
+        imageUrl: 'https://example.com/catalog/asset1.jpg',
+        license: 'CC0',
+      };
+      const wikimediaCand: any = {
+        candidateId: 'cand_wiki_1',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1.jpg',
+        license: 'CC_BY_SA_4_0',
+      };
+      const webCand: any = {
+        candidateId: 'cand_web_1',
+        imageUrl: 'https://other-site.com/image.jpg',
+        license: 'PUBLIC_DOMAIN',
+      };
+
+      expect(getProvenanceRank(catalogCand)).toBe(1);
+      expect(getProvenanceRank(wikimediaCand)).toBe(2);
+      expect(getProvenanceRank(webCand)).toBe(3);
+    });
+
+    it('should pre-filter non-whitelisted licenses before downloading and fall back to PURE_CODE', async () => {
+      const { inspectSceneVisuals } = await import('../inspector-pipeline.js');
+      const testScene: any = {
+        sceneId: 'sc_test_lic_1',
+        sceneIndex: 0,
+        layoutMode: 'PORTRAIT_SPLIT',
+        voiceoverText: 'Thành Cổ Loa hình xoáy ốc.',
+      };
+
+      const candidates: any[] = [
+        {
+          candidateId: 'cand_reject_1',
+          imageUrl: 'https://example.com/copyrighted.jpg',
+          license: 'ALL_RIGHTS_RESERVED',
+        },
+      ];
+
+      const result = await inspectSceneVisuals('proj_test_vlm_2', testScene, candidates);
+      expect(result.isPureCodeFallback).toBe(true);
+      expect(result.selectedCandidate).toBeUndefined();
+      expect(result.updatedScene.selectedAsset).toBeUndefined();
+      expect(result.inspectedCandidates[0].verdict).toBe('REJECT');
+    });
+  });
 });
 

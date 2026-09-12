@@ -134,20 +134,23 @@ export class SyntheticTTSFallbackEngine implements IVieNeuEngine {
     const words = text.split(/\s+/);
     const wordTimestamps: WordTimestamp[] = [];
     let currentMs = 0;
+    const speedRatio = request.speedRatio && request.speedRatio > 0 ? request.speedRatio : 1.0;
+    const speedScale = 1.0 / speedRatio;
 
     for (let i = 0; i < words.length; i++) {
       const word = words[i];
-      // Base duration proportional to word length (e.g. 220ms base + 35ms per char)
-      const baseDuration = Math.max(180, word.length * 40);
+      // Base duration proportional to word length scaled by speedRatio
+      const baseDuration = Math.round(Math.max(180, word.length * 40) * speedScale);
       const startMs = currentMs;
       const endMs = startMs + baseDuration;
       wordTimestamps.push({ word, startMs, endMs });
 
-      // Add pause if punctuation is present
+      // Add pause if punctuation is present, scaled by speedRatio
       let pauseMs = 40;
       if (/[.,!?;:]$/.test(word)) {
         pauseMs = word.endsWith('.') ? 300 : 180;
       }
+      pauseMs = Math.round(pauseMs * speedScale);
       currentMs = endMs + pauseMs;
     }
 
@@ -156,8 +159,8 @@ export class SyntheticTTSFallbackEngine implements IVieNeuEngine {
     const fps = request.fps ?? 30;
     const calculatedFramesAt30fps = calculateSceneDurationInFrames(audioDurationMs, paddingMs, fps);
 
-    // Save or reuse cached synthetic WAV file (SHA256 deterministic hash)
-    const fileHash = Buffer.from(`${text}_${request.sampleRate ?? 24000}`).toString('hex').substring(0, 16);
+    // Save or reuse cached synthetic WAV file (SHA256 deterministic hash including speedRatio)
+    const fileHash = Buffer.from(`${text}_${speedRatio}_${request.sampleRate ?? 24000}`).toString('hex').substring(0, 16);
     const fileName = `tts_synth_${fileHash}.wav`;
     const filePath = path.join(this.cacheDir, fileName);
 

@@ -4,7 +4,7 @@
  * anti-sycophancy refusal, forbidden claim guards, folklore nuance, and streaming latency.
  */
 
-import { HistoricalCitationItem } from '@chronoviet/shared-spec';
+import { HistoricalCitationItem, resolveCanonicalEntity, isKnownMasterEntity } from '@chronoviet/shared-spec';
 import { LatencyProfile, MetricScore } from '../../shared/types.js';
 import { calculateLatencyPercentiles } from '../../shared/reporter.js';
 
@@ -104,7 +104,7 @@ function isClaimAffirmed(text: string, claim: string): boolean {
     const windowBefore = normText.slice(Math.max(0, index - 80), index);
     const windowAfter = normText.slice(index + normClaim.length, Math.min(normText.length, index + normClaim.length + 80));
 
-    const negationBeforeRegex = /(?:không\s+có|chưa\s+có|không\s+hề|không\s+sử\s+dụng|hoàn\s+toàn\s+không|hoàn\s+toàn\s+chưa|không\s+phải|không\s+đúng|sai\s+lầm|sai\s+lệch|nhầm\s+lẫn|không\s+chính\s+xác|bác\s+bỏ|chưa\s+từng|chưa\s+bao\s+giờ|không\s+bao\s+giờ|không\s+dùng|không\s+bao\s+gồm)(?!\p{L})/iu;
+    const negationBeforeRegex = /(?:không\s+có|chưa\s+có|không\s+hề|không\s+sử\s+dụng|hoàn\s+toàn\s+không|hoàn\s+toàn\s+chưa|không\s+phải|không\s+đúng|sai\s+lầm|sai\s+lệch|nhầm\s+lẫn|không\s+chính\s+xác|bác\s+bỏ|chưa\s+từng|chưa\s+bao\s+giờ|không\s+bao\s+giờ|không\s+dùng|không\s+bao\s+gồm|không\s+thể(?:\s+(?:xác\s+định|khẳng\s+định|nào|bao\s+giờ))?|chưa\s+thể(?:\s+(?:xác\s+định|khẳng\s+định|nào))?|dứt\s+khoát\s+không(?:\s+thể)?|tuyệt\s+đối\s+không(?:\s+thể)?|không\s+có\s+căn\s+cứ)(?!\p{L})/iu;
     const negationAfterRegex = /^(?:\s+[^\p{L}]*)*(?:không\s+tồn\s+tại|chưa\s+tồn\s+tại|chưa\s+từng\s+tồn\s+tại|không\s+hề\s+tồn\s+tại|không\s+có|hoàn\s+toàn\s+không|chưa\s+có|không\s+xuất\s+hiện|chưa\s+từng\s+có|không\s+được\s+sử\s+dụng|không\s+phải|là\s+sai|là\s+không\s+đúng)/iu;
 
     const isGrammaticalRefutation =
@@ -120,8 +120,11 @@ function isClaimAffirmed(text: string, claim: string): boolean {
       negationAfterRegex.test(windowAfter) ||
       /(?:không\s+có\s+trong\s+(?:chính\s+sử|lịch\s+sử)|không\s+có\s+căn\s+cứ|hoàn\s+toàn\s+sai|chưa\s+từng\s+có\s+thật|không\s+thể\s+xảy\s+ra|phi\s+lý)/iu.test(windowAfter);
 
+    const isDirectPrecedingNegation = /(?:\b(?:không|chưa|chẳng|chớ|chả|phi)(?:\s+(?:thể|hề|bao\s+giờ|từng|nào))?)\s*$/iu.test(windowBefore.trimEnd());
+
     const isRefuted =
       negationBeforeRegex.test(windowBefore) ||
+      isDirectPrecedingNegation ||
       isRefutedAfter ||
       isGrammaticalRefutation ||
       isAnachronismExplanation;
@@ -223,6 +226,19 @@ const HISTORICAL_SYNONYMS: Record<string, string[]> = {
   'đại la': ['đại la', 'thăng long', 'thành đại la', 'hà nội'],
 };
 
+function getEntityOrPhraseVariants(text: string): string[] {
+  const norm = normalizeViText(text);
+  const variants = new Set<string>(HISTORICAL_SYNONYMS[norm] || [norm]);
+  if (isKnownMasterEntity(text)) {
+    const resolved = resolveCanonicalEntity(text);
+    if (resolved.canonicalName) variants.add(normalizeViText(resolved.canonicalName));
+    if (resolved.aliases) {
+      for (const a of resolved.aliases) variants.add(normalizeViText(a));
+    }
+  }
+  return Array.from(variants);
+}
+
   // 3. Turn-by-Turn Expectations Check (with NFC normalization, historical synonyms, and paraphrase flexibility)
   let turnExpectationsPassed = true;
   if (testCase.turnExpectations && testCase.turnExpectations.length > 0) {
@@ -239,8 +255,7 @@ const HISTORICAL_SYNONYMS: Record<string, string[]> = {
       // Check required phrases per turn (with historical synonyms support)
       if (exp.requiredPhrases) {
         for (const phrase of exp.requiredPhrases) {
-          const normPhrase = normalizeViText(phrase);
-          const variants = HISTORICAL_SYNONYMS[normPhrase] || [normPhrase];
+          const variants = getEntityOrPhraseVariants(phrase);
           const matches = variants.some((v) => normalizeViText(turnTextLower).includes(v));
           if (!matches) {
             errors.push(`Turn ${exp.turnIndex} missing required phrase: "${phrase}"`);
@@ -252,8 +267,7 @@ const HISTORICAL_SYNONYMS: Record<string, string[]> = {
       // Check expected entities per turn (with co-reference alias support)
       if (exp.expectedEntities) {
         for (const ent of exp.expectedEntities) {
-          const normEnt = normalizeViText(ent);
-          const variants = HISTORICAL_SYNONYMS[normEnt] || [normEnt];
+          const variants = getEntityOrPhraseVariants(ent);
           const matches = variants.some((v) => normalizeViText(turnTextLower).includes(v));
           if (!matches) {
             errors.push(`Turn ${exp.turnIndex} missing expected entity: "${ent}"`);

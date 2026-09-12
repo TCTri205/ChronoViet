@@ -24,78 +24,58 @@ Khi thu thập hình ảnh tư liệu lịch sử Việt Nam tự động từ I
 
 VLM Inspector Sub-Agent hỗ trợ **3 tầng scorer** với thứ tự ưu tiên thay đổi theo chế độ:
 - **Eval strict (`EVAL_STRICT=true`, mặc định):** **Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m`) qua llama-server** (`LLM_BASE_URL`) là scorer bắt buộc. Local VLM fail → eval FAIL ngay, **không** rơi vào Gemini/CLIP.
-- **Dev (`EVAL_STRICT=false`):** Gemini 3.6 Flash Cloud API (Primary, hỗ trợ xoay vòng luân phiên `GEMINI_API_KEYS` Round-Robin và tự động failover/quarantine khi chạm rate limit HTTP 429) → Local CLIP/SigLIP Cosine Similarity Scorer (Offline Fallback khi mất kết nối hoặc toàn bộ key hết quota).
+- **Fast Dev Mode (`FAST_DEV_MODE=true` & `EVAL_STRICT=false`):** Tự động kích hoạt shortcut chấm điểm heuristic bằng CLIP cục bộ siêu tốc, giảm tối đa thời gian chờ đợi khi kiểm thử tính năng kịch bản.
+- **Dev thông thường (`EVAL_STRICT=false`):** Gemini 3.6 Flash Cloud API (Primary, hỗ trợ xoay vòng luân phiên `GEMINI_API_KEYS` Round-Robin và tự động failover/quarantine khi chạm rate limit HTTP 429) → Local CLIP/SigLIP Cosine Similarity Scorer (Offline Fallback khi mất kết nối hoặc toàn bộ key hết quota).
 - Dual-Cache Redis 2 lớp (SHA-256 + pHash) luôn được kiểm tra trước mọi scorer.
 
 ---
 
-## 2. Quy Trình Kiểm Định 4 Lớp & Chiến Lược 3+3 Candidates (v4.1)
+## 2. Quy Trình Thẩm Định Lazy Sequential & Quản Lý Giấy Phép Bản Quyền (v4.2)
 
 ```
                        ┌───────────────────────────────┐
                        │   Research Agent cung cấp      │
-                       │   Candidate Pool (3 ảnh đợt 1) │
+                       │   Candidate Pool (Đa nguồn)   │
                        │   (Nguồn ảnh 100% Crawl Internet│
                        │    qua provider chain)          │
                        └───────────────┬───────────────┘
                                        │
                                        ▼
   ┌────────────────────────────────────────────────────────────────────────────┐
-  │ LỚP 0: LICENSE WHITELIST & ATTRIBUTION FILTER                              │
-  │ - Chỉ nhận ảnh thuộc Public Domain, CC0, CC-BY-4.0, CC-BY-SA-4.0            │
-  │ - Trích xuất metadata: author, sourceUrl, license                          │
+  │ BƯỚC 1: PRE-DOWNLOAD LICENSE FILTER & PROVENANCE RANKING                  │
+  │ - Tiền lọc qua metadata: Chỉ duyệt Public Domain, CC0, CC-BY, CC-BY-SA     │
+  │ - Loại bỏ trước khi tải file: Ngăn lãng phí băng thông và tài nguyên I/O   │
+  │ - Xếp hạng nguồn gốc (Provenance Ranking):                                 │
+  │     * Curated Catalog (Rank 3) > Wikimedia (Rank 2) > Web Search (Rank 1)  │
   └────────────────────────────────────┬───────────────────────────────────────┘
-                                       │ (Pass License)
+                                       │ (Đã sắp xếp theo độ tin cậy)
                                        ▼
   ┌────────────────────────────────────────────────────────────────────────────┐
-  │ LỚP 1: REDIS DUAL-LAYER CACHE CHECK (Exact Hash SHA-256 & pHash)           │
-  │ - Tra cứu theo key `vlm:sha256:${sha256}` và `vlm:phash:${phash}`        │
-  │ - Hit ➔ Trả ngay VLM Score & Verdict trong 1ms (Bỏ qua gọi VLM Engine)    │
-  └────────────────────────────────────┬───────────────────────────────────────┘
-                                       │ (Miss)
-                                       ▼
-  ┌────────────────────────────────────────────────────────────────────────────┐
-  │ LỚP 2: METADATA, SHARP RESIZER & TECHNICAL QUALITY GATE                     │
-  │ - Sharp Image Optimizer: Tự động thu nhỏ (fit inside <= 1920x1080)         │
-  │ - Nén tối ưu (MozJPEG / WebP quality 85), kiểm soát dung lượng file <= 2MB │
-  │ - Chuẩn hóa hướng chụp theo EXIF orientation                               │
-  │ - Trích xuất kích thước nhị phân siêu nhẹ (PNG/JPEG/WEBP header decoder)   │
-  │ - Kiểm tra kích thước tối thiểu (Sanity check): minWidth >= 200, minHeight >= 200│
-  │ - Hỗ trợ mọi tỉ lệ khung hình (16:9, 9:16, 1:1, 4:3, panorama) thông qua   │
-  │   các layout thích ứng của Remotion (BLUR_BG, HISTORICAL_FRAME, FULL_CONTAIN)│
-  │ - Ngăn ngừa triệt để cảnh báo quá tải bộ nhớ (>5MB) và lỗi OOM khi render  │
-  └────────────────────────────────────┬───────────────────────────────────────┘
-                                       │ (Pass Technical)
-                                       ▼
-  ┌────────────────────────────────────────────────────────────────────────────┐
-  │ LỚP 3: HYBRID VLM VISUAL & CONTEXT SCORING (Resilient JSON Parser)         │
-  │ ├─ Eval strict: Local Unified VLM (qwen3.5-9b qua llama-server) — bắt buộc │
-  │ ├─ Dev primary: Cloud Gemini 3.6 Flash API (khi có GEMINI_API_KEY)         │
-  │ └─ Dev fallback (429/500/Timeout): Local CLIP/SigLIP Cosine Scorer        │
-  │ - Historical Context Score (0-40): Đúng trang phục, cờ, kiến trúc VN?     │
-  │ - Async Circuit Breaker: Timeout 2.5s (AbortController) khi tải ảnh        │
-  │ - Cascade VLM Early Exit: Chấm điểm tuần tự; ứng viên đầu tiên đạt >= 85    │
-  │   thì lập tức CHỌN NGAY và dừng kiểm tra các ảnh còn lại (giảm 80% tải VLM) │
-  │ - Bộ trích xuất JSON bằng Regex bọc ngoại vi ({ ... }) chống preamble text │
-  └────────────────────────────────────┬───────────────────────────────────────┘
+  │ BƯỚC 2: LAZY SEQUENTIAL CURATION (Đánh giá tuần tự từng ứng viên)          │
+  │ ┌────────────────────────────────────────────────────────────────────────┐ │
+  │ │ Ứng viên #1 (Nguồn uy tín cao nhất)                                    │ │
+  │ │ 1. Redis Dual-Cache (SHA-256 / pHash)                                  │ │
+  │ │ 2. Technical Quality Gate (Sharp Resizer <=1920x1080, Binary Header)   │ │
+  │ │ 3. VLM Inspection (Local Qwen3.5-9B VLM / Cloud Gemini)                │ │
+  │ └────────────────────────────────┬───────────────────────────────────────┘ │
+  └────────────────────────────────────┼───────────────────────────────────────┘
                                        │
                    ┌───────────────────┴───────────────────┐
                    ▼                                       ▼
-       [Có ảnh điểm Max >= 60]                  [Tất cả 3 ảnh đợt 1 < 60]
-       (Early Exit nếu score >= 85)                        │
-                   │                                       ▼
-                   ▼                            RESEARCH BATCH 2 (3 ẢNH TỪ KHÓA MỞ RỘNG)
-       Duyệt ảnh tốt nhất Đợt 1                 - Research Agent thử từ khóa Bản đồ/Sơ đồ/Di tích
-       (Lưu License & Attribution)              - VLM chấm điểm 3 ảnh Đợt 2
-                                                            │
+       [Ứng viên #1 PASS (>= 60)]              [Ứng viên #1 FAIL (< 60/Lỗi Tech)]
+                   │                                       │
+                   ▼                                       ▼
+       CHỌN NGAY & DỪNG KIỂM TRA               Thẩm định Ứng viên #2
+       (Chỉ tốn đúng 1 lượt gọi VLM)          (Quy trình tương tự Bước 2)
+                                                           │
                                        ┌───────────────────┴───────────────────┐
                                        ▼                                       ▼
-                           [Có ảnh điểm Max 6 ảnh >= 60]          [Cả 6 ảnh đều < 60 điểm]
+                           [Ứng viên #2 PASS (>= 60)]              [Cả 2 ứng viên đều FAIL]
                                        │                                       │
                                        ▼                                       ▼
-                           Duyệt ảnh tốt nhất trong 6 ảnh       KÍCH HOẠT CODE RULES ENGINE:
-                                                                Ép chuyển PURE_CODE & Xoay vòng
-                                                                Layout (STAT_CARD, QUOTE...)
+                           CHỌN ỨNG VIÊN #2                        KÍCH HOẠT CODE RULES ENGINE:
+                                                                   Ép chuyển PURE_CODE & Xoay vòng
+                                                                   Layout (STAT_CARD, QUOTE...)
 ```
 
 ---

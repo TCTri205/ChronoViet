@@ -30,24 +30,43 @@ export const VIETNAMESE_STOP_WORDS = new Set([
 ]);
 
 /**
- * Extracts calendar years from text while ignoring numeric quantities (e.g. troop counts, boat counts).
+ * Extracts historical calendar years and time bounds from text.
+ * Accurately parses:
+ * - 2-digit years ("năm 40", "năm 43" SCN)
+ * - B.C. years ("257 TCN" -> -257)
+ * - Explicit calendar markers ("năm 938", "thời 1010", "niên hiệu 1428")
+ * - Excludes duration spans like "1000 năm Bắc thuộc" using negative lookahead
  */
-export function extractCalendarYears(text: string): number[] {
+export function extractHistoricalTimeBounds(text: string): number[] {
   if (!text) return [];
   const years = new Set<number>();
 
-  // 1. Explicit year pattern (e.g. "năm 981", "năm 1428", "thế kỷ 15")
-  const explicitYearRegex = /(?:năm|thời|niên hiệu|thế kỷ)\s+(\d{3,4})\b/gi;
+  // 1. Explicit calendar marker: (năm|thời|niên hiệu) followed by 1 to 4 digits, optional TCN / Trước Công Nguyên
+  // Explicitly excludes duration spans where the number is followed by duration/quantity units
+  const explicitYearRegex = /(?:năm|thời|niên hiệu)\s+(\d{1,4})(?:\s*(?:SCN|sau công nguyên))?(?:\s*(TCN|trước công nguyên))?(?!\s*(?:năm|tháng|ngày|vạn|nghìn|triệu|quân|lính|thuyền|chiến thuyền|người|chiến sĩ|tàu|chiếc|khẩu|mét|km|dặm|tấn|kg|con|đoàn|trận))\b/gi;
   let match: RegExpExecArray | null;
   while ((match = explicitYearRegex.exec(text)) !== null) {
-    const y = parseInt(match[1], 10);
-    if (y >= 100 && y <= 2100) {
+    let y = parseInt(match[1], 10);
+    const isBc = Boolean(match[2]);
+    if (isBc) {
+      y = -y;
+    }
+    if (y >= -3000 && y <= 2100) {
       years.add(y);
     }
   }
 
-  // 2. Standalone 4-digit years (e.g. 1288, 1428, 1789, 1954) not followed by quantity units
-  const standaloneYearRegex = /\b(1\d{3}|20\d{2})\b(?!\s*(?:vạn|nghìn|triệu|người|quân|lính|chiến sĩ|thuyền|tàu|chiếc|khẩu|ngày|tháng|mét|km|dặm|tấn|kg|con|đoàn|trận))/gi;
+  // 2. Year followed directly by TCN / trước công nguyên: e.g. "257 TCN", "208 trước công nguyên"
+  const bcYearRegex = /\b(\d{1,4})\s*(?:TCN|trước công nguyên)\b(?!\s*(?:năm|tháng|ngày|vạn|nghìn|triệu|quân|lính))/gi;
+  while ((match = bcYearRegex.exec(text)) !== null) {
+    const y = -parseInt(match[1], 10);
+    if (y >= -3000 && y <= 0) {
+      years.add(y);
+    }
+  }
+
+  // 3. Standalone 4-digit years (e.g. 1288, 1428, 1789, 1954) not followed by quantity units
+  const standaloneYearRegex = /\b(1\d{3}|20\d{2})\b(?!\s*(?:năm|tháng|ngày|vạn|nghìn|triệu|người|quân|lính|chiến sĩ|thuyền|chiến thuyền|tàu|chiếc|khẩu|mét|km|dặm|tấn|kg|con|đoàn|trận))/gi;
   while ((match = standaloneYearRegex.exec(text)) !== null) {
     const y = parseInt(match[1], 10);
     if (y >= 1000 && y <= 2100) {
@@ -56,6 +75,13 @@ export function extractCalendarYears(text: string): number[] {
   }
 
   return Array.from(years);
+}
+
+/**
+ * Backward compatibility alias for extractHistoricalTimeBounds
+ */
+export function extractCalendarYears(text: string): number[] {
+  return extractHistoricalTimeBounds(text);
 }
 
 /**
@@ -106,17 +132,17 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
   const overlapScore = matchedWords / claimWords.length;
   const rawEntailmentScore = Math.min(1.0, Number((0.50 + overlapScore * 0.55).toFixed(2)));
 
-  // Chronological & Epoch Verification
+  // Chronological & Epoch Verification: apply extractHistoricalTimeBounds symmetrically
   const gtYears: number[] = [];
   if (request.epochBounds?.startYear !== undefined) gtYears.push(request.epochBounds.startYear);
   if (request.epochBounds?.endYear !== undefined) gtYears.push(request.epochBounds.endYear);
 
   for (const chunk of request.groundTruthChunks) {
-    const chunkYears = extractCalendarYears(chunk);
+    const chunkYears = extractHistoricalTimeBounds(chunk);
     gtYears.push(...chunkYears);
   }
 
-  const claimYears = extractCalendarYears(request.scriptClaim);
+  const claimYears = extractHistoricalTimeBounds(request.scriptClaim);
 
   let chronologicalPenalty = 0;
   let chronologicalAnomalyMsg = '';

@@ -4,7 +4,7 @@
  */
 
 export const FOLKLORE_SIGNAL_REGEX =
-  /(theo (truyền thuyết|dã sử|thần thoại|dân gian|giai thoại)|tương truyền|dân gian (kể|cho rằng)|(truyền thuyết|giai thoại) (kể|rằng|ghi nhận)|người xưa (kể|truyền)|theo các giai thoại)/i;
+  /(theo (truyền thuyết|dã sử|thần thoại|dân gian|giai thoại|huyền sử|truyện xưa tích cũ|sử cũ)|tương truyền|dân gian (kể|cho rằng|lưu truyền|truyền tụng)|(truyền thuyết|giai thoại|huyền sử|dã sử|sử cũ) (kể|rằng|ghi nhận|chép rằng|chép lại|ghi lại)|người xưa (kể|truyền)|theo các giai thoại|truyện xưa tích cũ|huyền sử chép|lưu truyền trong dân gian)/i;
 
 export interface FolkloreValidationResult {
   isValid: boolean;

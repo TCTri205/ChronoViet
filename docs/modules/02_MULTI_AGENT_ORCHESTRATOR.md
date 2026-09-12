@@ -141,41 +141,52 @@ Mô-đun chịu trách nhiệm:
   1. Tránh lặp lại câu từ giải thích thông tin đã giới thiệu ở các Chapter trước (`introducedEntities`).
   2. Duy trì giọng văn đồng nhất (`establishedTone`).
   3. Mở đầu bằng câu chuyển cảnh mượt nối tiếp `transitionHook`.
+* **Cơ chế Serial Chained Generation & Lean 1+N Loop:**
+  - Tự động điều phối theo cấu hình phần cứng: chạy tuần tự (Serial Loop) khi dùng single-slot local LLM nhằm tối đa hóa KV-cache và tránh tranh chấp tài nguyên; hỗ trợ parallel blueprint khi chạy Cloud/multi-slot.
+  - Tiêm trực tiếp `previousChapterActualExit` (2 câu thực tế cuối cùng của Chapter $k-1$) vào prompt của Chapter $k$ kèm chỉ thị **Entity-Safe Anti-Echo**: nghiêm cấm sao chép nguyên văn cấu trúc câu hoặc tóm tắt lại cảnh trước, nhưng cho phép và khuyến khích các thực thể lịch sử cốt lõi tiếp tục xuất hiện tự nhiên.
+  - Vòng lặp tinh chỉnh nhịp điệu (Pacing Refinement Loop) được chuẩn hóa kích hoạt khi WPM chệch khỏi ngưỡng $\pm 12\%$ so với WPM mục tiêu của template (bảo đảm tỷ lệ đạt chuẩn benchmark $\le 15\%$).
+  - **Triệt tiêu 100% Static Canned Fallback**: Xóa bỏ hoàn toàn văn bản tĩnh đóng cứng. Khi LLM timeout hoặc rỗng kết quả, hệ thống chạy 1-pass Context-Reduction Retry (`temperature: 0.0`), sau đó sử dụng **Deterministic Historical Synthesizer** định dạng trực tiếp các sự kiện RAG đã thẩm định với dấu ngoặc kép (`"..."`) và nguồn trích dẫn.
+  - Idempotency cấp Checkpoint: Lưu trữ và tái sử dụng `state.chapterScripts` để resume mượt mà từ Chapter $k$ khi có sự cố mà không cần sinh lại các chương trước.
 * **Output:** Văn bản kịch bản thuần (Markdown/Text) của Chapter $N$.
 
 #### 3.2.2. Hybrid Fact-Checker Agent Mềm Dẻo (Micro-Step 1A-Audit)
 * **Input:** Kịch bản lời thoại từ Micro-Step 1A + RAG Verified Context + Historical Entity Alias Table.
-* **Nhiệm vụ:** Thẩm định độ chính xác lịch sử của kịch bản một cách thông minh, song song hóa qua các Chapters (`Promise.all`):
-  1. **Lớp 1 - Code Rule-based Sanitizer với Context-Safe Alias Matching & Diacritics Normalization (TypeScript)**:
-     - Trích xuất mốc năm, tên nhân vật, địa danh.
-     - Tra cứu qua **Alias Table** động từ RAG Context.
-     - Áp dụng Negative Lookbehind/Lookahead regex (`(?<!canonical\s*)\balias\b(?!\s*canonical)`) kèm escape ký tự đặc biệt để **bảo toàn nguyên vẹn danh xưng tôn kính** (ví dụ: *"Tiền Ngô Vương Ngô Quyền"* không bị replace thành *"Ngô Quyền Ngô Quyền"*).
-     - Chuẩn hóa dấu tiếng Việt và chữ hoa/thường trước khi so sánh. Hỗ trợ mốc thế kỷ ("thế kỷ 18" ➔ 1701-1800) và mốc thời gian tương đối.
-     - Chỉ gắn cờ lỗi nếu mốc năm/nhân vật hoàn toàn không tồn tại trong RAG và Alias Table.
-  2. **Lớp 2 - Dual Guardrail Verification**:
-     - **Folklore Tone Guardrail (`folklore-validator.ts`)**: Quét Regex tín hiệu giả thuyết cho nguồn Level 3 Dã sử / Truyền thuyết.
-     - **NLI Entailment Hallucination Judge (`nli-hallucination-judge.ts`)**: Đánh giá độ suy luận Entailment Score giữa câu thoại và ngữ cảnh RAG gốc (ngưỡng $\ge 0.80$). Trả về trạng thái `NEUTRAL` và điểm `0.0` (unverified) khi không có ground truth từ RAG, ngăn chặn silent false-passes.
+* **Nhiệm vụ:** Thẩm định độ chính xác lịch sử của kịch bản một cách thông minh, cực nhanh qua 3 tầng (3-Tier Hybrid Fact-Checking):
+  1. **Tier 1 - Safe Epoch Date Guard ($\le 1\text{ms}$)**:
+     - Trích xuất mốc năm đối xứng (`extractHistoricalTimeBounds`) hỗ trợ cả năm 2 chữ số (năm 40, năm 43), năm trước Công nguyên (257 TCN $\rightarrow -257$), và bộ lọc phủ định đơn vị trường độ `(?!\s*(?:năm|tháng|ngày|vạn|nghìn|triệu|quân|lính))` để những cụm từ như *"1000 năm Bắc thuộc"* không bao giờ kích hoạt báo động niên đại giả.
+     - Vùng biên niên đại an toàn $[\text{minYear}-50, \text{maxYear}+50]$ cho phép các sự kiện tiền đề/bối cảnh lịch sử diễn ra trước hoặc sau thời kỳ mà không bị cờ lỗi sai hoặc gọi LLM tốn kém.
+  2. **Tier 2 - Entity & Historical Anchor Verification ($\le 5\text{ms}$)**:
+     - Đối chiếu danh xưng và thực thể qua **Alias Table** động và Từ điển Thực thể Lịch sử chuẩn (`HISTORICAL_PERSON_DICTIONARY`, `HISTORICAL_LOCATION_DICTIONARY`).
+     - Yêu cầu tỷ lệ thực thể được xác thực $\ge 60\%$ và kiểm tra không có sự xâm nhập của các triều đại/thời kỳ lệch pha.
+     - Áp dụng Negative Lookbehind/Lookahead regex (`(?<!canonical\s*)\balias\b(?!\s*canonical)`) để bảo toàn nguyên vẹn danh xưng tôn kính (ví dụ: *"Tiền Ngô Vương Ngô Quyền"* không bị biến thành *"Ngô Quyền Ngô Quyền"*).
+  3. **Tier 3 - Neural CoT NLI Judge (Chỉ chạy khi có dị thường thực sự)**:
+     - Dự phòng cục bộ mô hình Qwen NLI Entailment Judge (`nli-hallucination-judge.ts`) chỉ kích hoạt khi phát hiện dị thường niên đại vượt ngưỡng hoặc thực thể ngoài thời kỳ.
+     - Trả về `NEUTRAL` và điểm `0.0` (unverified) khi không có ground truth từ RAG, ngăn chặn triệt để silent false-passes.
+  4. **Folklore Tone Guardrail (`folklore-validator.ts`)**:
+     - Quét nhận diện linh hoạt các biến thể ngữ nghĩa dã sử/truyền thuyết (*"theo truyền thuyết dân gian"*, *"dân gian lưu truyền"*, *"huyền sử chép"*, *"truyện xưa tích cũ"*, *"tương truyền"*).
 * **Cơ chế Thang Escalation Fallback 4 Tầng (4-Tier Escalation Path)**:
   - *Lần 1 & 2 (Tier 0 - LLM Self-Correction)*: Gửi Self-Correction Prompt kèm lỗi diff chính xác để LLM nhỏ viết lại (hỗ trợ chuẩn hóa văn phong truyền thuyết / dã sử).
   - *Lần 3 (Tier 1 - Context-Safe Code Auto-Fix Override)*: Nếu lỗi chỉ nằm ở việc dùng sai tên riêng đơn lẻ hoặc thiếu prefix giả thuyết, Code Engine tự động thay thế/bổ sung bằng tên chuẩn từ RAG mà không gọi lại LLM.
-  - *Lần 4 (Tier 2 - NLI Hallucination Flag & Audit Logging)*: Đánh dấu cờ phát hiện Hallucination từ NLI Judge (`escalationTier = 2`) và ghi nhận audit log chi tiết phục vụ giám sát chất lượng và chuyển tiếp mô hình lớn khi cần.
-  - *Lần 5 (Tier 3 - Human-in-the-Loop Flagging)*: Đánh dấu trạng thái Chapter là `NEEDS_HUMAN_REVIEW`, chuyển state sang chế độ chờ duyệt. Khi người dùng phê duyệt, pipeline resume trực tiếp từ node `segmenter` mà không nhân bản scenes hay chạy lại các node tiền đề.
+  - *Lần 4 (Tier 2 - NLI Hallucination Flag & Audit Logging)*: Đánh dấu cờ phát hiện Hallucination từ NLI Judge (`escalationTier = 2`) và ghi nhận audit log chi tiết phục vụ giám sát chất lượng.
+  - *Lần 5 (Tier 3 - Human-in-the-Loop Flagging)*: Đánh dấu trạng thái Chapter là `NEEDS_HUMAN_REVIEW`, chuyển state sang chế độ chờ duyệt. Pipeline resume trực tiếp từ node `segmenter` khi được duyệt.
 
 #### 3.2.3. Scene Segmenter & Layout Mapper Agent (Micro-Step 1B)
 * **Input:** Kịch bản lời thoại đã được Fact-Check từ Micro-Step 1A-Audit + `templateId`.
-* **Nhiệm vụ:** Chia kịch bản Chapter thành các Cảnh (Scenes, thời lượng 5s–25s/scene). Tự động ánh xạ Layout Modes tối ưu riêng theo từng mẫu thiết kế:
-  - `QUICK_SHORTS`: Ưu tiên `FULL_COVER`, `CENTER_SCALE`, `QUOTE_SLIDE`, `STAT_CARD`.
-  - `MODERN_NEWS`: Ưu tiên `STAT_CARD`, `TIMELINE_CHRONO`, `FULL_COVER`, `HISTORICAL_FRAME`.
-  - `HISTORICAL_DOCUMENTARY`: Sử dụng đầy đủ bộ layout điện ảnh truyền thống.
-* **Xử lý tiếng Việt:** Bộ tokenizer làm sạch toàn diện các biến thể dấu ngoặc kép kiểu Việt (`“`, `”`, `‘`, `’`), gạch ngang (`—`), và ba chấm (`…`).
+* **Nhiệm vụ:** Chia kịch bản Chapter thành các Cảnh (Scenes, thời lượng 5s–25s/scene).
+  - **Bảo vệ Từ Viết Tắt Nâng Cao (Context-Aware Lookahead Masking):**
+    - Chức danh/địa danh: `/(?:GS|PGS|TS|ThS|TP|TX|TT)\.\s+(?=[A-ZÀ-Ỹ])/g`
+    - Cụm từ "v.v.": `/(v\.v)\.(?=\s*[,a-zà-ỹ])/gi` (bảo toàn ngắt câu nếu theo sau là chữ hoa).
+  - **Nhận diện Layout Trích Dẫn & Thơ Ca:** Regex phi tham lam `/["“'‘][^"”'’\n]{5,300}["”'’]/` bảo đảm các trích dẫn dài hoặc đoạn thơ lịch sử được ánh xạ chuẩn layout `QUOTE_SLIDE` hoặc `POEM_RECITING` mà không bị cắt xén qua ranh giới câu.
+  - **Hợp nhất câu ngắn (Sentence Merging):** Tự động gộp các câu thoại ngắn ($< 8$ từ hoặc $< 2.5\text{s}$) vào câu liền kề để loại trừ các phân cảnh manh mún ($< 3.0\text{s}$).
+  - **Dự toán thời lượng mục tiêu theo số từ (Word Count Target Duration):**
+    $$\text{targetDurationSeconds} = \max(5, \min(25, \lceil \text{wordCount} / (\text{targetWpm} / 60) \rceil))$$
+    với `targetWpm` cấu hình động theo template (145 WPM cho Documentary, 160 WPM cho Shorts, 150 WPM cho News).
 
 #### 3.2.4. Duration Reconciliation Engine (Micro-Step 1B-Reconcile)
 * **Input:** Danh sách các Cảnh + Target Chapter Duration ($T_{\text{target}}$).
-* **Nhiệm vụ:** Sau khi Worker A sinh file âm thanh TTS cho các Scene, Code Engine tính tổng thời lượng âm thanh thực tế:
-  $$T_{\text{total}} = \sum_{i=1}^{M} \text{audioDurationMs}_i$$
-* **Quy tắc Cân Bằng (Reconciliation Rules):**
-  - Giới hạn time-stretch trong biên độ an toàn $\pm 10\%$ ($[0.90, 1.10]$).
-  - Thuật toán phân bổ trọng số residual deviation và tinh chỉnh phần dư ở cảnh cuối bảo đảm **pacing error $< 3.0\%$**.
+* **Nhiệm vụ:** Sau khi Worker A sinh file âm thanh TTS cho các Scene, Code Engine thực hiện điều hòa thời lượng hai chế độ (Dual-Mode Reconciliation) bảo đảm **zero dead silence** (khoảng lặng $\le 0.5\text{s}$) và **pacing error $< 1.5\%$**:
+  - **Mode A ($|totalAudio - targetTotalSec| \le 10\%$):** Phân bổ độ lệch dư vào các cảnh, khống chế trần đệm an toàn tối đa $\minRequiredSec + 0.6\text{s}$ trên mỗi phân cảnh nhằm loại bỏ hoàn toàn khoảng lặng chết trên timeline Remotion.
+  - **Mode B ($|totalAudio - targetTotalSec| > 10\%$):** Kích hoạt cơ chế Audio-Driven Grounding, tôn trọng thời lượng phát âm thanh thực tế của mô hình TTS và bổ sung 1 thẻ kết (outro card) $1.5\text{s}$ ở cuối thay vì kéo giãn nhân tạo thời lượng hình ảnh.
 
 #### 3.2.5. Visual Query Planning & Keyword Extractor Agent (Micro-Step 1C)
 * **Input:** Danh sách các scenes trong Chapter có `contentType: "IMAGE"`, `ragContext` và `userPrompt`.
@@ -193,27 +204,35 @@ Mô-đun chịu trách nhiệm:
 ---
 
 ### 3.3. Parallel Worker A: Sound Design & TTS Agent
-* **Nhiệm vụ:** Nhận `voiceoverText` của từng Scene, thực hiện check **Idempotency Hash Key** `hash(chapterId + sceneId + voiceoverText)`. Nếu file audio đã tồn tại trên local/S3, dùng lại ngay. Ngược lại, gọi **VieNeu ONNX TTS Engine** qua API `POST /api/v1/synthesize` để xuất WAV + `wordTimestamps`.
+* **Nhiệm vụ:** Nhận `voiceoverText` của từng Scene, tính toán tỷ lệ tốc độ thích ứng:
+  $$\text{speedRatio} = \text{clamp}(0.95, 1.15, \text{estimatedAudioSec} / \text{targetDurationSeconds})$$
+  và kiểm tra **Idempotency Hash Key** kết hợp `speedRatio`:
+  $$\text{hash}(chapterId + sceneId + voiceoverText + speedRatio)$$
+  Nếu file audio đã tồn tại trên local/S3, tái sử dụng ngay. Ngược lại, gọi **VieNeu ONNX TTS Engine** qua API `POST /api/v1/synthesize` kèm tham số `speedRatio` để xuất WAV + `wordTimestamps` được chuẩn hóa tỉ lệ chuẩn xác.
 
 ---
 
-### 3.4. Parallel Worker B: Research Agent & Hybrid VLM Inspector (Strategy 3+3 Candidates & Licensing)
+### 3.4. Parallel Worker B: Research Agent & Lazy Sequential VLM Inspector
 * **Nhiệm vụ:** 
-  1. **Nhận candidate pool từ Research Agent** (state `researchResults[sceneId]`) thay vì tự crawl. Fallback: nếu chưa có (resume checkpoint cũ), tự gọi `resolveImageCandidates` inline.
-  2. **License Whitelist Filter**: Chỉ nhận ảnh từ các nguồn minh bạch (Wikimedia Commons, Kho tư liệu lịch sử) thuộc giấy phép `Public Domain`, `CC0`, `CC-BY-4.0`, `CC-BY-SA-4.0`. Lưu thông tin `license` và `attribution` (tác giả, URL nguồn).
-  3. **Strategy 3+3 Candidates**: Research Agent cung cấp 3 ảnh đợt 1. Nếu không đạt $\ge 60$ điểm ➔ yêu cầu Research Batch 2 (3 ảnh bổ sung từ khóa mở rộng).
-  4. **Hybrid Dual-Tier VLM Inspection**:
-     - *Eval strict (`EVAL_STRICT=true`)*: **Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m` qua llama-server)** là scorer bắt buộc. Local VLM lỗi → pipeline throw, không dùng Gemini/CLIP.
-     - *Dev primary*: VLM Cloud API (Gemini 3.6 Flash) chấm điểm độ phù hợp lịch sử và thẩm mỹ (khi có `GEMINI_API_KEY`, `EVAL_STRICT=false`).
-     - *Dev offline fallback*: Nếu Gemini API gặp lỗi HTTP 429/500, timeout hoặc ngắt internet, tự động chuyển sang **Local CLIP/SigLIP Cosine Similarity Scorer** (ONNX model chạy offline, chỉ khi `EVAL_STRICT=false`).
-  5. **Code Fallback Trigger**: Nếu điểm cao nhất cả 6 ảnh vẫn $< 60$ ➔ Ép cảnh sang `PURE_CODE`.
+  1. **Nhận candidate pool từ Research Agent** (state `researchResults[sceneId]`).
+  2. **Tiền Lọc Giấy Phép Bản Quyền (Pre-Download Whitelist Filter)**: Kiểm tra siêu dữ liệu giấy phép (`Public Domain`, `CC0`, `CC-BY-4.0`, `CC-BY-SA-4.0`) ngay trước khi tải file ảnh lớn về máy.
+  3. **Xếp Hạng Nguồn Gốc (Provenance Ranking)**: Ưu tiên ứng viên theo thứ tự chất lượng tư liệu: `catalog` (Rank 3) > `wikimedia` (Rank 2) > web search (Rank 1).
+  4. **Thẩm Định Tuần Tự Tinh Gọn (Lazy Sequential VLM Curation)**:
+     - Đánh giá ứng viên tốt nhất (#1): Chạy kiểm tra kỹ thuật (Sharp resizer, format header), sau đó gọi VLM Inspector. Nếu đạt yêu cầu ($\ge 60$ điểm), lập tức chọn và kết thúc ngay (chỉ tốn đúng 1 lượt gọi VLM).
+     - Chỉ khi ứng viên #1 không đạt kỹ thuật hoặc bị từ chối, hệ thống mới tiếp tục thẩm định ứng viên #2 trước khi kích hoạt `PURE_CODE`.
+  5. **Chế Độ Scorer**:
+     - *Eval strict (`EVAL_STRICT=true`)*: **Local Unified VLM (`qwen3.5-9b-instruct-q4_k_m` qua llama-server)** là scorer bắt buộc.
+     - *Dev Fast Mode (`FAST_DEV_MODE=true` & `EVAL_STRICT=false`)*: Cho phép sử dụng bộ heuristic CLIP nội bộ tốc độ cao.
+     - *Dev primary*: VLM Cloud API (Gemini 3.6 Flash) khi có API key.
+  6. **Code Fallback Trigger**: Khi không có ứng viên nào đạt chuẩn $\ge 60$ ➔ Ép cảnh sang `PURE_CODE` và xoay vòng layout.
 
 ---
 
 ### 3.5. Code Rules Engine (TypeScript Helper & Layout Rotation)
 * **Nhiệm vụ:**
-  1. Tính toán `durationInFrames` theo chuẩn 30 FPS:
-     $$\text{durationInFrames} = \left\lceil \frac{\text{audioDurationMs} + 300}{1000} \times 30 \right\rceil$$
+  1. Tính toán `durationInFrames` theo chuẩn 30 FPS với giới hạn đệm an toàn bảo vệ âm thanh:
+     $$\text{durationInFrames} = \max(90, \max(\lceil \text{targetDurationSeconds} \times \text{FPS} \rceil, \lceil (\text{audioDurationSeconds} + 0.2) \times \text{FPS} \rceil))$$
+     Bảo đảm mỗi phân cảnh tối thiểu 3 giây ($90\text{ frames}$), âm thanh không bao giờ bị cắt cụt, và khoảng đệm đuôi luôn $\le 0.5\text{s}$.
   2. **PURE_CODE Layout Rotation Engine**: Luân phiên tự động chọn giữa `STAT_CARD`, `VERSUS_CARD`, `TIMELINE_CHRONO`, `QUOTE_SLIDE`, `POEM_RECITING`, `CHAPTER_CARD` khi nhiều cảnh liên tiếp không có ảnh tư liệu.
 
 ---

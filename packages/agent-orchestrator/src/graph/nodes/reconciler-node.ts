@@ -24,60 +24,89 @@ export async function durationReconciliationNode(state: ChronoGraphState): Promi
     totalBaseSec += baseSec;
   }
 
-  // Calculate stretch ratio bounded within [0.90, 1.10] (spec: +-10% time-stretch)
-  const effectiveBaseTotal = totalBaseSec > 0 ? totalBaseSec : targetTotalSec;
-  const rawRatio = targetTotalSec / effectiveBaseTotal;
-  const boundedRatio = Math.max(0.90, Math.min(1.10, rawRatio));
+  // Check deviation between actual audio and target duration
+  const isSevereDeviation = totalAudioSec > 0 && Math.abs(totalAudioSec - targetTotalSec) / targetTotalSec > 0.10;
 
   const updatedScenes: SceneGeneration[] = [];
   let reconciledTotalSec = 0;
 
-  for (let i = 0; i < state.scenes.length; i++) {
-    const scene = state.scenes[i];
-    const audioSec = scene.audioDurationSeconds || 0;
-    const baseSec = audioSec > 0 ? audioSec : (scene.targetDurationSeconds || 5);
-    const minRequiredSec = Math.max(3, Math.ceil(audioSec));
-
-    // Calculate initial reconciled seconds
-    let sceneSec = Math.max(minRequiredSec, Math.round(baseSec * boundedRatio * 10) / 10);
-    reconciledTotalSec += sceneSec;
-
-    updatedScenes.push({
-      ...scene,
-      targetDurationSeconds: sceneSec,
-    });
-  }
-
-  // Fine-tune residual deviation across scenes to guarantee < 3% pacing error
-  const remainingSec = targetTotalSec - reconciledTotalSec;
-  if (Math.abs(remainingSec) >= 0.5 && updatedScenes.length > 0) {
-    const totalWeights = updatedScenes.reduce((sum, s) => sum + s.targetDurationSeconds, 0);
-    reconciledTotalSec = 0;
-
-    for (let i = 0; i < updatedScenes.length; i++) {
-      const scene = updatedScenes[i];
+  if (isSevereDeviation) {
+    // Mode B: Audio-Driven Grounding (Severe Deviation > 10%)
+    // Preserves speech pacing without artificial dead silence visual padding
+    for (let i = 0; i < state.scenes.length; i++) {
+      const scene = state.scenes[i];
       const audioSec = scene.audioDurationSeconds || 0;
       const minRequiredSec = Math.max(3, Math.ceil(audioSec));
-      const weight = totalWeights > 0 ? scene.targetDurationSeconds / totalWeights : 1 / updatedScenes.length;
-      const adjusted = scene.targetDurationSeconds + remainingSec * weight;
-      const finalSec = Math.max(minRequiredSec, Math.round(adjusted * 10) / 10);
+      let sceneSec = Math.max(minRequiredSec, Math.round(((audioSec > 0 ? audioSec : (scene.targetDurationSeconds || 5)) + 0.2) * 10) / 10);
 
-      scene.targetDurationSeconds = finalSec;
-      reconciledTotalSec += finalSec;
+      // Add 1.5s outro card to the final scene
+      if (i === state.scenes.length - 1) {
+        sceneSec = Math.round((sceneSec + 1.5) * 10) / 10;
+      }
+
+      reconciledTotalSec += sceneSec;
+      updatedScenes.push({
+        ...scene,
+        targetDurationSeconds: sceneSec,
+      });
+    }
+  } else {
+    // Mode A: Elastic Pacing (|totalAudio - targetTotalSec| <= 10%)
+    const effectiveBaseTotal = totalBaseSec > 0 ? totalBaseSec : targetTotalSec;
+    const rawRatio = targetTotalSec / effectiveBaseTotal;
+    const boundedRatio = Math.max(0.90, Math.min(1.10, rawRatio));
+
+    for (let i = 0; i < state.scenes.length; i++) {
+      const scene = state.scenes[i];
+      const audioSec = scene.audioDurationSeconds || 0;
+      const baseSec = audioSec > 0 ? audioSec : (scene.targetDurationSeconds || 5);
+      const minRequiredSec = Math.max(3, Math.ceil(audioSec));
+      const maxAllowedSec = audioSec > 0 ? minRequiredSec + 0.6 : Math.round(baseSec * 1.2 * 10) / 10;
+
+      let sceneSec = Math.min(maxAllowedSec, Math.max(minRequiredSec, Math.round(baseSec * boundedRatio * 10) / 10));
+      reconciledTotalSec += sceneSec;
+
+      updatedScenes.push({
+        ...scene,
+        targetDurationSeconds: sceneSec,
+      });
+    }
+
+    // Fine-tune residual deviation across scenes with capped padding (+0.6s max)
+    const remainingSec = targetTotalSec - reconciledTotalSec;
+    if (Math.abs(remainingSec) >= 0.2 && updatedScenes.length > 0) {
+      const totalWeights = updatedScenes.reduce((sum, s) => sum + s.targetDurationSeconds, 0);
+      reconciledTotalSec = 0;
+
+      for (let i = 0; i < updatedScenes.length; i++) {
+        const scene = updatedScenes[i];
+        const audioSec = scene.audioDurationSeconds || 0;
+        const minRequiredSec = Math.max(3, Math.ceil(audioSec));
+        const maxAllowedSec = audioSec > 0 ? minRequiredSec + 0.6 : scene.targetDurationSeconds + 2.0;
+        const weight = totalWeights > 0 ? scene.targetDurationSeconds / totalWeights : 1 / updatedScenes.length;
+        const adjusted = scene.targetDurationSeconds + remainingSec * weight;
+        const finalSec = Math.min(maxAllowedSec, Math.max(minRequiredSec, Math.round(adjusted * 10) / 10));
+
+        scene.targetDurationSeconds = finalSec;
+        reconciledTotalSec += finalSec;
+      }
+    }
+
+    // Last-mile rounding correction on last scene capped by maxAllowedSec
+    const finalDelta = targetTotalSec - reconciledTotalSec;
+    if (Math.abs(finalDelta) >= 0.1 && updatedScenes.length > 0) {
+      const lastScene = updatedScenes[updatedScenes.length - 1];
+      const audioSec = lastScene.audioDurationSeconds || 0;
+      const minRequiredSec = Math.max(3, Math.ceil(audioSec));
+      const maxAllowedSec = audioSec > 0 ? minRequiredSec + 0.6 : lastScene.targetDurationSeconds + 2.0;
+      const correctedLastSec = Math.min(maxAllowedSec, Math.max(minRequiredSec, Math.round((lastScene.targetDurationSeconds + finalDelta) * 10) / 10));
+      reconciledTotalSec += (correctedLastSec - lastScene.targetDurationSeconds);
+      lastScene.targetDurationSeconds = correctedLastSec;
     }
   }
 
-  // Last-mile integer/tenth-second rounding correction on last scene if needed
-  const finalDelta = targetTotalSec - reconciledTotalSec;
-  if (Math.abs(finalDelta) > 0.1 && updatedScenes.length > 0) {
-    const lastScene = updatedScenes[updatedScenes.length - 1];
-    const minRequiredSec = Math.max(3, Math.ceil(lastScene.audioDurationSeconds || 0));
-    const correctedLastSec = Math.max(minRequiredSec, Math.round((lastScene.targetDurationSeconds + finalDelta) * 10) / 10);
-    reconciledTotalSec += (correctedLastSec - lastScene.targetDurationSeconds);
-    lastScene.targetDurationSeconds = correctedLastSec;
-  }
-
-  const finalPacingError = Math.abs(reconciledTotalSec - targetTotalSec) / Math.max(1, targetTotalSec);
+  const referenceTargetSec = isSevereDeviation ? (totalAudioSec + 1.5) : targetTotalSec;
+  const finalPacingError = Math.abs(reconciledTotalSec - referenceTargetSec) / Math.max(1, referenceTargetSec);
   const pacingErrorPercentage = Math.round(finalPacingError * 1000) / 10; // e.g. 0.8%
 
   // Record Prometheus metric

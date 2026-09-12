@@ -3,7 +3,7 @@
  * Divides topic and RAG context into N Chapters (2-3 minutes each) and initializes runningNarrativeState
  */
 
-import { ChapterPlan } from '@chronoviet/shared-spec';
+import { ChapterPlan, HISTORICAL_PERSON_DICTIONARY, HISTORICAL_LOCATION_DICTIONARY } from '@chronoviet/shared-spec';
 import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger, TelemetryAuditEntry } from '../state.js';
 
@@ -38,54 +38,55 @@ export function isValidHistoricalEntity(name: string): boolean {
   return true;
 }
 
-export function extractHistoricalEntitiesFromRag(ragContext?: ChronoGraphState['ragContext']): string[] {
-  if (!ragContext?.verifiedContext) return [];
+export function extractHistoricalEntitiesFromRag(ragContext?: ChronoGraphState['ragContext'], userPrompt?: string): string[] {
   const entitySet = new Set<string>();
 
-  for (const chunk of ragContext.verifiedContext) {
-    if (chunk.canonicalName && isValidHistoricalEntity(chunk.canonicalName)) {
-      entitySet.add(chunk.canonicalName.trim());
-    }
-    if (chunk.title && isValidHistoricalEntity(chunk.title)) {
-      const cleanTitle = chunk.title.replace(/\s*\(.*?\)/g, '').replace(/^(?:Tập sử liệu|Tập|Phần|Đoạn)\s*:\s*/i, '').trim();
-      if (isValidHistoricalEntity(cleanTitle)) {
-        entitySet.add(cleanTitle);
+  if (ragContext?.verifiedContext) {
+    for (const chunk of ragContext.verifiedContext) {
+      if (chunk.canonicalName && isValidHistoricalEntity(chunk.canonicalName)) {
+        entitySet.add(chunk.canonicalName.trim());
       }
-    }
-    if (Array.isArray(chunk.aliases)) {
-      for (const alias of chunk.aliases) {
-        if (alias && isValidHistoricalEntity(alias)) {
-          entitySet.add(alias.trim());
+      if (chunk.title && isValidHistoricalEntity(chunk.title)) {
+        const cleanTitle = chunk.title.replace(/\s*\(.*?\)/g, '').replace(/^(?:Tập sử liệu|Tập|Phần|Đoạn)\s*:\s*/i, '').trim();
+        if (isValidHistoricalEntity(cleanTitle)) {
+          entitySet.add(cleanTitle);
         }
       }
-    }
-
-    // Extract capitalized Vietnamese proper nouns and historical multi-word terms from chunk summary
-    if (chunk.summary) {
-      // 1. Capitalized proper nouns (1-4 words)
-      const nameRegex = /\b([A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ][a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]+(?:\s+[A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ0-9][a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ0-9]*){0,3})\b/g;
-      const matches = chunk.summary.match(nameRegex);
-      if (matches) {
-        for (const m of matches) {
-          if (isValidHistoricalEntity(m)) {
-            entitySet.add(m.trim());
+      if (Array.isArray(chunk.aliases)) {
+        for (const alias of chunk.aliases) {
+          if (alias && isValidHistoricalEntity(alias)) {
+            entitySet.add(alias.trim());
           }
         }
       }
 
-      // 2. Quoted historical concepts/documents (e.g. "Bình Ngô Đại Cáo", "Hịch tướng sĩ", "Nam quốc sơn hà")
-      const quoteRegex = /["“'‘]([^"”'’]{3,40})["”'’]/g;
-      let qMatch: RegExpExecArray | null;
-      while ((qMatch = quoteRegex.exec(chunk.summary)) !== null) {
-        const qText = qMatch[1].trim();
-        if (isValidHistoricalEntity(qText)) {
-          entitySet.add(qText);
+      // Extract capitalized Vietnamese proper nouns and historical multi-word terms from chunk summary
+      if (chunk.summary) {
+        // 1. Capitalized proper nouns (1-4 words)
+        const nameRegex = /\b([A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ][a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]+(?:\s+[A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ0-9][a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ0-9]*){0,3})\b/g;
+        const matches = chunk.summary.match(nameRegex);
+        if (matches) {
+          for (const m of matches) {
+            if (isValidHistoricalEntity(m)) {
+              entitySet.add(m.trim());
+            }
+          }
+        }
+
+        // 2. Quoted historical concepts/documents (e.g. "Bình Ngô Đại Cáo", "Hịch tướng sĩ", "Nam quốc sơn hà")
+        const quoteRegex = /["“'‘]([^"”'’]{3,40})["”'’]/g;
+        let qMatch: RegExpExecArray | null;
+        while ((qMatch = quoteRegex.exec(chunk.summary)) !== null) {
+          const qText = qMatch[1].trim();
+          if (isValidHistoricalEntity(qText)) {
+            entitySet.add(qText);
+          }
         }
       }
     }
   }
 
-  if (ragContext.aliasTable) {
+  if (ragContext?.aliasTable) {
     for (const [key, aliases] of Object.entries(ragContext.aliasTable)) {
       if (key && isValidHistoricalEntity(key)) {
         entitySet.add(key.trim());
@@ -97,6 +98,28 @@ export function extractHistoricalEntitiesFromRag(ragContext?: ChronoGraphState['
           }
         }
       }
+    }
+  }
+
+  // Correlate with canonical historical person and location dictionaries
+  const textCorpus = [
+    userPrompt || '',
+    ...(ragContext?.verifiedContext?.map((c) => `${c.canonicalName} ${c.title || ''} ${c.summary || ''}`) || []),
+  ].join(' ').toLowerCase();
+
+  for (const person of Object.values(HISTORICAL_PERSON_DICTIONARY)) {
+    if (!person.canonicalName || !isValidHistoricalEntity(person.canonicalName)) continue;
+    const pName = person.canonicalName.toLowerCase();
+    if (textCorpus.includes(pName) || person.aliases?.some((a) => textCorpus.includes(a.toLowerCase()))) {
+      entitySet.add(person.canonicalName);
+    }
+  }
+
+  for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
+    if (!loc.canonicalName || !isValidHistoricalEntity(loc.canonicalName)) continue;
+    const lName = loc.canonicalName.toLowerCase();
+    if (textCorpus.includes(lName) || loc.aliases?.some((a) => textCorpus.includes(a.toLowerCase()))) {
+      entitySet.add(loc.canonicalName);
     }
   }
 
@@ -116,7 +139,7 @@ export async function chapteringNode(state: ChronoGraphState): Promise<Partial<C
   const numChapters = Math.max(2, Math.min(6, Math.round(totalTargetSec / 60)));
   const secPerChapter = Math.round(totalTargetSec / numChapters);
 
-  const allHistoricalEntities = extractHistoricalEntitiesFromRag(state.ragContext);
+  const allHistoricalEntities = extractHistoricalEntitiesFromRag(state.ragContext, state.userPrompt);
   const ragSummary = state.ragContext?.verifiedContext?.map((e) => `- ${e.canonicalName}: ${e.summary}`).join('\n') || 'Không có dữ liệu chi tiết.';
 
   const systemMessage = `Bạn là Chaptering & Outline Agent chuyên nghiệp của nền tảng video lịch sử ChronoViet.

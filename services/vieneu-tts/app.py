@@ -201,22 +201,27 @@ def synthesize(req: VieNeuRequest, request: Request):
     words = text.split()
     sample_rate = req.sampleRate or 24000
 
+    # Calculate speed scale with safety clamping
+    speed_ratio = req.speedRatio if req.speedRatio and req.speedRatio > 0 else 1.0
+    speed_scale = 1.0 / speed_ratio
+    length_scale = max(0.85, min(1.05, speed_scale))
+
     # Calculate word cadence and timestamps
     word_timestamps = []
     curr_ms = 0.0
     for w in words:
-        base_dur = max(180.0, len(w) * 40.0)
-        pause = 40.0
+        base_dur = max(180.0, len(w) * 40.0) * speed_scale
+        pause = 40.0 * speed_scale
         if w.endswith((".", "!", "?")):
-            pause = 300.0
+            pause = 300.0 * speed_scale
         elif w.endswith((",", ";", ":")):
-            pause = 180.0
+            pause = 180.0 * speed_scale
         start_w = int(curr_ms)
         end_w = int(curr_ms + base_dur)
         word_timestamps.append({"word": w, "startMs": start_w, "endMs": end_w})
         curr_ms = end_w + pause
 
-    calculated_duration_ms = int(curr_ms)
+    calculated_duration_ms = max(1, int(curr_ms))
 
     # Hash deterministically for file caching
     file_hash = hashlib.sha256(f"{text}_{req.speakerId}_{req.speedRatio}_{sample_rate}".encode("utf-8")).hexdigest()[:16]
@@ -230,7 +235,7 @@ def synthesize(req: VieNeuRequest, request: Request):
             try:
                 if engine_type == "PIPER_NEURAL_ONNX":
                     audio_arrays = []
-                    for chunk in tts_engine.synthesize(text):
+                    for chunk in tts_engine.synthesize(text, length_scale=length_scale):
                         if chunk.audio_float_array is not None and len(chunk.audio_float_array) > 0:
                             audio_arrays.append(chunk.audio_float_array)
                     if audio_arrays:
@@ -270,6 +275,20 @@ def synthesize(req: VieNeuRequest, request: Request):
         rate = wf.getframerate()
         duration_ms = int((frames / float(rate)) * 1000)
 
+    # Scale word timestamps proportionally to match actual WAV duration
+    if calculated_duration_ms > 0 and duration_ms > 0:
+        time_scale = duration_ms / float(calculated_duration_ms)
+        final_word_timestamps = [
+            {
+                "word": wt["word"],
+                "startMs": int(wt["startMs"] * time_scale),
+                "endMs": int(wt["endMs"] * time_scale),
+            }
+            for wt in word_timestamps
+        ]
+    else:
+        final_word_timestamps = word_timestamps
+
     calculated_frames = math.ceil(((duration_ms + req.paddingMs) / 1000.0) * req.fps)
     elapsed_ms = round((time.time() - start_time) * 1000, 1)
 
@@ -290,7 +309,7 @@ def synthesize(req: VieNeuRequest, request: Request):
         "audioUrl": f"/static/audio/{file_name}",
         "audioDurationMs": duration_ms,
         "calculatedFramesAt30fps": calculated_frames,
-        "wordTimestamps": word_timestamps,
+        "wordTimestamps": final_word_timestamps,
         "engineType": current_engine,
     }
 

@@ -139,12 +139,14 @@ export const CASUAL_REMARK_REGEX =
 
 // Conjunction / Coordinate Entity Query Patterns ("A và B là ai", "quan hệ giữa A và B", "A và B có phải là 2 anh em...")
 const CONJUNCTION_ENTITY_PATTERNS = [
-  /^(.+?)\s+(?:và|với|cùng)\s+(.+?)\s+là\s+(?:ai|những\s+ai|người\s+như\s+thế\s+nào)(?:\s*\?)?$/i,
+  /^(?:có\s+phải\s+)?(.+?)\s+(?:và|với|cùng)\s+(.+?)\s+là\s+(?:ai|những\s+ai|người\s+như\s+thế\s+nào)(?:\s*\?)?$/i,
   /^(?:quan\s+hệ\s+giữa|mối\s+quan\s+hệ\s+giữa)\s+(.+?)\s+(?:và|với)\s+(.+?)(?:\s+là\s+gì|\s+như\s+thế\s+nào)?(?:\s*\?)?$/i,
-  /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+(?:mối\s+)?quan\s+hệ\s+(?:gì|như\s+thế\s+nào)(?:\s*\?)?$/i,
-  /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau|(?:2|hai)?\s*anh\s+em(?:\s+ruột)?)(?:\s*không|\s+hay\s+không|\s+phải\s+không|\s+hả|\s*\?)?$/i,
-  /^(.+?)\s+(?:và|với)\s+(.+?)\s+là\s+(?:cùng\s+một\s+người|là\s+một)\s+(?:hay|hoặc)\s+(?:là\s+)?(?:2|hai)?\s*(?:vị\s+vua|người|nhân\s+vật)\s+khác\s+nhau(?:.*)$/i,
-  /^(.+?)\s+(?:và|với)\s+(.+?)\s+là\s+(?:cùng\s+một\s+người|là\s+một|hai\s+người\s+khác\s+nhau|hai\s+vị\s+vua\s+khác\s+nhau)(?:.*)$/i,
+  /^(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+(?:mối\s+)?quan\s+hệ(?:\s+[\wà-ỹ]+)?\s+(?:gì|như\s+thế\s+nào|ra\s+sao)(?:\s*\?)?$/i,
+  /^(?:có\s+phải\s+)?(.+?)\s+(?:và|với)\s+(.+?)\s+có\s+phải\s+(?:là\s+)?(?:cùng\s+một\s+người|là\s+một|2\s+người\s+khác\s+nhau|hai\s+người\s+khác\s+nhau|(?:2|hai)?\s*anh\s+em(?:\s+ruột)?)(?:\s*không|\s+hay\s+không|\s+phải\s+không|\s+hả|\s*\?)?$/i,
+  /^(?:có\s+phải\s+)?(.+?)\s+(?:và|với)\s+(.+?)\s+là\s+(?:cùng\s+một\s+người|là\s+một)\s+(?:hay|hoặc)\s+(?:là\s+)?(?:2|hai)?\s*(?:vị\s+vua|người|nhân\s+vật)\s+khác\s+nhau(?:.*)$/i,
+  /^(?:có\s+phải\s+)?(.+?)\s+(?:và|với)\s+(.+?)\s+là\s+(?:cùng\s+một\s+người|là\s+một|hai\s+người\s+khác\s+nhau|hai\s+vị\s+vua\s+khác\s+nhau)(?:.*)$/i,
+  /^(.+?)\s+có\s+phải\s+(?:là\s+)?(?:con|cha|anh|em|vợ|chồng|cháu)\s+(?:của|với)\s+(.+?)(?:\s*không|\s*\?)?$/i,
+  /^(.+?)\s+là\s+(?:con|cha|anh|em|vợ|chồng|cháu)\s+(?:của|với)\s+(.+?)(?:\s*không|\s*\?)?$/i,
 ];
 
 const SINGLE_ENTITY_IDENTITY_PATTERNS = [
@@ -228,7 +230,10 @@ export function cleanHistoricalClause(text: string): string {
   // 4. Strip secondary question wrappers e.g. "bạn có biết"
   cleaned = cleaned.replace(/^(?:bạn\s+có\s+biết|bạn\s+biết\s+gì\s+về|kể\s+về|kể\s+cho\s+(?:tôi|mình|em)\s+nghe\s+về)\s*/i, '').trim();
   
-  // 5. Strip trailing question particles
+  // 5. Strip leading interrogative particles (e.g. "có phải là", "phải chăng là", "có đúng là", "liệu")
+  cleaned = cleaned.replace(/^(?:có\s+phải(?:\s+là)?|phải\s+chăng(?:\s+là)?|có\s+đúng(?:\s+là)?|liệu(?:\s+rằng)?|theo\s+(?:bạn|sử\s+sách)\s+thì)\s+/i, '').trim();
+
+  // 6. Strip trailing question particles
   cleaned = cleaned
     .replace(/(?:[\s,;:!?-]+(?:và|với))+$/i, '')
     .replace(/\s+(?:không|thế|vậy|nhỉ|hả|ạ)$/i, '')
@@ -658,9 +663,14 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
     if (match) {
       const rawE1 = match[1]?.replace(/[?!.,;:]+$/g, '').trim();
       const rawE2 = match[2]?.replace(/[?!.,;:]+$/g, '').trim();
-      if (rawE1 && rawE2 && isKnownMasterEntity(rawE1) && isKnownMasterEntity(rawE2)) {
-        const canonical1 = resolveCanonicalEntity(rawE1);
-        const canonical2 = resolveCanonicalEntity(rawE2);
+      const baseE1 = rawE1?.replace(/\s*\([^)]*\)/g, '').trim() || rawE1;
+      const baseE2 = rawE2?.replace(/\s*\([^)]*\)/g, '').trim() || rawE2;
+      const isE1Known = isKnownMasterEntity(rawE1) || isKnownMasterEntity(baseE1);
+      const isE2Known = isKnownMasterEntity(rawE2) || isKnownMasterEntity(baseE2);
+
+      if (rawE1 && rawE2 && isE1Known && isE2Known) {
+        const canonical1 = resolveCanonicalEntity(isKnownMasterEntity(rawE1) ? rawE1 : baseE1);
+        const canonical2 = resolveCanonicalEntity(isKnownMasterEntity(rawE2) ? rawE2 : baseE2);
 
         if (canonical1.entityId && canonical2.entityId) {
           signals.isCoReferenceIdentity = canonical1.entityId === canonical2.entityId;
@@ -670,12 +680,20 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
             canonicalName: canonical1.canonicalName,
           };
 
-          // If entities are distinct and question asks about kinship, route to HISTORICAL_QUERY with GENEALOGY_RELATION
-          const isKinshipQuestion = /(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|dòng\s+họ|thân\s+tộc)/i.test(cleanSearchTopic || cleanQuery);
-          if (!signals.isCoReferenceIdentity && isKinshipQuestion) {
+          // If entities are distinct, this is ALWAYS a HISTORICAL_QUERY
+          if (!signals.isCoReferenceIdentity) {
+            const isKinshipQuestion =
+              KINSHIP_AND_RELATION_REGEX.test(cleanSearchTopic || cleanQuery) ||
+              /(?:quan\s+hệ|huyết\s+thống|họ\s+hàng|thân\s+tộc)/i.test(cleanSearchTopic || cleanQuery);
+            const subIntent: ChatSubIntent = isKinshipQuestion
+              ? 'GENEALOGY_RELATION'
+              : (/(?:so\s+sánh|vai\s+trò|phân\s+công|nhiệm\s+vụ|khác\s+nhau|ai\s+hơn|đối\s+đầu|đối\s+chiếu)/i.test(cleanQuery)
+                ? 'COMPARATIVE_SYNTHESIS'
+                : detectHistoricalSubIntent(cleanSearchTopic || cleanQuery));
+
             const compositeResult: CompositeIntentResult = {
               primaryIntent: 'HISTORICAL_QUERY',
-              subIntent: 'GENEALOGY_RELATION',
+              subIntent,
               confidence: 0.95,
               clauses: detectedIntentClauses,
               hasHistoricalInquiry: true,
@@ -688,7 +706,7 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
             };
             return {
               intent: 'HISTORICAL_QUERY',
-              subIntent: 'GENEALOGY_RELATION',
+              subIntent,
               confidence: 0.95,
               matchedEntityId: canonical1.entityId,
               matchedCanonicalName: canonical1.canonicalName,
@@ -701,6 +719,7 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
             };
           }
 
+          // If entities are identical (co-referent aliases of same figure), route to ENTITY_IDENTITY
           const compositeResult: CompositeIntentResult = {
             primaryIntent: 'ENTITY_IDENTITY',
             confidence: 0.95,
@@ -718,6 +737,128 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
             confidence: 0.95,
             matchedEntityId: canonical1.entityId,
             matchedCanonicalName: canonical1.canonicalName,
+            signals,
+            cleanSearchTopic,
+            videoBriefTopic,
+            outOfDomainTopic,
+            compositeResult,
+            videoHandover,
+          };
+        }
+      }
+    }
+  }
+
+  // 4c-bis. Universal Multiplicity & Co-reference Detection:
+  // Evaluates unique entity IDs across all recognized spans in the query.
+  // - If uniqueEntityIds.size === 1 and >= 2 mentions: True co-reference identity inquiry (e.g. "Quang Trung và Nguyễn Huệ")
+  // - If uniqueEntityIds.size >= 2: Multi-entity historical inquiry (e.g. "Trần Liễu và vua Trần Thái Tông (Trần Cảnh)")
+  if (!signals.isCoReferenceIdentity) {
+    const isIdentityOrKinshipInquiry =
+      /(?:cùng\s+một\s+người|là\s+một|hai\s+người|2\s+người|khác\s+nhau|có\s+phải(?:\s+là)?|quan\s+hệ|cha\s+con|anh\s+em|vợ\s+chồng|con\s+của|cha\s+của|huyết\s+thống|vai\s+trò|phân\s+công)/i.test(cleanQuery);
+
+    if (isIdentityOrKinshipInquiry) {
+      const cleanTokens = cleanQuery
+        .replace(/[,;!?.:~"'/()\\-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .split(' ')
+        .filter(Boolean);
+      const nTokens = cleanTokens.length;
+      const coveredIndices = new Set<number>();
+      const foundEntities: Array<{ name: string; entityId: string; canonicalName: string }> = [];
+
+      for (let len = Math.min(4, nTokens); len >= 1; len--) {
+        for (let i = 0; i <= nTokens - len; i++) {
+          if (Array.from({ length: len }, (_, k) => i + k).some((idx) => coveredIndices.has(idx))) continue;
+          const span = cleanTokens.slice(i, i + len).join(' ');
+          const lowerSpan = span.toLowerCase();
+          if (CONVERSATIONAL_STOPWORDS.has(lowerSpan)) continue;
+          if (len === 1 && (span.length < 3 || lowerSpan === 'bạn')) continue;
+          if (isKnownMasterEntity(span)) {
+            const canon = resolveCanonicalEntity(span);
+            if (canon.entityId && canon.canonicalName) {
+              foundEntities.push({ name: span, entityId: canon.entityId, canonicalName: canon.canonicalName });
+              for (let k = 0; k < len; k++) coveredIndices.add(i + k);
+            }
+          }
+        }
+      }
+
+      if (foundEntities.length >= 2) {
+        const uniqueEntityIds = new Set(foundEntities.map((f) => f.entityId));
+
+        if (uniqueEntityIds.size === 1) {
+          // ALL mentions refer to the EXACT SAME PERSON -> ENTITY_IDENTITY
+          const first = foundEntities[0];
+          signals.isCoReferenceIdentity = true;
+          const videoHandover: VideoHandoverMetadata = {
+            topic: (signals.hasVideoGeneration && videoBriefTopic) ? videoBriefTopic : cleanSearchTopic,
+            primaryEntityId: first.entityId,
+            canonicalName: first.canonicalName,
+          };
+          const compositeResult: CompositeIntentResult = {
+            primaryIntent: 'ENTITY_IDENTITY',
+            confidence: 0.95,
+            clauses: detectedIntentClauses,
+            hasHistoricalInquiry: true,
+            hasGreetingOrIdentity: signals.hasChitchatGreeting,
+            hasOutOfDomain: signals.hasOutOfDomainTopic,
+            hasVideoRequest: signals.hasVideoGeneration,
+            cleanSearchTopics: [cleanSearchTopic],
+            videoHandover,
+            outOfDomainTopic,
+          };
+          return {
+            intent: 'ENTITY_IDENTITY',
+            subIntent: detectHistoricalSubIntent(cleanSearchTopic || cleanQuery),
+            confidence: 0.95,
+            matchedEntityId: first.entityId,
+            matchedCanonicalName: first.canonicalName,
+            signals,
+            cleanSearchTopic,
+            videoBriefTopic,
+            outOfDomainTopic,
+            compositeResult,
+            videoHandover,
+          };
+        } else if (uniqueEntityIds.size >= 2) {
+          // MULTIPLE DISTINCT ENTITIES (even if appositive aliases present) -> HISTORICAL_QUERY!
+          signals.isCoReferenceIdentity = false;
+          const isKinship =
+            KINSHIP_AND_RELATION_REGEX.test(cleanQuery) ||
+            /(?:quan\s+hệ|huyết\s+thống|họ\s+hàng|thân\s+tộc)/i.test(cleanQuery);
+          const first = foundEntities[0];
+          const videoHandover: VideoHandoverMetadata = {
+            topic: (signals.hasVideoGeneration && videoBriefTopic) ? videoBriefTopic : cleanSearchTopic,
+            primaryEntityId: first.entityId,
+            canonicalName: first.canonicalName,
+          };
+          const subIntent: ChatSubIntent = isKinship
+            ? 'GENEALOGY_RELATION'
+            : (/(?:so\s+sánh|vai\s+trò|phân\s+công|nhiệm\s+vụ|khác\s+nhau|ai\s+hơn|đối\s+đầu|đối\s+chiếu)/i.test(cleanQuery)
+              ? 'COMPARATIVE_SYNTHESIS'
+              : detectHistoricalSubIntent(cleanSearchTopic || cleanQuery));
+
+          const compositeResult: CompositeIntentResult = {
+            primaryIntent: 'HISTORICAL_QUERY',
+            subIntent,
+            confidence: 0.95,
+            clauses: detectedIntentClauses,
+            hasHistoricalInquiry: true,
+            hasGreetingOrIdentity: signals.hasChitchatGreeting,
+            hasOutOfDomain: signals.hasOutOfDomainTopic,
+            hasVideoRequest: signals.hasVideoGeneration,
+            cleanSearchTopics: [cleanSearchTopic],
+            videoHandover,
+            outOfDomainTopic,
+          };
+          return {
+            intent: 'HISTORICAL_QUERY',
+            subIntent,
+            confidence: 0.95,
+            matchedEntityId: first.entityId,
+            matchedCanonicalName: first.canonicalName,
             signals,
             cleanSearchTopic,
             videoBriefTopic,

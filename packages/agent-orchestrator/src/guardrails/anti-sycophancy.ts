@@ -46,13 +46,84 @@ const MIXED_PREMISE_PATTERNS = [
   /(?:năm\s+\d+.*đã\s+viết|năm\s+\d+.*đã\s+chỉ\s+huy|năm\s+\d+.*đã\s+lãnh\s+đạo|năm\s+\d+.*đại\s+phá.*năm\s+\d+|đại\s*phá.*năm\s*\d+|trong\s+Hội\s*nghị.*năm\s*\d+|ký\s+Hiệp\s*định.*năm\s*\d+|phát\s*động\s*phong\s*trào)/i,
 ];
 
-function cleanEntitySpan(span: string): string {
+export function cleanEntitySpan(span: string): string {
   return span
-    .replace(/^(?:cho\s+(?:mình|tôi|em)\s+hỏi|bạn\s+ơi|bot\s+ơi|làm\s+ơn\s+cho\s+biết)\s+/i, '')
+    .replace(/^(?:(?:cho\s+(?:mình|tôi|em)\s+hỏi|bạn\s+ơi|bot\s+ơi|làm\s+ơn\s+cho\s+biết|phiền\s+bạn)\s*,?\s*)?/i, '')
+    .replace(/^(?:có\s+phải\s+(?:là\s+)?|phải\s+chăng\s+(?:là\s+)?|có\s+đúng\s+(?:là\s+)?|liệu\s+(?:rằng\s+)?|theo\s+(?:bạn|sử\s+sách)\s+thì\s+)/i, '')
     .replace(/\s+(?:có\s+phải\s+(?:là\s+)?|có\s+phải|là\s+có\s+phải|là)$/i, '')
     .replace(/\s+(?:hay\s+không|phải\s+không|không|hả|nhỉ|thế|ạ)$/i, '')
     .replace(/[?!.,;:]+$/g, '')
     .trim();
+}
+
+/**
+ * Robustly extracts recognized historical master entities and capitalized proper noun candidates
+ * without relying on brittle regex capture group boundaries.
+ */
+export function extractRecognizedOrProperNounEntities(query: string): string[] {
+  const recognized: string[] = [];
+  const clean = query.replace(/[,;!?.:~"'/()\\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const tokens = clean.split(' ').filter(Boolean);
+  const n = tokens.length;
+  const coveredIndices = new Set<number>();
+
+  const STOPWORDS = new Set([
+    'bạn', 'tôi', 'mình', 'cậu', 'em', 'anh', 'chị', 'bot', 'ad', 'admin',
+    'ai', 'gì', 'nào', 'đâu', 'sao', 'thế', 'vậy', 'có', 'phải', 'là',
+    'không', 'chăng', 'hả', 'nhỉ', 'và', 'với', 'cùng', 'hai', 'người',
+  ]);
+
+  // 1. First pass: recognized master entities from shared-spec (4 words down to 1)
+  for (let len = Math.min(4, n); len >= 1; len--) {
+    for (let i = 0; i <= n - len; i++) {
+      if (Array.from({ length: len }, (_, k) => i + k).some((idx) => coveredIndices.has(idx))) continue;
+      const span = tokens.slice(i, i + len).join(' ');
+      const lower = span.toLowerCase();
+      if (STOPWORDS.has(lower)) continue;
+      if (len === 1 && (span.length < 3 || lower === 'bạn' || lower === 'ban')) continue;
+
+      if (isKnownMasterEntity(span)) {
+        recognized.push(span);
+        for (let k = 0; k < len; k++) coveredIndices.add(i + k);
+      }
+    }
+  }
+
+  // 2. Second pass: Capitalized Proper Noun candidate spans (2 to 4 words, e.g. "Lê Văn Tèo")
+  const properNounMatches = query.match(/(?:(?<!\p{L})\p{Lu}\p{Ll}+(?:\s+\p{Lu}\p{Ll}+){1,3}(?!\p{L}))/gu);
+  if (properNounMatches) {
+    for (const m of properNounMatches) {
+      const cleaned = cleanEntitySpan(m);
+      if (
+        cleaned.length >= 3 &&
+        !recognized.some((r) => r.toLowerCase().includes(cleaned.toLowerCase()) || cleaned.toLowerCase().includes(r.toLowerCase()))
+      ) {
+        if (!/^(?:có phải|phải chăng|cho tôi|cho mình|bạn ơi|xin chào)/i.test(cleaned)) {
+          recognized.push(cleaned);
+        }
+      }
+    }
+  }
+
+  return recognized;
+}
+
+function buildSameEntityCoReferenceDirective(
+  e1: string,
+  e2: string,
+  canon: { canonicalName: string; entityId?: string }
+): string {
+  let suggestedDirective = `BẮT BUỘC ĐÍNH CHÍNH CÙNG MỘT NGƯỜI & BÁC BỎ QUAN HỆ THÂN TỘC (ANTI-CO-REFERENCE ERROR): "${e1}" và "${e2}" thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ (${canon.canonicalName}), không phải là hai người khác nhau.
+- BẮT BUỘC câu đầu tiên phải khẳng định rõ ràng: "${e1} và ${e2} là cùng một người, không phải hai người khác nhau."
+- BẮT BUỘC bác bỏ dứt khoát mọi tiền đề thân tộc: Vì "${e1}" và "${e2}" là cùng một người, nên tuyệt đối không có quan hệ thân tộc (cha con, anh em, họ hàng hay anh em cột chèo) với nhau (một nhân vật lịch sử không thể có quan hệ huyết thống hay là cha/con/anh/em của chính bản thân mình).`;
+
+  if (canon.entityId === 'person_quang_trung') {
+    suggestedDirective += `\n- BẮT BUỘC nêu rõ nguồn gốc gây nhầm lẫn: Giai thoại "anh em cột chèo" trong lịch sử thực chất là nhắc đến mối quan hệ giữa Nguyễn Huệ và Nguyễn Ánh (Gia Long), do cả hai cùng kết duyên với hai chị em công chúa con vua Lê Hiển Tông là Lê Ngọc Hân và Lê Ngọc Bình. Tuyệt đối không gán ghép cụm từ này cho Quang Trung và Nguyễn Huệ. Hai người anh em ruột cùng dựng cờ khởi nghĩa Tây Sơn với Nguyễn Huệ là Nguyễn Nhạc và Nguyễn Lữ (Tây Sơn tam kiệt).`;
+  }
+
+  suggestedDirective += `\n- Nêu rõ bối cảnh danh xưng: "${e1}" và "${e2}" là các tên gọi khác nhau (tên húy/tên khai sinh vs niên hiệu/tôn hiệu hoàng đế) của cùng một người qua các thời kỳ. Nêu thân phụ, thân mẫu hoặc con cái thực sự được chính sử ghi chép.`;
+
+  return suggestedDirective;
 }
 
 /**
@@ -61,7 +132,90 @@ function cleanEntitySpan(span: string): string {
 export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisResult {
   const trimmed = query.trim();
 
-  // 1. Kinship & Co-reference leading question check
+  // 1. Robust Entity-First Analysis (Invariant to leading interrogatives and phrase permutations)
+  const spotted = extractRecognizedOrProperNounEntities(trimmed);
+  if (spotted.length >= 2) {
+    const e1 = spotted[0];
+    const e2 = spotted[1];
+    const canon1 = resolveCanonicalEntity(e1);
+    const canon2 = resolveCanonicalEntity(e2);
+
+    // Case 1a: Co-reference of the same entity (e.g. Quang Trung & Nguyễn Huệ, Đinh Tiên Hoàng & Đinh Bộ Lĩnh)
+    if (canon1.entityId && canon2.entityId && canon1.entityId === canon2.entityId) {
+      return {
+        isLeadingQuestion: true,
+        isSameEntityCoReference: true,
+        questionType: 'KINSHIP',
+        detectedEntities: [e1, e2],
+        suggestedDirective: buildSameEntityCoReferenceDirective(e1, e2, canon1),
+      };
+    }
+
+    // Case 1b: Kinship inquiry between two different entities
+    const isKnown1 = isKnownMasterEntity(e1);
+    const isKnown2 = isKnownMasterEntity(e2);
+    const isKinshipAsked = /(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu|họ\s+hàng|thân\s+tộc|huyết\s+thống|cột\s+chèo|con\s+trai|con\s+gái|quan\s+hệ)/i.test(trimmed);
+
+    if (isKinshipAsked) {
+      if (isKnown1 && isKnown2) {
+        const t1 = canon1.timeRange;
+        const t2 = canon2.timeRange;
+        let isDifferentEras = false;
+        let eraDiffDescription = '';
+
+        if (t1?.start !== undefined && t2?.start !== undefined) {
+          const s1 = t1.start;
+          const e1End = t1.end ?? t1.start;
+          const s2 = t2.start;
+          const e2End = t2.end ?? t2.start;
+
+          const gap = Math.max(0, s2 - e1End, s1 - e2End);
+          if (gap >= 80) {
+            isDifferentEras = true;
+            const fmtYear = (y: number) => (y < 0 ? `${Math.abs(y)} TCN` : `${y}`);
+            const timeDesc1 = t1.end ? `(khoảng ${fmtYear(s1)} - ${fmtYear(t1.end)})` : `(năm ${fmtYear(s1)})`;
+            const timeDesc2 = t2.end ? `(khoảng ${fmtYear(s2)} - ${fmtYear(t2.end)})` : `(năm ${fmtYear(s2)})`;
+            eraDiffDescription = `"${canon1.canonicalName}" ${timeDesc1} và "${canon2.canonicalName}" ${timeDesc2} sống cách nhau hơn ${Math.round(gap)} năm (thuộc hai thời kỳ lịch sử hoàn toàn khác nhau)`;
+          }
+        }
+
+        if (isDifferentEras) {
+          return {
+            isLeadingQuestion: true,
+            questionType: 'KINSHIP',
+            detectedEntities: [e1, e2],
+            suggestedDirective: `BẮT BUỘC BÁC BỎ TIỀN ĐỀ QUAN HỆ THÂN TỘC DO KHÁC BIỆT THỜI ĐẠI: Người dùng đang hỏi về quan hệ họ hàng giữa "${e1}" và "${e2}". Cả hai nhân vật đều có thật trong lịch sử, nhưng ${eraDiffDescription}, do đó dứt khoát KHÔNG THỂ có quan hệ anh em, cha con hay thân tộc trực tiếp. BẮT BUỘC phải bác bỏ rõ ràng ngay từ đầu (ví dụ: "${e1} và ${e2} không phải là anh em và không có quan hệ thân tộc trực tiếp..."), khẳng định niên đại, bối cảnh lịch sử thực tế của từng nhân vật và làm rõ sự trùng hợp về họ (nếu có).`,
+          };
+        } else {
+          return {
+            isLeadingQuestion: true,
+            questionType: 'KINSHIP',
+            detectedEntities: [e1, e2],
+            suggestedDirective: `KIỂM CHỨNG QUAN HỆ LỊCH SỬ KHÁCH QUAN: Người dùng đang hỏi về mối quan hệ giữa "${e1}" và "${e2}". Cả hai nhân vật đều có thật trong lịch sử và sống trong cùng thời kỳ. BẮT BUỘC đối chiếu kỹ thông tin trong <verified_master_entities> và <verified_rag_evidence> để xác định chính xác mối quan hệ:
+- Nếu thực sự là anh em ruột/thân tộc (ví dụ Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ là anh em Tây Sơn Tam Kiệt, con của Hồ Phi Phúc; Trưng Trắc và Trưng Nhị là hai chị em ruột con Lạc tướng Mê Linh; Trần Liễu và Trần Cảnh là hai anh em ruột con Thái thượng hoàng Trần Thừa): BẮT BUỘC khẳng định rõ ràng mối quan hệ, nêu phụ mẫu và bối cảnh gia đình.
+- Nếu là hai nhân vật cùng thời nhưng không có quan hệ họ hàng: giải thích rõ quan hệ thực tế giữa họ, không gán ghép sai lệch.
+- TUYỆT ĐỐI KHÔNG bác bỏ khi chưa kiểm tra thẻ thực thể và chứng cứ lịch sử.`,
+          };
+        }
+      } else if (isKnown1 && !isKnown2) {
+        return {
+          isLeadingQuestion: true,
+          questionType: 'KINSHIP',
+          detectedEntities: [e1, e2],
+          suggestedDirective: `BẮT BUỘC BÁC BỎ QUAN HỆ VỚI NHÂN VẬT CHƯA XÁC MINH: Người dùng đang hỏi về quan hệ giữa "${e1}" và "${e2}". Trong đó, "${e1}" là nhân vật lịch sử có thật (${canon1.canonicalName}), còn "${e2}" KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc của "${e1}". Hãy bác bỏ dứt khoát quan hệ thân tộc và chủ động trình bày thân tộc/anh em ruột thực sự của "${canon1.canonicalName}" đã được chính sử ghi chép để làm rõ bối cảnh. TUYỆT ĐỐI KHÔNG phỏng đoán "${e2}" là ai hay cho rằng "${e2}" là tên gọi khác/bí danh của bất kỳ ai khác, và TUYỆT ĐỐI KHÔNG kết luận phủ định rằng "${e2}" hoàn toàn không tồn tại trong toàn bộ lịch sử Việt Nam (chỉ kết luận không có quan hệ thân tộc với "${e1}").`,
+        };
+      } else if (!isKnown1 && isKnown2) {
+        return {
+          isLeadingQuestion: true,
+          questionType: 'KINSHIP',
+          detectedEntities: [e1, e2],
+          suggestedDirective: `BẮT BUỘC BÁC BỎ QUAN HỆ VỚI NHÂN VẬT CHƯA XÁC MINH: Người dùng đang hỏi về quan hệ giữa "${e1}" và "${e2}". Trong đó, "${e2}" là nhân vật lịch sử có thật (${canon2.canonicalName}), còn "${e1}" KHÔNG CÓ trong chính sử Việt Nam với tư cách thân tộc của "${e2}". Hãy bác bỏ dứt khoát quan hệ thân tộc và chủ động trình bày thân tộc/anh em ruột thực sự của "${canon2.canonicalName}" đã được chính sử ghi chép để làm rõ bối cảnh. TUYỆT ĐỐI KHÔNG phỏng đoán "${e1}" là ai hay cho rằng "${e1}" là tên gọi khác/bí danh của bất kỳ ai khác, và TUYỆT ĐỐI KHÔNG kết luận phủ định rằng "${e1}" hoàn toàn không tồn tại trong toàn bộ lịch sử Việt Nam (chỉ kết luận không có quan hệ thân tộc với "${e2}").`,
+        };
+      }
+    }
+  }
+
+  // 2. Kinship regex patterns fallback (for queries with unconventional phrasing or pro-drop)
   for (const pattern of KINSHIP_PATTERNS) {
     const match = trimmed.match(pattern);
     if (match) {
@@ -72,16 +226,12 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
       const canon2 = resolveCanonicalEntity(e2);
 
       if (canon1.entityId && canon2.entityId && canon1.entityId === canon2.entityId) {
-        let suggestedDirective = `BẮT BUỘC ĐÍNH CHÍNH CÙNG MỘT NGƯỜI (ANTI-CO-REFERENCE ERROR): "${e1}" và "${e2}" thực chất là CÙNG MỘT NHÂN VẬT LỊCH SỬ (${canon1.canonicalName}), không phải là hai người khác nhau. BẮT BUỘC phải khẳng định ngay ở câu đầu tiên rằng đây là cùng một người (${e1} và ${e2} là các tên gọi, tên húy, niên hiệu, tôn hiệu hoặc tước hiệu khác nhau của cùng một nhân vật qua các thời kỳ), TUYỆT ĐỐI KHÔNG tách thành hai nhân vật hay nhận định là quan hệ anh em/họ hàng.`;
-        if (canon1.entityId === 'person_quang_trung') {
-          suggestedDirective += ` ĐẶC BIỆT LƯU Ý MIỄN NHIỄM NHẦM LẪN SỬ LIỆU: Quang Trung và Nguyễn Huệ là cùng một người. Giai thoại 'anh em cột chèo' trong lịch sử là giữa Nguyễn Huệ và Nguyễn Ánh (cùng kết duyên với công chúa con vua Lê Hiển Tông), TUYỆT ĐỐI KHÔNG gán ghép cụm từ này cho Quang Trung và Nguyễn Huệ. Hai người anh em ruột cùng khởi nghĩa Tây Sơn với Nguyễn Huệ là Nguyễn Nhạc và Nguyễn Lữ (Tây Sơn tam kiệt).`;
-        }
         return {
           isLeadingQuestion: true,
           isSameEntityCoReference: true,
           questionType: 'KINSHIP',
           detectedEntities: [e1, e2].filter(Boolean),
-          suggestedDirective,
+          suggestedDirective: buildSameEntityCoReferenceDirective(e1, e2, canon1),
         };
       }
 
@@ -263,16 +413,40 @@ export function verifyCoReferenceInvariant(
     'gi'
   );
 
-  if (contradictionRegex.test(response)) {
-    const violation = `Contradictory bilateral relation detected asserting that co-referent aliases "${entity1}" and "${entity2}" are distinct subjects.`;
-    const sanitized = response.replace(
+  // Directional kinship contradiction patterns between the two aliases:
+  // e.g. "Đinh Tiên Hoàng là con trai của Đinh Bộ Lĩnh", "Vì vậy, Đinh Tiên Hoàng là con của Đinh Bộ Lĩnh"
+  const directionalKinshipRegex = new RegExp(
+    `(?:(?:vì\\s+vậy|do\\s+đó|như\\s+vậy|bởi\\s+vậy|tóm\\s+lại)[,\\s]+)?(?:${e1Escaped}\\s+(?:chính\\s+)?(?:là|vốn\\s+là)\\s*(?:con(?:\\s+trai|\\s+gái|\\s+ruột|\\s+nuôi)?|cha|bố|thân\\s+phụ|mẹ|thân\\s+mẫu|anh(?:\\s+trai|\\s+ruột)?|chị(?:\\s+gái|\\s+ruột)?|em(?:\\s+trai|\\s+gái|\\s+ruột)?|họ\\s+hàng)\\s+(?:của\\s+)?${e2Escaped}|${e2Escaped}\\s+(?:chính\\s+)?(?:là|vốn\\s+là)\\s*(?:con(?:\\s+trai|\\s+gái|\\s+ruột|\\s+nuôi)?|cha|bố|thân\\s+phụ|mẹ|thân\\s+mẫu|anh(?:\\s+trai|\\s+ruột)?|chị(?:\\s+gái|\\s+ruột)?|em(?:\\s+trai|\\s+gái|\\s+ruột)?|họ\\s+hàng)\\s+(?:của\\s+)?${e1Escaped})`,
+    'gi'
+  );
+
+  let sanitized = response;
+  let isViolated = false;
+  const violations: string[] = [];
+
+  if (contradictionRegex.test(sanitized)) {
+    isViolated = true;
+    violations.push(`Contradictory bilateral relation detected asserting that co-referent aliases "${entity1}" and "${entity2}" are distinct subjects.`);
+    sanitized = sanitized.replace(
       contradictionRegex,
       `${entity1} và ${entity2} thực chất là cùng một nhân vật lịch sử (${canonicalName}) qua các thời kỳ khác nhau`
     );
+  }
+
+  if (directionalKinshipRegex.test(sanitized)) {
+    isViolated = true;
+    violations.push(`Contradictory directional kinship detected asserting that co-referent alias "${entity1}" is a relative or descendant of "${entity2}".`);
+    sanitized = sanitized.replace(
+      directionalKinshipRegex,
+      `${entity1} chính là ${entity2} (${canonicalName}), là cùng một người chứ không phải có quan hệ họ hàng hay cha con`
+    );
+  }
+
+  if (isViolated) {
     return {
       isValid: false,
       sanitized,
-      violation,
+      violation: violations.join('; '),
     };
   }
 

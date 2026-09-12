@@ -401,6 +401,18 @@ export async function scoreImageWithVLM(
     return cached;
   }
 
+  // Fast CLIP Heuristic for Fast Dev Mode
+  if ((envConfig.FAST_DEV_MODE || process.env.FAST_DEV_MODE === 'true') && !envConfig.EVAL_STRICT) {
+    log.debug('vlm.fast_dev_mode', 'FAST_DEV_MODE enabled; using Local CLIP heuristic', {
+      imageUrl,
+      correlationId: options.correlationId,
+      sceneId: options.sceneId,
+    });
+    const clipResult = scoreImageWithLocalCLIP(imageUrl, eventDescription, options.metadata);
+    await setCachedVLMScore(clipResult, cacheOpts);
+    return clipResult;
+  }
+
   // 2. Strict Evaluation Mode
   if (envConfig.EVAL_STRICT) {
     if (!envConfig.USE_LOCAL_LLM && envConfig.VLM_PROVIDER !== 'openai') {

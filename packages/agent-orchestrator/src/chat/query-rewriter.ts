@@ -204,7 +204,7 @@ export const CONTINUATION_INTENT_REGEX =
   /^(?:sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao|như\s*thế\s*nào|kết\s*quả\s*thế\s*nào|ai\s*là|ai\s*đã|vị\s*vua\s*nào|người\s*nào|tướng\s*nào)/i;
 
 export const PRONOUN_COREF_CHECK_REGEX =
-  /(?:ông\s*ấy|bà\s*ấy|vị\s*tướng|nhân\s*vật|(?<!\p{L})(?:hắn|hắn\s*ta|ngài|ông|bà)(?!\p{L})|tên\s*tướng|tướng\s*giặc|quân\s*giặc|ông\s*ta|bà\s*ta|người\s*vợ|người\s*chồng|gia\s*tộc|sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao)/iu;
+  /(?:(?:hai|2|cả\s+hai)\s+(?:vị|người|nhân\s*vật|vua|tướng)(?:\s+(?:này|đó|ấy))?|ông\s*ấy|bà\s*ấy|vị\s*tướng|nhân\s*vật|(?<!\p{L})(?:hắn|hắn\s*ta|ngài|ông|bà)(?!\p{L})|tên\s*tướng|tướng\s*giặc|quân\s*giặc|ông\s*ta|bà\s*ta|người\s*vợ|người\s*chồng|gia\s*tộc|sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao)/iu;
 
 export function isContinuationOrCoreferenceQuery(
   query: string,
@@ -307,6 +307,21 @@ export function rewriteMultiTurnQuery(
   const connectiveMatch = rewritten.match(DISCOURSE_CONNECTIVE_PREFIX_REGEX);
   if (connectiveMatch) {
     rewritten = rewritten.slice(connectiveMatch[0].length).trim();
+  }
+
+  // 0. Dual-entity / Plural coreference: "hai vị tướng này", "hai người này", "hai nhân vật này", "cả hai người"
+  const dualEntities = state.veneratedEntities.length >= 2
+    ? [state.veneratedEntities[0], state.veneratedEntities[1]]
+    : [...state.veneratedEntities, ...state.adversaryEntities].length >= 2
+    ? [state.veneratedEntities[0] || state.adversaryEntities[0], state.adversaryEntities[0] || state.veneratedEntities[1]]
+    : [];
+
+  if (dualEntities.length >= 2) {
+    const dualPhrase = `${dualEntities[0]} và ${dualEntities[1]}`;
+    rewritten = rewritten.replace(
+      /(?:(?:hai|2|cả\s+hai)\s+(?:vị\s+tướng|vị\s+vua|nhân\s+vật|người|vị)(?:\s+(?:này|đó|ấy))?|(?:họ|hai\s+ông|hai\s+bà)(?:\s+(?:này|đó|ấy))?)/giu,
+      dualPhrase
+    );
   }
 
   // 1. Adversary pronouns: "hắn", "hắn ta", "tên tướng đó", "tướng giặc đó" (excluding interrogative "tướng giặc nào")

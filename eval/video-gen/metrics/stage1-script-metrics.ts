@@ -83,10 +83,13 @@ export function evaluateStage1ScriptCase(
 
   const targetDurationSec = testCase.targetDurationMinutes * 60;
 
+  const templateId = (testCase as any).templateId || 'HISTORICAL_DOCUMENTARY';
+  const targetWpm = templateId === 'QUICK_SHORTS' ? 160 : (templateId === 'MODERN_NEWS' ? 150 : 145);
+
   // Scene summaries and bounds audit (5s - 25s duration, 10 - 55 words)
   const sceneSummaries: Stage1SceneSummary[] = (projectState.scenes || []).map((scene) => {
     const wordCount = scene.voiceoverText ? scene.voiceoverText.trim().split(/\s+/).filter(Boolean).length : 0;
-    const durationSec = scene.targetDurationSeconds || Math.max(5, Math.ceil(wordCount / 2.5));
+    const durationSec = scene.targetDurationSeconds || Math.max(5, Math.ceil(wordCount / (targetWpm / 60)));
     const durationBoundsPassed = durationSec >= 5 && durationSec <= 25;
     const wordCountBoundsPassed = wordCount >= 10 && wordCount <= 55;
 
@@ -104,13 +107,12 @@ export function evaluateStage1ScriptCase(
 
   const actualDurationSec = sceneSummaries.reduce((sum, s) => sum + s.durationSec, 0);
 
-  // Planned Word Count & Pacing (145 WPM baseline, 130 - 160 band)
+  // Planned Word Count & Pacing (template-aware target WPM)
   const words = projectState.scriptText.trim().split(/\s+/).filter(Boolean);
   const totalWordCount = words.length;
   const durationMin = actualDurationSec > 0 ? actualDurationSec / 60 : testCase.targetDurationMinutes;
   const actualWpm = durationMin > 0 ? Math.round(totalWordCount / durationMin) : 0;
 
-  const targetWpm = 145;
   const pacingDeviationPct = Math.round((Math.abs(actualWpm - targetWpm) / targetWpm) * 1000) / 10;
   const pacingPassed = pacingDeviationPct <= 15.0; // Pass <= 15.0%, Target <= 8.0%
 

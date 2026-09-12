@@ -585,6 +585,56 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     timeRange: { start: 1194, end: 1264 },
     dynasty: 'Nhà Trần',
   },
+  'person_tran_khanh_du': {
+    entityId: 'person_tran_khanh_du',
+    canonicalName: 'Trần Khánh Dư',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Nhân Huệ Vương', 'Nhân Huệ Vương Trần Khánh Dư', 'tướng Trần Khánh Dư'],
+    timeRange: { start: 1240, end: 1340 },
+    dynasty: 'Nhà Trần',
+    namingMetadata: {
+      archetype: 'FEUDAL_FIGURE',
+      birthName: 'Trần Khánh Dư',
+      courtesyOrCommonName: 'Nhân Huệ Vương',
+      preReignTitles: ['Thượng tướng', 'Nhân Huệ Vương'],
+    },
+  },
+  'person_tran_thua': {
+    entityId: 'person_tran_thua',
+    canonicalName: 'Trần Thừa',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Thái thượng hoàng Trần Thừa', 'Trần Thái Tổ'],
+    timeRange: { start: 1184, end: 1234 },
+    dynasty: 'Nhà Trần',
+    namingMetadata: {
+      archetype: 'FEUDAL_FIGURE',
+      birthName: 'Trần Thừa',
+      templeName: 'Trần Thái Tổ',
+      reignEra: 'Thái thượng hoàng',
+      familyLineage: {
+        children: ['Trần Liễu', 'Trần Cảnh (Trần Thái Tông)', 'Trần Nhật Hiệu', 'Trần Bà Liệt'],
+      },
+    },
+  },
+  'person_tran_lieu': {
+    entityId: 'person_tran_lieu',
+    canonicalName: 'Trần Liễu',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['An Sinh Vương', 'An Sinh Vương Trần Liễu', 'Phụng Càn Vương Trần Liễu', 'Yên Sinh Vương'],
+    timeRange: { start: 1211, end: 1251 },
+    dynasty: 'Nhà Trần',
+    namingMetadata: {
+      archetype: 'FEUDAL_FIGURE',
+      birthName: 'Trần Liễu',
+      courtesyOrCommonName: 'An Sinh Vương',
+      preReignTitles: ['Phụng Càn Vương', 'Hiển Hoàng', 'An Sinh Vương'],
+      familyLineage: {
+        father: 'Trần Thừa (Trần Thái Tổ)',
+        siblings: ['Trần Cảnh (Trần Thái Tông)', 'Trần Nhật Hiệu', 'Trần Bà Liệt'],
+        children: ['Trần Quốc Tuấn (Hưng Đạo Đại Vương)', 'Trần Doãn', 'Trần Tung (Tuệ Trung Thượng Sĩ)'],
+      },
+    },
+  },
   'person_tran_thai_tong': {
     entityId: 'person_tran_thai_tong',
     canonicalName: 'Trần Thái Tông',
@@ -592,6 +642,17 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Trần Cảnh', 'Vua Trần Thái Tông'],
     timeRange: { start: 1218, end: 1277 },
     dynasty: 'Nhà Trần',
+    namingMetadata: {
+      archetype: 'FEUDAL_FIGURE',
+      birthName: 'Trần Cảnh',
+      templeName: 'Trần Thái Tông',
+      reignEra: 'Kiến Trung',
+      familyLineage: {
+        father: 'Trần Thừa (Trần Thái Tổ)',
+        siblings: ['Trần Liễu (An Sinh Vương)', 'Trần Nhật Hiệu', 'Trần Bà Liệt'],
+        children: ['Trần Hoảng (Trần Thánh Tông)', 'Trần Quang Khải'],
+      },
+    },
   },
   'person_tran_thanh_tong': {
     entityId: 'person_tran_thanh_tong',
@@ -600,6 +661,22 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Trần Hoảng', 'Vua Trần Thánh Tông'],
     timeRange: { start: 1240, end: 1290 },
     dynasty: 'Nhà Trần',
+  },
+  'person_tran_phu': {
+    entityId: 'person_tran_phu',
+    canonicalName: 'Trần Phú',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Đồng chí Trần Phú', 'Tổng Bí thư Trần Phú', 'Tổng bí thư đầu tiên Trần Phú'],
+    timeRange: { start: 1904, end: 1931 },
+    dynasty: 'Thời kỳ Hiện đại',
+    namingMetadata: {
+      archetype: 'MODERN_FIGURE',
+      birthName: 'Trần Phú',
+      courtesyOrCommonName: 'Trần Phú',
+      periodAliases: [
+        { period: '1930 - 1931 (Tổng Bí thư đầu tiên của Đảng)', name: 'Trần Phú' },
+      ],
+    },
   },
   'person_phan_boi_chau': {
     entityId: 'person_phan_boi_chau',

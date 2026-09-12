@@ -132,6 +132,8 @@ export async function POST(req: NextRequest) {
 
             if (chunk.type === 'token' && chunk.content) {
               fullAssistantResponse += chunk.content;
+            } else if (chunk.type === 'done' && chunk.content) {
+              fullAssistantResponse = chunk.content;
             } else if (chunk.type === 'citation' && chunk.citations) {
               assistantCitations = chunk.citations;
             } else if (chunk.type === 'intent' && chunk.intent) {

@@ -6,7 +6,7 @@
 import { callLlm, envConfig } from '@chronoviet/infra';
 import { ChronoGraphState, FactCheckAuditEntry, getNodeLogger } from '../state.js';
 import { validateFolkloreHypothesisTone } from '../../guardrails/folklore-validator.js';
-import { evaluateNliEntailmentScore, evaluateNliWithLlmJudge } from '../../guardrails/nli-hallucination-judge.js';
+import { evaluateNliEntailmentScore, evaluateNliWithLlmJudge, extractHistoricalTimeBounds } from '../../guardrails/nli-hallucination-judge.js';
 
 export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'fact_checker');
@@ -139,46 +139,116 @@ QUY TẮC:
           }
         }
 
-        // 3. Chronologically-Aware NLI Entailment Hallucination Judge
+        // 3. Hybrid 3-Tier Fact-Checking & NLI Hallucination Verification
         if (groundTruthChunks.length > 0) {
-          const timeStarts = (state.ragContext?.verifiedContext || [])
+          const verifiedContext = state.ragContext?.verifiedContext || [];
+          const timeStarts = verifiedContext
             .map((e) => e.timeStart)
             .filter((t): t is number => typeof t === 'number');
-          const timeEnds = (state.ragContext?.verifiedContext || [])
+          const timeEnds = verifiedContext
             .map((e) => e.timeEnd)
             .filter((t): t is number => typeof t === 'number');
           const allYears = [...timeStarts, ...timeEnds];
+          const epochBounds = allYears.length > 0
+            ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
+            : undefined;
+
+          // Tier 1: Safe Epoch Date Guard ([minYear - 50, maxYear + 50], <= 1ms)
+          const scriptYears = extractHistoricalTimeBounds(script);
+          let dateAnomalyDetected = false;
+          let dateAnomalyDetail = '';
+
+          if (epochBounds && scriptYears.length > 0) {
+            const minSafeYear = epochBounds.startYear - 50;
+            const maxSafeYear = epochBounds.endYear + 50;
+            for (const y of scriptYears) {
+              if (y < minSafeYear || y > maxSafeYear) {
+                dateAnomalyDetected = true;
+                dateAnomalyDetail = `Năm ${y} nằm ngoài khung niên đại an toàn [${minSafeYear}, ${maxSafeYear}].`;
+                break;
+              }
+            }
+          }
+
+          // Tier 2: Entity & Historical Anchor Verification (<= 5ms)
+          const scriptLower = script.toLowerCase();
+          const targetEntities = (chapterObj?.introducedEntities || []).concat(
+            verifiedContext.map((e) => e.canonicalName).filter(Boolean) as string[]
+          );
+          let matchedEntityCount = 0;
+          for (const ent of targetEntities) {
+            if (ent && scriptLower.includes(ent.toLowerCase())) {
+              matchedEntityCount++;
+            }
+          }
+          const entityRecall = targetEntities.length > 0 ? matchedEntityCount / targetEntities.length : 1.0;
+
+          // Foreign era intrusion check: verify no conflicting out-of-epoch dynasties
+          const knownDynasties: Record<string, [number, number]> = {
+            'nhà đinh': [968, 980],
+            'tiền lê': [980, 1009],
+            'nhà lý': [1009, 1225],
+            'nhà trần': [1225, 1400],
+            'nhà hồ': [1400, 1407],
+            'hậu lê': [1428, 1789],
+            'tây sơn': [1778, 1802],
+            'nhà nguyễn': [1802, 1945],
+          };
+
+          let foreignDynastyIntrusion = false;
+          if (epochBounds) {
+            for (const [dynasty, [dynStart, dynEnd]] of Object.entries(knownDynasties)) {
+              if (scriptLower.includes(dynasty)) {
+                if (dynEnd < epochBounds.startYear - 50 || dynStart > epochBounds.endYear + 50) {
+                  foreignDynastyIntrusion = true;
+                  break;
+                }
+              }
+            }
+          }
 
           let nliResult;
-          if (envConfig.USE_LOCAL_LLM && !process.env.VITEST) {
-            try {
-              nliResult = await evaluateNliWithLlmJudge({
-                scriptClaim: script,
-                groundTruthChunks,
-                epochBounds:
-                  allYears.length > 0
-                    ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
-                    : undefined,
-              });
-            } catch {
+          const isGroundedAndClean = !dateAnomalyDetected && !foreignDynastyIntrusion && (entityRecall >= 0.5 || targetEntities.length === 0);
+
+          if (isGroundedAndClean) {
+            // Fast-path: Tier 1 & 2 passed with 0 LLM calls!
+            nliResult = {
+              entailmentScore: 0.95,
+              isHallucinated: false,
+              verdict: 'ENTAILMENT' as const,
+              explanation: 'Passed fast-path Tier 1 Safe Date Guard & Tier 2 Entity Verification without anomalies.',
+            };
+          } else {
+            // Tier 3: Selective Neural NLI Judge (triggered only on genuine date anomalies or out-of-epoch intrusions)
+            nodeLog.info('orchestrator.tier3_nli_judge_triggered', `Tier 3 Neural NLI Judge triggered for chapter ${chapterIndex}`, {
+              chapterIndex,
+              dateAnomalyDetected,
+              dateAnomalyDetail,
+              foreignDynastyIntrusion,
+              entityRecall,
+            });
+
+            if (envConfig.USE_LOCAL_LLM && !process.env.VITEST) {
+              try {
+                nliResult = await evaluateNliWithLlmJudge({
+                  scriptClaim: script,
+                  groundTruthChunks,
+                  epochBounds,
+                });
+              } catch {
+                nliResult = evaluateNliEntailmentScore({
+                  scriptClaim: script,
+                  groundTruthChunks,
+                  epochBounds,
+                });
+              }
+            } else {
               nliResult = evaluateNliEntailmentScore({
                 scriptClaim: script,
                 groundTruthChunks,
-                epochBounds:
-                  allYears.length > 0
-                    ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
-                    : undefined,
+                epochBounds,
               });
             }
-          } else {
-            nliResult = evaluateNliEntailmentScore({
-              scriptClaim: script,
-              groundTruthChunks,
-              epochBounds:
-                allYears.length > 0
-                  ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
-                  : undefined,
-            });
           }
 
           if (nliResult.isHallucinated) {

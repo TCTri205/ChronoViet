@@ -81,10 +81,17 @@ export async function ttsSynthesisNode(state: ChronoGraphState): Promise<Partial
         let wordTimestamps: WordTimestamp[] = [];
 
         try {
+          const wordCount = scene.voiceoverText.trim().split(/\s+/).filter(Boolean).length;
+          const targetWpm = state.templateId === 'QUICK_SHORTS' ? 160 : (state.templateId === 'MODERN_NEWS' ? 150 : 145);
+          const estimatedAudioSec = wordCount > 0 ? wordCount / (targetWpm / 60) : 3;
+          const targetDuration = scene.targetDurationSeconds || 5;
+          const rawSpeedRatio = estimatedAudioSec / targetDuration;
+          const speedRatio = Math.max(0.95, Math.min(1.15, Math.round(rawSpeedRatio * 100) / 100));
+
           const ttsResult = await ttsEngine.synthesize({
             text: scene.voiceoverText,
             speakerId: 'vi_historical_male_1',
-            speedRatio: 1.0,
+            speedRatio,
             sampleRate: 24000,
             paddingMs: 300,
             fps: 30,

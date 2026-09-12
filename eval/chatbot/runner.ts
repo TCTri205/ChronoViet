@@ -151,6 +151,7 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
       const turnStart = Date.now();
       let firstTokenTime: number | null = null;
       let detectedIntent: string | undefined;
+      let finalDoneText: string | null = null;
       const tokens: string[] = [];
       const citations: any[] = [];
 
@@ -173,6 +174,10 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
             if (options.verbose && tokenStr) {
               process.stdout.write(tokenStr);
             }
+          } else if (chunk.type === 'done') {
+            if (chunk.content) {
+              finalDoneText = chunk.content;
+            }
           } else if (chunk.type === 'citation') {
             citations.push(...(chunk.citations || []));
           } else if (chunk.type === 'error') {
@@ -182,7 +187,7 @@ export async function runChatbotEvaluation(options: RunChatbotEvalOptions = {}):
 
         const turnDuration = Date.now() - turnStart;
         const ttftMs = firstTokenTime ? firstTokenTime - turnStart : turnDuration;
-        const fullResponseText = tokens.join('');
+        const fullResponseText = finalDoneText !== null ? finalDoneText : tokens.join('');
         const tokensPerSec = turnDuration > 0 ? Math.round((tokens.length / (turnDuration / 1000)) * 10) / 10 : 0;
 
         executedTurns.push({

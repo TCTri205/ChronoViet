@@ -228,6 +228,9 @@ export const EnvSchema = z.object({
   // Evaluation Gates & Benchmark
   // ==========================================
   EVAL_MAX_RTF: z.coerce.number().positive().default(0.3),
+  FAST_DEV_MODE: z
+    .union([z.boolean(), z.string().transform((v) => v === 'true')])
+    .default(false),
   EVAL_STRICT: z
     .union([z.boolean(), z.string().transform((v) => v === 'true')])
     .default(false),

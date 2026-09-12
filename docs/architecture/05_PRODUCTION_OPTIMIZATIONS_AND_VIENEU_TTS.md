@@ -47,22 +47,31 @@ Việc thẩm định các bức ảnh tư liệu trong kịch bản qua mô hì
 
 ---
 
-### 🟢 Thách Thức 3: Đồng Bộ Giọng Đọc và Thời Lượng Scene (Audio-Visual Scene Sync)
+### 🟢 Thách Thức 3: Đồng Bộ Giọng Đọc và Thời Lượng Scene (Audio-Visual Scene Sync & Adaptive SpeedRatio)
 
 #### *Bài toán:*
-Tốc độ nói của TTS thay đổi tùy theo độ dài câu văn và nhịp điệu. Nếu hardcode số khung hình cố định, giọng đọc sẽ bị chèn lên nhau hoặc để lại khoảng lặng vụng về.
+Tốc độ nói của TTS thay đổi tùy theo độ dài câu văn và nhịp điệu. Nếu hardcode số khung hình cố định, giọng đọc sẽ bị chèn lên nhau hoặc để lại khoảng lặng vụng về (dead silence).
 
 #### *Giải pháp hoàn chỉnh & Công thức Toán học:*
 
-$$\text{durationInFrames} = \left\lceil \frac{\text{audioDurationMs} + \text{paddingMs}}{1000} \times \text{FPS} \right\rceil$$
+1. **Adaptive SpeedRatio (TTS Node & Microservice):**
+   Trước khi gọi TTS, hệ thống ước tính thời lượng âm thanh và điều chỉnh tốc độ nói nhẹ nhàng trong biên độ tự nhiên:
+   $$\text{speedRatio} = \text{clamp}\left(0.95, 1.15, \frac{\text{estimatedAudioSec}}{\text{targetDurationSeconds}}\right)$$
+   Microservice VieNeu (Python) chuyển đổi sang tham số điều khiển của Piper:
+   $$\text{length\_scale} = \max\left(0.85, \min\left(1.05, \frac{1.0}{\text{speedRatio}}\right)\right)$$
+   Đồng thời toàn bộ mảng `wordTimestamps` và thời lượng tổng được co giãn theo tỷ lệ tương ứng.
 
-Trong đó:
-* $\text{audioDurationMs}$: Thời lượng thực tế của file `.wav` xuất ra từ VieNeu (ms).
-* $\text{paddingMs}$: Khoảng nghỉ an toàn giữa các phân cảnh (mặc định = $300\text{ ms}$).
-* $\text{FPS}$: Số khung hình/giây của video (mặc định = $30\text{ fps}$).
+2. **Dual-Mode Reconciliation Engine:**
+   - **Mode A ($|\text{totalAudio} - \text{targetTotalSec}| \le 10\%$):** Phân bổ phần dư sai lệch vào từng phân cảnh nhưng khống chế trần đệm an toàn không vượt quá $\minRequiredSec + 0.6\text{s}$ per scene, triệt tiêu hoàn toàn khoảng lặng chết trên timeline Remotion.
+   - **Mode B ($|\text{totalAudio} - \text{targetTotalSec}| > 10\%$):** Tôn trọng thời lượng giọng đọc thực tế (Audio-Driven Grounding), bổ sung 1 thẻ outro $1.5\text{s}$ ở cuối thay vì kéo giãn gượng ép thời lượng hình ảnh.
 
-*Ví dụ:* Nếu VieNeu đọc hết câu trong $7,400\text{ ms}$:
-$$\text{durationInFrames} = \left\lceil \frac{7400 + 300}{1000} \times 30 \right\rceil = \lceil 7.7 \times 30 \rceil = 231\text{ frames}$$
+3. **Packager Frame Alignment (30 FPS):**
+   $$\text{durationInFrames} = \max\left(90, \max\left(\lceil \text{targetDurationSeconds} \times \text{FPS} \rceil, \lceil (\text{audioDurationSeconds} + 0.2) \times \text{FPS} \rceil\right)\right)$$
+
+   Bảo đảm:
+   * Phân cảnh tối thiểu 3 giây ($90\text{ frames}$).
+   * Giọng đọc không bao giờ bị cắt cụt (audio safety margin $+0.2\text{s}$).
+   * Khoảng đệm đuôi luôn $\le 0.5\text{s}$ và Pacing Error Monorepo $< 1.5\%$.
 
 ---
 
@@ -70,8 +79,8 @@ $$\text{durationInFrames} = \left\lceil \frac{7400 + 300}{1000} \times 30 \right
 
 #### *Giải pháp hoàn chỉnh:*
 ChronoViet chọn **VieNeu** (https://www.vieneu.io/) — Mô hình Neural TTS chuyên biệt cho tiếng Việt đóng gói dưới dạng Docker Container (Python 3.11 FastAPI) kết hợp kiến trúc phòng thủ 2 lớp (Dual-Layer Architecture):
-1. **Lớp Primary Neural Engine**: Python FastAPI microservice (`app.py`) chạy mô hình VieNeu ONNX & NeuCodec sinh file âm thanh chất lượng cao 24kHz (PCM 16-bit) kèm phân bổ mốc từ ngữ `wordTimestamps` thông minh. Khi chạy chế độ không weights, service tự động vận hành ở chế độ Python PCM-16 Synthesizer dự phòng mà không bao giờ sập container.
-2. **Lớp Dual-Layer Fallback Engine**: Node.js `SyntheticTTSFallbackEngine` (`packages/infra/src/tts/`) tự động kích hoạt khi microservice Python chưa khởi chạy hoặc timeout, sinh xung âm thanh định thanh 480Hz để tiến trình render video Remotion không bao giờ ngắt quãng.
+1. **Lớp Primary Neural Engine**: Python FastAPI microservice (`app.py`) chạy mô hình VieNeu ONNX & NeuCodec sinh file âm thanh chất lượng cao 24kHz (PCM 16-bit) kèm phân bổ mốc từ ngữ `wordTimestamps` thông minh, hỗ trợ co giãn theo `speedRatio`. Khi chạy chế độ không weights, service tự động vận hành ở chế độ Python PCM-16 Synthesizer dự phòng mà không bao giờ sập container.
+2. **Lớp Dual-Layer Fallback Engine**: Node.js `SyntheticTTSFallbackEngine` (`packages/infra/src/tts/`) tự động kích hoạt khi microservice Python chưa khởi chạy hoặc timeout, sinh xung âm thanh định thanh 480Hz và co giãn thời lượng / `wordTimestamps` chuẩn xác theo `speedRatio` để tiến trình render video Remotion không bao giờ ngắt quãng.
 
 ---
 
