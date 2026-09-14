@@ -26,12 +26,27 @@ export async function runReResolve(): Promise<{ resolvedEntitiesCount: number; a
   let mergedEntitiesCount = 0;
 
   if (pgConnected) {
+    const KNOWN_AMBIGUOUS_ENTITY_MERGES: Record<string, string> = {
+      'person_thai_tong': 'person_tran_thai_tong',
+      'person_thai_tong_hoang_de': 'person_tran_thai_tong',
+      'person_thai_tong_kia': 'person_tran_thai_tong',
+      'person_thai_tong_van_hoang_de': 'person_tran_thai_tong',
+      'person_thai_tong_vua_thai_tong': 'person_tran_thai_tong',
+      'person_thai_tong_hoang': 'person_tran_thai_tong',
+      'person_thai_tong_sang': 'person_tran_thai_tong',
+      'person_thai_tong_van': 'person_tran_thai_tong',
+      'person_le_thai_tong_le_nguyen_long': 'person_le_thai_tong',
+      'person_le_thai_tong_le_thai_tong': 'person_le_thai_tong',
+      'unknown_khi_le_thai_tong': 'person_le_thai_tong',
+    };
+
     const dbEntities = await query<{ id: string; name: string; type: string; aliases: string[]; metadata: Record<string, unknown> }>(
       'SELECT id, name, type, aliases, metadata FROM entities'
     );
 
     for (const entity of dbEntities) {
-      const canonical = resolveCanonicalEntity(entity.name);
+      const explicitTarget = KNOWN_AMBIGUOUS_ENTITY_MERGES[entity.id];
+      const canonical = explicitTarget ? resolveCanonicalEntity(explicitTarget) : resolveCanonicalEntity(entity.name);
       if (canonical.entityId !== entity.id || canonical.canonicalName !== entity.name) {
         await withTransaction(async (execQuery: any) => {
           // 1. Ensure Canonical Entity is in entities table with merged aliases
@@ -101,6 +116,42 @@ export async function runReResolve(): Promise<{ resolvedEntitiesCount: number; a
         });
       }
       resolvedEntitiesCount++;
+    }
+
+    // Explicit Sweep: Consolidate any remaining relationships directly using ambiguous IDs
+    for (const [oldId, targetId] of Object.entries(KNOWN_AMBIGUOUS_ENTITY_MERGES)) {
+      await withTransaction(async (execQuery: any) => {
+        await execQuery(`
+          DELETE FROM relationships r_old
+          WHERE r_old.source_entity_id = $2
+            AND EXISTS (
+              SELECT 1 FROM relationships r_new
+              WHERE r_new.source_entity_id = $1
+                AND r_new.target_entity_id = r_old.target_entity_id
+                AND r_new.relation_type = r_old.relation_type
+            );
+        `, [targetId, oldId]);
+        await execQuery(`UPDATE relationships SET source_entity_id = $1 WHERE source_entity_id = $2;`, [targetId, oldId]);
+
+        await execQuery(`
+          DELETE FROM relationships r_old
+          WHERE r_old.target_entity_id = $2
+            AND EXISTS (
+              SELECT 1 FROM relationships r_new
+              WHERE r_new.target_entity_id = $1
+                AND r_new.source_entity_id = r_old.source_entity_id
+                AND r_new.relation_type = r_old.relation_type
+            );
+        `, [targetId, oldId]);
+        await execQuery(`UPDATE relationships SET target_entity_id = $1 WHERE target_entity_id = $2;`, [targetId, oldId]);
+        await execQuery(`DELETE FROM relationships WHERE source_entity_id = target_entity_id;`);
+      });
+    }
+
+    try {
+      await query('REFRESH MATERIALIZED VIEW mv_dynasty_lineage_paths;');
+    } catch {
+      // Ignore if materialized view does not exist in schema
     }
   } else {
     for (const [id, entity] of inMemoryStore.entities.entries()) {

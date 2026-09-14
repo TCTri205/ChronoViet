@@ -138,6 +138,51 @@ export async function getChunksForEntities(
     }
   }
 
+  // Build dual-key lookup sets for priority matching (supporting both slug IDs and Vietnamese diacritic names)
+  const priorityNamesAndIdsSet = new Set<string>();
+  for (const pid of priorityEntityIds || []) {
+    priorityNamesAndIdsSet.add(pid);
+    priorityNamesAndIdsSet.add(pid.toLowerCase());
+    try {
+      const canon = resolveCanonicalEntity(pid);
+      if (canon.canonicalName) {
+        priorityNamesAndIdsSet.add(canon.canonicalName);
+        priorityNamesAndIdsSet.add(canon.canonicalName.toLowerCase());
+      }
+      for (const alias of canon.aliases || []) {
+        priorityNamesAndIdsSet.add(alias);
+        priorityNamesAndIdsSet.add(alias.toLowerCase());
+      }
+    } catch {
+      // Fallback if resolution fails
+    }
+  }
+
+  const primarySeed = priorityEntityIds?.[0];
+  const primarySeedNamesAndIds = new Set<string>();
+  if (primarySeed) {
+    primarySeedNamesAndIds.add(primarySeed);
+    primarySeedNamesAndIds.add(primarySeed.toLowerCase());
+    try {
+      const canon = resolveCanonicalEntity(primarySeed);
+      if (canon.canonicalName) {
+        primarySeedNamesAndIds.add(canon.canonicalName);
+        primarySeedNamesAndIds.add(canon.canonicalName.toLowerCase());
+      }
+      for (const alias of canon.aliases || []) {
+        primarySeedNamesAndIds.add(alias);
+        primarySeedNamesAndIds.add(alias.toLowerCase());
+      }
+    } catch {
+      // Fallback if resolution fails
+    }
+  }
+
+  const isChunkMatchingTarget = (chunk: DbDocumentChunk, targetSet: Set<string>): boolean => {
+    if (!chunk.key_figures || chunk.key_figures.length === 0) return false;
+    return chunk.key_figures.some((kf) => targetSet.has(kf) || targetSet.has(kf.toLowerCase()));
+  };
+
   const reliabilityOrder: Record<string, number> = {
     LEVEL_1: 1,
     LEVEL_2: 2,
@@ -145,9 +190,10 @@ export async function getChunksForEntities(
   };
 
   rawChunks.sort((a, b) => {
-    const primarySeed = priorityEntityIds?.[0];
-    const aPriority = primarySeed && a.key_figures?.includes(primarySeed) ? 0 : (a.key_figures?.some((e) => prioritySet.has(e)) ? 1 : 2);
-    const bPriority = primarySeed && b.key_figures?.includes(primarySeed) ? 0 : (b.key_figures?.some((e) => prioritySet.has(e)) ? 1 : 2);
+    const aMatchesPrimary = isChunkMatchingTarget(a, primarySeedNamesAndIds);
+    const bMatchesPrimary = isChunkMatchingTarget(b, primarySeedNamesAndIds);
+    const aPriority = aMatchesPrimary ? 0 : (isChunkMatchingTarget(a, priorityNamesAndIdsSet) ? 1 : 2);
+    const bPriority = bMatchesPrimary ? 0 : (isChunkMatchingTarget(b, priorityNamesAndIdsSet) ? 1 : 2);
     if (aPriority !== bPriority) return aPriority - bPriority;
     const rA = reliabilityOrder[a.source_reliability || 'LEVEL_1'] ?? 3;
     const rB = reliabilityOrder[b.source_reliability || 'LEVEL_1'] ?? 3;
@@ -167,7 +213,9 @@ export async function getChunksForEntities(
     let maxConf = 0.5;
     let minHop = 2;
     for (const entId of chunk.key_figures || []) {
-      const { conf, hop } = signalFor(chunk.id, entId);
+      const resolved = resolveCanonicalEntity(entId);
+      const effectiveId = resolved.entityId || entId;
+      const { conf, hop } = signalFor(chunk.id, effectiveId);
       maxConf = Math.max(maxConf, conf);
       minHop = Math.min(minHop, hop);
     }

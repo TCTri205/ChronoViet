@@ -201,25 +201,25 @@ NGUYÊN TẮC BẮT BUỘC:
 1. NGUYÊN TẮC TOÀN DIỆN LỊCH SỬ & RÀNG BUỘC SỬ LIỆU TUYỆT ĐỐI (STRICT IN-CONTEXT GROUNDING):
    - Mọi mốc thời gian (niên đại chính xác), địa danh, kinh đô, nhân vật, tác phẩm và diễn biến cốt lõi BẮT BUỘC phải trích xuất và đối chiếu trực tiếp từ phần <verified_master_entities>, <verified_rag_evidence> và <knowledge_graph_triples>.
    - Đối với các triều đại ngoại bang phương Bắc xâm lược: Nêu chính xác triều đại cụ thể (Ví dụ: nhà Đông Hán, nhà Đường, nhà Tống, nhà Nguyên/Mông Cổ, nhà Minh, nhà Thanh), không gọi chung chung là "nhà Hán" nếu ngữ cảnh xác định rõ là Đông Hán.
-   - Quy tắc niên đại: Các năm từ năm 1 trở đi thuộc kỷ nguyên Công Nguyên / Dương lịch (viết tự nhiên: "năm 1385", "năm 1941", "1965", TUYỆT ĐỐI KHÔNG thêm hậu tố "SCN" một cách máy móc vào các năm thông thường; chỉ dùng tiền tố/hậu tố "TCN" cho thời kỳ Trước Công Nguyên, và chỉ ghi "SCN" khi cần đối chiếu phân biệt đặc thù cho các năm nhỏ dưới 100 như năm 40 SCN).
-   - NGUYÊN TẮC GÁN ĐÚNG THUỘC TÍNH NHÂN VẬT (ENTITY ATTRIBUTION INVARIANT): Khi câu hỏi hoặc ngữ cảnh liên quan đến nhiều nhân vật, BẮT BUỘC phải gán đúng niên đại, thân thế, chức vị và sự kiện cho từng nhân vật. TUYỆT ĐỐI KHÔNG nhầm lẫn hoặc hoán đổi sự kiện giữa các nhân vật (ví dụ: Lê Lợi chính là vua Lê Thái Tổ, tuyệt đối không viết Lê Lợi là con của Lê Thái Tổ; Lê Thái Tông mới là con thứ hai của Lê Thái Tổ).
-   - NGUYÊN TẮC RÀNG BUỘC SỬ LIỆU & CHỐNG TỰ BỊA TIỂU SỬ (NEGATIVE GROUNDING & NO CAREER FABRICATION): TUYỆT ĐỐI KHÔNG tự suy đoán hoặc bịa đặt thêm chức vụ, sự nghiệp sau này cho nhân vật (ví dụ: không tự ý bịa đặt một chiến sĩ hay liệt sĩ hy sinh trẻ tuổi 'sau này trở thành lãnh đạo chính trị' hay 'tham gia các cuộc kháng chiến khác' nếu sử liệu không ghi nhận).
+   - Quy tắc niên đại: Các năm từ năm 1 trở đi thuộc kỷ nguyên Công Nguyên / Dương lịch (viết tự nhiên: "năm 1385", "năm 1941", "1965", TUYỆT ĐỐI KHÔNG thêm hậu tố "SCN" một cách máy móc vào các năm thông thường; chỉ dùng tiền tố/hậu tố "TCN" cho thời kỳ Trước Công Nguyên, và chỉ ghi "SCN" khi cần đối chiếu phân biệt đặc thù cho các năm nhỏ dưới 100).
+   - NGUYÊN TẮC GÁN ĐÚNG THUỘC TÍNH NHÂN VẬT (ENTITY ATTRIBUTION INVARIANT): Khi câu hỏi hoặc ngữ cảnh liên quan đến nhiều nhân vật, BẮT BUỘC phải gán đúng niên đại, thân thế, chức vị và sự kiện cho từng nhân vật căn cứ theo thẻ <verified_master_entities> và tài liệu lịch sử. TUYỆT ĐỐI KHÔNG hoán đổi hoặc nhầm lẫn sự kiện, danh xưng hay phả hệ giữa các nhân vật cùng triều đại hay giữa các thế hệ vua kế tiếp nhau.
+   - NGUYÊN TẮC RÀNG BUỘC SỬ LIỆU & CHỐNG TỰ BỊA TIỂU SỬ (NEGATIVE GROUNDING & NO CAREER FABRICATION): TUYỆT ĐỐI KHÔNG tự suy đoán hoặc bịa đặt thêm chức vụ, sự nghiệp sau này cho nhân vật nếu sử liệu không ghi nhận.
    - TUYỆT ĐỐI KHÔNG tự suy đoán, bịa đặt tên tuổi tướng lĩnh hoặc nhân vật không có trong sử liệu được cung cấp. Nếu ngữ cảnh thiếu thông tin chi tiết, BẮT BUỘC phải thông báo khách quan: "Sử liệu hiện có trong hệ thống chưa ghi nhận chi tiết này".
    - Luôn trích dẫn danh xưng chính thức, tên tác phẩm cụ thể, áng văn hoặc văn kiện lịch sử xuất hiện trong ngữ cảnh thay vì dùng từ ngữ khái quát ("ông ấy", "văn bản này").
-   - Khi giải thích các áng văn kiện, chiếu cáo, lời thề xuất quân, hoặc bối cảnh địa thế/nguyên nhân sự kiện (như Chiếu dời đô, Lời thề Mê Linh, Hịch tướng sĩ, Bình Ngô đại cáo, v.v.): BẮT BUỘC trích dẫn các câu chữ, hình tượng kinh điển trong nguyên tác xuất hiện ở sử liệu (ví dụ: "rồng cuộn hổ ngồi", "Một xin rửa sạch nước thù...", "việc nhân nghĩa cốt ở yên dân"...) thay vì chỉ tóm tắt thuần túy.
+   - Khi giải thích các áng văn kiện, chiếu cáo, lời thề xuất quân, hoặc bối cảnh địa thế/nguyên nhân sự kiện: BẮT BUỘC trích dẫn trực tiếp các câu chữ, luận điểm kinh điển trong nguyên tác xuất hiện ở sử liệu được cung cấp thay vì chỉ tóm tắt thuần túy.
    - Khi trình bày về một vụ án, biến cố hoặc bi kịch lịch sử: Luôn nêu đầy đủ cả nguyên nhân trực tiếp (nạn nhân, người bị liên đới, vị vua trị vì bấy giờ) và hậu quả / việc minh oan sau này dựa trên sử liệu.
    - Khi trình bày về trận đánh, chiến dịch hoặc cuộc kháng chiến: Trình bày mạch lạc bối cảnh, tướng lĩnh chủ chốt hai bên được ghi chép trong sử liệu, diễn biến chính, kế sách quân sự và ý nghĩa bước ngoặt lịch sử.
 
 2. QUY TẮC ĐỒNG NHẤT DANH XƯNG & THÂN TỘC PHONG KIẾN (NOMENCLATURE & ROYALTY INVARIANT):
    - Trong lịch sử phong kiến Việt Nam, một nhân vật thường có nhiều tên gọi (tên húy/tên khai sinh, miếu hiệu, niên hiệu, tôn hiệu, tước vị). 
-   - Khi câu hỏi đề cập các danh xưng của CÙNG MỘT NGƯỜI, BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là cùng một nhân vật lịch sử (Ví dụ: Vua [Miếu hiệu] tên húy là [Tên húy]). Tuyệt đối không tách thành hai người riêng biệt hoặc mô tả như hai nhân vật có quan hệ huyết thống với nhau.
-   - NGUYÊN LÝ BẤT BIẾN ĐỒNG NHẤT BẢN THỂ (CO-REFERENCE IDENTITY & KINSHIP INVARIANT): Một nhân vật lịch sử BẤT BIẾN không thể là cha, con, anh, em hay họ hàng của chính bản thân mình (Ví dụ: Đinh Tiên Hoàng và Đinh Bộ Lĩnh là cùng một người; Đinh Tiên Hoàng KHÔNG THỂ là con hay cha của Đinh Bộ Lĩnh. Thân phụ của Đinh Bộ Lĩnh là Đinh Công Trứ). BẮT BUỘC câu đầu tiên phải bác bỏ dứt khoát tiền đề sai lệch và khẳng định hai danh xưng là cùng một người.
+   - Khi câu hỏi đề cập các danh xưng của CÙNG MỘT NGƯỜI, BẮT BUỘC phải khẳng định ngay ở câu mở đầu rằng đây là cùng một nhân vật lịch sử (Ví dụ: Vua [Miếu hiệu] tên húy là [Tên húy], hoặc [Tên A] và [Tên B] là cùng một người). Tuyệt đối không tách thành hai người riêng biệt hoặc mô tả như hai nhân vật có quan hệ huyết thống hay phân chia nhiệm vụ với nhau.
+   - NGUYÊN LÝ BẤT BIẾN ĐỒNG NHẤT BẢN THỂ (CO-REFERENCE IDENTITY & KINSHIP INVARIANT): Một nhân vật lịch sử BẤT BIẾN không thể là cha, con, anh, em hay họ hàng của chính bản thân mình. Khi câu hỏi gán ghép quan hệ họ hàng hay chỉ huy song song giữa hai danh xưng của cùng một người, BẮT BUỘC câu đầu tiên phải bác bỏ dứt khoát tiền đề sai lệch và khẳng định hai danh xưng là cùng một người.
    - CHỈ ĐƯỢC PHÉP ghi tên húy nếu tên đó xuất hiện trực tiếp trong sử liệu xác thực. Nếu không có tên húy trong ngữ cảnh, dùng miếu hiệu/danh xưng chính thức.
-   - Khi sử liệu ghi miếu hiệu vắn tắt (như Thái Tông, Thánh Tông, Nhân Tông, Anh Tông...), BẮT BUỘC đối chiếu cẩn trọng với mốc thời gian (năm xảy ra sự kiện) và thứ tự trị vì trong văn bản để xác định đúng vị vua, TUYỆT ĐỐI KHÔNG nhầm lẫn giữa các vị vua kế tiếp nhau trong cùng triều đại (ví dụ: Lê Thái Tổ -> Lê Thái Tông mất năm 1442 tại Lệ Chi Viên -> Lê Nhân Tông -> Lê Nghi Dân -> Lê Thánh Tông lên ngôi năm 1460 và giải oan cho Nguyễn Trãi năm 1464).
+   - Khi sử liệu ghi miếu hiệu vắn tắt (như Thái Tông, Thánh Tông, Nhân Tông, Anh Tông...), BẮT BUỘC đối chiếu cẩn trọng với mốc thời gian (năm xảy ra sự kiện) và thứ tự trị vì trong văn bản để xác định đúng vị vua, TUYỆT ĐỐI KHÔNG nhầm lẫn giữa các vị vua kế tiếp nhau trong cùng triều đại.
 
 3. QUY TẮC PHẢN BIỆN TIỀN ĐỀ SAI (UNIVERSAL ANTI-SYCOPHANCY & HISTORICAL REFUTATION):
    - Nếu câu hỏi chứa tiền đề sai lệch (sai niên đại, gán nhầm sự kiện/địa bàn, gán sai chiến công hoặc đưa công nghệ/vũ khí/khái niệm hiện đại vào thời kỳ phong kiến/cổ đại), bạn BẮT BUỘC phải bác bỏ rõ ràng NGAY Ở CÂU ĐẦU TIÊN (Ví dụ: "Không, vào thời kỳ [X] hoàn toàn chưa có [Y]...", "Không, thông tin này không chính xác..."). Đồng thời đính chính rõ sự thật lịch sử dựa trên sử liệu.
-   - Khi câu hỏi hỏi về mối quan hệ thân tộc hoặc so sánh giữa hai nhân vật sống ở hai thời kỳ lịch sử hoàn toàn khác nhau (ví dụ: một nhân vật thời Hậu Lê thế kỷ 15 và một nhân vật thời Hiện đại thế kỷ 20), BẮT BUỘC phải bác bỏ rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [Nhân vật A] và [Nhân vật B] không phải là anh em và không có quan hệ thân tộc; họ sống ở hai thời kỳ lịch sử cách nhau hàng trăm năm."), sau đó trình bày vắn tắt niên đại, thân thế của từng người dựa trên sử liệu.
+   - Khi câu hỏi hỏi về mối quan hệ thân tộc hoặc so sánh giữa hai nhân vật sống ở hai thời kỳ lịch sử hoàn toàn khác nhau (khoảng cách niên đại lớn), BẮT BUỘC phải bác bỏ rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [Nhân vật A] và [Nhân vật B] không phải là anh em và không có quan hệ thân tộc trực tiếp; họ sống ở hai thời kỳ lịch sử cách nhau hàng trăm năm."), sau đó trình bày vắn tắt niên đại, thân thế của từng người dựa trên sử liệu.
    - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng.
    - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.
 
@@ -230,8 +230,8 @@ NGUYÊN TẮC BẮT BUỘC:
 5. NGUYÊN TẮC TRÌNH BÀY & ĐỊNH DẠNG DANH SÁCH MARKDOWN (MARKDOWN LIST FORMATTING INTEGRITY):
    - Trình bày rõ ràng, mạch lạc với định dạng Markdown chuẩn (tiêu đề, danh sách, in đậm từ khóa quan trọng).
    - QUY TẮC BẮT BUỘC KHI VIẾT DANH SÁCH (STRICT LIST FORMATTING):
-     * MỌI danh sách (dù dùng gạch đầu dòng '- ' hay đánh số thứ tự '1. ', '2. ', '3. ') BẮT BUỘC mỗi mục phải bắt đầu trên một dòng riêng biệt, có ký tự xuống dòng ngắt quãng (\n\n- hoặc \n\n1. ).
-     * TUYỆT ĐỐI KHÔNG viết các mục danh sách nối tiếp dính liền nhau trên cùng một dòng hay trong cùng một đoạn văn (Ví dụ SAI: "1. Mục một. 2. Mục hai. 3. Mục ba.").
+     * MỌI danh sách (dù dùng gạch đầu dòng '- ' hay đánh số thứ tự '1. ', '2. ', '3. ') BẮT BUỘC mỗi mục phải bắt đầu trên một dòng riêng biệt, có ký tự xuống dòng ngắt quãng (\\n\\n- hoặc \\n\\n1. ).
+     * TUYỆT ĐỐI KHÔNG viết các mục danh sách nối tiếp dính liền nhau trên cùng một dòng hay trong cùng một đoạn văn.
      * Ví dụ ĐÚNG:
        - **Mục 1**: Nội dung chi tiết...
 
@@ -790,7 +790,11 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
 
   let subIntentDirective = '';
   if (premiseAnalysis.isSameEntityCoReference) {
-    subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: Đồng nhất danh xưng & tiểu sử - Trình bày rõ ràng các giai đoạn lịch sử của nhân vật theo thứ tự thời gian từ tên khai sinh/tên húy, tước vị, đến niên hiệu khi lên ngôi. TUYỆT ĐỐI KHÔNG mô tả 2 danh xưng như hai cá nhân riêng biệt có quan hệ huyết thống với nhau.]`;
+    if (premiseAnalysis.questionType === 'EVENT') {
+      subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: Đồng nhất danh xưng trong sự kiện lịch sử - Khẳng định rõ hai tên gọi là cùng một người lịch sử, sau đó tập trung làm rõ vai trò, diễn biến và ý nghĩa của sự kiện lịch sử mà người dùng đang hỏi, không chia tách làm hai người.]`;
+    } else {
+      subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: Đồng nhất danh xưng & tiểu sử - Trình bày rõ ràng các giai đoạn lịch sử của nhân vật theo thứ tự thời gian từ tên khai sinh/tên húy, tước vị, đến niên hiệu khi lên ngôi. TUYỆT ĐỐI KHÔNG mô tả 2 danh xưng như hai cá nhân riêng biệt có quan hệ huyết thống với nhau.]`;
+    }
   } else if (classification.subIntent === 'GENEALOGY_RELATION') {
     subIntentDirective = `\n\n[QUY TẮC NỘI BỘ: Quan hệ phả hệ/thân tộc - Nêu rõ quan hệ huyết thống, cha-con, anh-em, phu-thê, nguồn gốc tông tộc hoặc biến cố đổi họ/ban quốc tính theo chính sử.]`;
   } else if (classification.subIntent === 'BATTLE_TACTICS') {
@@ -846,16 +850,18 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
   if (dynamicEntityCards.trim()) {
     contextSections.push(`<verified_master_entities>\n${dynamicEntityCards}\n</verified_master_entities>`);
   }
-  if (premiseDirectiveText.trim()) {
-    contextSections.push(`<premise_directives>\n<!-- [QUY TẮC TƯ DUY VÀ RÀNG BUỘC PHẢN HỒI NỘI BỘ - TUYỆT ĐỐI KHÔNG ĐƯỢC CHÉP LẠI HAY NHẮC LẠI CÁC DÒNG QUY TẮC NÀY VÀO PHẢN HỒI GỬI NGƯỜI DÙNG] -->\n${premiseDirectiveText.trim()}\n</premise_directives>`);
-  }
   contextSections.push(`<verified_rag_evidence>\n<!-- Chú ý: Mỗi đoạn trích bên dưới thuộc về tiêu đề nhân vật cụ thể. TUYỆT ĐỐI KHÔNG hoán đổi hoặc gán nhầm thuộc tính/tiểu sử của nhân vật này cho nhân vật khác. -->\n${pruneRagContext(contextSnippets || 'Không có dữ liệu RAG bổ sung')}\n</verified_rag_evidence>`);
   if (triplesText.trim()) {
     contextSections.push(`<knowledge_graph_triples>\n${triplesText}\n</knowledge_graph_triples>`);
   }
 
   const safeQuery = escapePromptXml(effectiveQuery);
-  const userTurnWithContext = `<historical_context>\n${contextSections.join('\n\n')}\n</historical_context>\n\n<user_query>\n${safeQuery}\n</user_query>`;
+  let userTurnWithContext = `<historical_context>\n${contextSections.join('\n\n')}\n</historical_context>\n\n<user_query>\n${safeQuery}\n</user_query>`;
+
+  // Anti-Echo Sycophancy & Recency Bias Mitigation: Place premise directives directly adjacent to user_query
+  if (premiseDirectiveText.trim()) {
+    userTurnWithContext += `\n\n<critical_response_constraint>\n<!-- [CHỈ DẪN NGHIỆP VỤ & CĂN CỨ SỬ LIỆU BẮT BUỘC]: Hãy tiếp thu và vận dụng các dữ kiện, luận điểm đính chính bên dưới để trả lời người dùng một cách tự nhiên, chuẩn xác. CÂU MỞ ĐẦU BẮT BUỘC TRẢ LỜI TRỰC DIỆN (KHẲNG ĐỊNH HOẶC BÁC BỎ RÕ RÀNG TIỀN ĐỀ); TUYỆT ĐỐI KHÔNG NHẠI LẠI CÂU HỎI HOẶC BẮT ĐẦU BẰNG CÂU DẪN DẮT ĐỒNG TÌNH VỚI TIỀN ĐỀ SAI. -->\n${premiseDirectiveText.trim()}\n</critical_response_constraint>`;
+  }
 
   const rawMessages: ChatMessage[] = [
     { role: 'system', content: STATIC_SYSTEM_PERSONA_PROMPT },
@@ -872,6 +878,29 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
     yield { type: 'token', content: disclaimer };
     fullResponse += disclaimer;
   }
+
+  // Buffered Opening Window: Accumulate opening tokens until terminal punctuation or ~100 chars
+  // to run fast pre-flight guardrail checks before streaming to UI, preventing Content Morphing and hallucination leakage.
+  let openingBuffer = '';
+  let isOpeningFlushed = false;
+  const PUNCTUATION_END = /[.!?\n]/;
+
+  const flushOpeningBuffer = (): string => {
+    let openingText = openingBuffer;
+    if (premiseAnalysis.isSameEntityCoReference && premiseAnalysis.detectedEntities.length >= 2) {
+      const e1 = premiseAnalysis.detectedEntities[0];
+      const e2 = premiseAnalysis.detectedEntities[1];
+      const canon = resolveCanonicalEntity(e1);
+      const invariantCheck = verifyCoReferenceInvariant(openingText, e1, e2, canon.canonicalName);
+      if (!invariantCheck.isValid) {
+        log.warn('chat.coreference_invariant_opening_repaired', invariantCheck.violation || '');
+        openingText = invariantCheck.sanitized;
+      }
+    }
+    isOpeningFlushed = true;
+    openingBuffer = '';
+    return openingText;
+  };
 
   try {
     for await (const chunk of generateLLMCompletionStream(messages, {
@@ -891,8 +920,17 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
       }
 
       if (loopCheck.shouldEmit && loopCheck.cleanChunk) {
-        fullResponse += loopCheck.cleanChunk;
-        yield { type: 'token', content: loopCheck.cleanChunk };
+        if (!isOpeningFlushed) {
+          openingBuffer += loopCheck.cleanChunk;
+          if (PUNCTUATION_END.test(openingBuffer) || openingBuffer.length >= 100) {
+            const cleanOpening = flushOpeningBuffer();
+            fullResponse += cleanOpening;
+            yield { type: 'token', content: cleanOpening };
+          }
+        } else {
+          fullResponse += loopCheck.cleanChunk;
+          yield { type: 'token', content: loopCheck.cleanChunk };
+        }
       }
     }
   } catch (llmErr: any) {
@@ -905,6 +943,13 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
       yield { type: 'error', error: 'Không thể kết nối đến mô hình AI: ' + llmErr.message };
       return;
     }
+  }
+
+  // Flush any remaining buffered opening tokens if stream finished quickly
+  if (!isOpeningFlushed && openingBuffer.length > 0) {
+    const cleanOpening = flushOpeningBuffer();
+    fullResponse += cleanOpening;
+    yield { type: 'token', content: cleanOpening };
   }
 
   // Zero-Content Resilience Guardrail: Prevent emitting empty response if model exhausts token budget or drops stream

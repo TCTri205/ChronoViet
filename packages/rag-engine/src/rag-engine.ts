@@ -161,41 +161,39 @@ export class ChronoRagEngine implements IRagEngine {
     let timedOut = false;
 
     if (isComparative) {
-      const targetEntities = substantiveEntityIds.length >= 2 ? substantiveEntityIds : filterEntityIds;
-      const entA = targetEntities[0];
-      const entB = targetEntities[1];
-      const canonA = resolveCanonicalEntity(entA);
-      const canonB = resolveCanonicalEntity(entB);
-      const nameA = canonA.canonicalName || entA;
-      const nameB = canonB.canonicalName || entB;
+      const rawTargets = substantiveEntityIds.length >= 2 ? substantiveEntityIds : filterEntityIds;
+      const targetEntities = rawTargets.slice(0, 4);
+      const k = Math.max(1, targetEntities.length);
+      const entityWeight = 1.0 / k;
 
-      const subQueryA = `${queryText} ${nameA}`;
-      const subQueryB = `${queryText} ${nameB}`;
+      const subQueries = targetEntities.map((ent) => {
+        const canon = resolveCanonicalEntity(ent);
+        const name = canon.canonicalName || ent;
+        return {
+          entityId: ent,
+          name,
+          query: `${queryText} ${name}`,
+        };
+      });
 
-      const [gRes, [resA, resB]] = await Promise.all([
+      const [gRes, branchResults] = await Promise.all([
         searchLocalGraphCTE(filterEntityIds, {
           maxHops: request.subIntent === 'GENEALOGY_RELATION' ? 3 : 2,
           maxNodes: GRAPH_BRANCH_MAX_NODES,
           timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
         }).catch(() => ({ triples: [], aliasTable: {}, entityIds: [], timedOut: true })),
-        Promise.all([
-          searchHybridVectorAndBM25(
-            subQueryA,
-            getCachedQueryEmbedding(subQueryA),
-            Math.max(10, rerankTopK * 2),
-            60,
-            [entA],
-            request.subIntent
-          ),
-          searchHybridVectorAndBM25(
-            subQueryB,
-            getCachedQueryEmbedding(subQueryB),
-            Math.max(10, rerankTopK * 2),
-            60,
-            [entB],
-            request.subIntent
-          ),
-        ]),
+        Promise.all(
+          subQueries.map((sq) =>
+            searchHybridVectorAndBM25(
+              sq.query,
+              getCachedQueryEmbedding(sq.query),
+              Math.max(10, Math.floor((rerankTopK * 4) / k)),
+              60,
+              [sq.entityId],
+              request.subIntent
+            )
+          )
+        ),
       ]);
 
       graphResult = gRes as any;
@@ -221,20 +219,18 @@ export class ChronoRagEngine implements IRagEngine {
         gSignals
       ).catch(() => []);
 
-      // Balanced 50/50 RRF fusion between both entities
+      // Balanced dynamic 1/K RRF fusion across all K comparative entities
       const balancedMap = new Map<string, VectorSearchResult>();
-      resA.forEach((item, idx) => {
-        const score = 0.5 * (1 / (60 + idx + 1));
-        balancedMap.set(item.chunkId, { ...item, score });
-      });
-      resB.forEach((item, idx) => {
-        const score = 0.5 * (1 / (60 + idx + 1));
-        const existing = balancedMap.get(item.chunkId);
-        if (existing) {
-          existing.score += score;
-        } else {
-          balancedMap.set(item.chunkId, { ...item, score });
-        }
+      branchResults.forEach((branch) => {
+        branch.forEach((item, idx) => {
+          const score = entityWeight * (1 / (60 + idx + 1));
+          const existing = balancedMap.get(item.chunkId);
+          if (existing) {
+            existing.score += score;
+          } else {
+            balancedMap.set(item.chunkId, { ...item, score });
+          }
+        });
       });
       hybridCandidates = Array.from(balancedMap.values());
     } else {

@@ -224,6 +224,29 @@ const HISTORICAL_SYNONYMS: Record<string, string[]> = {
   'rồng cuộn hổ ngồi': ['rồng cuộn hổ ngồi', 'long bàn hổ cứ', 'thế rồng cuộn', 'rồng chầu hổ phục'],
   'thăng long': ['thăng long', 'đại la', 'thành thăng long', 'hà nội'],
   'đại la': ['đại la', 'thăng long', 'thành đại la', 'hà nội'],
+  'cùng một người': [
+    'cùng một người',
+    'cùng là một người',
+    'cùng một nhân vật',
+    'cùng là một nhân vật',
+    'cùng một nhân vật lịch sử',
+    'chính là một người',
+    'chính là cùng một người',
+    'thực chất là cùng một người',
+    'thực chất là một người',
+    'thực chất là cùng một nhân vật',
+    'thực chất là cùng một',
+    'cùng một người lịch sử',
+  ],
+  'cùng một nhân vật': [
+    'cùng một nhân vật',
+    'cùng một người',
+    'cùng là một người',
+    'cùng một nhân vật lịch sử',
+    'chính là một người',
+  ],
+  '1788': ['1788', '1789', 'kỷ dậu', '1788-1789'],
+  '1789': ['1789', '1788', 'kỷ dậu', '1788-1789'],
 };
 
 function getEntityOrPhraseVariants(text: string): string[] {
@@ -378,6 +401,21 @@ function getEntityOrPhraseVariants(text: string): string[] {
       'không dùng',
       'không xuất hiện',
       'không bao gồm',
+      'cùng một người',
+      'cùng một nhân vật',
+      'cùng một người lịch sử',
+      'cùng một nhân vật lịch sử',
+      'cùng là một người',
+      'cùng là một nhân vật',
+      'thực chất là cùng một',
+      'thực chất là một',
+      'thực tế là cùng một',
+      'thống soái duy nhất',
+      'lãnh đạo duy nhất',
+      'chỉ huy duy nhất',
+      'chỉ có một',
+      'không phải là hai',
+      'không phải hai',
     ];
 
     const agreementPhrases = [
@@ -414,11 +452,20 @@ function getEntityOrPhraseVariants(text: string): string[] {
         }
 
         if (agr === 'chính xác') {
+          // Exclude noun or attribute contexts (e.g. "sự chính xác", "độ chính xác", "tính chính xác", "xác nhận sự chính xác")
+          if (/(?:sự|độ|tính|xác\s+nhận|kiểm\s+chứng)\s+(?:sự\s+)?chính\s+xác/i.test(firstSentence)) {
+            return false;
+          }
           const idx = firstSentence.indexOf('chính xác');
           const prefix = firstSentence.slice(Math.max(0, idx - 25), idx);
           if (/\b(không|chưa|thiếu|sai|chẳng|bác bỏ)\b/.test(prefix)) {
             return false;
           }
+          // Must match as an affirmative statement or interjection
+          const isAffirmative =
+            /(?:^|[,\s])(?:chính\s+xác)(?:$|[!.,]|\s+(?:là|nhé|nhá|đấy|nha))/i.test(firstSentence) ||
+            /(?:bạn\s+nói|điều\s+đó\s+là)\s+chính\s+xác/i.test(firstSentence);
+          return isAffirmative;
         }
 
         if (agr === 'đúng' || agr === 'đúng là') {

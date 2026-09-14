@@ -215,6 +215,24 @@ describe('Multi-Turn Historical Query Rewriter', () => {
       expect(isTopicShiftQuery('Tại sao ngài lại quyết định tiến quân thần tốc?', history, [])).toBe(false);
     });
 
+    it('does NOT flag topic shift for comparative follow-up queries with discourse ellipsis (e.g. "Nếu so với Đinh Bộ Lĩnh thì ai có công lớn hơn?")', () => {
+      const ngoQuyenHistory: ChatTurnContext[] = [
+        { role: 'user', content: 'Ngô Quyền đã lãnh đạo trận Bạch Đằng năm 938 như thế nào?' },
+        { role: 'assistant', content: 'Ngô Quyền đã đóng cọc gỗ trên sông Bạch Đằng đánh tan quân Nam Hán.' },
+      ];
+
+      expect(
+        isTopicShiftQuery('Nếu so với Đinh Bộ Lĩnh thì ai có công lớn hơn trong việc thống nhất non sông?', ngoQuyenHistory, ['Đinh Bộ Lĩnh'])
+      ).toBe(false);
+
+      const rewritten = rewriteMultiTurnQuery(
+        'Nếu so với Đinh Bộ Lĩnh thì ai có công lớn hơn trong việc thống nhất non sông?',
+        ngoQuyenHistory
+      );
+      expect(rewritten).toContain('Ngô Quyền');
+      expect(rewritten).toContain('Đinh Bộ Lĩnh');
+    });
+
     it('returns false if there is no conversation history', () => {
       expect(isTopicShiftQuery('Lê Lợi là ai?', [], ['Lê Lợi'])).toBe(false);
     });

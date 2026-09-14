@@ -26,6 +26,13 @@ export interface HistoricalPersonFamilyLineage {
   children?: string[];
 }
 
+export interface HistoricalMisconception {
+  id: string;
+  triggerKeywords: string[];
+  explanation: string;
+  relatedEntityIds?: string[];
+}
+
 export interface HistoricalPersonNamingMetadata {
   archetype?: 'FEUDAL_FIGURE' | 'MODERN_FIGURE';
   birthName?: string;            // e.g. "Hồ Thơm", "Lý Công Uẩn", "Nguyễn Sinh Cung"
@@ -38,6 +45,7 @@ export interface HistoricalPersonNamingMetadata {
   periodAliases?: HistoricalPeriodAlias[]; // e.g. for modern figures: Nguyen Tat Thanh, Van Ba, Nguyen Ai Quoc, Ho Chi Minh
   familyLineage?: HistoricalPersonFamilyLineage; // e.g. parents, siblings, spouses, children recorded in official annals
   totalAliasesEstimated?: string; // e.g. estimated total number of names/pseudonyms recorded by historians/official institutions
+  misconceptions?: HistoricalMisconception[]; // Historical anecdotes, folklore traps or common confusions recorded centrally
 }
 
 export interface HistoricalEntityInfo {
@@ -149,6 +157,15 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
         spouses: ['Phạm Thị Liên', 'Bùi Thị Nhạn', 'Lê Ngọc Hân (Công chúa Ngọc Hân)'],
         children: ['Quang Toản (Cảnh Thịnh Hoàng đế)'],
       },
+      misconceptions: [
+        {
+          id: 'misc_quang_trung_cot_cheo',
+          triggerKeywords: ['cột chèo', 'anh em cột chèo', 'anh em'],
+          explanation:
+            'Giai thoại "anh em cột chèo" trong lịch sử thực chất là nhắc đến mối quan hệ giữa Nguyễn Huệ và Nguyễn Ánh (Gia Long), do cả hai cùng kết duyên với hai chị em công chúa con vua Lê Hiển Tông là Lê Ngọc Hân và Lê Ngọc Bình. Tuyệt đối không gán ghép cụm từ này cho Quang Trung và Nguyễn Huệ. Hai người anh em ruột cùng dựng cờ khởi nghĩa Tây Sơn với Nguyễn Huệ là Nguyễn Nhạc và Nguyễn Lữ (Tây Sơn tam kiệt).',
+          relatedEntityIds: ['person_gia_long', 'person_quang_trung'],
+        },
+      ],
     },
   },
   'person_nguyen_nhac': {
@@ -490,6 +507,15 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
       reignEra: 'Gia Long',
       templeName: 'Thế Tổ',
       reignPeriod: { start: 1802, end: 1820 },
+      misconceptions: [
+        {
+          id: 'misc_gia_long_cot_cheo',
+          triggerKeywords: ['cột chèo', 'anh em cột chèo', 'anh em'],
+          explanation:
+            'Gia Long và Nguyễn Ánh thực chất là cùng một người. Giai thoại "anh em cột chèo" trong lịch sử thực chất là nhắc đến mối quan hệ giữa Nguyễn Huệ (Quang Trung) và Nguyễn Ánh (Gia Long), do cả hai cùng kết duyên với hai chị em công chúa con vua Lê Hiển Tông là Lê Ngọc Hân và Lê Ngọc Bình. Tuyệt đối không gán ghép cụm từ này cho bản thân một nhân vật lịch sử.',
+          relatedEntityIds: ['person_quang_trung', 'person_gia_long'],
+        },
+      ],
     },
   },
   'person_minh_mang': {
@@ -1125,6 +1151,19 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Lý Càn Đức', 'Vua Lý Nhân Tông'],
     timeRange: { start: 1066, end: 1127 },
     dynasty: 'Nhà Lý',
+  },
+  'person_ly_hue_tong': {
+    entityId: 'person_ly_hue_tong',
+    canonicalName: 'Lý Huệ Tông',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Lý Sảm', 'Vua Lý Huệ Tông', 'Huệ Tông'],
+    timeRange: { start: 1194, end: 1226 },
+    dynasty: 'Nhà Lý',
+    namingMetadata: {
+      birthName: 'Lý Sảm',
+      templeName: 'Lý Huệ Tông',
+      reignPeriod: { start: 1211, end: 1224 },
+    },
   },
   'person_van_hanh': {
     entityId: 'person_van_hanh',

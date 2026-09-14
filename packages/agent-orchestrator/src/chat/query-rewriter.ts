@@ -203,6 +203,9 @@ export const DISCOURSE_CONNECTIVE_PREFIX_REGEX =
 export const CONTINUATION_INTENT_REGEX =
   /^(?:sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao|như\s*thế\s*nào|kết\s*quả\s*thế\s*nào|ai\s*là|ai\s*đã|vị\s*vua\s*nào|người\s*nào|tướng\s*nào)/i;
 
+export const COMPARATIVE_FOLLOWUP_REGEX =
+  /(?:^(?:nếu\s+)?so\s+với|^(?:hãy\s+)?so\s+sánh\s+với|^đối\s+chiếu\s+với|so\s+với|so\s+sánh\s+với|đối\s+chiếu\s+với|còn\s+.+?\s+thì\s+sao)/i;
+
 export const PRONOUN_COREF_CHECK_REGEX =
   /(?:(?:hai|2|cả\s+hai)\s+(?:vị|người|nhân\s*vật|vua|tướng)(?:\s+(?:này|đó|ấy))?|ông\s*ấy|bà\s*ấy|vị\s*tướng|nhân\s*vật|(?<!\p{L})(?:hắn|hắn\s*ta|ngài|ông|bà)(?!\p{L})|tên\s*tướng|tướng\s*giặc|quân\s*giặc|ông\s*ta|bà\s*ta|người\s*vợ|người\s*chồng|gia\s*tộc|sau\s*đó|khi\s*nào|ở\s*đâu|vì\s*sao|tại\s*sao)/iu;
 
@@ -212,6 +215,12 @@ export function isContinuationOrCoreferenceQuery(
 ): boolean {
   const trimmed = (query || '').trim();
   const stripped = trimmed.replace(DISCOURSE_CONNECTIVE_PREFIX_REGEX, '').trim();
+
+  // If query is a comparative follow-up comparing a new entity against the ongoing focal entity
+  // (e.g. "Nếu so với Đinh Bộ Lĩnh thì ai có công lớn hơn...")
+  if (COMPARATIVE_FOLLOWUP_REGEX.test(trimmed) || COMPARATIVE_FOLLOWUP_REGEX.test(stripped)) {
+    return true;
+  }
 
   const hasExplicitSubject =
     explicitEntities.length > 0 ||
@@ -245,6 +254,16 @@ export function isTopicShiftQuery(
   if (!currentExplicitEntities || currentExplicitEntities.length === 0) return false;
 
   const state = extractDialogueState(history);
+
+  // If query expresses a comparative follow-up with discourse ellipsis (e.g. "Nếu so với Đinh Bộ Lĩnh thì..."),
+  // it is intentionally comparing against previous dialogue context, NOT an unlinked topic shift.
+  if (
+    COMPARATIVE_FOLLOWUP_REGEX.test(query) &&
+    Boolean(state.primaryEntity || state.veneratedEntities.length > 0)
+  ) {
+    return false;
+  }
+
   const previousEntities = [
     state.primaryEntity,
     ...state.veneratedEntities,
@@ -380,6 +399,19 @@ export function rewriteMultiTurnQuery(
     );
     if (replaced !== rewritten) {
       rewritten = replaced;
+    }
+  }
+
+  // 6. Comparative Ellipsis: "Nếu so với [Entity]..." -> integrate ongoing primaryEntity
+  if (
+    primaryEntity &&
+    COMPARATIVE_FOLLOWUP_REGEX.test(rewritten) &&
+    !rewritten.toLowerCase().includes(primaryEntity.toLowerCase())
+  ) {
+    if (/^(?:nếu\s+)?so\s+với\s+/i.test(rewritten)) {
+      rewritten = `So sánh giữa ${primaryEntity} và ${rewritten.replace(/^(?:nếu\s+)?so\s+với\s+/i, '')}`;
+    } else {
+      rewritten = `So sánh giữa ${primaryEntity} và ${rewritten}`;
     }
   }
 

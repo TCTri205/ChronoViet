@@ -824,7 +824,13 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
           };
         } else if (uniqueEntityIds.size >= 2) {
           // MULTIPLE DISTINCT ENTITIES (even if appositive aliases present) -> HISTORICAL_QUERY!
-          signals.isCoReferenceIdentity = false;
+          const personEntities = foundEntities.filter((f) => f.entityId.startsWith('person_'));
+          const personEntityCounts = new Map<string, number>();
+          for (const p of personEntities) {
+            personEntityCounts.set(p.entityId, (personEntityCounts.get(p.entityId) || 0) + 1);
+          }
+          const hasCoReferencedPerson = Array.from(personEntityCounts.values()).some((cnt) => cnt >= 2);
+          signals.isCoReferenceIdentity = hasCoReferencedPerson;
           const isKinship =
             KINSHIP_AND_RELATION_REGEX.test(cleanQuery) ||
             /(?:quan\s+hệ|huyết\s+thống|họ\s+hàng|thân\s+tộc)/i.test(cleanQuery);
