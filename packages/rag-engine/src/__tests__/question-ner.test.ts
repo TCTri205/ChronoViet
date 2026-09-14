@@ -44,6 +44,10 @@ describe('Question NER in Chrono-RAG Runtime', () => {
     const res3 = extractQueryEntities(query3);
     expect(res3.entityIds).toContain('loc_sai_gon');
     expect(res3.entityNames).toContain('Sài Gòn');
+
+    const query4 = 'Đào Duy Từ chỉ huy đắp lũy Thầy kiên cố ngăn chặn quân Trịnh.';
+    const res4 = extractQueryEntities(query4);
+    expect(res4.entityIds).toContain('loc_luy_thay');
   });
 
   it('should execute in sub-15ms without any LLM dependency', () => {

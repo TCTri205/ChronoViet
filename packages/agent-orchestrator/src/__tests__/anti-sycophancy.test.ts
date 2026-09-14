@@ -88,6 +88,69 @@ describe('Anti-Sycophancy & Invariant Semantic Verification', () => {
       expect(result.suggestedDirective).toContain('Lê Học');
       expect(result.suggestedDirective).toContain('Lê Trừ');
     });
+
+    it('decouples category warning labels from detectedEntities', () => {
+      const sycophancyRes = analyzePremiseAndLeadingIntent('ông cố của tôi là hậu duệ trực hệ của vua Quang Trung');
+      expect(sycophancyRes.categoryLabel).toBe('Gia phả tư nhân');
+      expect(sycophancyRes.detectedEntities).not.toContain('Gia phả tư nhân');
+
+      const folkloreRes = analyzePremiseAndLeadingIntent('Thánh Gióng bay về trời là sự kiện có thật 100% trong chính sử');
+      expect(folkloreRes.categoryLabel).toBe('Truyền thuyết thần thoại');
+      expect(folkloreRes.detectedEntities).not.toContain('Truyền thuyết thần thoại');
+    });
+
+    it('whitelists legitimate feudal Vietnamese weapons and armor from false anachronism alerts', () => {
+      const sungThanCo = analyzePremiseAndLeadingIntent('Hồ Nguyên Trừng đã chế tạo súng thần cơ như thế nào?');
+      expect(sungThanCo.categoryLabel).toBeUndefined();
+      expect(sungThanCo.isLeadingQuestion).toBe(false);
+
+      const cuuViThanCong = analyzePremiseAndLeadingIntent('Cửu vị thần công thời Nguyễn được đúc vào năm nào?');
+      expect(cuuViThanCong.categoryLabel).toBeUndefined();
+      expect(cuuViThanCong.isLeadingQuestion).toBe(false);
+
+      const aoGiap = analyzePremiseAndLeadingIntent('Quân đội thời Trần sử dụng áo giáp sắt và vũ khí gì khi đánh giặc Nguyên Mông?');
+      expect(aoGiap.categoryLabel).toBeUndefined();
+      expect(aoGiap.isLeadingQuestion).toBe(false);
+    });
+
+    it('permits modern weapons in 20th century warfare contexts without false anachronism refutation', () => {
+      const airDefense1972 = analyzePremiseAndLeadingIntent(
+        'Trong chiến dịch Điện Biên Phủ trên không năm 1972, bộ đội phòng không đã dùng tên lửa SAM-2 bắn rơi máy bay B-52 như thế nào?'
+      );
+      expect(airDefense1972.categoryLabel).toBeUndefined();
+      expect(airDefense1972.isLeadingQuestion).toBe(false);
+    });
+
+    it('does not flag standard polite Vietnamese interrogative endings as mixed-premise traps', () => {
+      const politeQ = analyzePremiseAndLeadingIntent('Trận Bạch Đằng năm 938 do Ngô Quyền lãnh đạo đúng không?');
+      expect(politeQ.categoryLabel).toBeUndefined();
+      expect(politeQ.isLeadingQuestion).toBe(false);
+
+      const politeQ2 = analyzePremiseAndLeadingIntent('Lê Lợi khởi nghĩa Lam Sơn năm 1418 phải không?');
+      expect(politeQ2.categoryLabel).toBeUndefined();
+      expect(politeQ2.isLeadingQuestion).toBe(false);
+    });
+
+    it('does not flag standard scholarly terms like khẳng định, sắc phong, ngôi báu as sycophancy', () => {
+      const scholarlyQ = analyzePremiseAndLeadingIntent('Sử sách khẳng định vai trò của Ngô Quyền như thế nào?');
+      expect(scholarlyQ.categoryLabel).toBeUndefined();
+      expect(scholarlyQ.isLeadingQuestion).toBe(false);
+
+      const throneQ = analyzePremiseAndLeadingIntent('Vua Lê Thái Tổ lên ngôi báu năm nào?');
+      expect(throneQ.categoryLabel).toBeUndefined();
+      expect(throneQ.isLeadingQuestion).toBe(false);
+    });
+
+    it('condenses co-referent alias pairs in multi-entity queries and correctly classifies kinship (Trần Liễu vs Trần Thái Tông)', () => {
+      const result = analyzePremiseAndLeadingIntent('Trần Liễu và vua Trần Thái Tông (Trần Cảnh) có quan hệ gì?');
+      expect(result.isLeadingQuestion).toBe(true);
+      expect(result.isSameEntityCoReference).toBeUndefined();
+      expect(result.questionType).toBe('KINSHIP');
+      expect(result.suggestedDirective).toContain('KIỂM CHỨNG QUAN HỆ LỊCH SỬ KHÁCH QUAN');
+      expect(result.suggestedDirective).toContain('Trần Liễu');
+      expect(result.suggestedDirective).toContain('Trần Thái Tông');
+      expect(result.suggestedDirective).not.toContain('ĐÍNH CHÍNH DANH TÍNH CÙNG MỘT NGƯỜI');
+    });
   });
 
   describe('verifyCoReferenceInvariant', () => {

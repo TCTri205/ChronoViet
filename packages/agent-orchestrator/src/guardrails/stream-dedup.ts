@@ -23,14 +23,33 @@ export function createStreamLoopDetector(options: {
   minRepeatLength?: number;
   maxRepeatsAllowed?: number;
 } = {}): StreamLoopDetector {
-  const minRepeatLength = options.minRepeatLength ?? 40;
-  const maxRepeatsAllowed = options.maxRepeatsAllowed ?? 2;
+  const minRepeatLength = options.minRepeatLength ?? 60;
+  const maxRepeatsAllowed = options.maxRepeatsAllowed ?? 3;
 
   let accumulated = '';
 
   return {
     processChunk(chunk: string) {
       accumulated += chunk;
+
+      // Check consecutive identical paragraph/sentence degeneration (immediate severe loop)
+      const lines = accumulated
+        .split(/\n+/)
+        .map((l) => l.trim())
+        .filter((l) => l.length >= Math.min(minRepeatLength, 25));
+
+      if (lines.length >= 3) {
+        const last = lines[lines.length - 1].toLowerCase().replace(/[.,!?:;\s]+/g, ' ');
+        const prev = lines[lines.length - 2].toLowerCase().replace(/[.,!?:;\s]+/g, ' ');
+        const prev2 = lines[lines.length - 3].toLowerCase().replace(/[.,!?:;\s]+/g, ' ');
+        if (last.length >= 25 && last === prev && last === prev2) {
+          return {
+            shouldEmit: false,
+            shouldTerminate: true,
+            cleanChunk: '',
+          };
+        }
+      }
 
       // 1. Paragraph-level loop detection
       const paragraphs = accumulated
@@ -40,6 +59,8 @@ export function createStreamLoopDetector(options: {
 
       const paragraphCounts = new Map<string, number>();
       for (const p of paragraphs) {
+        // Skip structural markdown headers/titles (e.g. ###, **, - **)
+        if (/^(?:#{1,6}|\*{2}|-\s*\*{2})/.test(p) && p.length < 120) continue;
         const normalized = p.toLowerCase().replace(/[.,!?:;\s]+/g, ' ');
         const count = (paragraphCounts.get(normalized) || 0) + 1;
         paragraphCounts.set(normalized, count);
@@ -60,6 +81,8 @@ export function createStreamLoopDetector(options: {
 
       const sentenceCounts = new Map<string, number>();
       for (const s of sentences) {
+        // Skip structural markdown headers/titles
+        if (/^(?:#{1,6}|\*{2}|-\s*\*{2})/.test(s) && s.length < 120) continue;
         const normalized = s.toLowerCase().replace(/[.,!?:;\s]+/g, ' ');
         const count = (sentenceCounts.get(normalized) || 0) + 1;
         sentenceCounts.set(normalized, count);

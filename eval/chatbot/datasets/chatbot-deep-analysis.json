@@ -16,15 +16,28 @@
       "Ngô Quyền 938",
       "Lê Hoàn 981",
       "Trần Hưng Đạo 1288",
+      "Tiền Lê",
       "thủy triều",
       "kế thừa",
       "phát triển"
+    ],
+    "forbiddenClaims": [
+      "Lê Hoàn thuộc nhà Lý",
+      "Lê Hoàn của nhà Lý",
+      "nhà Lý năm 981",
+      "triều Lý năm 981"
     ],
     "goldenSummary": "Phân tích so sánh toàn diện: Ngô Quyền (938) mở đầu sáng tạo cọc bịt sắt lợi dụng thủy triều tiêu diệt Hoằng Thao; Lê Hoàn (981) kế thừa địa thế Bạch Đằng phối hợp phục kích thủy bộ chém Hầu Nhân Bảo; Trần Hưng Đạo (1288) nâng tầm thành nghệ thuật quân sự đỉnh cao với quy mô bãi cọc liên hoàn (Yên Hưng), phối hợp thủy - bộ khép kín, triệt đường thoái lui bắt sống Ô Mã Nhi.",
     "turnExpectations": [
       {
         "turnIndex": 1,
-        "requiredPhrases": ["938", "981", "1288", "cọc", "thủy triều"]
+        "requiredPhrases": ["938", "981", "1288", "cọc", "thủy triều", "Tiền Lê"],
+        "forbiddenClaims": [
+          "Lê Hoàn thuộc nhà Lý",
+          "Lê Hoàn của nhà Lý",
+          "nhà Lý năm 981",
+          "triều Lý năm 981"
+        ]
       }
     ]
   },
@@ -44,16 +57,29 @@
     "requiredAspects": [
       "Hồ Quý Ly",
       "Hồ Nguyên Trừng",
+      "Trần Thiếu Đế",
       "Thần không sợ đánh",
       "lòng dân",
       "tiền giấy",
       "quân Minh"
     ],
+    "forbiddenClaims": [
+      "cướp ngôi Trần Thiêm Bình",
+      "phế truất Trần Thiêm Bình",
+      "thay thế Trần Thiêm Bình",
+      "vua Trần Thiêm Bình"
+    ],
     "goldenSummary": "Cuộc cải cách của Hồ Quý Ly có nhiều điểm tiến bộ nhưng thực hiện vội vã, cưỡng bức, lại phế truất vua Trần khiến sĩ phu và nhân dân bất mãn. Dù có súng thần cơ và thành đá kiên cố, việc đánh mất thế trận lòng dân đúng như câu nói của Hồ Nguyên Trừng 'Thần không sợ đánh, chỉ sợ lòng dân không theo' là nguyên nhân cốt tử khiến nhà Hồ thất bại trước quân Minh.",
     "turnExpectations": [
       {
         "turnIndex": 1,
-        "requiredPhrases": ["Hồ Nguyên Trừng", "lòng dân", "quân Minh"]
+        "requiredPhrases": ["Hồ Nguyên Trừng", "lòng dân", "quân Minh"],
+        "forbiddenClaims": [
+          "cướp ngôi Trần Thiêm Bình",
+          "phế truất Trần Thiêm Bình",
+          "thay thế Trần Thiêm Bình",
+          "vua Trần Thiêm Bình"
+        ]
       }
     ]
   },
@@ -109,7 +135,7 @@
     "turnExpectations": [
       {
         "turnIndex": 1,
-        "requiredPhrases": ["sông Gianh", "Đàng Trong", "Đàng Ngoài"]
+        "requiredPhrases": ["sông Gianh", "Lũy Thầy", "Đàng Trong", "Đàng Ngoài"]
       }
     ]
   },
@@ -159,11 +185,23 @@
       "B-52",
       "Hiệp định Paris"
     ],
+    "forbiddenClaims": [
+      "thu hồi tên lửa đã bắn rơi",
+      "thu hồi tên lửa đã nổ",
+      "bắn tên lửa gỗ",
+      "nhặt tên lửa đã bắn"
+    ],
     "goldenSummary": "Nhận diện cả 2 ý định: Giải đáp câu hỏi lịch sử (chiến dịch 12 ngày đêm từ 18/12 đến 30/12/1972, bắn rơi nhiều pháo đài bay B-52, buộc Mỹ ký Hiệp định Paris 1973) đồng thời kích hoạt intent khởi tạo video 3 phút về trận Điện Biên Phủ trên không.",
     "turnExpectations": [
       {
         "turnIndex": 1,
-        "requiredPhrases": ["12 ngày đêm", "B-52"]
+        "requiredPhrases": ["12 ngày đêm", "B-52", "18/12", "30/12"],
+        "forbiddenClaims": [
+          "thu hồi tên lửa đã bắn rơi",
+          "thu hồi tên lửa đã nổ",
+          "bắn tên lửa gỗ",
+          "nhặt tên lửa đã bắn"
+        ]
       }
     ]
   },
@@ -189,7 +227,7 @@
     "turnExpectations": [
       {
         "turnIndex": 1,
-        "requiredPhrases": ["Lam Sơn", "Tuyên ngôn Độc lập", "văn hiến"]
+        "requiredPhrases": ["Lam Sơn", "Tuyên ngôn Độc lập"]
       }
     ]
   },

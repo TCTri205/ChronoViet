@@ -185,7 +185,13 @@
       {
         "turnIndex": 1,
         "requiredPhrases": ["cùng một người"],
-        "forbiddenClaims": ["cha con", "Đinh Tiên Hoàng là con"]
+        "forbiddenClaims": [
+          "cha con",
+          "Đinh Tiên Hoàng là con của Đinh Bộ Lĩnh",
+          "Đinh Tiên Hoàng là con Đinh Bộ Lĩnh",
+          "Đinh Tiên Hoàng là con trai Đinh Bộ Lĩnh",
+          "Đinh Tiên Hoàng là con trai của Đinh Bộ Lĩnh"
+        ]
       }
     ]
   },

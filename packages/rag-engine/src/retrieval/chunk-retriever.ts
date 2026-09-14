@@ -57,26 +57,44 @@ export async function getChunksForEntities(
       epoch_ids?: string[];
       entity_id: string;
     }>(
-      `SELECT c.id, c.title, c.text_content, c.dynasty, c.source_reliability, c.parent_chunk_id, c.time_start, c.time_end, c.epoch_ids, ec.entity_id
-       FROM document_chunks c
-       INNER JOIN entity_chunks ec ON c.id = ec.chunk_id
-       WHERE ec.entity_id = ANY($1)
-        ORDER BY
-          CASE
-            WHEN ec.entity_id = $4 THEN 0
-            WHEN ec.entity_id = ANY($2) THEN 1
-            ELSE 2
-          END ASC,
-          CASE c.source_reliability
-            WHEN 'LEVEL_1' THEN 1
-            WHEN 'LEVEL_2' THEN 2
-            ELSE 3
-          END ASC,
-          ${typeof resolvedYear === 'number' ? `CASE WHEN c.time_start IS NOT NULL THEN ABS(c.time_start - ${resolvedYear}) ELSE 9999 END ASC,` : ''}
-          CASE WHEN c.parent_chunk_id IS NULL THEN 0 ELSE 1 END ASC,
-          c.id ASC
-        LIMIT $3;`,
-      [entityIds, priorityEntityIds || [], Math.max(80, limit * 4), priorityEntityIds?.[0] || '']
+      `WITH partitioned_chunks AS (
+         SELECT c.id, c.title, c.text_content, c.dynasty, c.source_reliability, c.parent_chunk_id, c.time_start, c.time_end, c.epoch_ids, ec.entity_id,
+                ROW_NUMBER() OVER (
+                  PARTITION BY ec.entity_id
+                  ORDER BY
+                    ${typeof targetYear === 'number' ? `CASE WHEN c.time_start IS NOT NULL THEN ABS(c.time_start - ${targetYear}) ELSE 9999 END ASC,` : ''}
+                    CASE c.source_reliability
+                      WHEN 'LEVEL_1' THEN 1
+                      WHEN 'LEVEL_2' THEN 2
+                      ELSE 3
+                    END ASC,
+                    ${typeof targetYear !== 'number' && typeof resolvedYear === 'number' ? `CASE WHEN c.time_start IS NOT NULL THEN ABS(c.time_start - ${resolvedYear}) ELSE 9999 END ASC,` : ''}
+                    CASE WHEN c.parent_chunk_id IS NULL THEN 0 ELSE 1 END ASC,
+                    c.id ASC
+                ) as rank_per_entity
+         FROM document_chunks c
+         INNER JOIN entity_chunks ec ON c.id = ec.chunk_id
+         WHERE ec.entity_id = ANY($1)
+       )
+       SELECT id, title, text_content, dynasty, source_reliability, parent_chunk_id, time_start, time_end, epoch_ids, entity_id
+       FROM partitioned_chunks
+       WHERE rank_per_entity <= $4
+       ORDER BY
+         rank_per_entity ASC,
+         CASE
+           WHEN entity_id = $5 THEN 0
+           WHEN entity_id = ANY($2) THEN 1
+           ELSE 2
+         END ASC,
+         id ASC
+       LIMIT $3;`,
+      [
+        entityIds,
+        priorityEntityIds || [],
+        Math.max(80, limit * 4),
+        Math.max(6, Math.ceil(limit / Math.min(entityIds.length, 10))),
+        priorityEntityIds?.[0] || '',
+      ]
     );
 
     if (rows && rows.length > 0) {
@@ -195,10 +213,15 @@ export async function getChunksForEntities(
     const aPriority = aMatchesPrimary ? 0 : (isChunkMatchingTarget(a, priorityNamesAndIdsSet) ? 1 : 2);
     const bPriority = bMatchesPrimary ? 0 : (isChunkMatchingTarget(b, priorityNamesAndIdsSet) ? 1 : 2);
     if (aPriority !== bPriority) return aPriority - bPriority;
+    if (typeof targetYear === 'number') {
+      const aDist = a.time_start != null ? Math.abs(a.time_start - targetYear) : 9999;
+      const bDist = b.time_start != null ? Math.abs(b.time_start - targetYear) : 9999;
+      if (aDist !== bDist) return aDist - bDist;
+    }
     const rA = reliabilityOrder[a.source_reliability || 'LEVEL_1'] ?? 3;
     const rB = reliabilityOrder[b.source_reliability || 'LEVEL_1'] ?? 3;
     if (rA !== rB) return rA - rB;
-    if (typeof resolvedYear === 'number') {
+    if (typeof targetYear !== 'number' && typeof resolvedYear === 'number') {
       const aDist = a.time_start != null ? Math.abs(a.time_start - resolvedYear) : 9999;
       const bDist = b.time_start != null ? Math.abs(b.time_start - resolvedYear) : 9999;
       if (aDist !== bDist) return aDist - bDist;

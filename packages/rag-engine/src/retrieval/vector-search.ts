@@ -149,7 +149,8 @@ export async function searchHybridVectorAndBM25(
   topK: number = 5,
   rrfK: number = RRF_K,
   detectedEntityIds?: string[],
-  subIntent?: ChatSubIntent
+  subIntent?: ChatSubIntent,
+  targetYear?: number
 ): Promise<VectorSearchResult[]> {
   const pgConnected = await isPgAvailable();
   const [denseResults, ftsResults] = await Promise.all([
@@ -209,6 +210,24 @@ export async function searchHybridVectorAndBM25(
       });
     }
   });
+
+  // Apply temporal proximity adjustment if targetYear is specified
+  if (typeof targetYear === 'number') {
+    for (const item of chunkMap.values()) {
+      if (item.timeStart !== undefined || item.timeEnd !== undefined) {
+        const start = item.timeStart ?? item.timeEnd!;
+        const end = item.timeEnd ?? item.timeStart!;
+        let delta = 0;
+        if (targetYear < Math.min(start, end)) {
+          delta = Math.min(start, end) - targetYear;
+        } else if (targetYear > Math.max(start, end)) {
+          delta = targetYear - Math.max(start, end);
+        }
+        const tempMult = delta === 0 ? 1.25 : delta <= 2 ? 1.10 : delta <= 5 ? 1.00 : delta <= 15 ? 0.75 : delta <= 30 ? 0.40 : 0.15;
+        item.score *= tempMult;
+      }
+    }
+  }
 
   const results = Array.from(chunkMap.values());
   results.sort((a, b) => b.score - a.score);

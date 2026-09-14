@@ -102,4 +102,48 @@ describe('Graph-Guided Chunk Retriever', () => {
     expect(res[1].chunkId).toBe('chunk_lev2');
     expect(res[2].chunkId).toBe('chunk_lev3');
   });
+
+  it('should prioritize chunks matching targetYear (e.g. 1972 over 1954)', async () => {
+    inMemoryStore.documentChunks.set('chunk_dbp_1954', {
+      id: 'chunk_dbp_1954',
+      title: 'Chiến dịch Điện Biên Phủ 1954',
+      text_content: 'Chiến thắng Điện Biên Phủ lừng lẫy năm châu chấn động địa cầu năm 1954.',
+      time_start: 1954,
+      time_end: 1954,
+      source_reliability: 'LEVEL_1',
+    });
+    inMemoryStore.documentChunks.set('chunk_dbp_1972', {
+      id: 'chunk_dbp_1972',
+      title: 'Chiến dịch Điện Biên Phủ trên không 1972',
+      text_content: 'Chiến dịch 12 ngày đêm Điện Biên Phủ trên không bảo vệ Hà Nội năm 1972.',
+      time_start: 1972,
+      time_end: 1972,
+      source_reliability: 'LEVEL_2',
+    });
+
+    inMemoryStore.entityChunks.push(
+      { entity_id: 'event_dien_bien_phu', chunk_id: 'chunk_dbp_1954' },
+      { entity_id: 'event_dien_bien_phu', chunk_id: 'chunk_dbp_1972' }
+    );
+
+    // Query asking for 1972 targetYear
+    const res1972 = await getChunksForEntities(
+      ['event_dien_bien_phu'],
+      10,
+      ['event_dien_bien_phu'],
+      undefined,
+      1972
+    );
+    expect(res1972[0].chunkId).toBe('chunk_dbp_1972');
+
+    // Query asking for 1954 targetYear
+    const res1954 = await getChunksForEntities(
+      ['event_dien_bien_phu'],
+      10,
+      ['event_dien_bien_phu'],
+      undefined,
+      1954
+    );
+    expect(res1954[0].chunkId).toBe('chunk_dbp_1954');
+  });
 });

@@ -4,12 +4,13 @@
  * and generates strict refusal & verification guidance for LLM prompts.
  */
 
-import { resolveCanonicalEntity, isKnownMasterEntity, HistoricalEntityInfo } from '@chronoviet/shared-spec';
+import { resolveCanonicalEntity, isKnownMasterEntity, HistoricalEntityInfo, HISTORICAL_PERSON_DICTIONARY } from '@chronoviet/shared-spec';
 
 export interface PremiseAnalysisResult {
   isLeadingQuestion: boolean;
   isSameEntityCoReference?: boolean;
   questionType?: 'KINSHIP' | 'IDENTITY' | 'DYNASTY' | 'CHRONOLOGY' | 'GENERAL' | 'EVENT';
+  categoryLabel?: string;
   detectedEntities: string[];
   suggestedDirective: string;
 }
@@ -29,21 +30,32 @@ const DYNASTY_PATTERNS = [
 ];
 
 const SYCOPHANCY_PATTERNS = [
-  /(?:gia\s*phả|hậu\s*duệ|huyết\s*thống|dòng\s*họ|dòng\s*dõi|tự\s*hào|khẳng\s*định|công\s*nhận|khen|nịnh|tổ\s*tiên|ông\s*cố|sắc\s*phong|thừa\s*kế|ngôi\s*báu|khám\s*phá\s*của\s*tôi|bài\s*luận|đồng\s*ý\s*với\s*tôi|đồng\s*ý\s*rằng|chứng\s*tỏ|tuyên\s*bố|xác\s*nhận|nói\s*rằng)/i,
+  /(?:dòng\s*họ\s*(?:của\s*)?tôi|ông\s*cố\s*(?:của\s*)?tôi|tổ\s*tiên\s*(?:của\s*)?tôi|gia\s*phả\s*(?:nhà|của|dòng\s*họ)\s*tôi|khám\s*phá\s*của\s*tôi|bài\s*luận\s*của\s*tôi|đồng\s*ý\s*với\s*tôi|đồng\s*ý\s*rằng)/i,
+  /(?:tôi\s+(?:là|chính\s+là)\s+hậu\s+duệ|tôi\s+là\s+cháu\s+(?:đích\s+tôn|đời\s+thứ)|nhà\s+tôi\s+có\s+gia\s+phả|nhận\s+vơ\s+hậu\s+duệ|nhận\s+làm\s+hậu\s+duệ)/i,
 ];
 
-const ANACHRONISM_PATTERNS = [
-  /(?:đại\s*bác|súng|hỏa\s*mai|xe\s*tăng|máy\s*bay|súng\s*hỏa\s*cơ|thần\s*công|bộ\s*đàm|điện\s*thoại|tàu\s*hỏa|facebook|youtube|kính\s*thiên\s*văn|đèn\s*led|camera|microsoft\s*word|máy\s*vi\s*tính|mã\s*qr|ví\s*điện\s*tử|boeing|email|sms|cano|4k|truyền\s*hình|máy\s*kéo|máy\s*gặt|bom\s*nguyên\s*tử|thương\s*mại\s*điện\s*tử|áo\s*giáp|kevlar|pin\s*lithium|drone|bắn\s*tỉa|hồng\s*ngoại|tên\s*lửa|sam-2)/i,
+// Whitelist for authentic feudal Vietnamese weaponry and armor
+const FEUDAL_WEAPONS_WHITELIST = /(?:súng\s*thần\s*cơ|súng\s*hỏa\s*mai|cửu\s*vị\s*thần\s*công|thần\s*cơ\s*doanh|thần\s*cơ\s*thương\s*pháo|thần\s*công|áo\s*giáp(?:\s*sắt|\s*đồng)?)/i;
+
+// Digital / modern electronic tech that is strictly anachronistic for any pre-modern context
+const MODERN_DIGITAL_ANACHRONISM_PATTERNS = [
+  /(?:bộ\s*đàm|điện\s*thoại|facebook|youtube|kính\s*thiên\s*văn|đèn\s*led|camera|microsoft\s*word|máy\s*vi\s*tính|mã\s*qr|ví\s*điện\s*tử|boeing|email|sms|cano|4k|truyền\s*hình|pin\s*lithium|drone|hồng\s*ngoại|thương\s*mại\s*điện\s*tử|áo\s*giáp\s*kevlar|kevlar)/i,
 ];
+
+// Modern military hardware (20th century) that is ONLY anachronistic if queried in ancient/feudal context
+const MODERN_MILITARY_PATTERNS = [
+  /(?:xe\s*tăng|máy\s*bay|tên\s*lửa|sam-2|bom\s*nguyên\s*tử|súng\s*bắn\s*tỉa|máy\s*kéo|máy\s*gặt)/i,
+];
+
+const ANCIENT_FEUDAL_CONTEXT_PATTERNS = /(?:thời(?:\s+kỳ)?\s+(?:phong\s*kiến|cổ\s*đại|bắc\s*thuộc|lý|trần|lê|nguyễn|đinh|ngô|tiền\s*lê|hồ|tây\s*sơn|mạc|hùng\s*vương|an\s*dương\s*vương)|nhà\s+(?:lý|trần|lê|nguyễn|đinh|ngô|tiền\s*lê|hồ|tây\s*sơn|mạc|hán|đường|tống|nguyên|minh|thanh)|triều\s+(?:lý|trần|lê|nguyễn|đinh|ngô|tiền\s*lê|hồ|tây\s*sơn|mạc)|quang\s*trung|nguyễn\s*huệ|trần\s*hưng\s*đạo|lê\s*lợi|lý\s*thường\s*kiệt|ngô\s*quyền|đinh\s*tiên\s*hoàng|an\s*dương\s*vương|thục\s*phán|trọng\s*thủy|mỵ\s*châu|bạch\s*đằng(?:\s*năm\s*(?:938|981|1288))?|ngọc\s*hồi|chi\s*lăng|xương\s*giang|như\s*nguyệt)/i;
 
 const FOLKLORE_AS_FACT_PATTERNS = [
   /(?:thánh\s*gióng|bay\s*về\s*trời|nhổ\s*bụi\s*tre|nỏ\s*thần|rùa\s*vàng|thần\s*kim\s*quy|có\s*thật\s*100%|chính\s*sử.*thần\s*thoại|sơn\s*tinh|thủy\s*tinh|dưa\s*hấu|mai\s*an\s*tiêm|rùa\s*vàng.*hồ\s*gươm|chử\s*đồng\s*tử|tiên\s*dung|bánh\s*chưng|lang\s*liêu|thạch\s*sanh|thần\s*độc\s*cước|tre\s*trăm\s*đốt|trầu\s*cau|từ\s*thức|ông\s*táo|trạng\s*quỳnh|tấm\s*cám|mỵ\s*châu|ba\s*bể|thần\s*đồng\s*cổ|móng\s*rồng|cóc\s*kiện\s*trời|con\s*cóc\s*là\s*cậu)/i,
 ];
 
 const MIXED_PREMISE_PATTERNS = [
-  /(?:đúng\s*không|phải\s*không|có\s*đúng|đúng\s*chứ)/i,
-  /(?:và\s+sau\s+đó|và\s+cùng|rồi\s+sau\s+đó|rồi\s+ký|rồi\s+lãnh\s+đạo|đã\s+viết.*dời\s+đô|và\s+dùng|và\s+phát\s+hành|và\s+chỉ\s+huy\s+mở|sáng\s+lập\s+ra|trực\s+tiếp\s+sáng\s+tác)/i,
-  /(?:năm\s+\d+.*đã\s+viết|năm\s+\d+.*đã\s+chỉ\s+huy|năm\s+\d+.*đã\s+lãnh\s+đạo|năm\s+\d+.*đại\s+phá.*năm\s+\d+|đại\s*phá.*năm\s*\d+|trong\s+Hội\s*nghị.*năm\s*\d+|ký\s+Hiệp\s*định.*năm\s*\d+|phát\s*động\s*phong\s*trào)/i,
+  /(?:vừa\s+(?:lãnh\s*đạo|chỉ\s*huy|chiến\s*đấu)\s+.*nhưng\s+(?:lại\s+)?(?:ký|đầu\s*hàng|thỏa\s*hiệp))/i,
+  /(?:năm\s+\d{3,4}.*(?:rồi\s+sau\s+đó|nhưng\s+lại).*năm\s+\d{3,4}.*(?:có\s+mâu\s+thuẫn|đúng\s+sai\s+thế\s+nào))/i,
 ];
 
 export function cleanEntitySpan(span: string): string {
@@ -73,8 +85,8 @@ export function extractRecognizedOrProperNounEntities(query: string): string[] {
     'không', 'chăng', 'hả', 'nhỉ', 'và', 'với', 'cùng', 'hai', 'người',
   ]);
 
-  // 1. First pass: recognized master entities from shared-spec (4 words down to 1)
-  for (let len = Math.min(4, n); len >= 1; len--) {
+  // 1. First pass: recognized master entities from shared-spec (8 words down to 1)
+  for (let len = Math.min(8, n); len >= 1; len--) {
     for (let i = 0; i <= n - len; i++) {
       if (Array.from({ length: len }, (_, k) => i + k).some((idx) => coveredIndices.has(idx))) continue;
       const span = tokens.slice(i, i + len).join(' ');
@@ -123,6 +135,7 @@ export function extractRecognizedOrProperNounEntities(query: string): string[] {
       if (spanTokens.some((t) => STOPWORDS.has(t.toLowerCase()))) continue;
       const candidate = spanTokens.join(' ');
       const cleaned = cleanEntitySpan(candidate);
+      if (/^(?:to lớn|to tát|to nhỏ|to cao|vương quyền|vương triều|vương quốc|vương vị|đối với)\b/i.test(cleaned)) continue;
       if (
         cleaned.length >= 3 &&
         !recognized.some((r) => r.toLowerCase().includes(cleaned.toLowerCase()) || cleaned.toLowerCase().includes(r.toLowerCase()))
@@ -308,59 +321,81 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
       isKnown: isKnownMasterEntity(name),
     }));
 
-    // 1a. Check for Same Entity Co-Reference across ANY pair of mentions
-    for (let i = 0; i < resolvedList.length; i++) {
-      for (let j = i + 1; j < resolvedList.length; j++) {
-        const itemA = resolvedList[i];
-        const itemB = resolvedList[j];
-        if (
-          itemA.canon.entityId &&
-          itemB.canon.entityId &&
-          itemA.canon.entityId === itemB.canon.entityId &&
-          itemA.name.toLowerCase() !== itemB.name.toLowerCase()
-        ) {
-          const isEventOrActionInquiry = /(?:chiến\s+dịch|trận|trận\s+đánh|đánh|đánh\s+đuổi|khởi\s+nghĩa|chỉ\s+huy|lãnh\s+đạo|tác\s+chiến|phối\s+hợp|phân\s+công|nhiệm\s+vụ|ra\s+đi|tìm\s+đường|lên\s+tàu|ký|hội\s+nghị|sáng\s+lập|định\s+đô|dời\s+đô|xây\s+dựng|cùng\s+(?:nhau\s+)?(?:làm|đánh|chỉ\s+huy|lãnh\s+đạo|chiến\s+đấu|khởi\s+nghĩa))/i.test(trimmed);
+    // Filter person subjects (excluding locations, events, dynasties, artifacts, docs)
+    const personItems = resolvedList.filter((item) => {
+      const t = item.canon.type;
+      return !(t === 'LOCATION' || t === 'EVENT_BATTLE' || t === 'DYNASTY_ERA' || t === 'ORGANIZATION' || t === 'ARTIFACT' || t === 'DOCUMENT_CULTURE');
+    });
 
-          const allEntities = Array.from(new Set([itemA.name, itemB.name, ...spotted]));
+    const candidateItems = personItems.length >= 2 ? personItems : resolvedList;
 
-          if (isEventOrActionInquiry) {
-            return {
-              isLeadingQuestion: true,
-              isSameEntityCoReference: true,
-              questionType: 'EVENT',
-              detectedEntities: allEntities,
-              suggestedDirective: buildSameEntityEventDirective(itemA.name, itemB.name, itemA.canon, trimmed),
-            };
-          } else {
-            const isKinshipAsked = /(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu|họ\s+hàng|thân\s+tộc|huyết\s+thống|cột\s+chèo|con\s+trai|con\s+gái|quan\s+hệ|liên\s+quan)/i.test(trimmed);
-            return {
-              isLeadingQuestion: true,
-              isSameEntityCoReference: true,
-              questionType: isKinshipAsked ? 'KINSHIP' : 'IDENTITY',
-              detectedEntities: allEntities,
-              suggestedDirective: buildSameEntityCoReferenceDirective(itemA.name, itemB.name, itemA.canon, trimmed),
-            };
-          }
-        }
+    // Group mentions by canonical persona to condense co-referent alias pairs
+    const personaMap = new Map<string, typeof resolvedList>();
+    for (const item of candidateItems) {
+      const isPerson = item.canon.type === 'HISTORICAL_PERSON' || item.canon.entityId.startsWith('person_') || Boolean(HISTORICAL_PERSON_DICTIONARY[item.canon.entityId]);
+      const pKey = isPerson ? item.canon.entityId : item.name.toLowerCase();
+      if (!personaMap.has(pKey)) {
+        personaMap.set(pKey, []);
+      }
+      personaMap.get(pKey)!.push(item);
+    }
+
+    const distinctPersonaKeys = Array.from(personaMap.keys());
+    const distinctKnownPersonaKeys = distinctPersonaKeys.filter((k) => k.startsWith('person_') || Boolean(HISTORICAL_PERSON_DICTIONARY[k]));
+
+    // 1a. If ALL KNOWN candidate personas map to exactly ONE canonical persona (e.g. Quang Trung & Nguyễn Huệ, Nguyễn Tất Thành & Văn Ba)
+    if (distinctKnownPersonaKeys.length === 1 && personaMap.get(distinctKnownPersonaKeys[0])!.length >= 2) {
+      const mentions = personaMap.get(distinctKnownPersonaKeys[0])!;
+      const itemA = mentions[0];
+      const itemB = mentions.length > 1 ? mentions[1] : mentions[0];
+      const isEventOrActionInquiry = /(?:chiến\s+dịch|trận|trận\s+đánh|đánh|đánh\s+đuổi|khởi\s+nghĩa|chỉ\s+huy|lãnh\s+đạo|tác\s+chiến|phối\s+hợp|phân\s+công|nhiệm\s+vụ|ra\s+đi|tìm\s+đường|lên\s+tàu|ký|hội\s+nghị|sáng\s+lập|định\s+đô|dời\s+đô|xây\s+dựng|cùng\s+(?:nhau\s+)?(?:làm|đánh|chỉ\s+huy|lãnh\s+đạo|chiến\s+đấu|khởi\s+nghĩa))/i.test(trimmed);
+
+      const allEntities = Array.from(new Set([itemA.name, itemB.name, ...spotted]));
+
+      if (isEventOrActionInquiry) {
+        return {
+          isLeadingQuestion: true,
+          isSameEntityCoReference: true,
+          questionType: 'EVENT',
+          detectedEntities: allEntities,
+          suggestedDirective: buildSameEntityEventDirective(itemA.name, itemB.name, itemA.canon, trimmed),
+        };
+      } else {
+        const isKinshipAsked = /(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu|họ\s+hàng|thân\s+tộc|huyết\s+thống|cột\s+chèo|con\s+trai|con\s+gái|quan\s+hệ|liên\s+quan)/i.test(trimmed);
+        return {
+          isLeadingQuestion: true,
+          isSameEntityCoReference: true,
+          questionType: isKinshipAsked ? 'KINSHIP' : 'IDENTITY',
+          detectedEntities: allEntities,
+          suggestedDirective: buildSameEntityCoReferenceDirective(itemA.name, itemB.name, itemA.canon, trimmed),
+        };
       }
     }
 
-    // 1b. Kinship inquiry between two different entities
-    const e1 = spotted[0];
-    const e2 = spotted[1];
-    const canon1 = resolvedList[0].canon;
-    const canon2 = resolvedList[1].canon;
-    const isKnown1 = resolvedList[0].isKnown;
-    const isKnown2 = resolvedList[1].isKnown;
-    const isKinshipAsked = /(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu|họ\s+hàng|thân\s+tộc|huyết\s+thống|cột\s+chèo|con\s+trai|con\s+gái|quan\s+hệ|liên\s+quan)/i.test(trimmed);
+    // 1b. If there are 2 or more distinct personas (e.g. Trần Liễu vs Trần Thái Tông / Trần Cảnh)
+    // Co-reference must NOT be true. Check for Kinship or comparative relation between the distinct personas.
+    if (distinctPersonaKeys.length >= 2) {
+      const personaA = personaMap.get(distinctPersonaKeys[0])![0];
+      const personaB = personaMap.get(distinctPersonaKeys[1])![0];
+      const isKinshipAsked = /(?:anh\s+em|chị\s+em|cha\s+con|mẹ\s+con|vợ\s+chồng|ông\s+cháu|họ\s+hàng|thân\s+tộc|huyết\s+thống|cột\s+chèo|con\s+trai|con\s+gái|quan\s+hệ|liên\s+quan)/i.test(trimmed);
 
-    if (isKinshipAsked) {
-      return {
-        isLeadingQuestion: true,
-        questionType: 'KINSHIP',
-        detectedEntities: spotted,
-        suggestedDirective: buildKinshipDirective(e1, e2, canon1, canon2, isKnown1, isKnown2, trimmed),
-      };
+      if (isKinshipAsked) {
+        return {
+          isLeadingQuestion: true,
+          isSameEntityCoReference: undefined,
+          questionType: 'KINSHIP',
+          detectedEntities: spotted,
+          suggestedDirective: buildKinshipDirective(
+            personaA.name,
+            personaB.name,
+            personaA.canon,
+            personaB.canon,
+            personaA.isKnown,
+            personaB.isKnown,
+            trimmed
+          ),
+        };
+      }
     }
   }
 
@@ -435,22 +470,33 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
       return {
         isLeadingQuestion: true,
         questionType: 'IDENTITY',
-        detectedEntities: ['Gia phả tư nhân'],
+        categoryLabel: 'Gia phả tư nhân',
+        detectedEntities: spotted,
         suggestedDirective: 'BẮT BUỘC BÁC BỎ HOẶC GIỮ NGUYÊN TẮC HỌC THUẬT: Không phụ họa vào các tuyên bố gia phả tư nhân hoặc nguồn gốc chưa qua kiểm chứng học thuật.',
       };
     }
   }
 
   // 4. Anachronism weapon/era check
-  for (const pattern of ANACHRONISM_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      return {
-        isLeadingQuestion: true,
-        questionType: 'CHRONOLOGY',
-        detectedEntities: ['Công nghệ vũ khí'],
-        suggestedDirective: 'BẮT BUỘC BÁC BỎ SAI LỆCH NIÊN ĐẠI CÔNG NGHỆ: BẮT BUỘC phải bác bỏ rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, vào thời kỳ [X] hoàn toàn chưa có [vũ khí/công nghệ Y]..."). Nêu rõ vũ khí và bối cảnh lịch sử thực tế thời đó. TUYỆT ĐỐI KHÔNG giải thích dông dài hay mô tả thông số các loại máy bay, súng đạn hiện đại không liên quan.',
-      };
-    }
+  const isWhitelistedFeudal = FEUDAL_WEAPONS_WHITELIST.test(trimmed);
+  const hasDigitalAnachronism = MODERN_DIGITAL_ANACHRONISM_PATTERNS.some((p) => p.test(trimmed));
+  const hasModernMilitary = MODERN_MILITARY_PATTERNS.some((p) => p.test(trimmed));
+  const hasFeudalContext =
+    ANCIENT_FEUDAL_CONTEXT_PATTERNS.test(trimmed) ||
+    (/\b(4\d|5\d|[6-9]\d{2}|1[0-8]\d{2})\b/.test(trimmed) && !/\b(19\d{2}|20\d{2})\b/.test(trimmed));
+
+  const isAnachronistic =
+    (!isWhitelistedFeudal && hasDigitalAnachronism) ||
+    (!isWhitelistedFeudal && hasModernMilitary && hasFeudalContext);
+
+  if (isAnachronistic) {
+    return {
+      isLeadingQuestion: true,
+      questionType: 'CHRONOLOGY',
+      categoryLabel: 'Công nghệ vũ khí',
+      detectedEntities: spotted,
+      suggestedDirective: 'BẮT BUỘC BÁC BỎ SAI LỆCH NIÊN ĐẠI CÔNG NGHỆ: BẮT BUỘC phải bác bỏ rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, vào thời kỳ [X] hoàn toàn chưa có [vũ khí/công nghệ Y]..."). Nêu rõ vũ khí và bối cảnh lịch sử thực tế thời đó. TUYỆT ĐỐI KHÔNG giải thích dông dài hay mô tả thông số các loại máy bay, súng đạn hiện đại không liên quan.',
+    };
   }
 
   // 5. Folklore / Myth claim check
@@ -459,7 +505,8 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
       return {
         isLeadingQuestion: true,
         questionType: 'GENERAL',
-        detectedEntities: ['Truyền thuyết thần thoại'],
+        categoryLabel: 'Truyền thuyết thần thoại',
+        detectedEntities: spotted,
         suggestedDirective: 'BẮT BUỘC PHÂN ĐỊNH DÃ SỬ & CHÍNH SỬ: Phân định rõ ranh giới giữa biểu tượng truyền thuyết thần thoại dân gian và sự kiện thực chứng trong chính sử. Bác bỏ các chi tiết gán ghép sai lệch về địa danh, nhân vật hoặc niên đại; nêu rõ địa danh và tình tiết lịch sử/dân gian chính xác.',
       };
     }
@@ -471,16 +518,65 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
       return {
         isLeadingQuestion: true,
         questionType: 'GENERAL',
-        detectedEntities: ['Tiền đề hỗn hợp'],
+        categoryLabel: 'Tiền đề hỗn hợp',
+        detectedEntities: spotted,
         suggestedDirective: 'BẮT BUỘC KIỂM TRA TỪNG MỆNH ĐỀ: Phân tách rõ phần đúng và phần sai trong câu hỏi.',
       };
     }
   }
 
+  // 7. Military Ordnance Reuse / Field Repair Conflation Check (Task 4)
+  const MISSILE_REUSE_PATTERN = /(?:thu\s*hồi.*tên\s*lửa|tái\s*sử\s*dụng.*tên\s*lửa|bắn\s+lại.*tên\s*lửa|tên\s*lửa.*bắn\s+xong.*thu\s*hồi|bắn\s+tên\s*lửa\s+giả)/i;
+  if (MISSILE_REUSE_PATTERN.test(trimmed)) {
+    return {
+      isLeadingQuestion: true,
+      questionType: 'EVENT',
+      categoryLabel: 'Học thuyết khí tài quân sự',
+      detectedEntities: spotted,
+      suggestedDirective: 'BẮT BUỘC BÁC BỎ SAI LỆCH VỀ TÁI SỬ DỤNG VŨ KHÍ: BẮT BUỘC câu đầu tiên phải bác bỏ dứt khoát tiền đề sai lệch. Tên lửa phòng không (SAM-2) và đạn pháo hạng nặng là vũ khí tiêu hao một lần, khi đã bắn ra/phát nổ thì KHÔNG THỂ thu hồi để tái sử dụng hay bắn lại. Xưởng/Nhà máy A31 là nơi bảo dưỡng, nâng cấp khí tài radar dẫn đường (như đài Fan Song/P-12) và kiểm tra, lắp ráp, hiệu chỉnh tham số quả đạn trước khi phóng, hoàn toàn không có việc thu hồi tên lửa đã bắn.',
+    };
+  }
+
+  // 8. Linebacker II Campaign Temporal Bounds Check (Task 4)
+  const LINEBACKER_DATE_MISMATCH_PATTERN = /(?:12\s+ngày\s+đêm|điện\s+biên\s+phủ\s+trên\s+không|linebacker\s*(?:ii|2)).*(?:kéo\s+dài|diễn\s+ra|tháng\s+1|năm\s+1973|sang\s+năm\s+1973)/i;
+  if (LINEBACKER_DATE_MISMATCH_PATTERN.test(trimmed)) {
+    return {
+      isLeadingQuestion: true,
+      questionType: 'CHRONOLOGY',
+      categoryLabel: 'Mốc thời gian chiến dịch',
+      detectedEntities: spotted,
+      suggestedDirective: 'BẮT BUỘC KHỐNG CHẾ MỐC THỜI GIAN CHIẾN DỊCH 12 NGÀY ĐÊM: Chiến dịch diễn ra chính xác từ ngày 18/12/1972 đến ngày 30/12/1972 (khi Tổng thống Nixon tuyên bố ngừng ném bom từ vĩ tuyến 20 trở ra Bắc). Chiến dịch kết thúc trọn vẹn trong năm 1972, không kéo dài sang năm 1973. Thắng lợi của chiến dịch buộc Mỹ phải ký kết Hiệp định Paris vào ngày 27/01/1973.',
+    };
+  }
+
+  // 9. Trần Thiêm Bình false usurpation premise check (Task 3)
+  const TRAN_THIEM_BINH_PATTERN = /(?:cướp\s+ngôi|phế\s+truất|thay\s+thế|lật\s+đổ).*Trần\s+Thiêm\s+Bình|Trần\s+Thiêm\s+Bình.*(?:cướp\s+ngôi|làm\s+vua|bị\s+phế|nhà\s+trần)/i;
+  if (TRAN_THIEM_BINH_PATTERN.test(trimmed)) {
+    return {
+      isLeadingQuestion: true,
+      questionType: 'DYNASTY',
+      categoryLabel: 'Chính biến vương triều',
+      detectedEntities: spotted,
+      suggestedDirective: 'BẮT BUỘC BÁC BỎ TIỀN ĐỀ VỀ TRẦN THIÊM BÌNH: BẮT BUỘC câu đầu tiên phải bác bỏ dứt khoát. Người bị Hồ Quý Ly truất ngôi năm 1400 là vua Trần Thiếu Đế (vị vua cuối cùng của nhà Trần). Trần Thiêm Bình (tên thật là Nguyễn Khang) là gia nô mạo xưng tôn thất nhà Trần chạy sang cầu viện nhà Minh, KHÔNG PHẢI là vua và KHÔNG PHẢI người bị Hồ Quý Ly cướp ngôi.',
+    };
+  }
+
+  // 10. Lê Hoàn vs Nhà Lý false dynasty premise check (Task 3)
+  const LE_HOAN_LY_PATTERN = /(?:Lê\s+Hoàn|Lê\s+Đại\s+Hành).*(?:thuộc|của|vua)?\s*nhà\s+Lý|nhà\s+Lý.*(?:năm\s+981|Bạch\s+Đằng\s+981|Lê\s+Hoàn)/i;
+  if (LE_HOAN_LY_PATTERN.test(trimmed)) {
+    return {
+      isLeadingQuestion: true,
+      questionType: 'DYNASTY',
+      categoryLabel: 'Quy thuộc triều đại',
+      detectedEntities: spotted,
+      suggestedDirective: 'BẮT BUỘC BÁC BỎ TIỀN ĐỀ VỀ LÊ HOÀN VÀ NHÀ LÝ: BẮT BUỘC câu đầu tiên khẳng định Lê Hoàn thuộc triều Tiền Lê (trị vì 980-1005). Chiến thắng Bạch Đằng năm 981 là chiến công oanh liệt của triều Tiền Lê. Nhà Lý thành lập năm 1009 bởi Lý Thái Tổ (Lý Công Uẩn), sau khi triều Tiền Lê kết thúc, nên không liên quan đến chiến thắng năm 981.',
+    };
+  }
+
   return {
     isLeadingQuestion: false,
     questionType: 'GENERAL',
-    detectedEntities: [],
+    detectedEntities: spotted,
     suggestedDirective: '',
   };
 }

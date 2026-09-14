@@ -46,6 +46,16 @@ export interface HistoricalPersonNamingMetadata {
   familyLineage?: HistoricalPersonFamilyLineage; // e.g. parents, siblings, spouses, children recorded in official annals
   totalAliasesEstimated?: string; // e.g. estimated total number of names/pseudonyms recorded by historians/official institutions
   misconceptions?: HistoricalMisconception[]; // Historical anecdotes, folklore traps or common confusions recorded centrally
+  famousQuote?: string; // Authoritative famous quotes recorded in primary historical annals
+  achievements?: string[]; // Major contributions, reforms, works, or milestones recorded in annals
+}
+
+export interface HistoricalDocMetadata {
+  author?: string;
+  dynasty?: string;
+  year?: number;
+  adversary?: string;
+  context?: string;
 }
 
 export interface HistoricalEntityInfo {
@@ -57,6 +67,7 @@ export interface HistoricalEntityInfo {
   dynasty?: string;
   isMythological?: boolean;
   namingMetadata?: HistoricalPersonNamingMetadata;
+  docMetadata?: HistoricalDocMetadata;
 }
 
 export function removeVietnameseAccents(str: string): string {
@@ -459,9 +470,23 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     entityId: 'person_ho_nguyen_trung',
     canonicalName: 'Hồ Nguyên Trừng',
     type: 'HISTORICAL_PERSON',
-    aliases: ['Lê Trừng'],
+    aliases: ['Lê Trừng', 'Nam Ông', 'Tả tướng quốc Hồ Nguyên Trừng'],
     timeRange: { start: 1374, end: 1446 },
     dynasty: 'Nhà Hồ',
+    namingMetadata: {
+      birthName: 'Lê Trừng (sau đổi thành Hồ Nguyên Trừng)',
+      courtesyOrCommonName: 'Nam Ông',
+      familyLineage: {
+        father: 'Hồ Quý Ly',
+        siblings: ['Hồ Hán Thương'],
+      },
+      famousQuote: 'Thần không sợ đánh, chỉ sợ lòng dân không theo (Đại Việt Sử Ký Toàn Thư ghi nhận lời đáp vua Hồ Hán Thương năm 1405 trước họa xâm lăng của giặc Minh).',
+      achievements: [
+        'Sáng chế Súng thần cơ (Thần cơ sang pháo) - hỏa khí ưu việt hàng đầu thời phong kiến',
+        'Tổng công trình sư xây dựng phòng tuyến sông Hồng, thành Đa Bang và đồn lũy kháng Minh',
+        'Tác giả tác phẩm văn học Nam Ông mộng lục',
+      ],
+    },
   },
   'person_mac_dang_dung': {
     entityId: 'person_mac_dang_dung',
@@ -499,14 +524,27 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     entityId: 'person_gia_long',
     canonicalName: 'Gia Long',
     type: 'HISTORICAL_PERSON',
-    aliases: ['Nguyễn Ánh', 'Vua Gia Long', 'Gia Long Hoàng Đế'],
+    aliases: ['Nguyễn Ánh', 'Vua Gia Long', 'Gia Long Hoàng Đế', 'Nguyễn Phúc Ánh'],
     timeRange: { start: 1762, end: 1820 },
     dynasty: 'Nhà Nguyễn',
     namingMetadata: {
-      birthName: 'Nguyễn Ánh',
+      birthName: 'Nguyễn Phúc Ánh (Nguyễn Ánh)',
+      courtesyOrCommonName: 'Vua Gia Long (vua sáng lập triều Nguyễn)',
       reignEra: 'Gia Long',
       templeName: 'Thế Tổ',
       reignPeriod: { start: 1802, end: 1820 },
+      familyLineage: {
+        father: 'Nguyễn Phúc Luân (Hiếu Khang Hoàng đế - Đệ nhị công tử)',
+        mother: 'Nguyễn Thị Hoàn (Hiếu Khang Hoàng hậu)',
+        children: ['Nguyễn Phúc Cảnh (Hoàng tử Cảnh)', 'Nguyễn Phúc Đảm (Vua Minh Mạng - người kế vị)'],
+      },
+      famousQuote: 'Đặt quốc hiệu Việt Nam năm 1804 và chính thức thực thi, khẳng định chủ quyền của vương triều tại hai quần đảo Hoàng Sa và Trường Sa.',
+      achievements: [
+        'Thống nhất giang sơn đất nước trọn vẹn từ Ải Nam Quan đến Mũi Cà Mau (1802)',
+        'Xác lập quốc hiệu Việt Nam chính thức trên trường ngoại giao quốc tế (1804)',
+        'Thiết lập hệ thống hành chính quy củ, ban hành bộ luật Hoàng Việt luật lệ (luật Gia Long)',
+        'Xác lập và thực thi chủ quyền biển đảo liên tục tại hai quần đảo Hoàng Sa và Trường Sa',
+      ],
       misconceptions: [
         {
           id: 'misc_gia_long_cot_cheo',
@@ -2520,46 +2558,46 @@ export const CORE_ORGS: Array<{ id: string; name: string; aliases: string[] }> =
   { id: 'org_tu_luc_van_doan', name: 'Tự Lực Văn Đoàn', aliases: ['Tự Lực văn đoàn', 'nhóm Tự Lực Văn Đoàn', 'Tự Lực Văn đoàn'] },
 ];
 
-export const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[] }> = [
-  { id: 'event_dung_nuoc_van_lang', name: 'Sáng lập nhà nước Văn Lang', aliases: ['Dựng nước Văn Lang', 'Sáng lập Văn Lang'] },
-  { id: 'event_khoi_nghia_hai_ba_trung', name: 'Khởi nghĩa Hai Bà Trưng', aliases: ['Khởi nghĩa Mê Linh'] },
-  { id: 'event_khoi_nghia_ba_trieu', name: 'Khởi nghĩa Bà Triệu', aliases: [] },
-  { id: 'event_khoi_nghia_ly_bi', name: 'Khởi nghĩa Lý Bí', aliases: ['Khởi nghĩa Vạn Xuân'] },
-  { id: 'event_bach_dang_938', name: 'Chiến thắng Bạch Đằng năm 938', aliases: ['Trận Bạch Đằng (938)', 'Trận Bạch Đằng năm 938', 'Chiến thắng Bạch Đằng 938', 'Trận Bạch Đằng 938'] },
-  { id: 'event_bach_dang_981', name: 'Trận Bạch Đằng năm 981', aliases: ['Trận Bạch Đằng (981)', 'Chiến thắng Bạch Đằng 981', 'Trận Bạch Đằng 981'] },
-  { id: 'event_bach_dang_1288', name: 'Trận Bạch Đằng năm 1288', aliases: ['Trận Bạch Đằng (1288)', 'Chiến thắng Bạch Đằng 1288', 'Đại thắng Bạch Đằng 1288', 'Trận Bạch Đằng 1288'] },
-  { id: 'event_dep_loan_12_su_quan', name: 'Dẹp loạn 12 sứ quân', aliases: [] },
-  { id: 'event_khoi_nghia_lam_son', name: 'Khởi nghĩa Lam Sơn', aliases: [] },
-  { id: 'event_chi_lang_xuong_giang', name: 'Chiến dịch Chi Lăng - Xương Giang', aliases: ['Trận Chi Lăng - Xương Giang', 'Chi Lăng - Xương Giang'] },
-  { id: 'event_hoi_the_dong_quan', name: 'Hội thề Đông Quan', aliases: [] },
-  { id: 'event_ngoc_hoi_dong_da', name: 'Trận Ngọc Hồi - Đống Đa', aliases: ['Chiến thắng Ngọc Hồi - Đống Đa', 'Đại thắng Ngọc Hồi - Đống Đa', 'Ngọc Hồi - Đống Đa'] },
-  { id: 'event_dien_bien_phu', name: 'Chiến dịch Điện Biên Phủ', aliases: ['Trận Điện Biên Phủ', 'chiến dịch Điện Biên Phủ', 'Điện Biên Phủ 1954', 'Chiến dịch Điện Biên Phủ 1954'] },
-  { id: 'event_bien_gioi_1950', name: 'Chiến dịch Biên giới Thu Đông 1950', aliases: ['Chiến dịch Biên giới 1950', 'Chiến dịch Biên giới', 'Chiến dịch Biên Giới Thu Đông 1950'] },
-  { id: 'event_chien_dich_ho_chi_minh', name: 'Chiến dịch Hồ Chí Minh', aliases: ['Chiến dịch Hồ Chí Minh 1975'] },
-  { id: 'event_30_thang_4_1975', name: 'Sự kiện 30 tháng 4 năm 1975', aliases: ['30 tháng 4 năm 1975', 'Ngày Giải phóng miền Nam 30/4/1975'] },
-  { id: 'event_hoi_nghi_dien_hong', name: 'Hội nghị Diên Hồng', aliases: ['Hội nghị Diên Hồng 1284', 'Diên Hồng'] },
-  { id: 'event_hoi_nghi_binh_than', name: 'Hội nghị Bình Than', aliases: ['Hội nghị Bình Than 1282', 'Bình Than'] },
-  { id: 'event_phong_tuyen_nhu_nguyet', name: 'Trận phòng tuyến sông Như Nguyệt', aliases: ['phòng tuyến sông Như Nguyệt'] },
-  { id: 'event_tot_dong_chuc_dong', name: 'Trận Tốt Động - Chúc Động', aliases: ['Tốt Động - Chúc Động'] },
-  { id: 'event_rach_gam_xoai_mut', name: 'Trận Rạch Gầm - Xoài Mút', aliases: ['Rạch Gầm - Xoài Mút'] },
-  { id: 'event_ban_dao_son_tra', name: 'Trận bán đảo Sơn Trà', aliases: ['Bán đảo Sơn Trà'] },
-  { id: 'event_phong_trao_can_vuong', name: 'Phong trào Cần Vương', aliases: ['Cần Vương'] },
-  { id: 'event_dong_du', name: 'Phong trào Đông Du', aliases: ['Đông Du'] },
-  { id: 'event_duy_tan_phan_chu_trinh', name: 'Phong trào Duy Tân', aliases: ['Duy Tân'] },
-  { id: 'event_khoi_nghia_yen_bai', name: 'Khởi nghĩa Yên Bái', aliases: ['cuộc Khởi nghĩa Yên Bái'] },
-  { id: 'event_dong_khoi', name: 'Phong trào Đồng Khởi', aliases: ['Đồng khởi', 'Đồng Khởi', 'Phong trào Đồng Khởi năm 1960', 'phong trào Đồng khởi năm 1960', 'phong trào Đồng khởi', 'Đồng khởi 1960', 'event_dong_khoi_1960'] },
-  { id: 'event_linebacker_2', name: 'Trận Điện Biên Phủ trên không', aliases: ['Điện Biên Phủ trên không', 'Trận Điện Biên Phủ trên không năm 1972', 'Điện Biên Phủ trên không 1972', 'event_dien_bien_phu_tren_khong_1972', 'Linebacker II'] },
-  { id: 'event_gac_ma_1988', name: 'Trận Gạc Ma', aliases: ['Gạc Ma'] },
-  { id: 'event_dong_bo_dau_1258', name: 'Chiến thắng Đông Bộ Đầu năm 1258', aliases: ['Trận Đông Bộ Đầu', 'Đông Bộ Đầu 1258'] },
-  { id: 'event_khoi_nghia_ba_dinh', name: 'Khởi nghĩa Ba Đình', aliases: ['căn cứ Ba Đình'] },
-  { id: 'event_khoi_nghia_huong_khe', name: 'Khởi nghĩa Hương Khê', aliases: ['khởi nghĩa Hương Khê', 'cuộc khởi nghĩa Hương Khê'] },
-  { id: 'event_khoi_nghia_yen_the', name: 'Khởi nghĩa Yên Thế', aliases: ['khởi nghĩa Yên Thế', 'cuộc khởi nghĩa Yên Thế'] },
-  { id: 'event_viet_bac_1947', name: 'Chiến dịch Việt Bắc Thu Đông 1947', aliases: ['Chiến dịch Việt Bắc'] },
-  { id: 'event_mau_than_1968', name: 'Tổng tiến công và nổi dậy Tết Mậu Thân 1968', aliases: ['Tết Mậu Thân 1968', 'Tết Mậu Thân', 'event_tet_mau_than_1968'] },
-  { id: 'event_chien_dich_tay_nguyen_1975', name: 'Chiến dịch Tây Nguyên', aliases: ['Chiến dịch Tây Nguyên 1975'] },
-  { id: 'event_dai_hoi_vi', name: 'Đại hội VI', aliases: ['Đại hội Đảng VI', 'Đại hội VI Đảng Cộng sản Việt Nam', 'Đại hội 6'] },
-  { id: 'event_van_don', name: 'Trận Vân Đồn', aliases: ['Trận Vân Đồn năm 1288', 'Vân Đồn', 'event_tran_van_don'] },
-  { id: 'event_bo_co', name: 'Trận Bô Cô', aliases: ['Trận Bô Cô năm 1408', 'Bô Cô', 'event_tran_bo_co'] },
+export const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[]; timeRange?: { start?: number; end?: number } }> = [
+  { id: 'event_dung_nuoc_van_lang', name: 'Sáng lập nhà nước Văn Lang', aliases: ['Dựng nước Văn Lang', 'Sáng lập Văn Lang'], timeRange: { start: -2879, end: -258 } },
+  { id: 'event_khoi_nghia_hai_ba_trung', name: 'Khởi nghĩa Hai Bà Trưng', aliases: ['Khởi nghĩa Mê Linh'], timeRange: { start: 40, end: 43 } },
+  { id: 'event_khoi_nghia_ba_trieu', name: 'Khởi nghĩa Bà Triệu', aliases: [], timeRange: { start: 248, end: 248 } },
+  { id: 'event_khoi_nghia_ly_bi', name: 'Khởi nghĩa Lý Bí', aliases: ['Khởi nghĩa Vạn Xuân'], timeRange: { start: 542, end: 548 } },
+  { id: 'event_bach_dang_938', name: 'Chiến thắng Bạch Đằng năm 938', aliases: ['Trận Bạch Đằng (938)', 'Trận Bạch Đằng năm 938', 'Chiến thắng Bạch Đằng 938', 'Trận Bạch Đằng 938'], timeRange: { start: 938, end: 938 } },
+  { id: 'event_bach_dang_981', name: 'Trận Bạch Đằng năm 981', aliases: ['Trận Bạch Đằng (981)', 'Chiến thắng Bạch Đằng 981', 'Trận Bạch Đằng 981'], timeRange: { start: 981, end: 981 } },
+  { id: 'event_bach_dang_1288', name: 'Trận Bạch Đằng năm 1288', aliases: ['Trận Bạch Đằng (1288)', 'Chiến thắng Bạch Đằng 1288', 'Đại thắng Bạch Đằng 1288', 'Trận Bạch Đằng 1288'], timeRange: { start: 1288, end: 1288 } },
+  { id: 'event_dep_loan_12_su_quan', name: 'Dẹp loạn 12 sứ quân', aliases: [], timeRange: { start: 966, end: 968 } },
+  { id: 'event_khoi_nghia_lam_son', name: 'Khởi nghĩa Lam Sơn', aliases: [], timeRange: { start: 1418, end: 1427 } },
+  { id: 'event_chi_lang_xuong_giang', name: 'Chiến dịch Chi Lăng - Xương Giang', aliases: ['Trận Chi Lăng - Xương Giang', 'Chi Lăng - Xương Giang'], timeRange: { start: 1427, end: 1427 } },
+  { id: 'event_hoi_the_dong_quan', name: 'Hội thề Đông Quan', aliases: [], timeRange: { start: 1427, end: 1427 } },
+  { id: 'event_ngoc_hoi_dong_da', name: 'Trận Ngọc Hồi - Đống Đa', aliases: ['Chiến thắng Ngọc Hồi - Đống Đa', 'Đại thắng Ngọc Hồi - Đống Đa', 'Ngọc Hồi - Đống Đa'], timeRange: { start: 1789, end: 1789 } },
+  { id: 'event_dien_bien_phu', name: 'Chiến dịch Điện Biên Phủ', aliases: ['Trận Điện Biên Phủ', 'chiến dịch Điện Biên Phủ', 'Điện Biên Phủ 1954', 'Chiến dịch Điện Biên Phủ 1954'], timeRange: { start: 1954, end: 1954 } },
+  { id: 'event_bien_gioi_1950', name: 'Chiến dịch Biên giới Thu Đông 1950', aliases: ['Chiến dịch Biên giới 1950', 'Chiến dịch Biên giới', 'Chiến dịch Biên Giới Thu Đông 1950'], timeRange: { start: 1950, end: 1950 } },
+  { id: 'event_chien_dich_ho_chi_minh', name: 'Chiến dịch Hồ Chí Minh', aliases: ['Chiến dịch Hồ Chí Minh 1975'], timeRange: { start: 1975, end: 1975 } },
+  { id: 'event_30_thang_4_1975', name: 'Sự kiện 30 tháng 4 năm 1975', aliases: ['30 tháng 4 năm 1975', 'Ngày Giải phóng miền Nam 30/4/1975'], timeRange: { start: 1975, end: 1975 } },
+  { id: 'event_hoi_nghi_dien_hong', name: 'Hội nghị Diên Hồng', aliases: ['Hội nghị Diên Hồng 1284', 'Diên Hồng'], timeRange: { start: 1284, end: 1284 } },
+  { id: 'event_hoi_nghi_binh_than', name: 'Hội nghị Bình Than', aliases: ['Hội nghị Bình Than 1282', 'Bình Than'], timeRange: { start: 1282, end: 1282 } },
+  { id: 'event_phong_tuyen_nhu_nguyet', name: 'Trận phòng tuyến sông Như Nguyệt', aliases: ['phòng tuyến sông Như Nguyệt'], timeRange: { start: 1077, end: 1077 } },
+  { id: 'event_tot_dong_chuc_dong', name: 'Trận Tốt Động - Chúc Động', aliases: ['Tốt Động - Chúc Động'], timeRange: { start: 1426, end: 1426 } },
+  { id: 'event_rach_gam_xoai_mut', name: 'Trận Rạch Gầm - Xoài Mút', aliases: ['Rạch Gầm - Xoài Mút'], timeRange: { start: 1785, end: 1785 } },
+  { id: 'event_ban_dao_son_tra', name: 'Trận bán đảo Sơn Trà', aliases: ['Bán đảo Sơn Trà'], timeRange: { start: 1858, end: 1858 } },
+  { id: 'event_phong_trao_can_vuong', name: 'Phong trào Cần Vương', aliases: ['Cần Vương'], timeRange: { start: 1885, end: 1896 } },
+  { id: 'event_dong_du', name: 'Phong trào Đông Du', aliases: ['Đông Du'], timeRange: { start: 1905, end: 1908 } },
+  { id: 'event_duy_tan_phan_chu_trinh', name: 'Phong trào Duy Tân', aliases: ['Duy Tân'], timeRange: { start: 1906, end: 1908 } },
+  { id: 'event_khoi_nghia_yen_bai', name: 'Khởi nghĩa Yên Bái', aliases: ['cuộc Khởi nghĩa Yên Bái'], timeRange: { start: 1930, end: 1930 } },
+  { id: 'event_dong_khoi', name: 'Phong trào Đồng Khởi', aliases: ['Đồng khởi', 'Đồng Khởi', 'Phong trào Đồng Khởi năm 1960', 'phong trào Đồng khởi năm 1960', 'phong trào Đồng khởi', 'Đồng khởi 1960', 'event_dong_khoi_1960'], timeRange: { start: 1960, end: 1960 } },
+  { id: 'event_linebacker_2', name: 'Trận Điện Biên Phủ trên không', aliases: ['Điện Biên Phủ trên không', 'Trận Điện Biên Phủ trên không năm 1972', 'Điện Biên Phủ trên không 1972', 'event_dien_bien_phu_tren_khong_1972', 'Linebacker II'], timeRange: { start: 1972, end: 1972 } },
+  { id: 'event_gac_ma_1988', name: 'Trận Gạc Ma', aliases: ['Gạc Ma'], timeRange: { start: 1988, end: 1988 } },
+  { id: 'event_dong_bo_dau_1258', name: 'Chiến thắng Đông Bộ Đầu năm 1258', aliases: ['Trận Đông Bộ Đầu', 'Đông Bộ Đầu 1258'], timeRange: { start: 1258, end: 1258 } },
+  { id: 'event_khoi_nghia_ba_dinh', name: 'Khởi nghĩa Ba Đình', aliases: ['căn cứ Ba Đình'], timeRange: { start: 1886, end: 1887 } },
+  { id: 'event_khoi_nghia_huong_khe', name: 'Khởi nghĩa Hương Khê', aliases: ['khởi nghĩa Hương Khê', 'cuộc khởi nghĩa Hương Khê'], timeRange: { start: 1885, end: 1896 } },
+  { id: 'event_khoi_nghia_yen_the', name: 'Khởi nghĩa Yên Thế', aliases: ['khởi nghĩa Yên Thế', 'cuộc khởi nghĩa Yên Thế'], timeRange: { start: 1884, end: 1913 } },
+  { id: 'event_viet_bac_1947', name: 'Chiến dịch Việt Bắc Thu Đông 1947', aliases: ['Chiến dịch Việt Bắc'], timeRange: { start: 1947, end: 1947 } },
+  { id: 'event_mau_than_1968', name: 'Tổng tiến công và nổi dậy Tết Mậu Thân 1968', aliases: ['Tết Mậu Thân 1968', 'Tết Mậu Thân', 'event_tet_mau_than_1968'], timeRange: { start: 1968, end: 1968 } },
+  { id: 'event_chien_dich_tay_nguyen_1975', name: 'Chiến dịch Tây Nguyên', aliases: ['Chiến dịch Tây Nguyên 1975'], timeRange: { start: 1975, end: 1975 } },
+  { id: 'event_dai_hoi_vi', name: 'Đại hội VI', aliases: ['Đại hội Đảng VI', 'Đại hội VI Đảng Cộng sản Việt Nam', 'Đại hội 6'], timeRange: { start: 1986, end: 1986 } },
+  { id: 'event_van_don', name: 'Trận Vân Đồn', aliases: ['Trận Vân Đồn năm 1288', 'Vân Đồn', 'event_tran_van_don'], timeRange: { start: 1288, end: 1288 } },
+  { id: 'event_bo_co', name: 'Trận Bô Cô', aliases: ['Trận Bô Cô năm 1408', 'Bô Cô', 'event_tran_bo_co'], timeRange: { start: 1408, end: 1408 } },
   { id: 'event_bien_gioi_1979', name: 'Chiến tranh biên giới phía Bắc', aliases: ['chiến tranh biên giới phía Bắc', 'Chiến tranh biên giới 1979', 'Cuộc chiến đấu bảo vệ biên giới phía Bắc', 'biên giới 1979'] },
   { id: 'event_bien_gioi_tay_nam', name: 'Chiến tranh biên giới Tây Nam', aliases: ['chiến tranh biên giới Tây Nam', 'chiến dịch phản công bảo vệ biên giới Tây Nam'] },
   { id: 'event_30_thang_4_1975', name: 'Ngày 30 tháng 4 năm 1975', aliases: ['30 tháng 4 năm 1975', '30/4/1975', 'ngày 30 tháng 4 năm 1975'] },
@@ -2568,6 +2606,8 @@ export const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[] }>
   { id: 'event_khoa_thi_tam_khoi', name: 'Khoa thi Tam khôi', aliases: ['khoa thi Tam khôi', 'Tam khôi', 'khoa thi Tam Khôi', 'event_tam_khoi'] },
   { id: 'event_khoa_thi_thai_hoc_sinh', name: 'Khoa thi Thái học sinh', aliases: ['khoa thi Thái học sinh'] },
   { id: 'event_khoa_thi_1075', name: 'Khoa thi Minh kinh bác học năm 1075', aliases: ['khoa thi Minh kinh bác học', 'khoa thi năm 1075'] },
+  { id: 'concept_hao_khi_dong_a', name: 'Hào khí Đông A', aliases: ['hào khí Đông A', 'tinh thần Đông A', 'hào khí thời Trần', 'khí phách Đông A', 'concept_hao_khi_dong_a'], timeRange: { start: 1225, end: 1400 } },
+  { id: 'concept_tam_giao_dong_nguyen', name: 'Tam giáo đồng nguyên', aliases: ['Tam giáo đồng nguyên', 'tam giáo đồng nguyên', 'tam giáo', 'Nho Phật Đạo song hành', 'concept_tam_giao_dong_nguyen'], timeRange: { start: 1009, end: 1400 } },
 ];
 
 export const CORE_ARTIFACTS: Array<{ id: string; name: string; aliases: string[] }> = [
@@ -2580,12 +2620,65 @@ export const CORE_ARTIFACTS: Array<{ id: string; name: string; aliases: string[]
   { id: 'artifact_cuu_dinh', name: 'Cửu Đỉnh', aliases: ['Cửu đỉnh', 'Cửu Đỉnh Huế'] },
 ];
 
-export const CORE_DOCS: Array<{ id: string; name: string; aliases: string[] }> = [
-  { id: 'doc_chieu_doi_do', name: 'Chiếu dời đô', aliases: ['Thiên đô chiếu', 'doc_chieu_doi_do'] },
-  { id: 'doc_hich_tuong_si', name: 'Hịch tướng sĩ', aliases: ['Dụ chư tì tướng hịch văn', 'doc_hich_tuong_si'] },
-  { id: 'doc_binh_ngo_dai_cao', name: 'Bình Ngô đại cáo', aliases: ['Bình Ngô Đại Cáo', 'bài cáo Bình Ngô', 'doc_binh_ngo_dai_cao', 'doc_binh_ngo'] },
-  { id: 'doc_tuyen_ngon_doc_lap', name: 'Tuyên ngôn Độc lập', aliases: ['Bản Tuyên ngôn Độc lập', 'Bản Tuyên ngôn độc lập', 'doc_tuyen_ngon_doc_lap'] },
-  { id: 'doc_nam_quoc_son_ha', name: 'Nam quốc sơn hà', aliases: ['Bài thơ thần Nam quốc sơn hà', 'doc_nam_quoc_son_ha'] },
+export const CORE_DOCS: Array<{
+  id: string;
+  name: string;
+  aliases: string[];
+  author?: string;
+  dynasty?: string;
+  year?: number;
+  adversary?: string;
+  context?: string;
+}> = [
+  {
+    id: 'doc_chieu_doi_do',
+    name: 'Chiếu dời đô',
+    aliases: ['Thiên đô chiếu', 'doc_chieu_doi_do'],
+    author: 'Lý Thái Tổ (Lý Công Uẩn)',
+    dynasty: 'Nhà Lý',
+    year: 1010,
+    context: 'Vua Lý Thái Tổ quyết định dời đô từ cố đô Hoa Lư về thành Đại La (sau đổi là Thăng Long) mở ra thời kỳ hưng thịnh lâu dài của quốc gia Đại Việt.',
+  },
+  {
+    id: 'doc_hich_tuong_si',
+    name: 'Hịch tướng sĩ',
+    aliases: ['Dụ chư tì tướng hịch văn', 'doc_hich_tuong_si'],
+    author: 'Trần Hưng Đạo (Tiết chế Quốc công Trần Quốc Tuấn)',
+    dynasty: 'Nhà Trần',
+    year: 1285,
+    adversary: 'Quân xâm lược Nguyên Mông (Nhà Nguyên)',
+    context: 'Kêu gọi tinh thần yêu nước, lòng trung quân ái quốc và ý chí quyết chiến quyết thắng của các tướng sĩ trước cuộc kháng chiến chống quân Nguyên Mông lần thứ hai.',
+  },
+  {
+    id: 'doc_binh_ngo_dai_cao',
+    name: 'Bình Ngô đại cáo',
+    aliases: ['Bình Ngô Đại Cáo', 'bài cáo Bình Ngô', 'doc_binh_ngo_dai_cao', 'doc_binh_ngo'],
+    author: 'Nguyễn Trãi (thay lời Bình Định Vương Lê Lợi)',
+    dynasty: 'Nhà Hậu Lê (Lê sơ)',
+    year: 1428,
+    adversary: 'Quân xâm lược Nhà Minh (giặc Minh)',
+    context: 'Bản tuyên ngôn độc lập thứ hai, tổng kết thắng lợi oanh liệt của cuộc Khởi nghĩa Lam Sơn (1418 - 1427) đánh đuổi 15 vạn viện binh giặc Minh do Liễu Thăng, Mộc Thạnh chỉ huy, khôi phục nền độc lập thái bình cho Đại Việt.',
+  },
+  {
+    id: 'doc_tuyen_ngon_doc_lap',
+    name: 'Tuyên ngôn Độc lập',
+    aliases: ['Bản Tuyên ngôn Độc lập', 'Bản Tuyên ngôn độc lập', 'doc_tuyen_ngon_doc_lap'],
+    author: 'Chủ tịch Hồ Chí Minh',
+    dynasty: 'Việt Nam Dân chủ Cộng hòa',
+    year: 1945,
+    adversary: 'Thực dân Pháp và Phát xít Nhật',
+    context: 'Đọc ngày 2/9/1945 tại Quảng trường Ba Đình, Hà Nội, khai sinh ra nước Việt Nam Dân chủ Cộng hòa, chấm dứt hơn 80 năm ách thống trị của thực dân Pháp và xóa bỏ chế độ phong kiến.',
+  },
+  {
+    id: 'doc_nam_quoc_son_ha',
+    name: 'Nam quốc sơn hà',
+    aliases: ['Bài thơ thần Nam quốc sơn hà', 'doc_nam_quoc_son_ha'],
+    author: 'Lý Thường Kiệt (tương truyền)',
+    dynasty: 'Nhà Lý',
+    year: 1077,
+    adversary: 'Quân xâm lược Nhà Tống (Quách Quỳ, Triệu Tiết)',
+    context: 'Bản tuyên ngôn độc lập đầu tiên của dân tộc, khẳng định chủ quyền lãnh thổ trên phòng tuyến sông Như Nguyệt trong cuộc kháng chiến chống Tống (1075 - 1077).',
+  },
   { id: 'doc_hinh_thu', name: 'Hình thư', aliases: ['sách Hình thư', 'luật Hình thư', 'Hình thư thời Lý', 'doc_hinh_thu'] },
   { id: 'doc_luat_hong_duc', name: 'Luật Hồng Đức', aliases: ['Quốc triều hình luật', 'doc_quoc_trieu_hinh_luat', 'bộ luật Hồng Đức', 'Bộ luật Hồng Đức', 'Bộ Luật Hồng Đức'] },
   { id: 'doc_dai_viet_su_ky', name: 'Đại Việt Sử Ký', aliases: ['Đại Việt sử ký', 'sách Đại Việt Sử Ký', 'bộ Đại Việt sử ký', 'doc_dai_viet_su_ky'] },
@@ -2659,17 +2752,17 @@ function initFastEntityMap(): void {
     }
   }
 
-  const AMBIGUOUS_SINGLE_WORD_LOCS = new Set(['tiền', 'hậu', 'đà', 'hồng', 'mã', 'cả', 'lô', 'thao', 'đáy', 'hương', 'tranh', 'gianh', 'vệ']);
+  const AMBIGUOUS_SINGLE_WORD_LOCS = new Set(['tiền', 'hậu', 'đà', 'hồng', 'mã', 'cả', 'lô', 'thao', 'đáy', 'hương', 'tranh', 'gianh', 'vệ', 'thầy']);
   for (const loc of Object.values(HISTORICAL_LOCATION_DICTIONARY)) {
     register(loc.entityId, loc.entityId, loc.canonicalName);
     register(loc.canonicalName, loc.entityId, loc.canonicalName);
-    const stripped = loc.canonicalName.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|huyện|làng|căn cứ)\s+/i, '');
+    const stripped = loc.canonicalName.replace(/^(lũy|chiến lũy|thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|huyện|làng|căn cứ)\s+/i, '');
     if (stripped !== loc.canonicalName && stripped.toLowerCase() !== 'nhà hồ' && stripped.toLowerCase() !== 'huế' && !AMBIGUOUS_SINGLE_WORD_LOCS.has(stripped.toLowerCase())) {
       register(stripped, loc.entityId, loc.canonicalName);
     }
     for (const alias of loc.aliases) {
       register(alias, loc.entityId, loc.canonicalName);
-      const strippedAlias = alias.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|huyện|làng|căn cứ)\s+/i, '');
+      const strippedAlias = alias.replace(/^(lũy|chiến lũy|thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|huyện|làng|căn cứ)\s+/i, '');
       if (strippedAlias !== alias && strippedAlias.toLowerCase() !== 'nhà hồ' && strippedAlias.toLowerCase() !== 'huế' && !AMBIGUOUS_SINGLE_WORD_LOCS.has(strippedAlias.toLowerCase())) {
         register(strippedAlias, loc.entityId, loc.canonicalName);
       }
@@ -2791,6 +2884,14 @@ function initFastEntityMap(): void {
   register('lũy Thầy', 'loc_luy_thay', 'lũy Thầy');
   register('Lũy Thầy', 'loc_luy_thay', 'lũy Thầy');
   register('loc_luy_thay', 'loc_luy_thay', 'lũy Thầy');
+  register('lũy Đào Duy Từ', 'loc_luy_thay', 'lũy Thầy');
+  register('Lũy Đào Duy Từ', 'loc_luy_thay', 'lũy Thầy');
+  register('chiến lũy Thầy', 'loc_luy_thay', 'lũy Thầy');
+  register('Chiến lũy Thầy', 'loc_luy_thay', 'lũy Thầy');
+  register('Lũy Nhật Lệ', 'loc_luy_thay', 'lũy Thầy');
+  register('lũy Nhật Lệ', 'loc_luy_thay', 'lũy Thầy');
+  register('Lũy Trường Dục', 'loc_luy_thay', 'lũy Thầy');
+  register('lũy Trường Dục', 'loc_luy_thay', 'lũy Thầy');
   register('person_bo_cai_dai_vuong', 'person_phung_hung', 'Phùng Hưng');
   register('Bố Cái Đại Vương', 'person_phung_hung', 'Phùng Hưng');
   register('Bình Ngô sách', 'doc_binh_ngo_sach', 'Bình Ngô sách');
@@ -2991,7 +3092,7 @@ export function resolveEntityAlias(aliasOrName: string, entityType?: string): En
     return directMatch;
   }
 
-  const strippedNorm = normInput.replace(/^(thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|thời kỳ|thời đại|thời|triều đại|triều|nhà)\s+/, '');
+  const strippedNorm = normInput.replace(/^(lũy|chiến lũy|thành|sông|núi|ải|phủ|đồn|xứ|cố đô|kinh đô|kinh thành|tỉnh|thời kỳ|thời đại|thời|triều đại|triều|nhà)\s+/, '');
   const unaccentedStrippedNorm = strippedNorm.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd');
   const strippedMatch = FAST_ENTITY_MAP.get(strippedNorm) || FAST_ENTITY_MAP.get(unaccentedStrippedNorm);
   if (strippedMatch) {
@@ -3094,14 +3195,30 @@ export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo 
     const d = DYNASTY_DICTIONARY[inputName];
     return { entityId: d.entityId, canonicalName: d.canonicalName, type: 'DYNASTY_ERA', aliases: d.aliases };
   }
-  const directOrg = CORE_ORGS.find((o) => o.id === inputName);
+  const directOrg = CORE_ORGS.find((o) => o.id === inputName || o.aliases.some((a) => a.toLowerCase() === inputName.toLowerCase()) || o.name.toLowerCase() === inputName.toLowerCase());
   if (directOrg) return { entityId: directOrg.id, canonicalName: directOrg.name, type: 'ORGANIZATION', aliases: directOrg.aliases };
-  const directEv = CORE_EVENTS.find((e) => e.id === inputName);
-  if (directEv) return { entityId: directEv.id, canonicalName: directEv.name, type: 'EVENT_BATTLE', aliases: directEv.aliases };
-  const directArt = CORE_ARTIFACTS.find((a) => a.id === inputName);
+  const directEv = CORE_EVENTS.find((e) => e.id === inputName || e.aliases.some((a) => a.toLowerCase() === inputName.toLowerCase()) || e.name.toLowerCase() === inputName.toLowerCase());
+  if (directEv) return { entityId: directEv.id, canonicalName: directEv.name, type: 'EVENT_BATTLE', aliases: directEv.aliases, timeRange: directEv.timeRange };
+  const directArt = CORE_ARTIFACTS.find((a) => a.id === inputName || a.aliases.some((a) => a.toLowerCase() === inputName.toLowerCase()) || a.name.toLowerCase() === inputName.toLowerCase());
   if (directArt) return { entityId: directArt.id, canonicalName: directArt.name, type: 'ARTIFACT', aliases: directArt.aliases };
-  const directDoc = CORE_DOCS.find((d) => d.id === inputName);
-  if (directDoc) return { entityId: directDoc.id, canonicalName: directDoc.name, type: 'DOCUMENT_CULTURE', aliases: directDoc.aliases };
+  const directDoc = CORE_DOCS.find((d) => d.id === inputName || d.aliases.some((a) => a.toLowerCase() === inputName.toLowerCase()) || d.name.toLowerCase() === inputName.toLowerCase());
+  if (directDoc) {
+    return {
+      entityId: directDoc.id,
+      canonicalName: directDoc.name,
+      type: 'DOCUMENT_CULTURE',
+      aliases: directDoc.aliases,
+      dynasty: directDoc.dynasty,
+      timeRange: directDoc.year ? { start: directDoc.year, end: directDoc.year } : undefined,
+      docMetadata: {
+        author: directDoc.author,
+        dynasty: directDoc.dynasty,
+        year: directDoc.year,
+        adversary: directDoc.adversary,
+        context: directDoc.context,
+      },
+    };
+  }
 
   const inferredType = inferEntityTypeFromName(inputName);
   const aliasMapping = resolveEntityAlias(inputName, inferredType);
@@ -3119,22 +3236,31 @@ export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo 
   const foundDyn = DYNASTY_DICTIONARY[aliasMapping.canonicalId];
   if (foundDyn) return { entityId: foundDyn.entityId, canonicalName: foundDyn.canonicalName, type: 'DYNASTY_ERA', aliases: foundDyn.aliases };
 
-  const foundOrg = CORE_ORGS.find((o) => o.id === aliasMapping.canonicalId);
+  const foundOrg = CORE_ORGS.find((o) => o.id === aliasMapping.canonicalId || o.aliases.includes(aliasMapping.canonicalId) || o.name.toLowerCase() === aliasMapping.canonicalName.toLowerCase());
   if (foundOrg) return { entityId: foundOrg.id, canonicalName: foundOrg.name, type: 'ORGANIZATION', aliases: foundOrg.aliases };
 
-  const foundEvent = CORE_EVENTS.find((e) => e.id === aliasMapping.canonicalId);
-  if (foundEvent) return { entityId: foundEvent.id, canonicalName: foundEvent.name, type: 'EVENT_BATTLE', aliases: foundEvent.aliases };
+  const foundEvent = CORE_EVENTS.find((e) => e.id === aliasMapping.canonicalId || e.aliases.includes(aliasMapping.canonicalId) || e.name.toLowerCase() === aliasMapping.canonicalName.toLowerCase());
+  if (foundEvent) return { entityId: foundEvent.id, canonicalName: foundEvent.name, type: 'EVENT_BATTLE', aliases: foundEvent.aliases, timeRange: foundEvent.timeRange };
 
-  const foundArt = CORE_ARTIFACTS.find((a) => a.id === aliasMapping.canonicalId);
+  const foundArt = CORE_ARTIFACTS.find((a) => a.id === aliasMapping.canonicalId || a.aliases.includes(aliasMapping.canonicalId) || a.name.toLowerCase() === aliasMapping.canonicalName.toLowerCase());
   if (foundArt) return { entityId: foundArt.id, canonicalName: foundArt.name, type: 'ARTIFACT', aliases: foundArt.aliases };
 
-  const foundDoc = CORE_DOCS.find((d) => d.id === aliasMapping.canonicalId);
+  const foundDoc = CORE_DOCS.find((d) => d.id === aliasMapping.canonicalId || d.aliases.includes(aliasMapping.canonicalId) || d.name.toLowerCase() === aliasMapping.canonicalName.toLowerCase());
   if (foundDoc) {
     return {
       entityId: foundDoc.id,
       canonicalName: foundDoc.name,
       type: 'DOCUMENT_CULTURE',
       aliases: foundDoc.aliases,
+      dynasty: foundDoc.dynasty,
+      timeRange: foundDoc.year ? { start: foundDoc.year, end: foundDoc.year } : undefined,
+      docMetadata: {
+        author: foundDoc.author,
+        dynasty: foundDoc.dynasty,
+        year: foundDoc.year,
+        adversary: foundDoc.adversary,
+        context: foundDoc.context,
+      },
     };
   }
 

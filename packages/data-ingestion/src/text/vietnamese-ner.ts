@@ -392,7 +392,7 @@ const HISTORICAL_PREFIX_PATTERNS: Array<{
   },
   // Physical Geographical Locations & Monuments (Keep prefix like "sông Bạch Đằng", "núi Sóc Sơn")
   {
-    regex: /(?<![\p{L}\p{N}])(?:(?<![đĐ]ổi\s+tên\s+)(?:thành\s+|Thành\s+)(?!phố\s+)|căn\s+cứ\s+|Căn\s+cứ\s+|ải\s+|Ải\s+|núi\s+|Núi\s+|sông\s+|Sông\s+|bán\s+đảo\s+|Bán\s+đảo\s+|quần\s+đảo\s+|Quần\s+đảo\s+|địa\s+đạo\s+|Đường\s+mòn\s+|Đường\s+|Đền\s+|Chùa\s+|Văn\s+Miếu\s+|Quảng\s+trường\s+|Dinh\s+|Nhà\s+máy\s+Thủy\s+điện\s+|ấp\s+|Ấp\s+|đầm\s+|Đầm\s+|khu\s+mộ\s+chum\s+|di\s+chỉ\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
+    regex: /(?<![\p{L}\p{N}])(?:(?<![đĐ]ổi\s+tên\s+)(?:thành\s+|Thành\s+)(?!phố\s+)|lũy\s+|Lũy\s+|chiến\s+lũy\s+|Chiến\s+lũy\s+|căn\s+cứ\s+|Căn\s+cứ\s+|ải\s+|Ải\s+|núi\s+|Núi\s+|sông\s+|Sông\s+|bán\s+đảo\s+|Bán\s+đảo\s+|quần\s+đảo\s+|Quần\s+đảo\s+|địa\s+đạo\s+|Đường\s+mòn\s+|Đường\s+|Đền\s+|Chùa\s+|Văn\s+Miếu\s+|Quảng\s+trường\s+|Dinh\s+|Nhà\s+máy\s+Thủy\s+điện\s+|ấp\s+|Ấp\s+|đầm\s+|Đầm\s+|khu\s+mộ\s+chum\s+|di\s+chỉ\s+)([\p{Lu}][\p{Ll}]*(?:\s+[\p{Lu}][\p{Ll}]*){0,4})(?![\p{L}\p{N}])/gu,
     type: 'LOCATION',
     includePrefixInText: true,
   },

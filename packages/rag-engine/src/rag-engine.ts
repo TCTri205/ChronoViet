@@ -119,6 +119,10 @@ export class ChronoRagEngine implements IRagEngine {
     }
 
     const queryText = request.query;
+    const targetYear = request.targetYear ?? (() => {
+      const ym = queryText.match(/\b(?:năm\s+)?([12]\d{3}|\d{3})\b/i);
+      return ym ? parseInt(ym[1], 10) : undefined;
+    })();
 
     // Step 1: Question NER & Keyword Extraction (< 1ms)
     const queryInfo = extractQueryEntities(queryText);
@@ -142,14 +146,23 @@ export class ChronoRagEngine implements IRagEngine {
       substantiveEntityIds.length >= 2 &&
       /(?:\bvà\b|\bvới\b|\bcùng\b|so\s+sánh|vai\s+trò|phân\s+công|nhiệm\s+vụ|đối\s+đầu)/i.test(queryText);
 
-    // Steps 2, 3, 4: Dual-Branch Parallel Execution (with Conditional Comparative Decomposition)
-    const isComparative =
+    // Multi-subject or multi-epoch condition:
+    // (1) Multiple distinct positive historical years mentioned in query (e.g. 938, 981, 1288)
+    // (2) Comparative / genealogical / coordinate queries across multiple entities
+    const distinctYears = Array.from(
+      new Set((queryInfo.extractedYears || []).filter((y) => y > 0 && y <= 2100))
+    ).sort((a, b) => a - b);
+
+    const isMultiEpochQuery = distinctYears.length >= 2;
+    const isMultiEntityComparative =
       (detectQueryIntent(queryText) === 'COMPARATIVE' ||
         request.subIntent === 'COMPARATIVE_SYNTHESIS' ||
         request.subIntent === 'GENEALOGY_RELATION' ||
         substantiveEntityIds.length === 2 ||
         isCoordinateSubjectQuery) &&
       (substantiveEntityIds.length >= 2 || filterEntityIds.length >= 2);
+
+    const isComparative = isMultiEpochQuery || isMultiEntityComparative;
 
     let hybridCandidates: VectorSearchResult[] = [];
     let graphResult: { triples: GraphTriple[]; aliasTable: Record<string, string[]>; entityIds: string[] } = {
@@ -161,20 +174,92 @@ export class ChronoRagEngine implements IRagEngine {
     let timedOut = false;
 
     if (isComparative) {
-      const rawTargets = substantiveEntityIds.length >= 2 ? substantiveEntityIds : filterEntityIds;
-      const targetEntities = rawTargets.slice(0, 4);
-      const k = Math.max(1, targetEntities.length);
-      const entityWeight = 1.0 / k;
+      interface SubQueryBranch {
+        query: string;
+        targetYear?: number;
+        entityIds: string[];
+      }
 
-      const subQueries = targetEntities.map((ent) => {
-        const canon = resolveCanonicalEntity(ent);
-        const name = canon.canonicalName || ent;
-        return {
-          entityId: ent,
-          name,
-          query: `${queryText} ${name}`,
-        };
-      });
+      let subQueries: SubQueryBranch[] = [];
+
+      if (isMultiEpochQuery) {
+        // Mode A: Multi-Epoch / Multi-Year decomposition (e.g. 938, 981, 1288)
+        const targetYears = distinctYears.slice(0, 4);
+        subQueries = targetYears.map((year) => {
+          const boundEntities = filterEntityIds.filter((eid) => {
+            const canon = resolveCanonicalEntity(eid);
+            if (canon.timeRange?.start != null) {
+              const s = canon.timeRange.start;
+              const e = canon.timeRange.end ?? s;
+              if (year >= s - 15 && year <= e + 15) return true;
+            }
+            if (eid.includes(`_${year}`)) return true;
+            return false;
+          });
+
+          const otherYears = distinctYears.filter((y) => y !== year);
+          let focusedBase = queryText;
+          if (otherYears.length > 0) {
+            focusedBase = focusedBase.replace(new RegExp(`\\b(${otherYears.join('|')})\\b`, 'g'), '');
+          }
+          focusedBase = focusedBase.replace(/\s+/g, ' ').trim();
+
+          const boundNames = boundEntities
+            .map((eid) => resolveCanonicalEntity(eid).canonicalName)
+            .filter((n): n is string => Boolean(n) && !focusedBase.toLowerCase().includes(n.toLowerCase()));
+
+          const branchQueryText = `${focusedBase} ${boundNames.join(' ')} năm ${year}`.replace(/\s+/g, ' ').trim();
+          return {
+            query: branchQueryText,
+            targetYear: year,
+            entityIds: boundEntities.length > 0 ? boundEntities : filterEntityIds,
+          };
+        });
+      } else {
+        // Mode B: Multi-Entity comparative / coordinate decomposition
+        // Prioritize primary historical subjects:
+        // 1. Entities mentioned in a question/trailing clause (e.g. "Ý nghĩa câu nói của Hồ Nguyên Trừng là gì?")
+        // 2. High-salience entity types: HISTORICAL_PERSON, DYNASTY_ERA, EVENT_BATTLE > ARTIFACT, LOCATION
+        const rawPool = substantiveEntityIds.length >= 2 ? substantiveEntityIds : filterEntityIds;
+        const sentences = queryText.split(/(?<=[.?!])\s+/);
+        const lastSentence = (sentences[sentences.length - 1] || '').toLowerCase();
+
+        const prioritizedTargets = [...rawPool].sort((a, b) => {
+          const canonA = resolveCanonicalEntity(a);
+          const canonB = resolveCanonicalEntity(b);
+          const nameA = (canonA.canonicalName || a).toLowerCase();
+          const nameB = (canonB.canonicalName || b).toLowerCase();
+
+          const aInLast = lastSentence.includes(nameA);
+          const bInLast = lastSentence.includes(nameB);
+          if (aInLast && !bInLast) return -1;
+          if (!aInLast && bInLast) return 1;
+
+          const typeWeight = (t?: string) =>
+            t === 'HISTORICAL_PERSON' || t === 'DYNASTY_ERA' || t === 'EVENT_BATTLE' ? 2 : 1;
+          const diff = typeWeight(canonB.type) - typeWeight(canonA.type);
+          if (diff !== 0) return diff;
+
+          return 0;
+        });
+
+        const targetEntities = prioritizedTargets.slice(0, 5);
+        subQueries = targetEntities.map((ent) => {
+          const canon = resolveCanonicalEntity(ent);
+          const name = canon.canonicalName || ent;
+          const matchingSentence = sentences.find((s) => s.toLowerCase().includes(name.toLowerCase()));
+          const focusedBase = matchingSentence || queryText;
+          const branchQueryText = `${focusedBase} ${name}`.replace(/\s+/g, ' ').trim();
+          return {
+            query: branchQueryText,
+            targetYear: canon.timeRange?.start ?? targetYear,
+            entityIds: [ent],
+          };
+        });
+      }
+
+      const k = Math.max(1, subQueries.length);
+      const entityWeight = 1.0 / k;
 
       const [gRes, branchResults] = await Promise.all([
         searchLocalGraphCTE(filterEntityIds, {
@@ -189,8 +274,9 @@ export class ChronoRagEngine implements IRagEngine {
               getCachedQueryEmbedding(sq.query),
               Math.max(10, Math.floor((rerankTopK * 4) / k)),
               60,
-              [sq.entityId],
-              request.subIntent
+              sq.entityIds,
+              request.subIntent,
+              sq.targetYear ?? targetYear
             )
           )
         ),
@@ -212,14 +298,28 @@ export class ChronoRagEngine implements IRagEngine {
         }
       }
 
-      graphChunks = await getChunksForEntities(
-        graphResult.entityIds.length > 0 ? graphResult.entityIds : filterEntityIds,
-        20,
-        filterEntityIds,
-        gSignals
-      ).catch(() => []);
+      // Retrieve graph chunks per branch with its targetYear to ensure no era/subject is starved
+      const branchGraphResults = await Promise.all(
+        subQueries.map((sq) =>
+          getChunksForEntities(
+            sq.entityIds.length > 0 ? sq.entityIds : (graphResult.entityIds.length > 0 ? graphResult.entityIds : filterEntityIds),
+            Math.max(8, Math.floor(20 / k)),
+            sq.entityIds.length > 0 ? sq.entityIds : filterEntityIds,
+            gSignals,
+            sq.targetYear
+          ).catch(() => [])
+        )
+      );
 
-      // Balanced dynamic 1/K RRF fusion across all K comparative entities
+      const combinedGraphChunksMap = new Map<string, VectorSearchResult>();
+      branchGraphResults.flat().forEach((c) => {
+        if (!combinedGraphChunksMap.has(c.chunkId)) {
+          combinedGraphChunksMap.set(c.chunkId, c);
+        }
+      });
+      graphChunks = Array.from(combinedGraphChunksMap.values());
+
+      // Balanced dynamic 1/K RRF fusion across all K branches
       const balancedMap = new Map<string, VectorSearchResult>();
       branchResults.forEach((branch) => {
         branch.forEach((item, idx) => {
@@ -259,7 +359,8 @@ export class ChronoRagEngine implements IRagEngine {
             gRes.entityIds,
             20,
             filterEntityIds,
-            graphSignals
+            graphSignals,
+            targetYear
           );
           return { graphResult: gRes, graphChunks: gChunks, timedOut: Boolean(gRes.timedOut) };
         } catch (err) {
@@ -292,7 +393,8 @@ export class ChronoRagEngine implements IRagEngine {
               Math.max(15, rerankTopK * 3),
               60,
               filterEntityIds,
-              request.subIntent
+              request.subIntent,
+              targetYear
             ),
             searchHybridVectorAndBM25(
               expandedThematicQuery,
@@ -300,7 +402,8 @@ export class ChronoRagEngine implements IRagEngine {
               Math.max(15, rerankTopK * 3),
               60,
               filterEntityIds,
-              request.subIntent
+              request.subIntent,
+              targetYear
             ),
           ]);
 
@@ -327,7 +430,8 @@ export class ChronoRagEngine implements IRagEngine {
           Math.max(15, rerankTopK * 3),
           60,
           filterEntityIds,
-          request.subIntent
+          request.subIntent,
+          targetYear
         );
         return candidates;
       })();
@@ -380,18 +484,22 @@ export class ChronoRagEngine implements IRagEngine {
     allCandidates.sort((a, b) => b.score - a.score);
 
     // Step 5: Pure Model Cross-Encoder Reranker & Response Formatting
-    let effectiveQueryYears = queryInfo.extractedYears || [];
-    if (effectiveQueryYears.length === 0 && filterEntityIds.length > 0) {
-      for (const eid of filterEntityIds) {
+    let effectiveQueryYears = distinctYears.length > 0 ? [...distinctYears] : [...(queryInfo.extractedYears || [])];
+    if (isComparative || effectiveQueryYears.length === 0) {
+      const targetEntityIds = substantiveEntityIds.length > 0 ? substantiveEntityIds : filterEntityIds;
+      for (const eid of targetEntityIds) {
         const ent = resolveCanonicalEntity(eid);
         if (ent?.timeRange?.start !== undefined) {
-          effectiveQueryYears = [ent.timeRange.start, ent.timeRange.end || ent.timeRange.start];
-          break;
+          effectiveQueryYears.push(ent.timeRange.start);
+          if (ent.timeRange.end && ent.timeRange.end !== ent.timeRange.start) {
+            effectiveQueryYears.push(ent.timeRange.end);
+          }
         }
       }
+      effectiveQueryYears = Array.from(new Set(effectiveQueryYears));
     }
 
-    const rerankPoolLimit = Math.max(12, rerankTopK * 2);
+    const rerankPoolLimit = Math.max(isComparative ? 24 : 12, rerankTopK * (isComparative ? 3 : 2));
     const topChunks = await rerankCandidates(
       queryText,
       allCandidates,
@@ -420,7 +528,9 @@ export class ChronoRagEngine implements IRagEngine {
     let accumulatedTokens = 0;
     const sourceCountMap = new Map<string, number>();
     const topCandidateScore = topChunks[0]?.score || 0;
-    const dynamicRelativeCutoff = Math.max(MIN_RELEVANCE_SCORE_CUTOFF, topCandidateScore * 0.45);
+    const dynamicRelativeCutoff = isComparative
+      ? MIN_RELEVANCE_SCORE_CUTOFF
+      : Math.max(MIN_RELEVANCE_SCORE_CUTOFF, topCandidateScore * 0.45);
 
     for (let idx = 0; idx < topChunks.length; idx++) {
       const chunk = topChunks[idx];
@@ -429,10 +539,13 @@ export class ChronoRagEngine implements IRagEngine {
         continue;
       }
 
-      // Source diversity: at most 2 chunks per source title/book prefix to prevent crowding out
+      // Source diversity: allow proportional representation per source when comparative decomposition is active
+      const maxPerSource = isComparative
+        ? Math.max(2, Math.max(distinctYears.length, substantiveEntityIds.length))
+        : 2;
       const sourceKey = chunk.title.replace(/\s*-\s*Đoạn.*$/i, '').replace(/\s*\(Phần.*$/i, '').trim();
       const currentCount = sourceCountMap.get(sourceKey) || 0;
-      if (currentCount >= 2 && topChunks.length > 3) {
+      if (currentCount >= maxPerSource && topChunks.length > 3) {
         continue;
       }
 

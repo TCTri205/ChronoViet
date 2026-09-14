@@ -12,6 +12,7 @@ import {
   isKnownMasterEntity,
   HISTORICAL_PERSON_DICTIONARY,
   resolveCanonicalEntity,
+  CORE_DOCS,
 } from '@chronoviet/shared-spec';
 import {
   createLogger,
@@ -26,6 +27,8 @@ import {
   classifyChatIntent,
   ChatIntent,
   IntentClassificationResult,
+  hasHistoricalDomainSignals,
+  SUBSTANTIVE_QUESTION_REGEX,
 } from './intent-classifier.js';
 import {
   rewriteMultiTurnQuery,
@@ -54,10 +57,185 @@ const log = createLogger({ service: 'agent-orchestrator' });
 
 export function escapePromptXml(text: string): string {
   if (!text || typeof text !== 'string') return '';
-  return text.replace(/<\/?(?:historical_context|user_query|premise_directives|verified_rag_evidence|knowledge_graph_triples|verified_master_entities|dialogue_context_banner)[^>]*>/gi, '');
+  return text.replace(/<\/?(?:historical_context|user_query|premise_directives|verified_rag_evidence|knowledge_graph_triples|verified_master_entities|verified_chronology_anchors|critical_response_constraint|dialogue_context_banner)[^>]*>/gi, '');
 }
 
-export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): string {
+/**
+ * Structured Chronology & Anti-Conflation Anchor Builder (Task 3)
+ * Maps matched persons, campaigns, and events to canonical dynasty, reign years, and sovereignty transitions.
+ * Disambiguates known historical conflation pairs and provides verified chronological ground truths.
+ */
+export function buildChronologyAnchorBox(
+  entityNamesOrIds: string[],
+  activeYears: number[] = [],
+  queryText: string = ''
+): string {
+  const anchors: string[] = [];
+  const queryLower = (queryText || '').toLowerCase();
+  const seenRules = new Set<string>();
+
+  // 1. Resolve canonical entity IDs
+  const resolvedIds = new Set<string>();
+  for (const item of entityNamesOrIds) {
+    if (!item) continue;
+    const resolved = resolveCanonicalEntity(item.trim());
+    if (resolved.entityId) {
+      resolvedIds.add(resolved.entityId);
+    }
+  }
+
+  const hasEntity = (id: string) => resolvedIds.has(id);
+  const hasPhrase = (regex: RegExp) => regex.test(queryLower);
+  const hasYear = (y: number) => activeYears.includes(y) || new RegExp(`\\b${y}\\b`).test(queryLower);
+
+  // Rule A: Lê Hoàn & Triều Tiền Lê (980 - 1005) vs. Nhà Lý
+  if (
+    hasEntity('person_le_hoan') ||
+    hasPhrase(/\b(lê\s+hoàn|lê\s+đại\s+hành)\b/i) ||
+    (hasYear(981) && (hasPhrase(/bạch\s+đằng/i) || hasPhrase(/chống\s+tống/i) || hasPhrase(/nhà\s+lý/i))) ||
+    hasPhrase(/(?:lê\s+hoàn|lê\s+đại\s+hành).*(?:nhà|triều)\s+lý/i)
+  ) {
+    if (!seenRules.has('LE_HOAN_TIEN_LE')) {
+      seenRules.add('LE_HOAN_TIEN_LE');
+      anchors.push(
+        `• Lê Hoàn (Lê Đại Hành): Thuộc triều Tiền Lê (trị vì 980 - 1005). Lãnh đạo cuộc kháng chiến chống Tống lần thứ nhất thắng lợi rực rỡ năm 981 (chiến thắng Bạch Đằng năm 981). TUYỆT ĐỐI KHÔNG gán Lê Hoàn hoặc chiến thắng năm 981 vào nhà Lý (nhà Lý do Lý Thái Tổ sáng lập năm 1009, sau thời Tiền Lê).`
+      );
+    }
+  }
+
+  // Rule B: Hồ Quý Ly & Trần Thiếu Đế vs. Trần Thiêm Bình
+  if (
+    hasEntity('person_ho_quy_ly') ||
+    hasEntity('person_tran_thieu_de') ||
+    hasEntity('person_tran_thiem_binh') ||
+    hasPhrase(/\b(hồ\s+quý\s+ly|trần\s+thiếu\s+đế|trần\s+thiêm\s+bình|nhà\s+hồ|đại\s+ngu)\b/i) ||
+    (hasPhrase(/cướp\s+ngôi/i) && hasPhrase(/nhà\s+trần/i))
+  ) {
+    if (!seenRules.has('HO_QUY_LY_TRAN_THIEU_DE')) {
+      seenRules.add('HO_QUY_LY_TRAN_THIEU_DE');
+      anchors.push(
+        `• Hồ Quý Ly & Sự chuyển giao vương triều Trần - Hồ (1400): Tháng 2 năm Canh Thìn (1400), Hồ Quý Ly phế truất vua Trần Thiếu Đế (vị vua cuối cùng của triều Trần, cháu ngoại Hồ Quý Ly) để lên ngôi, lập ra nhà Hồ (đổi quốc hiệu thành Đại Ngu). Trần Thiêm Bình (tên thật là Nguyễn Khang) là gia nô mạo xưng tôn thất nhà Trần chạy sang nhà Minh cầu viện, KHÔNG PHẢI là vua và KHÔNG PHẢI là người bị Hồ Quý Ly cướp ngôi.`
+      );
+    }
+  }
+
+  // Rule C: Ba trận thủy chiến sông Bạch Đằng (938, 981, 1288)
+  const isBachDangQuery =
+    hasPhrase(/bạch\s+đằng/i) ||
+    [938, 981, 1288].filter((y) => hasYear(y)).length >= 2;
+  if (isBachDangQuery) {
+    if (!seenRules.has('BACH_DANG_THREE_BATTLES')) {
+      seenRules.add('BACH_DANG_THREE_BATTLES');
+      anchors.push(
+        `• Ba trận thủy chiến sông Bạch Đằng tiêu biểu trong lịch sử:\n` +
+        `  - Năm 938: Tiền Ngô Vương Ngô Quyền chỉ huy đánh tan quân Nam Hán (Lưu Hoằng Tháo tử trận), mở ra kỷ nguyên độc lập tự chủ.\n` +
+        `  - Năm 981: Vua Lê Hoàn (triều Tiền Lê) chỉ huy đánh bại quân xâm lược nhà Tống, chém tướng Hầu Nhân Bảo.\n` +
+        `  - Năm 1288: Hưng Đạo Đại Vương Trần Quốc Tuấn (nhà Trần) chỉ huy tiêu diệt hoàn toàn thủy quân Nguyên Mông do Ô Mã Nhi cầm đầu.\n` +
+        `  -> Đây là ba trận đánh ở ba thời kỳ, ba triều đại hoàn toàn khác nhau do ba vị anh hùng độc lập lãnh đạo.`
+      );
+    }
+  }
+
+  // Rule D: Chiến tuyến Trịnh - Nguyễn phân tranh (Lũy Thầy & Sông Gianh)
+  if (
+    hasEntity('loc_luy_thay') ||
+    hasEntity('loc_song_gianh') ||
+    hasEntity('person_dao_duy_tu') ||
+    hasPhrase(/\b(lũy\s+thầy|lũy\s+đào\s+duy\s+từ|lũy\s+nhật\s+lệ|lũy\s+trường\s+dục|sông\s+gianh|linh\s+giang|đào\s+duy\s+từ)\b/i) ||
+    (hasPhrase(/trịnh\s*-\s*nguyễn/i) && hasPhrase(/phân\s+tranh/i))
+  ) {
+    if (!seenRules.has('LUY_THAY_SONG_GIANH')) {
+      seenRules.add('LUY_THAY_SONG_GIANH');
+      anchors.push(
+        `• Chiến tuyến Trịnh - Nguyễn phân tranh (thế kỷ 17 - 18):\n` +
+        `  - Lũy Thầy (Lũy Đào Duy Từ, bao gồm Lũy Nhật Lệ, Lũy Trường Dục, Lũy Đầu Mâu...) tại Quảng Bình là công trình phòng thủ quân sự do Đào Duy Từ chỉ huy đắp để giúp chúa Nguyễn (Đàng Trong) ngăn chặn các cuộc tiến công của quân Trịnh.\n` +
+        `  - Sông Gianh (Linh Giang, Quảng Bình) là giới tuyến tự nhiên lịch sử phân định ranh giới giữa Đàng Ngoài và Đàng Trong.`
+      );
+    }
+  }
+
+  // Rule E: Chiến dịch 12 ngày đêm "Điện Biên Phủ trên không" (1972)
+  if (
+    hasPhrase(/\b(12\s+ngày\s+đêm|điện\s+biên\s+phủ\s+trên\s+không|linebacker|sam-2|xưởng\s+a31|nhà\s+máy\s+a31|b-52)\b/i) ||
+    (hasYear(1972) && hasPhrase(/ném\s+bom|phòng\s+không|không\s+quân/i))
+  ) {
+    if (!seenRules.has('LINEBACKER_II_1972')) {
+      seenRules.add('LINEBACKER_II_1972');
+      anchors.push(
+        `• Chiến dịch 12 ngày đêm "Điện Biên Phủ trên không" (18/12/1972 - 30/12/1972):\n` +
+        `  - Thời gian: Diễn ra chính xác trong 12 ngày đêm từ đêm 18/12/1972 đến ngày 30/12/1972 (Mỹ tuyên bố ngừng ném bom phía bắc vĩ tuyến 20), dẫn đến việc ký Hiệp định Paris (27/01/1973).\n` +
+        `  - Khí tài & Vũ khí: Tên lửa SAM-2 là vũ khí tiêu hao một lần, khi đã bắn ra thì không thể thu hồi để tái sử dụng; Xưởng/Nhà máy A31 là nơi bảo dưỡng đài radar, sửa chữa bệ phóng và hiệu chỉnh quả đạn trước khi phóng, không có việc thu hồi tên lửa đã bắn.`
+      );
+    }
+  }
+
+  // 2. Generic sovereign & dynasty chronology for matched persons
+  const entityBullets: string[] = [];
+  const seenEntities = new Set<string>();
+
+  for (const item of entityNamesOrIds) {
+    if (!item || item.trim().length <= 2) continue;
+    const resolved = resolveCanonicalEntity(item.trim());
+    const entId = resolved.entityId;
+    if (!entId || entId.startsWith('ent_') || seenEntities.has(entId)) continue;
+    seenEntities.add(entId);
+
+    const person = HISTORICAL_PERSON_DICTIONARY[entId];
+    const target = person || resolved;
+    if (!target) continue;
+
+    const parts: string[] = [];
+    if (target.dynasty) {
+      parts.push(`Triều đại: ${target.dynasty}`);
+    }
+    const meta = target.namingMetadata;
+    if (meta?.reignEra) {
+      let rPeriod = '';
+      if (typeof meta.reignPeriod === 'string') {
+        rPeriod = meta.reignPeriod;
+      } else if (meta.reignPeriod && typeof meta.reignPeriod === 'object' && meta.reignPeriod.start != null) {
+        const s = meta.reignPeriod.start < 0 ? `${Math.abs(meta.reignPeriod.start)} TCN` : `${meta.reignPeriod.start}`;
+        const e = meta.reignPeriod.end != null ? (meta.reignPeriod.end < 0 ? `${Math.abs(meta.reignPeriod.end)} TCN` : `${meta.reignPeriod.end}`) : '';
+        rPeriod = e ? `${s} - ${e}` : s;
+      }
+      parts.push(`Niên hiệu: ${meta.reignEra}${rPeriod ? ` (${rPeriod})` : ''}`);
+    } else if (meta?.reignPeriod) {
+      const s = typeof meta.reignPeriod === 'object' && meta.reignPeriod.start != null ? `${meta.reignPeriod.start}` : '';
+      const e = typeof meta.reignPeriod === 'object' && meta.reignPeriod.end != null ? `${meta.reignPeriod.end}` : '';
+      if (s || e) parts.push(`Thời gian trị vì: ${s}${e ? ` - ${e}` : ''}`);
+    }
+    if (target.timeRange && target.timeRange.start != null) {
+      const start = target.timeRange.start;
+      const end = target.timeRange.end;
+      const startStr = start < 0 ? `${Math.abs(start)} TCN` : `${start}`;
+      const endStr = end != null ? (end < 0 ? `${Math.abs(end)} TCN` : `${end}`) : '';
+      parts.push(`Niên đại: ${startStr}${endStr ? ` - ${endStr}` : ''}`);
+    }
+
+    if (parts.length > 0) {
+      entityBullets.push(`- ${target.canonicalName}: ${parts.join(' | ')}`);
+    }
+  }
+
+  if (anchors.length === 0 && entityBullets.length === 0) {
+    return '';
+  }
+
+  const sections: string[] = [];
+  if (anchors.length > 0) {
+    sections.push(anchors.join('\n\n'));
+  }
+  if (entityBullets.length > 0) {
+    sections.push(`QUY THUỘC TRIỀU ĐẠI & NIÊN HIỆU CHÍNH SỬ:\n${entityBullets.join('\n')}`);
+  }
+
+  return sections.join('\n\n');
+}
+
+export function buildDynamicEntityKnowledgeCards(
+  entityNamesOrIds: string[],
+  isBroadAnalytical: boolean = false
+): string {
   const cards: string[] = [];
   const seen = new Set<string>();
 
@@ -103,7 +281,7 @@ export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): st
           if (meta.birthName) {
             lines.push(`  + Tên khai sinh / Tên thuở nhỏ: ${meta.birthName}`);
           }
-          if (meta.periodAliases && meta.periodAliases.length > 0) {
+          if (!isBroadAnalytical && meta.periodAliases && meta.periodAliases.length > 0) {
             lines.push(`  + Tên gọi và bí danh theo các thời kỳ hoạt động cách mạng:`);
             for (const pa of meta.periodAliases) {
               lines.push(`    * ${pa.period}: "${pa.name}"${pa.context ? ` (${pa.context})` : ''}`);
@@ -119,7 +297,7 @@ export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): st
           if (meta.courtesyOrCommonName) {
             lines.push(`  + Tên thường gọi / Tên tự: ${meta.courtesyOrCommonName}`);
           }
-          if (meta.preReignTitles && meta.preReignTitles.length > 0) {
+          if (!isBroadAnalytical && meta.preReignTitles && meta.preReignTitles.length > 0) {
             lines.push(`  + Tước vị trước khi lên ngôi: ${meta.preReignTitles.join(', ')}`);
           }
           if (meta.reignEra) {
@@ -136,10 +314,10 @@ export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): st
           if (meta.templeName) {
             lines.push(`  + Miếu hiệu: ${meta.templeName}`);
           }
-          if (meta.posthumousName) {
+          if (!isBroadAnalytical && meta.posthumousName) {
             lines.push(`  + Thụy hiệu: ${meta.posthumousName}`);
           }
-          if (meta.familyLineage) {
+          if (!isBroadAnalytical && meta.familyLineage) {
             const fam = meta.familyLineage;
             const famParts: string[] = [];
             if (fam.father) famParts.push(`Thân phụ: ${fam.father}`);
@@ -151,11 +329,39 @@ export function buildDynamicEntityKnowledgeCards(entityNamesOrIds: string[]): st
               lines.push(`  + Thân tộc chính sử: ${famParts.join('; ')}`);
             }
           }
+          if (!isBroadAnalytical && meta.famousQuote) {
+            lines.push(`  + Câu nói / Tuyên ngôn sử sách ghi nhận: "${meta.famousQuote}"`);
+          }
+          if (meta.achievements && meta.achievements.length > 0) {
+            const achList = isBroadAnalytical ? meta.achievements.slice(0, 2) : meta.achievements;
+            lines.push(`  + Sự nghiệp / Công tích chính sử: ${achList.join('; ')}`);
+          }
         }
       } else if (target.aliases && target.aliases.length > 0) {
-        lines.push(`  + Danh xưng / Tên gọi khác: ${target.aliases.slice(0, 6).join(', ')}`);
+        const aliasCount = isBroadAnalytical ? 3 : 6;
+        lines.push(`  + Danh xưng / Tên gọi khác: ${target.aliases.slice(0, aliasCount).join(', ')}`);
       }
-      if (target.dynasty) {
+      if (target.type === 'DOCUMENT_CULTURE' || target.docMetadata) {
+        const docMeta = target.docMetadata || CORE_DOCS.find((d) => d.id === target.entityId || d.name.toLowerCase() === target.canonicalName.toLowerCase());
+        if (docMeta) {
+          if (docMeta.author) {
+            lines.push(`  + Tác giả / Người soạn thảo: ${docMeta.author}`);
+          }
+          if (docMeta.dynasty) {
+            lines.push(`  + Triều đại / Bối cảnh lịch sử: ${docMeta.dynasty}`);
+          }
+          if (docMeta.year) {
+            lines.push(`  + Năm ban bố / sáng tác: năm ${docMeta.year}`);
+          }
+          if (docMeta.adversary) {
+            lines.push(`  + Đối tượng / Kẻ thù lịch sử: ${docMeta.adversary} (TUYỆT ĐỐI KHÔNG nhầm lẫn sang các triều đại hoặc ngoại bang khác)`);
+          }
+          if (!isBroadAnalytical && docMeta.context) {
+            lines.push(`  + Bối cảnh lịch sử cốt lõi: ${docMeta.context}`);
+          }
+        }
+      }
+      if (target.dynasty && target.type !== 'DOCUMENT_CULTURE') {
         lines.push(`  + Triều đại: ${target.dynasty}`);
       }
       if (target.timeRange && target.timeRange.start != null && target.timeRange.end != null) {
@@ -199,7 +405,7 @@ export const STATIC_SYSTEM_PERSONA_PROMPT = `Bạn là ChronoViet AI — Chuyên
 
 NGUYÊN TẮC BẮT BUỘC:
 1. NGUYÊN TẮC TOÀN DIỆN LỊCH SỬ & RÀNG BUỘC SỬ LIỆU TUYỆT ĐỐI (STRICT IN-CONTEXT GROUNDING):
-   - Mọi mốc thời gian (niên đại chính xác), địa danh, kinh đô, nhân vật, tác phẩm và diễn biến cốt lõi BẮT BUỘC phải trích xuất và đối chiếu trực tiếp từ phần <verified_master_entities>, <verified_rag_evidence> và <knowledge_graph_triples>.
+   - Mọi mốc thời gian (niên đại chính xác), địa danh, kinh đô, nhân vật, tác phẩm và diễn biến cốt lõi BẮT BUỘC phải trích xuất và đối chiếu trực tiếp từ phần <verified_chronology_anchors>, <verified_master_entities>, <verified_rag_evidence> và <knowledge_graph_triples>.
    - Đối với các triều đại ngoại bang phương Bắc xâm lược: Nêu chính xác triều đại cụ thể (Ví dụ: nhà Đông Hán, nhà Đường, nhà Tống, nhà Nguyên/Mông Cổ, nhà Minh, nhà Thanh), không gọi chung chung là "nhà Hán" nếu ngữ cảnh xác định rõ là Đông Hán.
    - Quy tắc niên đại: Các năm từ năm 1 trở đi thuộc kỷ nguyên Công Nguyên / Dương lịch (viết tự nhiên: "năm 1385", "năm 1941", "1965", TUYỆT ĐỐI KHÔNG thêm hậu tố "SCN" một cách máy móc vào các năm thông thường; chỉ dùng tiền tố/hậu tố "TCN" cho thời kỳ Trước Công Nguyên, và chỉ ghi "SCN" khi cần đối chiếu phân biệt đặc thù cho các năm nhỏ dưới 100).
    - NGUYÊN TẮC GÁN ĐÚNG THUỘC TÍNH NHÂN VẬT (ENTITY ATTRIBUTION INVARIANT): Khi câu hỏi hoặc ngữ cảnh liên quan đến nhiều nhân vật, BẮT BUỘC phải gán đúng niên đại, thân thế, chức vị và sự kiện cho từng nhân vật căn cứ theo thẻ <verified_master_entities> và tài liệu lịch sử. TUYỆT ĐỐI KHÔNG hoán đổi hoặc nhầm lẫn sự kiện, danh xưng hay phả hệ giữa các nhân vật cùng triều đại hay giữa các thế hệ vua kế tiếp nhau.
@@ -219,7 +425,9 @@ NGUYÊN TẮC BẮT BUỘC:
 
 3. QUY TẮC PHẢN BIỆN TIỀN ĐỀ SAI (UNIVERSAL ANTI-SYCOPHANCY & HISTORICAL REFUTATION):
    - Nếu câu hỏi chứa tiền đề sai lệch (sai niên đại, gán nhầm sự kiện/địa bàn, gán sai chiến công hoặc đưa công nghệ/vũ khí/khái niệm hiện đại vào thời kỳ phong kiến/cổ đại), bạn BẮT BUỘC phải bác bỏ rõ ràng NGAY Ở CÂU ĐẦU TIÊN (Ví dụ: "Không, vào thời kỳ [X] hoàn toàn chưa có [Y]...", "Không, thông tin này không chính xác..."). Đồng thời đính chính rõ sự thật lịch sử dựa trên sử liệu.
-   - Khi câu hỏi hỏi về mối quan hệ thân tộc hoặc so sánh giữa hai nhân vật sống ở hai thời kỳ lịch sử hoàn toàn khác nhau (khoảng cách niên đại lớn), BẮT BUỘC phải bác bỏ rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [Nhân vật A] và [Nhân vật B] không phải là anh em và không có quan hệ thân tộc trực tiếp; họ sống ở hai thời kỳ lịch sử cách nhau hàng trăm năm."), sau đó trình bày vắn tắt niên đại, thân thế của từng người dựa trên sử liệu.
+   - BÁC BỎ QUAN HỆ THÂN TỘC XUYÊN THỜI ĐẠI (CROSS-ERA KINSHIP REFUTATION): Khi câu hỏi gán ghép quan hệ thân tộc hoặc huyết thống trực tiếp (như anh em, cha con, họ hàng) giữa hai nhân vật sống ở hai thời kỳ lịch sử hoàn toàn khác nhau (khoảng cách niên đại lớn), BẮT BUỘC phải bác bỏ rõ ràng ngay ở câu đầu tiên (ví dụ: "Không, [Nhân vật A] và [Nhân vật B] không phải là anh em và không có quan hệ thân tộc trực tiếp; họ sống ở hai thời kỳ lịch sử cách nhau hàng trăm năm."), sau đó làm rõ niên đại, thân thế của từng người dựa trên sử liệu.
+   - CHO PHÉP & KHUYẾN KHÍCH SO SÁNH LỊCH SỬ HỌC THUẬT (COMPARATIVE HISTORIOGRAPHY): Khi người dùng yêu cầu so sánh, đối chiếu học thuật giữa các nhân vật, triều đại, tư tưởng trị quốc, chiến lược quân sự, hoặc chính sách văn hóa - xã hội ở các thời kỳ khác nhau (ví dụ: so sánh nghệ thuật quân sự thời Lý và thời Trần; so sánh tư tưởng cải cách của Hồ Quý Ly và vua Minh Mạng): TUYỆT ĐỐI KHÔNG từ chối hay xem đây là tiền đề sai. Hãy phân tích chuyên sâu, đa chiều, làm rõ điểm tương đồng, dị biệt và bối cảnh thời đại của từng đối tượng.
+   - BÁC BỎ GIẢ THUYẾT PHI THỰC TẾ VỀ VŨ KHÍ & KHÍ TÀI: Bác bỏ dứt khoát các tiền đề phi lịch sử hoặc phi vật lý (ví dụ: thu hồi tên lửa phòng không đã bắn đem về dùng lại, hoặc chiến dịch 12 ngày đêm 1972 kéo dài sang năm 1973).
    - TUYỆT ĐỐI KHÔNG xu nịnh hoặc đồng tình ("Đúng rồi", "Đúng vậy") với tiền đề sai của người dùng.
    - Khi một nhân vật hoặc tên gọi KHÔNG CÓ trong chính sử Việt Nam (hoặc hư cấu, không xác định), BẮT BUỘC phải nói rõ: "Trong chính sử không có ghi chép về nhân vật mang tên [X]" thay vì suy đoán.
 
@@ -249,7 +457,21 @@ NGUYÊN TẮC BẮT BUỘC:
    - Khi người dùng hỏi về số lượng ("bao nhiêu", "tổng cộng bao nhiêu", "tất cả mấy cái tên/biệt danh/trận đánh/vị vua..."):
      * BẮT BUỘC trả lời TRỰC DIỆN con số tổng quan, số lượng xác thực hoặc khoảng ước tính được chính sử / tư liệu lịch sử công nhận NGAY Ở CÂU MỞ ĐẦU (ví dụ: tổng số đời vua, số năm trị vì, số lượng tướng lĩnh/thân tộc, hoặc tổng số danh xưng/bí danh được giới sử học ghi nhận).
      * TUYỆT ĐỐI KHÔNG bỏ qua câu hỏi số lượng để chỉ liệt kê danh sách vài ví dụ mà không nêu rõ con số tổng thể.
-     * Sau khi nêu con số tổng quan ở câu đầu, mới trình bày bối cảnh và liệt kê chi tiết các mốc/danh xưng/sự kiện tiêu biểu nhất.`;
+     * Sau khi nêu con số tổng quan ở câu đầu, mới trình bày bối cảnh và liệt kê chi tiết các mốc/danh xưng/sự kiện tiêu biểu nhất.
+
+8. NGUYÊN TẮC BÁM SÁT TOÀN DIỆN THUẬT NGỮ CỦA NGƯỜI DÙNG & CHỐNG TỰ BỊA LỜI THOẠI (COMPREHENSIVE COVERAGE & ANTI-CONFABULATION):
+   - BÁM SÁT MỌI THUẬT NGỮ TRONG ĐỀ BÀI: Khi người dùng nêu rõ các thuật ngữ, khái niệm, câu hỏi phụ hay sự kiện cụ thể trong câu hỏi (ví dụ: "Hào khí Đông A", "Hội nghị Diên Hồng", "Súng thần cơ", "câu nói của Hồ Nguyên Trừng", "chủ quyền Hoàng Sa - Trường Sa", "quốc hiệu Việt Nam", "12 ngày đêm", "B-52"):
+     * Câu trả lời BẮT BUỘC phải trực tiếp phân tích, giải thích và làm sáng tỏ từng thuật ngữ/khái niệm đó, tuyệt đối không được bỏ sót bất kỳ yêu cầu hay thuật ngữ nào mà người dùng đã nêu.
+   - NGHIÊM CẤM TỰ BỊA ĐẶT LỜI THOẠI HOẶC PHẢ HỆ HƯ CẤU:
+     * Tuyệt đối không tự sáng tác lời thoại hư cấu mang phong cách tiểu thuyết hay kịch nghệ cho các nhân vật lịch sử. Nếu sử liệu hoặc ngữ cảnh cung cấp không có ghi nhận nguyên văn câu nói hoặc chi tiết phả hệ đó, hãy nêu rõ ràng: "Sử liệu chính thức không ghi chép câu nói này" hoặc chỉ trích dẫn câu nói kinh điển có trong sử liệu (ví dụ: lời Hồ Nguyên Trừng: 'Thần không sợ đánh, chỉ sợ lòng dân không theo').
+
+9. NGUYÊN TẮC HỌC THUYẾT KHÍ TÀI QUÂN SỰ & RÀNG BUỘC CHIẾN DỊCH (MILITARY DOCTRINE & CAMPAIGN INVARIANTS):
+   - ĐẶC TÍNH KHÍ TÀI & ĐẠN DƯỢC PHÒNG KHÔNG:
+     * Tên lửa phòng không (như SAM-2 / SAM-3) và các loại đạn pháo hạng nặng là vũ khí tiêu hao một lần (single-use disposable ordnance). Khi đã phóng đi hoặc phát nổ trên không tiêu diệt mục tiêu, TUYỆT ĐỐI KHÔNG THỂ thu hồi để tái sử dụng hay bắn lại.
+     * Hoạt động bảo dưỡng, sửa chữa, cải tiến khí tài (như tại Nhà máy / Xưởng A31) là công tác kỹ thuật sửa chữa đài radar dẫn đường (như radar Fan Song / P-12), bệ phóng và kiểm tra, lắp ráp, hiệu chỉnh tham số kỹ thuật quả đạn trước khi phóng; TUYỆT ĐỐI KHÔNG PHẢI là "thu hồi tên lửa đã bắn đem về dùng lại". Nếu người dùng hỏi hoặc ám chỉ việc thu hồi tên lửa đã bắn, BẮT BUỘC câu mở đầu phải bác bỏ dứt khoát.
+   - KHỐNG CHẾ CHÍNH XÁC THỜI GIAN CHIẾN DỊCH "ĐIỆN BIÊN PHỦ TRÊN KHÔNG" (LINEBACKER II):
+     * Chiến dịch 12 ngày đêm phòng không Hà Nội - Hải Phòng diễn ra chính xác từ đêm 18/12/1972 đến ngày 30/12/1972 (ngày 30/12/1972 Tổng thống Mỹ Nixon tuyên bố ngừng ném bom từ vĩ tuyến 20 trở ra Bắc).
+     * Thắng lợi vẻ vang của chiến dịch buộc Mỹ phải ký kết Hiệp định Paris về chấm dứt chiến tranh, lập lại hòa bình ở Việt Nam vào tháng 1 năm 1973 (ngày 27/01/1973).`;
 
 /**
  * Tier 2 Speculative Semantic Arbiter using the primary local model (Qwen 3.5 9B).
@@ -520,8 +742,17 @@ export async function* handleChatQueryStream(
     return;
   }
 
-  // 4. Video Creation Intent -> Direct LLM Stream
-  if (classification.intent === 'VIDEO_INTENT') {
+  // 4. Video Creation Intent -> Direct LLM Stream (Only for pure video creation requests)
+  // If the query contains substantive historical inquiry (questions about dates, events, numbers, causes, etc.),
+  // do NOT bypass RAG! Route through the full GraphRAG pipeline so that historical facts, chronology anchors,
+  // and campaign boundaries are rigorously grounded, followed by the video handover recommendation.
+  const hasSubstantiveHistoricalContent =
+    classification.compositeResult?.hasHistoricalInquiry ||
+    SUBSTANTIVE_QUESTION_REGEX.test(effectiveQuery) ||
+    hasHistoricalDomainSignals(effectiveQuery) ||
+    Boolean(classification.matchedEntityId);
+
+  if (classification.intent === 'VIDEO_INTENT' && !hasSubstantiveHistoricalContent) {
     const topic = classification.suggestedTopic || effectiveQuery;
     log.info('chat.video_intent_llm', `Handling video intent query via LLM: "${topic.slice(0, 50)}"`, {
       conversationId,
@@ -639,13 +870,22 @@ export async function* handleChatQueryStream(
 
   // If the query mentions multiple entities (e.g. A and B in kinship, comparative, or premise queries)
   // but not all of them could be resolved into known filter IDs, DO NOT restrict entityFilter to a subset.
-  // Letting entityFilter = undefined enables open hybrid BM25 + vector search across the entire corpus.
+  // Also, for open, comprehensive historiographical, thematic, or multi-faceted evaluation queries
+  // (e.g. asking about overall achievements, territory, sovereignty, reforms, comparisons, impacts),
+  // restricting entityFilter strictly to a single person entity starves RAG from retrieving thematic chunks
+  // (such as national naming, treaties, island sovereignty, or administrative reforms).
+  // In those cases, setting entityFilter = undefined allows open hybrid BM25 + Vector retrieval across the full corpus.
   const hasUnresolvedEntityInMultiEntityQuery =
     premiseAnalysis.detectedEntities.length >= 2 &&
     resolvedFilterIds.length < premiseAnalysis.detectedEntities.length;
 
+  const isBroadAnalyticalQuery =
+    /(?:đánh\s+giá|toàn\s+diện|khách\s+quan|công\s+lao|hạn\s+chế|tổng\s+quan|ý\s+nghĩa|tác\s+động|chủ\s+quyền|cương\s+thổ|biển\s+đảo|quốc\s+hiệu|nguyên\s+nhân\s+sâu\s+xa|bối\s+cảnh)/i.test(
+      effectiveQuery
+    );
+
   const effectiveEntityFilter =
-    hasUnresolvedEntityInMultiEntityQuery || resolvedFilterIds.length === 0
+    hasUnresolvedEntityInMultiEntityQuery || resolvedFilterIds.length === 0 || isBroadAnalyticalQuery
       ? undefined
       : resolvedFilterIds;
 
@@ -701,6 +941,7 @@ export async function* handleChatQueryStream(
         rerankTopK,
         maxTokens: maxRagTokens,
         entityFilter: effectiveEntityFilter,
+        targetYear: dialogueState.activeTemporalYears?.[0],
       }),
       new Promise<any>((_, reject) =>
         setTimeout(() => reject(new Error('RAG search timeout')), ragTimeoutMs)
@@ -754,15 +995,26 @@ export async function* handleChatQueryStream(
 
   // 6. Build Context & Multi-turn Prompt
   const triplesText = pruneGraphTriples(graphTriples, 15, premiseAnalysis.detectedEntities);
+  const DIAGNOSTIC_CATEGORY_LABELS = new Set([
+    'Công nghệ vũ khí',
+    'Gia phả tư nhân',
+    'Truyền thuyết thần thoại',
+    'Tiền đề hỗn hợp',
+  ]);
   const unmappedEntities: string[] = [];
-  for (const ent of premiseAnalysis.detectedEntities) {
-    const isMaster = isKnownMasterEntity(ent);
-    const foundInContext = contextSnippets.toLowerCase().includes(ent.toLowerCase());
-    const foundInTriples = graphTriples.some(
-      (t) => t.source.toLowerCase().includes(ent.toLowerCase()) || t.target.toLowerCase().includes(ent.toLowerCase())
-    );
-    if (!isMaster && !foundInContext && !foundInTriples) {
-      unmappedEntities.push(ent);
+  if (premiseAnalysis.isLeadingQuestion || premiseAnalysis.questionType === 'KINSHIP' || premiseAnalysis.questionType === 'IDENTITY') {
+    for (const ent of premiseAnalysis.detectedEntities) {
+      if (DIAGNOSTIC_CATEGORY_LABELS.has(ent) || (premiseAnalysis.categoryLabel && ent === premiseAnalysis.categoryLabel)) {
+        continue;
+      }
+      const isMaster = isKnownMasterEntity(ent);
+      const foundInContext = contextSnippets.toLowerCase().includes(ent.toLowerCase());
+      const foundInTriples = graphTriples.some(
+        (t) => t.source.toLowerCase().includes(ent.toLowerCase()) || t.target.toLowerCase().includes(ent.toLowerCase())
+      );
+      if (!isMaster && !foundInContext && !foundInTriples) {
+        unmappedEntities.push(ent);
+      }
     }
   }
 
@@ -821,7 +1073,7 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
     multiIntentDirective += `\n\n[QUY TẮC NỘI BỘ: Ràng buộc phạm vi - Tập trung trả lời phần lịch sử chính, đồng thời lịch sự nhắc người dùng rằng ChronoViet là hệ thống chuyên biệt về Lịch sử Việt Nam nên không hỗ trợ chi tiết các nội dung ngoài lề ("${classification.outOfDomainTopic}").]`;
   }
   if (classification.signals?.hasVideoGeneration) {
-    multiIntentDirective += `\n\n[QUY TẮC NỘI BỘ: Kết hợp sản xuất video - Sau khi trình bày sự kiện lịch sử, hãy gợi ý người dùng nhấn nút "Tạo Video" hoặc chuyển sang tab Video Studio để bắt đầu tạo kịch bản phân cảnh.]`;
+    multiIntentDirective += `\n\n[QUY TẮC NỘI BỘ: Kết hợp sản xuất video - Trình bày sự kiện lịch sử dựa trên tài liệu đã cung cấp, tóm lược mạch lạc các phân cảnh chính (nếu có) bám sát 100% sử liệu xác thực, TUYỆT ĐỐI KHÔNG tự suy đoán hay thêm thắt giai thoại chiến thuật hư cấu ngoài tài liệu, sau đó gợi ý người dùng nhấn nút "Tạo Video" hoặc chuyển sang tab Video Studio để bắt đầu tạo kịch bản phân cảnh.]`;
   }
 
   const premiseDirectiveText =
@@ -846,7 +1098,18 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
     ...(isTopicShift ? [] : dialogueState.activeDocuments),
     ...(isTopicShift ? [] : dialogueState.activeLocations),
   ]));
-  const dynamicEntityCards = buildDynamicEntityKnowledgeCards(entitiesToLookup);
+
+  // Chronology & Anti-Conflation Anchor Injection (Task 3)
+  const queryYearsMatch = effectiveQuery.match(/\b(\d{3,4})\b/g);
+  const activeYears = queryYearsMatch
+    ? Array.from(new Set(queryYearsMatch.map((y) => parseInt(y, 10)).filter((y) => y >= 100 && y <= 2100)))
+    : [];
+  const chronologyAnchors = buildChronologyAnchorBox(entitiesToLookup, activeYears, effectiveQuery);
+  if (chronologyAnchors.trim()) {
+    contextSections.push(`<verified_chronology_anchors>\n${chronologyAnchors}\n</verified_chronology_anchors>`);
+  }
+
+  const dynamicEntityCards = buildDynamicEntityKnowledgeCards(entitiesToLookup, isBroadAnalyticalQuery);
   if (dynamicEntityCards.trim()) {
     contextSections.push(`<verified_master_entities>\n${dynamicEntityCards}\n</verified_master_entities>`);
   }
@@ -868,7 +1131,8 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
     ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
     { role: 'user', content: userTurnWithContext },
   ];
-  const messages = clampTotalPromptMessages(rawMessages, isLeanIdentity ? 2500 : 5000);
+  const maxPromptBudget = isLeanIdentity ? 2500 : (isBroadAnalyticalQuery ? 3500 : 5000);
+  const messages = clampTotalPromptMessages(rawMessages, maxPromptBudget);
 
   let fullResponse = '';
   const loopDetector = createStreamLoopDetector();

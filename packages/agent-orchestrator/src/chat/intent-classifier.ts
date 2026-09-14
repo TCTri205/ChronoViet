@@ -295,7 +295,7 @@ export function extractHistoricalEntityFromQuery(text: string): ExtractedHistori
  * Detects if the query contains verified historical temporal or domain lexical markers.
  * Acts as Key 2 in Dual-Key Positive Gating.
  */
-function hasHistoricalDomainSignals(text: string): boolean {
+export function hasHistoricalDomainSignals(text: string): boolean {
   if (!text || typeof text !== 'string') return false;
 
   // 1. Explicit calendar year numbers or BCE/CE notations (prevents arbitrary 3-digit quantities like 500 from firing RAG)

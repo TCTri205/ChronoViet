@@ -650,6 +650,86 @@ describe('Real-World Typo & Resilient Fast Path Execution', () => {
       expect(card).toContain('Tổng số lượng tên gọi / bút danh / bí danh ước tính:');
       expect(card).toContain('150 đến 175');
     });
+
+    it('injects document anchors (author, dynasty, adversary, year) into master entity card for Binh Ngo Dai Cao', async () => {
+      const { buildDynamicEntityKnowledgeCards } = await import('../index.js');
+      const card = buildDynamicEntityKnowledgeCards(['Bình Ngô Đại Cáo']);
+
+      expect(card).toContain('Văn kiện / Tác phẩm: Bình Ngô đại cáo');
+      expect(card).toContain('Nguyễn Trãi (thay lời Bình Định Vương Lê Lợi)');
+      expect(card).toContain('Nhà Hậu Lê (Lê sơ)');
+      expect(card).toContain('Quân xâm lược Nhà Minh (giặc Minh)');
+      expect(card).toContain('năm 1428');
+    });
+  });
+
+  describe('Phase 2: Structured Chrono-Anchoring & Military Doctrine Guardrails', () => {
+    it('generates anti-conflation chronology anchors for Le Hoan vs Nha Ly', async () => {
+      const { buildChronologyAnchorBox } = await import('../index.js');
+      const box = buildChronologyAnchorBox(['person_le_hoan'], [981], 'Lê Hoàn thuộc nhà Lý năm 981');
+
+      expect(box).toContain('Lê Hoàn (Lê Đại Hành): Thuộc triều Tiền Lê');
+      expect(box).toContain('TUYỆT ĐỐI KHÔNG gán Lê Hoàn hoặc chiến thắng năm 981 vào nhà Lý');
+      expect(box).toContain('nhà Lý do Lý Thái Tổ sáng lập năm 1009');
+    });
+
+    it('generates anti-conflation chronology anchors for Ho Quy Ly vs Tran Thiem Binh', async () => {
+      const { buildChronologyAnchorBox } = await import('../index.js');
+      const box = buildChronologyAnchorBox(['person_ho_quy_ly'], [1400], 'Hồ Quý Ly cướp ngôi Trần Thiêm Bình');
+
+      expect(box).toContain('phế truất vua Trần Thiếu Đế');
+      expect(box).toContain('Trần Thiêm Bình');
+      expect(box).toContain('KHÔNG PHẢI là vua và KHÔNG PHẢI là người bị Hồ Quý Ly cướp ngôi');
+    });
+
+    it('generates chronology anchors for all three Bach Dang battles (938, 981, 1288)', async () => {
+      const { buildChronologyAnchorBox } = await import('../index.js');
+      const box = buildChronologyAnchorBox([], [938, 981, 1288], 'So sánh ba trận thủy chiến Bạch Đằng');
+
+      expect(box).toContain('Năm 938: Tiền Ngô Vương Ngô Quyền');
+      expect(box).toContain('Năm 981: Vua Lê Hoàn (triều Tiền Lê)');
+      expect(box).toContain('Năm 1288: Hưng Đạo Đại Vương Trần Quốc Tuấn (nhà Trần)');
+    });
+
+    it('generates chronology anchors for Luy Thay and Song Gianh in Trinh - Nguyen conflict', async () => {
+      const { buildChronologyAnchorBox } = await import('../index.js');
+      const box = buildChronologyAnchorBox(['loc_luy_thay'], [], 'Lũy Thầy trong Trịnh Nguyễn phân tranh');
+
+      expect(box).toContain('Lũy Thầy (Lũy Đào Duy Từ');
+      expect(box).toContain('Đào Duy Từ chỉ huy đắp');
+      expect(box).toContain('Sông Gianh (Linh Giang, Quảng Bình)');
+    });
+
+    it('generates military doctrine and temporal boundary anchors for Linebacker II 1972', async () => {
+      const { buildChronologyAnchorBox } = await import('../index.js');
+      const box = buildChronologyAnchorBox([], [1972], 'Chiến dịch 12 ngày đêm Điện Biên Phủ trên không');
+
+      expect(box).toContain('18/12/1972 - 30/12/1972');
+      expect(box).toContain('SAM-2 là vũ khí tiêu hao một lần');
+      expect(box).toContain('không có việc thu hồi tên lửa đã bắn');
+    });
+
+    it('flags missile reuse questions as false premise with military doctrine directive', async () => {
+      const { analyzePremiseAndLeadingIntent } = await import('../index.js');
+      const analysis = analyzePremiseAndLeadingIntent('Xưởng A31 có thu hồi tên lửa SAM-2 đã bắn để tái sử dụng không?');
+
+      expect(analysis.isLeadingQuestion).toBe(true);
+      expect(analysis.categoryLabel).toBe('Học thuyết khí tài quân sự');
+      expect(analysis.suggestedDirective).toContain('vũ khí tiêu hao một lần');
+      expect(analysis.suggestedDirective).toContain('KHÔNG THỂ thu hồi để tái sử dụng');
+    });
+
+    it('prunes verbose family lineage from entity cards during broad analytical queries', async () => {
+      const { buildDynamicEntityKnowledgeCards } = await import('../index.js');
+      const fullCard = buildDynamicEntityKnowledgeCards(['person_tran_hung_dao'], false);
+      const leanCard = buildDynamicEntityKnowledgeCards(['person_tran_hung_dao'], true);
+
+      expect(fullCard).toContain('Thân tộc chính sử:');
+      expect(fullCard).toContain('An Sinh Vương Trần Liễu');
+      expect(leanCard).not.toContain('Thân tộc chính sử:');
+      expect(leanCard).toContain('Trần Hưng Đạo');
+      expect(leanCard).toContain('Triều đại: Nhà Trần');
+    });
   });
 });
 

@@ -456,6 +456,7 @@ export const RagSearchRequestSchema = z.object({
   maxTokens: z.number().int().positive().optional().default(3200),
   rerankTopK: z.number().int().positive().optional().default(5),
   subIntent: ChatSubIntentSchema.optional(),
+  targetYear: z.number().int().optional(),
 });
 
 export const HistoricalContextEntitySchema = z.object({
