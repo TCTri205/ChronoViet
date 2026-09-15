@@ -38,6 +38,7 @@ const __dirname = path.dirname(__filename);
 export interface RunStage1ScriptEvalOptions {
   limit?: number;
   type?: string;
+  ids?: string[];
   strict?: boolean;
   clean?: boolean;
 }
@@ -64,6 +65,14 @@ export async function runStage1ScriptEvaluation(
     const typeUpper = options.type.toUpperCase();
     testCases = testCases.filter((tc) => tc.videoType.toUpperCase() === typeUpper);
     console.log(`Filtered by video type "${typeUpper}": ${testCases.length} topics remaining.`);
+  }
+
+  if (options.ids && options.ids.length > 0) {
+    const rawIds = options.ids.map((id) => id.toLowerCase().trim());
+    testCases = testCases.filter((tc) =>
+      rawIds.some((id) => tc.id.toLowerCase().includes(id) || tc.id.toLowerCase().startsWith(id))
+    );
+    console.log(`Filtered by IDs [${options.ids.join(', ')}]: ${testCases.length} topics remaining.`);
   }
 
   if (options.limit && options.limit > 0) {
@@ -99,14 +108,14 @@ export async function runStage1ScriptEvaluation(
       }
       initProjectWorkspace(projectId, stage1OutputsDir);
 
-      const searchQuery = tc.searchKeywordsCheck && tc.searchKeywordsCheck.length > 0
+      const ragQuery = tc.searchKeywordsCheck && tc.searchKeywordsCheck.length > 0
         ? `${tc.topic} ${tc.searchKeywordsCheck.join(' ')}`
         : tc.topic;
 
       const ragSearchResult = await ragEngine.search({
-        query: searchQuery,
-        maxTokens: 3500,
-        rerankTopK: Math.max(8, Math.min(12, (tc.targetDurationMinutes || 2) * 2 + 4)),
+        query: ragQuery,
+        maxTokens: 4000,
+        rerankTopK: Math.max(10, Math.min(16, (tc.targetDurationMinutes || 2) * 2 + 6)),
       });
 
       const ragContext = {
@@ -124,6 +133,7 @@ export async function runStage1ScriptEvaluation(
         targetDurationMinutes: tc.targetDurationMinutes,
         videoType: tc.videoType,
         templateId: 'HISTORICAL_DOCUMENTARY',
+        epoch: tc.epoch,
         status: 'INIT',
         currentStep: 1,
         ragContext,
@@ -348,10 +358,19 @@ if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWi
     }
   }
 
+  let ids: string[] | undefined;
+  const idArg = args.find((a) => a === '--id' || a.startsWith('--id=') || a === '--ids' || a.startsWith('--ids='));
+  if (idArg) {
+    const rawVal = idArg.includes('=') ? idArg.split('=')[1] : args[args.indexOf(idArg) + 1];
+    if (rawVal) {
+      ids = rawVal.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+  }
+
   const strict = args.includes('--strict');
   const clean = args.includes('--clean');
 
-  runStage1ScriptEvaluation({ limit, type, strict, clean })
+  runStage1ScriptEvaluation({ limit, type, ids, strict, clean })
     .then((report) => {
       if (!report.allPassed && strict) {
         process.exit(1);

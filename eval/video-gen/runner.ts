@@ -1,20 +1,30 @@
 /**
  * ChronoViet Video Generation Evaluation Suite Runner
- * Orchestrates 2-Stage Decoupled Evaluation Suite:
+ * Orchestrates 4-Stage Decoupled & End-to-End Evaluation Suite:
  * - Stage 1 (Script & Narrative): Fast text-only grounding, narrative flow, planned pacing, fact-checking, scene bounds.
  * - Stage 2 (Visual Research & Curation): Trilingual visual queries, image search, disk download, license whitelist, VLM scoring.
- * - Stage All (Master Pre-Render Benchmark): End-to-end pre-render pipeline with unified scorecard.
+ * - Stage 3 (TTS Gen Audio & Pacing): Real VieNeu voice synthesis, 16-bit PCM WAV on disk, word timestamps, duration reconciliation.
+ * - Stage 4 (Remotion Video Composition & Render): Zod schema verification, headless MP4 rendering, timeline audio-video sync.
+ * - Stage All (Master Video-Gen Benchmark): End-to-end 4-stage pipeline execution with unified scorecard.
  *
  * CLI usage:
- *   pnpm eval:video [--stage=1|2|all] [--golden] [--limit <n>] [--type <type>] [--strict] [--clean]
+ *   pnpm eval:video [--stage=1|2|3|4|all] [--golden] [--limit <n>] [--type <type>] [--strict] [--clean] [--concurrency <n>]
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { assertEvalPreflight, initProjectWorkspace, getProjectPaths } from '@chronoviet/infra';
+import {
+  assertEvalPreflight,
+  initProjectWorkspace,
+  getProjectPaths,
+  findMonorepoRoot,
+  loadProjectSchema,
+} from '@chronoviet/infra';
 import { ChronoRagEngine } from '@chronoviet/rag-engine';
 import { isWhitelistedLicense } from '@chronoviet/vlm-inspector';
+import { VideoProjectSchema } from '@chronoviet/shared-spec';
 import {
   ChronoGraphState,
   runOrchestratorPipeline,
@@ -22,7 +32,6 @@ import {
 import {
   saveJsonArtifact,
   saveSuiteEvaluationReport,
-  generateMarkdownReport,
   printCliSummaryTable,
   ensureDirectory,
   BaseSuiteReport,
@@ -33,9 +42,12 @@ import {
   VideoGenCaseResult,
   evaluateVideoGenCase,
   computeVideoGenAggregatedMetrics,
+  validateWavHeader,
 } from './metrics/index.js';
 import { runStage1ScriptEvaluation } from './stage1-script-runner.js';
 import { runStage2VisualEvaluation } from './stage2-visual-runner.js';
+import { runStage3AudioEvaluation } from './stage3-audio-runner.js';
+import { runStage4RenderEvaluation, prepareSchemaForRemotionRender } from './stage4-render-runner.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,9 +57,12 @@ export interface RunVideoGenEvalOptions {
   type?: string;
   strict?: boolean;
   clean?: boolean;
-  stage?: '1' | '2' | 'all' | 'script' | 'visual';
+  stage?: '1' | '2' | '3' | '4' | 'all' | 'script' | 'visual' | 'audio' | 'render';
   golden?: boolean;
   stage1Dir?: string;
+  stage2Dir?: string;
+  stage3Dir?: string;
+  concurrency?: number;
 }
 
 export async function runVideoGenerationEvaluation(
@@ -75,14 +90,46 @@ export async function runVideoGenerationEvaluation(
     });
   }
 
-  // Stage All: Full End-to-End Master Pipeline
+  if (stage === '3' || stage === 'audio') {
+    return runStage3AudioEvaluation({
+      limit: options.limit,
+      type: options.type,
+      strict: options.strict,
+      clean: options.clean,
+      golden: options.golden,
+      sourceDir: options.stage2Dir,
+    });
+  }
+
+  if (stage === '4' || stage === 'render') {
+    return runStage4RenderEvaluation({
+      limit: options.limit,
+      type: options.type,
+      strict: options.strict,
+      clean: options.clean,
+      golden: options.golden,
+      sourceDir: options.stage3Dir,
+      concurrency: options.concurrency,
+    });
+  }
+
+  // Stage All: Full End-to-End Master 4-Stage Pipeline
   const startTime = new Date();
   const startTimeMs = Date.now();
 
-  console.log('\n🎬 Starting ChronoViet Video Generation (End-to-End Master Pipeline) Evaluation Suite...');
+  console.log('\n🎬 Starting ChronoViet Video Generation (End-to-End Master 4-Stage Pipeline) Evaluation Suite...');
 
-  // 1. Preflight Health Checks (postgres, embedding, llm, vlm, search)
-  const preflight = await assertEvalPreflight(['postgres', 'embedding', 'llm', 'vlm', 'search']);
+  // 1. Preflight Health Checks across all modules
+  const preflight = await assertEvalPreflight(['postgres', 'embedding', 'llm', 'vlm', 'search', 'tts']);
+
+  // Locate Remotion Engine
+  const monorepoRoot = findMonorepoRoot();
+  const remotionPkgDir = path.resolve(monorepoRoot, 'packages/remotion-engine');
+  const remotionEntry = path.join(remotionPkgDir, 'src/index.ts');
+
+  if (!fs.existsSync(remotionEntry)) {
+    throw new Error(`Remotion entry not found at: ${remotionEntry}`);
+  }
 
   // 2. Load Video Test Topics Dataset
   const datasetPath = path.resolve(__dirname, 'datasets/video-gen-test-cases.json');
@@ -112,27 +159,35 @@ export async function runVideoGenerationEvaluation(
   const ragEngine = new ChronoRagEngine();
   const caseResults: VideoGenCaseResult[] = [];
   const createdProjectIds: string[] = [];
+  const renderConcurrency = String(options.concurrency || 2);
 
-  // 3. Execute Pre-Render Pipeline for Each Test Case
+  // 3. Execute End-to-End 4-Stage Pipeline for Each Test Case
   for (let i = 0; i < testCases.length; i++) {
     const tc = testCases[i];
     const projectId = `eval_proj_${tc.id}`;
     createdProjectIds.push(projectId);
 
-    console.log(`\n[${i + 1}/${testCases.length}] Generating Video Pipeline: ${tc.id} — "${tc.topic}" (${tc.videoType}, ${tc.targetDurationMinutes}m)`);
+    console.log(`\n[${i + 1}/${testCases.length}] End-to-End Video: ${tc.id} — "${tc.topic}" (${tc.videoType}, ${tc.targetDurationMinutes}m)`);
     const caseStart = Date.now();
 
     try {
-      // Step 1: Auto-clean prior project workspace inside outputs/ for this test case on re-run, then initialize fresh
+      // Step 0: Auto-clean prior project workspace inside outputs/ on re-run, then initialize fresh
       const existingWorkspace = getProjectPaths(projectId, outputsDir);
       if (fs.existsSync(existingWorkspace.rootDir)) {
         fs.rmSync(existingWorkspace.rootDir, { recursive: true, force: true });
       }
-      initProjectWorkspace(projectId, outputsDir);
+      const paths = initProjectWorkspace(projectId, outputsDir);
+
+      // Step 1: GraphRAG Knowledge Grounding
+      console.log(`  ├─ [Stage 1] GraphRAG Search & Chaptering...`);
+      const ragQuery = (tc as any).searchKeywordsCheck && (tc as any).searchKeywordsCheck.length > 0
+        ? `${tc.topic} ${(tc as any).searchKeywordsCheck.join(' ')}`
+        : tc.topic;
+
       const ragSearchResult = await ragEngine.search({
-        query: tc.topic,
-        maxTokens: 2000,
-        rerankTopK: 5,
+        query: ragQuery,
+        maxTokens: 4000,
+        rerankTopK: Math.max(10, Math.min(16, (tc.targetDurationMinutes || 2) * 2 + 6)),
       });
 
       const ragContext = {
@@ -174,16 +229,161 @@ export async function runVideoGenerationEvaluation(
       };
 
       // Step 2: Execute LangGraph Multi-Agent Orchestrator Pipeline
-      console.log(`  └─ Executing LangGraph Multi-Agent Orchestrator Pipeline...`);
+      // (Stage 1 Scriptwriter & Segmenter + Stage 2 Visual Curation & VLM + Stage 3 TTS & Reconciliation + Packager)
+      console.log(`  ├─ [Stage 1-3] LangGraph Orchestrator Execution (Script + Visual + TTS)...`);
       state = await runOrchestratorPipeline(state, { resumeFromCheckpoint: false });
 
+      // Log immediately if human review / severe hallucination triggered
+      if (state.needsHumanReview) {
+        console.error(`  ├─ ❌ [Stage 1 Guardrail] Severe hallucination flagged by Fact-Checker -> Case marked for review`);
+      }
+
+      // Step 3: Audit Stage 3 Audio Assets on Disk
+      console.log(`  ├─ [Stage 3 Audit] Verifying Synthesized WAV Audio & Word Timestamps...`);
+      let audioGeneratedScenes = 0;
+      let validWavHeaders = 0;
+      let monotonicTimestampsCount = 0;
+      let syntheticFallbackCount = 0;
+
+      for (const scene of state.scenes || []) {
+        const audioPath = scene.audioPath || path.join(paths.audioDir, `${scene.sceneId}.wav`);
+        if (fs.existsSync(audioPath) && fs.statSync(audioPath).size > 0) {
+          audioGeneratedScenes++;
+          try {
+            const buf = fs.readFileSync(audioPath);
+            const check = validateWavHeader(buf);
+            if (check.valid) validWavHeaders++;
+          } catch {}
+        }
+
+        const wts = scene.wordTimestamps || [];
+        let isMono = wts.length > 0;
+        for (let j = 0; j < wts.length; j++) {
+          if (wts[j].endMs < wts[j].startMs || (j > 0 && wts[j].startMs < wts[j - 1].startMs)) {
+            isMono = false;
+            break;
+          }
+        }
+        if (isMono) monotonicTimestampsCount++;
+
+        const isFallback = state.telemetryAudit?.some(
+          (t) => t.node === 'tts_synthesis' && t.category === 'FALLBACK' && (t.metadata as any)?.sceneId === scene.sceneId
+        );
+        if (isFallback) {
+          syntheticFallbackCount++;
+          console.warn(`  ├─ ⚠️ [Stage 3 Fallback] Scene ${scene.sceneId} used synthetic fallback audio`);
+        }
+      }
+
+      const totalScenesCount = (state.scenes || []).length;
+      const audioGenSuccessRate = totalScenesCount > 0 ? audioGeneratedScenes / totalScenesCount : 0;
+      const wavHeaderRate = totalScenesCount > 0 ? validWavHeaders / totalScenesCount : 0;
+      const timestampsMonoRate = totalScenesCount > 0 ? monotonicTimestampsCount / totalScenesCount : 0;
+
+      // Step 4: [Stage 4] Validate VideoProjectSchema & Execute Remotion Render
+      console.log(`  ├─ [Stage 4] Validating VideoProjectSchema & Rendering MP4 with Remotion...`);
+      const schemaPath = path.join(paths.rootDir, 'project_schema.json');
+      let schemaValidated = false;
+      const schemaErrors: string[] = [];
+      let projectSchema: any;
+
+      try {
+        projectSchema = loadProjectSchema(projectId, outputsDir);
+        const parsed = VideoProjectSchema.safeParse(projectSchema);
+        if (parsed.success) {
+          schemaValidated = true;
+        } else {
+          schemaValidated = false;
+          schemaErrors.push(...parsed.error.issues.map((iss) => `${iss.path.join('.')}: ${iss.message}`));
+          console.error(`  ├─ ❌ [Stage 4 Schema] Zod validation failed: ${schemaErrors.join('; ')}`);
+        }
+      } catch (loadErr: any) {
+        schemaValidated = false;
+        schemaErrors.push(`Failed to load project schema: ${loadErr.message}`);
+      }
+
+      // Prepare render props with data URIs for local audio & image files so Remotion headless browser can access them directly
+      const renderSchema = prepareSchemaForRemotionRender(projectSchema);
+      const renderPropsPath = path.join(paths.rootDir, 'render_props.json');
+      fs.writeFileSync(renderPropsPath, JSON.stringify(renderSchema, null, 2), 'utf-8');
+
+      // Execute Real Remotion Render
+      const outputPath = path.join(paths.outputDir, 'video.mp4');
+      const compId = 'ChronoVideo';
+      let renderStdErr = '';
+      let renderStdOut = '';
+      let videoRenderSuccess = false;
+      const renderStart = Date.now();
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const renderProc = spawn(
+            'npx',
+            [
+              'remotion',
+              'render',
+              remotionEntry,
+              compId,
+              outputPath,
+              `--props=${renderPropsPath}`,
+              `--concurrency=${renderConcurrency}`,
+              '--gl=angle',
+              '--overwrite',
+            ],
+            {
+              cwd: remotionPkgDir,
+              stdio: 'pipe',
+            }
+          );
+
+          renderProc.stdout.on('data', (data) => {
+            const line = data.toString();
+            renderStdOut += line;
+            if (line.includes('Rendered') && (line.includes('time remaining') || line.includes('Rendered 100%'))) {
+              const trimmed = line.trim().split('\n').pop() || '';
+              process.stdout.write(`\r     ⏳ [Stage 4 Render] ${trimmed.slice(0, 65)}`);
+            }
+          });
+
+          renderProc.stderr.on('data', (data) => {
+            renderStdErr += data.toString();
+          });
+
+          renderProc.on('close', (code) => {
+            process.stdout.write('\n');
+            if (code === 0) {
+              videoRenderSuccess = true;
+              resolve();
+            } else {
+              videoRenderSuccess = false;
+              reject(new Error(`Remotion render exited with code ${code}: ${renderStdErr || renderStdOut}`));
+            }
+          });
+
+          renderProc.on('error', (err) => {
+            reject(err);
+          });
+        });
+      } catch (renderErr: any) {
+        console.error(`  ├─ ❌ [Stage 4 Render Error] Remotion render failed:`, renderErr.message.slice(0, 300));
+        renderStdErr = renderErr.message;
+      }
+
+      const renderDurationMs = Date.now() - renderStart;
       const caseDuration = Date.now() - caseStart;
 
-      // Extract full narration script
-      const scriptText = Object.values(state.chapterScripts || {}).join(' ');
+      let videoFileExists = false;
+      let videoFileSizeBytes = 0;
+      if (fs.existsSync(outputPath)) {
+        videoFileExists = true;
+        videoFileSizeBytes = fs.statSync(outputPath).size;
+      }
 
-      // Audit downloaded assets on disk inside outputs/
-      const paths = getProjectPaths(projectId, outputsDir);
+      // Step 5: Construct Scene Summaries & Evaluate All Metrics
+      const scriptText = Object.values(state.chapterScripts || {}).join(' ');
+      const factCheckPassed = !state.needsHumanReview;
+      const factCheckFlags = (state.factCheckLogs || []).filter((l) => !l.passed).map((l) => l.details);
+
       const sceneSummaries: VideoGenSceneSummary[] = (state.scenes || []).map((scene) => {
         let assetFileExists = false;
         let assetFileSizeBytes = 0;
@@ -207,9 +407,9 @@ export async function runVideoGenerationEvaluation(
         return {
           sceneId: scene.sceneId,
           contentType: scene.contentType,
-          layoutMode: scene.layoutMode || 'STAT_CARD',
+          layoutMode: scene.layoutMode || 'HISTORICAL_FRAME',
           durationSec: scene.targetDurationSeconds || 5,
-          wordCount: scene.voiceoverText ? scene.voiceoverText.trim().split(/\s+/).length : 0,
+          wordCount: scene.voiceoverText ? scene.voiceoverText.trim().split(/\s+/).filter(Boolean).length : 0,
           hasVisualAsset: !!scene.selectedAsset,
           assetFileExists,
           assetFileSizeBytes,
@@ -221,10 +421,6 @@ export async function runVideoGenerationEvaluation(
         };
       });
 
-      const factCheckPassed = !state.needsHumanReview;
-      const factCheckFlags = (state.factCheckLogs || []).filter((l) => !l.passed).map((l) => l.details);
-
-      // Evaluate single test case
       const caseResult = evaluateVideoGenCase(
         tc,
         {
@@ -238,6 +434,41 @@ export async function runVideoGenerationEvaluation(
         },
         sceneSummaries
       );
+
+      // Attach Stage 3 & Stage 4 properties
+      caseResult.audioGeneratedScenes = audioGeneratedScenes;
+      caseResult.audioGenerationSuccessRate = audioGenSuccessRate;
+      caseResult.timestampsMonotonicRate = timestampsMonoRate;
+      caseResult.wavHeaderValidRate = wavHeaderRate;
+      caseResult.syntheticAudioFallbackCount = syntheticFallbackCount;
+      caseResult.schemaValidated = schemaValidated;
+      caseResult.videoRendered = videoFileExists && videoFileSizeBytes >= 50 * 1024;
+      caseResult.videoFileSizeBytes = videoFileSizeBytes;
+      caseResult.renderDurationMs = renderDurationMs;
+
+      const totalVideoDurationSec = caseResult.actualDurationSec || tc.targetDurationMinutes * 60;
+      caseResult.renderSpeedRatio = totalVideoDurationSec > 0
+        ? Math.round((renderDurationMs / (totalVideoDurationSec * 1000)) * 100) / 100
+        : 0;
+
+      // Fail case if video render failed or schema invalid
+      if (!caseResult.videoRendered) {
+        caseResult.passed = false;
+        caseResult.errors = caseResult.errors || [];
+        caseResult.errors.push(`Stage 4 Video render failed: ${renderStdErr || 'File missing or < 50KB'}`);
+      }
+
+      if (!schemaValidated) {
+        caseResult.passed = false;
+        caseResult.errors = caseResult.errors || [];
+        caseResult.errors.push(`Stage 4 Schema invalid: ${schemaErrors.join('; ')}`);
+      }
+
+      if (options.strict && syntheticFallbackCount > 0) {
+        caseResult.passed = false;
+        caseResult.errors = caseResult.errors || [];
+        caseResult.errors.push(`[STRICT] ${syntheticFallbackCount} scenes fell back to synthetic audio`);
+      }
 
       caseResults.push(caseResult);
 
@@ -254,38 +485,48 @@ export async function runVideoGenerationEvaluation(
           scenes: state.scenes,
           researchResults: state.researchResults,
           factCheckLogs: state.factCheckLogs,
+          audioAssets: state.audioAssets,
+          videoPath: outputPath,
         },
         executedAt: new Date().toISOString(),
       });
 
-      // Count VLM Scorer vs Fallback usage
+      // Count VLM Scorer usage
       let localVlmCount = 0;
       let cloudVlmCount = 0;
       let fallbackClipCount = 0;
       for (const scene of state.scenes || []) {
         for (const cand of scene.candidates || []) {
           const sType = (cand.score as any)?.scorerType;
-          if (sType === 'LOCAL_VLM' || sType === 'OPENAI_VLM') {
-            localVlmCount++;
-          } else if (sType === 'GEMINI_CLOUD') {
-            cloudVlmCount++;
-          } else if (sType === 'CLIP_LOCAL_FALLBACK') {
-            fallbackClipCount++;
-          }
+          if (sType === 'LOCAL_VLM' || sType === 'OPENAI_VLM') localVlmCount++;
+          else if (sType === 'GEMINI_CLOUD') cloudVlmCount++;
+          else if (sType === 'CLIP_LOCAL_FALLBACK') fallbackClipCount++;
         }
       }
-      const totalEvaluated = localVlmCount + cloudVlmCount + fallbackClipCount;
-      const vlmModeInfo = totalEvaluated > 0
-        ? `VLM: ${localVlmCount + cloudVlmCount}/${totalEvaluated} (${fallbackClipCount > 0 ? `⚠️ ${fallbackClipCount} fallback to CLIP` : '✅ 100% Primary VLM, 0 fallback'})`
-        : 'VLM: 0 images';
+      const totalVlmEvaluated = localVlmCount + cloudVlmCount + fallbackClipCount;
+      const vlmModeInfo = totalVlmEvaluated > 0
+        ? `VLM: ${localVlmCount + cloudVlmCount}/${totalVlmEvaluated} (${fallbackClipCount > 0 ? `⚠️ ${fallbackClipCount} CLIP fallback` : '100% Primary'})`
+        : 'VLM: 0';
 
       const statusMark = caseResult.passed ? '✅ PASSED' : '❌ FAILED';
-      console.log(`  └─ Status: ${statusMark} | Entity Recall: ${(caseResult.entityRecallRate * 100).toFixed(0)}% | Pacing WPM: ${caseResult.actualWpm} | Assets: ${caseResult.downloadedAssetsCount}/${caseResult.imageScenes} | ${vlmModeInfo} | Time: ${caseDuration}ms`);
+      const sizeMb = (videoFileSizeBytes / (1024 * 1024)).toFixed(2);
+      console.log(
+        `  └─ Status: ${statusMark} | S1 Pacing: ${caseResult.actualWpm} WPM | S2 Assets: ${caseResult.downloadedAssetsCount}/${caseResult.imageScenes} | S3 Audio: ${audioGeneratedScenes}/${totalScenesCount} | S4 Video: ${sizeMb} MB | Time: ${caseDuration}ms`
+      );
       if (caseResult.errors && caseResult.errors.length > 0) {
         console.log(`     Errors: ${caseResult.errors.join('; ')}`);
       }
+      if (caseResult.warnings && caseResult.warnings.length > 0) {
+        console.log(`     Warnings: ${caseResult.warnings.join('; ')}`);
+      }
+
+      // Clean video file if requested
+      if (options.clean && fs.existsSync(outputPath)) {
+        fs.unlinkSync(outputPath);
+      }
     } catch (err: any) {
       const caseDuration = Date.now() - caseStart;
+      console.error(`  └─ ❌ FAILED with exception in case ${tc.id}:`, err.message);
       caseResults.push({
         id: tc.id,
         title: tc.topic,
@@ -308,38 +549,27 @@ export async function runVideoGenerationEvaluation(
         downloadSuccessRate: 0,
         licenseComplianceRate: 0,
         meanVlmQualityScore: 0,
+        audioGeneratedScenes: 0,
+        audioGenerationSuccessRate: 0,
+        schemaValidated: false,
+        videoRendered: false,
+        videoFileSizeBytes: 0,
         durationMs: caseDuration,
         passed: false,
         scenes: [],
-        errors: [err.message || String(err)],
+        errors: [`Unhandled pipeline failure: ${err.message}`],
       });
-      console.log(`  └─ ❌ FAILED with exception: ${err.message}`);
     }
   }
 
-  // 4. Clean up temporary eval project directories if requested
-  if (options.clean) {
-    console.log('\n🧹 Cleaning up temporary eval media folders in outputs/...');
-    for (const projId of createdProjectIds) {
-      try {
-        const pPaths = getProjectPaths(projId, outputsDir);
-        if (fs.existsSync(pPaths.rootDir)) {
-          fs.rmSync(pPaths.rootDir, { recursive: true, force: true });
-        }
-      } catch (cleanErr: any) {
-        console.warn(`Could not clean ${projId}: ${cleanErr.message}`);
-      }
-    }
-  }
-
-  // 5. Compute Aggregated Metrics
+  // 4. Compute Aggregated Metrics
   const aggregated = computeVideoGenAggregatedMetrics(caseResults);
   const endTime = new Date();
   const durationMs = Date.now() - startTimeMs;
   const allPassed = Object.values(aggregated.metricScores).every((m) => m.pass);
 
   const suiteReport: BaseSuiteReport<VideoGenCaseResult> = {
-    title: 'Video Generation Pre-Render Pipeline Benchmark',
+    title: 'ChronoViet Video Generation End-to-End Master Evaluation Report (4-Stage Pipeline)',
     suite: 'VIDEO_GEN',
     timestamp: startTime.toISOString(),
     totalCases: testCases.length,
@@ -371,7 +601,7 @@ export async function runVideoGenerationEvaluation(
     outputArtifactsDir: outputsDir,
   };
 
-  // 6. Save Report Artifacts to reports/
+  // 5. Save Report Artifacts to reports/
   saveSuiteEvaluationReport({
     report: suiteReport,
     reportsDir,
@@ -393,20 +623,33 @@ if (process.argv[1] && (process.argv[1] === __filename || process.argv[1].endsWi
   const typeArgIdx = args.indexOf('--type');
   const type = typeArgIdx !== -1 ? args[typeArgIdx + 1] : undefined;
 
-  let stage: '1' | '2' | 'all' | 'script' | 'visual' | undefined;
+  let stage: '1' | '2' | '3' | '4' | 'all' | 'script' | 'visual' | 'audio' | 'render' | undefined;
   const stageArgIdx = args.findIndex((a) => a.startsWith('--stage'));
   if (stageArgIdx !== -1) {
     const val = args[stageArgIdx].includes('=') ? args[stageArgIdx].split('=')[1] : args[stageArgIdx + 1];
-    if (val === '1' || val === '2' || val === 'all' || val === 'script' || val === 'visual') {
+    if (
+      val === '1' ||
+      val === '2' ||
+      val === '3' ||
+      val === '4' ||
+      val === 'all' ||
+      val === 'script' ||
+      val === 'visual' ||
+      val === 'audio' ||
+      val === 'render'
+    ) {
       stage = val;
     }
   }
+
+  const concArgIdx = args.indexOf('--concurrency');
+  const concurrency = concArgIdx !== -1 ? parseInt(args[concArgIdx + 1], 10) : undefined;
 
   const strict = args.includes('--strict');
   const clean = args.includes('--clean');
   const golden = args.includes('--golden');
 
-  runVideoGenerationEvaluation({ limit, type, strict, clean, stage, golden })
+  runVideoGenerationEvaluation({ limit, type, strict, clean, stage, golden, concurrency })
     .then((report) => {
       if (!report.allPassed && strict) {
         process.exit(1);

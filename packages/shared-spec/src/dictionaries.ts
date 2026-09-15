@@ -344,3 +344,44 @@ export function resolveReignEra(
   return matched[0];
 }
 
+export interface CanonicalDynastyBound {
+  dynastyKey: string;
+  name: string;
+  aliases: string[];
+  startYear: number;
+  endYear: number;
+}
+
+export const CANONICAL_DYNASTY_BOUNDS: CanonicalDynastyBound[] = [
+  { dynastyKey: 'hung_vuong', name: 'Thời kỳ Hùng Vương / Văn Lang', aliases: ['hùng vương', 'hồng bàng', 'văn lang', 'hùng công'], startYear: -2879, endYear: -258 },
+  { dynastyKey: 'au_lac', name: 'Nhà nước Âu Lạc', aliases: ['âu lạc', 'an dương vương', 'thục phán'], startYear: -257, endYear: -180 },
+  { dynastyKey: 'bac_thuoc', name: 'Thời kỳ Bắc thuộc', aliases: ['bắc thuộc', 'thời kỳ bắc thuộc', 'nghìn năm bắc thuộc', 'đô hộ'], startYear: -179, endYear: 938 },
+  { dynastyKey: 'hai_ba_trung', name: 'Trưng Nữ Vương', aliases: ['hai bà trưng', 'trưng nữ vương', 'trưng trắc', 'trưng nhị'], startYear: 40, endYear: 43 },
+  { dynastyKey: 'tien_ly', name: 'Nhà Tiền Lý & Vạn Xuân', aliases: ['tiền lý', 'nhà tiền lý', 'vạn xuân', 'lý nam đế', 'triệu quang phục'], startYear: 544, endYear: 602 },
+  { dynastyKey: 'ngo', name: 'Nhà Ngô', aliases: ['nhà ngô', 'triều ngô', 'ngô quyền', 'tiền ngô vương'], startYear: 939, endYear: 965 },
+  { dynastyKey: '12_su_quan', name: 'Thời kỳ 12 Sứ quân', aliases: ['12 sứ quân', 'mười hai sứ quân'], startYear: 966, endYear: 967 },
+  { dynastyKey: 'dinh', name: 'Nhà Đinh', aliases: ['nhà đinh', 'triều đinh', 'đinh tiên hoàng', 'đinh bộ lĩnh'], startYear: 968, endYear: 980 },
+  { dynastyKey: 'tien_le', name: 'Nhà Tiền Lê', aliases: ['nhà tiền lê', 'tiền lê', 'triều tiền lê', 'lê đại hành', 'lê hoàn'], startYear: 980, endYear: 1009 },
+  { dynastyKey: 'ly', name: 'Nhà Lý', aliases: ['nhà lý', 'triều lý', 'lý thái tổ', 'lý công uẩn'], startYear: 1010, endYear: 1225 },
+  { dynastyKey: 'tran', name: 'Nhà Trần', aliases: ['nhà trần', 'triều trần', 'trần thái tông', 'trần hưng đạo'], startYear: 1225, endYear: 1400 },
+  { dynastyKey: 'ho', name: 'Nhà Hồ', aliases: ['nhà hồ', 'triều hồ', 'hồ quý ly'], startYear: 1400, endYear: 1407 },
+  { dynastyKey: 'thuoc_minh', name: 'Thời kỳ thuộc Minh / Hậu Trần', aliases: ['hậu trần', 'thuộc minh', 'nhà minh'], startYear: 1407, endYear: 1427 },
+  { dynastyKey: 'le_so', name: 'Nhà Lê Sơ', aliases: ['nhà lê sơ', 'lê sơ', 'triều lê sơ', 'lê lợi', 'lê thái tổ'], startYear: 1428, endYear: 1527 },
+  { dynastyKey: 'mac', name: 'Nhà Mạc', aliases: ['nhà mạc', 'triều mạc', 'mạc đăng dung'], startYear: 1528, endYear: 1592 },
+  { dynastyKey: 'le_trung_hung', name: 'Lê Trung Hưng', aliases: ['lê trung hưng', 'nhà lê trung hưng', 'chúa trịnh', 'chúa nguyễn'], startYear: 1533, endYear: 1789 },
+  { dynastyKey: 'tay_son', name: 'Nhà Tây Sơn', aliases: ['tây sơn', 'nhà tây sơn', 'quang trung', 'nguyễn huệ'], startYear: 1778, endYear: 1802 },
+  { dynastyKey: 'nguyen', name: 'Nhà Nguyễn', aliases: ['nhà nguyễn', 'triều nguyễn', 'vua gia long', 'vua minh mạng', 'vua tự đức'], startYear: 1802, endYear: 1945 },
+];
+
+/**
+ * Strips Vietnamese diacritics / tone marks, preserving ASCII characters
+ */
+export function removeVietnameseTones(str: string): string {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+}
+

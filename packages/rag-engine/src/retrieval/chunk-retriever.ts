@@ -1,5 +1,5 @@
 import { isPgAvailable, query, inMemoryStore, DbDocumentChunk } from '@chronoviet/infra';
-import { resolveCanonicalEntity } from '@chronoviet/shared-spec';
+import { resolveCanonicalEntity, findHistoricalEpoch } from '@chronoviet/shared-spec';
 
 import { VectorSearchResult, RRF_K } from './vector-search.js';
 
@@ -44,6 +44,10 @@ export async function getChunksForEntities(
     }
   }
 
+  const effectiveYear = targetYear !== undefined ? targetYear : resolvedYear;
+  const targetEpoch = typeof effectiveYear === 'number' ? findHistoricalEpoch(effectiveYear) : undefined;
+  const targetEpochId = targetEpoch?.epochId;
+
   if (pgConnected) {
     const rows = await query<{
       id: string;
@@ -62,13 +66,12 @@ export async function getChunksForEntities(
                 ROW_NUMBER() OVER (
                   PARTITION BY ec.entity_id
                   ORDER BY
-                    ${typeof targetYear === 'number' ? `CASE WHEN c.time_start IS NOT NULL THEN ABS(c.time_start - ${targetYear}) ELSE 9999 END ASC,` : ''}
+                    ${typeof effectiveYear === 'number' ? `CASE WHEN c.time_start IS NOT NULL THEN ABS(c.time_start - ${effectiveYear}) ${targetEpochId ? `WHEN c.epoch_ids IS NOT NULL AND '${targetEpochId}' = ANY(c.epoch_ids) THEN 0` : ''} ELSE 200 END ASC,` : ''}
                     CASE c.source_reliability
                       WHEN 'LEVEL_1' THEN 1
                       WHEN 'LEVEL_2' THEN 2
                       ELSE 3
                     END ASC,
-                    ${typeof targetYear !== 'number' && typeof resolvedYear === 'number' ? `CASE WHEN c.time_start IS NOT NULL THEN ABS(c.time_start - ${resolvedYear}) ELSE 9999 END ASC,` : ''}
                     CASE WHEN c.parent_chunk_id IS NULL THEN 0 ELSE 1 END ASC,
                     c.id ASC
                 ) as rank_per_entity
@@ -213,19 +216,19 @@ export async function getChunksForEntities(
     const aPriority = aMatchesPrimary ? 0 : (isChunkMatchingTarget(a, priorityNamesAndIdsSet) ? 1 : 2);
     const bPriority = bMatchesPrimary ? 0 : (isChunkMatchingTarget(b, priorityNamesAndIdsSet) ? 1 : 2);
     if (aPriority !== bPriority) return aPriority - bPriority;
-    if (typeof targetYear === 'number') {
-      const aDist = a.time_start != null ? Math.abs(a.time_start - targetYear) : 9999;
-      const bDist = b.time_start != null ? Math.abs(b.time_start - targetYear) : 9999;
+    if (typeof effectiveYear === 'number') {
+      const getDist = (c: DbDocumentChunk) => {
+        if (c.time_start != null) return Math.abs(c.time_start - effectiveYear);
+        if (targetEpochId && Array.isArray(c.epoch_ids) && c.epoch_ids.includes(targetEpochId)) return 0;
+        return 200;
+      };
+      const aDist = getDist(a);
+      const bDist = getDist(b);
       if (aDist !== bDist) return aDist - bDist;
     }
     const rA = reliabilityOrder[a.source_reliability || 'LEVEL_1'] ?? 3;
     const rB = reliabilityOrder[b.source_reliability || 'LEVEL_1'] ?? 3;
     if (rA !== rB) return rA - rB;
-    if (typeof targetYear !== 'number' && typeof resolvedYear === 'number') {
-      const aDist = a.time_start != null ? Math.abs(a.time_start - resolvedYear) : 9999;
-      const bDist = b.time_start != null ? Math.abs(b.time_start - resolvedYear) : 9999;
-      if (aDist !== bDist) return aDist - bDist;
-    }
     const aParent = a.parent_chunk_id == null ? 0 : 1;
     const bParent = b.parent_chunk_id == null ? 0 : 1;
     if (aParent !== bParent) return aParent - bParent;

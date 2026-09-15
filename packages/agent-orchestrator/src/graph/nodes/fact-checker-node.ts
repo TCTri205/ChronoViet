@@ -4,6 +4,7 @@
  */
 
 import { callLlm, envConfig } from '@chronoviet/infra';
+import { CANONICAL_DYNASTY_BOUNDS, HISTORICAL_CHRONOLOGY, removeVietnameseTones } from '@chronoviet/shared-spec';
 import { ChronoGraphState, FactCheckAuditEntry, getNodeLogger } from '../state.js';
 import { validateFolkloreHypothesisTone } from '../../guardrails/folklore-validator.js';
 import { evaluateNliEntailmentScore, evaluateNliWithLlmJudge, extractHistoricalTimeBounds } from '../../guardrails/nli-hallucination-judge.js';
@@ -92,13 +93,12 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
         const chapterHasLevel3Entity = chapterReferencedChunks.some(
           (e) => e.sourceReliability === 'LEVEL_3'
         );
-        const chapterHasFolkloreCitation = chapterReferencedChunks.some((e) =>
-          (e.citations || []).some((c) =>
-            /lĩnh nam chích quái|việt điện u linh|dân gian|dã sử|truyền thuyết|thần thoại|giai thoại/i.test(c)
-          )
+        const hasLevel1CanonicalSource = chapterReferencedChunks.some(
+          (e) => e.sourceReliability === 'LEVEL_1'
         );
+        // Only trigger folklore hypothesis tone when topic is explicitly folklore OR chunk is LEVEL_3 without LEVEL_1 backing
         const isLevel3OrFolkloreSource =
-          isGlobalFolkloreTopic || chapterHasLevel3Entity || chapterHasFolkloreCitation;
+          isGlobalFolkloreTopic || (chapterHasLevel3Entity && !hasLevel1CanonicalSource);
 
         const folkloreCheck = validateFolkloreHypothesisTone(script, isLevel3OrFolkloreSource);
         if (!folkloreCheck.isValid) {
@@ -110,10 +110,11 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
           try {
             const fixSystem = `Bạn là Chuyên gia Biên tập Sử học ChronoViet.
 Nhiệm vụ: Biên tập lại đoạn kịch bản dã sử/truyền thuyết để tuân thủ quy chuẩn học thuật.
-QUY TẮC:
-1. Bổ sung các cụm từ mở đầu như 'Theo truyền thuyết', 'Tương truyền', 'Theo dã sử' vào trước các câu miêu tả sự kiện dã sử.
-2. Giữ nguyên toàn bộ nội dung, độ dài, câu từ chính xác khác của kịch bản, không thêm bớt sự kiện mới.
-3. Chỉ xuất văn bản kịch bản hoàn chỉnh sau khi sửa, không kèm lời giải thích.`;
+QUY TẮC BẮT BUỘC:
+1. Bổ sung các cụm từ mở đầu như 'Theo truyền thuyết', 'Tương truyền', 'Theo dã sử' vào trước các câu miêu tả sự kiện dã sử/thần kỳ.
+2. TUYỆT ĐỐI KHÔNG thay đổi hoặc thay thế các nhân vật lịch sử, tướng lĩnh, địa danh, niên đại có trong văn bản gốc.
+3. Giữ nguyên toàn bộ nội dung, độ dài, câu từ chính xác khác của kịch bản, không bịa đặt thêm sự kiện mới.
+4. Chỉ xuất văn bản kịch bản hoàn chỉnh sau khi sửa, không kèm lời giải thích.`;
 
             const fixUser = `Hãy biên tập lại đoạn văn sau để chuẩn hóa văn phong truyền thuyết:\n"${script}"`;
 
@@ -144,11 +145,54 @@ QUY TẮC:
           const verifiedContext = state.ragContext?.verifiedContext || [];
           const timeStarts = verifiedContext
             .map((e) => e.timeStart)
-            .filter((t): t is number => typeof t === 'number');
+            .filter((t): t is number => typeof t === 'number' && t <= 2000);
           const timeEnds = verifiedContext
             .map((e) => e.timeEnd)
-            .filter((t): t is number => typeof t === 'number');
+            .filter((t): t is number => typeof t === 'number' && t <= 2000);
           const allYears = [...timeStarts, ...timeEnds];
+
+          // Incorporate canonical epoch and dynasty bounds if userPrompt or epoch is defined
+          const textToMatch = [state.epoch || '', state.userPrompt || ''].join(' ').trim();
+          if (textToMatch) {
+            const normText = removeVietnameseTones(textToMatch).toLowerCase();
+            const cleanText = normText.replace(/[^a-z0-9]/g, '');
+            for (const bound of CANONICAL_DYNASTY_BOUNDS) {
+              const matched = bound.aliases.some((alias) => {
+                const normAlias = removeVietnameseTones(alias).toLowerCase();
+                const cleanAlias = normAlias.replace(/[^a-z0-9]/g, '');
+                return cleanText.includes(cleanAlias);
+              });
+              if (matched) {
+                allYears.push(bound.startYear, bound.endYear);
+              }
+            }
+
+            const epochClean = state.epoch
+              ? removeVietnameseTones(state.epoch).toLowerCase().replace(/[^a-z0-9]/g, '')
+              : '';
+
+            for (const chron of HISTORICAL_CHRONOLOGY) {
+              const idClean = chron.epochId.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const dynIdClean = (chron.dynastyId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              const eClean = removeVietnameseTones(chron.name).toLowerCase().replace(/[^a-z0-9]/g, '');
+              const dClean = removeVietnameseTones(chron.dynastyName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+              const matchesEpoch =
+                epochClean &&
+                (idClean === epochClean ||
+                  dynIdClean === epochClean ||
+                  dynIdClean.includes(epochClean) ||
+                  eClean.includes(epochClean) ||
+                  dClean.includes(epochClean));
+
+              const matchesPrompt = cleanText && (eClean.includes(cleanText) || cleanText.includes(eClean) || (dClean && cleanText.includes(dClean)));
+
+              if (matchesEpoch || matchesPrompt) {
+                allYears.push(chron.startYear, chron.endYear);
+              }
+            }
+          }
+
           const epochBounds = allYears.length > 0
             ? { startYear: Math.min(...allYears), endYear: Math.max(...allYears) }
             : undefined;
@@ -172,36 +216,38 @@ QUY TẮC:
 
           // Tier 2: Entity & Historical Anchor Verification (<= 5ms)
           const scriptLower = script.toLowerCase();
-          const targetEntities = (chapterObj?.introducedEntities || []).concat(
-            verifiedContext.map((e) => e.canonicalName).filter(Boolean) as string[]
+          const targetEntities = Array.from(
+            new Set([
+              ...(chapterObj?.introducedEntities || []),
+              ...chapterReferencedChunks.map((e) => e.canonicalName).filter(Boolean),
+            ])
           );
           let matchedEntityCount = 0;
           for (const ent of targetEntities) {
-            if (ent && scriptLower.includes(ent.toLowerCase())) {
+            if (!ent) continue;
+            const entLower = ent.toLowerCase();
+            const aliases = aliasTable[ent] || [];
+            const isMatched = scriptLower.includes(entLower) || aliases.some((a) => a && scriptLower.includes(a.toLowerCase()));
+            if (isMatched) {
               matchedEntityCount++;
             }
           }
           const entityRecall = targetEntities.length > 0 ? matchedEntityCount / targetEntities.length : 1.0;
 
-          // Foreign era intrusion check: verify no conflicting out-of-epoch dynasties
-          const knownDynasties: Record<string, [number, number]> = {
-            'nhà đinh': [968, 980],
-            'tiền lê': [980, 1009],
-            'nhà lý': [1009, 1225],
-            'nhà trần': [1225, 1400],
-            'nhà hồ': [1400, 1407],
-            'hậu lê': [1428, 1789],
-            'tây sơn': [1778, 1802],
-            'nhà nguyễn': [1802, 1945],
-          };
-
+          // Foreign era intrusion check: verify no conflicting out-of-epoch dynasties via SSOT
           let foreignDynastyIntrusion = false;
+          let foreignDynastyDetail = '';
           if (epochBounds) {
-            for (const [dynasty, [dynStart, dynEnd]] of Object.entries(knownDynasties)) {
-              if (scriptLower.includes(dynasty)) {
-                if (dynEnd < epochBounds.startYear - 50 || dynStart > epochBounds.endYear + 50) {
-                  foreignDynastyIntrusion = true;
-                  break;
+            for (const dyn of CANONICAL_DYNASTY_BOUNDS) {
+              const matchedAlias = dyn.aliases.find((a) => scriptLower.includes(a.toLowerCase()));
+              if (matchedAlias) {
+                if (dyn.endYear < epochBounds.startYear - 50 || dyn.startYear > epochBounds.endYear + 50) {
+                  const comparativeRegex = new RegExp(`(?:như|kế thừa|tiếp nối|từ thời|khác với)\\s+(?:thời kỳ\\s+)?${matchedAlias}`, 'i');
+                  if (!comparativeRegex.test(scriptLower)) {
+                    foreignDynastyIntrusion = true;
+                    foreignDynastyDetail = `Phát hiện nhân vật/triều đại lệch thời kỳ: ${dyn.name} (${matchedAlias}).`;
+                    break;
+                  }
                 }
               }
             }
@@ -271,7 +317,7 @@ QUY TẮC:
 ${groundTruthChunks.slice(0, 5).join('\n')}
 
 LỖI PHÁT HIỆN:
-${nliResult.explanation || 'Dữ kiện mâu thuẫn với sử liệu.'}
+${[foreignDynastyDetail, nliResult.explanation].filter(Boolean).join('. ') || 'Dữ kiện mâu thuẫn với sử liệu.'}
 
 KỊCH BẢN CẦN VÁ LỖI (CHƯƠNG ${chapterIndex + 1}):
 "${script}"`;
@@ -295,7 +341,22 @@ KỊCH BẢN CẦN VÁ LỖI (CHƯƠNG ${chapterIndex + 1}):
                       : undefined,
                 });
 
-                if (!recheck.isHallucinated || recheck.entailmentScore >= 0.7) {
+                const patchedLower = patchedScript.toLowerCase();
+                let patchHasForeignIntrusion = false;
+                if (epochBounds) {
+                  for (const dyn of CANONICAL_DYNASTY_BOUNDS) {
+                    const matchedAlias = dyn.aliases.find((a) => patchedLower.includes(a.toLowerCase()));
+                    if (matchedAlias && (dyn.endYear < epochBounds.startYear - 50 || dyn.startYear > epochBounds.endYear + 50)) {
+                      const comparativeRegex = new RegExp(`(?:như|kế thừa|tiếp nối|từ thời|khác với)\\s+(?:thời kỳ\\s+)?${matchedAlias}`, 'i');
+                      if (!comparativeRegex.test(patchedLower)) {
+                        patchHasForeignIntrusion = true;
+                        break;
+                      }
+                    }
+                  }
+                }
+
+                if (!patchHasForeignIntrusion && !recheck.isHallucinated && recheck.entailmentScore >= 0.75) {
                   script = patchedScript;
                   patchedSuccessfully = true;
                   escalationTier = Math.max(escalationTier, 1);
@@ -308,9 +369,9 @@ KỊCH BẢN CẦN VÁ LỖI (CHƯƠNG ${chapterIndex + 1}):
             }
 
             if (!patchedSuccessfully) {
-              if (nliResult.entailmentScore < 0.6 || nliResult.verdict === 'CONTRADICTION') {
+              if (foreignDynastyIntrusion || nliResult.entailmentScore < 0.6 || nliResult.verdict === 'CONTRADICTION') {
                 escalationTier = Math.max(escalationTier, 3);
-                auditDetails += ` Critical NLI Entailment failure (score: ${nliResult.entailmentScore}); routed to human review. ${nliResult.explanation}`;
+                auditDetails += ` Critical NLI Entailment failure (score: ${nliResult.entailmentScore}); routed to human review. ${foreignDynastyDetail || nliResult.explanation}`;
               } else {
                 escalationTier = Math.max(escalationTier, 2);
                 auditDetails += ` NLI Entailment score: ${nliResult.entailmentScore}.`;

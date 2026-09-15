@@ -235,5 +235,9 @@ export const ChronoGraphAnnotation = Annotation.Root({
   }),
 });
 
-export type ChronoGraphState = typeof ChronoGraphAnnotation.State;
-export type ChronoGraphUpdate = typeof ChronoGraphAnnotation.Update;
+export type ChronoGraphState = typeof ChronoGraphAnnotation.State & {
+  epoch?: string;
+};
+export type ChronoGraphUpdate = typeof ChronoGraphAnnotation.Update & {
+  epoch?: string;
+};

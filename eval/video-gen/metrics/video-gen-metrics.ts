@@ -60,6 +60,24 @@ export interface VideoGenCaseResult {
   downloadSuccessRate: number;
   licenseComplianceRate: number;
   meanVlmQualityScore?: number;
+  // Stage 3 Audio Metrics
+  audioGeneratedScenes?: number;
+  audioGenerationSuccessRate?: number;
+  meanRtf?: number;
+  timestampsMonotonicRate?: number;
+  wavHeaderValidRate?: number;
+  pacingReconciliationDeviationPct?: number;
+  syntheticAudioFallbackCount?: number;
+
+  // Stage 4 Remotion Render Metrics
+  schemaValidated?: boolean;
+  videoRendered?: boolean;
+  videoFileSizeBytes?: number;
+  renderDurationMs?: number;
+  renderSpeedRatio?: number;
+  audioVideoSyncCompliantRate?: number;
+  captionBoundsCompliantRate?: number;
+
   durationMs: number;
   passed: boolean;
   scenes: VideoGenSceneSummary[];
@@ -77,6 +95,21 @@ export interface VideoGenAggregatedMetrics {
   licenseComplianceRate: number;
   meanVlmQualityScore: number;
   pureCodeFallbackRate: number;
+
+  // Stage 3 Aggregated
+  audioGenerationSuccessRate?: number;
+  meanRtf?: number;
+  timestampsMonotonicRate?: number;
+  wavHeaderComplianceRate?: number;
+  syntheticFallbackRate?: number;
+
+  // Stage 4 Aggregated
+  schemaValidationPassRate?: number;
+  videoRenderSuccessRate?: number;
+  meanRenderSpeedRatio?: number;
+  meanAudioVideoSyncRate?: number;
+  meanCaptionBoundsRate?: number;
+
   durationProfile: LatencyProfile;
   metricScores: Record<string, MetricScore>;
 }
@@ -492,6 +525,92 @@ export function computeVideoGenAggregatedMetrics(
     },
   };
 
+  // Stage 3 Audio Aggregation
+  const casesWithAudio = caseResults.filter((r) => typeof r.audioGenerationSuccessRate === 'number');
+  let meanAudioGenRate: number | undefined;
+  let meanRtf: number | undefined;
+  let meanTimestampsRate: number | undefined;
+
+  if (casesWithAudio.length > 0) {
+    meanAudioGenRate = casesWithAudio.reduce((sum, r) => sum + (r.audioGenerationSuccessRate || 0), 0) / casesWithAudio.length;
+    meanRtf = casesWithAudio.reduce((sum, r) => sum + (r.meanRtf || 0), 0) / casesWithAudio.length;
+    meanTimestampsRate = casesWithAudio.reduce((sum, r) => sum + (r.timestampsMonotonicRate || 0), 0) / casesWithAudio.length;
+
+    metricScores.audioGenerationSuccessRate = {
+      name: 'Audio Generation Success Rate',
+      value: Math.round(meanAudioGenRate * 1000) / 10,
+      target: 100.0,
+      pass: meanAudioGenRate >= 0.95,
+      unit: '%',
+      description: 'Percentage of scenes with valid synthesized audio files on disk',
+    };
+    metricScores.meanRtfSpeed = {
+      name: 'Real-Time Factor (RTF) Speed',
+      value: Math.round(meanRtf * 100) / 100,
+      target: 0.35,
+      pass: meanRtf <= 0.60,
+      unit: 'x RTF',
+      description: 'Ratio of audio synthesis latency relative to total speech audio duration',
+    };
+    metricScores.timestampsMonotonicRate = {
+      name: 'Word Timestamp Monotonic Alignment',
+      value: Math.round(meanTimestampsRate * 1000) / 10,
+      target: 100.0,
+      pass: meanTimestampsRate >= 0.95,
+      unit: '%',
+      description: 'Percentage of scenes with non-decreasing, non-overlapping karaoke word timestamps',
+    };
+  }
+
+  // Stage 4 Video Render Aggregation
+  const casesWithRender = caseResults.filter((r) => typeof r.videoRendered === 'boolean');
+  let schemaPassRate: number | undefined;
+  let videoRenderRate: number | undefined;
+  let meanRenderSpeed: number | undefined;
+  let meanAudioSyncRate: number | undefined;
+
+  if (casesWithRender.length > 0) {
+    const validSchemas = casesWithRender.filter((r) => r.schemaValidated).length;
+    schemaPassRate = validSchemas / casesWithRender.length;
+    const successfulRenders = casesWithRender.filter((r) => r.videoRendered).length;
+    videoRenderRate = successfulRenders / casesWithRender.length;
+    meanRenderSpeed = casesWithRender.reduce((sum, r) => sum + (r.renderSpeedRatio || 0), 0) / casesWithRender.length;
+    meanAudioSyncRate = casesWithRender.reduce((sum, r) => sum + (r.audioVideoSyncCompliantRate || 0), 0) / casesWithRender.length;
+
+    metricScores.schemaValidationPassRate = {
+      name: 'VideoProjectSchema Validation Pass Rate',
+      value: Math.round(schemaPassRate * 1000) / 10,
+      target: 100.0,
+      pass: schemaPassRate >= 1.0,
+      unit: '%',
+      description: 'Percentage of generated projects passing Zod VideoProjectSchema validation',
+    };
+    metricScores.videoRenderSuccessRate = {
+      name: 'Remotion Video Render Success Rate',
+      value: Math.round(videoRenderRate * 1000) / 10,
+      target: 100.0,
+      pass: videoRenderRate >= 1.0,
+      unit: '%',
+      description: 'Percentage of projects rendered to a valid MP4 file on disk (>50KB)',
+    };
+    metricScores.meanRenderSpeedRatio = {
+      name: 'Remotion Render Speed Ratio',
+      value: Math.round(meanRenderSpeed * 100) / 100,
+      target: 1.0,
+      pass: meanRenderSpeed <= 1.50,
+      unit: 'x real-time',
+      description: 'Ratio of total render time relative to target video playback duration',
+    };
+    metricScores.audioVideoSyncRate = {
+      name: 'Audio-Video Timeline Synchronization Rate',
+      value: Math.round(meanAudioSyncRate * 1000) / 10,
+      target: 100.0,
+      pass: meanAudioSyncRate >= 0.98,
+      unit: '%',
+      description: 'Percentage of scenes where timeline frames adequately cover speech audio without abrupt cuts',
+    };
+  }
+
   return {
     totalProjects,
     passedProjects,
@@ -502,6 +621,13 @@ export function computeVideoGenAggregatedMetrics(
     licenseComplianceRate: meanLicenseCompliance,
     meanVlmQualityScore: Math.round(meanVlmScore * 10) / 10,
     pureCodeFallbackRate,
+    audioGenerationSuccessRate: meanAudioGenRate !== undefined ? Math.round(meanAudioGenRate * 1000) / 1000 : undefined,
+    meanRtf: meanRtf !== undefined ? Math.round(meanRtf * 100) / 100 : undefined,
+    timestampsMonotonicRate: meanTimestampsRate !== undefined ? Math.round(meanTimestampsRate * 1000) / 1000 : undefined,
+    schemaValidationPassRate: schemaPassRate !== undefined ? Math.round(schemaPassRate * 1000) / 1000 : undefined,
+    videoRenderSuccessRate: videoRenderRate !== undefined ? Math.round(videoRenderRate * 1000) / 1000 : undefined,
+    meanRenderSpeedRatio: meanRenderSpeed !== undefined ? Math.round(meanRenderSpeed * 100) / 100 : undefined,
+    meanAudioVideoSyncRate: meanAudioSyncRate !== undefined ? Math.round(meanAudioSyncRate * 1000) / 1000 : undefined,
     durationProfile,
     metricScores,
   };

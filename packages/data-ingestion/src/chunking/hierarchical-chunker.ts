@@ -184,7 +184,8 @@ export function chunkDocumentHierarchical(
 
   // Heading Stack tracking
   const headingStack: HeadingFrame[] = [];
-  let currentActiveDynasty = docMetadata.dynasty || 'Chính sử';
+  const isMultiEraDoc = !!(docMetadata.dynasty && (/[-–—/]|đến/i.test(docMetadata.dynasty)));
+  let currentActiveDynasty = isMultiEraDoc ? 'Chính sử' : (docMetadata.dynasty || 'Chính sử');
   let currentSectionTitle = cleanHeadingTitle(docMetadata.title);
 
   const totalWords = countWords(text);
@@ -357,7 +358,7 @@ export function chunkDocumentHierarchical(
 
       // Check dynasty update
       const extractedDynasty = extractDynastyFromHeading(headingTitle);
-      const activeDynasty = extractedDynasty || (headingStack.length > 0 ? headingStack[headingStack.length - 1].dynasty : docMetadata.dynasty) || 'Chính sử';
+      const activeDynasty = extractedDynasty || (headingStack.length > 0 ? headingStack[headingStack.length - 1].dynasty : (isMultiEraDoc ? 'Chính sử' : docMetadata.dynasty)) || 'Chính sử';
 
       headingStack.push({
         level: headingLevel,

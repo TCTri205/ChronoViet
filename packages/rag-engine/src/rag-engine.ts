@@ -530,7 +530,11 @@ export class ChronoRagEngine implements IRagEngine {
     const topCandidateScore = topChunks[0]?.score || 0;
     const dynamicRelativeCutoff = isComparative
       ? MIN_RELEVANCE_SCORE_CUTOFF
-      : Math.max(MIN_RELEVANCE_SCORE_CUTOFF, topCandidateScore * 0.45);
+      : Math.max(MIN_RELEVANCE_SCORE_CUTOFF, topCandidateScore * 0.25);
+
+    const distinctSourceCount = new Set(
+      topChunks.map((c) => c.title.replace(/\s*-\s*Đoạn.*$/i, '').replace(/\s*\(Phần.*$/i, '').trim())
+    ).size;
 
     for (let idx = 0; idx < topChunks.length; idx++) {
       const chunk = topChunks[idx];
@@ -539,10 +543,12 @@ export class ChronoRagEngine implements IRagEngine {
         continue;
       }
 
-      // Source diversity: allow proportional representation per source when comparative decomposition is active
+      // Source diversity: allow proportional representation per source
+      // When sources are sparse (<= 2 distinct sources), do not starve the context; allow up to rerankTopK.
+      // Otherwise, allow a balanced proportion (at least 4 chunks per source).
       const maxPerSource = isComparative
-        ? Math.max(2, Math.max(distinctYears.length, substantiveEntityIds.length))
-        : 2;
+        ? Math.max(3, Math.max(distinctYears.length, substantiveEntityIds.length))
+        : (distinctSourceCount <= 2 ? rerankTopK : Math.max(4, Math.ceil(rerankTopK / 2)));
       const sourceKey = chunk.title.replace(/\s*-\s*Đoạn.*$/i, '').replace(/\s*\(Phần.*$/i, '').trim();
       const currentCount = sourceCountMap.get(sourceKey) || 0;
       if (currentCount >= maxPerSource && topChunks.length > 3) {

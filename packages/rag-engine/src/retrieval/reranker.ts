@@ -63,15 +63,24 @@ export function truncateToSentenceBoundary(
   };
 
   const sEnd = findLast(/[.!?\n]/g);
-  if (sEnd >= Math.floor(maxChars * 0.6)) return window.slice(0, sEnd).trim();
+  let result = window.trim();
+  if (sEnd >= Math.floor(maxChars * 0.6)) {
+    result = window.slice(0, sEnd).trim();
+  } else {
+    const cEnd = findLast(/[;:,—\-]/g);
+    if (cEnd >= Math.floor(maxChars * 0.75)) {
+      result = window.slice(0, cEnd).trim();
+    } else {
+      const spEnd = window.lastIndexOf(' ');
+      if (spEnd >= Math.floor(maxChars * 0.85)) {
+        result = window.slice(0, spEnd).trim();
+      }
+    }
+  }
 
-  const cEnd = findLast(/[;:,—\-]/g);
-  if (cEnd >= Math.floor(maxChars * 0.75)) return window.slice(0, cEnd).trim();
-
-  const spEnd = window.lastIndexOf(' ');
-  if (spEnd >= Math.floor(maxChars * 0.85)) return window.slice(0, spEnd).trim();
-
-  return window.trim();
+  // Strip trailing fragmented single words or capitalized hanging initials (e.g. "Giang Nam Ch")
+  result = result.replace(/\s+\p{Lu}\p{Ll}{0,2}$/u, '').trim();
+  return result;
 }
 
 /**

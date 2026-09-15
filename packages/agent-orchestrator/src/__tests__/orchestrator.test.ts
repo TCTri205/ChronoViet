@@ -134,6 +134,7 @@ describe('Agent Orchestrator Unit Tests', () => {
           {
             sceneId: 'sc_001',
             sceneIndex: 0,
+            chapterIndex: 0,
             voiceoverText: 'Cảnh 1 dẫn nhập',
             layoutMode: 'HISTORICAL_FRAME',
             contentType: 'IMAGE',
@@ -146,6 +147,7 @@ describe('Agent Orchestrator Unit Tests', () => {
           {
             sceneId: 'sc_002',
             sceneIndex: 1,
+            chapterIndex: 0,
             voiceoverText: 'Cảnh 2 phân đoạn lịch sử',
             layoutMode: 'HISTORICAL_FRAME',
             contentType: 'IMAGE',
@@ -176,6 +178,7 @@ describe('Agent Orchestrator Unit Tests', () => {
           {
             sceneId: 'sc_001',
             sceneIndex: 0,
+            chapterIndex: 0,
             voiceoverText: 'Cảnh 1 ngắn',
             layoutMode: 'HISTORICAL_FRAME',
             contentType: 'IMAGE',
@@ -188,6 +191,7 @@ describe('Agent Orchestrator Unit Tests', () => {
           {
             sceneId: 'sc_002',
             sceneIndex: 1,
+            chapterIndex: 0,
             voiceoverText: 'Cảnh 2 ngắn',
             layoutMode: 'HISTORICAL_FRAME',
             contentType: 'IMAGE',
@@ -218,6 +222,7 @@ describe('Agent Orchestrator Unit Tests', () => {
           {
             sceneId: 'sc_001',
             sceneIndex: 0,
+            chapterIndex: 0,
             voiceoverText: 'Cảnh thuyết minh dài',
             layoutMode: 'HISTORICAL_FRAME',
             contentType: 'IMAGE',
@@ -501,6 +506,7 @@ describe('Agent Orchestrator Unit Tests', () => {
           {
             sceneId: 'sc_fj_001',
             sceneIndex: 0,
+            chapterIndex: 0,
             voiceoverText: 'Ngô Quyền cắm cọc nhọn trên sông Bạch Đằng.',
             layoutMode: 'HISTORICAL_FRAME',
             contentType: 'IMAGE',
@@ -537,6 +543,7 @@ describe('Agent Orchestrator Unit Tests', () => {
           {
             sceneId: 'sc_vlm_err_1',
             sceneIndex: 0,
+            chapterIndex: 0,
             voiceoverText: 'Trận chiến ác liệt trên sông',
             layoutMode: 'HISTORICAL_FRAME',
             contentType: 'IMAGE',

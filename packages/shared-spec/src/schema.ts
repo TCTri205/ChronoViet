@@ -1006,6 +1006,7 @@ export const VisualCandidateSchema = z.object({
 export const SceneGenerationSchema = z.object({
   sceneId: z.string(),
   sceneIndex: z.number().int().min(0),
+  chapterIndex: z.number().int().min(0).default(0),
   voiceoverText: z.string().min(1),
   layoutMode: LayoutModeSchema,
   contentType: z.enum(['IMAGE', 'PURE_CODE']).default('IMAGE'),

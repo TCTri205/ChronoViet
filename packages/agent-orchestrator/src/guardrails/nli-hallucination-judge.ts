@@ -4,6 +4,7 @@
  */
 
 import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
+import { CANONICAL_DYNASTY_BOUNDS } from '@chronoviet/shared-spec';
 
 export interface NliJudgeRequest {
   scriptClaim: string;
@@ -160,7 +161,33 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
     }
   }
 
-  const entailmentScore = Math.max(0.1, Number((rawEntailmentScore - chronologicalPenalty).toFixed(2)));
+  // Dynasty Anomaly Check: detect out-of-epoch dynasties (> 50 years deviation from epoch bounds)
+  let dynastyAnomalyPenalty = 0;
+  let dynastyAnomalyMsg = '';
+
+  if (gtYears.length > 0) {
+    const minGtYear = Math.min(...gtYears);
+    const maxGtYear = Math.max(...gtYears);
+    const claimLower = request.scriptClaim.toLowerCase();
+
+    for (const dyn of CANONICAL_DYNASTY_BOUNDS) {
+      const matchedAlias = dyn.aliases.find((a) => claimLower.includes(a.toLowerCase()));
+      if (matchedAlias) {
+        if (dyn.endYear < minGtYear - 50 || dyn.startYear > maxGtYear + 50) {
+          const comparativeRegex = new RegExp(`(?:như|kế thừa|tiếp nối|từ thời|khác với)\\s+(?:thời kỳ\\s+)?${matchedAlias}`, 'i');
+          if (!comparativeRegex.test(claimLower)) {
+            dynastyAnomalyPenalty = 0.50;
+            dynastyAnomalyMsg = ` [Dynasty Anomaly: out-of-epoch dynasty '${dyn.name}' (${matchedAlias}) deviates > 50 years from epoch bounds ${minGtYear}-${maxGtYear}]`;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  const totalAnomalyPenalty = Math.max(chronologicalPenalty, dynastyAnomalyPenalty);
+  const anomalyMsg = `${chronologicalAnomalyMsg}${dynastyAnomalyMsg}`;
+  const entailmentScore = Math.max(0.1, Number((rawEntailmentScore - totalAnomalyPenalty).toFixed(2)));
   const isHallucinated = entailmentScore < 0.80;
 
   const verdict = entailmentScore >= 0.80 ? 'ENTAILMENT' : entailmentScore >= 0.50 ? 'NEUTRAL' : 'CONTRADICTION';
@@ -170,7 +197,7 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
     isHallucinated,
     verdict,
     explanation: isHallucinated
-      ? `Entailment score ${entailmentScore} < 0.80 threshold. Claim may contain unverified statements or epoch mismatch.${chronologicalAnomalyMsg}`
+      ? `Entailment score ${entailmentScore} < 0.80 threshold. Claim may contain unverified statements or epoch mismatch.${anomalyMsg}`
       : `Entailment score ${entailmentScore} >= 0.80 threshold.`,
   };
 }

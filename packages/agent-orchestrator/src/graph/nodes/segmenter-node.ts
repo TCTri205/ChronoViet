@@ -5,6 +5,7 @@
 
 import { LayoutMode, SceneGeneration } from '@chronoviet/shared-spec';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
+import { isValidHistoricalEntity } from './chaptering-node.js';
 
 const TEMPLATE_LAYOUTS: Record<string, LayoutMode[]> = {
   QUICK_SHORTS: ['FULL_COVER', 'CENTER_SCALE', 'QUOTE_SLIDE', 'STAT_CARD'],
@@ -68,6 +69,7 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
 
   for (const [key, scriptText] of sortedEntries) {
     const chapterIdx = Number(key);
+    const currentChapter = state.chapters?.[chapterIdx];
 
     // Context-Aware Abbreviation Masking
     // Mask titles followed by capital letters
@@ -119,21 +121,28 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
       const targetDurationSeconds = Math.max(5, Math.min(25, Math.ceil(wordCount / (targetWpm / 60))));
       const layoutMode = inferSemanticLayoutMode(voiceoverText, state.templateId, globalSceneIdx, availableLayouts);
 
-      // Extract search keywords from text (including Vietnamese quotes and punctuation)
-      const words = voiceoverText
-        .replace(/[.,!?;:"'()“”‘’—…[\]]/g, ' ')
-        .split(/\s+/)
-        .filter((w) => w.length > 3)
-        .slice(0, 4);
+      // Extract search keywords from scene text: capitalized proper nouns, chapter entities, and userPrompt
+      const properNouns = Array.from(
+        voiceoverText.matchAll(/(?<!\p{L})((?:\p{Lu}\p{Ll}+(?:-\p{Lu}\p{Ll}+)?)(?:\s+\p{Lu}\p{Ll}+(?:-\p{Lu}\p{Ll}+)?){1,3})(?!\p{L})/gu)
+      ).map((m) => m[1].trim()).filter(isValidHistoricalEntity);
+
+      const sceneKeywords = Array.from(
+        new Set([
+          state.userPrompt,
+          ...properNouns,
+          ...(currentChapter?.introducedEntities || []).slice(0, 2),
+        ])
+      ).filter(Boolean).slice(0, 5);
 
       scenes.push({
         sceneId: `scene_${String(globalSceneIdx + 1).padStart(3, '0')}`,
         sceneIndex: globalSceneIdx,
+        chapterIndex: chapterIdx,
         voiceoverText,
         layoutMode,
         contentType: 'IMAGE',
         targetDurationSeconds,
-        searchKeywords: [state.userPrompt, ...words],
+        searchKeywords: sceneKeywords,
         candidates: [],
         usePureCodeFallback: false,
       });

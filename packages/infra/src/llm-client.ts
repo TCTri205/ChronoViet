@@ -1158,15 +1158,40 @@ export function repairJsonUnescapedQuotes(json: string): string {
       continue;
     }
 
+    if (inString) {
+      if (char === '\n') {
+        result += '\\n';
+        continue;
+      }
+      if (char === '\r') {
+        result += '\\r';
+        continue;
+      }
+      if (char === '\t') {
+        result += '\\t';
+        continue;
+      }
+    }
+
     if (char === '"') {
       if (!inString) {
         inString = true;
         result += char;
       } else {
         // Check if this quote is legitimately terminating the string.
-        // A valid closing quote in JSON is followed (after optional whitespace) by: ',', '}', ']', ':', or end-of-input.
+        // A valid closing quote in JSON is followed (after optional whitespace/comments) by:
+        // 1. Colon ':' (if object key)
+        // 2. Closing brace '}' or bracket ']'
+        // 3. Comma followed by the next object key: `,"key":` or `,"key" :`
+        // 4. Comma followed by the next array element: `,"...",` or `,{...}` or `,[...]` or `,true`, `,false`, `,null`, `,-123`
+        // 5. End of input
         const rest = json.slice(i + 1);
-        const isTerminator = /^\s*([,:}\]\n\r]|$)/.test(rest);
+        const isTerminator =
+          /^\s*:/.test(rest) ||
+          /^\s*[}\]]/.test(rest) ||
+          /^\s*,\s*(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/|\s)*"(?:[^"\\\r\n]+)"\s*:/.test(rest) ||
+          /^\s*,\s*(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/|\s)*(?:true\b|false\b|null\b|-?\d+(?:\.\d+)?|["{\[])/i.test(rest) ||
+          /^\s*$/.test(rest);
 
         if (isTerminator) {
           inString = false;
@@ -1196,6 +1221,9 @@ export function parseLlmJson<T = any>(rawText: string): T {
     try {
       let s = jsonStr;
 
+      // 0. Strip JavaScript comments (single-line and multi-line)
+      s = s.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
       // 1. Convert Python-style single quoted JSON keys/values if single quotes are used
       if (s.startsWith("{'") || s.startsWith("['") || s.includes("': '") || s.includes("': [")) {
         s = s.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
@@ -1204,13 +1232,13 @@ export function parseLlmJson<T = any>(rawText: string): T {
       // 2. Remove trailing commas before closing braces/brackets
       s = s.replace(/,\s*([}\]])/g, '$1');
 
-      // 3. Token-based unescaped quotes repair
+      // 3. Token-based unescaped quotes and raw control character repair
       s = repairJsonUnescapedQuotes(s);
 
       // 4. Remove trailing commas again after quote repair
       s = s.replace(/,\s*([}\]])/g, '$1');
 
-      // 5. Fix unescaped newlines/tabs inside string values
+      // 5. Fix any remaining unescaped newlines/tabs inside string values
       s = s.replace(/(?<=:\s*"[^"]*)\n([^"]*")/g, '\\n$1');
 
       // 6. Auto-close truncated JSON objects/arrays if closing brackets are missing

@@ -92,8 +92,8 @@ export function buildOrchestratorGraph() {
             });
             const searchResult = await ragEngine.search({
               query: state.userPrompt,
-              maxTokens: 2000,
-              rerankTopK: 5,
+              maxTokens: 3500,
+              rerankTopK: Math.max(8, Math.min(14, (state.targetDurationMinutes || 2) * 2 + 4)),
             });
 
             ragContext = {

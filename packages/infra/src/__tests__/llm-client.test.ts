@@ -53,6 +53,27 @@ describe('LLM Gateway Client', () => {
 
     const rawJson = '{"foo": "bar"}';
     expect(parseLlmJson(rawJson)).toEqual({ foo: 'bar' });
+
+    // Self-healing: unescaped interior quotes followed by comma and text
+    const unescapedQuoteJson = '{"title": "Hồi 1: "Tiếng trống Mê Linh", khởi nghĩa bùng nổ", "target": 60}';
+    expect(parseLlmJson(unescapedQuoteJson)).toEqual({
+      title: 'Hồi 1: "Tiếng trống Mê Linh", khởi nghĩa bùng nổ',
+      target: 60,
+    });
+
+    // Self-healing: raw unescaped newlines inside strings
+    const rawNewlineJson = '{"summary": "Dòng 1\\r\\nDòng 2", "status": "active"}';
+    expect(parseLlmJson(rawNewlineJson)).toEqual({
+      summary: 'Dòng 1\r\nDòng 2',
+      status: 'active',
+    });
+
+    // Self-healing: JS single-line and multi-line comments
+    const commentedJson = '{\n  // Chapter count\n  "chapters": 2 /* total */,\n  "ok": true\n}';
+    expect(parseLlmJson(commentedJson)).toEqual({
+      chapters: 2,
+      ok: true,
+    });
   });
 
   it('streams tokens correctly from local SSE stream', async () => {
