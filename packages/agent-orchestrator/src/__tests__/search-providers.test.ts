@@ -252,7 +252,7 @@ describe('Agentic Image Search Tool Execution', () => {
 
 describe('10-Epoch Curated Historical Asset Matrix', () => {
   it('strictly matches epoch keywords for historical events', async () => {
-    const { matchCuratedCatalog, HISTORICAL_FALLBACK_CATALOG } = await import('../research/providers/wikimedia-search.js');
+    const { matchCuratedCatalog, HISTORICAL_FALLBACK_CATALOG } = await import('../research/providers/curated-catalog.js');
 
     expect(HISTORICAL_FALLBACK_CATALOG.length).toBeGreaterThanOrEqual(10);
 
@@ -270,7 +270,7 @@ describe('10-Epoch Curated Historical Asset Matrix', () => {
   });
 
   it('returns empty array [] for unknown or out-of-catalog topics to enforce Pure Code over Wrong Image', async () => {
-    const { matchCuratedCatalog } = await import('../research/providers/wikimedia-search.js');
+    const { matchCuratedCatalog } = await import('../research/providers/curated-catalog.js');
 
     const unknown = matchCuratedCatalog('Vũ trụ tương lai robot lượng tử 2099', 3);
     expect(unknown).toEqual([]);

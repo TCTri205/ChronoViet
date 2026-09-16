@@ -8,7 +8,7 @@ import {
   HISTORICAL_FALLBACK_CATALOG,
   matchCuratedCatalog,
   HistoricalEpochKey,
-} from '../research/providers/wikimedia-search.js';
+} from '../research/providers/curated-catalog.js';
 
 describe('100+ Asset Master Curated Historical Matrix', () => {
   const ALL_10_EPOCHS: HistoricalEpochKey[] = [

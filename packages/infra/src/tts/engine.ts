@@ -259,28 +259,17 @@ export class VieNeuEngine implements IVieNeuEngine {
       return response;
     } catch (err: any) {
       const elapsedMs = Date.now() - startTime;
-      ttsRequestsTotal.inc({ engine: 'vieneu_python', status: 'fallback' });
+      const reason = err?.message || 'Connection refused or offline';
+      ttsRequestsTotal.inc({ engine: 'vieneu_python', status: 'error' });
       ttsSynthesisDurationSeconds.observe({ engine: 'vieneu_python' }, elapsedMs / 1000);
 
-      // If Python ONNX microservice is offline, seamlessly switch to Fallback Engine with warning log
-      const reason = err?.message || 'Connection refused or offline';
-      // Eval Integrity: strict mode must not substitute synthetic sine-wave audio
-      if (envConfig.EVAL_STRICT) {
-        throw new Error(`[EVAL_STRICT] VieNeu Python ONNX service unavailable: ${reason}`);
-      }
-      log.warn('tts.python_engine_failed', 'VieNeu Python ONNX engine failed; falling back to synthetic engine', {
+      log.error('tts.python_engine_failed', `VieNeu Python ONNX engine failed: ${reason}`, {
         error: err,
         pythonUrl: this.pythonUrl,
         requestText: normalizedRequest.text,
       });
-      logFallbackAlert({
-        subsystem: 'TTS_ENGINE',
-        primaryTarget: `VieNeu Python ONNX Neural Engine (${this.pythonUrl})`,
-        fallbackTarget: 'SyntheticToneFallbackEngine (480Hz Sine Wave)',
-        reason: reason,
-        actionRequired: `Start VieNeu Python FastAPI ONNX service at ${this.pythonUrl} (e.g. python app.py)`,
-      });
-      return this.fallbackEngine.synthesize(normalizedRequest);
+
+      throw new Error(`[VIENEU_TTS_ERROR] VieNeu-TTS service failed at ${this.pythonUrl}: ${reason}. Fallback is completely disabled.`);
     }
   }
 }

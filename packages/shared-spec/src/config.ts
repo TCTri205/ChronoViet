@@ -177,7 +177,7 @@ export const EnvSchema = z.object({
   VIENEU_PYTHON_URL: z.string().default('http://localhost:8080'),
   VIENEU_VOICE: z.string().default('vi_vietnam'),
   TTS_SERVICE_PORT: z.coerce.number().int().positive().default(8080),
-  TTS_HTTP_TIMEOUT_MS: z.coerce.number().int().positive().default(60000),
+  TTS_HTTP_TIMEOUT_MS: z.coerce.number().int().positive().default(180000),
 
   // ==========================================
   // Remotion Engine & Render Dispatch

@@ -269,11 +269,21 @@ export function evaluateVideoGenCase(
 
   const templateId = (testCase as any).templateId || 'HISTORICAL_DOCUMENTARY';
   const targetWpm = templateId === 'QUICK_SHORTS' ? 160 : (templateId === 'MODERN_NEWS' ? 150 : 145);
-  const pacingDeviationPct = Math.round((Math.abs(actualWpm - targetWpm) / targetWpm) * 1000) / 10;
-  // Pacing pass if within 15% deviation
-  const pacingPassed = pacingDeviationPct <= 15.0;
+  const wpmDeviationPct = Math.round((Math.abs(actualWpm - targetWpm) / targetWpm) * 1000) / 10;
+  const durationDeviationPct = targetDurationSec > 0
+    ? Math.round((Math.abs(actualDurationSec - targetDurationSec) / targetDurationSec) * 1000) / 10
+    : 0;
+
+  const pacingDeviationPct = Math.max(wpmDeviationPct, durationDeviationPct);
+  // Pacing pass if WPM deviation <= 15% and duration deviation <= 25%
+  const pacingPassed = wpmDeviationPct <= 15.0 && durationDeviationPct <= 25.0;
   if (!pacingPassed) {
-    warnings.push(`Pacing deviation is ${pacingDeviationPct}% (WPM=${actualWpm}, Target=${targetWpm})`);
+    if (wpmDeviationPct > 15.0) {
+      warnings.push(`Pacing WPM deviation is ${wpmDeviationPct}% (WPM=${actualWpm}, Target=${targetWpm})`);
+    }
+    if (durationDeviationPct > 25.0) {
+      errors.push(`Total duration deviation is ${durationDeviationPct}% (Actual: ${actualDurationSec}s, Target: ${targetDurationSec}s)`);
+    }
   }
 
   // Fact check

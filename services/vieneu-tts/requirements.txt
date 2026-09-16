@@ -7,3 +7,4 @@ scipy>=1.10.0
 requests>=2.31.0
 onnxruntime>=1.16.0
 piper-tts>=1.2.0
+vieneu>=3.8.0

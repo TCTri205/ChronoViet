@@ -695,14 +695,13 @@ export async function launchTtsOnly() {
     process.exit(1);
   }
 
-  const cleanup = () => {
-    console.log(`\n${colors.yellow}[*] Stopping VieNeu TTS container...${colors.reset}`);
-    void stopTts();
-    process.exit(0);
-  };
-
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
+  console.log(`\n${colors.bright}${colors.green}══════════════════════════════════════════════════════════════════════════════${colors.reset}`);
+  console.log(`${colors.bright}${colors.green} ✅ Official VieNeu-TTS Engine (vieneu.io) is RUNNING on http://localhost:${TTS_PORT}${colors.reset}`);
+  console.log(`${colors.dim} • Model:     VieNeu v3turbo (Voice: 'Anh Khôi' - Historical Storytelling)${colors.reset}`);
+  console.log(`${colors.dim} • Status:    Persistent background container (vieneu_tts_engine)${colors.reset}`);
+  console.log(`${colors.dim} • Health:    curl http://localhost:${TTS_PORT}/health${colors.reset}`);
+  console.log(`${colors.dim} • Stop:      pnpm ai:stop  (or docker stop vieneu_tts_engine)${colors.reset}`);
+  console.log(`${colors.bright}${colors.green}══════════════════════════════════════════════════════════════════════════════${colors.reset}\n`);
 }
 
 export async function launchChatStack() {

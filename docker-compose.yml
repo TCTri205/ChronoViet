@@ -87,7 +87,7 @@ services:
       - TTS_SERVICE_PORT=8080
       - MEDIA_DIR=/app/media
       - AUDIO_CACHE_DIR=/app/media/audio-cache
-      - WEB_CONCURRENCY=2
+      - WEB_CONCURRENCY=1
     ports:
       - "8080:8080"
     volumes:
@@ -103,7 +103,7 @@ services:
       resources:
         limits:
           cpus: '2.00'
-          memory: 2000M
+          memory: 4000M
     logging: *default-logging
 
   local-ai-cuda-llm:

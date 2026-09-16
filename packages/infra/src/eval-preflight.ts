@@ -42,13 +42,41 @@ async function checkTtsHealth(): Promise<PreflightCheck> {
       signal: controller.signal,
     });
     clearTimeout(timer);
-    const healthy = res.ok;
+    if (!res.ok) {
+      return {
+        service: 'tts',
+        healthy: false,
+        provider: 'SYNTHETIC_FALLBACK_TONE',
+        required: true,
+        details: `TTS health endpoint returned HTTP ${res.status}`,
+      };
+    }
+
+    let isNeuralLoaded = false;
+    let engineType = 'UNKNOWN';
+    try {
+      const data = (await res.json()) as any;
+      engineType = data?.engineType || 'UNKNOWN';
+      isNeuralLoaded = data?.neuralModelLoaded === true || (engineType.includes('NEURAL') || engineType.includes('PIPER') || engineType.includes('VIENEU'));
+    } catch {
+      isNeuralLoaded = false;
+    }
+
+    if (isNeuralLoaded && !engineType.includes('FALLBACK') && !engineType.includes('SYNTHETIC')) {
+      return {
+        service: 'tts',
+        healthy: true,
+        provider: `REAL_NEURAL_ONNX (${url}) [${engineType}]`,
+        required: true,
+      };
+    }
+
     return {
       service: 'tts',
-      healthy,
-      provider: healthy ? `REAL_NEURAL_ONNX (${url})` : 'SYNTHETIC_FALLBACK_TONE',
+      healthy: false,
+      provider: `SYNTHETIC_PYTHON_FALLBACK (${url}) [${engineType}]`,
       required: true,
-      details: healthy ? undefined : `TTS health endpoint HTTP ${res.status}`,
+      details: 'VieNeu TTS is online but running in synthetic fallback mode (neural voice weights not loaded)',
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

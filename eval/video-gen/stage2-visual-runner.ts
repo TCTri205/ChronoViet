@@ -274,7 +274,10 @@ export async function runStage2VisualEvaluation(
           primaryQuery: scene.searchParams?.primaryQuery,
           hasEnglishQuery: !!scene.searchParams?.englishQuery && scene.searchParams.englishQuery.trim().length > 0,
           hasFrenchQuery: !!scene.searchParams?.frenchQuery && scene.searchParams.frenchQuery.trim().length > 0,
-          candidatesCount: scene.candidates?.length || state.researchResults?.[scene.sceneId]?.candidates?.length || 0,
+          candidatesCount: Math.max(
+            state.researchResults?.[scene.sceneId]?.candidates?.length || 0,
+            scene.candidates?.length || 0
+          ),
           selectedAssetExists: !!scene.selectedAsset,
           assetFileExists,
           assetFileSizeBytes,

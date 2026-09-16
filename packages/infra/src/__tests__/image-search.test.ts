@@ -108,7 +108,7 @@ describe('Image Search Whitelist & License Policy', () => {
   describe('getImageSearchProviderChain', () => {
     it('returns ordered default chain', () => {
       const chain = getImageSearchProviderChain();
-      expect(chain).toEqual(['serpapi', 'tavily', 'brave', 'wikimedia', 'gallica', 'catalog']);
+      expect(chain).toEqual(['catalog', 'wikimedia', 'gallica', 'tavily', 'brave', 'serpapi']);
     });
   });
 });

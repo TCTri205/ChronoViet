@@ -455,14 +455,22 @@ export async function keywordNode(state: ChronoGraphState): Promise<Partial<Chro
         .join('\n');
 
       const systemPrompt = `Bạn là Trilingual Visual Research Planning Agent của ChronoViet.
-Nhiệm vụ: Phân tích voiceover của từng cảnh phim lịch sử và tạo ra Search Tool Input chuẩn để tìm kiếm tư liệu ảnh lịch sử (trên Wikimedia Commons, Gallica BnF & Search Engines).
-QUY TẮC BẮT BUỘC:
-1. Xuất duy nhất 1 JSON object hợp lệ: { "queries": [ { "sceneId": "...", "primaryQuery": "...", "englishQuery": "...", "frenchQuery": "...", "visualType": "...", "historicalPeriod": "..." } ] }.
-2. "primaryQuery": từ khóa tiếng Việt chi tiết, giàu ngữ cảnh lịch sử (ví dụ: "Tượng đài Trần Hưng Đạo bãi cọc Bạch Đằng").
-3. "englishQuery": từ khóa tiếng Anh tương ứng chuẩn xác (ví dụ: "Statue of Tran Hung Dao Bach Dang battle painting").
-4. "frenchQuery": từ khóa tiếng Pháp tương ứng. ƯU TIÊN dùng các thuật ngữ/địa danh lưu trữ thời thuộc địa tương ứng (ví dụ: "Tonkin", "Annam", "Cochinchine", "Indochine", "Citadelle de Hué", "Bataille de Bach Dang") để tối đa hóa khả năng truy xuất trên kho Thư viện Quốc gia Pháp (Gallica BnF).
-5. "visualType": chọn 1 trong: ['PORTRAIT', 'BATTLE_SCENE', 'MAP_CHRONO', 'ARTIFACT', 'LANDSCAPE', 'ARCHAEOLOGY', 'GENERAL_HISTORICAL'].
-6. Không thêm văn bản giải thích ngoài JSON.`;
+Nhiệm vụ: Phân tích voiceover của từng cảnh phim lịch sử và tạo ra Search Tool Input chuẩn xác để tìm kiếm tư liệu ảnh lịch sử (trên Wikimedia Commons, Gallica BnF, Bảo tàng & Search Engines).
+
+QUY TẮC BẮT BUỘC VỀ ÁNH XẠ THỰC THỂ THỊ GIÁC (PHYSICAL ENTITY MAPPING):
+1. TUYỆT ĐỐI KHÔNG tìm kiếm các hành động trừu tượng, lời kể cảm thán hay sự kiện cá nhân không có tư liệu ảnh trực tiếp (Ví dụ: KHÔNG tìm "Trưng Trắc kết hôn với Thi Sách", "Vua mở mang bờ cõi", "Nhân dân ca ngợi công đức").
+2. BẮT BUỘC ÁNH XẠ sang các THỰC THỂ VẬT LÝ có thật trong kho lưu trữ, di tích, bảo tàng:
+   - Nhân vật & Sự kiện tiểu sử cổ đại: Ánh xạ sang Tranh dân gian truyền thống ("Tranh dân gian Đông Hồ Hai Bà Trưng cưỡi voi", "Tranh Nữ tướng Bà Triệu"), Đền thờ danh nhân ("Đền thờ Hai Bà Trưng Mê Linh", "Đền Hát Môn", "Đền thờ Thi Sách", "Thành cổ Luy Lâu"), hoặc Tượng thờ / Tượng đài ("Tượng Hai Bà Trưng", "Tượng đài Trưng Trắc").
+   - Cổ vật & Khảo cổ: "Trống đồng Đông Sơn", "Thạp đồng Đào Thịnh", "Mũi tên đồng Cổ Loa", "Rìu đồng Đông Sơn", "Cổ vật thời Hùng Vương", "Bảo tàng Lịch sử Quốc gia".
+   - Di tích & Đền đài: "Khu di tích Đền Hùng Phú Thọ", "Đền Thượng núi Nghĩa Lĩnh", "Thành Cổ Loa kinh đô Âu Lạc", "Đền thờ An Dương Vương", "Cố đô Hoa Lư".
+   - Mỹ thuật & Tượng đài: "Tượng vua Hùng", "Phù điêu lịch sử", "Tranh khắc gỗ dân gian", "Tượng đài danh nhân lịch sử".
+   - Bản đồ & Địa lý: "Bản đồ nước Văn Lang thời Hùng Vương", "Bản đồ Giao Chỉ thời Bắc thuộc", "Bản đồ thời kỳ Hồng Bàng".
+3. Xuất duy nhất 1 JSON object hợp lệ: { "queries": [ { "sceneId": "...", "primaryQuery": "...", "englishQuery": "...", "frenchQuery": "...", "visualType": "...", "historicalPeriod": "..." } ] }.
+4. "primaryQuery": từ khóa tiếng Việt tập trung vào cổ vật, di tích, đền thờ, tượng đài, tranh dân gian lịch sử (ví dụ: "Tranh dân gian Đông Hồ Hai Bà Trưng cưỡi voi ra trận" hoặc "Đền thờ Hai Bà Trưng Mê Linh").
+5. "englishQuery": từ khóa tiếng Anh tương ứng (ví dụ: "Dong Son bronze drum Hung Kings artifact" hoặc "Hai Ba Trung Temple Me Linh").
+6. "frenchQuery": từ khóa tiếng Pháp tương ứng (ví dụ: "Tambour de bronze Dong Son Tonkin" hoặc "Soeurs Trung insurrection").
+7. "visualType": chọn 1 trong: ['ARTIFACT', 'ARCHAEOLOGY', 'LANDSCAPE', 'PORTRAIT', 'BATTLE_SCENE', 'MAP_CHRONO', 'GENERAL_HISTORICAL'].
+8. Không thêm văn bản giải thích ngoài JSON.`;
 
       const userContent = `Chủ đề chung: "${state.userPrompt}"
 Thực thể lịch sử kiểm chứng: ${ragEntities.join(', ') || 'Không có'}
@@ -553,12 +561,13 @@ ${scenesSummary}`;
       throw new Error(`[EVAL_STRICT] Missing planned LLM query for scene ${scene.sceneId} during evaluation`);
     }
 
-    // Heuristic fallback
-    const primaryQuery = rawKeywords.length > 0 ? rawKeywords.join(' ') : state.userPrompt;
-    const englishQuery = translateHistoricalQueryToEnglish(primaryQuery);
-    const frenchQuery = translateHistoricalQueryToFrench(primaryQuery);
+    // Heuristic fallback: Synthesize concise entity query (2-4 key terms)
     const visualType = inferVisualTypeHeuristic(scene.voiceoverText);
     const historicalPeriod = state.userPrompt;
+    const topKeywords = rawKeywords.slice(0, 3).join(' ');
+    const primaryQuery = topKeywords || state.userPrompt;
+    const englishQuery = translateHistoricalQueryToEnglish(primaryQuery);
+    const frenchQuery = translateHistoricalQueryToFrench(primaryQuery);
     const facetQueries = generateFacetQueries(
       primaryQuery,
       englishQuery,

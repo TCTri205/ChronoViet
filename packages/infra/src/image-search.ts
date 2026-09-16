@@ -70,12 +70,12 @@ export type ImageSearchProviderName =
   | 'catalog';
 
 export const IMAGE_SEARCH_PROVIDER_NAMES: ImageSearchProviderName[] = [
+  'wikimedia',
+  'catalog',
+  'gallica',
   'serpapi',
   'tavily',
   'brave',
-  'wikimedia',
-  'gallica',
-  'catalog',
 ];
 
 /**
@@ -83,8 +83,12 @@ export const IMAGE_SEARCH_PROVIDER_NAMES: ImageSearchProviderName[] = [
  * Wikimedia Commons (PD/CC), Flickr (CC filterable), museum archives, and government archives.
  */
 export const DEFAULT_IMAGE_DOMAIN_WHITELIST = [
+  '*.wikipedia.org',
+  '*.wikimedia.org',
   '*.gov.vn',
   '*.archives.gov.vn',
+  '*.bvhttdl.gov.vn',
+  '*.dsvh.gov.vn',
   'upload.wikimedia.org',
   'commons.wikimedia.org',
   'live.staticflickr.com',
@@ -104,9 +108,20 @@ export const DEFAULT_IMAGE_DOMAIN_WHITELIST = [
   'media.britishmuseum.org',
   'baotanglichsu.vn',
   'btlsqs.vn',
+  'baotanghochiminh.vn',
+  'baotangmythuat.vn',
+  'baotangquangninh.vn',
+  'baotangdanang.vn',
+  'baotanghaiphong.gov.vn',
+  'baotangnghean.gov.vn',
+  'baotanglamdong.com.vn',
+  'baotangdaklak.vn',
+  'baotangphunu.org.vn',
   'archives.gov.vn',
   'dsvh.gov.vn',
   'ditichlichsuvanhoa.vn',
+  'denhung.org.vn',
+  'thanhcoloa.vn',
   'nhandan.vn',
   'chinhphu.vn',
   'vietnam.vn',
@@ -115,6 +130,7 @@ export const DEFAULT_IMAGE_DOMAIN_WHITELIST = [
   'viensuhoc.vass.gov.vn',
   'hoangthanhthanglong.vn',
   'hueworldheritage.org.vn',
+  'vanmieu.gov.vn',
   'gallica.bnf.fr',
   'archive.org',
   'digitalcollections.nypl.org',
@@ -194,7 +210,12 @@ export function inferLicenseFromDomain(imageUrl: string): LicenseType {
     return 'UNKNOWN';
   }
 
-  if (host === 'upload.wikimedia.org' || host === 'commons.wikimedia.org') {
+  if (
+    host === 'upload.wikimedia.org' ||
+    host === 'commons.wikimedia.org' ||
+    host.endsWith('.wikimedia.org') ||
+    host.endsWith('.wikipedia.org')
+  ) {
     return 'PUBLIC_DOMAIN';
   }
   if (
@@ -236,12 +257,24 @@ export function inferLicenseFromDomain(imageUrl: string): LicenseType {
     host.endsWith('.baotanglichsu.vn') ||
     host === 'btlsqs.vn' ||
     host.endsWith('.btlsqs.vn') ||
+    host === 'baotanghochiminh.vn' ||
+    host.endsWith('.baotanghochiminh.vn') ||
+    host === 'baotangmythuat.vn' ||
+    host.endsWith('.baotangmythuat.vn') ||
+    host.endsWith('.baotangquangninh.vn') ||
+    host.endsWith('.baotangdanang.vn') ||
+    host.endsWith('.baotangphunu.org.vn') ||
+    host.includes('baotang') ||
     host === 'archives.gov.vn' ||
     host.endsWith('.archives.gov.vn') ||
     host === 'dsvh.gov.vn' ||
     host.endsWith('.dsvh.gov.vn') ||
     host === 'ditichlichsuvanhoa.vn' ||
     host.endsWith('.ditichlichsuvanhoa.vn') ||
+    host === 'denhung.org.vn' ||
+    host.endsWith('.denhung.org.vn') ||
+    host === 'thanhcoloa.vn' ||
+    host.endsWith('.thanhcoloa.vn') ||
     host === 'nhandan.vn' ||
     host.endsWith('.nhandan.vn') ||
     host === 'chinhphu.vn' ||
@@ -257,6 +290,8 @@ export function inferLicenseFromDomain(imageUrl: string): LicenseType {
     host.endsWith('.hoangthanhthanglong.vn') ||
     host === 'hueworldheritage.org.vn' ||
     host.endsWith('.hueworldheritage.org.vn') ||
+    host === 'vanmieu.gov.vn' ||
+    host.endsWith('.vanmieu.gov.vn') ||
     host === 'gov.vn' ||
     host.endsWith('.gov.vn')
   ) {

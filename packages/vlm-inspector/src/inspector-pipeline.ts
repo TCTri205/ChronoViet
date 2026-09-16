@@ -144,6 +144,7 @@ async function evaluateSingleCandidate(
           visualNoiseScore: scoreResult.visualNoiseScore,
           artisticFitScore: scoreResult.artisticFitScore,
           overallScore: scoreResult.totalScore,
+          scorerType: scoreResult.scorerType,
         },
         verdict: passed ? 'PASS' : 'REJECT',
       },
@@ -284,16 +285,16 @@ export async function inspectSceneVisuals(
     targetAspectRatio: (scene as any).aspectRatio,
   };
 
-  // 3. Lazy Sequential VLM Curation (Evaluate candidate #1; if it fails technical checks or score gate, evaluate candidate #2 before falling back to PURE_CODE)
+  // 3. Lazy Sequential VLM Curation (Evaluate candidate #1..#4 lazily; stopping as soon as one candidate passes)
   const inspected: VisualCandidate[] = [...rejectedByLicense];
   let selectedCandidate: VisualCandidate | undefined = undefined;
 
-  // We evaluate at most 2 candidates lazily
-  const candidatesToTry = whitelistedCandidates.slice(0, 2);
+  // We evaluate up to 4 candidates lazily
+  const candidatesToTry = whitelistedCandidates.slice(0, 4);
 
   for (let idx = 0; idx < candidatesToTry.length; idx++) {
     const cand = candidatesToTry[idx];
-    const batchNum = (idx === 0 ? 1 : 2) as 1 | 2;
+    const batchNum = (idx < 2 ? idx + 1 : 2) as 1 | 2;
 
     // Download active candidate only
     let downloadedCand = cand;

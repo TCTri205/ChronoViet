@@ -997,6 +997,7 @@ export const VisualCandidateSchema = z.object({
       visualNoiseScore: z.number().min(0).max(100),
       artisticFitScore: z.number().min(0).max(100),
       overallScore: z.number().min(0).max(100),
+      scorerType: z.enum(['LOCAL_VLM', 'OPENAI_VLM', 'GEMINI_CLOUD', 'CLIP_LOCAL_FALLBACK', 'REDIS_CACHE']).optional(),
     })
     .optional(),
   verdict: z.enum(['PASS', 'REJECT']).optional(),

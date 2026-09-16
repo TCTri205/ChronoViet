@@ -626,7 +626,29 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
         }
       }
 
-      const finalScript = cleanedScript || sanitizeVoiceoverScript(rawContent);
+      let finalScript = cleanedScript || sanitizeVoiceoverScript(rawContent);
+      finalScript = deduplicateRepetitiveText(finalScript);
+
+      // Enforce hard word limit: Never let a chapter script exceed maxWords * 1.25
+      const finalWords = finalScript.split(/\s+/).filter(Boolean);
+      if (finalWords.length > maxWords * 1.25) {
+        const sentences = finalScript.split(/(?<=[.!?])\s+/);
+        let curW = 0;
+        const kept: string[] = [];
+        for (const s of sentences) {
+          const w = s.split(/\s+/).filter(Boolean).length;
+          if (curW + w <= maxWords * 1.15 || kept.length === 0) {
+            kept.push(s);
+            curW += w;
+          } else {
+            break;
+          }
+        }
+        if (kept.length > 0 && curW >= minWords * 0.7) {
+          finalScript = kept.join(' ');
+        }
+      }
+
       if (!finalScript || finalScript.split(/\s+/).filter(Boolean).length < 20) {
         if (envConfig.EVAL_STRICT) {
           throw new Error(`Scriptwriter failed to generate narration for chapter ${i} in EVAL_STRICT mode.`);

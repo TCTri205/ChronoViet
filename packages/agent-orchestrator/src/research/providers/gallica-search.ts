@@ -9,6 +9,19 @@ import { ImageSearchProvider, ImageSearchProviderOptions } from './image-search-
 
 const log = createLogger({ service: 'agent-orchestrator' });
 
+export function sanitizeGallicaQuery(keywords: string): string {
+  if (!keywords) return '';
+  // Remove negative modifiers like -anime, -cartoon
+  let clean = keywords.replace(/-\w+/g, '');
+  // Remove punctuation and special characters that break SRU query parsing
+  clean = clean.replace(/["'`:;!?(){}\[\]\/\\]/g, ' ');
+  // Normalize whitespace
+  clean = clean.replace(/\s+/g, ' ').trim();
+  // Keep first 6 substantive words to avoid overly restrictive queries
+  const words = clean.split(' ').filter((w) => w.length > 1);
+  return words.slice(0, 6).join(' ');
+}
+
 export class GallicaSearchProvider implements ImageSearchProvider {
   readonly name = 'gallica';
 
@@ -17,13 +30,15 @@ export class GallicaSearchProvider implements ImageSearchProvider {
     limit: number = 6,
     _options?: ImageSearchProviderOptions
   ): Promise<VisualCandidate[]> {
-    if (!keywords || !keywords.trim()) return [];
+    const cleanKeywords = sanitizeGallicaQuery(keywords);
+    if (!cleanKeywords) return [];
 
-    const encodedQuery = encodeURIComponent(keywords.trim());
-    const sruUrl = `https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query=(gallica%20all%20%22${encodedQuery}%22)%20and%20(dc.type%20all%20%22image%22)&maximumRecords=${Math.min(limit * 2, 10)}&startRecord=1`;
+    const encodedQuery = encodeURIComponent(cleanKeywords);
+    const sruUrl = `https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query=(gallica%20all%20${encodedQuery})%20and%20(dc.type%20all%20%22image%22)&maximumRecords=${Math.min(limit * 2, 10)}&startRecord=1`;
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
+    const timeoutMs = 8000;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     const startTime = Date.now();
 
     try {
@@ -38,8 +53,8 @@ export class GallicaSearchProvider implements ImageSearchProvider {
 
       const latencyMs = Date.now() - startTime;
       if (!res.ok) {
-        log.warn('research.gallica_http_error', `HTTP ${res.status} from Gallica BnF for "${keywords}"`, {
-          keywords,
+        log.debug('research.gallica_http_error', `HTTP ${res.status} from Gallica BnF for "${cleanKeywords}"`, {
+          keywords: cleanKeywords,
           status: res.status,
           latencyMs,
         });
@@ -63,7 +78,7 @@ export class GallicaSearchProvider implements ImageSearchProvider {
         const titleMatch = record.match(/<dc:title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/dc:title>/i);
         const creatorMatch = record.match(/<dc:creator>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/dc:creator>/i);
 
-        const title = titleMatch ? titleMatch[1].trim() : `Tư liệu Gallica BnF: ${keywords}`;
+        const title = titleMatch ? titleMatch[1].trim() : `Tư liệu Gallica BnF: ${cleanKeywords}`;
         const author = creatorMatch ? creatorMatch[1].trim() : 'Bibliothèque nationale de France (Gallica)';
 
         candidates.push({
@@ -80,7 +95,7 @@ export class GallicaSearchProvider implements ImageSearchProvider {
       }
 
       log.debug('research.gallica_success', `Gallica BnF returned ${candidates.length} candidates`, {
-        keywords,
+        keywords: cleanKeywords,
         candidateCount: candidates.length,
         latencyMs,
       });
@@ -88,8 +103,8 @@ export class GallicaSearchProvider implements ImageSearchProvider {
       return candidates;
     } catch (err: any) {
       const latencyMs = Date.now() - startTime;
-      log.warn('research.gallica_search_failed', `Gallica BnF search failed for "${keywords}": ${err.message}`, {
-        keywords,
+      log.debug('research.gallica_search_failed', `Gallica BnF search failed for "${cleanKeywords}": ${err.message}`, {
+        keywords: cleanKeywords,
         error: err.message,
         latencyMs,
       });

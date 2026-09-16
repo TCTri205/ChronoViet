@@ -65,8 +65,15 @@ export async function runStage3AudioEvaluation(
 
   console.log('\n🎙️ [Stage 3] Starting ChronoViet TTS Gen Audio & Pacing Reconciliation Evaluation Suite...');
 
-  // 1. Preflight Health Checks: TTS service (Non-blocking if not strict, but logs clearly)
+  // 1. Preflight Health Checks: TTS service (Must be strictly healthy, no fallback)
   const preflight = await assertEvalPreflight(['tts']);
+  const ttsCheck = preflight.checks.find((c) => c.service === 'tts');
+  if (!ttsCheck || !ttsCheck.healthy) {
+    console.error('\n❌ [FATAL] VieNeu-TTS service is NOT healthy or unreachable on http://localhost:8080.');
+    console.error('Fallback is completely disabled. Please ensure VieNeu-TTS container is running:');
+    console.error('  pnpm ai:tts\n');
+    process.exit(1);
+  }
 
   const stage1OutputsDir = path.resolve(__dirname, 'outputs/stage1');
   const stage2OutputsDir = path.resolve(__dirname, 'outputs/stage2');

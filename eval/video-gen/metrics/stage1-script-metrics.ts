@@ -113,11 +113,21 @@ export function evaluateStage1ScriptCase(
   const durationMin = actualDurationSec > 0 ? actualDurationSec / 60 : testCase.targetDurationMinutes;
   const actualWpm = durationMin > 0 ? Math.round(totalWordCount / durationMin) : 0;
 
-  const pacingDeviationPct = Math.round((Math.abs(actualWpm - targetWpm) / targetWpm) * 1000) / 10;
-  const pacingPassed = pacingDeviationPct <= 15.0; // Pass <= 15.0%, Target <= 8.0%
+  const wpmDeviationPct = Math.round((Math.abs(actualWpm - targetWpm) / targetWpm) * 1000) / 10;
+  const durationDeviationPct = targetDurationSec > 0
+    ? Math.round((Math.abs(actualDurationSec - targetDurationSec) / targetDurationSec) * 1000) / 10
+    : 0;
+
+  const pacingDeviationPct = Math.max(wpmDeviationPct, durationDeviationPct);
+  const pacingPassed = wpmDeviationPct <= 15.0 && durationDeviationPct <= 25.0; // Pass if WPM <= 15% and duration <= 25%
 
   if (!pacingPassed) {
-    warnings.push(`Planned pacing deviation is ${pacingDeviationPct}% (WPM=${actualWpm}, Target=${targetWpm})`);
+    if (wpmDeviationPct > 15.0) {
+      warnings.push(`Planned pacing WPM deviation is ${wpmDeviationPct}% (WPM=${actualWpm}, Target=${targetWpm})`);
+    }
+    if (durationDeviationPct > 25.0) {
+      errors.push(`Planned total duration deviation is ${durationDeviationPct}% (Actual: ${actualDurationSec}s, Target: ${targetDurationSec}s)`);
+    }
   }
 
   // Fact-Check Audit

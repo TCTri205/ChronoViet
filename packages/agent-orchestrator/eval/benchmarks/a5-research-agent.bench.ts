@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ComponentBenchmarkReport } from '@chronoviet/shared-spec';
 import { buildProviderChain, resolveImageCandidates } from '../../src/research/index.js';
-import { matchCuratedCatalog } from '../../src/research/providers/wikimedia-search.js';
+import { matchCuratedCatalog } from '../../src/research/providers/curated-catalog.js';
 import { HighResolutionLatencyProfiler } from '../metrics/index.js';
 
 const __filename = fileURLToPath(import.meta.url);

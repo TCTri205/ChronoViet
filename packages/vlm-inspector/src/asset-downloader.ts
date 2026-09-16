@@ -274,14 +274,30 @@ export async function downloadCandidateImage(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     try {
-      const res = await fetch(candidate.imageUrl, {
+      const isWikiHost = candidate.imageUrl.includes('wikimedia.org') || candidate.imageUrl.includes('wikipedia.org');
+      const fetchHeaders: Record<string, string> = {
+        'User-Agent': userAgent,
+        Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      };
+      if (isWikiHost) {
+        fetchHeaders['Referer'] = 'https://commons.wikimedia.org/';
+      }
+
+      let res = await fetch(candidate.imageUrl, {
         signal: controller.signal,
-        headers: {
-          'User-Agent': userAgent,
-          Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        },
+        headers: fetchHeaders,
         cache: 'no-store',
       });
+
+      // Handle 429 rate limiting with gentle jitter backoff retry
+      if (res.status === 429) {
+        await new Promise((r) => setTimeout(r, 400 + Math.floor(Math.random() * 400)));
+        res = await fetch(candidate.imageUrl, {
+          signal: controller.signal,
+          headers: fetchHeaders,
+          cache: 'no-store',
+        });
+      }
 
       const latencyMs = Date.now() - startTime;
       if (!res.ok) {

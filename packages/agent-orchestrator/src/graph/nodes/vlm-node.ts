@@ -9,7 +9,7 @@ import { envConfig, getAdaptiveConcurrency } from '@chronoviet/infra';
 import { inspectSceneVisuals } from '@chronoviet/vlm-inspector';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 
-const VLM_SCENE_TIMEOUT_MS = (envConfig as any).VLM_SCENE_TIMEOUT_MS || 60000;
+const VLM_SCENE_TIMEOUT_MS = (envConfig as any).VLM_SCENE_TIMEOUT_MS || 180000;
 
 const PURE_CODE_LAYOUT_ROTATION: LayoutMode[] = [
   'TIMELINE_CHRONO',

@@ -94,55 +94,17 @@ def ensure_piper_model(target_dir: str) -> tuple[str, str]:
 
     return m_path, c_path
 
-# Initialize Neural Engine or Graceful Fallback
-tts_engine = None
-engine_type = "SYNTHETIC_FALLBACK_PYTHON"
-
+# Initialize Official VieNeu-TTS Engine (v3turbo - vieneu.io) exclusively
 try:
-    from piper import PiperVoice
-    
-    # Auto-discover any .onnx voice model in MODELS_DIR
-    discovered_model = None
-    discovered_config = None
-    if os.path.exists(MODELS_DIR):
-        candidates = [f for f in os.listdir(MODELS_DIR) if f.endswith(".onnx")]
-        # Prefer 25hours_single, then vivos, then any onnx
-        candidates.sort(key=lambda x: (0 if "25hours" in x else (1 if "vivos" in x else 2)))
-        if candidates:
-            discovered_model = os.path.join(MODELS_DIR, candidates[0])
-            cfg_cand = discovered_model + ".json"
-            if os.path.exists(cfg_cand):
-                discovered_config = cfg_cand
-
-    default_m = discovered_model or os.path.join(MODELS_DIR, "vi_VN-25hours_single-low.onnx")
-    default_c = discovered_config or (default_m + ".json")
-    model_path = os.getenv("PIPER_MODEL_PATH", default_m)
-    config_path = os.getenv("PIPER_CONFIG_PATH", default_c)
-
-    if not os.path.exists(model_path):
-        ensure_piper_model(MODELS_DIR)
-
-    if os.path.exists(model_path):
-        log.info(f"Loading Piper ONNX Neural Voice Engine ({model_path})...")
-        tts_engine = PiperVoice.load(model_path, config_path=config_path if (config_path and os.path.exists(config_path)) else None)
-        engine_type = "PIPER_NEURAL_ONNX"
-        log.info(f"Piper ONNX Voice Engine loaded successfully from {model_path}!")
-    else:
-        raise FileNotFoundError(f"Model weights not found at {model_path}")
-except Exception as p_err:
-    try:
-        from vieneu import Vieneu
-        log.info("Loading VieNeu ONNX Neural Engine...")
-        tts_engine = Vieneu()
-        engine_type = "REAL_NEURAL_ONNX"
-        log.info("VieNeu ONNX Neural Engine loaded successfully!")
-    except Exception as init_err:
-        log.warning(
-            f"Neural ONNX voice model not initialized (piper: {p_err}, vieneu: {init_err}). "
-            "Operating in resilient Python Synthesizer mode."
-        )
-        tts_engine = None
-        engine_type = "SYNTHETIC_FALLBACK_PYTHON"
+    import vieneu
+    log.info("Loading Official VieNeu-TTS Engine (v3turbo - vieneu.io)...")
+    tts_engine = vieneu.Vieneu(mode="v3turbo")
+    engine_type = "VIENEU_OFFICIAL_V3TURBO"
+    log.info("VieNeu-TTS Official v3turbo Engine loaded successfully!")
+except Exception as v_err:
+    log.error(f"Fatal error: failed to initialize VieNeu-TTS v3turbo engine: {v_err}")
+    tts_engine = None
+    engine_type = "ERROR_UNAVAILABLE"
 
 class VieNeuRequest(BaseModel):
     text: str
@@ -151,29 +113,6 @@ class VieNeuRequest(BaseModel):
     sampleRate: int = 24000
     paddingMs: int = 300
     fps: int = 30
-
-def generate_python_pcm16_audio(text: str, duration_ms: float, word_timestamps: list, sample_rate: int = 24000) -> np.ndarray:
-    """Generate harmonic audible PCM audio matching word timestamps for local testing."""
-    num_samples = int((duration_ms / 1000.0) * sample_rate)
-    audio = np.zeros(num_samples, dtype=np.int16)
-    base_freq = 440.0
-
-    for i in range(num_samples):
-        curr_ms = (i / float(sample_rate)) * 1000.0
-        sample_val = 0.0
-        for idx, wt in enumerate(word_timestamps):
-            if wt["startMs"] <= curr_ms <= wt["endMs"]:
-                freq = base_freq + (idx % 6) * 35.0
-                t = i / float(sample_rate)
-                # Apply envelope to avoid clicking
-                time_in_word = curr_ms - wt["startMs"]
-                word_dur = max(1.0, wt["endMs"] - wt["startMs"])
-                envelope = math.sin(math.pi * (time_in_word / word_dur))
-                sample_val = math.sin(2.0 * math.pi * freq * t) * 14000.0 * max(0.0, envelope)
-                break
-        audio[i] = int(sample_val)
-
-    return audio
 
 @app.get("/health")
 def health():
@@ -231,39 +170,42 @@ def synthesize(req: VieNeuRequest, request: Request):
     current_engine = engine_type
 
     if not os.path.exists(file_path):
-        if tts_engine is not None:
-            try:
-                if engine_type == "PIPER_NEURAL_ONNX":
-                    audio_arrays = []
-                    for chunk in tts_engine.synthesize(text, length_scale=length_scale):
-                        if chunk.audio_float_array is not None and len(chunk.audio_float_array) > 0:
-                            audio_arrays.append(chunk.audio_float_array)
-                    if audio_arrays:
-                        full_audio = np.concatenate(audio_arrays)
-                        sr = getattr(tts_engine.config, "sample_rate", sample_rate)
-                        sf.write(file_path, full_audio, sr, subtype="PCM_16")
-                    else:
-                        raise RuntimeError("Piper synthesis yielded no audio chunks")
-                else:
-                    audio_data = tts_engine.infer(text)
-                    sr = getattr(tts_engine, "sample_rate", sample_rate)
-                    if hasattr(tts_engine, "save") and callable(getattr(tts_engine, "save")):
-                        try:
-                            tts_engine.save(audio_data, file_path)
-                        except Exception:
-                            audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
-                            sf.write(file_path, audio_int16, sr, subtype="PCM_16")
-                    else:
-                        audio_int16 = (audio_data * 32767.0).clip(-32768, 32767).astype(np.int16)
-                        sf.write(file_path, audio_int16, sr, subtype="PCM_16")
-            except Exception as infer_err:
-                log.warning(f"Neural inference failed ({infer_err}), falling back to Python PCM synthesizer")
-                current_engine = "SYNTHETIC_FALLBACK_PYTHON"
-                synth_audio = generate_python_pcm16_audio(text, calculated_duration_ms, word_timestamps, sample_rate)
-                sf.write(file_path, synth_audio, sample_rate, subtype="PCM_16")
-        else:
-            synth_audio = generate_python_pcm16_audio(text, calculated_duration_ms, word_timestamps, sample_rate)
-            sf.write(file_path, synth_audio, sample_rate, subtype="PCM_16")
+        if tts_engine is None:
+            raise HTTPException(status_code=503, detail="VieNeu TTS model is not available")
+        try:
+            speaker_name = "Anh Khôi"
+            if req.speakerId:
+                spk_low = req.speakerId.lower()
+                if "female" in spk_low or "truc_ly" in spk_low:
+                    speaker_name = "Trúc Ly"
+                elif "mai_anh" in spk_low:
+                    speaker_name = "Mai Anh"
+                elif "south" in spk_low or "thai_son" in spk_low:
+                    speaker_name = "Thái Sơn"
+                elif "thien_tam" in spk_low:
+                    speaker_name = "Thiền Tâm Đức"
+                elif "tuyen" in spk_low:
+                    speaker_name = "Phạm Tuyên"
+                elif "vinh" in spk_low:
+                    speaker_name = "Xuân Vĩnh"
+                elif hasattr(tts_engine, "list_preset_voices"):
+                    presets = [v[1] for v in tts_engine.list_preset_voices()]
+                    if req.speakerId in presets:
+                        speaker_name = req.speakerId
+
+            voice = tts_engine.get_preset_voice(speaker_name)
+            audio_data = tts_engine.infer(text=text, voice=voice)
+            sr = getattr(tts_engine, "sample_rate", sample_rate)
+            if hasattr(tts_engine, "save") and callable(getattr(tts_engine, "save")):
+                try:
+                    tts_engine.save(audio_data, file_path)
+                except Exception:
+                    sf.write(file_path, audio_data, sr, subtype="PCM_16")
+            else:
+                sf.write(file_path, audio_data, sr, subtype="PCM_16")
+        except Exception as infer_err:
+            log.error(f"VieNeu inference failed: {infer_err}")
+            raise HTTPException(status_code=500, detail=f"VieNeu TTS inference failed: {infer_err}")
 
     if not os.path.exists(file_path):
         log.error(f"Failed to create audio file at {file_path}", extra={"event": "tts.file_error", "requestId": request_id})

@@ -4,4 +4,4 @@ export * from './tavily-search.js';
 export * from './brave-search.js';
 export * from './wikimedia-search.js';
 export * from './gallica-search.js';
-
+export * from './curated-catalog.js';

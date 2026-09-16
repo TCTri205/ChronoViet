@@ -41,18 +41,23 @@ Hãy thẩm định hình ảnh tư liệu sau cho bối cảnh lịch sử:
 "${eventDescription}"
 Tiêu đề ảnh/metadata: "${options.metadata?.title || 'Không rõ'}" | Bản quyền: "${options.metadata?.license || 'Không rõ'}"
 
-QUY TẮC BẮT BUỘC CHỐNG LỆCH THỜI ĐẠI (ANTI-ANACHRONISM ADR-5):
+QUY TẮC THẨM ĐỊNH LỊCH SỬ & CHỐNG LỆCH THỜI ĐẠI (ANTI-ANACHRONISM ADR-5):
 1. historicalContextScore (0 - 40 điểm):
-   - Đánh giá tính xác thực lịch sử Việt Nam và sự tương thích đúng triều đại/thời kỳ.
-   - PHẠT NẶNG (cho dưới 10 điểm) nếu:
+   - ĐÁNH GIÁ CAO (30 - 40 điểm) cho các tư liệu xác thực:
+     * Cổ vật khảo cổ, hiện vật bảo tàng (trống đồng Đông Sơn, thạp đồng, mũi tên, vũ khí cổ, đồ gốm, đồ đồng...).
+     * Tranh dân gian truyền thống Việt Nam (Tranh Đông Hồ, Hàng Trống, Kim Hoàng), tranh khắc gỗ, tranh lụa mô tả danh nhân / sự kiện lịch sử (Hai Bà Trưng cưỡi voi, Bà Triệu, Đinh Bộ Lĩnh, Lê Lợi, Quang Trung...). Đây là di sản mỹ thuật dân tộc chuẩn mực.
+     * Ảnh chụp khu di tích lịch sử, đền thờ, lăng miếu, thành cổ, chùa chiền cổ (Đền Hùng, Cổ Loa, Mê Linh, Hát Môn, Hoa Lư, Thăng Long...).
+     * Tượng thờ cổ, tượng đài danh nhân dân tộc, phù điêu điêu khắc, tranh vẽ lịch sử chính thống, bản đồ cổ/bản đồ khảo cổ.
+   - CHỈ PHẠT NẶNG (cho dưới 10 điểm) nếu:
      * Dính trang phục / đầu tóc triều đại phong kiến ngoại quốc không đúng lịch sử Việt Nam (ví dụ: bím tóc đuôi sam nhà Mãn Thanh, trang phục Hanbok Triều Tiên, Kimono Nhật Bản).
-     * Là hình ảnh AI vẽ giả tạo dị dạng (plastic skin, ngón tay biến dạng, vũ khí kỳ ảo fantasy không có thật trong lịch sử).
-     * Chứa yếu tố kiến trúc / công trình hiện đại trong bối cảnh cổ đại.
+     * Là hình ảnh AI vẽ giả tạo dị dạng (plastic skin, ngón tay biến dạng, vũ khí kỳ ảo tiên hiệp/fantasy vô căn cứ).
+     * Phương tiện cơ giới hiện đại (ô tô, xe máy) hoặc nhà cao tầng xuất hiện trong cảnh phục dựng thời cổ đại. (Lưu ý: KHÔNG phạt tủ kính bảo tàng, khuôn viên di tích, lư hương hay bối cảnh đền thờ ngày nay).
 2. visualNoiseScore (0 - 30 điểm):
-   - Không dính watermark, logo đóng dấu thương mại (Getty Images, Shutterstock, Alamy, iStock, v.v.), không có chữ đè to làm hỏng khuôn hình.
-   - PHẠT NẶNG (dưới 10 điểm) nếu dính watermark hoặc chữ bản quyền đè dày đặc.
+   - ĐÁNH GIÁ TỐT (22 - 30 điểm): Ảnh tư liệu rõ nét, tranh dân gian truyền thống giữ nguyên chất liệu mộc bản/giấy điệp, ảnh chụp di tích/hiện vật trong thực tế. (Chấp nhận bảng chú thích bảo tàng, dấu mộc cổ hoặc tem lưu trữ học thuật nhỏ).
+   - PHẠT NẶNG (dưới 10 điểm): Dính watermark đóng dấu thương mại lớn che kín chủ thể (Getty Images, Shutterstock, Alamy, iStock...).
 3. artisticFitScore (0 - 30 điểm):
-   - Bố cục điện ảnh, thẩm mỹ, tỉ lệ hài hòa (16:9 / tư liệu), ánh sáng và độ sắc nét cao.
+   - ĐÁNH GIÁ TỐT (22 - 30 điểm): Tranh dân gian truyền thống, ảnh chụp cổ vật bảo tàng, ảnh di tích kiến trúc đền đài có ánh sáng rõ ràng, bố cục cân đối, phù hợp đưa vào documentary video.
+   - LƯU Ý: Mỹ thuật dân gian (Đông Hồ, Hàng Trống) với nét vẽ ước lệ truyền thống là giá trị thẩm mỹ cao, TUYỆT ĐỐI KHÔNG đánh đồng với ảnh hoạt hình anime/chất lượng thấp.
 4. focalPoint ([x, y]):
    - Tọa độ số thực chuẩn hóa từ 0.0 đến 1.0 của chủ thể chính trong bức ảnh (mặc định [0.5, 0.4] với chân dung, [0.5, 0.5] với hiện vật/phong cảnh). TUYỆT ĐỐI KHÔNG dùng dạng phần trăm 0-100.
 

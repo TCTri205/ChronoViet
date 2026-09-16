@@ -18,8 +18,8 @@ import { ImageSearchProvider, searchWithProviderChain } from './providers/image-
 import { SerpApiImageSearchProvider } from './providers/serpapi-search.js';
 import { TavilyImageSearchProvider } from './providers/tavily-search.js';
 import { BraveImageSearchProvider } from './providers/brave-search.js';
-import { CuratedCatalogProvider, WikimediaSearchProvider } from './providers/wikimedia-search.js';
-
+import { WikimediaSearchProvider } from './providers/wikimedia-search.js';
+import { CuratedCatalogProvider } from './providers/curated-catalog.js';
 import { GallicaSearchProvider } from './providers/gallica-search.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
@@ -75,59 +75,56 @@ export async function executeImageSearchTool(
     ? Object.values(facetQueries).filter((q): q is string => Boolean(typeof q === 'string' && q.trim().length > 0))
     : [];
 
+  // Ordered query candidates: Primary VI -> English -> French -> Facets
   const rawQueries = Array.from(
     new Set([
-      englishQuery?.trim(),
       primaryQuery.trim(),
+      englishQuery?.trim(),
       frenchQuery?.trim(),
       ...facetList,
     ].filter((q): q is string => Boolean(q && q.length > 0)))
   );
 
-  // Group queries to execute in bounded parallel chunks
-  const chunkSize = 3;
-  for (let i = 0; i < rawQueries.length; i += chunkSize) {
+  // Execute queries in prioritized sequence with instant early-exit once candidate quota is met
+  for (const query of rawQueries) {
     if (candidates.length >= limit) break;
-    if (i > 0) {
-      await new Promise((r) => setTimeout(r, 60));
-    }
-    const chunk = rawQueries.slice(i, i + chunkSize);
 
-    const chunkResults = await Promise.allSettled(
-      chunk.map(async (query) => {
-        const queryWithNeg = negativeQuery ? `${query} ${negativeQuery}`.trim() : query;
-        return searchWithProviderChain(providers, queryWithNeg, limit, {
-          aspectRatio,
-          minResolution,
-        });
-      })
-    );
+    const queryWithNeg = negativeQuery ? `${query} ${negativeQuery}`.trim() : query;
+    const remainingNeeded = limit - candidates.length;
 
-    for (const res of chunkResults) {
-      if (res.status === 'fulfilled') {
-        for (const chainResult of res.value) {
-          for (const cand of chainResult.candidates) {
-            const normalizedUrl = cand.imageUrl.trim().toLowerCase();
-            if (seenUrls.has(normalizedUrl)) continue;
-            seenUrls.add(normalizedUrl);
+    try {
+      const chainResults = await searchWithProviderChain(providers, queryWithNeg, remainingNeeded, {
+        aspectRatio,
+        minResolution,
+      });
 
-            candidates.push({
-              ...cand,
-              candidateId: `cand_${sceneId}_${String(candidates.length + 1).padStart(2, '0')}`,
-            });
-            if (candidates.length >= limit) break;
-          }
+      for (const chainResult of chainResults) {
+        for (const cand of chainResult.candidates) {
+          const normalizedUrl = cand.imageUrl.trim().toLowerCase();
+          if (seenUrls.has(normalizedUrl)) continue;
+          seenUrls.add(normalizedUrl);
 
-          provenance.push({
-            provider: chainResult.provider,
-            count: chainResult.candidates.length,
-            latencyMs: chainResult.latencyMs,
+          candidates.push({
+            ...cand,
+            candidateId: `cand_${sceneId}_${String(candidates.length + 1).padStart(2, '0')}`,
           });
-
           if (candidates.length >= limit) break;
         }
+
+        provenance.push({
+          provider: chainResult.provider,
+          count: chainResult.candidates.length,
+          latencyMs: chainResult.latencyMs,
+        });
+
+        if (candidates.length >= limit) break;
       }
-      if (candidates.length >= limit) break;
+    } catch (err: any) {
+      log.debug('research.query_execution_error', `Query failed for scene ${sceneId}: "${query}"`, {
+        sceneId,
+        query,
+        error: err.message,
+      });
     }
   }
 
