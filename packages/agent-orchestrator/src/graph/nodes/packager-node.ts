@@ -10,6 +10,7 @@ import {
   VideoProjectSchema,
 } from '@chronoviet/shared-spec';
 import {
+  alignSpokenWordTimestamps,
   envConfig,
   saveProjectSchema,
 } from '@chronoviet/infra';
@@ -34,20 +35,19 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
 
     const sceneCaptions: CaptionWord[] = [];
     if (scene.wordTimestamps && scene.wordTimestamps.length > 0) {
-      for (const wt of scene.wordTimestamps) {
-        const localStartFrame = Math.round((wt.startMs / 1000) * fps);
-        const localEndFrame = Math.round((wt.endMs / 1000) * fps);
+      const aligned = alignSpokenWordTimestamps(scene.voiceoverText, scene.wordTimestamps, fps);
+      for (const cw of aligned) {
         const sceneCapWord: CaptionWord = {
-          word: wt.word,
-          startFrame: localStartFrame,
-          endFrame: localEndFrame,
+          word: cw.word,
+          startFrame: cw.startFrame,
+          endFrame: cw.endFrame,
         };
         sceneCaptions.push(sceneCapWord);
 
         const globalCapWord: CaptionWord = {
-          word: wt.word,
-          startFrame: currentGlobalFrame + localStartFrame,
-          endFrame: currentGlobalFrame + localEndFrame,
+          word: cw.word,
+          startFrame: currentGlobalFrame + cw.startFrame,
+          endFrame: currentGlobalFrame + cw.endFrame,
         };
         allCaptions.push(globalCapWord);
       }

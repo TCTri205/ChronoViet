@@ -289,8 +289,8 @@ export async function inspectSceneVisuals(
   const inspected: VisualCandidate[] = [...rejectedByLicense];
   let selectedCandidate: VisualCandidate | undefined = undefined;
 
-  // We evaluate up to 4 candidates lazily
-  const candidatesToTry = whitelistedCandidates.slice(0, 4);
+  // We evaluate up to 3 candidates lazily
+  const candidatesToTry = whitelistedCandidates.slice(0, 3);
 
   for (let idx = 0; idx < candidatesToTry.length; idx++) {
     const cand = candidatesToTry[idx];

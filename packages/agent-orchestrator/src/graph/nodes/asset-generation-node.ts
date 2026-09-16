@@ -4,15 +4,18 @@
  * (Keyword Extraction -> Online Research -> VLM Inspection) concurrently via Promise.all.
  */
 
-import { SceneGeneration } from '@chronoviet/shared-spec';
+import { SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
 import {
   createLogger,
+  envConfig,
+  getAdaptiveConcurrency,
   orchestratorAssetGenerationDurationSeconds,
 } from '@chronoviet/infra';
 import {
   ChronoGraphState,
   ChronoGraphUpdate,
   getNodeLogger,
+  ResearchSceneResult,
   TelemetryAuditEntry,
 } from '../state.js';
 import { ttsSynthesisNode } from './tts-node.js';
@@ -56,38 +59,112 @@ export async function assetGenerationForkJoinNode(
     }
   })();
 
-  // 2. Visual Branch: Keyword Extraction -> Online Image Research -> VLM Inspection
+  // 2. Visual Branch: Keyword Extraction -> Pipelined (Online Research -> VLM Inspection)
   const visualBranchPromise = (async () => {
     const branchStart = performance.now();
     try {
-      // Step A: Keyword Planning & Extraction
+      // Step A: Global 1-Pass Keyword Planning & Extraction
       const keywordResult = await keywordNode(state);
+      const scenesWithKeywords = keywordResult.scenes || state.scenes;
       const stateAfterKeywords: ChronoGraphState = {
         ...state,
         ...keywordResult,
-        scenes: keywordResult.scenes || state.scenes,
+        scenes: scenesWithKeywords,
       };
 
-      // Step B: Online Image Search & Candidate Crawling
-      const researchResult = await researchNode(stateAfterKeywords);
-      const stateAfterResearch: ChronoGraphState = {
-        ...stateAfterKeywords,
-        ...researchResult,
-        researchResults: researchResult.researchResults || {},
-      };
+      // Step B: Pipelined Research & VLM Inspection (Streaming scenes without barrier block)
+      const candidateLimit = envConfig.RESEARCH_CANDIDATES_PER_SCENE || 3;
+      const vlmBatchSize = getAdaptiveConcurrency('VLM');
+      const aggregatedResearchResults: Record<string, ResearchSceneResult> = { ...(state.researchResults || {}) };
+      const inspectedScenes: SceneGeneration[] = [];
 
-      // Step C: VLM 3+3 Inspection & Fallback Gate
-      const vlmResult = await vlmInspectionNode(stateAfterResearch);
+      const { resolveImageCandidates } = await import('../../research/index.js');
+      const { inspectSceneVisuals } = await import('@chronoviet/vlm-inspector');
+
+      for (let i = 0; i < scenesWithKeywords.length; i += vlmBatchSize) {
+        const batch = scenesWithKeywords.slice(i, i + vlmBatchSize);
+        const batchResults = await Promise.all(
+          batch.map(async (scene) => {
+            if (scene.contentType !== 'IMAGE') {
+              return scene;
+            }
+
+            // 1. Check or resolve candidates for this scene
+            let sceneResearch = aggregatedResearchResults[scene.sceneId];
+            if (!sceneResearch || sceneResearch.candidates.length === 0) {
+              const sceneLimit = scene.searchParams?.limit || candidateLimit;
+              const searchInput = scene.searchParams
+                ? {
+                    sceneId: scene.sceneId,
+                    primaryQuery: scene.searchParams.primaryQuery,
+                    englishQuery: scene.searchParams.englishQuery,
+                    frenchQuery: scene.searchParams.frenchQuery,
+                    negativeQuery: scene.searchParams.negativeQuery,
+                    facetQueries: scene.searchParams.facetQueries,
+                    visualType: (scene.searchParams.visualType as any) || 'GENERAL_HISTORICAL',
+                    historicalPeriod: scene.searchParams.historicalPeriod,
+                    minResolution: 'HD' as const,
+                    limit: sceneLimit,
+                  }
+                : {
+                    sceneId: scene.sceneId,
+                    primaryQuery: scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt,
+                    minResolution: 'HD' as const,
+                    limit: sceneLimit,
+                  };
+
+              const keywords = scene.searchParams?.primaryQuery || (scene.searchKeywords.length > 0 ? scene.searchKeywords.join(' ') : state.userPrompt);
+              try {
+                const { candidates, provenance } = await resolveImageCandidates(searchInput as any, scene.sceneId, sceneLimit);
+                sceneResearch = {
+                  sceneId: scene.sceneId,
+                  keywords,
+                  candidates: candidates as VisualCandidate[],
+                  provenance,
+                  resolvedAt: new Date().toISOString(),
+                };
+              } catch (resErr: any) {
+                sceneResearch = {
+                  sceneId: scene.sceneId,
+                  keywords,
+                  candidates: [],
+                  provenance: [],
+                  resolvedAt: new Date().toISOString(),
+                };
+              }
+              aggregatedResearchResults[scene.sceneId] = sceneResearch;
+            }
+
+            // 2. Immediately inspect candidates with VLM for this scene without waiting for other scenes
+            try {
+              const inspectRes = await inspectSceneVisuals(state.projectId, scene, sceneResearch.candidates, {
+                customBaseDir: state.customBaseDir,
+              });
+              return inspectRes.updatedScene;
+            } catch (vlmErr: any) {
+              nodeLog.warn('orchestrator.vlm_scene_fallback', `VLM inspection fallback for scene ${scene.sceneId}: ${vlmErr.message}`);
+              return {
+                ...scene,
+                contentType: 'PURE_CODE' as const,
+                usePureCodeFallback: true,
+                selectedAsset: undefined,
+              };
+            }
+          })
+        );
+        inspectedScenes.push(...batchResults);
+      }
+
       const latencyMs = Math.round(performance.now() - branchStart);
       nodeLog.info(
         'orchestrator.visual_branch_completed',
         `Visual Asset branch completed in ${latencyMs}ms`,
-        { projectId: state.projectId, latencyMs, scenesAudited: vlmResult.scenes?.length || 0 }
+        { projectId: state.projectId, latencyMs, scenesAudited: inspectedScenes.length }
       );
       return {
         keywordResult,
-        researchResult,
-        vlmResult,
+        researchResult: { researchResults: aggregatedResearchResults },
+        vlmResult: { scenes: inspectedScenes },
       };
     } catch (err: any) {
       nodeLog.warn(

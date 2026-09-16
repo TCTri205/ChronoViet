@@ -9,6 +9,7 @@ import {
 } from '@chronoviet/shared-spec';
 import {
   createLogger,
+  envConfig,
   getImageSearchProviderChain,
   ImageSearchToolInput,
   ImageSearchToolInputSchema,
@@ -85,12 +86,17 @@ export async function executeImageSearchTool(
     ].filter((q): q is string => Boolean(q && q.length > 0)))
   );
 
+  // Target limit from caller or envConfig (SSOT configurable candidate limit)
+  const targetLimit = Math.max(1, limit || envConfig.RESEARCH_CANDIDATES_PER_SCENE || 3);
+
   // Execute queries in prioritized sequence with instant early-exit once candidate quota is met
-  for (const query of rawQueries) {
-    if (candidates.length >= limit) break;
+  for (let qIdx = 0; qIdx < rawQueries.length; qIdx++) {
+    const query = rawQueries[qIdx];
+    // Early exit: if we already have sufficient candidates, skip downstream fallback queries
+    if (candidates.length >= targetLimit) break;
 
     const queryWithNeg = negativeQuery ? `${query} ${negativeQuery}`.trim() : query;
-    const remainingNeeded = limit - candidates.length;
+    const remainingNeeded = targetLimit - candidates.length;
 
     try {
       const chainResults = await searchWithProviderChain(providers, queryWithNeg, remainingNeeded, {
@@ -108,7 +114,7 @@ export async function executeImageSearchTool(
             ...cand,
             candidateId: `cand_${sceneId}_${String(candidates.length + 1).padStart(2, '0')}`,
           });
-          if (candidates.length >= limit) break;
+          if (candidates.length >= targetLimit) break;
         }
 
         provenance.push({
@@ -117,7 +123,7 @@ export async function executeImageSearchTool(
           latencyMs: chainResult.latencyMs,
         });
 
-        if (candidates.length >= limit) break;
+        if (candidates.length >= targetLimit) break;
       }
     } catch (err: any) {
       log.debug('research.query_execution_error', `Query failed for scene ${sceneId}: "${query}"`, {

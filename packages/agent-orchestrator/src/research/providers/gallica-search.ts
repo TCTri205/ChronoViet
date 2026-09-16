@@ -4,7 +4,7 @@
  */
 
 import { VisualCandidate } from '@chronoviet/shared-spec';
-import { createLogger } from '@chronoviet/infra';
+import { createLogger, ProviderRateLimiter } from '@chronoviet/infra';
 import { ImageSearchProvider, ImageSearchProviderOptions } from './image-search-provider.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
@@ -35,6 +35,9 @@ export class GallicaSearchProvider implements ImageSearchProvider {
 
     const encodedQuery = encodeURIComponent(cleanKeywords);
     const sruUrl = `https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query=(gallica%20all%20${encodedQuery})%20and%20(dc.type%20all%20%22image%22)&maximumRecords=${Math.min(limit * 2, 10)}&startRecord=1`;
+
+    // Apply proactive rate limiter (max 2 RPS for Gallica BnF)
+    await ProviderRateLimiter.acquireSlot('gallica');
 
     const controller = new AbortController();
     const timeoutMs = 8000;

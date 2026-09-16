@@ -368,6 +368,38 @@ export class ResourceSentinel {
   }
 
   /**
+   * Determine hardware-safe optimal render concurrency dynamically.
+   * Throttles concurrency based on system memory pressure and free RAM to prevent Chromium OOM crashes.
+   */
+  public static async getOptimalRenderConcurrency(requestedConcurrency?: number): Promise<number> {
+    const memory = await this.getMemoryStatus();
+    const configuredConcurrency = requestedConcurrency || envConfig.REMOTION_CONCURRENCY || 2;
+
+    // Severe memory pressure or very low free RAM (< 2.5 GB): throttle to 1
+    if (memory.isUnderPressure || memory.freeMemoryMb < 2560) {
+      log.warn(
+        'resource_sentinel.concurrency_throttled_critical',
+        `System memory under pressure (${memory.freeMemoryMb}MB free, ${memory.usedMemoryPercent}% used). Throttling render concurrency to 1.`
+      );
+      return 1;
+    }
+
+    // Moderate memory (< 5 GB free): throttle to max 2
+    if (memory.freeMemoryMb < 5120) {
+      const throttled = Math.min(configuredConcurrency, 2);
+      if (throttled < configuredConcurrency) {
+        log.info(
+          'resource_sentinel.concurrency_throttled_moderate',
+          `Moderate system memory (${memory.freeMemoryMb}MB free). Clamping render concurrency to ${throttled}.`
+        );
+      }
+      return throttled;
+    }
+
+    return Math.max(1, configuredConcurrency);
+  }
+
+  /**
    * Evaluate whether AI requests should be offloaded directly to Cloud API
    * based on active Render Mutex or Host RAM pressure.
    */

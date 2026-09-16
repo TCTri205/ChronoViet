@@ -13,6 +13,7 @@ import {
   isAllowedImageDomain,
   executeWithKeyRotation,
   hasAvailableApiKeys,
+  ProviderRateLimiter,
 } from '@chronoviet/infra';
 import { ImageSearchProvider, ImageSearchProviderOptions } from './image-search-provider.js';
 
@@ -118,6 +119,7 @@ export class BraveImageSearchProvider implements ImageSearchProvider {
           log.warn('research.brave_no_key', 'BRAVE_API_KEY is empty; skipping Brave provider');
           return [];
         }
+        await ProviderRateLimiter.acquireSlot('brave');
         return await runSearchWithKey(this.explicitApiKey);
       }
 

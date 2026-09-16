@@ -1009,6 +1009,7 @@ export const SceneGenerationSchema = z.object({
   sceneIndex: z.number().int().min(0),
   chapterIndex: z.number().int().min(0).default(0),
   voiceoverText: z.string().min(1),
+  normalizedVoiceoverText: z.string().optional(),
   layoutMode: LayoutModeSchema,
   contentType: z.enum(['IMAGE', 'PURE_CODE']).default('IMAGE'),
   targetDurationSeconds: z.number().positive(),

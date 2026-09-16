@@ -35,6 +35,12 @@ importers:
       '@chronoviet/vlm-inspector':
         specifier: workspace:*
         version: link:../../packages/vlm-inspector
+      '@remotion/bundler':
+        specifier: 4.0.507
+        version: 4.0.507(@swc/helpers@0.5.5)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@remotion/renderer':
+        specifier: 4.0.507
+        version: 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       bullmq:
         specifier: ^5.1.0
         version: 5.81.3
@@ -295,7 +301,7 @@ importers:
         version: link:../shared-spec
       '@remotion/cli':
         specifier: 4.0.507
-        version: 4.0.507(@swc/helpers@0.5.5)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        version: 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       '@remotion/google-fonts':
         specifier: 4.0.507
         version: 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4895,17 +4901,51 @@ snapshots:
       - webpack-cli
       - webpack-hot-middleware
 
+  '@remotion/bundler@4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@remotion/media-parser': 4.0.507
+      '@remotion/studio': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@remotion/studio-shared': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@remotion/timeline-utils': 4.0.507
+      '@rspack/core': 1.7.11(@swc/helpers@0.5.5)
+      '@rspack/plugin-react-refresh': 1.6.1(react-refresh@0.18.0)
+      css-loader: 7.1.4(@rspack/core@1.7.11)(webpack@5.105.0(esbuild@0.28.1))
+      esbuild: 0.28.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      react-refresh: 0.18.0
+      remotion: 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      style-loader: 4.0.0(webpack@5.105.0(esbuild@0.28.1))
+      webpack: 5.105.0(esbuild@0.28.1)
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/helpers'
+      - '@swc/html'
+      - bufferutil
+      - clean-css
+      - cssnano
+      - csso
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+      - webpack-hot-middleware
+
   '@remotion/captions@4.0.507': {}
 
-  '@remotion/cli@4.0.507(@swc/helpers@0.5.5)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@remotion/cli@4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
       '@babel/parser': 7.24.1
-      '@remotion/bundler': 4.0.507(@swc/helpers@0.5.5)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@remotion/bundler': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remotion/media-utils': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remotion/player': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remotion/renderer': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remotion/studio': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@remotion/studio-server': 4.0.507(@swc/helpers@0.5.5)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+      '@remotion/studio-server': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       '@remotion/studio-shared': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       dotenv: 17.3.1
       minimist: 1.2.6
@@ -5026,11 +5066,11 @@ snapshots:
 
   '@remotion/studio-protocol@4.0.507': {}
 
-  '@remotion/studio-server@4.0.507(@swc/helpers@0.5.5)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@remotion/studio-server@4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
       '@babel/parser': 7.24.1
       '@babel/types': 7.24.0
-      '@remotion/bundler': 4.0.507(@swc/helpers@0.5.5)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@remotion/bundler': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remotion/renderer': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remotion/studio-codemods': 4.0.507(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remotion/studio-protocol': 4.0.507
@@ -5782,6 +5822,20 @@ snapshots:
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.5)
       webpack: 5.105.0(esbuild@0.28.1)(postcss@8.5.26)
+
+  css-loader@7.1.4(@rspack/core@1.7.11)(webpack@5.105.0(esbuild@0.28.1)):
+    dependencies:
+      icss-utils: 5.1.0(postcss@8.5.26)
+      postcss: 8.5.26
+      postcss-modules-extract-imports: 3.1.0(postcss@8.5.26)
+      postcss-modules-local-by-default: 4.2.0(postcss@8.5.26)
+      postcss-modules-scope: 3.2.1(postcss@8.5.26)
+      postcss-modules-values: 4.0.0(postcss@8.5.26)
+      postcss-value-parser: 4.2.0
+      semver: 7.8.5
+    optionalDependencies:
+      '@rspack/core': 1.7.11(@swc/helpers@0.5.5)
+      webpack: 5.105.0(esbuild@0.28.1)
 
   css-select@5.2.2:
     dependencies:
@@ -7115,6 +7169,10 @@ snapshots:
     dependencies:
       webpack: 5.105.0(esbuild@0.28.1)(postcss@8.5.26)
 
+  style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.1)):
+    dependencies:
+      webpack: 5.105.0(esbuild@0.28.1)
+
   style-to-js@1.1.21:
     dependencies:
       style-to-object: 1.0.14
@@ -7200,6 +7258,16 @@ snapshots:
     optionalDependencies:
       esbuild: 0.28.1
       postcss: 8.5.26
+
+  terser-webpack-plugin@5.6.1(esbuild@0.28.1)(webpack@5.105.0(esbuild@0.28.1)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.3.3
+      terser: 5.49.2
+      webpack: 5.105.0(esbuild@0.28.1)
+    optionalDependencies:
+      esbuild: 0.28.1
 
   terser@5.49.2:
     dependencies:
@@ -7396,6 +7464,47 @@ snapshots:
       graceful-fs: 4.2.11
 
   webpack-sources@3.5.1: {}
+
+  webpack@5.105.0(esbuild@0.28.1):
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.18.0
+      acorn-import-phases: 1.0.4(acorn@8.18.0)
+      browserslist: 4.28.8
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.24.5
+      es-module-lexer: 2.3.1
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.2
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.3
+      terser-webpack-plugin: 5.6.1(esbuild@0.28.1)(webpack@5.105.0(esbuild@0.28.1))
+      watchpack: 2.5.2
+      webpack-sources: 3.5.1
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
 
   webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.26):
     dependencies:

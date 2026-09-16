@@ -157,3 +157,124 @@ export function normalizeVietnameseTextForSpeech(rawText: string): string {
 
   return text;
 }
+
+export interface WordTimestampLike {
+  word: string;
+  startMs: number;
+  endMs: number;
+}
+
+/**
+ * Align Spoken Word Timestamps with Original Raw Text
+ * 
+ * Maps multi-word phonetic speech expansions (e.g. "1789" -> "một nghìn bảy trăm tám mươi chín")
+ * back to the single original text token with an encompassing [startFrame, endFrame] span.
+ * Guarantees that on-screen subtitles display canonical historical text (e.g. "1789", "thế kỷ XIII")
+ * while karaoke highlighting stays 100% in sync with audio speech.
+ */
+export function alignSpokenWordTimestamps(
+  rawText: string,
+  spokenTimestamps: WordTimestampLike[],
+  fps: number = 30
+): { word: string; startFrame: number; endFrame: number }[] {
+  if (!spokenTimestamps || spokenTimestamps.length === 0) {
+    return [];
+  }
+  if (!rawText || !rawText.trim()) {
+    return spokenTimestamps.map((st) => ({
+      word: st.word,
+      startFrame: Math.round((st.startMs / 1000) * fps),
+      endFrame: Math.max(Math.round((st.startMs / 1000) * fps) + 1, Math.round((st.endMs / 1000) * fps)),
+    }));
+  }
+
+  // 1. Tokenize rawText into words, preserving original display case & numbers
+  const rawTokens = rawText.trim().split(/\s+/).filter(Boolean);
+  if (rawTokens.length === 0) return [];
+
+  // If rawTokens count matches spokenTimestamps count directly, 1-to-1 map
+  if (rawTokens.length === spokenTimestamps.length) {
+    return rawTokens.map((tok, i) => ({
+      word: tok,
+      startFrame: Math.round((spokenTimestamps[i].startMs / 1000) * fps),
+      endFrame: Math.max(
+        Math.round((spokenTimestamps[i].startMs / 1000) * fps) + 1,
+        Math.round((spokenTimestamps[i].endMs / 1000) * fps)
+      ),
+    }));
+  }
+
+  // 2. Build expansion map for each raw token
+  const expandedCounts: number[] = [];
+  for (let i = 0; i < rawTokens.length; i++) {
+    const tok = rawTokens[i];
+    const prevTokens = rawTokens.slice(Math.max(0, i - 2), i);
+    const contextPrefix = prevTokens.length > 0 ? `${prevTokens.join(' ')} ` : '';
+    const normSingle = normalizeVietnameseTextForSpeech(tok);
+    const normCombined = normalizeVietnameseTextForSpeech(contextPrefix + tok);
+
+    let count = 1;
+    if (normSingle !== tok) {
+      const parts = normSingle.split(/\s+/).filter(Boolean);
+      count = Math.max(1, parts.length);
+    } else if (contextPrefix && normCombined !== contextPrefix + tok) {
+      const partsAll = normCombined.split(/\s+/).filter(Boolean);
+      const normPrefix = normalizeVietnameseTextForSpeech(contextPrefix.trim());
+      const partsPrefix = normPrefix ? normPrefix.split(/\s+/).filter(Boolean) : [];
+      count = Math.max(1, partsAll.length - partsPrefix.length);
+    }
+    expandedCounts.push(count);
+  }
+
+  const totalExpanded = expandedCounts.reduce((sum, c) => sum + c, 0);
+  const result: { word: string; startFrame: number; endFrame: number }[] = [];
+  let spokenIdx = 0;
+  let cumulativeExp = 0;
+
+  for (let i = 0; i < rawTokens.length; i++) {
+    const rawWord = rawTokens[i];
+    const expCount = expandedCounts[i];
+    const isLastToken = i === rawTokens.length - 1;
+
+    if (spokenIdx >= spokenTimestamps.length) {
+      const last = result[result.length - 1];
+      const start = last ? last.endFrame : 0;
+      result.push({
+        word: rawWord,
+        startFrame: start,
+        endFrame: start + Math.round(0.3 * fps),
+      });
+      continue;
+    }
+
+    cumulativeExp += expCount;
+    let targetEndSpokenIdx: number;
+
+    if (isLastToken) {
+      targetEndSpokenIdx = spokenTimestamps.length - 1;
+    } else if (totalExpanded === spokenTimestamps.length) {
+      targetEndSpokenIdx = spokenIdx + expCount - 1;
+    } else {
+      const targetSpokenCount = Math.round((cumulativeExp / Math.max(1, totalExpanded)) * spokenTimestamps.length);
+      targetEndSpokenIdx = Math.max(spokenIdx, Math.min(spokenTimestamps.length - 1, targetSpokenCount - 1));
+    }
+
+    const endSpokenIdx = Math.max(spokenIdx, Math.min(spokenTimestamps.length - 1, targetEndSpokenIdx));
+    const startMs = spokenTimestamps[spokenIdx].startMs;
+    const endMs = spokenTimestamps[endSpokenIdx].endMs;
+
+    result.push({
+      word: rawWord,
+      startFrame: Math.round((startMs / 1000) * fps),
+      endFrame: Math.max(
+        Math.round((startMs / 1000) * fps) + 1,
+        Math.round((endMs / 1000) * fps)
+      ),
+    });
+
+    spokenIdx = endSpokenIdx + 1;
+  }
+
+  return result;
+}
+

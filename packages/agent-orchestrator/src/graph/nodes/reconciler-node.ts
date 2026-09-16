@@ -36,7 +36,7 @@ export async function durationReconciliationNode(state: ChronoGraphState): Promi
     for (let i = 0; i < state.scenes.length; i++) {
       const scene = state.scenes[i];
       const audioSec = scene.audioDurationSeconds || 0;
-      const minRequiredSec = Math.max(3, Math.ceil(audioSec));
+      const minRequiredSec = Math.max(3, Math.round(audioSec * 10) / 10);
       let sceneSec = Math.max(minRequiredSec, Math.round(((audioSec > 0 ? audioSec : (scene.targetDurationSeconds || 5)) + 0.2) * 10) / 10);
 
       // Add 1.5s outro card to the final scene
@@ -105,7 +105,8 @@ export async function durationReconciliationNode(state: ChronoGraphState): Promi
     }
   }
 
-  const referenceTargetSec = isSevereDeviation ? (totalAudioSec + 1.5) : targetTotalSec;
+  const expectedModeBTotal = totalAudioSec + (state.scenes.length * 0.2) + 1.5;
+  const referenceTargetSec = isSevereDeviation ? expectedModeBTotal : targetTotalSec;
   const finalPacingError = Math.abs(reconciledTotalSec - referenceTargetSec) / Math.max(1, referenceTargetSec);
   const pacingErrorPercentage = Math.round(finalPacingError * 1000) / 10; // e.g. 0.8%
 

@@ -55,6 +55,38 @@ export function getRamDiskAssetCacheDir(): string {
   return fallbackPath;
 }
 
+let cachedServeUrl: string | null = null;
+let bundlePromise: Promise<string> | null = null;
+
+export async function getOrCreateRemotionBundle(entryPoint: string): Promise<string> {
+  if (cachedServeUrl && fs.existsSync(cachedServeUrl)) {
+    return cachedServeUrl;
+  }
+  if (bundlePromise) {
+    return bundlePromise;
+  }
+
+  bundlePromise = (async () => {
+    try {
+      const { bundle } = await import('@remotion/bundler');
+      log.info('worker.remotion_bundling', `Pre-bundling Remotion composition from ${entryPoint}...`);
+      const serveUrl = await bundle({
+        entryPoint,
+        webpackOverride: (config) => config,
+      });
+      cachedServeUrl = serveUrl;
+      log.info('worker.remotion_bundled', `Remotion composition bundled successfully at ${serveUrl}`);
+      return serveUrl;
+    } catch (err: any) {
+      bundlePromise = null;
+      log.warn('worker.remotion_bundle_failed', `Failed to bundle with @remotion/bundler (${err.message}). Fallback to CLI execution.`);
+      throw err;
+    }
+  })();
+
+  return bundlePromise;
+}
+
 export type RenderJobData = RenderJobPayload;
 
 export type RenderJobResult = BaseRenderJobResult & {
@@ -139,7 +171,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       saveProjectSchema(projectId, projectSchema);
     }
 
-    // 3. Real Remotion Render via CLI / Renderer Engine
+    // 3. Render Execution via Programmatic @remotion/renderer or Fallback to CLI
     const schemaPath = path.join(paths.rootDir, 'project_schema.json');
     const monorepoRoot = findMonorepoRoot();
     const remotionPkgDir = path.resolve(monorepoRoot, 'packages/remotion-engine');
@@ -157,103 +189,158 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       throw new Error(errorMsg);
     }
 
-  const defaultConcurrency = envConfig.REMOTION_CONCURRENCY || 2;
-  const renderConcurrency = String(
-    process.env.REMOTION_CONCURRENCY ||
-    process.env.RENDER_CONCURRENCY ||
-    envConfig.RENDER_CONCURRENCY ||
-    defaultConcurrency
-  );
+    const optimalConcurrency = await ResourceSentinel.getOptimalRenderConcurrency(
+      Number(envConfig.REMOTION_CONCURRENCY || envConfig.RENDER_CONCURRENCY || 2)
+    );
+    const renderConcurrency = String(optimalConcurrency);
 
-  workerLog.info('worker.remotion_rendering', `Invoking Remotion engine for ${projectId} with concurrency=${renderConcurrency}`, {
-    remotionEntry,
-    schemaPath,
-    outputPath,
-    renderConcurrency,
-  });
-
-  const { spawn } = await import('child_process');
-  let lastProgressPublishTime = 0;
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const renderProcess = spawn(
-        'npx',
-        [
-          'remotion',
-          'render',
-          remotionEntry,
-          'ChronoVideo',
-          outputPath,
-          `--props=${schemaPath}`,
-          `--concurrency=${renderConcurrency}`,
-          '--gl=angle',
-          '--overwrite',
-        ],
-        {
-          cwd: remotionPkgDir,
-          stdio: 'pipe',
-        }
-      );
-
-      let stderrOutput = '';
-
-      renderProcess.stdout?.on('data', (chunk) => {
-        const text = chunk.toString();
-        const lines = text.split('\n');
-        for (const line of lines) {
-          const parsed = parseRemotionStdoutLine(line, totalFrames);
-          if (parsed) {
-            const now = Date.now();
-            if (now - lastProgressPublishTime >= 800 || parsed.progressPercent >= 100) {
-              lastProgressPublishTime = now;
-              job.updateProgress(Math.round(parsed.progressPercent)).catch(() => {});
-              pubsub.publishRenderEvent({
-                projectId,
-                type: 'RENDER_PROGRESS',
-                status: 'RENDERING',
-                progressPercent: parsed.progressPercent,
-                currentFrame: parsed.currentFrame ?? Math.round((parsed.progressPercent / 100) * totalFrames),
-                totalFrames: totalFrames || 100,
-                estimatedRemainingSec: parsed.estimatedRemainingSec ?? 0,
-                timestamp: new Date().toISOString(),
-              }).catch(() => {});
-            }
-          }
-        }
-      });
-
-      renderProcess.stderr?.on('data', (chunk) => {
-        stderrOutput += chunk.toString();
-      });
-
-      renderProcess.on('error', (err) => {
-        reject(err);
-      });
-
-      renderProcess.on('close', (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`Remotion CLI exited with code ${code}: ${stderrOutput}`));
-        }
-      });
+    workerLog.info('worker.remotion_rendering', `Rendering Remotion engine for ${projectId} with optimalConcurrency=${optimalConcurrency}`, {
+      remotionEntry,
+      schemaPath,
+      outputPath,
+      optimalConcurrency,
     });
-    workerLog.info('worker.remotion_rendered_mp4', `Successfully rendered MP4 with Remotion Engine for ${projectId}`);
-  } catch (renderErr: any) {
-    const durationSec = (Date.now() - startTime) / 1000;
-    renderDurationSeconds.observe({ status: 'failed' }, durationSec);
-    const errorOutput = renderErr.message || String(renderErr);
-    workerLog.error('worker.remotion_cli_failed', `Remotion CLI execution failed for ${projectId}: ${errorOutput}`);
-    await pubsub.publishRenderEvent({
-      projectId,
-      type: 'RENDER_FAILED',
-      status: 'FAILED',
-      errorMessage: errorOutput,
-      timestamp: new Date().toISOString(),
-    }).catch(() => {});
-    throw new Error(`Remotion render failed for ${projectId}: ${errorOutput}`);
-  }
+
+    let renderedSuccessfully = false;
+    let lastProgressPublishTime = 0;
+
+    // 3.1 Attempt Programmatic @remotion/renderer (Zero CLI process overhead)
+    try {
+      const serveUrl = await getOrCreateRemotionBundle(remotionEntry);
+      const { renderMedia, selectComposition } = await import('@remotion/renderer');
+
+      const composition = await selectComposition({
+        serveUrl,
+        id: 'ChronoVideo',
+        inputProps: projectSchema,
+      });
+
+      workerLog.info('worker.remotion_programmatic_start', `Starting programmatic renderMedia with duration=${composition.durationInFrames} frames`);
+
+      await renderMedia({
+        composition,
+        serveUrl,
+        codec: 'h264',
+        outputLocation: outputPath,
+        inputProps: projectSchema,
+        concurrency: optimalConcurrency,
+        chromiumOptions: {
+          gl: process.platform === 'darwin' ? 'angle' : undefined,
+        },
+        overwrite: true,
+        onProgress: ({ renderedFrames, progress }: { renderedFrames: number; progress: number }) => {
+          const now = Date.now();
+          const percent = Math.round(progress * 100);
+          if (now - lastProgressPublishTime >= 800 || percent >= 100) {
+            lastProgressPublishTime = now;
+            job.updateProgress(percent).catch(() => {});
+            pubsub.publishRenderEvent({
+              projectId,
+              type: 'RENDER_PROGRESS',
+              status: 'RENDERING',
+              progressPercent: percent,
+              currentFrame: renderedFrames,
+              totalFrames: composition.durationInFrames || totalFrames || 100,
+              estimatedRemainingSec: 0,
+              timestamp: new Date().toISOString(),
+            }).catch(() => {});
+          }
+        },
+      });
+
+      renderedSuccessfully = true;
+      workerLog.info('worker.remotion_rendered_mp4_programmatic', `Successfully rendered MP4 with @remotion/renderer for ${projectId}`);
+    } catch (progErr: any) {
+      workerLog.warn('worker.remotion_programmatic_fallback', `Programmatic renderMedia fallback (${progErr.message}). Invoking CLI spawn render.`, {
+        error: progErr.message,
+      });
+    }
+
+    // 3.2 Robust CLI spawn fallback if programmatic render was unsuccessful
+    if (!renderedSuccessfully) {
+      const { spawn } = await import('child_process');
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const cliArgs = [
+            'remotion',
+            'render',
+            remotionEntry,
+            'ChronoVideo',
+            outputPath,
+            `--props=${schemaPath}`,
+            `--concurrency=${renderConcurrency}`,
+            ...(process.platform === 'darwin' ? ['--gl=angle'] : []),
+            '--overwrite',
+          ];
+          const renderProcess = spawn(
+            'npx',
+            cliArgs,
+            {
+              cwd: remotionPkgDir,
+              stdio: 'pipe',
+            }
+          );
+
+          let stderrOutput = '';
+
+          renderProcess.stdout?.on('data', (chunk) => {
+            const text = chunk.toString();
+            const lines = text.split('\n');
+            for (const line of lines) {
+              const parsed = parseRemotionStdoutLine(line, totalFrames);
+              if (parsed) {
+                const now = Date.now();
+                if (now - lastProgressPublishTime >= 800 || parsed.progressPercent >= 100) {
+                  lastProgressPublishTime = now;
+                  job.updateProgress(Math.round(parsed.progressPercent)).catch(() => {});
+                  pubsub.publishRenderEvent({
+                    projectId,
+                    type: 'RENDER_PROGRESS',
+                    status: 'RENDERING',
+                    progressPercent: parsed.progressPercent,
+                    currentFrame: parsed.currentFrame ?? Math.round((parsed.progressPercent / 100) * totalFrames),
+                    totalFrames: totalFrames || 100,
+                    estimatedRemainingSec: parsed.estimatedRemainingSec ?? 0,
+                    timestamp: new Date().toISOString(),
+                  }).catch(() => {});
+                }
+              }
+            }
+          });
+
+          renderProcess.stderr?.on('data', (chunk) => {
+            stderrOutput += chunk.toString();
+          });
+
+          renderProcess.on('error', (err) => {
+            reject(err);
+          });
+
+          renderProcess.on('close', (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(`Remotion CLI exited with code ${code}: ${stderrOutput}`));
+            }
+          });
+        });
+        renderedSuccessfully = true;
+        workerLog.info('worker.remotion_rendered_mp4_cli', `Successfully rendered MP4 with Remotion CLI for ${projectId}`);
+      } catch (renderErr: any) {
+        const durationSec = (Date.now() - startTime) / 1000;
+        renderDurationSeconds.observe({ status: 'failed' }, durationSec);
+        const errorOutput = renderErr.message || String(renderErr);
+        workerLog.error('worker.remotion_cli_failed', `Remotion CLI execution failed for ${projectId}: ${errorOutput}`);
+        await pubsub.publishRenderEvent({
+          projectId,
+          type: 'RENDER_FAILED',
+          status: 'FAILED',
+          errorMessage: errorOutput,
+          timestamp: new Date().toISOString(),
+        }).catch(() => {});
+        throw new Error(`Remotion render failed for ${projectId}: ${errorOutput}`);
+      }
+    }
 
   if (!fs.existsSync(outputPath)) {
     const durationSec = (Date.now() - startTime) / 1000;
@@ -336,7 +423,7 @@ export function startRenderWorker(): Worker<RenderJobData, RenderJobResult> {
     }
   );
 
-  worker.on('completed', (job) => {
+  worker.on('completed', async (job) => {
     totalCompletedRenderJobs++;
     log.info('worker.render_job_completed', `Render job ${job.id} completed for project ${job.data.projectId} (batch: ${totalCompletedRenderJobs}/${MAX_JOBS_BEFORE_RECYCLE})`);
     if (totalCompletedRenderJobs >= MAX_JOBS_BEFORE_RECYCLE) {
@@ -344,6 +431,22 @@ export function startRenderWorker(): Worker<RenderJobData, RenderJobResult> {
       totalCompletedRenderJobs = 0;
       if (global.gc) {
         try { global.gc(); } catch {}
+      }
+
+      // In production daemon mode, trigger graceful process exit to allow process supervisor (Docker/PM2) to respawn a clean process
+      const isTestEnv = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST);
+      const enableAutoExit = process.env.ENABLE_WORKER_AUTO_EXIT === 'true' || (!isTestEnv && process.env.ENABLE_WORKER_AUTO_EXIT !== 'false');
+      if (enableAutoExit && !isTestEnv) {
+        log.info('worker.graceful_exit_initiated', 'Closing worker and waiting for all active jobs to finish before restart...');
+        try {
+          // Close worker cleanly: stops accepting new jobs and waits for active jobs to complete
+          await worker.close();
+          log.info('worker.graceful_exit_completed', 'Render worker closed cleanly. Exiting process for supervisor restart.');
+          process.exit(0);
+        } catch (exitErr: any) {
+          log.error('worker.graceful_exit_error', `Error during graceful worker close: ${exitErr.message}`);
+          process.exit(1);
+        }
       }
     }
   });

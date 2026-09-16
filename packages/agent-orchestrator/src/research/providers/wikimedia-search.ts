@@ -5,7 +5,7 @@
  */
 
 import { VisualCandidate } from '@chronoviet/shared-spec';
-import { createLogger } from '@chronoviet/infra';
+import { createLogger, ProviderRateLimiter } from '@chronoviet/infra';
 import { ImageSearchProvider, ImageSearchProviderOptions } from './image-search-provider.js';
 
 const log = createLogger({ service: 'agent-orchestrator' });
@@ -23,8 +23,7 @@ export function normalizeLicenseString(rawLicense: string): AllowedVisualLicense
 }
 
 export function stripNegativeSearchTerms(str: string): string {
-  if (!str) return '';
-  return str.replace(/-\w+/g, '').replace(/\s+/g, ' ').trim();
+  return str.replace(/-[a-zA-Z0-9_-]+/g, '').replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -41,6 +40,9 @@ export async function searchWikimediaCommons(
   const encoded = encodeURIComponent(cleanKeywords);
   const searchLimit = Math.min(20, Math.max(limit * 2, 10));
   const endpoint = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encoded}&gsrnamespace=6&gsrlimit=${searchLimit}&prop=imageinfo&iiprop=url|size|extmetadata|mime&format=json&origin=*`;
+
+  // Apply proactive rate limiter (max 3 RPS for Wikimedia Commons)
+  await ProviderRateLimiter.acquireSlot('wikimedia');
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
