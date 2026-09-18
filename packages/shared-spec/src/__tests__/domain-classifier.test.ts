@@ -14,6 +14,18 @@ describe('Dynamic Video Domain Classifier (classifyVideoDomain)', () => {
     expect(
       classifyVideoDomain('Trận chiến Bạch Đằng năm 938 của Ngô Quyền')
     ).toBe('BATTLE');
+
+    expect(
+      classifyVideoDomain('Cuộc kháng chiến chống Pháp (1945 – 1954)')
+    ).toBe('BATTLE');
+
+    expect(
+      classifyVideoDomain('Kháng chiến chống Mỹ cứu nước')
+    ).toBe('BATTLE');
+
+    expect(
+      classifyVideoDomain('Chiến tranh bảo vệ biên giới phía Bắc 1979')
+    ).toBe('BATTLE');
   });
 
   it('should correctly classify BIOGRAPHY for historical figures', () => {

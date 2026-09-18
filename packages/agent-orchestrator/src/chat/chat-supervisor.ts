@@ -7,12 +7,14 @@
 import {
   IRagEngine,
   ChatStreamResponse,
+  GroundedClaimItem,
   GraphTripleItem,
   HistoricalCitationItem,
   isKnownMasterEntity,
   HISTORICAL_PERSON_DICTIONARY,
   resolveCanonicalEntity,
   CORE_DOCS,
+  VisualAnchorSuggestion,
 } from '@chronoviet/shared-spec';
 import {
   createLogger,
@@ -22,7 +24,7 @@ import {
   envConfig,
   ragTimeoutsTotal,
 } from '@chronoviet/infra';
-import { ChronoRagEngine } from '@chronoviet/rag-engine';
+import { ChronoRagEngine, groundClaims, ChunkInfo } from '@chronoviet/rag-engine';
 import {
   classifyChatIntent,
   ChatIntent,
@@ -395,6 +397,11 @@ export interface ChatExecutionResult {
   intent: ChatIntent;
   citations: (string | HistoricalCitationItem)[];
   triples: GraphTripleItem[];
+  claims?: GroundedClaimItem[];
+  visualAnchors?: VisualAnchorSuggestion[];
+  faithfulnessScore?: number;
+  citationCorrectnessScore?: number;
+  isLowConfidence?: boolean;
   conversationId?: string;
 }
 
@@ -937,6 +944,7 @@ export async function* handleChatQueryStream(
   let isFolkloreSource = false;
   let isRagSystemError = false;
   let isZeroContextFound = false;
+  let ragChunkList: ChunkInfo[] = [];
 
   const ragTimeoutMs = envConfig.RAG_SEARCH_TIMEOUT_MS || 20000;
   try {
@@ -956,6 +964,13 @@ export async function* handleChatQueryStream(
 
     verifiedCitations = ragResponse.citations || [];
     graphTriples = (ragResponse.triples as GraphTripleItem[]) || [];
+
+    ragChunkList = (ragResponse.verifiedContext || []).map((v: any) => ({
+      id: v.chunkId || v.entityId || 'chunk_0',
+      title: v.title || v.canonicalName || 'Sử liệu',
+      content: v.textContent || v.summary || '',
+      reliability: v.sourceReliability || 'LEVEL_1',
+    }));
 
     contextSnippets = (ragResponse.verifiedContext || [])
       .map((v: any) => {
@@ -1261,12 +1276,44 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
     }
   }
 
+  // 8. Post-Generation Grounding & Sentence-Level Attribution
+  let groundedClaims: GroundedClaimItem[] = [];
+  let visualAnchors: VisualAnchorSuggestion[] = [];
+  let faithfulnessScore: number | undefined;
+  let citationCorrectnessScore: number | undefined;
+  let isLowConfidence = false;
+
+  if (ragChunkList.length > 0 && fullResponse.trim()) {
+    try {
+      const grounding = groundClaims(fullResponse, ragChunkList);
+      groundedClaims = grounding.claims;
+      visualAnchors = grounding.visualAnchors;
+      faithfulnessScore = grounding.faithfulnessScore;
+      citationCorrectnessScore = grounding.citationCorrectnessScore;
+      isLowConfidence = grounding.isLowConfidence || false;
+
+      if (grounding.hasContradiction) {
+        log.warn('chat.grounding_contradiction_detected', 'Chat response has potential historical contradiction with evidence', {
+          conversationId,
+          faithfulnessScore,
+        });
+        const contradictionDisclaimer = `\n\n> ⚠️ **Lưu ý đối chiếu sử liệu:** *Một số nội dung trong phản hồi có dấu hiệu chưa đồng nhất với nguồn chính sử đã đối soát. Vui lòng đối chiếu kỹ với các tập sử liệu được dẫn chứng bên dưới.*`;
+        fullResponse += contradictionDisclaimer;
+        yield { type: 'token', content: contradictionDisclaimer };
+      }
+    } catch (groundErr: any) {
+      log.warn('chat.grounding_analysis_failed', `Grounding analysis skipped due to error: ${groundErr.message}`);
+    }
+  }
+
   const charLength = fullResponse.length;
   const estimatedTokens = Math.ceil(charLength / 3.5);
   log.info('chat.supervisor_completed', `Chat stream finished (${Date.now() - startTime}ms)`, {
     conversationId,
     charLength,
     tokenLength: estimatedTokens,
+    faithfulnessScore,
+    claimsCount: groundedClaims.length,
   });
 
   yield {
@@ -1274,6 +1321,11 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
     content: fullResponse,
     citations: verifiedCitations,
     triples: graphTriples,
+    claims: groundedClaims.length > 0 ? groundedClaims : undefined,
+    visualAnchors: visualAnchors.length > 0 ? visualAnchors : undefined,
+    faithfulnessScore,
+    citationCorrectnessScore,
+    isLowConfidence: isLowConfidence || undefined,
     conversationId,
     videoHandover: classification.videoHandover,
   };
@@ -1286,6 +1338,11 @@ export async function executeChatQuery(
   let citations: (string | HistoricalCitationItem)[] = [];
   let triples: GraphTripleItem[] = [];
   let intent: ChatIntent = 'HISTORICAL_QUERY';
+  let claims: GroundedClaimItem[] | undefined;
+  let visualAnchors: VisualAnchorSuggestion[] | undefined;
+  let faithfulnessScore: number | undefined;
+  let citationCorrectnessScore: number | undefined;
+  let isLowConfidence: boolean | undefined;
 
   for await (const chunk of handleChatQueryStream(request)) {
     if (chunk.type === 'token' && chunk.content) {
@@ -1296,6 +1353,12 @@ export async function executeChatQuery(
       triples = chunk.triples;
     } else if (chunk.type === 'intent' && chunk.intent) {
       intent = chunk.intent as ChatIntent;
+    } else if (chunk.type === 'done') {
+      claims = chunk.claims;
+      visualAnchors = chunk.visualAnchors;
+      faithfulnessScore = chunk.faithfulnessScore;
+      citationCorrectnessScore = chunk.citationCorrectnessScore;
+      isLowConfidence = chunk.isLowConfidence;
     }
   }
 
@@ -1304,6 +1367,11 @@ export async function executeChatQuery(
     intent,
     citations,
     triples,
+    claims,
+    visualAnchors,
+    faithfulnessScore,
+    citationCorrectnessScore,
+    isLowConfidence,
     conversationId: request.conversationId,
   };
 }

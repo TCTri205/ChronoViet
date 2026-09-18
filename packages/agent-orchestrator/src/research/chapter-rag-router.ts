@@ -173,6 +173,17 @@ export function scoreChunkForChapter(
 }
 
 /**
+ * Helper to get representative year from chunk (timeStart, or extracted years).
+ */
+export function getChunkRepresentativeYear(chunk: HistoricalContextEntity): number | undefined {
+  if (chunk.timeStart !== undefined) return chunk.timeStart;
+  if (chunk.timeEnd !== undefined) return chunk.timeEnd;
+  const chunkText = [chunk.canonicalName, chunk.title, chunk.summary].filter(Boolean).join(' ');
+  const years = extractYearsFromText(chunkText);
+  return years.length > 0 ? years[0] : undefined;
+}
+
+/**
  * Partitions and assigns verified RAG chunks to each chapter based on temporal and semantic relevance
  * with monotonic chronological anchoring.
  */
@@ -186,15 +197,42 @@ export function routeChunksToChapters(
     return chapters.map((c) => ({ ...c, chapterChunks: [] }));
   }
 
+  // Pre-sort globalChunks chronologically so fallbacks and tie-breakers maintain monotonic timeline
+  const sortedGlobalChunks = [...globalChunks].sort((a, b) => {
+    const ya = getChunkRepresentativeYear(a) ?? 9999;
+    const yb = getChunkRepresentativeYear(b) ?? 9999;
+    return ya - yb;
+  });
+
+  // Determine global time boundaries from sorted chunks
+  const validGlobalYears = sortedGlobalChunks
+    .map(getChunkRepresentativeYear)
+    .filter((y): y is number => y !== undefined);
+  const globalMinYear = validGlobalYears.length > 0 ? Math.min(...validGlobalYears) : undefined;
+  const globalMaxYear = validGlobalYears.length > 0 ? Math.max(...validGlobalYears) : undefined;
+
   let runningMinYear: number | undefined = undefined;
 
-  return chapters.map((chapter) => {
-    const timeRange = extractTimeRangeFromChapter(chapter);
+  return chapters.map((chapter, idx) => {
+    let timeRange = extractTimeRangeFromChapter(chapter);
+
+    // Monotonic chronological interpolation: if chapter has no explicit year anchor
+    // but global chunks span an era, estimate chapter's timeline based on chapter index stride
+    if (timeRange.startYear === undefined && globalMinYear !== undefined && globalMaxYear !== undefined && chapters.length > 1) {
+      const stride = (globalMaxYear - globalMinYear) / (chapters.length - 1);
+      const estStart = Math.round(globalMinYear + idx * stride);
+      const estEnd = Math.round(globalMinYear + (idx + 1) * stride);
+      timeRange = {
+        startYear: estStart,
+        endYear: estEnd,
+      };
+    }
+
     if (timeRange.startYear !== undefined) {
       runningMinYear = runningMinYear !== undefined ? Math.max(runningMinYear, timeRange.startYear) : timeRange.startYear;
     }
 
-    const scoredChunks = globalChunks.map((chunk) => ({
+    const scoredChunks = sortedGlobalChunks.map((chunk) => ({
       chunk,
       score: scoreChunkForChapter(chunk, chapter, timeRange, runningMinYear),
     }));
@@ -208,14 +246,32 @@ export function routeChunksToChapters(
       .slice(0, maxChunksPerChapter)
       .map((s) => s.chunk);
 
-    // Fallback: If chapter gets fewer than 2 chunks, supplement with top global chunks
+    // Fallback: If chapter gets fewer than 2 chunks, supplement with chronological stride from sortedGlobalChunks
+    // instead of always dumping index 0 and 1 into every chapter.
     if (selectedChunks.length < 2) {
       const existingIds = new Set(selectedChunks.map((c) => c.entityId || c.canonicalName));
-      for (const globalItem of globalChunks) {
-        if (!existingIds.has(globalItem.entityId || globalItem.canonicalName)) {
-          selectedChunks.push(globalItem);
-          existingIds.add(globalItem.entityId || globalItem.canonicalName);
-          if (selectedChunks.length >= 2) break;
+      const chunkStride = Math.max(1, Math.floor(sortedGlobalChunks.length / chapters.length));
+      const startOffset = Math.min((chapter.chapterIndex ?? idx) * chunkStride, Math.max(0, sortedGlobalChunks.length - 2));
+
+      // Attempt stride window first
+      for (let k = startOffset; k < sortedGlobalChunks.length && selectedChunks.length < 2; k++) {
+        const candidate = sortedGlobalChunks[k];
+        const cid = candidate.entityId || candidate.canonicalName;
+        if (!existingIds.has(cid)) {
+          selectedChunks.push(candidate);
+          existingIds.add(cid);
+        }
+      }
+
+      // If still fewer than 2, scan remaining from beginning
+      if (selectedChunks.length < 2) {
+        for (const candidate of sortedGlobalChunks) {
+          const cid = candidate.entityId || candidate.canonicalName;
+          if (!existingIds.has(cid)) {
+            selectedChunks.push(candidate);
+            existingIds.add(cid);
+            if (selectedChunks.length >= 2) break;
+          }
         }
       }
     }

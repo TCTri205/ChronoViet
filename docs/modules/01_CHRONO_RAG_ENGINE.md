@@ -242,6 +242,14 @@ Khi tiếp nhận câu hỏi từ mô-đun Multi-Agent (ví dụ: *"Hãy cho bi�
   * **Chain-of-Thought (CoT) / Graph-of-Thought (GoT):** Ép LLM suy luận theo từng mốc thời gian trước khi đưa ra câu trả lời cuối cùng.
   * **Citation & Grounding Guardrails:** Kỹ thuật yêu cầu LLM đính kèm nguồn (sách nào, bộ ba quan hệ nào) để đảm bảo không bịa đặt sự thật lịch sử.
 
+### 5.5. Công đoạn Hậu kiểm Mệnh đề & Gán nguồn (Production Claim Grounding Layer)
+*Hệ thống kiểm định mệnh đề theo thời gian thực để loại bỏ triệt để ảo giác (Hallucination) và đối soát với kho sử liệu:*
+
+* **Tách mệnh đề phi siêu ngôn ngữ (`extractClaims`):** Phân tách câu trả lời thành từng mệnh đề sự thật độc lập, tự động lọc bỏ các câu chào hỏi, dẫn nhập hoặc câu tóm tắt (`isDiscourseOrMetaSentence`).
+* **Kiểm định đảo ngược cực tính Thắng - Bại (Polarity Inversion):** Đối chiếu từ vựng chiến cục (`VICTORY_TERMS` vs `DEFEAT_TERMS`). Nếu sử liệu ghi "đại thắng" mà câu trả lời khẳng định "thất bại/đầu hàng", lập tức đánh dấu `CONTRADICTED` và kích hoạt cảnh báo `isLowConfidence`.
+* **Kiểm định xung đột thân tộc & phủ định (Kinship & Negation Conflict):** Phát hiện các mối quan hệ gia tộc mâu thuẫn (như gán nhầm cha-con, anh-em) và các mẫu phủ định sai lệch.
+* **Streaming Grounding Event:** Cung cấp đầy đủ payload `claims`, `visualAnchors`, `faithfulnessScore`, `citationCorrectnessScore` ngay trong sự kiện `done` của luồng SSE Streaming (phục vụ đồng bộ cả RAG engine và Web Chat Supervisor).
+
 ---
 
 ## 6. Đánh Giá Chi Tiết Ưu, Nhược Điểm & Đánh Đổi (Trade-off Analysis)

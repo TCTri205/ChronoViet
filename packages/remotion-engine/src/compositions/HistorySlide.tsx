@@ -48,6 +48,8 @@ export const HistoryBackground: React.FC<HistorySlideProps> = ({
         <SlideImage
           src={scene.assetUrl || ''}
           secondaryAssetUrl={scene.secondaryAssetUrl}
+          assetMetadata={scene.assetMetadata}
+          secondaryAssetMetadata={scene.secondaryAssetMetadata}
           layoutMode={scene.layoutMode}
           durationInFrames={durationInFrames}
           zoomType={scene.effect || 'KEN_BURNS_ZOOM_IN'}

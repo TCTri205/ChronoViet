@@ -11,6 +11,7 @@ import {
   CORE_DOCS,
   CORE_ORGS,
   CORE_ARTIFACTS,
+  CANONICAL_DYNASTY_BOUNDS,
   sanitizeSentenceBoundaries,
   resolveCanonicalEntity,
   getTargetWpm,
@@ -944,7 +945,7 @@ QUY TẮC BẮT BUỘC:
     {
       "chapterIndex": 0,
       "title": "Hồi 1: Tiêu đề Hồi ngắn gọn, cuốn hút",
-      "timeAnchor": "Mốc thời gian (ví dụ: 'Năm 1285' hoặc 'Mùa xuân 1789')",
+      "timeAnchor": "Mốc thời gian cụ thể (ví dụ: 'Năm [YYYY]' hoặc 'Giai đoạn [YYYY-YYYY]' tương ứng của Hồi)",
       "mainEvent": "Sự kiện lịch sử trung tâm của Hồi này",
       "entryHook": "Câu mở đầu hấp dẫn, tạo sự tò mò",
       "climaxFocus": "Điểm nhấn kịch tính/cao trào của Hồi",
@@ -962,8 +963,9 @@ QUY TẮC BẮT BUỘC:
    - Phân chia ${numChapters} hồi theo tiến trình niên đại TUYẾN TÍNH KHÔNG TRÙNG LẶP. Mỗi hồi đại diện cho một chặng đường lịch sử riêng biệt:
 ${domainChapteringGuidance}
    - QUY TẮC ĐẶT TIÊU ĐỀ HỒI (CHƯƠNG):
-     + Tiêu đề BẮT BUỘC phải sáng tạo, hấp dẫn và gắn chặt với sự kiện lịch sử CỦA CHỦ ĐỀ HIỆN TẠI (ví dụ: 'Hồi 1: Nỗi hờn sông Mê và Ách bạo ngược Tô Định', 'Hồi 2: Lời thề Hát Môn và Tiếng trống đồng tụ nghĩa', 'Hồi 3: Bão lửa giáp công hạ thành Luy Lâu', 'Hồi 4: Nền độc lập Trưng Vương và Di sản muôn đời'...).
-     + TUYỆT ĐỐI KHÔNG copy các nhãn khuôn mẫu chung chung như 'Bối cảnh và Nguy cơ', 'Hiệu triệu, Tuyển binh & Hành quân thần tốc', 'Kế sách công kích & Hịch xuất quân', 'Đại thắng khải hoàn & Di sản'.
+     + Tiêu đề BẮT BUỘC phải sáng tạo, hấp dẫn và gắn chặt với sự kiện lịch sử CỦA CHỦ ĐỀ HIỆN TẠI theo cấu trúc: 'Hồi [N]: [Hành động/Biến cố lịch sử then chốt] và [Địa danh/Nhân vật/Chiến dịch tương ứng của giai đoạn đó]'.
+     + TUYỆT ĐỐI KHÔNG đưa tên nhân vật, địa danh hoặc sự kiện của thời kỳ lịch sử khác vào tiêu đề.
+     + TUYỆT ĐỐI KHÔNG đặt tiêu đề rỗng hoặc nhãn khuôn mẫu chung chung như 'Hồi [N]: Diễn biến giai đoạn [N]', 'Bối cảnh và Nguy cơ', 'Trận quyết chiến', 'Di sản và Dư âm'.
    - BẢO TOÀN PHÂN VÙNG THỜI GIAN & SỰ KIỆN (TEMPORAL BOUNDARY INTEGRITY):
      + Mỗi Hồi có một phạm vi sự kiện RIÊNG BIỆT.
      + Hồi trước TUYỆT ĐỐI KHÔNG được kể lấn sang các sự kiện, chiến thắng hoặc kết cục thuộc về các Hồi sau!
@@ -1079,12 +1081,58 @@ Hãy xuất JSON { "chapterBeats": [...] } gồm ĐỦ ${numChapters} hồi:`;
         metadata: { existingBeats: beats.length, numChapters },
       });
       for (let i = beats.length; i < numChapters; i++) {
+        const candidateChunk = verifiedChunks[i % Math.max(1, verifiedChunks.length)];
+        const chunkTitle = candidateChunk?.title || candidateChunk?.canonicalName;
+        const fallbackTitle = chunkTitle && chunkTitle !== state.userPrompt
+          ? `Hồi ${i + 1}: ${chunkTitle}`
+          : `Hồi ${i + 1}: Bước ngoặt then chốt (${state.userPrompt})`;
         beats.push({
           chapterIndex: i,
-          title: `Hồi ${i + 1}: Diễn biến giai đoạn ${i + 1}`,
-          timeAnchor: '',
-          mainEvent: `Diễn biến và quyết sách then chốt giai đoạn ${i + 1} của ${state.userPrompt}`,
+          title: fallbackTitle,
+          timeAnchor: candidateChunk?.timeStart ? `Năm ${candidateChunk.timeStart}` : '',
+          mainEvent: candidateChunk?.summary
+            ? cleanCrawlerText(candidateChunk.summary).slice(0, 150)
+            : `Diễn biến và quyết sách then chốt giai đoạn ${i + 1} của ${state.userPrompt}`,
         });
+      }
+    }
+
+    // Epoch Consistency Gatekeeper: Detect and re-anchor beats containing alien entities from wrong epochs
+    const promptYears = (state.userPrompt.match(/\b(1?\d{3,4})\b/g) || [])
+      .map((y) => parseInt(y, 10))
+      .filter((y) => y >= 100 && y <= 2050);
+    const minPromptYear = promptYears.length > 0 ? Math.min(...promptYears) : undefined;
+    const maxPromptYear = promptYears.length > 0 ? Math.max(...promptYears) : undefined;
+
+    if (minPromptYear !== undefined && maxPromptYear !== undefined) {
+      for (let bIdx = 0; bIdx < beats.length; bIdx++) {
+        const beat = beats[bIdx];
+        const beatText = `${beat.title} ${beat.mainEvent}`.toLowerCase();
+        let alienFound = '';
+
+        for (const dyn of CANONICAL_DYNASTY_BOUNDS) {
+          if (dyn.endYear < minPromptYear - 50 || dyn.startYear > maxPromptYear + 50) {
+            for (const alias of dyn.aliases) {
+              if (alias.length >= 4 && beatText.includes(alias.toLowerCase())) {
+                alienFound = alias;
+                break;
+              }
+            }
+            if (alienFound) break;
+          }
+        }
+
+        if (alienFound) {
+          nodeLog.warn('orchestrator.chapter_alien_epoch_filtered', `Detected alien entity '${alienFound}' in chapter beat ${bIdx}: '${beat.title}'. Re-anchoring with verified RAG context.`);
+          const candidateChunk = verifiedChunks[bIdx % Math.max(1, verifiedChunks.length)];
+          const chunkTitle = candidateChunk?.title || candidateChunk?.canonicalName;
+          beat.title = chunkTitle && chunkTitle !== state.userPrompt
+            ? `Hồi ${bIdx + 1}: ${chunkTitle}`
+            : `Hồi ${bIdx + 1}: Bước ngoặt then chốt (${state.userPrompt})`;
+          if (candidateChunk?.summary) {
+            beat.mainEvent = cleanCrawlerText(candidateChunk.summary).slice(0, 150);
+          }
+        }
       }
     }
 

@@ -18,6 +18,7 @@ import {
   extractHistoricalTimeBounds,
   isLegitimateHistoricalReference,
 } from '../../guardrails/nli-hallucination-judge.js';
+import { sanitizeVoiceoverScript } from './scriptwriter-node.js';
 
 export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'fact_checker');
@@ -159,7 +160,7 @@ QUY TẮC BẮT BUỘC:
               ],
               temperature: 0.1,
             });
-            script = fixRes.content.trim();
+            script = sanitizeVoiceoverScript(fixRes.content.trim());
             escalationTier = Math.max(escalationTier, 0);
             auditDetails = 'Corrected folklore tone hypothesis framing via LLM Self-Correction.';
           } catch (err: any) {
@@ -356,10 +357,15 @@ QUY TẮC BẮT BUỘC:
             try {
               const patchSystem = `Bạn là Chuyên gia Thẩm định và Hiệu đính Lịch sử ChronoViet.
 Nhiệm vụ: Sửa đúng câu/chi tiết lịch sử bị sai lệch/mâu thuẫn trong đoạn kịch bản mà KHÔNG làm thay đổi cấu trúc hay các phần đúng còn lại.
-QUY TẮC:
+QUY TẮC BẮT BUỘC:
 1. Dựa trên BẰNG CHỨNG LỊCH SỬ XÁC THỰC được cung cấp để điều chỉnh dữ kiện mâu thuẫn.
 2. Giữ nguyên độ dài, phong cách kể chuyện hào hùng, không thêm bớt tình tiết ngoài sử liệu.
-3. Chỉ xuất đoạn kịch bản hoàn chỉnh sau khi vá lỗi, không giải thích.`;
+3. Xuất kết quả DUY NHẤT dưới dạng JSON:
+{
+  "patchedScript": "Toàn bộ đoạn kịch bản sau khi đã sửa chuẩn xác (văn xuôi thuần túy, TUYỆT ĐỐI KHÔNG tiêu đề, KHÔNG nhãn, KHÔNG giải thích)",
+  "explanation": "Tóm tắt ngắn gọn 1 câu lý do sửa đổi"
+}
+4. TUYỆT ĐỐI KHÔNG chèn tiêu đề, prompt header hoặc câu giải thích vào bên trong trường 'patchedScript'.`;
 
               const patchUser = `BẰNG CHỨNG LỊCH SỬ XÁC THỰC:
 ${groundTruthChunks.slice(0, 5).join('\n')}
@@ -367,7 +373,7 @@ ${groundTruthChunks.slice(0, 5).join('\n')}
 LỖI PHÁT HIỆN:
 ${[foreignDynastyDetail, nliResult.explanation].filter(Boolean).join('. ') || 'Dữ kiện mâu thuẫn với sử liệu.'}
 
-KỊCH BẢN CẦN VÁ LỖI (CHƯƠNG ${chapterIndex + 1}):
+KỊCH BẢN HIỆN TẠI (CHƯƠNG ${chapterIndex + 1}):
 "${script}"`;
 
               const patchRes = await callLlm({
@@ -376,9 +382,25 @@ KỊCH BẢN CẦN VÁ LỖI (CHƯƠNG ${chapterIndex + 1}):
                   { role: 'user', content: patchUser },
                 ],
                 temperature: 0.1,
+                responseFormat: 'json_object',
               });
 
-              const patchedScript = patchRes.content.trim();
+              let rawPatched = '';
+              try {
+                const parsed = JSON.parse(patchRes.content);
+                rawPatched = (parsed.patchedScript || parsed.script || '').trim();
+              } catch {
+                const jsonMatch = patchRes.content.match(/"patchedScript"\s*:\s*"([^"]+)"/);
+                rawPatched = jsonMatch ? jsonMatch[1] : patchRes.content.trim();
+              }
+
+              // Strip prompt echo or quote wrappers
+              rawPatched = rawPatched
+                .replace(/^KỊCH BẢN (?:CẦN )?VÁ LỖI[^\n:]*:\s*/i, '')
+                .replace(/^["“”'«»]+|["“”'«»]+$/g, '')
+                .trim();
+
+              const patchedScript = sanitizeVoiceoverScript(rawPatched);
               if (patchedScript && patchedScript.length >= 20) {
                 const recheck = evaluateNliEntailmentScore({
                   scriptClaim: patchedScript,

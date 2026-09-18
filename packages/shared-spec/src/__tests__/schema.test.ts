@@ -163,5 +163,24 @@ describe('Shared Schemas Validation (Phase 1 SSOT)', () => {
     expect(parsed.coveredMilestones.length).toBe(2);
     expect(parsed.passedTimeAnchor).toBe(1911);
   });
+
+  it('should protect thousands separators and numbers in splitSentences and sanitizeSentenceBoundaries', async () => {
+    const { splitSentences, sanitizeSentenceBoundaries } = await import('../schema.js');
+
+    const sample = 'Quân đội Quốc gia Việt Nam phát triển lên tới 230.000 quân, chiếm 60% lực lượng Liên Hiệp Pháp. Kháng chiến bắt đầu.';
+    const sentences = splitSentences(sample);
+    expect(sentences.length).toBe(2);
+    expect(sentences[0]).toContain('230.000 quân');
+    expect(sentences[1]).toBe('Kháng chiến bắt đầu.');
+
+    const sampleWithSpace = 'Lực lượng đồn trú gồm 300. 000 quân và 500 chiến thuyền. Ngày 19 tháng 12 năm 1946 nổ súng.';
+    const sList = splitSentences(sampleWithSpace);
+    expect(sList.length).toBe(2);
+    expect(sList[0]).toContain('300.000 quân');
+
+    const sanitizedTail = sanitizeSentenceBoundaries('Quân đội có 230.000 quân, chiếm 60% lực lượng.');
+    expect(sanitizedTail).toBe('Quân đội có 230.000 quân, chiếm 60% lực lượng.');
+  });
 });
+
 

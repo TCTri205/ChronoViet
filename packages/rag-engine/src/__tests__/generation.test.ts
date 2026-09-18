@@ -180,17 +180,93 @@ describe('ClaimGrounder', () => {
     const result = ClaimGrounder.groundClaims(answer, chunks);
     expect(result.claims.length).toBe(1);
     expect(result.claims[0].sourceChunkId).toBe('chunk_1288');
+    expect(result.claims[0].entailmentStatus).toBe('ENTAILED');
     expect(result.faithfulnessScore).toBe(100);
     expect(result.citationCorrectnessScore).toBe(100);
+    expect(result.isLowConfidence).toBe(false);
+  });
+
+  it('should detect polarity inversion contradiction (claim defeat vs evidence victory)', () => {
+    const claim = 'Năm 1288, quân dân nhà Trần thất bại thảm hại trên sông Bạch Đằng';
+    const evidence = 'Trận chiến trên sông Bạch Đằng năm 1288 kết thúc với đại thắng vang dội của quân dân nhà Trần.';
+    const detail = ClaimGrounder.verifyClaimEntailmentDetail(claim, evidence);
+    expect(detail.status).toBe('CONTRADICTED');
+    expect(detail.score).toBeLessThanOrEqual(0.1);
+    expect(detail.conflictReason).toBe('POLARITY_INVERSION_CLAIM_DEFEAT_EVIDENCE_VICTORY');
+
+    const result = ClaimGrounder.groundClaims(claim, [{
+      id: 'chunk_1',
+      title: 'Bạch Đằng 1288',
+      content: evidence,
+      reliability: 'LEVEL_1',
+    }]);
+    expect(result.hasContradiction).toBe(true);
+    expect(result.isLowConfidence).toBe(true);
+    expect(result.claims.length).toBe(0);
+  });
+
+  it('should filter out discourse and conversational prefix statements from factual claims', () => {
+    const text = 'Dạ thưa bạn, dưới đây là thông tin chi tiết về sự kiện. Năm 1288, quân dân nhà Trần đại thắng trên sông Bạch Đằng. Tóm lại đây là chiến thắng oanh liệt.';
+    const claims = ClaimGrounder.extractClaims(text);
+    expect(claims.length).toBe(1);
+    expect(claims[0]).toContain('Bạch Đằng');
+  });
+
+  it('should detect kinship conflict between claim and evidence', () => {
+    const claim = 'Nguyễn Trãi là con của Lê Lợi.';
+    const evidence = 'Nguyễn Trãi là mưu sĩ thân cận của Lê Lợi, ông là con của Nguyễn Phi Khanh.';
+    const detail = ClaimGrounder.verifyClaimEntailmentDetail(claim, evidence);
+    expect(detail.status).toBe('CONTRADICTED');
+    expect(detail.score).toBeLessThanOrEqual(0.1);
+  });
+
+  it('should detect agent-target role inversion contradiction (e.g. victor vs defeated roles swapped)', () => {
+    const claim = 'Quân Thanh đại phá quân Tây Sơn ở trận Ngọc Hồi - Đống Đa.';
+    const evidence = 'Năm 1789, quân Tây Sơn do vua Quang Trung chỉ huy đại phá 29 vạn quân Thanh ở Ngọc Hồi - Đống Đa.';
+    const detail = ClaimGrounder.verifyClaimEntailmentDetail(claim, evidence);
+    expect(detail.status).toBe('CONTRADICTED');
+    expect(detail.score).toBeLessThanOrEqual(0.1);
+    expect(detail.conflictReason).toBe('AGENT_TARGET_INVERSION_CONTRADICTION');
+  });
+
+  it('should extract claims without fragmenting on decimal numbers and abbreviations', () => {
+    const text = 'Năm 1285, Thoát Hoan đem 500.000 quân xâm lược Đại Việt. GS. Trần Quốc Vượng đánh giá đây là trận chiến then chốt.';
+    const claims = ClaimGrounder.extractClaims(text);
+    expect(claims.length).toBe(2);
+    expect(claims[0]).toContain('500.000 quân');
+    expect(claims[1]).toContain('GS. Trần Quốc Vượng');
+  });
+
+  it('should preserve factual claims that start with source preambles after stripping', () => {
+    const text = 'Theo sử liệu, năm 1010, vua Lý Thái Tổ dời đô về Thăng Long.';
+    const claims = ClaimGrounder.extractClaims(text);
+    expect(claims.length).toBe(1);
+    expect(claims[0]).toBe('Năm 1010, vua Lý Thái Tổ dời đô về Thăng Long.');
+  });
+
+  it('should validate century containment against exact years', () => {
+    const claim = 'Vào thế kỷ XIII, quân dân nhà Trần đã đánh tan quân Nguyên Mông.';
+    const evidence = 'Năm 1288, quân dân nhà Trần đại thắng quân Nguyên Mông trên sông Bạch Đằng.';
+    const detail = ClaimGrounder.verifyClaimEntailmentDetail(claim, evidence);
+    expect(detail.status).toBe('ENTAILED');
+    expect(detail.score).toBeGreaterThanOrEqual(0.3);
+  });
+
+  it('should reject claim when temporal years completely mismatch', () => {
+    const claim = 'Năm 1789, quân dân nhà Trần đại thắng trên sông Bạch Đằng.';
+    const evidence = 'Năm 1288, quân dân nhà Trần đại thắng quân Nguyên Mông trên sông Bạch Đằng.';
+    const detail = ClaimGrounder.verifyClaimEntailmentDetail(claim, evidence);
+    expect(detail.status).toBe('NOT_SUPPORTED');
+    expect(detail.conflictReason).toBe('TEMPORAL_MISMATCH');
   });
 });
 
 describe('AnswerGenerator Streaming & TTFT', () => {
-  it('should yield streaming events and measure TTFT metrics', async () => {
+  it('should yield streaming events, measure TTFT metrics, and emit post-stream grounding in done event', async () => {
     const sseChunks = [
       'data: {"choices":[{"delta":{"content":"Năm "}}]}\n\n',
-      'data: {"choices":[{"delta":{"content":"1954 "}}]}\n\n',
-      'data: {"choices":[{"delta":{"content":"chiến dịch toàn thắng."}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"1954, "}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"chiến dịch Điện Biên Phủ đại thắng."}}]}\n\n',
       'data: [DONE]\n\n',
     ];
 
@@ -228,7 +304,16 @@ describe('AnswerGenerator Streaming & TTFT', () => {
         chunks: [],
         triples: [{ source: 'Điện Biên Phủ', relation: 'OCCURRED_IN', target: '1954' }],
         citations: ['Sử liệu 1954'],
-        verifiedContext: [],
+        verifiedContext: [
+          {
+            chunkId: 'chunk_dbp_1954',
+            title: 'Chiến dịch Điện Biên Phủ',
+            summary: 'Năm 1954, chiến dịch Điện Biên Phủ đại thắng tiêu diệt tập đoàn cứ điểm Pháp.',
+            citations: ['Sử liệu 1954'],
+            confidenceScore: 1.0,
+            sourceReliability: 'LEVEL_1',
+          },
+        ],
         aliasTable: {},
       }),
     };
@@ -253,6 +338,12 @@ describe('AnswerGenerator Streaming & TTFT', () => {
     expect(doneEvent).toBeDefined();
     expect(doneEvent?.metrics?.totalLatencyMs).toBeGreaterThanOrEqual(0);
     expect(doneEvent?.metrics?.tokenCount).toBe(3);
+    // Verified post-stream grounding payload
+    expect(doneEvent?.claims).toBeDefined();
+    expect(doneEvent?.claims?.length).toBeGreaterThan(0);
+    expect(doneEvent?.claims?.[0].sourceChunkId).toBe('chunk_dbp_1954');
+    expect(doneEvent?.faithfulnessScore).toBe(100);
+    expect(doneEvent?.isLowConfidence).toBe(false);
 
     vi.stubGlobal('fetch', originalFetch);
   });

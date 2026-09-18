@@ -8,6 +8,8 @@ import {
   HistoricalAnswerGenerationRequest,
   HistoricalAnswerResponse,
   GraphTripleItem,
+  GroundedClaimItem,
+  VisualAnchorSuggestion,
 } from '@chronoviet/shared-spec';
 import { callLLM, generateLLMCompletionStream, createLogger } from '@chronoviet/infra';
 import { assembleContext } from './context-synthesizer.js';
@@ -103,6 +105,9 @@ export async function generateHistoricalAnswer(
     citations: grounding.citations.length > 0 ? grounding.citations : searchRes.citations,
     triplesUsed: searchRes.triples as GraphTripleItem[],
     visualAnchors: grounding.visualAnchors,
+    faithfulnessScore: grounding.faithfulnessScore,
+    citationCorrectnessScore: grounding.citationCorrectnessScore,
+    isLowConfidence: grounding.isLowConfidence,
     metrics: {
       retrievalLatencyMs,
       generationLatencyMs,
@@ -112,10 +117,15 @@ export async function generateHistoricalAnswer(
 }
 
 export interface HistoricalAnswerStreamEvent {
-  type: 'token' | 'triples' | 'citations' | 'done' | 'meta';
+  type: 'token' | 'triples' | 'citations' | 'done' | 'meta' | 'grounding';
   content?: string;
   triples?: GraphTripleItem[];
   citations?: string[];
+  claims?: GroundedClaimItem[];
+  visualAnchors?: VisualAnchorSuggestion[];
+  faithfulnessScore?: number;
+  citationCorrectnessScore?: number;
+  isLowConfidence?: boolean;
   metrics?: {
     retrievalLatencyMs?: number;
     ttftMs?: number;
@@ -208,11 +218,19 @@ export async function *generateHistoricalAnswerStream(
 
   const totalLatencyMs = performance.now() - streamStart;
 
+  // Post-Stream Grounding & Verification
+  const grounding = groundClaims(fullText, contextResult.chunkMap);
+
   yield {
     type: 'done',
     content: fullText,
     triples,
-    citations: searchRes.citations,
+    citations: grounding.citations.length > 0 ? grounding.citations : searchRes.citations,
+    claims: grounding.claims,
+    visualAnchors: grounding.visualAnchors,
+    faithfulnessScore: grounding.faithfulnessScore,
+    citationCorrectnessScore: grounding.citationCorrectnessScore,
+    isLowConfidence: grounding.isLowConfidence,
     metrics: {
       retrievalLatencyMs,
       ttftMs: isFirstToken ? totalLatencyMs : ttftMs,

@@ -151,3 +151,116 @@ export function resolveOverlayPositionStyle(
   }
 }
 
+/**
+ * Detects whether an image's aspect ratio severely mismatches the composition canvas aspect ratio.
+ * Used to prevent aggressive cropping (>40% to 80% loss) in full-cover layout modes.
+ *
+ * @param imageAspect width / height of the visual asset
+ * @param canvasAspect width / height of the video canvas (e.g. 16/9 = 1.777, 9/16 = 0.5625)
+ * @returns true if the aspect ratio mismatch is severe enough that object-fit: cover would destroy essential content
+ */
+export function isSevereAspectRatioMismatch(imageAspect: number, canvasAspect: number): boolean {
+  if (!Number.isFinite(imageAspect) || !Number.isFinite(canvasAspect) || imageAspect <= 0 || canvasAspect <= 0) {
+    return false;
+  }
+
+  const ratioMismatch = imageAspect / canvasAspect;
+  // ratioMismatch < 0.65 means image is far more vertical than canvas (e.g. 1:2 stela in 16:9 canvas -> 0.5 / 1.777 = 0.28)
+  // ratioMismatch > 1.65 means image is far more horizontal than canvas (e.g. 3:1 panorama in 16:9 -> 3 / 1.777 = 1.69, or 16:9 in 9:16 vertical canvas -> 1.777 / 0.5625 = 3.16)
+  return ratioMismatch < 0.65 || ratioMismatch > 1.65;
+}
+
+/**
+ * Resolves a safe layout mode against potential severe aspect ratio cropping.
+ * Automatically falls back to BLUR_BG (which preserves 100% of the image inside a contain frame with ambient blurred backdrop)
+ * when a crop-heavy layout mode (FULL_COVER, PURE_IMAGE_FULL, VIGNETTE_DARK) is paired with an extreme aspect ratio.
+ */
+export function resolveSafeLayoutMode(
+  requestedMode?: LayoutMode,
+  imageAspect?: number | null,
+  canvasAspect: number = 16 / 9
+): LayoutMode {
+  const effectiveMode = requestedMode || 'BLUR_BG';
+
+  if (!imageAspect || !Number.isFinite(imageAspect) || imageAspect <= 0) {
+    return effectiveMode;
+  }
+
+  const isCropLayout =
+    effectiveMode === 'FULL_COVER' ||
+    effectiveMode === 'PURE_IMAGE_FULL' ||
+    effectiveMode === 'VIGNETTE_DARK';
+
+  if (isCropLayout && isSevereAspectRatioMismatch(imageAspect, canvasAspect)) {
+    return 'BLUR_BG';
+  }
+
+  return effectiveMode;
+}
+
+export interface SafeImageBounds {
+  maxWidth: number;
+  maxHeight: number;
+  outerMaxWidth: number;
+  outerMaxHeight: number;
+}
+
+/**
+ * Calculates deterministic pixel bounds for image rendering in Remotion compositions,
+ * strictly derived from canvas resolution (useVideoConfig().width and height) instead of browser viewport units (vw/vh).
+ */
+export function calculateSafeImageBounds(
+  canvasWidth: number,
+  canvasHeight: number,
+  layoutMode?: LayoutMode
+): SafeImageBounds {
+  const mode = layoutMode || 'BLUR_BG';
+
+  switch (mode) {
+    case 'HISTORICAL_FRAME':
+      return {
+        outerMaxWidth: Math.round(canvasWidth * 0.82),
+        outerMaxHeight: Math.round(canvasHeight * 0.80),
+        maxWidth: Math.round(canvasWidth * 0.78),
+        maxHeight: Math.round(canvasHeight * 0.75),
+      };
+    case 'DOCUMENTARY_GRID':
+      return {
+        outerMaxWidth: Math.round(canvasWidth * 0.85),
+        outerMaxHeight: Math.round(canvasHeight * 0.82),
+        maxWidth: Math.round(canvasWidth * 0.80),
+        maxHeight: Math.round(canvasHeight * 0.78),
+      };
+    case 'NEWSPAPER_ARCHIVE':
+      return {
+        outerMaxWidth: Math.round(canvasWidth * 0.82),
+        outerMaxHeight: Math.round(canvasHeight * 0.82),
+        maxWidth: Math.round(canvasWidth * 0.75),
+        maxHeight: Math.round(canvasHeight * 0.70),
+      };
+    case 'GALLERY_3D':
+      return {
+        outerMaxWidth: Math.round(canvasWidth * 0.82),
+        outerMaxHeight: Math.round(canvasHeight * 0.80),
+        maxWidth: Math.round(canvasWidth * 0.78),
+        maxHeight: Math.round(canvasHeight * 0.75),
+      };
+    case 'FULL_CONTAIN':
+    case 'CENTER_SCALE':
+      return {
+        outerMaxWidth: Math.round(canvasWidth * 0.92),
+        outerMaxHeight: Math.round(canvasHeight * 0.92),
+        maxWidth: Math.round(canvasWidth * 0.90),
+        maxHeight: Math.round(canvasHeight * 0.90),
+      };
+    case 'BLUR_BG':
+    default:
+      return {
+        outerMaxWidth: Math.round(canvasWidth * 0.85),
+        outerMaxHeight: Math.round(canvasHeight * 0.82),
+        maxWidth: Math.round(canvasWidth * 0.82),
+        maxHeight: Math.round(canvasHeight * 0.80),
+      };
+  }
+}
+

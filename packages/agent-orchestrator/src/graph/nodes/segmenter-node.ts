@@ -10,6 +10,7 @@ import {
   VideoType,
   isPureImageLayout,
   getTargetWpm,
+  splitSentences,
 } from '@chronoviet/shared-spec';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 import { isValidHistoricalEntity } from './chaptering-node.js';
@@ -131,47 +132,7 @@ export function inferSemanticLayoutMode(
 }
 
 export function splitScriptIntoSentences(scriptText: string): string[] {
-  if (!scriptText || !scriptText.trim()) return [];
-
-  // 1. Prevent splitting on newlines after colons, semicolons, dashes, or dangling lists
-  let normalized = scriptText
-    .replace(/:\s*\n+/g, ': ')
-    .replace(/;\s*\n+/g, '; ')
-    .replace(/,\s*\n+/g, ', ')
-    .replace(/\n+\s*([a-zà-ỹ])/g, ' $1');
-
-  // 2. Context-Aware Abbreviation Masking
-  normalized = normalized.replace(/\b(GS|PGS|TS|ThS|TP|TX|TT)\.\s+(?=[A-ZÀ-Ỹ])/g, '$1__DOT__ ');
-  normalized = normalized.replace(/\b(v\.v)\.(?=\s*[,a-zà-ỹ])/gi, '$1__VVDOT__');
-
-  // 3. Split strictly on terminal punctuation followed by whitespace
-  const rawParts = normalized
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.replace(/__DOT__/g, '.').replace(/__VVDOT__/g, '.').trim())
-    .filter((s) => s.length > 0);
-
-  // 4. Clause boundary healing: merge dangling fragments and lowercase continuations
-  const healedSentences: string[] = [];
-  for (const part of rawParts) {
-    if (healedSentences.length > 0) {
-      const isFragment =
-        /^[a-zà-ỹ]/u.test(part) ||
-        /^(?:tiền|hậu|tả|hữu|trung quân|và|hoặc|nhưng|rồi|mà|với|cùng)(?:\s+|$)/iu.test(part) ||
-        part.length < 15;
-
-      const lastIdx = healedSentences.length - 1;
-      const prev = healedSentences[lastIdx];
-      const prevEndsWithColonOrComma = /[:;,–—]\s*$/.test(prev) || !/[.!?]$/.test(prev);
-
-      if (isFragment || prevEndsWithColonOrComma) {
-        healedSentences[lastIdx] = `${prev} ${part}`.replace(/\s+/g, ' ').trim();
-        continue;
-      }
-    }
-    healedSentences.push(part);
-  }
-
-  return healedSentences.filter((s) => s.length > 5);
+  return splitSentences(scriptText);
 }
 
 export async function segmenterNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {

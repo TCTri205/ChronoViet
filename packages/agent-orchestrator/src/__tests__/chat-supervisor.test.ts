@@ -730,6 +730,36 @@ describe('Real-World Typo & Resilient Fast Path Execution', () => {
       expect(leanCard).toContain('Trần Hưng Đạo');
       expect(leanCard).toContain('Triều đại: Nhà Trần');
     });
+
+    it('returns grounded claims and faithfulness score upon stream completion', async () => {
+      const { executeChatQuery } = await import('../index.js');
+      const mockRag: IRagEngine = {
+        search: vi.fn().mockResolvedValue({
+          verifiedContext: [
+            {
+              chunkId: 'chunk_bd_938',
+              title: 'Chiến thắng Bạch Đằng 938',
+              summary: 'Năm 938, Ngô Quyền chỉ huy quân dân đánh tan quân Nam Hán trên sông Bạch Đằng.',
+              citations: ['Đại Việt Sử Ký Toàn Thư'],
+              sourceReliability: 'LEVEL_1',
+            },
+          ],
+          citations: ['Đại Việt Sử Ký Toàn Thư [Nguồn: LEVEL_1]'],
+          triples: [],
+        }),
+        ingestDocument: async () => {},
+      };
+
+      const result = await executeChatQuery({
+        query: 'Chiến thắng Bạch Đằng diễn ra như thế nào?',
+        conversationId: 'test_grounding_chat_001',
+        ragEngine: mockRag,
+      });
+
+      expect(result.fullText).toBeDefined();
+      expect(result.claims).toBeDefined();
+      expect(result.citations).toHaveLength(1);
+    });
   });
 });
 

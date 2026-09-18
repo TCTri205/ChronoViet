@@ -4,7 +4,13 @@
  */
 
 import { z } from 'zod';
-import { GraphTripleItemSchema, HistoricalCitationItemSchema, VideoHandoverMetadataSchema } from './schema.js';
+import {
+  GraphTripleItemSchema,
+  GroundedClaimItemSchema,
+  HistoricalCitationItemSchema,
+  VideoHandoverMetadataSchema,
+  VisualAnchorSuggestionSchema,
+} from './schema.js';
 
 // ============================================================================
 // 1. Render Event Schemas (Redis PubSub channel `project_events:${projectId}`)
@@ -99,13 +105,18 @@ export type ProjectSummary = z.infer<typeof ProjectSummarySchema>;
 // ============================================================================
 
 export const ChatStreamResponseSchema = z.object({
-  type: z.enum(['token', 'citation', 'intent', 'triples', 'done', 'error']),
+  type: z.enum(['token', 'citation', 'intent', 'triples', 'done', 'error', 'grounding']),
   content: z.string().optional(),
   citations: z.array(z.union([z.string(), HistoricalCitationItemSchema])).optional(),
   intent: z.string().optional(),
   compositeIntents: z.array(z.string()).optional(),
   videoHandover: VideoHandoverMetadataSchema.optional(),
   triples: z.array(GraphTripleItemSchema).optional(),
+  claims: z.array(GroundedClaimItemSchema).optional(),
+  faithfulnessScore: z.number().optional(),
+  citationCorrectnessScore: z.number().optional(),
+  visualAnchors: z.array(VisualAnchorSuggestionSchema).optional(),
+  isLowConfidence: z.boolean().optional(),
   error: z.string().optional(),
   conversationId: z.string().optional(),
   messageId: z.string().optional(),

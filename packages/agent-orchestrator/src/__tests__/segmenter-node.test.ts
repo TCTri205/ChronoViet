@@ -147,5 +147,15 @@ describe('Segmenter Node & Domain-Aware Layout Inference', () => {
       expect(sentences.length).toBe(1);
       expect(sentences[0]).toContain('Nghĩa quân Tây Sơn thần tốc tiến vào Thăng Long. Và làm nên đại thắng mùa xuân Kỷ Dậu 1789.');
     });
+
+    it('protects numbers with periods as thousands separators from splitting', () => {
+      const script = 'Quân đội Quốc gia Việt Nam phát triển lên tới 230.000 quân, chiếm 60% lực lượng Liên Hiệp Pháp ở Đông Dương. Kháng chiến bắt đầu bùng nổ.';
+      const sentences = splitScriptIntoSentences(script);
+
+      expect(sentences.length).toBe(2);
+      expect(sentences[0]).toContain('230.000 quân');
+      expect(sentences[1]).toContain('Kháng chiến bắt đầu bùng nổ.');
+      expect(sentences.some((s) => s.startsWith('000 quân'))).toBe(false);
+    });
   });
 });

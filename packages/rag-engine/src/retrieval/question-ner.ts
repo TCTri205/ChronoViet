@@ -164,7 +164,7 @@ export const QUESTION_STOPWORDS = new Set([
   'do', 'nhà', 'nước', 'thuộc', 'thời', 'kỳ', 'bởi', 'vì', 'nên', 'mà',
   'các', 'những', 'rất', 'cũng', 'để', 'vẫn', 'từng', 'qua', 'lên', 'xuống',
   'nơi', 'sau', 'trước', 'tháng', 'ngày',
-  'phải', 'không', 'chăng', 'đúng', 'sai', 'hay', 'liệu', 'anh', 'em'
+  'phải', 'không', 'chăng', 'đúng', 'sai', 'hay', 'liệu', 'anh', 'em', 'bạn', 'tôi', 'ta', 'mình'
 ]);
 
 export function extractQueryEntities(queryText: string): ExtractedQueryInfo {
@@ -216,7 +216,7 @@ export function extractQueryEntities(queryText: string): ExtractedQueryInfo {
   for (let w = maxWindow; w >= 1; w--) {
     for (let i = 0; i <= rawCleanTokens.length - w; i++) {
       const phrase = rawCleanTokens.slice(i, i + w).join(' ');
-      if (w === 1 && phrase.length < 3) continue;
+      if (w === 1 && (phrase.length < 3 || QUESTION_STOPWORDS.has(phrase.toLowerCase()))) continue;
       const resolved = resolveEntityAlias(phrase);
       if (resolved?.canonicalId && isKnownMasterEntity(resolved.canonicalId)) {
         if (!entityIds.includes(resolved.canonicalId)) {

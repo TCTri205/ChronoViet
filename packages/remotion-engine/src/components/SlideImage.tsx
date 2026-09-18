@@ -1,13 +1,19 @@
 import React from 'react';
-import { AbsoluteFill, Img, staticFile, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { COLOR_PALETTE } from '../constants/config';
 import { calculateKenBurnsTransform, getFilterCss } from '../utils/animationUtils';
-import { CustomKenBurns, FilterStyle, KenBurnsEffect, LayoutMode } from '../types';
-import { isPureCodeLayout } from '../utils/layoutUtils';
+import { AssetMetadata, CustomKenBurns, FilterStyle, KenBurnsEffect, LayoutMode } from '../types';
+import {
+  calculateSafeImageBounds,
+  isPureCodeLayout,
+  resolveSafeLayoutMode,
+} from '../utils/layoutUtils';
 
 interface SlideImageProps {
   src: string;
   secondaryAssetUrl?: string;
+  assetMetadata?: AssetMetadata;
+  secondaryAssetMetadata?: AssetMetadata;
   layoutMode?: LayoutMode;
   durationInFrames: number;
   zoomType?: KenBurnsEffect | 'zoom-in' | 'zoom-out' | 'pan-left';
@@ -60,6 +66,8 @@ const resolveUrl = (url?: string, isError?: boolean) => {
 export const SlideImage: React.FC<SlideImageProps> = ({
   src,
   secondaryAssetUrl,
+  assetMetadata,
+  secondaryAssetMetadata,
   layoutMode = 'BLUR_BG',
   durationInFrames,
   zoomType = 'KEN_BURNS_ZOOM_IN',
@@ -71,7 +79,44 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   index,
 }) => {
   const frame = useCurrentFrame();
+  const { width: canvasWidth, height: canvasHeight } = useVideoConfig();
+  const canvasAspect = canvasWidth / Math.max(canvasHeight, 1);
   const progress = frame / Math.max(durationInFrames, 1);
+
+  // Measure or resolve image natural dimensions & aspect ratio
+  const [naturalDimensions, setNaturalDimensions] = React.useState<{ width: number; height: number } | null>(
+    assetMetadata?.width && assetMetadata?.height
+      ? { width: assetMetadata.width, height: assetMetadata.height }
+      : null
+  );
+
+  const imageAspect = React.useMemo(() => {
+    if (naturalDimensions && naturalDimensions.height > 0) {
+      return naturalDimensions.width / naturalDimensions.height;
+    }
+    if (assetMetadata?.width && assetMetadata?.height && assetMetadata.height > 0) {
+      return assetMetadata.width / assetMetadata.height;
+    }
+    if (assetMetadata?.aspectRatio) {
+      const parts = assetMetadata.aspectRatio.split(/[:/]/);
+      if (parts.length === 2) {
+        const w = parseFloat(parts[0]);
+        const h = parseFloat(parts[1]);
+        if (w > 0 && h > 0) return w / h;
+      }
+    }
+    return null;
+  }, [naturalDimensions, assetMetadata]);
+
+  // Aspect Ratio Guard: Protect against severe cropping in cover modes
+  const effectiveLayoutMode = React.useMemo(() => {
+    return resolveSafeLayoutMode(layoutMode, imageAspect, canvasAspect);
+  }, [layoutMode, imageAspect, canvasAspect]);
+
+  // Deterministic pixel bounds derived from canvas resolution
+  const safeBounds = React.useMemo(() => {
+    return calculateSafeImageBounds(canvasWidth, canvasHeight, effectiveLayoutMode);
+  }, [canvasWidth, canvasHeight, effectiveLayoutMode]);
 
   // Normalize effect parameter string
   const normalizedEffect: KenBurnsEffect =
@@ -107,25 +152,25 @@ export const SlideImage: React.FC<SlideImageProps> = ({
     if (!hasPrimaryError) {
       setHasPrimaryError(true);
       console.warn(
-        `[remotion-engine] render.asset_load_failed: Failed to load primary asset '${src}' (sceneId: ${sceneId ?? 'unknown'}, layoutMode: ${layoutMode}, index: ${index ?? 'unknown'})`
+        `[remotion-engine] render.asset_load_failed: Failed to load primary asset '${src}' (sceneId: ${sceneId ?? 'unknown'}, layoutMode: ${effectiveLayoutMode}, index: ${index ?? 'unknown'})`
       );
     }
-  }, [hasPrimaryError, src, sceneId, layoutMode, index]);
+  }, [hasPrimaryError, src, sceneId, effectiveLayoutMode, index]);
 
   const handleSecondaryError = React.useCallback(() => {
     if (!hasSecondaryError) {
       setHasSecondaryError(true);
       console.warn(
-        `[remotion-engine] render.asset_load_failed: Failed to load secondary asset '${secondaryAssetUrl}' (sceneId: ${sceneId ?? 'unknown'}, layoutMode: ${layoutMode}, index: ${index ?? 'unknown'})`
+        `[remotion-engine] render.asset_load_failed: Failed to load secondary asset '${secondaryAssetUrl}' (sceneId: ${sceneId ?? 'unknown'}, layoutMode: ${effectiveLayoutMode}, index: ${index ?? 'unknown'})`
       );
     }
-  }, [hasSecondaryError, secondaryAssetUrl, sceneId, layoutMode, index]);
+  }, [hasSecondaryError, secondaryAssetUrl, sceneId, effectiveLayoutMode, index]);
 
   const resolvedSrc = resolveUrl(src, hasPrimaryError);
   const resolvedSecondarySrc = resolveUrl(secondaryAssetUrl, hasSecondaryError);
 
   // 0. Pure Code / UI Component Scenes: Image is rendered purely as full-screen blurred background wallpaper (same blur as Type 1, no sharp image component)
-  if (isPureCodeScene || isPureCodeLayout(layoutMode)) {
+  if (isPureCodeScene || isPureCodeLayout(effectiveLayoutMode)) {
     return (
       <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         {/* Fullscreen Blurred Cover Background Image with Ken Burns motion */}
@@ -155,7 +200,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 1. SPLIT_COMPARE: Dual Image Side-by-Side Comparison
-  if (layoutMode === 'SPLIT_COMPARE') {
+  if (effectiveLayoutMode === 'SPLIT_COMPARE') {
     return (
       <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         <div
@@ -244,17 +289,23 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 2. PURE_IMAGE_FULL: Clean Edge-to-Edge Uncropped Historical Photo
-  if (layoutMode === 'PURE_IMAGE_FULL') {
+  if (effectiveLayoutMode === 'PURE_IMAGE_FULL') {
     return (
       <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         <Img
           src={resolvedSrc}
           onError={handlePrimaryError}
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+              setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+            }
+          }}
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transform: `rotate(${rotateDeg}deg) scale(${scale * 1.05}) translate(${translateX * 0.35}%, ${translateY * 0.35}%) translateZ(0)`,
+            transform: `rotate(${rotateDeg}deg) scale(${scale * 1.08}) translate(${translateX * 0.35}%, ${translateY * 0.35}%) translateZ(0)`,
             willChange: 'transform',
             filter: filterCss,
           }}
@@ -271,17 +322,23 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 3. FULL_COVER: Fullscreen Cover with Ken Burns motion
-  if (layoutMode === 'FULL_COVER') {
+  if (effectiveLayoutMode === 'FULL_COVER') {
     return (
       <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         <Img
           src={resolvedSrc}
           onError={handlePrimaryError}
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+              setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+            }
+          }}
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transform: `rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.4}%, ${translateY * 0.4}%)`,
+            transform: `rotate(${rotateDeg}deg) scale(${scale * 1.08}) translate(${translateX * 0.4}%, ${translateY * 0.4}%)`,
             filter: filterCss,
           }}
         />
@@ -297,8 +354,8 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 4. FULL_CONTAIN / CENTER_SCALE: Clean centered image without blurred background
-  if (layoutMode === 'FULL_CONTAIN' || layoutMode === 'CENTER_SCALE') {
-    const isScaleMode = layoutMode === 'CENTER_SCALE';
+  if (effectiveLayoutMode === 'FULL_CONTAIN' || effectiveLayoutMode === 'CENTER_SCALE') {
+    const isScaleMode = effectiveLayoutMode === 'CENTER_SCALE';
     return (
       <AbsoluteFill
         style={{
@@ -312,9 +369,15 @@ export const SlideImage: React.FC<SlideImageProps> = ({
         <Img
           src={resolvedSrc}
           onError={handlePrimaryError}
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+              setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+            }
+          }}
           style={{
-            maxWidth: isScaleMode ? '90vw' : '95vw',
-            maxHeight: isScaleMode ? '90vh' : '95vh',
+            maxWidth: isScaleMode ? Math.round(canvasWidth * 0.90) : Math.round(canvasWidth * 0.95),
+            maxHeight: isScaleMode ? Math.round(canvasHeight * 0.90) : Math.round(canvasHeight * 0.95),
             objectFit: 'contain',
             transform: `rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.25}%, ${translateY * 0.25}%)`,
             filter: filterCss,
@@ -332,17 +395,23 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 5. VIGNETTE_DARK: Reduced brightness (-40%) with heavy 4-corner radial dark vignette
-  if (layoutMode === 'VIGNETTE_DARK') {
+  if (effectiveLayoutMode === 'VIGNETTE_DARK') {
     return (
       <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         <Img
           src={resolvedSrc}
           onError={handlePrimaryError}
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+              setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+            }
+          }}
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transform: `rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.3}%, ${translateY * 0.3}%)`,
+            transform: `rotate(${rotateDeg}deg) scale(${scale * 1.08}) translate(${translateX * 0.3}%, ${translateY * 0.3}%)`,
             filter: `${filterCss} brightness(0.6)`,
           }}
         />
@@ -358,7 +427,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 6. HISTORICAL_FRAME: Vintage framed image with ornamental gold border
-  if (layoutMode === 'HISTORICAL_FRAME') {
+  if (effectiveLayoutMode === 'HISTORICAL_FRAME') {
     return (
       <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         {/* Background Blur */}
@@ -382,14 +451,14 @@ export const SlideImage: React.FC<SlideImageProps> = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '50px',
+            padding: `${Math.round(canvasHeight * 0.04)}px`,
           }}
         >
           <div
             style={{
               transform: `rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.25}%, ${translateY * 0.25}%)`,
-              maxHeight: '80%',
-              maxWidth: '82%',
+              maxHeight: safeBounds.outerMaxHeight,
+              maxWidth: safeBounds.outerMaxWidth,
               border: `3px solid ${COLOR_PALETTE.primaryGold}`,
               outline: `8px solid ${COLOR_PALETTE.vermilionRed}`,
               boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 40px rgba(200, 157, 53, 0.3)',
@@ -401,11 +470,18 @@ export const SlideImage: React.FC<SlideImageProps> = ({
             <Img
               src={resolvedSrc}
               onError={handlePrimaryError}
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+                  setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+                }
+              }}
               style={{
-                maxHeight: '75vh',
-                maxWidth: '75vw',
+                maxHeight: safeBounds.maxHeight,
+                maxWidth: safeBounds.maxWidth,
                 objectFit: 'contain',
                 filter: filterCss,
+                display: 'block',
               }}
             />
           </div>
@@ -424,7 +500,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 7. DOCUMENTARY_GRID: Archival photo layout with corner gold frame
-  if (layoutMode === 'DOCUMENTARY_GRID') {
+  if (effectiveLayoutMode === 'DOCUMENTARY_GRID') {
     return (
       <AbsoluteFill style={{ backgroundColor: COLOR_PALETTE.lacquerBlack, overflow: 'hidden' }}>
         {/* Background Blur */}
@@ -448,14 +524,14 @@ export const SlideImage: React.FC<SlideImageProps> = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '40px',
+            padding: `${Math.round(canvasHeight * 0.04)}px`,
           }}
         >
           <div
             style={{
               transform: `rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.25}%, ${translateY * 0.25}%) translateZ(0)`,
-              maxHeight: '82%',
-              maxWidth: '85%',
+              maxHeight: safeBounds.outerMaxHeight,
+              maxWidth: safeBounds.outerMaxWidth,
               boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 0 2px rgba(200, 157, 53, 0.4)',
               border: `2px solid ${COLOR_PALETTE.primaryGold}`,
               borderRadius: '2px',
@@ -467,11 +543,18 @@ export const SlideImage: React.FC<SlideImageProps> = ({
             <Img
               src={resolvedSrc}
               onError={handlePrimaryError}
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+                  setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+                }
+              }}
               style={{
-                maxHeight: '78vh',
-                maxWidth: '78vw',
+                maxHeight: safeBounds.maxHeight,
+                maxWidth: safeBounds.maxWidth,
                 objectFit: 'contain',
                 filter: filterCss,
+                display: 'block',
               }}
             />
             <div
@@ -505,7 +588,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 8. NEWSPAPER_ARCHIVE: Archival Press Vintage Style
-  if (layoutMode === 'NEWSPAPER_ARCHIVE') {
+  if (effectiveLayoutMode === 'NEWSPAPER_ARCHIVE') {
     return (
       <AbsoluteFill style={{ backgroundColor: '#120f0d', overflow: 'hidden' }}>
         <AbsoluteFill style={{ overflow: 'hidden' }}>
@@ -527,14 +610,14 @@ export const SlideImage: React.FC<SlideImageProps> = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '45px',
+            padding: `${Math.round(canvasHeight * 0.04)}px`,
           }}
         >
           <div
             style={{
               transform: `rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.2}%, ${translateY * 0.2}%) translateZ(0)`,
-              maxHeight: '82%',
-              maxWidth: '82%',
+              maxHeight: safeBounds.outerMaxHeight,
+              maxWidth: safeBounds.outerMaxWidth,
               backgroundColor: '#d8c7a6',
               padding: '16px 16px 20px 16px',
               borderRadius: '2px',
@@ -564,15 +647,22 @@ export const SlideImage: React.FC<SlideImageProps> = ({
               <span>BẢN TIN SỬ LIỆU</span>
               <span>CHRONOVIET ARCHIVE</span>
             </div>
-            <div style={{ overflow: 'hidden', border: '1px solid #5a4738', maxHeight: '68vh', maxWidth: '72vw' }}>
+            <div style={{ overflow: 'hidden', border: '1px solid #5a4738', maxHeight: safeBounds.maxHeight, maxWidth: safeBounds.maxWidth }}>
               <Img
                 src={resolvedSrc}
                 onError={handlePrimaryError}
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+                  if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+                    setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+                  }
+                }}
                 style={{
-                  maxHeight: '68vh',
-                  maxWidth: '72vw',
+                  maxHeight: safeBounds.maxHeight,
+                  maxWidth: safeBounds.maxWidth,
                   objectFit: 'contain',
                   filter: 'sepia(0.35) contrast(1.1) brightness(0.92)',
+                  display: 'block',
                 }}
               />
             </div>
@@ -590,7 +680,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
   }
 
   // 9. GALLERY_3D: Heritage Exhibition Gallery Perspective Style
-  if (layoutMode === 'GALLERY_3D') {
+  if (effectiveLayoutMode === 'GALLERY_3D') {
     return (
       <AbsoluteFill
         style={{
@@ -619,8 +709,8 @@ export const SlideImage: React.FC<SlideImageProps> = ({
         <div
           style={{
             transform: `rotateY(-6deg) rotateX(4deg) rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.25}%, ${translateY * 0.25}%) translateZ(0)`,
-            maxHeight: '80%',
-            maxWidth: '82%',
+            maxHeight: safeBounds.outerMaxHeight,
+            maxWidth: safeBounds.outerMaxWidth,
             border: `4px solid ${COLOR_PALETTE.primaryGold}`,
             boxShadow: '0 30px 80px rgba(0,0,0,0.95), 0 0 50px rgba(200, 157, 53, 0.25)',
             borderRadius: '3px',
@@ -632,11 +722,18 @@ export const SlideImage: React.FC<SlideImageProps> = ({
           <Img
             src={resolvedSrc}
             onError={handlePrimaryError}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+                setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+              }
+            }}
             style={{
-              maxHeight: '75vh',
-              maxWidth: '75vw',
+              maxHeight: safeBounds.maxHeight,
+              maxWidth: safeBounds.maxWidth,
               objectFit: 'contain',
               filter: filterCss,
+              display: 'block',
             }}
           />
           <div
@@ -694,15 +791,15 @@ export const SlideImage: React.FC<SlideImageProps> = ({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '40px',
+          padding: `${Math.round(canvasHeight * 0.04)}px`,
         }}
       >
         <div
           style={{
             transform: `rotate(${rotateDeg}deg) scale(${scale}) translate(${translateX * 0.3}%, ${translateY * 0.3}%) translateZ(0)`,
             willChange: 'transform',
-            maxHeight: '82%',
-            maxWidth: '85%',
+            maxHeight: safeBounds.outerMaxHeight,
+            maxWidth: safeBounds.outerMaxWidth,
             boxShadow: '0 20px 50px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(200, 157, 53, 0.3)',
             borderRadius: '2px',
             overflow: 'hidden',
@@ -712,11 +809,18 @@ export const SlideImage: React.FC<SlideImageProps> = ({
           <Img
             src={resolvedSrc}
             onError={handlePrimaryError}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (!naturalDimensions && img.naturalWidth && img.naturalHeight) {
+                setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+              }
+            }}
             style={{
-              maxHeight: '80vh',
-              maxWidth: '80vw',
+              maxHeight: safeBounds.maxHeight,
+              maxWidth: safeBounds.maxWidth,
               objectFit: 'contain',
               filter: filterCss,
+              display: 'block',
             }}
           />
         </div>

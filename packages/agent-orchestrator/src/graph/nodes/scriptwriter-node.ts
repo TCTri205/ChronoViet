@@ -8,6 +8,7 @@ import {
   HISTORICAL_CHRONOLOGY,
   removeVietnameseTones,
   sanitizeSentenceBoundaries,
+  splitSentences,
   getTargetWpm,
   NarrativeLedger,
   VideoType,
@@ -608,26 +609,26 @@ ${chapterRoleGuidance}
 
 QUY TẮC BẢO TOÀN NIÊN ĐẠI & TRÁNH HALLUCINATION:
 - Niên đại trọng tâm của video: ${epochInfo.epochDesc}.
-- TUYỆT ĐỐI KHÔNG tự ý đưa vào các nhân vật, tướng lĩnh hoặc triều đại thuộc các thế kỷ khác không thuộc bối cảnh này (ví dụ: không đưa nhân vật nhà Trần hay Hậu Lê vào bối cảnh thời Tiền Lê/Đinh/Lý).
-- TUYỆT ĐỐI KHÔNG đưa thuật ngữ, tuyến đường hoặc chiến lược của thời kỳ chống Mỹ (như: 'đường mòn Hồ Chí Minh', 'ấp chiến lược', 'Việt Nam hóa chiến tranh') vào thời kỳ kháng chiến chống Pháp (1945–1954) hoặc các thời kỳ phong kiến.
+- TUYỆT ĐỐI KHÔNG tự ý đưa vào các nhân vật, tướng lĩnh, sự kiện hoặc triều đại thuộc các thời kỳ khác không nằm trong bối cảnh được chỉ định.
+- TUYỆT ĐỐI KHÔNG đưa thuật ngữ chiến lược, tổ chức quân sự hoặc tên vũ khí của các cuộc chiến khác vào bối cảnh thời kỳ đang viết.
 - Cho phép đề cập bối cảnh tiền đề hoặc hệ quả trong phạm vi ±30 năm cùng dòng lịch sử, nhưng nghiêm cấm vượt thế kỷ hoặc đảo lộn diễn biến lịch sử.
 - ĐỊNH DANH ĐÚNG VAI TRÒ LỊCH SỬ: Nhân vật/quân đội Đại Việt (Việt Nam) là phe kháng chiến/chính nghĩa; các chủ tướng xâm lược là quân địch bị tiêu diệt hoặc tháo chạy; các tướng giặc bị bắt làm tù binh TUYỆT ĐỐI KHÔNG viết thành tướng chỉ huy của phe ta.
 - BẢO TOÀN KẾT CỤC LỊCH SỬ CHUẨN XÁC: Tôn trọng sự thật lịch sử về sự hy sinh anh dũng và tấm gương kiên trung, bất khuất của các anh hùng dân tộc tuẫn tiết vì nghĩa lớn. TUYỆT ĐỐI KHÔNG bịa đặt kết quả 'toàn thắng mở nền độc lập' sai lệch với tư liệu RAG.
 - TUYỆT ĐỐI KHÔNG lặp lại các câu tụng ca sáo rỗng hoặc khuôn mẫu chung chung như: 'khẳng định vị thế độc lập', 'đánh dấu bước ngoặt lịch sử', 'bảo vệ non sông'. Hãy miêu tả trực tiếp HÀNH ĐỘNG, SỰ KIỆN, MƯU LƯỢC và BIẾN CỐ cụ thể gắn với các nhân vật và hiện vật.
 - QUY TẮC BẢN THỂ & DANH XƯNG NHÂN VẬT (COREFERENCE & ALIAS DISAMBIGUATION):
-  + Các danh xưng, tên khai sinh hoặc bí danh của cùng một nhân vật lịch sử qua từng thời kỳ (ví dụ: Nguyễn Sinh Cung thời niên thiếu, Nguyễn Tất Thành khi dạy học/ra đi tìm đường cứu nước, Văn Ba khi làm việc trên tàu, Nguyễn Ái Quốc khi hoạt động quốc tế, Hồ Chí Minh khi về nước lãnh đạo cách mạng) CHÍNH LÀ CÙNG MỘT NGƯỜI DUY NHẤT.
+  + Các danh xưng, tên khai sinh hoặc bí danh của cùng một nhân vật lịch sử qua từng thời kỳ CHÍNH LÀ CÙNG MỘT NGƯỜI DUY NHẤT.
   + TUYỆT ĐỐI KHÔNG viết thành "học hỏi từ...", "kế thừa từ...", "gặp gỡ..." đối với các bí danh của chính nhân vật! Hãy sử dụng đúng danh xưng phù hợp với giai đoạn lịch sử của chương đó.
 
 QUY TẮC BẮT BUỘC DÀNH CHO GIỌNG ĐỌC TTS (LOCAL LLM COMPLIANCE):
-1. TUYỆT ĐỐI KHÔNG chèn tiêu đề đoạn, KHÔNG viết các nhãn cấu trúc như: "Hồi 1:", "Mở cảnh:", "Diễn biến:", "Cao trào:", "Dư âm:", "Bài học:", "Hào hùng, trang trọng." vào văn bản.
+1. TUYỆT ĐỐI KHÔNG chèn tiêu đề đoạn, KHÔNG viết các nhãn cấu trúc như: "Hồi [X]:", "Mở cảnh:", "Diễn biến:", "Cao trào:", "Dư âm:", "Bài học:" vào văn bản.
 2. TUYỆT ĐỐI KHÔNG chèn thẻ chỉ dẫn sân khấu như: [Nhạc nền], (Giọng truyền cảm), (Cười), [Hình ảnh...].
 3. TUYỆT ĐỐI KHÔNG chèn nhãn người nói như: "MC:", "Người dẫn chuyện:", "Lời bình:".
 4. TUYỆT ĐỐI KHÔNG dùng định dạng tiêu đề Markdown như: #, ##, **, * ở đầu đoạn.
 5. Chỉ xuất văn bản lời đọc thuần túy (Plain Text), liền mạch, giàu cảm xúc, chuẩn xác sử liệu.
 6. BẮT BUỘC lồng ghép tự nhiên các tên nhân vật, tướng lĩnh, địa danh, niên đại, vũ khí và sự kiện lịch sử từ tư liệu RAG. Gọi đích danh bằng danh từ riêng chuẩn xác, tránh dùng đại từ thay thế mơ hồ.
 7. QUY TẮC ĐỌC SỐ & NIÊN HIỆU:
-   - Không dùng số La Mã viết tắt (viết "thế kỷ thứ mười" thay vì "thế kỷ X").
-   - Viết thành câu văn xuôi mượt mà (ví dụ: "từ năm 1428 đến năm 1433" thay vì "(1428 - 1433)").
+   - Không dùng số La Mã viết tắt (viết đầy đủ theo dạng số đếm: "thế kỷ thứ mười" thay vì "thế kỷ X").
+   - Viết thành câu văn xuôi mượt mà (ví dụ: "từ năm [A] đến năm [B]" thay vì "([A] - [B])").
 8. TUYỆT ĐỐI KHÔNG dùng chữ Hán (Chinese characters); toàn bộ nội dung phải là tiếng Việt chuẩn.`;
 
     // Extract entities from selected RAG chunks
@@ -725,7 +726,7 @@ QUY TẮC CHUYỂN TIẾP BẮT BUỘC: TUYỆT ĐỐI KHÔNG lặp lại nguyê
         }
       }
       if (chapterScripts[j]) {
-        const sentences = chapterScripts[j].split(/(?<=[.!?])\s+/).filter((s) => s.length > 20);
+        const sentences = splitSentences(chapterScripts[j]).filter((s) => s.length > 20);
         if (sentences.length > 0) {
           coveredMilestones.push(`Mở đầu đã kể: "${sentences[0]}"`);
         }
@@ -917,7 +918,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
 
             // If refined text is too long, bound it cleanly at sentence boundary
             if (refinedWords > maxWords * 1.08) {
-              const sentences = processedRefined.split(/(?<=[.!?])\s+/);
+              const sentences = splitSentences(processedRefined);
               let curW = 0;
               const kept: string[] = [];
               for (const s of sentences) {
@@ -976,7 +977,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
               // If refinement was rejected or over-shortened, but original text was over-long,
               // deterministically bound original text down to maxWords at clean sentence boundaries.
               if (actualWpm > maxWpmAllowed) {
-                const sentences = cleanedScript.split(/(?<=[.!?])\s+/);
+                const sentences = splitSentences(cleanedScript);
                 let curW = 0;
                 const kept: string[] = [];
                 for (const s of sentences) {
@@ -1012,7 +1013,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
       // Enforce hard word limit: Never let a chapter script exceed maxWords * 1.12
       const finalWords = finalScript.split(/\s+/).filter(Boolean);
       if (finalWords.length > maxWords * 1.12) {
-        const sentences = finalScript.split(/(?<=[.!?])\s+/);
+        const sentences = splitSentences(finalScript);
         let curW = 0;
         const kept: string[] = [];
         for (const s of sentences) {
@@ -1038,7 +1039,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
         const prevSentencesSet = new Set<string>();
         for (let j = 0; j < i; j++) {
           if (chapterScripts[j]) {
-            const sList = chapterScripts[j].split(/(?<=[.!?])\s+/).map((s) => s.trim().toLowerCase());
+            const sList = splitSentences(chapterScripts[j]).map((s) => s.trim().toLowerCase());
             for (const s of sList) {
               if (s.length > 25) prevSentencesSet.add(s);
             }
@@ -1046,7 +1047,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
         }
 
         if (prevSentencesSet.size > 0) {
-          const curSentences = finalScript.split(/(?<=[.!?])\s+/);
+          const curSentences = splitSentences(finalScript);
           const filteredSentences = curSentences.filter((s) => {
             const sLower = s.trim().toLowerCase();
             return !prevSentencesSet.has(sLower);

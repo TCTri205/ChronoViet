@@ -10,14 +10,13 @@ import {
   Minimize,
   Download,
   FileText,
-  Subtitles,
   ScrollText,
   Sparkles,
   AlertTriangle,
   RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { KaraokeSubtitles, SubtitleSegment } from "./KaraokeSubtitles";
+import type { SubtitleSegment } from "./KaraokeSubtitles";
 import { AttributionDrawer, MediaAttribution } from "./AttributionDrawer";
 import { TranscriptDrawer, TranscriptScene } from "./TranscriptDrawer";
 
@@ -47,7 +46,6 @@ export function VideoPlayer({
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isCcActive, setIsCcActive] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAttributionOpen, setIsAttributionOpen] = useState(false);
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
@@ -98,26 +96,6 @@ export function VideoPlayer({
       layoutMode: "OUTRO_CARD",
     },
   ]);
-  const [dynamicSubtitles, setDynamicSubtitles] = useState<SubtitleSegment[]>(
-    subtitles || [
-      {
-        text: "Vạn Kiếp sấm vang, sông Bạch Đằng cuộn sóng...",
-        startMs: 0,
-        endMs: 4000,
-        words: [
-          { word: "Vạn", startMs: 0, endMs: 500 },
-          { word: "Kiếp", startMs: 500, endMs: 1000 },
-          { word: "sấm", startMs: 1000, endMs: 1500 },
-          { word: "vang,", startMs: 1500, endMs: 2000 },
-          { word: "sông", startMs: 2000, endMs: 2500 },
-          { word: "Bạch", startMs: 2500, endMs: 3000 },
-          { word: "Đằng", startMs: 3000, endMs: 3500 },
-          { word: "cuộn", startMs: 3500, endMs: 3800 },
-          { word: "sóng...", startMs: 3800, endMs: 4000 },
-        ],
-      },
-    ]
-  );
   const [dynamicAttributions, setDynamicAttributions] = useState<MediaAttribution[]>(
     attributions || [
       {
@@ -193,7 +171,6 @@ export function VideoPlayer({
         // Hydrate subtitles and transcript from timeline schema
         if (data.schema?.timeline && Array.isArray(data.schema.timeline)) {
           let elapsedMs = 0;
-          const parsedSubs: SubtitleSegment[] = [];
           const parsedAttrs: MediaAttribution[] = [];
           const parsedTranscript: TranscriptScene[] = [];
 
@@ -228,20 +205,6 @@ export function VideoPlayer({
                 text: vText,
                 layoutMode: scene.layoutMode,
               });
-
-              if (!subtitles) {
-                parsedSubs.push({
-                  text: vText,
-                  startMs,
-                  endMs,
-                  words:
-                    scene.wordTimestamps?.map((w: any) => ({
-                      word: w.word,
-                      startMs: startMs + (w.startMs || 0),
-                      endMs: startMs + (w.endMs || 250),
-                    })) || [],
-                });
-              }
             }
 
             if (!attributions && scene.selectedAsset) {
@@ -261,7 +224,6 @@ export function VideoPlayer({
           }
 
           if (parsedTranscript.length > 0) setDynamicTranscript(parsedTranscript);
-          if (!subtitles && parsedSubs.length > 0) setDynamicSubtitles(parsedSubs);
           if (!attributions && parsedAttrs.length > 0) setDynamicAttributions(parsedAttrs);
         }
       })
@@ -449,13 +411,6 @@ export function VideoPlayer({
               className="w-full h-full object-cover cursor-pointer"
             />
 
-            {/* Karaoke Subtitles Overlay inside portrait canvas */}
-            <KaraokeSubtitles
-              currentTimeMs={currentTime * 1000}
-              subtitles={dynamicSubtitles}
-              isVisible={isCcActive}
-            />
-
             {/* Play Button Overlay */}
             {!isPlaying && (
               <button
@@ -482,13 +437,6 @@ export function VideoPlayer({
               onError={() => setHasVideoError(true)}
               onClick={togglePlay}
               className="w-full max-h-[68vh] object-contain cursor-pointer"
-            />
-
-            {/* Karaoke Subtitles Overlay */}
-            <KaraokeSubtitles
-              currentTimeMs={currentTime * 1000}
-              subtitles={dynamicSubtitles}
-              isVisible={isCcActive}
             />
 
             {/* Play Button Overlay */}
@@ -601,20 +549,6 @@ export function VideoPlayer({
             >
               <ScrollText className="w-3.5 h-3.5 text-primary" />
               <span className="hidden sm:inline font-medium">Kịch bản</span>
-            </Button>
-
-            <Button
-              onClick={() => setIsCcActive(!isCcActive)}
-              variant="ghost"
-              size="sm"
-              className={`h-8 text-xs gap-1 cursor-pointer ${
-                isCcActive ? "text-gold-300 bg-primary/10" : "text-text-muted hover:text-text-primary"
-              }`}
-              aria-label="Bật/tắt phụ đề Karaoke"
-              title="Bật/tắt phụ đề Karaoke"
-            >
-              <Subtitles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Phụ đề</span>
             </Button>
 
             <Button

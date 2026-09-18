@@ -79,13 +79,13 @@ export function classifyVideoDomain(topic: string, explicitDomain?: string): Vid
   if (explicitDomain && VideoDomainSchema.safeParse(explicitDomain).success) {
     return explicitDomain as VideoDomain;
   }
-  if (!topic || typeof topic !== 'string') return 'BIOGRAPHY';
+  if (!topic || typeof topic !== 'string') return 'BATTLE';
 
   const lower = topic.toLowerCase();
 
-  // 1. Combat, Battle, Campaign, Uprising keywords
+  // 1. Combat, Battle, Campaign, Resistance, War keywords
   if (
-    /hành quân|thần tốc|đại phá|chiến dịch|trận đánh|trận|quyết chiến|khởi nghĩa|đánh tan|công phá|phòng tuyến|phản công|tiến công|thủy chiến|bạch đằng|ngọc hồi|đống đa|chi lăng|điện biên phủ|rạch gầm|xoài mút|như nguyệt|xuân 1789|kỷ dậu 1789|mãn thanh|quân thanh|quân giặc|xâm lược|vạn quân/i.test(
+    /hành quân|thần tốc|đại phá|chiến dịch|trận đánh|trận|quyết chiến|khởi nghĩa|đánh tan|công phá|phòng tuyến|phản công|tiến công|thủy chiến|kháng chiến|chiến tranh|chiến đấu|đánh giặc|giải phóng|tiêu thổ|vệ quốc|bạch đằng|ngọc hồi|đống đa|chi lăng|điện biên phủ|rạch gầm|xoài mút|như nguyệt|xuân 1789|kỷ dậu 1789|mãn thanh|quân thanh|quân giặc|quân xâm lược|xâm lược|vạn quân|chống pháp|chống mỹ|chống tống|chống nguyên|chống minh|chống thanh|chống giặc|cách mạng|tổng tiến công|độc lập dân tộc|bảo vệ biên giới/i.test(
       lower
     )
   ) {
@@ -119,8 +119,21 @@ export function classifyVideoDomain(topic: string, explicitDomain?: string): Vid
     return 'DYNASTY';
   }
 
-  // 5. Default to BIOGRAPHY for figure-focused queries
-  return 'BIOGRAPHY';
+  // 5. Figure / Person biography keywords
+  if (
+    /tiểu sử|cuộc đời|thân thế|sự nghiệp|danh nhân|vị vua|danh tướng|bà chúa|lãnh tụ|chủ tịch|đại tướng|tướng quân|thái sư|trạng nguyên|anh hùng|nữ tướng|chân dung/i.test(
+      lower
+    )
+  ) {
+    return 'BIOGRAPHY';
+  }
+
+  // 6. Fallback: If mentions historical epoch, era or year, default to DYNASTY, otherwise general action documentary BATTLE
+  if (/(?:thời|thế kỷ|niên hiệu|thập niên|năm\s+\d{3,4})/i.test(lower)) {
+    return 'DYNASTY';
+  }
+
+  return 'BATTLE';
 }
 
 export const classifyVideoType = classifyVideoDomain;
@@ -303,6 +316,9 @@ export function sanitizeSentenceBoundaries(text: string): string {
   let cleaned = text.trim();
   if (!cleaned) return '';
 
+  // 1. Protect numbers with thousands separators and decimals (e.g. 230.000, 300. 000, 12.5)
+  cleaned = cleaned.replace(/(\d+)\.\s*(\d+)/g, '$1__NUMDOT__$2');
+
   // Clean trailing dangling prepositions/conjunctions before period or at the end
   const danglingTailRegex = /(?:,\s*|\s+)(?:vào\s+năm(?:\s+\d{1,3})?|năm\s+\d{1,2}|tháng\s+\d{1,2}|ngày\s+\d{1,2}|vào|tại|trong|khi|do|vì|bởi|và|hoặc|nhưng|rồi|với|là|ở|đến|của|từ)[.!?]?\s*$/gi;
   cleaned = cleaned.replace(danglingTailRegex, '').trim();
@@ -310,13 +326,13 @@ export function sanitizeSentenceBoundaries(text: string): string {
   // If text already ends with terminal punctuation (.!? optionally followed by quotes)
   if (/[.!?]["”'’]?\s*$/.test(cleaned)) {
     cleaned = cleaned.replace(/(?:,\s*|\s+)(?:vào\s+năm(?:\s+\d{1,3})?|năm\s+\d{1,2}|tháng\s+\d{1,2}|ngày\s+\d{1,2}|vào|tại|trong|khi|do|vì|bởi|và|hoặc|nhưng|rồi|với|là|ở|đến|của|từ)[.!?]\s*$/gi, '.').trim();
-    return cleaned;
+    return cleaned.replace(/__NUMDOT__/g, '.');
   }
 
   // The text does NOT end with terminal punctuation.
   // Check if there is an earlier legitimate sentence boundary:
   // - A punctuation (.!?) that is followed by whitespace and a capital letter
-  // - NOT preceded by digits (e.g. 2.9, 19.5) or common Vietnamese abbreviations (TP., GS., TS., etc.)
+  // - NOT preceded by digits or common Vietnamese abbreviations (TP., GS., TS., etc.)
   const abbrevRegex = /\b(?:TP|Tp|TpHCM|GS|PGS|TS|ThS|BS|Th|Q|H|TX|TT|tr|sđd|v\.v)\.$/i;
   const candRegex = /(?<=[^\d\s]{2,})[.!?]["”'’]?\s+(?=[A-ZÀ-Ỹ])/gu;
   let lastBoundaryEnd = -1;
@@ -332,7 +348,7 @@ export function sanitizeSentenceBoundaries(text: string): string {
   if (lastBoundaryEnd !== -1 && lastBoundaryEnd >= 20) {
     // Discard the unclosed trailing fragment, retaining only the complete sentence
     cleaned = cleaned.slice(0, lastBoundaryEnd).trim();
-    return cleaned;
+    return cleaned.replace(/__NUMDOT__/g, '.');
   }
 
   // No earlier legitimate sentence boundary found.
@@ -346,7 +362,62 @@ export function sanitizeSentenceBoundaries(text: string): string {
     cleaned = `${cleaned}.`;
   }
 
-  return cleaned;
+  return cleaned.replace(/__NUMDOT__/g, '.');
+}
+
+/**
+ * Context-aware, single-source-of-truth sentence splitter for Vietnamese historical scripts.
+ * Protects numbers with decimals and thousands separators (e.g. "230.000", "230. 000"),
+ * abbreviations (GS., PGS., TP., etc.), and heals coordinate fragments.
+ */
+export function splitSentences(text: string): string[] {
+  if (!text || typeof text !== 'string') return [];
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+
+  // 1. Prevent splitting on newlines after colons, semicolons, dashes, or dangling lists
+  let normalized = trimmed
+    .replace(/:\s*\n+/g, ': ')
+    .replace(/;\s*\n+/g, '; ')
+    .replace(/,\s*\n+/g, ', ')
+    .replace(/\n+\s*([a-zà-ỹ])/g, ' $1');
+
+  // 2. Protect numbers with decimals and thousands separators
+  normalized = normalized.replace(/(\d+)\.\s*(\d+)/g, '$1__NUMDOT__$2');
+
+  // 3. Context-Aware Abbreviation Masking
+  normalized = normalized.replace(/\b(GS|PGS|TS|ThS|TP|TX|TT|BS|Q|H|sđd|tr)\.\s+(?=[A-ZÀ-Ỹ0-9])/g, '$1__DOT__ ');
+  normalized = normalized.replace(/\b(v\.v)\.(?=\s*[,a-zà-ỹ])/gi, '$1__VVDOT__');
+
+  // 4. Split strictly on terminal punctuation (.!?) followed by whitespace or string end
+  const rawParts = normalized
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.replace(/__DOT__/g, '.').replace(/__VVDOT__/g, '.').replace(/__NUMDOT__/g, '.').trim())
+    .filter((s) => s.length > 0);
+
+  // 5. Clause boundary healing: merge dangling fragments, number remnants, and lowercase continuations
+  const healed: string[] = [];
+  for (const part of rawParts) {
+    if (healed.length > 0) {
+      const isFragment =
+        /^[a-zà-ỹ]/u.test(part) ||
+        /^(?:tiền|hậu|tả|hữu|trung quân|và|hoặc|nhưng|rồi|mà|với|cùng)(?:\s+|$)/iu.test(part) ||
+        /^\d{1,4}\s*(?:quân|người|chiến thuyền|khẩu|binh|xe|máy bay|km|dặm)/i.test(part) ||
+        part.length < 15;
+
+      const lastIdx = healed.length - 1;
+      const prev = healed[lastIdx];
+      const prevEndsWithColonOrComma = /[:;,–—]\s*$/.test(prev) || !/[.!?]$/.test(prev);
+
+      if (isFragment || prevEndsWithColonOrComma) {
+        healed[lastIdx] = `${prev} ${part}`.replace(/\s+/g, ' ').trim();
+        continue;
+      }
+    }
+    healed.push(part);
+  }
+
+  return healed.filter((s) => s.length > 5);
 }
 
 
@@ -685,6 +756,7 @@ export const GroundedClaimItemSchema = z.object({
   sourceTitle: z.string(),
   reliability: z.enum(['LEVEL_1', 'LEVEL_2', 'LEVEL_3']).default('LEVEL_1'),
   entailmentScore: z.number().min(0).max(1).default(1.0),
+  entailmentStatus: z.enum(['ENTAILED', 'CONTRADICTED', 'NOT_SUPPORTED', 'NEUTRAL']).default('ENTAILED'),
   visualAnchors: z.array(VisualAnchorSuggestionSchema).optional(),
 });
 
@@ -704,6 +776,9 @@ export const HistoricalAnswerResponseSchema = z.object({
   citations: z.array(z.string()).default([]),
   triplesUsed: z.array(GraphTripleItemSchema).default([]),
   visualAnchors: z.array(VisualAnchorSuggestionSchema).default([]),
+  faithfulnessScore: z.number().min(0).max(100).optional(),
+  citationCorrectnessScore: z.number().min(0).max(100).optional(),
+  isLowConfidence: z.boolean().optional(),
   metrics: z.object({
     retrievalLatencyMs: z.number().min(0),
     generationLatencyMs: z.number().min(0),

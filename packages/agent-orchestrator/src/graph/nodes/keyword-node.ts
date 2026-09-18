@@ -459,19 +459,20 @@ Nhiệm vụ: Phân tích voiceover của từng cảnh phim lịch sử và t�
 
 QUY TẮC BẮT BUỘC VỀ ĐA DẠNG HÓA VÀ ÁNH XẠ THỰC THỂ THỊ GIÁC (VISUAL DIVERSIFICATION & PHYSICAL MAPPING):
 1. CHỐNG ĐƠN ĐIỆU & CẤM LẶP TỪ KHÓA (ANTI-MONOTONY):
-   - TUYỆT ĐỐI KHÔNG sinh cùng một "primaryQuery" lặp đi lặp lại cho nhiều cảnh liên tiếp (ví dụ: cấm dùng "Quang Trung" hay "Trần Hưng Đạo" cho 5-10 cảnh liên tục).
+   - TUYỆT ĐỐI KHÔNG sinh cùng một "primaryQuery" lặp đi lặp lại cho nhiều cảnh liên tiếp (ví dụ: không dùng cùng tên 1 nhân vật cho 5-10 cảnh liên tục).
    - Mỗi cảnh PHẢI có một góc nhìn thị giác riêng biệt gắn liền với hành động, địa danh, hiện vật, vũ khí hoặc đối thủ được nhắc đến trong chính phân cảnh đó.
-   - Luân phiên đa dạng giữa các visualType: PORTRAIT (chân dung), BATTLE_SCENE (tranh trận chiến/phù điêu), ARTIFACT (hiện vật/vũ khí/chiếu chỉ/tiền đồng), LANDSCAPE (địa danh/phòng tuyến/đền thờ), MAP_CHRONO (bản đồ/địa đồ).
+   - Luân phiên đa dạng giữa các visualType: PORTRAIT (chân dung), BATTLE_SCENE (tranh trận chiến/phù điêu/ảnh tư liệu chiến sự), ARTIFACT (hiện vật/vũ khí/chiếu chỉ/sắc phong/văn kiện), LANDSCAPE (địa danh/phòng tuyến/căn cứ/di tích), MAP_CHRONO (bản đồ/địa đồ chiến dịch).
 
 2. CẤM TÌM KIẾM SỐ LƯỢNG TRỪU TƯỢNG (NO PURE QUANTITIES):
-   - TUYỆT ĐỐI KHÔNG xuất "primaryQuery" chỉ chứa con số hoặc số lượng lính trừu tượng như: "Quân số 10 vạn", "29 vạn quân", "100,000 soldiers", "5 đạo quân".
-   - BẮT BUỘC ánh xạ số lượng sang thực thể quân sự vật lý có thật: "Đội quân Tây Sơn", "Tượng binh voi chiến thời Tây Sơn", "Binh khí súng thần công thời Tây Sơn", "Tranh vẽ quân đội nhà Thanh Càn Long", "Bát Kỳ Mãn Thanh".
+   - TUYỆT ĐỐI KHÔNG xuất "primaryQuery" chỉ chứa con số hoặc số lượng lính trừu tượng như: "Quân số 10 vạn", "200.000 quân", "5 đạo quân".
+   - BẮT BUỘC ánh xạ số lượng sang thực thể quân sự vật lý có thật: Lực lượng quân đội cụ thể ("Đội quân [Tên quân đội/lực lượng]"), binh chủng ("Tượng binh voi chiến", "Kỵ binh", "Pháo binh"), trang bị quân sự ("Binh khí súng thần công", "Đoàn xe thồ chi viện"), hoặc tranh vẽ/ảnh tư liệu lực lượng đối phương.
 
 3. ÁNH XẠ THỰC THỂ VẬT LÝ CỤ THỂ THEO BỐI CẢNH (PHYSICAL ENTITY MAPPING):
-   - Nhân vật & Sự kiện tiểu sử cổ đại: Tranh dân gian truyền thống (Ví dụ: "Tranh dân gian Đông Hồ [Tên nhân vật / sự kiện]"), Đền thờ danh nhân ("Đền thờ [Tên danh nhân / di tích]"), hoặc Tượng thờ / Tượng đài ("Tượng đài [Tên danh nhân]").
-   - Di tích chiến trường & Phòng tuyến: Ánh xạ sang địa danh di tích cụ thể ("Phòng tuyến Tam Điệp Biện Sơn", "Di tích Gò Đống Đa", "Chiến trường Rạch Gầm Xoài Mút", "Sông Bạch Đằng").
-   - Cổ vật & Vũ khí: "Bảo tàng [Tên bảo tàng/danh nhân]", "Súng thần công Tây Sơn", "Chiếu chỉ [Tên vua]", "Tiền đồng [Niên hiệu] thông bảo".
-   - Bản đồ & Tác chiến: "Bản đồ [Địa bàn / Chiến dịch] thế kỷ [XVIII/thế kỷ tương ứng]".
+   - Nhân vật & Sự kiện tiểu sử cổ đại/trung đại: Tranh dân gian truyền thống ("Tranh dân gian [Tên nhân vật/sự kiện]"), Đền thờ danh nhân ("Đền thờ [Tên danh nhân/di tích]"), hoặc Tượng thờ / Tượng đài ("Tượng đài [Tên danh nhân]").
+   - Nhân vật & Sự kiện cận - hiện đại: Ảnh tư liệu lịch sử ("Ảnh tư liệu [Tên nhân vật/sự kiện/chiến dịch]"), Nhà lưu niệm, Căn cứ kháng chiến ("Căn cứ [Tên căn cứ]").
+   - Di tích chiến trường & Phòng tuyến: Ánh xạ sang địa danh di tích cụ thể ("Phòng tuyến [Tên địa danh]", "Di tích [Tên chiến trường/cứ điểm]", "Chiến trường [Tên chiến trường]").
+   - Cổ vật & Khí tài: "Bảo tàng [Tên bảo tàng/địa phương]", "Vũ khí [Tên vũ khí/trang bị]", "Văn kiện / Hiệp định [Tên văn kiện]".
+   - Bản đồ & Tác chiến: "Bản đồ [Địa bàn / Chiến dịch]".
 
 4. ĐỊNH DẠNG ĐẦU RA:
    - Xuất duy nhất 1 JSON object hợp lệ: { "queries": [ { "sceneId": "...", "primaryQuery": "...", "englishQuery": "...", "frenchQuery": "...", "visualType": "...", "historicalPeriod": "..." } ] }.
