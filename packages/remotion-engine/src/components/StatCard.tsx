@@ -183,15 +183,16 @@ export const StatCard: React.FC<StatCardProps> = ({
           </p>
         )}
 
-        {/* Stat Items Grid (Staggered Fade-in) */}
+        {/* Stat Items Grid (Staggered Fade-in across 16:9 width) */}
         {statItems.length > 0 && (
           <div
             style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: `${Math.round(10 * scale)}px`,
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: `${Math.round(12 * scale)}px`,
               width: '100%',
-              marginTop: `${Math.round(6 * scale)}px`,
+              marginTop: `${Math.round(10 * scale)}px`,
             }}
           >
             {statItems.map((item, idx) => {
@@ -217,6 +218,8 @@ export const StatCard: React.FC<StatCardProps> = ({
                 <div
                   key={idx}
                   style={{
+                    flex: '1 1 calc(33.333% - 12px)',
+                    minWidth: `${Math.round(130 * scale)}px`,
                     opacity: itemOpacity,
                     transform: `translateY(${itemY}px)`,
                     padding: `${Math.round(10 * scale)}px ${Math.round(14 * scale)}px`,

@@ -32,7 +32,21 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
 
   const cleanQuoteText = normalizeVietnameseText(quoteText);
   const cleanAuthor = toVietnameseUpperCase(author);
-  const cleanSubtitle = normalizeVietnameseText(subtitle);
+  const rawSubtitle = normalizeVietnameseText(subtitle);
+
+  // Prevent duplicated rendering between badge, quote text, and author subtext
+  const isSubtitleRedundant =
+    !rawSubtitle ||
+    rawSubtitle.toLowerCase().trim() === cleanQuoteText.toLowerCase().trim() ||
+    cleanQuoteText.toLowerCase().includes(rawSubtitle.toLowerCase().slice(0, 25)) ||
+    rawSubtitle.toLowerCase().includes(cleanQuoteText.toLowerCase().slice(0, 25));
+
+  // Category Stamp Text for the Red Seal Badge
+  const stampBadgeText = isSubtitleRedundant
+    ? 'TRÍCH DẪN SỬ LIỆU'
+    : (rawSubtitle.length > 36 ? `${rawSubtitle.slice(0, 33)}...` : rawSubtitle);
+
+  const shouldRenderAuthorSubtext = !isSubtitleRedundant && rawSubtitle.length <= 50;
 
   // Dimming background progress
   const bgOpacity = interpolate(frame, [0, 15], [0.3, 0.55], { extrapolateRight: 'clamp' });
@@ -102,7 +116,7 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
         }}
       >
         {/* Vietnamese Red Seal Stamp Badge (Con dấu Triện Son) */}
-        {cleanSubtitle && (
+        {stampBadgeText && (
           <div
             style={{
               fontFamily: activeFont,
@@ -119,7 +133,7 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
               boxShadow: 'inset 0 0 4px rgba(155, 27, 27, 0.25)',
             }}
           >
-            【 {cleanSubtitle} 】
+            【 {stampBadgeText} 】
           </div>
         )}
 
@@ -180,7 +194,7 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
           </span>
         )}
 
-        {cleanSubtitle && (
+        {shouldRenderAuthorSubtext && (
           <span
             style={{
               fontFamily: activeFont,
@@ -191,7 +205,7 @@ export const QuoteSlide: React.FC<QuoteSlideProps> = ({
               letterSpacing: '0.5px',
             }}
           >
-            ({cleanSubtitle})
+            ({rawSubtitle})
           </span>
         )}
       </div>

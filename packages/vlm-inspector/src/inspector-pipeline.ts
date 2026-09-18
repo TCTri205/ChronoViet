@@ -4,10 +4,13 @@
  */
 
 import {
+  DOMAIN_LAYOUT_WHITELIST,
   LayoutMode,
   LicenseTypeSchema,
   SceneGeneration,
+  VideoType,
   VisualCandidate,
+  isPureCodeLayout,
 } from '@chronoviet/shared-spec';
 import { createLogger, envConfig } from '@chronoviet/infra';
 import { z } from 'zod';
@@ -27,14 +30,14 @@ export function isWhitelistedLicense(licenseString: string): boolean {
     normalized.includes('ND') ||
     normalized.includes('NO_DERIVS') ||
     normalized.includes('ALL_RIGHTS_RESERVED') ||
-    normalized.includes('COPYRIGHT_STRICT') ||
-    normalized === 'UNKNOWN'
+    normalized.includes('UNKNOWN')
   ) {
     return false;
   }
 
   return (
     normalized.includes('PUBLIC_DOMAIN') ||
+    normalized.includes('PUBLIC') ||
     normalized.includes('CC0') ||
     normalized.includes('ZERO') ||
     normalized.includes('PD') ||
@@ -45,18 +48,12 @@ export function isWhitelistedLicense(licenseString: string): boolean {
 
 const log = createLogger({ service: 'vlm-inspector' });
 
-const PURE_CODE_LAYOUT_ROTATION: LayoutMode[] = [
-  'TIMELINE_CHRONO',
-  'QUOTE_SLIDE',
-  'STAT_CARD',
-  'VERSUS_CARD',
-  'POEM_RECITING',
-  'CHAPTER_CARD',
-];
-
 export interface InspectSceneOptions {
   customBaseDir?: string;
   correlationId?: string;
+  usedAssetHashes?: Set<string>;
+  preferSemanticLayout?: boolean;
+  videoType?: VideoType;
 }
 
 export interface InspectSceneResult {
@@ -75,12 +72,79 @@ export function getProvenanceRank(c: VisualCandidate): number {
   return 3;
 }
 
+export function inferSemanticPureCodeLayout(
+  text: string,
+  fallbackIdx: number = 0,
+  videoType?: VideoType
+): LayoutMode {
+  const lower = (text || '').toLowerCase();
+  const allowedPool = videoType && DOMAIN_LAYOUT_WHITELIST[videoType]
+    ? new Set(DOMAIN_LAYOUT_WHITELIST[videoType])
+    : null;
+
+  // 1. Direct speech, proclamation or historical quote
+  if (/["“'‘][^"”'’\n]{5,300}["”'’]|hịch tướng sĩ|bình ngô đại cáo|tuyên ngôn|lời thề|lời dặn|khẳng định rằng|lời nói của|chiếu chỉ|dụ rằng|nói với/i.test(text)) {
+    if (!allowedPool || allowedPool.has('QUOTE_SLIDE')) {
+      return 'QUOTE_SLIDE';
+    }
+  }
+
+  // 2. Comparison / Versus confrontation (strictly forbidden if not in domain whitelist)
+  if (/so với|đối đầu|hai bên|tương quan lực lượng|địch và ta|quân ta.*quân địch|thủy chiến.*bộ chiến|đại phá quân|đánh tan.*quân/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('VERSUS_CARD')) {
+      return 'VERSUS_CARD';
+    }
+  }
+
+  // 2b. Character Profile (Exclusive for BIOGRAPHY when introducing identity, birth, titles, roles, or aliases)
+  if (videoType === 'BIOGRAPHY' && /sinh ra tại|quê quán|tên khai sinh|tên thật là|thân phụ|thân mẫu|thuở nhỏ|bí danh|danh xưng|chức vụ|tổng bí thư|chủ tịch nước|lãnh tụ/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('CHARACTER_PROFILE')) {
+      return 'CHARACTER_PROFILE';
+    }
+  }
+
+  // 3. Explicit quantifiable standalone statistics
+  if (/(?:thống kê|con số|tổng kết|thiệt hại|tổn thất|quân số lên tới|tổng cộng|lực lượng gồm có|huy động tổng cộng|quân số gồm|quy mô lực lượng):\s*\d+/i.test(text) ||
+      /^\s*(?:quân số|lực lượng|thiệt hại|tổn thất|quy mô)\s*:\s*\d+/i.test(text) ||
+      /(?:thiệt hại|tổn thất|quân số)\s*(?:lên tới|ước tính|khoảng)\s*\d+\s*(?:vạn|nghìn|triệu|người|chiến thuyền)/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('STAT_CARD')) {
+      return 'STAT_CARD';
+    }
+  }
+
+  // 4. Chronological progression / Milestones / Chronological range
+  if (/(?:tiến trình lịch sử|giai đoạn then chốt|bước ngoặt thời kỳ|mốc thời gian|từ năm\s+\d+.*đến\s+năm\s+\d+|giai đoạn\s+\d+[\s–—\-]+\d+)/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('TIMELINE_CHRONO')) {
+      return 'TIMELINE_CHRONO';
+    }
+  }
+
+  // 5. Default fallback round-robin across domain-whitelisted pure code layouts
+  const domainLayouts: LayoutMode[] = videoType && DOMAIN_LAYOUT_WHITELIST[videoType]
+    ? DOMAIN_LAYOUT_WHITELIST[videoType].filter((l): l is LayoutMode => isPureCodeLayout(l))
+    : ['CHARACTER_PROFILE', 'TIMELINE_CHRONO', 'STAT_CARD'];
+  const fallbackList: LayoutMode[] = domainLayouts.length > 0
+    ? domainLayouts
+    : ['CHARACTER_PROFILE', 'TIMELINE_CHRONO', 'STAT_CARD'];
+
+  return fallbackList[Math.abs(fallbackIdx) % fallbackList.length];
+}
+
+export function isCandidateAlreadyUsed(cand: VisualCandidate, usedAssetHashes?: Set<string>): boolean {
+  if (!usedAssetHashes || usedAssetHashes.size === 0) return false;
+  return Boolean(
+    (cand.sha256 && usedAssetHashes.has(cand.sha256)) ||
+    (cand.imageUrl && usedAssetHashes.has(cand.imageUrl)) ||
+    (cand.localPath && usedAssetHashes.has(cand.localPath))
+  );
+}
+
 async function evaluateSingleCandidate(
   cand: VisualCandidate,
   voiceoverText: string,
   batchNumber: 1 | 2,
   qualityGate: VisualQualityGate,
-  context: { correlationId?: string; sceneId?: string; projectId?: string; targetAspectRatio?: string } = {}
+  context: { correlationId?: string; sceneId?: string; projectId?: string; targetAspectRatio?: string; isUsed?: boolean } = {}
 ): Promise<{ evaluated: VisualCandidate; passed: boolean }> {
   // 1. Technical Visual Quality Gate (Resolution & Aspect Ratio Check) (Layer 2)
   if (cand.localPath) {
@@ -132,7 +196,10 @@ async function evaluateSingleCandidate(
     );
 
     const scoreThreshold = envConfig.VLM_SCORE_THRESHOLD ?? 60;
-    const passed = scoreResult.passed && (scoreResult.totalScore >= scoreThreshold);
+    // Apply frequency penalty if asset has already been used in an earlier scene
+    const usedPenalty = context.isUsed ? 35 : 0;
+    const finalScore = Math.max(0, scoreResult.totalScore - usedPenalty);
+    const passed = scoreResult.passed && (finalScore >= scoreThreshold);
 
     return {
       evaluated: {
@@ -143,7 +210,7 @@ async function evaluateSingleCandidate(
           historicalContextScore: scoreResult.historicalContextScore,
           visualNoiseScore: scoreResult.visualNoiseScore,
           artisticFitScore: scoreResult.artisticFitScore,
-          overallScore: scoreResult.totalScore,
+          overallScore: finalScore,
           scorerType: scoreResult.scorerType,
         },
         verdict: passed ? 'PASS' : 'REJECT',
@@ -193,10 +260,19 @@ export async function inspectSceneVisuals(
   });
 
   const qualityGate = new VisualQualityGate();
-  const getPureCodeLayout = () => {
+  const getPureCodeLayout = (): LayoutMode => {
+    if (options.preferSemanticLayout) {
+      return inferSemanticPureCodeLayout(scene.voiceoverText, scene.sceneIndex ?? 0, options.videoType);
+    }
     const rawIndex = scene.sceneIndex ?? 0;
-    const rotationIndex = Math.abs(rawIndex) % PURE_CODE_LAYOUT_ROTATION.length;
-    return PURE_CODE_LAYOUT_ROTATION[rotationIndex];
+    const domainPureCode: LayoutMode[] = options.videoType && DOMAIN_LAYOUT_WHITELIST[options.videoType]
+      ? DOMAIN_LAYOUT_WHITELIST[options.videoType].filter((l): l is LayoutMode => isPureCodeLayout(l))
+      : ['TIMELINE_CHRONO', 'QUOTE_SLIDE', 'STAT_CARD'];
+    const rotationPool: LayoutMode[] = domainPureCode.length > 0
+      ? domainPureCode
+      : ['TIMELINE_CHRONO', 'STAT_CARD'];
+    const rotationIndex = Math.abs(rawIndex) % rotationPool.length;
+    return rotationPool[rotationIndex];
   };
 
   if (!candidatePool || candidatePool.length === 0) {
@@ -269,8 +345,17 @@ export async function inspectSceneVisuals(
     };
   }
 
-  // 2. Sort candidate pool by provenance: catalog > wikimedia > web search
-  whitelistedCandidates.sort((a, b) => getProvenanceRank(a) - getProvenanceRank(b));
+  // 2. Sort candidate pool by provenance: catalog > wikimedia > web search,
+  // deprioritizing candidates already selected in earlier scenes
+  whitelistedCandidates.sort((a, b) => {
+    const aUsed = isCandidateAlreadyUsed(a, options.usedAssetHashes);
+    const bUsed = isCandidateAlreadyUsed(b, options.usedAssetHashes);
+
+    if (aUsed !== bUsed) {
+      return aUsed ? 1 : -1;
+    }
+    return getProvenanceRank(a) - getProvenanceRank(b);
+  });
 
   const downloadOpts = {
     customBaseDir: options.customBaseDir,
@@ -285,16 +370,19 @@ export async function inspectSceneVisuals(
     targetAspectRatio: (scene as any).aspectRatio,
   };
 
-  // 3. Lazy Sequential VLM Curation (Evaluate candidate #1..#4 lazily; stopping as soon as one candidate passes)
+  // 3. Lazy Sequential VLM Curation (Evaluate candidate #1..#8 lazily; stopping when an unused candidate passes)
   const inspected: VisualCandidate[] = [...rejectedByLicense];
   let selectedCandidate: VisualCandidate | undefined = undefined;
+  let backupUsedCandidate: VisualCandidate | undefined = undefined;
 
-  // We evaluate up to 3 candidates lazily
-  const candidatesToTry = whitelistedCandidates.slice(0, 3);
+  // We evaluate all whitelisted candidates (up to 8 candidates) lazily
+  const maxCandidatesToTry = Math.min(8, whitelistedCandidates.length);
+  const candidatesToTry = whitelistedCandidates.slice(0, maxCandidatesToTry);
 
   for (let idx = 0; idx < candidatesToTry.length; idx++) {
     const cand = candidatesToTry[idx];
     const batchNum = (idx < 2 ? idx + 1 : 2) as 1 | 2;
+    const isAlreadyUsed = isCandidateAlreadyUsed(cand, options.usedAssetHashes);
 
     // Download active candidate only
     let downloadedCand = cand;
@@ -325,32 +413,64 @@ export async function inspectSceneVisuals(
       scene.voiceoverText,
       batchNum,
       qualityGate,
-      evalContext
+      {
+        ...evalContext,
+        isUsed: isAlreadyUsed,
+      }
     );
 
     inspected.push(evaluated);
 
     if (passed) {
-      selectedCandidate = evaluated;
-      log.debug('vlm.lazy_curation_passed', `Candidate ${evaluated.candidateId} passed with score ${evaluated.score?.overallScore}; stopping sequential evaluation`, {
-        sceneId: scene.sceneId,
-        candidateId: evaluated.candidateId,
-        score: evaluated.score?.overallScore,
-      });
-      break; // Lazy stop! Candidate #1 succeeded, no need to download or evaluate candidate #2.
+      if (!isAlreadyUsed) {
+        selectedCandidate = evaluated;
+        if (options.usedAssetHashes) {
+          if (evaluated.sha256) options.usedAssetHashes.add(evaluated.sha256);
+          if (evaluated.imageUrl) options.usedAssetHashes.add(evaluated.imageUrl);
+          if (evaluated.localPath) options.usedAssetHashes.add(evaluated.localPath);
+        }
+        log.debug('vlm.lazy_curation_passed', `Candidate ${evaluated.candidateId} passed (fresh, unused) with score ${evaluated.score?.overallScore}; stopping sequential evaluation`, {
+          sceneId: scene.sceneId,
+          candidateId: evaluated.candidateId,
+          score: evaluated.score?.overallScore,
+        });
+        break; // Stop immediately on fresh passing candidate!
+      } else if (!backupUsedCandidate) {
+        backupUsedCandidate = evaluated;
+        log.debug('vlm.used_candidate_backup', `Candidate ${evaluated.candidateId} passed with frequency penalty; holding as backup while seeking fresh candidate`, {
+          sceneId: scene.sceneId,
+          candidateId: evaluated.candidateId,
+          score: evaluated.score?.overallScore,
+        });
+      }
+    }
+  }
+
+  if (!selectedCandidate && backupUsedCandidate) {
+    selectedCandidate = backupUsedCandidate;
+    if (options.usedAssetHashes) {
+      if (selectedCandidate.sha256) options.usedAssetHashes.add(selectedCandidate.sha256);
+      if (selectedCandidate.imageUrl) options.usedAssetHashes.add(selectedCandidate.imageUrl);
+      if (selectedCandidate.localPath) options.usedAssetHashes.add(selectedCandidate.localPath);
     }
   }
 
   // Check if any candidate was successfully selected
   const isPureCodeFallback = !selectedCandidate;
-  const finalLayoutMode = isPureCodeFallback ? getPureCodeLayout() : scene.layoutMode;
+  let finalLayoutMode: LayoutMode;
 
   if (isPureCodeFallback) {
+    finalLayoutMode = getPureCodeLayout();
     log.warn('vlm.pure_code_fallback', `All evaluated candidates failed; falling back to PURE_CODE Layout: ${finalLayoutMode}`, {
       sceneId: scene.sceneId,
       finalLayoutMode,
       correlationId: options.correlationId,
     });
+  } else {
+    // If candidate succeeded and original layout was pure code or missing, promote to HISTORICAL_FRAME
+    finalLayoutMode = (!scene.layoutMode || isPureCodeLayout(scene.layoutMode))
+      ? 'HISTORICAL_FRAME'
+      : scene.layoutMode;
   }
 
   const updatedScene: SceneGeneration = {

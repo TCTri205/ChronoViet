@@ -129,6 +129,7 @@ let pgConnected = Boolean(chronoGlobal.__chronoviet_pg_connected__);
 let checkAttempted = false;
 let lastCheckTime = 0;
 const NEGATIVE_CACHE_TTL_MS = 1500;
+let inFlightCheck: Promise<boolean> | null = null;
 
 export function getPoolConfig() {
   const db = getDatabaseConfig();
@@ -161,63 +162,75 @@ export async function isPgAvailable(forceCheck = false): Promise<boolean> {
     pgPool = chronoGlobal.__chronoviet_pg_pool__ || null;
     return true;
   }
+
+  // Deduplicate concurrent connection attempts (Single-Flight Pattern)
+  if (inFlightCheck && !forceCheck) {
+    return inFlightCheck;
+  }
+
   if (!pgConnected && checkAttempted && !forceCheck && now - lastCheckTime < NEGATIVE_CACHE_TTL_MS) {
     return false;
   }
 
-  checkAttempted = true;
-  lastCheckTime = now;
+  inFlightCheck = (async () => {
+    checkAttempted = true;
+    lastCheckTime = Date.now();
 
-  const cfg = getPoolConfig();
-  const timeoutMs = Math.max(2000, envConfig.PG_CONNECTION_TIMEOUT_MS || 5000);
-  try {
-    if (!chronoGlobal.__chronoviet_pg_pool__) {
-      const newPool = new Pool({ ...cfg, connectionTimeoutMillis: timeoutMs });
-      newPool.on('error', () => {
-        pgConnected = false;
-        chronoGlobal.__chronoviet_pg_connected__ = false;
-      });
-      chronoGlobal.__chronoviet_pg_pool__ = newPool;
-    }
-    pgPool = chronoGlobal.__chronoviet_pg_pool__;
+    const cfg = getPoolConfig();
+    const timeoutMs = Math.max(2000, envConfig.PG_CONNECTION_TIMEOUT_MS || 5000);
+    try {
+      if (!chronoGlobal.__chronoviet_pg_pool__) {
+        const newPool = new Pool({ ...cfg, connectionTimeoutMillis: timeoutMs });
+        newPool.on('error', () => {
+          pgConnected = false;
+          chronoGlobal.__chronoviet_pg_connected__ = false;
+        });
+        chronoGlobal.__chronoviet_pg_pool__ = newPool;
+      }
+      pgPool = chronoGlobal.__chronoviet_pg_pool__;
 
-    const client = await Promise.race([
-      pgPool.connect(),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('PG Timeout')), timeoutMs)),
-    ]);
+      const client = await Promise.race([
+        pgPool.connect(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('PG Timeout')), timeoutMs)),
+      ]);
 
-    await client.query('SELECT 1');
-    client.release();
-    const wasConnected = pgConnected;
-    pgConnected = true;
-    chronoGlobal.__chronoviet_pg_connected__ = true;
-    if (!wasConnected) {
-      log.info('db.pg_connected', 'PostgreSQL connection established', {
-        host: cfg.host,
-        database: cfg.database,
-      });
-    } else {
-      log.debug('db.pg_health_check_ok', 'PostgreSQL routine health check passed');
+      await client.query('SELECT 1');
+      client.release();
+      const wasConnected = pgConnected;
+      pgConnected = true;
+      chronoGlobal.__chronoviet_pg_connected__ = true;
+      if (!wasConnected) {
+        log.info('db.pg_connected', 'PostgreSQL connection established', {
+          host: cfg.host,
+          database: cfg.database,
+        });
+      } else {
+        log.debug('db.pg_health_check_ok', 'PostgreSQL routine health check passed');
+      }
+    } catch (err) {
+      const wasConnected = pgConnected;
+      pgConnected = false;
+      chronoGlobal.__chronoviet_pg_connected__ = false;
+      if (wasConnected || !checkAttempted) {
+        log.warn('db.pg_unavailable', 'PostgreSQL unavailable; falling back to in-memory store', {
+          error: err,
+          host: cfg.host,
+          database: cfg.database,
+        });
+      }
+      if (chronoGlobal.__chronoviet_pg_pool__) {
+        const poolToClose = chronoGlobal.__chronoviet_pg_pool__;
+        chronoGlobal.__chronoviet_pg_pool__ = null;
+        pgPool = null;
+        poolToClose.end().catch(() => {});
+      }
     }
-  } catch (err) {
-    const wasConnected = pgConnected;
-    pgConnected = false;
-    chronoGlobal.__chronoviet_pg_connected__ = false;
-    if (wasConnected || !checkAttempted) {
-      log.warn('db.pg_unavailable', 'PostgreSQL unavailable; falling back to in-memory store', {
-        error: err,
-        host: cfg.host,
-        database: cfg.database,
-      });
-    }
-    if (chronoGlobal.__chronoviet_pg_pool__) {
-      const poolToClose = chronoGlobal.__chronoviet_pg_pool__;
-      chronoGlobal.__chronoviet_pg_pool__ = null;
-      pgPool = null;
-      poolToClose.end().catch(() => {});
-    }
-  }
-  return pgConnected;
+    return pgConnected;
+  })().finally(() => {
+    inFlightCheck = null;
+  });
+
+  return inFlightCheck;
 }
 
 export async function query<T = unknown>(text: string, params?: unknown[]): Promise<T[]> {
@@ -318,4 +331,47 @@ export async function logEntityAuditAction(
 export function getDatabaseClient(): Pool | null {
   return chronoGlobal.__chronoviet_pg_pool__ || pgPool;
 }
+
+export async function ensureConversationExists(
+  conversationId: string,
+  title?: string,
+  mode = 'RESEARCH'
+): Promise<boolean> {
+  if (!conversationId) return false;
+  const now = new Date().toISOString();
+  const safeTitle = (title || 'Phiên tra cứu lịch sử').slice(0, 100);
+
+  const available = await isPgAvailable();
+  if (available && pgPool) {
+    try {
+      await query(
+        `INSERT INTO conversations (id, title, mode, metadata, created_at, updated_at)
+         VALUES ($1, $2, $3, '{}'::jsonb, $4, $4)
+         ON CONFLICT (id) DO UPDATE SET updated_at = EXCLUDED.updated_at`,
+        [conversationId, safeTitle, mode, now]
+      );
+      return true;
+    } catch (err: any) {
+      log.warn('db.ensure_conversation_failed', `Failed to upsert conversation: ${err.message}`, {
+        conversationId,
+        error: err.message,
+      });
+      return false;
+    }
+  }
+
+  // Fallback to in-memory store
+  if (!inMemoryStore.conversations.has(conversationId)) {
+    inMemoryStore.conversations.set(conversationId, {
+      id: conversationId,
+      title: safeTitle,
+      mode,
+      metadata: {},
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  return true;
+}
+
 

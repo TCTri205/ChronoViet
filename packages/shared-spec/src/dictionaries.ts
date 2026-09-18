@@ -353,7 +353,7 @@ export interface CanonicalDynastyBound {
 }
 
 export const CANONICAL_DYNASTY_BOUNDS: CanonicalDynastyBound[] = [
-  { dynastyKey: 'hung_vuong', name: 'Thời kỳ Hùng Vương / Văn Lang', aliases: ['hùng vương', 'hồng bàng', 'văn lang', 'hùng công'], startYear: -2879, endYear: -258 },
+  { dynastyKey: 'hung_vuong', name: 'Thời kỳ Hùng Vương / Văn Lang', aliases: ['hùng vương', 'vua hùng', 'hồng bàng', 'văn lang', 'hùng công'], startYear: -2879, endYear: -258 },
   { dynastyKey: 'au_lac', name: 'Nhà nước Âu Lạc', aliases: ['âu lạc', 'an dương vương', 'thục phán'], startYear: -257, endYear: -180 },
   { dynastyKey: 'bac_thuoc', name: 'Thời kỳ Bắc thuộc', aliases: ['bắc thuộc', 'thời kỳ bắc thuộc', 'nghìn năm bắc thuộc', 'đô hộ'], startYear: -179, endYear: 938 },
   { dynastyKey: 'hai_ba_trung', name: 'Trưng Nữ Vương', aliases: ['hai bà trưng', 'trưng nữ vương', 'trưng trắc', 'trưng nhị'], startYear: 40, endYear: 43 },

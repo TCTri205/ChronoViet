@@ -13,6 +13,7 @@ import {
   query,
   isPgAvailable,
   inMemoryStore,
+  ensureConversationExists,
 } from '@chronoviet/infra';
 import { ChatTurnContext } from '../chat/query-rewriter.js';
 
@@ -173,6 +174,12 @@ export async function compileChatToVideoBrief(
   // Persist to database (PostgreSQL with in-memory fallback)
   const pgUp = await isPgAvailable();
   if (pgUp) {
+    if (brief.conversationId) {
+      await ensureConversationExists(brief.conversationId, brief.topic).catch((err) =>
+        log.warn('brief.ensure_conv_failed', `Could not ensure conversation ${brief.conversationId}: ${err.message}`)
+      );
+    }
+
     try {
       await query(
         `INSERT INTO video_briefs (
@@ -203,6 +210,42 @@ export async function compileChatToVideoBrief(
       );
       log.info('brief.persisted_pg', `Saved video brief ${brief.id} to PostgreSQL`, { briefId: brief.id });
     } catch (err: any) {
+      // Graceful FK Fallback: If conversation_id is still rejected by FK constraint, persist with conversation_id=null
+      if (err.message && err.message.includes('foreign key constraint') && brief.conversationId) {
+        log.warn('brief.pg_fk_retry_null', `Retrying video_briefs write with conversation_id=null due to FK constraint`, { briefId: brief.id });
+        try {
+          await query(
+            `INSERT INTO video_briefs (
+              id, conversation_id, project_id, topic, summary, key_entities, citations,
+              target_duration_sec, aspect_ratio, narrative_tone, created_at
+            ) VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ON CONFLICT (id) DO UPDATE SET
+              topic = EXCLUDED.topic,
+              summary = EXCLUDED.summary,
+              key_entities = EXCLUDED.key_entities,
+              citations = EXCLUDED.citations,
+              target_duration_sec = EXCLUDED.target_duration_sec,
+              aspect_ratio = EXCLUDED.aspect_ratio,
+              narrative_tone = EXCLUDED.narrative_tone`,
+            [
+              brief.id,
+              brief.projectId,
+              brief.topic,
+              brief.summary,
+              JSON.stringify(brief.keyEntities),
+              JSON.stringify(brief.citations),
+              brief.targetDurationSec,
+              brief.aspectRatio,
+              brief.narrativeTone,
+              brief.createdAt,
+            ]
+          );
+          log.info('brief.persisted_pg_null_fallback', `Saved video brief ${brief.id} to PostgreSQL with conversation_id=null`, { briefId: brief.id });
+          return brief;
+        } catch (retryErr: any) {
+          log.warn('brief.pg_retry_failed', `Retry writing video brief failed: ${retryErr.message}`);
+        }
+      }
       log.warn('brief.pg_persist_failed', `Failed to write video brief to PostgreSQL: ${err.message}`, { error: err.message });
       inMemoryStore.videoBriefs.set(brief.id, brief);
     }

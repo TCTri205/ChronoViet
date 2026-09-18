@@ -4,7 +4,7 @@
  */
 
 import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
-import { CANONICAL_DYNASTY_BOUNDS } from '@chronoviet/shared-spec';
+import { CANONICAL_DYNASTY_BOUNDS, validateAdministrativeContainment } from '@chronoviet/shared-spec';
 
 export interface NliJudgeRequest {
   scriptClaim: string;
@@ -29,6 +29,91 @@ export const VIETNAMESE_STOP_WORDS = new Set([
   'không', 'có', 'là', 'được', 'bị', 'từ', 'đến', 'cùng', 'giữa', 'này',
   'như', 'đó', 'thì', 'mà', 'vì', 'do', 'bởi', 'để', 'nên', 'rất',
 ]);
+
+/**
+ * Legitimate retrospective / genealogical / memorial markers in Vietnamese historiography
+ */
+export const LEGITIMATE_RETROSPECTIVE_MARKERS = [
+  'dòng dõi',
+  'hậu duệ',
+  'con cháu',
+  'nguồn cội',
+  'gốc tích',
+  'gốc gác',
+  'tổ tiên',
+  'tiền nhân',
+  'cha ông',
+  'tiếp nối',
+  'kế thừa',
+  'kế tục',
+  'nối nghiệp',
+  'noi gương',
+  'học tập',
+  'từ thời',
+  'thời kỳ',
+  'thuở',
+  'thuở xưa',
+  'ngàn xưa',
+  'như',
+  'khác với',
+  'tương tự',
+  'tưởng nhớ',
+  'nhớ ơn',
+  'thờ phụng',
+  'di tích',
+  'dấu tích',
+  'di sản',
+  'truyền thống',
+  'dựng nước',
+  'cũ',
+  'thuộc',
+  'vùng đất',
+  'lãnh thổ',
+  'thuở trước',
+  'xưa kia',
+] as const;
+
+/**
+ * Evaluates whether a mention of an out-of-epoch historical dynasty/monarch
+ * is a legitimate genealogical, retrospective, comparative, or memorial reference.
+ */
+export function isLegitimateHistoricalReference(textLower: string, matchedAlias: string): boolean {
+  if (!textLower || !matchedAlias) return false;
+  const aliasLower = matchedAlias.toLowerCase();
+  if (!textLower.includes(aliasLower)) return false;
+
+  // 1. Split into clauses to evaluate clause-level semantic anchoring
+  const clauses = textLower.split(/[,.;:!?\n()\-–—]/);
+  for (const rawClause of clauses) {
+    const clause = rawClause.trim();
+    if (!clause.includes(aliasLower)) continue;
+    for (const marker of LEGITIMATE_RETROSPECTIVE_MARKERS) {
+      if (clause.includes(marker)) {
+        return true;
+      }
+    }
+  }
+
+  // 2. Proximity window check (within 60 characters before or after alias)
+  const escapedAlias = aliasLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const markerRegexPart = LEGITIMATE_RETROSPECTIVE_MARKERS.map((m) =>
+    m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  ).join('|');
+
+  // Preceding marker window: e.g. "kế thừa truyền thống hào hùng thời ... Hùng Vương"
+  const precedingRegex = new RegExp(`(?:${markerRegexPart})\\s+[^.!?\\n]{0,60}\\b${escapedAlias}\\b`, 'i');
+  if (precedingRegex.test(textLower)) {
+    return true;
+  }
+
+  // Trailing marker window: e.g. "Hùng Vương ... thuở xưa"
+  const trailingRegex = new RegExp(`\\b${escapedAlias}\\b\\s+[^.!?\\n]{0,60}(?:${markerRegexPart})`, 'i');
+  if (trailingRegex.test(textLower)) {
+    return true;
+  }
+
+  return false;
+}
 
 /**
  * Extracts historical calendar years and time bounds from text.
@@ -174,8 +259,7 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
       const matchedAlias = dyn.aliases.find((a) => claimLower.includes(a.toLowerCase()));
       if (matchedAlias) {
         if (dyn.endYear < minGtYear - 50 || dyn.startYear > maxGtYear + 50) {
-          const comparativeRegex = new RegExp(`(?:như|kế thừa|tiếp nối|từ thời|khác với)\\s+(?:thời kỳ\\s+)?${matchedAlias}`, 'i');
-          if (!comparativeRegex.test(claimLower)) {
+          if (!isLegitimateHistoricalReference(claimLower, matchedAlias)) {
             dynastyAnomalyPenalty = 0.50;
             dynastyAnomalyMsg = ` [Dynasty Anomaly: out-of-epoch dynasty '${dyn.name}' (${matchedAlias}) deviates > 50 years from epoch bounds ${minGtYear}-${maxGtYear}]`;
             break;
@@ -185,8 +269,17 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
     }
   }
 
-  const totalAnomalyPenalty = Math.max(chronologicalPenalty, dynastyAnomalyPenalty);
-  const anomalyMsg = `${chronologicalAnomalyMsg}${dynastyAnomalyMsg}`;
+  // Geographic / Administrative Containment Check
+  let geoAnomalyPenalty = 0;
+  let geoAnomalyMsg = '';
+  const geoResult = validateAdministrativeContainment(request.scriptClaim);
+  if (!geoResult.valid) {
+    geoAnomalyPenalty = 0.50;
+    geoAnomalyMsg = ` [Geographic Anomaly: ${geoResult.reason}]`;
+  }
+
+  const totalAnomalyPenalty = Math.max(chronologicalPenalty, dynastyAnomalyPenalty, geoAnomalyPenalty);
+  const anomalyMsg = `${chronologicalAnomalyMsg}${dynastyAnomalyMsg}${geoAnomalyMsg}`;
   const entailmentScore = Math.max(0.1, Number((rawEntailmentScore - totalAnomalyPenalty).toFixed(2)));
   const isHallucinated = entailmentScore < 0.80;
 
@@ -197,7 +290,7 @@ export function evaluateNliEntailmentScore(request: NliJudgeRequest): NliJudgeRe
     isHallucinated,
     verdict,
     explanation: isHallucinated
-      ? `Entailment score ${entailmentScore} < 0.80 threshold. Claim may contain unverified statements or epoch mismatch.${anomalyMsg}`
+      ? `Entailment score ${entailmentScore} < 0.80 threshold. Claim may contain unverified statements, geographic contradiction or epoch mismatch.${anomalyMsg}`
       : `Entailment score ${entailmentScore} >= 0.80 threshold.`,
   };
 }

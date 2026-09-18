@@ -123,36 +123,55 @@ export function normalizeVietnameseTextForSpeech(rawText: string): string {
 
   let text = rawText;
 
+  // 0. Clean Wikipedia Headers and Reference Citations
+  text = text.replace(/={2,5}[^=\n]+={2,5}/g, ' ');
+  text = text.replace(/\[\d+\]/g, ' ');
+  text = text.replace(/\[(?:cần dẫn nguồn|nguồn|sđd|tr\.)[^\]]*\]/gi, ' ');
+
   // 1. Expand Historical & Administrative Abbreviations (O(1) Token Replacement)
   text = text.replace(ABBREVIATIONS_REGEX, (m) => ABBREVIATIONS_MAP[m] || ABBREVIATIONS_MAP[m.replace(/\s+/g, ' ')] || m);
 
-  // 2. Expand Centuries with Roman Numerals (e.g. "thế kỷ XIII" -> "thế kỷ mười ba")
+  // 2. Expand Date with Slashes (e.g. "12/5/1284" -> "ngày 12 tháng 5 năm 1284", "tháng 3/1284" -> "tháng 3 năm 1284")
+  text = text.replace(/\b(\d{1,2})\/(\d{1,2})\/(\d{1,4})\b/g, 'ngày $1 tháng $2 năm $3');
+  text = text.replace(/\b(tháng|Tháng)\s*(\d{1,2})\/(\d{1,4})\b/g, '$1 $2 năm $3');
+  text = text.replace(/\b(ngày|Ngày)\s*(\d{1,2})\/(\d{1,2})\b/g, '$1 $2 tháng $3');
+  text = text.replace(/\b(\d{3,4})\/(\d{3,4})\b/g, '$1 đến năm $2');
+
+  // Replace any remaining stray slashes between words
+  text = text.replace(/(?<=\S)\/(?=\S)/g, ' và ');
+  text = text.replace(/\//g, ' ');
+
+  // Clean dangling quotes and ellipses
+  text = text.replace(/["“”'«»]/g, ' ');
+  text = text.replace(/\.{2,}|\u2026/g, '.');
+
+  // 3. Expand Centuries with Roman Numerals (e.g. "thế kỷ XIII" -> "thế kỷ mười ba")
   text = text.replace(/\b(thế\s+kỷ|thế\s+kỉ|Thế\s+kỷ|Thế\s+kỉ)\s+([IVXLCDM]+)\b/g, (_, prefix, roman) => {
     const upper = roman.toUpperCase();
     const spoken = ROMAN_CENTURY_MAP[upper];
     return spoken ? `${prefix} ${spoken}` : `${prefix} ${roman}`;
   });
 
-  // 3. Expand Centuries with Digits (e.g. "thế kỷ 13" -> "thế kỷ mười ba")
+  // 4. Expand Centuries with Digits (e.g. "thế kỷ 13" -> "thế kỷ mười ba")
   text = text.replace(/\b(thế\s+kỷ|thế\s+kỉ|Thế\s+kỷ|Thế\s+kỉ)\s+(\d+)\b/g, (_, prefix, digits) => {
     const num = parseInt(digits, 10);
     return `${prefix} ${numberToVietnameseWords(num)}`;
   });
 
-  // 4. Expand Specific Historical Years (e.g. "năm 1789" -> "năm một nghìn bảy trăm tám mươi chín")
+  // 5. Expand Specific Historical Years (e.g. "năm 1789" -> "năm một nghìn bảy trăm tám mươi chín")
   text = text.replace(/\b(năm|năm\s+đoán|Năm|Năm\s+đoán)\s+(\d{1,4})\b/g, (_, prefix, yearDigits) => {
     const year = parseInt(yearDigits, 10);
     return `${prefix} ${numberToVietnameseWords(year)}`;
   });
 
-  // 5. Expand Standalone Numbers
+  // 6. Expand Standalone Numbers
   text = text.replace(/(?<!\w)(\d+)(?!\w)/g, (match) => {
     const num = parseInt(match, 10);
     if (isNaN(num)) return match;
     return numberToVietnameseWords(num);
   });
 
-  // 6. Clean multiple spaces
+  // 7. Clean multiple spaces
   text = text.replace(/\s+/g, ' ').trim();
 
   return text;
@@ -171,11 +190,14 @@ export interface WordTimestampLike {
  * back to the single original text token with an encompassing [startFrame, endFrame] span.
  * Guarantees that on-screen subtitles display canonical historical text (e.g. "1789", "thế kỷ XIII")
  * while karaoke highlighting stays 100% in sync with audio speech.
+ * 
+ * Supports an optional leadInFrames offset for audio margin alignment.
  */
 export function alignSpokenWordTimestamps(
   rawText: string,
   spokenTimestamps: WordTimestampLike[],
-  fps: number = 30
+  fps: number = 30,
+  leadInFrames: number = 0
 ): { word: string; startFrame: number; endFrame: number }[] {
   if (!spokenTimestamps || spokenTimestamps.length === 0) {
     return [];
@@ -183,8 +205,8 @@ export function alignSpokenWordTimestamps(
   if (!rawText || !rawText.trim()) {
     return spokenTimestamps.map((st) => ({
       word: st.word,
-      startFrame: Math.round((st.startMs / 1000) * fps),
-      endFrame: Math.max(Math.round((st.startMs / 1000) * fps) + 1, Math.round((st.endMs / 1000) * fps)),
+      startFrame: Math.round((st.startMs / 1000) * fps) + leadInFrames,
+      endFrame: Math.max(Math.round((st.startMs / 1000) * fps) + 1, Math.round((st.endMs / 1000) * fps)) + leadInFrames,
     }));
   }
 
@@ -196,11 +218,11 @@ export function alignSpokenWordTimestamps(
   if (rawTokens.length === spokenTimestamps.length) {
     return rawTokens.map((tok, i) => ({
       word: tok,
-      startFrame: Math.round((spokenTimestamps[i].startMs / 1000) * fps),
+      startFrame: Math.round((spokenTimestamps[i].startMs / 1000) * fps) + leadInFrames,
       endFrame: Math.max(
         Math.round((spokenTimestamps[i].startMs / 1000) * fps) + 1,
         Math.round((spokenTimestamps[i].endMs / 1000) * fps)
-      ),
+      ) + leadInFrames,
     }));
   }
 
@@ -238,7 +260,7 @@ export function alignSpokenWordTimestamps(
 
     if (spokenIdx >= spokenTimestamps.length) {
       const last = result[result.length - 1];
-      const start = last ? last.endFrame : 0;
+      const start = last ? last.endFrame : leadInFrames;
       result.push({
         word: rawWord,
         startFrame: start,
@@ -265,11 +287,11 @@ export function alignSpokenWordTimestamps(
 
     result.push({
       word: rawWord,
-      startFrame: Math.round((startMs / 1000) * fps),
+      startFrame: Math.round((startMs / 1000) * fps) + leadInFrames,
       endFrame: Math.max(
         Math.round((startMs / 1000) * fps) + 1,
         Math.round((endMs / 1000) * fps)
-      ),
+      ) + leadInFrames,
     });
 
     spokenIdx = endSpokenIdx + 1;

@@ -79,14 +79,35 @@ export async function processTTSJob(job: Job<TTSJobData>): Promise<TTSJobResult>
       const candidates = [
         path.resolve(envConfig.AUDIO_CACHE_DIR, base),
         path.resolve(process.cwd(), 'media/audio-cache', base),
+        path.resolve(process.cwd(), '../../media/audio-cache', base),
+        path.resolve(process.cwd(), '../../services/vieneu-tts/media/audio-cache', base),
         path.resolve('/media/audio-cache', base),
       ];
+      let copied = false;
       for (const cand of candidates) {
         if (fs.existsSync(cand)) {
           try {
             await fs.promises.copyFile(cand, audioFilePath);
+            copied = true;
             break;
           } catch {}
+        }
+      }
+
+      if (!copied) {
+        // Fallback to HTTP download from VieNeu microservice static endpoint
+        try {
+          const downloadUrl = new URL(ttsResult.audioUrl, envConfig.VIENEU_PYTHON_URL).toString();
+          const resp = await fetch(downloadUrl);
+          if (resp.ok) {
+            const buf = Buffer.from(await resp.arrayBuffer());
+            await fs.promises.writeFile(audioFilePath, buf);
+            copied = true;
+          }
+        } catch (downloadErr) {
+          workerLog.warn('worker.tts_audio_download_failed', `Failed to download audio from TTS endpoint: ${formatErrorMessage(downloadErr)}`, {
+            audioUrl: ttsResult.audioUrl,
+          });
         }
       }
     }

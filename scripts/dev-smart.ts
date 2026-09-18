@@ -160,6 +160,28 @@ async function main() {
     console.log(`${colors.yellow}[BUILD]${colors.reset} ⚠️ Package build notice: ${buildErr.message}`);
   }
 
+  // 2.6. Clean up any stale Node processes occupying development ports
+  const killStalePort = async (port: number) => {
+    try {
+      const rawPids = execSync(`lsof -ti :${port} 2>/dev/null || true`, { encoding: 'utf-8' }).trim();
+      if (rawPids) {
+        const pids = rawPids.split('\n').map((p) => p.trim()).filter(Boolean);
+        for (const pid of pids) {
+          try {
+            execSync(`kill -9 ${pid} 2>/dev/null || true`, { stdio: 'ignore' });
+          } catch {}
+        }
+        for (let i = 0; i < 10; i++) {
+          await new Promise((r) => setTimeout(r, 200));
+          const check = execSync(`lsof -ti :${port} 2>/dev/null || true`, { encoding: 'utf-8' }).trim();
+          if (!check) break;
+        }
+      }
+    } catch {}
+  };
+  await killStalePort(3000);
+  await killStalePort(3001);
+
   // 3. Start Web UI
   console.log(`\n${colors.green}[WEB]${colors.reset} Starting Web UI on http://localhost:3000...`);
   const webProc = spawn('pnpm', ['--filter', '@chronoviet/web', 'dev'], {

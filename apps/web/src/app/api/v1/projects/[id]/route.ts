@@ -7,6 +7,8 @@ import {
   createLogger,
   httpRequestsTotal,
   httpRequestDurationSeconds,
+  query as dbQuery,
+  isPgAvailable,
 } from '@chronoviet/infra';
 import { invalidateProjectsCache } from '@/lib/project-cache';
 
@@ -153,6 +155,17 @@ export async function DELETE(
       }
     } catch (rmErr: any) {
       reqLog.warn('api.project_rm_warning', `Could not delete directory: ${rmErr.message}`);
+    }
+
+    // Clean up PostgreSQL persistence checkpoints and briefs if PG is available
+    try {
+      const pgUp = await isPgAvailable();
+      if (pgUp) {
+        await dbQuery(`DELETE FROM orchestrator_checkpoints WHERE project_id = $1`, [projectId]);
+        await dbQuery(`DELETE FROM video_briefs WHERE project_id = $1`, [projectId]);
+      }
+    } catch (dbErr: any) {
+      reqLog.warn('api.project_db_rm_warning', `Could not clean database records: ${dbErr.message}`);
     }
 
     invalidateProjectsCache();

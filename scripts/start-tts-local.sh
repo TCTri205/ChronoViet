@@ -9,6 +9,15 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+# Check if VieNeu TTS is already running and healthy (e.g. host-native Python or existing container)
+if curl -s -f http://localhost:8080/health >/dev/null 2>&1; then
+  HEALTH_JSON=$(curl -s http://localhost:8080/health)
+  if echo "${HEALTH_JSON}" | grep -q "VIENEU_OFFICIAL_V3TURBO"; then
+    echo "=== [VieNeu TTS] Official VieNeu-TTS v3turbo is already UP & HEALTHY on http://localhost:8080 ==="
+    exit 0
+  fi
+fi
+
 echo "=== [VieNeu TTS] Starting VieNeu TTS Container (Port 8080) ==="
 cd "${ROOT_DIR}"
 docker compose --profile tts up -d --build --quiet-pull vieneu-tts-service >/dev/null 2>&1 || docker compose --profile tts up -d vieneu-tts-service

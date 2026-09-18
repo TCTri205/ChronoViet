@@ -42,21 +42,32 @@ export function extractTopicFromMessage(text: string): string {
         !l.startsWith("Xin chào") &&
         !l.startsWith("Tôi là") &&
         !l.startsWith("Bạn có thể") &&
+        !l.startsWith("Dưới đây là") &&
+        !l.startsWith("Theo sử liệu") &&
         !l.startsWith("Nguồn Sử Liệu")
     );
 
   for (const line of lines) {
-    const candidate = line.replace(/^[#*`\-_:> ]+/g, "").replace(/[*`_]/g, "").trim();
+    const candidate = line.replace(/^[#*`\-_:> ]+/g, "").replace(/[*`_#]/g, "").trim();
     // Look for lines that look like actual historical statements/entities
-    if (candidate.length > 5 && candidate.length < 80 && !/^(?:chào|tôi là|hãy|vui lòng)/i.test(candidate)) {
+    if (
+      candidate.length >= 6 &&
+      candidate.length <= 80 &&
+      !/^(?:chào|tôi là|hãy|vui lòng|dưới đây|theo sử sách|theo ghi chép)/i.test(candidate)
+    ) {
       return candidate;
     }
   }
 
-  const fallbackCandidate = text.split("\n").find((l) => l.trim().length > 5 && !/^(?:🏛️|⚠️|chào|xin chào)/i.test(l.trim()));
+  const fallbackCandidate = text.split("\n").find((l) => l.trim().length > 6 && !/^(?:🏛️|⚠️|chào|xin chào)/i.test(l.trim()));
   if (fallbackCandidate) {
     const clean = fallbackCandidate.replace(/^[#*`\-_:> ]+/g, "").replace(/[#*`⚠️🏛️]/g, "").trim();
-    if (clean.length > 5 && clean.length < 80) return clean;
+    if (clean.length >= 6 && clean.length <= 80) return clean;
+    if (clean.length > 80) {
+      const cut = clean.slice(0, 75);
+      const lastSpace = cut.lastIndexOf(" ");
+      return (lastSpace > 30 ? cut.slice(0, lastSpace) : cut) + "...";
+    }
   }
 
   return "Sự kiện lịch sử từ đoạn hội thoại";
@@ -69,6 +80,7 @@ function ChatMessageComponent({
 }: ChatMessageProps) {
   const isUser = message.role === "user";
   const isErrorMessage = !isUser && (message.content.includes("⚠️") || message.content.includes("Không thể kết nối"));
+  const isReadyForVideo = !isUser && !isErrorMessage && Boolean(message.content && message.content.trim().length > 20);
 
   return (
     <div
@@ -100,7 +112,39 @@ function ChatMessageComponent({
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : message.content ? (
             <div className="prose prose-invert max-w-none prose-sm text-text-primary prose-headings:font-headline prose-headings:text-gold-300 prose-a:text-primary prose-strong:text-gold-300">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              <ReactMarkdown
+                components={{
+                  a: ({ href, children }) => {
+                    if (href?.startsWith("citation:")) {
+                      const citationId = href.replace("citation:", "");
+                      const matched = message.citations?.find((c) => String(c.id) === citationId);
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (matched) onCitationClick?.(matched);
+                          }}
+                          className="inline-flex items-center px-1 py-0.2 mx-0.5 rounded text-[11px] font-mono font-bold bg-primary/20 text-gold-300 hover:bg-primary/30 border border-primary/40 cursor-pointer align-baseline transition-colors"
+                          title={`Xem trích dẫn sử liệu [${citationId}]`}
+                          aria-label={`Xem trích dẫn sử liệu số ${citationId}`}
+                        >
+                          [{children}]
+                        </button>
+                      );
+                    }
+                    return (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        {children}
+                      </a>
+                    );
+                  },
+                }}
+              >
+                {message.citations && message.citations.length > 0
+                  ? message.content.replace(/\[(\d+)\](?!\()/g, "[$1](citation:$1)")
+                  : message.content}
+              </ReactMarkdown>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-text-muted text-xs py-0.5">
@@ -133,8 +177,8 @@ function ChatMessageComponent({
           )}
         </div>
 
-        {/* 1-Click Handover CTA Button on Assistant Message */}
-        {!isUser && onCreateVideoFromTopic && (
+        {/* 1-Click Handover CTA Button only on completed, valid Assistant Message */}
+        {isReadyForVideo && onCreateVideoFromTopic && (
           <div className="flex items-center gap-2 pt-0.5">
             <Button
               variant="outline"
@@ -143,7 +187,7 @@ function ChatMessageComponent({
                 const chosenTopic = message.videoHandover?.topic || extractTopicFromMessage(message.content);
                 onCreateVideoFromTopic(chosenTopic, message.conversationId);
               }}
-              className="text-xs h-7 gap-1.5 border-primary/30 text-gold-300 hover:bg-primary/20 hover:text-white"
+              className="text-xs h-7 gap-1.5 border-primary/30 text-gold-300 hover:bg-primary/20 hover:text-white transition-all shadow-sm shadow-gold-glow/5"
             >
               <Film className="w-3.5 h-3.5 text-primary" />
               <span>⚡ Tạo Video từ cuộc trò chuyện này</span>
@@ -163,4 +207,3 @@ function ChatMessageComponent({
 }
 
 export const ChatMessage = React.memo(ChatMessageComponent);
-

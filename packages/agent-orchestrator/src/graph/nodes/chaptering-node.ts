@@ -11,9 +11,13 @@ import {
   CORE_DOCS,
   CORE_ORGS,
   CORE_ARTIFACTS,
+  sanitizeSentenceBoundaries,
+  resolveCanonicalEntity,
+  getTargetWpm,
 } from '@chronoviet/shared-spec';
 import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger, TelemetryAuditEntry } from '../state.js';
+import { routeChunksToChapters } from '../../research/chapter-rag-router.js';
 
 /**
  * Sanitizes raw crawler markdown, metadata tags, and URL encoding artifacts
@@ -25,6 +29,9 @@ export function cleanCrawlerText(rawText?: string): string {
     .replace(/^(?:source_reliability|source_url|crawled_at|word_count|title|canonical_name):.*$/gim, '')
     .replace(/(?:^|\s)(?:BB%[A-Z0-9%]+|%[0-9A-F]{2})+/g, '')
     .replace(/Page\s+\d+/gi, '')
+    .replace(/={2,5}[^=\n]+={2,5}/g, ' ')
+    .replace(/\[\d+\]/g, ' ')
+    .replace(/\[(?:cần dẫn nguồn|nguồn|sđd|tr\.)[^\]]*\]/gi, ' ')
     .replace(/#+\s*/g, '')
     .replace(/\*{1,3}/g, '')
     .replace(/[\r\n]+/g, ' ')
@@ -81,6 +88,54 @@ export function isValidHistoricalEntity(name: string): boolean {
   if (genericStopPhrases.has(trimmed.toLowerCase())) return false;
 
   return true;
+}
+
+/**
+ * Deduplicates and canonicalizes historical entities, grouping aliases
+ * under their primary canonical persona to prevent coreference confusion and hallucinations.
+ */
+export function canonicalizeEntityList(entities: string[]): {
+  canonicalEntities: string[];
+  aliasGroups: Record<string, string[]>;
+} {
+  const canonicalMap = new Map<string, { primaryName: string; aliases: Set<string> }>();
+  const independentEntities: string[] = [];
+
+  for (const ent of entities) {
+    if (!isValidHistoricalEntity(ent)) continue;
+    const resolved = resolveCanonicalEntity(ent);
+    if (resolved && resolved.canonicalName) {
+      const cName = resolved.canonicalName;
+      if (!canonicalMap.has(cName)) {
+        canonicalMap.set(cName, { primaryName: cName, aliases: new Set() });
+      }
+      if (ent.toLowerCase() !== cName.toLowerCase()) {
+        canonicalMap.get(cName)!.aliases.add(ent);
+      }
+    } else {
+      if (!independentEntities.includes(ent)) {
+        independentEntities.push(ent);
+      }
+    }
+  }
+
+  const canonicalEntities: string[] = [];
+  const aliasGroups: Record<string, string[]> = {};
+
+  for (const [cName, data] of canonicalMap.entries()) {
+    canonicalEntities.push(cName);
+    if (data.aliases.size > 0) {
+      aliasGroups[cName] = Array.from(data.aliases);
+    }
+  }
+
+  for (const ind of independentEntities) {
+    if (!canonicalEntities.some((c) => c.toLowerCase() === ind.toLowerCase())) {
+      canonicalEntities.push(ind);
+    }
+  }
+
+  return { canonicalEntities, aliasGroups };
 }
 
 const STARTING_FUNCTION_WORDS = new Set([
@@ -543,7 +598,7 @@ export function enrichMacroBeatsToChapterPlans(
   // Climax chapter index: e.g. for 2 chapters -> 1; 3 chapters -> 1; 4 chapters -> 2; 5 chapters -> 3
   const climaxChapterIdx = numChapters <= 2 ? numChapters - 1 : Math.max(1, Math.min(numChapters - 2, Math.floor((numChapters - 1) * 0.6)));
 
-  const chapters: ChapterPlan[] = beats.map((beat, idx) => {
+  let chapters: ChapterPlan[] = beats.map((beat, idx) => {
     let rawTitle = (beat.title || '').trim()
       .replace(/^(?:Hồi|Chương|Phần)\s*\d*\s*[:\-–—]\s*/i, '')
       .replace(/^(?:Bối cảnh(?: lịch sử)?|Trận quyết chiến|Quyết chiến|Sách lược(?: và thế trận)?|Kết cục(?: thắng lợi)?|Di sản(?: và dư âm)?|Ý nghĩa(?: lịch sử)?)\s*[:\-–—]\s*/i, '')
@@ -572,9 +627,14 @@ export function enrichMacroBeatsToChapterPlans(
 
     const climaxFocus = beat.climaxFocus || mainEventText;
 
+    const cleanUserTopic = userPrompt.replace(/^(?:kể lại|hãy kể|trình bày|hãy trình bày|tóm tắt|phân tích|viết về|hãy viết về|thuyết minh về)\s+/iu, '').trim();
     const entryHook = beat.entryHook || (idx === 0
-      ? `Khởi nguồn từ bối cảnh ${beat.timeAnchor || 'thời cuộc'} của ${userPrompt}`
-      : `Nối tiếp cục diện lịch sử, ${beat.timeAnchor ? `vào ${beat.timeAnchor}, ` : ''}trọng tâm chuyển sang ${mainEventText}`);
+      ? (beat.mainEvent && beat.mainEvent.length > 5
+          ? `Bối cảnh ${beat.timeAnchor ? `năm ${beat.timeAnchor}` : 'thời cuộc'} và khởi đầu của ${beat.mainEvent}`
+          : `Bối cảnh lịch sử ${beat.timeAnchor ? `năm ${beat.timeAnchor}` : ''} gắn liền với ${cleanUserTopic}`)
+      : (beat.mainEvent && beat.mainEvent.length > 5
+          ? `Diễn biến tiếp theo chuyển sang ${beat.mainEvent}`
+          : `Bước ngoặt tiếp theo trong tiến trình lịch sử`));
 
     const exitHook = beat.exitHook || (idx < numChapters - 1
       ? `Mở ra bước ngoặt tiếp theo trong tiến trình lịch sử`
@@ -643,10 +703,17 @@ export function enrichMacroBeatsToChapterPlans(
 
       const cleanBestChunkSummary = cleanCrawlerText(bestChunk?.summary);
       if (cleanBestChunkSummary && cleanBestChunkSummary.length >= 25) {
-        summary = `${bestChunk.canonicalName}: ${cleanBestChunkSummary}`;
+        summary = cleanBestChunkSummary;
       } else {
         summary = `${beat.timeAnchor ? `Vào ${beat.timeAnchor}, ` : ''}${mainEventText}, ghi dấu ấn lịch sử quan trọng trong tiến trình ${userPrompt}.`;
       }
+    }
+
+    // Incomplete Summary Guardrail: Sanitize incomplete or truncated sentence boundaries
+    summary = sanitizeSentenceBoundaries(summary);
+    if (!summary || summary.trim().length < 15) {
+      summary = `${beat.timeAnchor ? `Vào ${beat.timeAnchor}, ` : ''}${mainEventText}, ghi dấu ấn lịch sử quan trọng trong tiến trình ${userPrompt}.`;
+      summary = sanitizeSentenceBoundaries(summary);
     }
 
     const introducedEntities = Array.isArray(beat.introducedEntities) && beat.introducedEntities.length > 0
@@ -769,12 +836,15 @@ export function enrichMacroBeatsToChapterPlans(
     }
   }
 
-  // Safety check: ensure every chapter has at least 2 entities
-  chapters.forEach((c, idx) => {
+  // Safety check: ensure every chapter has at least 2 entities using safe prompt & chapter title entities
+  chapters.forEach((c) => {
     if (!c.introducedEntities || c.introducedEntities.length < 2) {
-      const sliceStart = (idx * 2) % Math.max(1, allHistoricalEntities.length);
-      const fallbackSlice = allHistoricalEntities.slice(sliceStart, sliceStart + 3);
-      c.introducedEntities = Array.from(new Set([...(c.introducedEntities || []), ...fallbackSlice]));
+      const titleEntities = extractHistoricalEntitiesFromRag(
+        { verifiedContext: [], aliasTable: {}, citations: [] },
+        `${c.title} ${c.summary}`
+      );
+      const safeEntities = Array.from(new Set([...userPromptEntities, ...titleEntities])).filter(isValidHistoricalEntity);
+      c.introducedEntities = Array.from(new Set([...(c.introducedEntities || []), ...safeEntities])).slice(0, 5);
     }
   });
 
@@ -789,6 +859,15 @@ export function enrichMacroBeatsToChapterPlans(
     });
   }
 
+  // Phase 3: Route verified RAG chunks temporally to chapters
+  const effectiveChunks = (verifiedChunks && verifiedChunks.length > 0)
+    ? verifiedChunks
+    : (ragContext?.verifiedContext || []);
+
+  if (effectiveChunks.length > 0) {
+    chapters = routeChunksToChapters(chapters, effectiveChunks);
+  }
+
   return chapters;
 }
 
@@ -801,9 +880,18 @@ export async function chapteringNode(state: ChronoGraphState): Promise<Partial<C
   });
 
   const totalTargetSec = Math.max(60, Math.round((state.targetDurationMinutes || 2) * 60));
-  // Calculate number of chapters according to cinematic narrative beats (each chapter ~35-70s)
-  // For short videos (<90s): 2 chapters; For standard videos (>=90s): minimum 3 chapters (3-act structure: Context -> Climax -> Resolution/Legacy)
-  const numChapters = totalTargetSec < 90 ? 2 : Math.max(3, Math.min(6, Math.round(totalTargetSec / 60)));
+  // Dynamic chapter count according to cinematic pacing:
+  // Short videos (<90s): 2 chapters (~35-45s each)
+  // 2-minute videos (90-149s): 3 chapters (~40-50s each)
+  // 3-minute videos (150-239s): 4 chapters (~45-55s each)
+  // Long-form videos (>=240s): 5-6 chapters (~50-60s each)
+  const numChapters = totalTargetSec < 90
+    ? 2
+    : (totalTargetSec < 150
+      ? 3
+      : (totalTargetSec < 240
+        ? 4
+        : Math.min(6, Math.round(totalTargetSec / 50))));
   const secPerChapter = Math.round(totalTargetSec / numChapters);
 
   const allHistoricalEntities = extractHistoricalEntitiesFromRag(state.ragContext, state.userPrompt);
@@ -831,12 +919,23 @@ QUY TẮC BẮT BUỘC:
 với ĐỦ ${numChapters} hồi (từ chapterIndex 0 đến ${numChapters - 1}).
 2. Không thêm bất kỳ văn bản nào ngoài JSON.
 3. TIÊU ĐỀ CHƯƠNG BẮT BUỘC GẮN VỚI SỰ KIỆN LỊCH SỬ CỤ THỂ (HISTORICAL EVENT ANCHORS):
+   - TIÊU ĐỀ MỖI HỒI BẮT BUỘC PHẢI KHÁC NHAU HOÀN TOÀN, phản ánh sự phát triển tuyến tính của dòng lịch sử (TUYỆT ĐỐI KHÔNG dùng cùng một tiêu đề cho nhiều hồi).
    - TUYỆT ĐỐI KHÔNG đặt tiêu đề chung chung như: 'Bối cảnh và Nguy cơ', 'Sách lược và chuẩn bị', 'Trận quyết chiến', 'Di sản và Dư âm'.
-   - Tiêu đề BẮT BUỘC chứa tên nhân vật, chiến dịch, địa danh hoặc hiện vật lịch sử cụ thể.
+   - Tiêu đề BẮT BUỘC chứa tên nhân vật, chiến dịch, địa danh hoặc sự kiện lịch sử cụ thể theo từng giai đoạn.
 4. QUY TẮC MẠCH TRUYỆN THEO THỂ LOẠI (TOPIC & HISTORICAL ARC FIDELITY):
-   - Áng văn, chiếu hịch, tư tưởng, văn kiện (Hịch tướng sĩ, Nam quốc sơn hà, Bình Ngô đại cáo, Chiếu dời đô, Hội nghị Diên Hồng, Hào khí Đông A...): BẮT BUỘC dành Hồi mở đầu hoặc Hồi chuẩn bị khắc họa trực tiếp hoàn cảnh ra đời, khí phách và tác động hiệu triệu của áng văn/văn kiện đó.
-   - Nhân vật/Danh nhân: Hồi đầu (bối cảnh, xuất thân, khởi nghiệp) -> Hồi giữa (đỉnh cao sự nghiệp, quyết sách, trận đánh lớn) -> Hồi cuối (kết cục lịch sử chuẩn xác: hy sinh vì nghĩa lớn/băng hà và di sản lưu danh). TUYỆT ĐỐI KHÔNG bịa đặt chiến thắng cho nhân vật tuẫn tiết.
-   - Chiến dịch & Trận đánh: Khởi phát và mưu lược -> Công kiên cứ điểm then chốt -> Quyết chiến định đoạt và ký kết hiệp định/hòa ước.
+   - Nhân vật/Danh nhân (BIOGRAPHY): Phân chia ${numChapters} hồi theo các chặng đường niên đại TUYẾN TÍNH KHÔNG TRÙNG LẶP:
+     + Hồi đầu (bối cảnh quê hương, thời niên thiếu, lý tưởng ban đầu) -> Các hồi giữa (hành trình bôn ba tìm đường, thử thách, quyết sách bước ngoặt, đỉnh cao sự nghiệp) -> Hồi cuối (kháng chiến, di sản trường tồn, tầm vóc lịch sử).
+     + MỖI HỒI CHỈ TẬP TRUNG vào sự kiện của giai đoạn đó, TUYỆT ĐỐI KHÔNG lặp lại các sự kiện (như năm sinh, Tuyên ngôn Độc lập, số lượng bí danh) xuyên suốt các hồi khác nhau.
+     + TUYỆT ĐỐI KHÔNG dùng các từ tiêu cực hoặc bất cẩn như 'Kết cục', 'Hạ màn' cho các anh hùng dân tộc, danh nhân lịch sử. TUYỆT ĐỐI KHÔNG bịa đặt chiến thắng cho nhân vật tuẫn tiết.
+   - Triều đại (DYNASTY): Khởi lập và định đô -> Thời kỳ hưng thịnh và võ công văn trị -> Biến cố, chuyển giao và di sản.
+   - Chiến dịch & Trận đánh (BATTLE): BẮT BUỘC tuân thủ mạch kịch bản chiến dịch quân sự 5 nhịp kinh điển (Campaign Arc):
+     + Beat 1 (Bối cảnh nguy biến & Mệnh lệnh lịch sử): Tương quan lực lượng, quân thù chiếm đóng kinh thành, thế trận hiểm nghèo, mệnh lệnh xuất quân.
+     + Beat 2 (Hiệu triệu, Tuyển binh & Hành quân thần tốc): Lên ngôi Hoàng đế/Nhận quyền chỉ huy, tuyển binh, duyệt binh, hành quân chớp nhoáng hội quân tại phòng tuyến then chốt.
+     + Beat 3 (Kế sách công kích & Hịch xuất quân): Mở tiệc khao quân đón Tết sớm, lời hiệu triệu đanh thép, chia 5 đạo quân bí mật áp sát cứ điểm.
+     + Beat 4 (Bão lửa Quyết chiến & Đột kích cứ điểm): Phá tan các tiền đồn phòng ngự trọng yếu (Hà Hồi, Ngọc Hồi, Đống Đa), bao vây tiêu diệt đại bản doanh, tiến thẳng vào giải phóng kinh thành.
+     + Beat 5 (Đại thắng khải hoàn & Di sản nghệ thuật quân sự): Tướng giặc tháo chạy/đầu hàng, thu phục non sông, nghệ thuật quân sự đỉnh cao và bài học cho muôn đời sau.
+     + TUYỆT ĐỐI KHÔNG đưa các chi tiết tiểu sử cuộc đời (như năm sinh, thời niên thiếu, quê quán, lý tưởng thuở nhỏ) vào kịch bản chiến dịch/trận đánh cụ thể.
+   - Áng văn, chiếu hịch, tư tưởng, văn kiện: BẮT BUỘC dành Hồi mở đầu hoặc Hồi chuẩn bị khắc họa trực tiếp hoàn cảnh ra đời, khí phách và tác động hiệu triệu của áng văn/văn kiện đó.
    - Trật tự thời gian tuyến tính từ sớm đến muộn. Đúng vai trò chính nghĩa (Đại Việt/Việt Nam) và quân xâm lược.`;
 
   const userContent = `Chủ đề: "${state.userPrompt}"
@@ -986,13 +1085,47 @@ Hãy xuất JSON { "chapterBeats": [...] } gồm ĐỦ ${numChapters} hồi:`;
 
     // Deterministic fallback macro-beats
     const fallbackBeats: ChapterMacroBeat[] = [];
-    for (let i = 0; i < numChapters; i++) {
-      fallbackBeats.push({
-        chapterIndex: i,
-        title: `Hồi ${i + 1}: ${i === 0 ? 'Khởi nguồn và Bối cảnh' : i === numChapters - 1 ? 'Quyết chiến và Di sản' : `Diễn biến giai đoạn ${i + 1}`} (${state.userPrompt})`,
-        timeAnchor: '',
-        mainEvent: `Diễn biến lịch sử phần ${i + 1} của ${state.userPrompt}`,
-      });
+    if (state.videoType === 'BATTLE') {
+      const battleBeats = [
+        {
+          title: `Hồi 1: Nguy biến Lịch sử & Thế trận Hiểm nghèo (${state.userPrompt})`,
+          mainEvent: `Quân xâm lược tràn sang chiếm đóng kinh thành, tạo nên bối cảnh nguy biến buộc nghĩa quân phải hành động khẩn cấp trong ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 2: Hiệu triệu Binh sĩ & Hành quân Thần tốc (${state.userPrompt})`,
+          mainEvent: `Tập hợp lực lượng, củng cố phòng tuyến và hành quân chớp nhoáng thần tốc tiến về tiền tuyến trong ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 3: Mưu lược Giáp công & Hịch Xuất quân (${state.userPrompt})`,
+          mainEvent: `Kế sách mở tiệc khao quân đón Tết sớm, hạ lệnh tiến công 5 cánh quân chia lửa quyết chiến tiêu diệt giặc.`,
+        },
+        {
+          title: `Hồi 4: Bão lửa Quyết chiến Phá tan Cứ điểm (${state.userPrompt})`,
+          mainEvent: `Đột kích công phá dũng mãnh các cứ điểm then chốt, tiêu diệt sào huyệt quân địch, tiến thẳng vào giải phóng kinh thành.`,
+        },
+        {
+          title: `Hồi 5: Đại thắng Khải hoàn & Tầm vóc Lịch sử (${state.userPrompt})`,
+          mainEvent: `Toàn thắng rực rỡ, quét sạch bóng thù, khẳng định đỉnh cao nghệ thuật quân sự và di sản trường tồn của ${state.userPrompt}.`,
+        },
+      ];
+      for (let i = 0; i < numChapters; i++) {
+        const beatTemplate = battleBeats[Math.min(i, battleBeats.length - 1)];
+        fallbackBeats.push({
+          chapterIndex: i,
+          title: numChapters === 5 ? beatTemplate.title : `Hồi ${i + 1}: ${beatTemplate.title}`,
+          timeAnchor: '',
+          mainEvent: beatTemplate.mainEvent,
+        });
+      }
+    } else {
+      for (let i = 0; i < numChapters; i++) {
+        fallbackBeats.push({
+          chapterIndex: i,
+          title: `Hồi ${i + 1}: ${i === 0 ? 'Khởi nguồn và Bối cảnh' : i === numChapters - 1 ? 'Quyết chiến và Di sản' : `Diễn biến giai đoạn ${i + 1}`} (${state.userPrompt})`,
+          timeAnchor: '',
+          mainEvent: `Diễn biến lịch sử phần ${i + 1} của ${state.userPrompt}`,
+        });
+      }
     }
 
     chapters = enrichMacroBeatsToChapterPlans(fallbackBeats, {

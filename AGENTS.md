@@ -16,6 +16,7 @@ Guidelines, operational constraints, and verification protocols for AI Agents an
 3. **Production-Ready & Anti-Overfitting:**
    - Ensure generic, robust, and performant implementations.
    - Do NOT hardcode logic, make narrow assumptions, or loosen test/eval assertions and fixtures to artificially inflate benchmark scores or force tests to pass.
+   - Restrict the use of brittle rule-based heuristics, ad-hoc regex patching, and handcrafted pattern matching to bypass edge cases or force compliance; rely on robust semantic modeling, prompt engineering, or structured schema validation instead.
 4. **Stateless Runtime:**
    - Keep application state stateless. Persistent data resides in PostgreSQL (pgvector), Redis, and volume storage (`/media`).
 5. **Language Boundary:**

@@ -10,6 +10,7 @@ import {
   query as dbQuery,
   isPgAvailable,
   inMemoryStore,
+  ensureConversationExists,
 } from '@chronoviet/infra';
 import { handleChatQueryStream } from '@chronoviet/agent-orchestrator';
 
@@ -71,14 +72,9 @@ export async function POST(req: NextRequest) {
     if (conversationId) {
       const userMsgId = `msg_u_${Date.now()}`;
       try {
+        await ensureConversationExists(conversationId, truncateSnippet(query, 60));
         const pgUp = await isPgAvailable();
         if (pgUp) {
-          await dbQuery(
-            `INSERT INTO conversations (id, title, mode, metadata, created_at, updated_at)
-             VALUES ($1, $2, 'RESEARCH', '{}'::jsonb, $3, $3)
-             ON CONFLICT (id) DO UPDATE SET updated_at = EXCLUDED.updated_at`,
-            [conversationId, truncateSnippet(query, 60), now]
-          );
           await dbQuery(
             `INSERT INTO conversation_messages (id, conversation_id, role, content, created_at)
              VALUES ($1, $2, 'user', $3, $4)`,
@@ -156,6 +152,7 @@ export async function POST(req: NextRequest) {
           const assistantMsgId = `msg_a_${Date.now()}`;
           const finishedAt = new Date().toISOString();
           try {
+            await ensureConversationExists(conversationId, truncateSnippet(query, 60));
             const pgUp = await isPgAvailable();
             if (pgUp) {
               await dbQuery(
@@ -174,7 +171,9 @@ export async function POST(req: NextRequest) {
                 createdAt: finishedAt,
               });
             }
-          } catch {}
+          } catch (saveErr: any) {
+            reqLog.warn('api.chat_save_assistant_turn_failed', `Failed to save assistant turn: ${saveErr.message}`);
+          }
         }
 
         controller.close();

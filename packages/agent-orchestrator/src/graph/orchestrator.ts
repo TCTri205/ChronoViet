@@ -27,6 +27,7 @@ import { segmenterNode } from './nodes/segmenter-node.js';
 import { assetGenerationForkJoinNode } from './nodes/asset-generation-node.js';
 import { durationReconciliationNode } from './nodes/reconciler-node.js';
 import { packagerNode } from './nodes/packager-node.js';
+import { GraphTripleItem } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'agent-orchestrator' });
 
@@ -73,6 +74,7 @@ export function buildOrchestratorGraph() {
                 ],
                 aliasTable: { [brief.topic]: brief.keyEntities },
                 citations: brief.citations.map((c) => (typeof c === 'string' ? c : c.sourceTitle)),
+                triples: [],
               };
               nodeLog.info('orchestrator.brief_context_hydrated', `Hydrated RAG context from video brief ${brief.id}`, {
                 briefId: brief.id,
@@ -100,6 +102,7 @@ export function buildOrchestratorGraph() {
               verifiedContext: searchResult.verifiedContext,
               aliasTable: searchResult.aliasTable,
               citations: searchResult.citations,
+              triples: (searchResult.triples as GraphTripleItem[]) || [],
             };
             nodeLog.info('orchestrator.rag_retrieved_real', `Retrieved ${searchResult.verifiedContext.length} verified context entities from RAG Engine`, {
               retrievalLatencyMs: searchResult.retrievalLatencyMs,
@@ -126,6 +129,7 @@ export function buildOrchestratorGraph() {
                 [state.userPrompt]: [],
               },
               citations: ['Đại Việt Sử Ký Toàn Thư', 'Khâm Định Việt Sử Thông Giám Cương Mục'],
+              triples: [],
             };
             telemetryAudit.push({
               timestamp: new Date().toISOString(),

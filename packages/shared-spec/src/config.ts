@@ -165,7 +165,7 @@ export const EnvSchema = z.object({
   VLM_BASE_URL: z.string().optional(),
   VLM_MODEL: z.string().optional(),
   VLM_API_KEY: z.string().optional(),
-  IMAGE_DOWNLOAD_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
+  IMAGE_DOWNLOAD_TIMEOUT_MS: z.coerce.number().int().positive().default(25000),
   IMAGE_DOWNLOAD_USER_AGENT: z
     .string()
     .default('ChronoViet-VLM-Downloader/1.0 (https://chronoviet.vn; contact@chronoviet.vn)'),
@@ -177,7 +177,7 @@ export const EnvSchema = z.object({
   VIENEU_PYTHON_URL: z.string().default('http://localhost:8080'),
   VIENEU_VOICE: z.string().default('vi_vietnam'),
   TTS_SERVICE_PORT: z.coerce.number().int().positive().default(8080),
-  TTS_HTTP_TIMEOUT_MS: z.coerce.number().int().positive().default(180000),
+  TTS_HTTP_TIMEOUT_MS: z.coerce.number().int().positive().default(300000),
 
   // ==========================================
   // Remotion Engine & Render Dispatch
@@ -223,6 +223,7 @@ export const EnvSchema = z.object({
   IMAGE_LICENSE_POLICY: z.enum(['STRICT', 'EDITORIAL']).default('STRICT'),
   RESEARCH_CANDIDATE_POOL_SIZE: z.coerce.number().int().positive().default(6),
   RESEARCH_CANDIDATES_PER_SCENE: z.coerce.number().int().positive().default(6),
+  SEARCH_PROVIDER_TIMEOUT_MS: z.coerce.number().int().positive().default(25000),
 
   // ==========================================
   // Evaluation Gates & Benchmark

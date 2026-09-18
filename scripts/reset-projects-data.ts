@@ -7,6 +7,7 @@ const ROOT_DIR = process.cwd();
 
 async function cleanDirectories() {
   const dirsToClean = [
+    path.join(ROOT_DIR, 'media/projects'),
     path.join(ROOT_DIR, 'apps/web/media/projects'),
     path.join(ROOT_DIR, 'apps/web/media/audio-cache'),
     path.join(ROOT_DIR, 'apps/render-worker/media/projects'),

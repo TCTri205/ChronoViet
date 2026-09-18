@@ -13,20 +13,20 @@ const log = createLogger({ service: 'rag-engine' });
 
 export const MAX_RERANK_CANDIDATE_POOL = process.env.RERANK_CANDIDATE_POOL
   ? parseInt(process.env.RERANK_CANDIDATE_POOL, 10)
-  : 30;
+  : 20;
 export const MAX_CHUNK_CHAR_TRUNCATION = 1800;
 export const MIN_RELEVANCE_SCORE_THRESHOLD = 0.15;
 
 export function calculateDynamicPoolSize(subIntent?: ChatSubIntent, rerankTopK: number = 5): number {
   let basePool = MAX_RERANK_CANDIDATE_POOL;
   if (subIntent === 'FACTOID_LOOKUP') {
-    basePool = 20;
+    basePool = 16;
   } else if (subIntent === 'GENEALOGY_RELATION') {
-    basePool = 22;
+    basePool = 18;
   } else if (subIntent === 'BATTLE_TACTICS') {
-    basePool = 25;
+    basePool = 20;
   } else if (subIntent === 'COMPARATIVE_SYNTHESIS') {
-    basePool = 30;
+    basePool = Math.min(24, MAX_RERANK_CANDIDATE_POOL);
   }
   return Math.max(rerankTopK * 3, Math.min(MAX_RERANK_CANDIDATE_POOL, basePool));
 }
@@ -64,22 +64,31 @@ export function truncateToSentenceBoundary(
 
   const sEnd = findLast(/[.!?\n]/g);
   let result = window.trim();
-  if (sEnd >= Math.floor(maxChars * 0.6)) {
+  if (sEnd >= Math.floor(maxChars * 0.4)) {
     result = window.slice(0, sEnd).trim();
   } else {
     const cEnd = findLast(/[;:,—\-]/g);
-    if (cEnd >= Math.floor(maxChars * 0.75)) {
+    if (cEnd >= Math.floor(maxChars * 0.5)) {
       result = window.slice(0, cEnd).trim();
     } else {
       const spEnd = window.lastIndexOf(' ');
-      if (spEnd >= Math.floor(maxChars * 0.85)) {
+      if (spEnd > 0) {
         result = window.slice(0, spEnd).trim();
       }
+      result = result.replace(/[\-–—\s]+$/, '').trim();
     }
   }
 
   // Strip trailing fragmented single words or capitalized hanging initials (e.g. "Giang Nam Ch")
   result = result.replace(/\s+\p{Lu}\p{Ll}{0,2}$/u, '').trim();
+
+  // Clean unclosed opening quote if the closing quote was trimmed away
+  const openQuotes = (result.match(/["“«]/g) || []).length;
+  const closeQuotes = (result.match(/["”»]/g) || []).length;
+  if (openQuotes > closeQuotes) {
+    result = result.replace(/^["“«]\s*/, '').trim();
+  }
+
   return result;
 }
 
@@ -133,21 +142,26 @@ export function extractQueryRelevantExcerpt(
     return truncateToSentenceBoundary(text, maxChars);
   }
 
-  // Start slightly before bestPos to preserve opening context
-  const startOffset = Math.max(0, bestPos - 100);
-  const rawExcerpt = text.slice(startOffset, startOffset + maxChars + 150);
-
-  // Snap start to first sentence boundary if we didn't start at beginning and boundary is before match
-  let cleanStart = 0;
-  if (startOffset > 0) {
-    const matchRelativeStart = bestPos - startOffset;
-    const firstPeriod = rawExcerpt.search(/[.!?\n]\s+/);
-    if (firstPeriod !== -1 && firstPeriod < matchRelativeStart) {
-      cleanStart = firstPeriod + 2;
+  // Start cleanly before bestPos, snapping to genuine sentence boundary or whitespace boundary
+  let startOffset = 0;
+  if (bestPos > 0) {
+    const searchWindow = text.slice(Math.max(0, bestPos - 250), bestPos);
+    const periodMatches = Array.from(searchWindow.matchAll(/[.!?\n]\s+/g));
+    const lastPeriodMatch = periodMatches.pop();
+    if (lastPeriodMatch && lastPeriodMatch.index !== undefined) {
+      startOffset = Math.max(0, bestPos - 250) + lastPeriodMatch.index + lastPeriodMatch[0].length;
+    } else {
+      // Fallback: search ~100 chars before bestPos and snap to the next word boundary
+      const roughStart = Math.max(0, bestPos - 100);
+      if (roughStart > 0) {
+        const spaceMatch = text.slice(roughStart, bestPos).search(/\s+/);
+        startOffset = (spaceMatch !== -1) ? roughStart + spaceMatch + 1 : roughStart;
+      }
     }
   }
 
-  const boundedExcerpt = rawExcerpt.slice(cleanStart, cleanStart + maxChars);
+  const rawExcerpt = text.slice(startOffset, startOffset + maxChars + 150);
+  const boundedExcerpt = rawExcerpt.replace(/^[,:;\s–—\-]+/, '');
   return truncateToSentenceBoundary(boundedExcerpt, maxChars);
 }
 

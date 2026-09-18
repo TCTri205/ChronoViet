@@ -372,11 +372,145 @@ describe('Chaptering Node & Entity Sanitizer', () => {
 
       expect(result.status).toBe('OUTLINE_CHAPTERED');
       expect(result.chapters).toBeDefined();
-      expect(result.chapters!.length).toBe(3);
+      expect(result.chapters!.length).toBe(4);
       expect(result.telemetryAudit).toBeDefined();
       const fallbackEntry = result.telemetryAudit!.find((t) => t.category === 'FALLBACK');
       expect(fallbackEntry).toBeDefined();
       expect(fallbackEntry?.message).toContain('LLM connection timeout');
     });
+
+    it('should sanitize truncated and dangling sentence boundaries in chapter summary (Incomplete Summary Guardrail)', () => {
+      const truncatedBeat = [
+        {
+          chapterIndex: 0,
+          title: 'Thời niên thiếu',
+          summary: 'Chủ tịch Hồ Chí Minh sinh ra tại Nam Đàn, Nghệ An. Hoàng sơ tổ khảo là Thái bảo Nguyễn Bá P',
+          targetDurationSeconds: 60,
+        },
+      ];
+
+      const chapters = enrichMacroBeatsToChapterPlans(truncatedBeat as any, {
+        userPrompt: 'Chủ tịch Hồ Chí Minh',
+        videoType: 'BIOGRAPHY',
+        totalTargetSec: 60,
+        secPerChapter: 60,
+        allHistoricalEntities: ['Hồ Chí Minh', 'Nguyễn Sinh Sắc'],
+        userPromptEntities: ['Hồ Chí Minh'],
+        verifiedChunks: [],
+      });
+
+      expect(chapters.length).toBe(1);
+      // The hanging truncated clause "Hoàng sơ tổ khảo là Thái bảo Nguyễn Bá P" must be stripped
+      expect(chapters[0].summary).toBe('Chủ tịch Hồ Chí Minh sinh ra tại Nam Đàn, Nghệ An.');
+      expect(chapters[0].summary).not.toContain('Nguyễn Bá P');
+      expect(chapters[0].summary.endsWith('.')).toBe(true);
+    });
+
+    it('should fallback cleanly when beat summary is solely an incomplete sentence fragment', () => {
+      const danglingOnlyBeat = [
+        {
+          chapterIndex: 0,
+          title: 'Thân thế dòng tộc',
+          timeAnchor: 'Năm 1890',
+          mainEvent: 'Nguyễn Sinh Cung chào đời',
+          summary: 'vào năm',
+          targetDurationSeconds: 60,
+        },
+      ];
+
+      const chapters = enrichMacroBeatsToChapterPlans(danglingOnlyBeat as any, {
+        userPrompt: 'Chủ tịch Hồ Chí Minh',
+        videoType: 'BIOGRAPHY',
+        totalTargetSec: 60,
+        secPerChapter: 60,
+        allHistoricalEntities: ['Hồ Chí Minh'],
+        userPromptEntities: ['Hồ Chí Minh'],
+        verifiedChunks: [],
+      });
+
+      expect(chapters.length).toBe(1);
+      expect(chapters[0].summary).toBe('Vào Năm 1890, Nguyễn Sinh Cung chào đời, ghi dấu ấn lịch sử quan trọng trong tiến trình Chủ tịch Hồ Chí Minh.');
+      expect(chapters[0].summary.endsWith('.')).toBe(true);
+    });
+
+    it('should partition chapterChunks chronologically when verifiedChunks are provided', () => {
+      const beats = [
+        {
+          chapterIndex: 0,
+          title: 'Hồi 1: Thuở Thiếu Thời (1890 - 1911)',
+          timeAnchor: '1890 - 1911',
+          mainEvent: 'Tuổi thơ làng Sen',
+          summary: 'Thời niên thiếu của Nguyễn Sinh Cung tại Nghệ An.',
+          targetDurationSeconds: 60,
+        },
+        {
+          chapterIndex: 1,
+          title: 'Hồi 2: Ra Đi Tìm Đường Cứu Nước (1911 - 1941)',
+          timeAnchor: '1911 - 1941',
+          mainEvent: 'Bôn ba hải ngoại',
+          summary: 'Hành trình quốc tế của Nguyễn Ái Quốc.',
+          targetDurationSeconds: 60,
+        },
+      ];
+
+      const verifiedChunks = [
+        {
+          entityId: 'chunk_1890',
+          name: 'Thời niên thiếu 1890',
+          summary: 'Nguyễn Sinh Cung sinh năm 1890 tại Kim Liên, Nam Đàn, Nghệ An.',
+        },
+        {
+          entityId: 'chunk_1911',
+          name: 'Hành trình 1911-1941',
+          summary: 'Năm 1911 người sang Pháp, lấy tên Nguyễn Ái Quốc năm 1919.',
+        },
+      ];
+
+      const chapters = enrichMacroBeatsToChapterPlans(beats as any, {
+        userPrompt: 'Chủ tịch Hồ Chí Minh',
+        videoType: 'BIOGRAPHY',
+        totalTargetSec: 120,
+        secPerChapter: 60,
+        allHistoricalEntities: ['Nguyễn Sinh Cung', 'Nguyễn Ái Quốc'],
+        userPromptEntities: ['Hồ Chí Minh'],
+        verifiedChunks,
+      });
+
+      expect(chapters.length).toBe(2);
+      expect(chapters[0].chapterChunks).toBeDefined();
+      expect(chapters[0].chapterChunks?.[0].entityId).toBe('chunk_1890');
+      expect(chapters[1].chapterChunks?.[0].entityId).toBe('chunk_1911');
+    });
+
+    it('should generate battle campaign chapters without biographical tropes in fallback mode', async () => {
+      const state: Partial<ChronoGraphState> = {
+        projectId: 'test_battle_proj',
+        userPrompt: 'Tóm tắt cuộc hành quân thần tốc của Hoàng đế Quang Trung đại phá quân Thanh 1789',
+        targetDurationMinutes: 4,
+        videoType: 'BATTLE',
+        ragContext: {
+          verifiedContext: [],
+        } as any,
+      };
+
+      const result = await chapteringNode(state as ChronoGraphState);
+      expect(result.chapters).toBeDefined();
+      expect(result.chapters?.length).toBe(5);
+
+      const titles = result.chapters!.map((c) => c.title);
+      // Ensure campaign arc progression
+      expect(titles[0]).toContain('Nguy biến Lịch sử');
+      expect(titles[1]).toContain('Hiệu triệu Binh sĩ');
+      expect(titles[2]).toContain('Mưu lược Giáp công');
+      expect(titles[3]).toContain('Bão lửa Quyết chiến');
+      expect(titles[4]).toContain('Đại thắng Khải hoàn');
+
+      // Ensure no childhood biographical tropes
+      for (const t of titles) {
+        expect(t).not.toContain('Thời niên thiếu');
+        expect(t).not.toContain('Thuở nhỏ');
+      }
+    });
   });
 });
+

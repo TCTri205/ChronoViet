@@ -302,17 +302,31 @@ function startTtsService(): void {
   });
 }
 
-function killStalePort(port: number): void {
+async function killStalePort(port: number): Promise<void> {
   try {
-    execSync(`lsof -ti :${port} | xargs kill -9 2>/dev/null || true`, { stdio: 'ignore' });
+    const rawPids = execSync(`lsof -ti :${port} 2>/dev/null || true`, { encoding: 'utf-8' }).trim();
+    if (rawPids) {
+      const pids = rawPids.split('\n').map((p) => p.trim()).filter(Boolean);
+      for (const pid of pids) {
+        try {
+          execSync(`kill -9 ${pid} 2>/dev/null || true`, { stdio: 'ignore' });
+        } catch {}
+      }
+      // Wait up to 2 seconds for the operating system to release the socket
+      for (let i = 0; i < 10; i++) {
+        await new Promise((r) => setTimeout(r, 200));
+        const check = execSync(`lsof -ti :${port} 2>/dev/null || true`, { encoding: 'utf-8' }).trim();
+        if (!check) break;
+      }
+    }
   } catch {}
 }
 
 // 7. Start Web App & Render Worker
-function startApps(): void {
+async function startApps(): Promise<void> {
   // Clean up any stale Node instances occupying development ports
-  killStalePort(3000);
-  killStalePort(3001);
+  await killStalePort(3000);
+  await killStalePort(3001);
 
   // Synchronize workspace packages so web & worker runtime never run stale dist
   try {
@@ -423,7 +437,7 @@ async function main() {
   await new Promise((r) => setTimeout(r, 2000));
 
   // Phase C: Web App & Worker
-  startApps();
+  await startApps();
 }
 
 main().catch((err) => {

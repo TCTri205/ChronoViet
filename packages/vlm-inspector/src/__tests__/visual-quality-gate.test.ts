@@ -1,10 +1,29 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import {
   VisualQualityGate,
   readImageDimensionsFromBuffer,
 } from '../visual-quality-gate.js';
 
 describe('VisualQualityGate Unit Tests', () => {
+  let tempBaseDir: string;
+
+  beforeAll(() => {
+    tempBaseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chronoviet-vlm-test-'));
+    process.env.PROJECTS_MEDIA_ROOT = tempBaseDir;
+  });
+
+  afterAll(() => {
+    if (tempBaseDir && fs.existsSync(tempBaseDir)) {
+      try {
+        fs.rmSync(tempBaseDir, { recursive: true, force: true });
+      } catch {}
+    }
+    delete process.env.PROJECTS_MEDIA_ROOT;
+  });
+
   const gate = new VisualQualityGate('/tmp/test-vlm-assets');
 
   describe('License Audit', () => {

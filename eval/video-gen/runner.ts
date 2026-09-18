@@ -216,6 +216,11 @@ export async function runVideoGenerationEvaluation(
           introducedEntities: [],
           transitionHook: '',
         },
+        narrativeLedger: {
+          coveredMilestones: [],
+          introducedKeyFacts: [],
+          resolvedAliases: [],
+        },
         chapterScripts: {},
         factCheckLogs: [],
         scenes: [],

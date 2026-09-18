@@ -5,10 +5,13 @@ import { Sidebar } from "../components/layout/Sidebar";
 import { VideoGeneratorPanel } from "../components/video/VideoGeneratorPanel";
 import { VideoPlayer } from "../components/player/VideoPlayer";
 import { ChatContainer } from "../components/chat/ChatContainer";
-import { ChatMessage } from "../components/chat/ChatMessage";
+import { ChatMessage, extractTopicFromMessage } from "../components/chat/ChatMessage";
 import { LiveAgentStepper } from "../components/video/LiveAgentStepper";
 import { CitationBadge } from "../components/chat/CitationBadge";
 import { KaraokeSubtitles } from "../components/player/KaraokeSubtitles";
+import { TranscriptDrawer } from "../components/player/TranscriptDrawer";
+import { HistoricalSourceModal } from "../components/chat/HistoricalSourceModal";
+import { EmptyChatState } from "../components/chat/EmptyChatState";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 
@@ -60,6 +63,11 @@ describe("Frontend UI/UX Component Specifications", () => {
       expect(KaraokeSubtitles).toBeDefined();
       expect(typeof KaraokeSubtitles).toBe("function");
     });
+
+    it("should define TranscriptDrawer component with script copy capabilities", () => {
+      expect(TranscriptDrawer).toBeDefined();
+      expect(typeof TranscriptDrawer).toBe("function");
+    });
   });
 
   describe("Chat & Knowledge Hub Components", () => {
@@ -75,8 +83,24 @@ describe("Frontend UI/UX Component Specifications", () => {
 
     it("should export ChatMessage component with resilient topic extraction support", () => {
       expect(ChatMessage).toBeDefined();
-      expect(typeof ChatMessage).toBe("object"); // React.memo component is an object with render property or function
+      expect(typeof ChatMessage).toBe("object"); // React.memo component
+    });
+
+    it("should define HistoricalSourceModal and EmptyChatState components", () => {
+      expect(HistoricalSourceModal).toBeDefined();
+      expect(typeof HistoricalSourceModal).toBe("function");
+      expect(EmptyChatState).toBeDefined();
+      expect(typeof EmptyChatState).toBe("function");
+    });
+
+    it("should accurately extract topic without greetings or system preambles", () => {
+      const textWithGreeting = `Chào bạn! Tôi là ChronoViet AI.\n\nChiến Thắng Bạch Đằng Năm 1288\n\nVào năm 1288, quân dân nhà Trần dưới sự lãnh đạo của Trần Hưng Đạo...`;
+      const topic = extractTopicFromMessage(textWithGreeting);
+      expect(topic).toBe("Chiến Thắng Bạch Đằng Năm 1288");
+
+      const textWithMarkdown = `## Khởi Nghĩa Lam Sơn 1418 - 1427\nLê Lợi dựng cờ khởi nghĩa...`;
+      const cleanTopic = extractTopicFromMessage(textWithMarkdown);
+      expect(cleanTopic).toBe("Khởi Nghĩa Lam Sơn 1418 - 1427");
     });
   });
 });
-

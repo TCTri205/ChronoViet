@@ -359,7 +359,12 @@ export function ChatContainer({
         aria-live="polite"
       >
         {messages.length === 0 ? (
-          <EmptyChatState onSelectPrompt={(p) => handleSendMessage(p)} />
+          <EmptyChatState
+            onSelectPrompt={(p) => {
+              setInput(p);
+              handleSendMessage(p);
+            }}
+          />
         ) : (
           messages.map((msg) => (
             <ChatMessage

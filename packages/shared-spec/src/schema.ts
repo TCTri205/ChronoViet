@@ -68,12 +68,81 @@ export const VideoDomainSchema = z.enum([
   'MYSTERY',
   'ARTIFACT',
 ]);
+export const VideoTypeSchema = VideoDomainSchema;
+export type VideoType = z.infer<typeof VideoTypeSchema>;
+
+/**
+ * Robust, generic historical domain classifier that inspects user prompt keywords
+ * to dynamically infer video intent (BATTLE, BIOGRAPHY, DYNASTY, ARTIFACT, MYSTERY).
+ */
+export function classifyVideoDomain(topic: string, explicitDomain?: string): VideoDomain {
+  if (explicitDomain && VideoDomainSchema.safeParse(explicitDomain).success) {
+    return explicitDomain as VideoDomain;
+  }
+  if (!topic || typeof topic !== 'string') return 'BIOGRAPHY';
+
+  const lower = topic.toLowerCase();
+
+  // 1. Combat, Battle, Campaign, Uprising keywords
+  if (
+    /hành quân|thần tốc|đại phá|chiến dịch|trận đánh|trận|quyết chiến|khởi nghĩa|đánh tan|công phá|phòng tuyến|phản công|tiến công|thủy chiến|bạch đằng|ngọc hồi|đống đa|chi lăng|điện biên phủ|rạch gầm|xoài mút|như nguyệt|xuân 1789|kỷ dậu 1789|mãn thanh|quân thanh|quân giặc|xâm lược|vạn quân/i.test(
+      lower
+    )
+  ) {
+    return 'BATTLE';
+  }
+
+  // 2. Artifact, Relic, Cultural Heritage keywords
+  if (
+    /trống đồng|cổ vật|bảo vật|di vật|hiện vật|di chỉ|thạp đồng|kiếm báu|bia đá|chuông đồng|trống ngọc lũ|hoàng thành|di tích|thành cổ|thành nhà hồ/i.test(
+      lower
+    )
+  ) {
+    return 'ARTIFACT';
+  }
+
+  // 3. Mystery, Unsolved historical crime/mystery keywords
+  if (
+    /bí ẩn|vụ án|kỳ án|uẩn khúc|nghi án|lệ chi viên|cái chết của|mất tích|bí mật|truyền thuyết bí ẩn/i.test(
+      lower
+    )
+  ) {
+    return 'MYSTERY';
+  }
+
+  // 4. Dynasty, Era, Transfer of capital keywords
+  if (
+    /triều đại|nhà lý|nhà trần|nhà lê|nhà nguyễn|nhà hồ|nhà đinh|nhà tiền lê|thời kỳ|định đô|chiếu dời đô|hưng thịnh|suy vong|chuyển giao quyền lực/i.test(
+      lower
+    )
+  ) {
+    return 'DYNASTY';
+  }
+
+  // 5. Default to BIOGRAPHY for figure-focused queries
+  return 'BIOGRAPHY';
+}
+
+export const classifyVideoType = classifyVideoDomain;
+
 
 export const TemplateIdSchema = z.enum([
   'HISTORICAL_DOCUMENTARY',
   'QUICK_SHORTS',
   'MODERN_NEWS',
 ]);
+
+export const TEMPLATE_TARGET_WPM: Record<TemplateId, number> = {
+  QUICK_SHORTS: 215,
+  MODERN_NEWS: 210,
+  HISTORICAL_DOCUMENTARY: 205,
+};
+
+export function getTargetWpm(templateId?: string): number {
+  if (templateId === 'QUICK_SHORTS') return TEMPLATE_TARGET_WPM.QUICK_SHORTS;
+  if (templateId === 'MODERN_NEWS') return TEMPLATE_TARGET_WPM.MODERN_NEWS;
+  return TEMPLATE_TARGET_WPM.HISTORICAL_DOCUMENTARY;
+}
 
 export const AspectRatioSchema = z.enum(['16:9', '9:16', '1:1']).default('16:9');
 
@@ -171,6 +240,115 @@ export const isPureImageLayout = (layoutMode?: LayoutMode | string): boolean => 
   if (!layoutMode) return false;
   return PURE_IMAGE_LAYOUTS.has(layoutMode);
 };
+
+export const isPureCodeLayout = (layoutMode?: LayoutMode | string): boolean => {
+  if (!layoutMode) return false;
+  return !PURE_IMAGE_LAYOUTS.has(layoutMode);
+};
+
+export const DOMAIN_LAYOUT_WHITELIST: Record<VideoDomain, LayoutMode[]> = {
+  BIOGRAPHY: [
+    'HISTORICAL_FRAME',
+    'FULL_COVER',
+    'CENTER_SCALE',
+    'QUOTE_SLIDE',
+    'TIMELINE_CHRONO',
+    'ARTICLE_UI',
+    'CHARACTER_PROFILE',
+    'STAT_CARD',
+  ],
+  BATTLE: [
+    'HISTORICAL_FRAME',
+    'FULL_COVER',
+    'VERSUS_CARD',
+    'ARMY_STRENGTH',
+    'MAP_TACTICAL',
+    'STAT_CARD',
+    'TIMELINE_CHRONO',
+  ],
+  ARTIFACT: [
+    'HISTORICAL_FRAME',
+    'FULL_COVER',
+    'ARTIFACT_INSPECT',
+    'MUSEUM_TAG',
+    'STAT_CARD',
+    'CENTER_SCALE',
+  ],
+  DYNASTY: [
+    'HISTORICAL_FRAME',
+    'FULL_COVER',
+    'ROYAL_DECREE',
+    'TIMELINE_CHRONO',
+    'STAT_CARD',
+    'DOCUMENTARY_GRID',
+  ],
+  MYSTERY: [
+    'HISTORICAL_FRAME',
+    'FULL_COVER',
+    'SPLIT_THEORY',
+    'ARTICLE_UI',
+    'QUOTE_SLIDE',
+  ],
+};
+
+/**
+ * Sanitizes and guards text boundaries against truncated or hanging sentence fragments.
+ * - Trims hanging trailing clauses that lack a valid sentence-closing punctuation (.!?).
+ * - Strips dangling prepositions and conjunctions (e.g., 'vào năm', 'tại', 'khi') before sentence ends.
+ * - Removes isolated single-letter trailing initials from truncated strings.
+ * - Ensures any valid retained text ends with proper closing punctuation.
+ */
+export function sanitizeSentenceBoundaries(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  let cleaned = text.trim();
+  if (!cleaned) return '';
+
+  // Clean trailing dangling prepositions/conjunctions before period or at the end
+  const danglingTailRegex = /(?:,\s*|\s+)(?:vào\s+năm(?:\s+\d{1,3})?|năm\s+\d{1,2}|tháng\s+\d{1,2}|ngày\s+\d{1,2}|vào|tại|trong|khi|do|vì|bởi|và|hoặc|nhưng|rồi|với|là|ở|đến|của|từ)[.!?]?\s*$/gi;
+  cleaned = cleaned.replace(danglingTailRegex, '').trim();
+
+  // If text already ends with terminal punctuation (.!? optionally followed by quotes)
+  if (/[.!?]["”'’]?\s*$/.test(cleaned)) {
+    cleaned = cleaned.replace(/(?:,\s*|\s+)(?:vào\s+năm(?:\s+\d{1,3})?|năm\s+\d{1,2}|tháng\s+\d{1,2}|ngày\s+\d{1,2}|vào|tại|trong|khi|do|vì|bởi|và|hoặc|nhưng|rồi|với|là|ở|đến|của|từ)[.!?]\s*$/gi, '.').trim();
+    return cleaned;
+  }
+
+  // The text does NOT end with terminal punctuation.
+  // Check if there is an earlier legitimate sentence boundary:
+  // - A punctuation (.!?) that is followed by whitespace and a capital letter
+  // - NOT preceded by digits (e.g. 2.9, 19.5) or common Vietnamese abbreviations (TP., GS., TS., etc.)
+  const abbrevRegex = /\b(?:TP|Tp|TpHCM|GS|PGS|TS|ThS|BS|Th|Q|H|TX|TT|tr|sđd|v\.v)\.$/i;
+  const candRegex = /(?<=[^\d\s]{2,})[.!?]["”'’]?\s+(?=[A-ZÀ-Ỹ])/gu;
+  let lastBoundaryEnd = -1;
+  let m: RegExpExecArray | null;
+
+  while ((m = candRegex.exec(cleaned)) !== null) {
+    const beforeDot = cleaned.slice(0, m.index + 1);
+    if (!abbrevRegex.test(beforeDot)) {
+      lastBoundaryEnd = m.index + 1;
+    }
+  }
+
+  if (lastBoundaryEnd !== -1 && lastBoundaryEnd >= 20) {
+    // Discard the unclosed trailing fragment, retaining only the complete sentence
+    cleaned = cleaned.slice(0, lastBoundaryEnd).trim();
+    return cleaned;
+  }
+
+  // No earlier legitimate sentence boundary found.
+  // If the text ends with an isolated single letter, it was truncated mid-word without a complete sentence
+  if (/(?:^|\s+)\p{L}\s*$/u.test(cleaned)) {
+    return '';
+  }
+
+  // Otherwise, if cleaned text is still a substantial sentence/clause (>= 15 chars), close it with a dot
+  if (cleaned.length >= 15) {
+    cleaned = `${cleaned}.`;
+  }
+
+  return cleaned;
+}
+
 
 export const SoundEffectSchema = z.object({
   sfxUrl: z.string(),
@@ -299,6 +477,12 @@ export const SponsorOverlaySchema = z.object({
   position: OverlayPositionSchema.optional(),
 });
 
+export const MilestoneItemSchema = z.object({
+  time: z.string(),
+  title: z.string(),
+  desc: z.string().optional(),
+});
+
 export const LooseOverlayDataSchema = z.object({
   name: z.string().optional(),
   role: z.string().optional(),
@@ -319,6 +503,7 @@ export const LooseOverlayDataSchema = z.object({
   bulletPoints: z.array(z.string()).optional(),
   artifactInfo: ArtifactInfoSchema.optional(),
   theories: z.array(HistoricalTheorySchema).optional(),
+  milestones: z.array(MilestoneItemSchema).optional(),
 });
 
 export const OverlayDataSchema = LooseOverlayDataSchema;
@@ -333,6 +518,7 @@ export const AssetMetadataSchema = z.object({
 
 export const BaseTimelineSceneSchema = z.object({
   id: z.string(),
+  chapterIndex: z.number().optional(),
   type: z.enum(['PURE_CODE', 'PURE_IMAGE']).optional(),
   durationInFrames: z.number().optional(),
   durationInSeconds: z.number().optional(),
@@ -978,6 +1164,14 @@ export const ChapterPlanSchema = z.object({
   exitHook: z.string().optional(),
   climaxFocus: z.string().optional(),
   establishedTone: z.string().optional(),
+  timeAnchor: z.union([
+    z.string(),
+    z.object({
+      startYear: z.number().optional(),
+      endYear: z.number().optional(),
+    }),
+  ]).optional(),
+  chapterChunks: z.array(HistoricalContextEntitySchema).optional(),
 });
 
 export const VisualCandidateSchema = z.object({
@@ -1067,9 +1261,17 @@ export const OrchestratorStatusSchema = z.enum([
   'ABORTED',
 ]);
 
+export const NarrativeLedgerSchema = z.object({
+  coveredMilestones: z.array(z.string()).default([]),
+  introducedKeyFacts: z.array(z.string()).default([]),
+  resolvedAliases: z.array(z.string()).default([]),
+  passedTimeAnchor: z.number().optional(),
+});
+
 export type ProjectWorkspaceConfig = z.infer<typeof ProjectWorkspaceConfigSchema>;
 export type ChapterPlan = z.infer<typeof ChapterPlanSchema>;
 export type VisualCandidate = z.infer<typeof VisualCandidateSchema>;
 export type SceneGeneration = z.infer<typeof SceneGenerationSchema>;
 export type MediaAssetRegistry = z.infer<typeof MediaAssetRegistrySchema>;
 export type OrchestratorStatus = z.infer<typeof OrchestratorStatusSchema>;
+export type NarrativeLedger = z.infer<typeof NarrativeLedgerSchema>;

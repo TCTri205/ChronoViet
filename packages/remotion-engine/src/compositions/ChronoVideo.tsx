@@ -20,7 +20,19 @@ const resolveMediaUrl = (url?: string): string => {
     trimmed.startsWith('http://') ||
     trimmed.startsWith('https://') ||
     trimmed.startsWith('data:') ||
-    trimmed.startsWith('blob:')
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('file://')
+  ) {
+    return trimmed;
+  }
+  // Absolute disk paths should not be passed to staticFile()
+  if (
+    trimmed.startsWith('/Users') ||
+    trimmed.startsWith('/home') ||
+    trimmed.startsWith('/media') ||
+    trimmed.startsWith('/tmp') ||
+    trimmed.startsWith('/var') ||
+    /^[A-Za-z]:[\\/]/.test(trimmed)
   ) {
     return trimmed;
   }
@@ -183,7 +195,7 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
       }}
     >
       {/* Audio Layer 1: Primary Voiceover */}
-      {audioUrl && (
+      {audioUrl && audioUrl.trim().length > 0 && (
         <Audio
           src={resolveMediaUrl(audioUrl)}
           volume={1.0}
@@ -191,7 +203,7 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
       )}
 
       {/* Audio Layer 2: Background Music with Dynamic Audio Ducking (-12dB during speech frames) */}
-      {bgmUrl && (
+      {bgmUrl && bgmUrl.trim().length > 0 && (
         <Loop durationInFrames={durationInFrames}>
           <Audio
             src={resolveMediaUrl(bgmUrl)}
@@ -226,9 +238,17 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
             effectiveTransition !== 'NONE' &&
             index < timeline.length - 1;
 
-          const shouldHideSubtitle =
+          const isFullTextLayout =
             effectiveScene.layoutMode === 'OUTRO_CARD' ||
             effectiveScene.layoutMode === 'SPONSOR_UI' ||
+            effectiveScene.layoutMode === 'QUOTE_SLIDE' ||
+            effectiveScene.layoutMode === 'QUOTE_CANVAS' ||
+            effectiveScene.layoutMode === 'POEM_RECITING' ||
+            effectiveScene.layoutMode === 'CHAPTER_CARD' ||
+            effectiveScene.layoutMode === 'TITLE_CARD';
+
+          const shouldHideSubtitle =
+            isFullTextLayout ||
             effectiveScene.hideSubtitle === true;
 
           const shouldHideHeader =
@@ -300,13 +320,20 @@ export const ChronoVideo: React.FC<ChronoVideoProps> = ({
                   </AbsoluteFill>
                 </AbsoluteFill>
 
-                {/* Per-Scene Primary Audio */}
-                {scene.sceneAudioUrl && (
-                  <Audio
-                    src={resolveMediaUrl(scene.sceneAudioUrl)}
-                    volume={1.0}
-                  />
-                )}
+                {/* Per-Scene Primary Audio with synchronized lead-in margin */}
+                {scene.sceneAudioUrl && (() => {
+                  const audioLeadIn = scene.captions && scene.captions.length > 0
+                    ? Math.max(0, Math.min(12, scene.captions[0].startFrame))
+                    : 12;
+                  return (
+                    <Sequence from={audioLeadIn}>
+                      <Audio
+                        src={resolveMediaUrl(scene.sceneAudioUrl)}
+                        volume={1.0}
+                      />
+                    </Sequence>
+                  );
+                })()}
                 {/* Legacy single SFX */}
                 {scene.sfxUrl && (
                   <Audio

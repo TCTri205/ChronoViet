@@ -1,4 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { durationReconciliationNode } from '../graph/nodes/reconciler-node.js';
 import { validateFolkloreHypothesisTone } from '../guardrails/folklore-validator.js';
 import { evaluateNliEntailmentScore } from '../guardrails/nli-hallucination-judge.js';
@@ -8,6 +11,8 @@ import { runOrchestratorPipeline, resumeOrchestratorPipeline, streamOrchestrator
 import { extractSearchKeywordsFromText } from '../graph/nodes/keyword-node.js';
 import { vlmInspectionNode } from '../graph/nodes/vlm-node.js';
 import { assetGenerationForkJoinNode } from '../graph/nodes/asset-generation-node.js';
+import { ttsSynthesisNode } from '../graph/nodes/tts-node.js';
+import { factCheckerNode } from '../graph/nodes/fact-checker-node.js';
 
 // Mock callLlm and VieNeuEngine for deterministic unit testing
 vi.mock('@chronoviet/infra', async (importOriginal) => {
@@ -15,7 +20,34 @@ vi.mock('@chronoviet/infra', async (importOriginal) => {
   return {
     ...original,
     callLlm: vi.fn().mockImplementation(async ({ messages, responseFormat }) => {
+      const userMsg = messages.find((m: any) => m.role === 'user')?.content || '';
       const prompt = messages[0]?.content || '';
+
+      if (userMsg.includes('Chủ tịch Hồ Chí Minh') || userMsg.includes('test_pipeline_ho_chi_minh')) {
+        if (responseFormat === 'json_object' || prompt.includes('JSON')) {
+          return {
+            content: JSON.stringify({
+              chapterBeats: [
+                {
+                  chapterIndex: 0,
+                  title: 'Thời niên thiếu và chí lớn cứu nước',
+                  timeAnchor: 'Năm 1890',
+                  mainEvent: 'Chủ tịch Hồ Chí Minh sinh ra tại Nam Đàn',
+                  summary: 'Chủ tịch Hồ Chí Minh sinh năm 1890 tại làng Sen, Nam Đàn, Nghệ An.',
+                  targetDurationSeconds: 60,
+                  keyEvents: ['Sinh ra tại làng Sen'],
+                  introducedEntities: ['Chủ tịch Hồ Chí Minh'],
+                },
+              ],
+            }),
+          };
+        }
+        return {
+          content:
+            'Chủ tịch Hồ Chí Minh sinh năm 1890 tại làng Sen, Nam Đàn, Nghệ An. Người đã cống hiến trọn cuộc đời mình vì sự nghiệp giải phóng dân tộc và độc lập tự do cho Tổ quốc.',
+        };
+      }
+
       if (responseFormat === 'json_object' || prompt.includes('JSON')) {
         return {
           content: JSON.stringify([
@@ -110,6 +142,22 @@ vi.mock('@chronoviet/vlm-inspector', async () => {
 });
 
 describe('Agent Orchestrator Unit Tests', () => {
+  let tempBaseDir: string;
+
+  beforeAll(() => {
+    tempBaseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chronoviet-orch-test-'));
+    process.env.PROJECTS_MEDIA_ROOT = tempBaseDir;
+  });
+
+  afterAll(() => {
+    if (tempBaseDir && fs.existsSync(tempBaseDir)) {
+      try {
+        fs.rmSync(tempBaseDir, { recursive: true, force: true });
+      } catch {}
+    }
+    delete process.env.PROJECTS_MEDIA_ROOT;
+  });
+
   describe('Duration Reconciliation Node', () => {
     it('should reconcile scene durations in Mode A (<= 10% deviation) and maintain pacing error < 3%', async () => {
       const mockState: Partial<ChronoGraphState> = {
@@ -561,5 +609,184 @@ describe('Agent Orchestrator Unit Tests', () => {
       expect(result.scenes![0].contentType).toBe('PURE_CODE');
       expect(result.scenes![0].usePureCodeFallback).toBe(true);
     });
+
+    it('should synthesize audio via ttsSynthesisNode and avoid reusing synthetic fallback audio', async () => {
+      const sampleState: Partial<ChronoGraphState> = {
+        projectId: 'test_tts_node_anti_sine_001',
+        userPrompt: 'Chiến thắng Bạch Đằng',
+        status: 'SCENES_SEGMENTED',
+        currentStep: 6,
+        scenes: [
+          {
+            sceneId: 'sc_tts_test_1',
+            sceneIndex: 0,
+            chapterIndex: 0,
+            voiceoverText: 'Trận Bạch Đằng vang danh ngàn đời.',
+            layoutMode: 'STAT_CARD',
+            contentType: 'IMAGE',
+            searchKeywords: ['bạch đằng'],
+            candidates: [],
+            usePureCodeFallback: false,
+            targetDurationSeconds: 5,
+          },
+        ],
+      };
+
+      const result = await ttsSynthesisNode(sampleState as ChronoGraphState);
+      expect(result.status).toBe('TTS_SYNTHESIZED');
+      expect(result.scenes).toBeDefined();
+      expect(result.scenes![0].audioPath).toBeDefined();
+      expect(result.scenes![0].audioDurationSeconds).toBeGreaterThan(0);
+      expect(result.audioAssets).toBeDefined();
+      expect(result.audioAssets!.length).toBe(1);
+    });
+
+    it('should maintain and propagate graph triples in state.ragContext', async () => {
+      const sampleState: Partial<ChronoGraphState> = {
+        projectId: 'test_rag_init_triples_001',
+        userPrompt: 'Chủ tịch Hồ Chí Minh',
+        targetDurationMinutes: 1,
+        videoType: 'BIOGRAPHY',
+        templateId: 'HISTORICAL_DOCUMENTARY',
+        status: 'INIT',
+        currentStep: 1,
+        ragContext: {
+          verifiedContext: [
+            {
+              entityId: 'person_ho_chi_minh',
+              canonicalName: 'Chủ tịch Hồ Chí Minh',
+              aliases: ['Bác Hồ', 'Nguyễn Ái Quốc'],
+              summary: 'Lãnh tụ vĩ đại của dân tộc Việt Nam.',
+              citations: ['Hồ Chí Minh Toàn Tập'],
+              confidenceScore: 0.99,
+            },
+          ],
+          aliasTable: {
+            'Chủ tịch Hồ Chí Minh': ['Bác Hồ', 'Nguyễn Ái Quốc'],
+          },
+          citations: ['Hồ Chí Minh Toàn Tập'],
+          triples: [
+            {
+              source: 'person_ho_chi_minh',
+              relation: 'LED_BY',
+              target: 'org_dang_cong_san_vn',
+              confidence: 0.95,
+            },
+          ],
+        },
+      };
+
+      expect(sampleState.ragContext?.triples).toBeDefined();
+      expect(sampleState.ragContext?.triples?.length).toBe(1);
+      expect(sampleState.ragContext?.triples?.[0].relation).toBe('LED_BY');
+    });
+
+    it('runs end-to-end pipeline for Chủ tịch Hồ Chí Minh verifying layout safety and sentence completeness', async () => {
+      const projectId = 'test_pipeline_ho_chi_minh_bio';
+      const initialState: Partial<ChronoGraphState> = {
+        projectId,
+        userPrompt: 'Chủ tịch Hồ Chí Minh',
+        targetDurationMinutes: 1,
+        videoType: 'BIOGRAPHY',
+        templateId: 'HISTORICAL_DOCUMENTARY',
+        status: 'INIT',
+        currentStep: 1,
+        ragContext: {
+          verifiedContext: [
+            {
+              entityId: 'person_ho_chi_minh',
+              canonicalName: 'Chủ tịch Hồ Chí Minh',
+              aliases: ['Bác Hồ', 'Nguyễn Ái Quốc'],
+              summary: 'Chủ tịch Hồ Chí Minh sinh năm 1890 tại làng Sen, Nam Đàn, Nghệ An. Người đã dành trọn cuộc đời vì sự nghiệp độc lập dân tộc.',
+              citations: ['Hồ Chí Minh Toàn Tập'],
+              confidenceScore: 0.99,
+            },
+          ],
+          aliasTable: {
+            'Chủ tịch Hồ Chí Minh': ['Bác Hồ', 'Nguyễn Ái Quốc'],
+          },
+          citations: ['Hồ Chí Minh Toàn Tập'],
+          triples: [
+            {
+              source: 'person_ho_chi_minh',
+              relation: 'BORN_IN',
+              target: 'loc_nghe_an',
+              confidence: 0.99,
+            },
+          ],
+        },
+      };
+
+      const finalState = await runOrchestratorPipeline(initialState as ChronoGraphState, {
+        resumeFromCheckpoint: false,
+      });
+
+      expect(finalState.status).toBe('COMPLETED');
+      expect(finalState.videoProps).toBeDefined();
+
+      // Verify no VERSUS_CARD or ARMY_STRENGTH in biography video
+      const timelineScenes = finalState.videoProps?.timeline || [];
+      expect(timelineScenes.length).toBeGreaterThan(0);
+      for (const scene of timelineScenes) {
+        expect(scene.layoutMode).not.toBe('VERSUS_CARD');
+        expect(scene.layoutMode).not.toBe('ARMY_STRENGTH');
+        if (scene.text) {
+          expect(/[.!?]["”']?\s*$/.test(scene.text)).toBe(true);
+        }
+      }
+
+      // Verify scenes list and voiceover text boundaries
+      expect(finalState.scenes).toBeDefined();
+      expect(finalState.scenes!.length).toBeGreaterThan(0);
+      for (const sc of finalState.scenes || []) {
+        expect(sc.layoutMode).not.toBe('VERSUS_CARD');
+        expect(sc.layoutMode).not.toBe('ARMY_STRENGTH');
+        expect(sc.voiceoverText).toBeDefined();
+        expect(sc.voiceoverText.length).toBeGreaterThan(0);
+        expect(/[.!?]["”']?\s*$/.test(sc.voiceoverText)).toBe(true);
+        expect(sc.voiceoverText).not.toContain('Nguyễn Bá P');
+      }
+    }, 30000);
+
+    it('factCheckerNode auto-corrects geographical administrative mismatches (e.g. Hoa Lư with Nghệ An -> Ninh Bình)', async () => {
+      const mockState: Partial<ChronoGraphState> = {
+        projectId: 'test_geo_factcheck',
+        userPrompt: 'Đinh Tiên Hoàng',
+        chapterScripts: {
+          0: 'Đinh Tiên Hoàng định đô tại cố đô Hoa Lư, tỉnh Nghệ An và xây dựng triều đình vững mạnh.',
+        },
+        chapters: [
+          {
+            chapterIndex: 0,
+            title: 'Hồi 1: Định đô',
+            summary: 'Đinh Bộ Lĩnh thống nhất 12 sứ quân và định đô tại Hoa Lư.',
+            targetDurationSeconds: 60,
+            keyEvents: [],
+            introducedEntities: [],
+          },
+        ],
+        ragContext: {
+          verifiedContext: [
+            {
+              entityId: 'loc_hoa_lu',
+              canonicalName: 'Hoa Lư',
+              aliases: [],
+              summary: 'Hoa Lư là kinh đô đầu tiên của nhà nước phong kiến trung ương tập quyền Việt Nam, thuộc tỉnh Ninh Bình.',
+              citations: [],
+              confidenceScore: 1.0,
+            },
+          ],
+          aliasTable: {},
+          citations: [],
+        },
+      };
+
+      const result = await factCheckerNode(mockState as ChronoGraphState);
+      expect(result.chapterScripts).toBeDefined();
+      expect(result.chapterScripts![0]).toContain('Ninh Bình');
+      expect(result.chapterScripts![0]).not.toContain('Nghệ An');
+      expect(result.factCheckLogs?.[0].escalationTier).toBeGreaterThanOrEqual(1);
+    });
   });
 });
+

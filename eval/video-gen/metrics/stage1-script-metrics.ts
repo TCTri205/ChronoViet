@@ -8,7 +8,7 @@
  * Stage 1 measures Planned Script Pacing & Density (WPM), not acoustic spoken timing.
  */
 
-import { SceneGeneration } from '@chronoviet/shared-spec';
+import { SceneGeneration, getTargetWpm } from '@chronoviet/shared-spec';
 import { BaseTestCaseResult, MetricScore, LatencyProfile, calculateLatencyPercentiles } from '../../shared/index.js';
 import { VideoGenTestCase, CANONICAL_HISTORICAL_ALIASES } from './video-gen-metrics.js';
 
@@ -84,7 +84,7 @@ export function evaluateStage1ScriptCase(
   const targetDurationSec = testCase.targetDurationMinutes * 60;
 
   const templateId = (testCase as any).templateId || 'HISTORICAL_DOCUMENTARY';
-  const targetWpm = templateId === 'QUICK_SHORTS' ? 160 : (templateId === 'MODERN_NEWS' ? 150 : 145);
+  const targetWpm = getTargetWpm(templateId);
 
   // Scene summaries and bounds audit (5s - 25s duration, 10 - 55 words)
   const sceneSummaries: Stage1SceneSummary[] = (projectState.scenes || []).map((scene) => {
@@ -304,7 +304,7 @@ export function computeStage1ScriptAggregatedMetrics(
       target: 8.0,
       pass: meanPacingDeviation <= 15.0, // Target <= 8%, fail > 15%
       unit: '%',
-      description: 'Deviation of planned narration WPM against target 145 WPM (130-160 WPM band) benchmark',
+      description: 'Deviation of planned narration WPM against template target WPM benchmark',
     },
     factCheckPassRate: {
       name: 'Historical Fact-Check Pass Rate',

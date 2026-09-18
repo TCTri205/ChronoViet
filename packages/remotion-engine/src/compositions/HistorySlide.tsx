@@ -83,6 +83,7 @@ const getForegroundContent = (
       <TimelineChrono
         title={od?.title || scene.text}
         subtitle={od?.subtitle}
+        milestones={od?.milestones}
         durationInFrames={durationInFrames}
         theme={theme}
       />
@@ -231,7 +232,7 @@ const getForegroundContent = (
   if (layoutMode === 'VERSUS_CARD' || (Boolean(od?.leftSide) && Boolean(od?.rightSide))) {
     return (
       <VersusCard
-        title={od?.title}
+        title={od?.title || scene.text}
         leftSide={od?.leftSide}
         rightSide={od?.rightSide}
         bgImageSrc={scene.assetUrl}

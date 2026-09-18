@@ -11,12 +11,15 @@ import {
   Download,
   FileText,
   Subtitles,
-  RotateCcw,
+  ScrollText,
   Sparkles,
+  AlertTriangle,
+  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KaraokeSubtitles, SubtitleSegment } from "./KaraokeSubtitles";
 import { AttributionDrawer, MediaAttribution } from "./AttributionDrawer";
+import { TranscriptDrawer, TranscriptScene } from "./TranscriptDrawer";
 
 export interface VideoPlayerProps {
   videoUrl?: string;
@@ -42,18 +45,59 @@ export function VideoPlayer({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isCcActive, setIsCcActive] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAttributionOpen, setIsAttributionOpen] = useState(false);
+  const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const [hasVideoError, setHasVideoError] = useState(false);
 
   // Dynamic project hydration states
   const [effectiveVideoUrl, setEffectiveVideoUrl] = useState(
     videoUrl || `/api/v1/projects/${projectId}/video`
   );
   const [effectiveTitle, setEffectiveTitle] = useState(projectTitle);
+  const [effectiveAspectRatio, setEffectiveAspectRatio] = useState<"16:9" | "9:16">(aspectRatio);
+  const [dynamicTranscript, setDynamicTranscript] = useState<TranscriptScene[]>([
+    {
+      sceneId: "scene_default_01",
+      chapterIndex: 0,
+      chapterTitle: "Hồi 1: Khí Thiêng Sông Bạch Đằng",
+      startMs: 0,
+      endMs: 4000,
+      text: "Vạn Kiếp sấm vang, sông Bạch Đằng cuộn sóng... Hơn một nghìn năm lịch sử oai hùng của dân tộc Việt Nam ngời sáng nơi cửa biển linh thiêng.",
+      layoutMode: "ARTICLE_UI",
+    },
+    {
+      sceneId: "scene_default_02",
+      chapterIndex: 0,
+      chapterTitle: "Hồi 1: Khí Thiêng Sông Bạch Đằng",
+      startMs: 4000,
+      endMs: 8500,
+      text: "Dưới sự lãnh đạo thiên tài của Quốc Công Tiết Chế Hưng Đạo Đại Vương Trần Quốc Tuấn, quân dân Đại Việt đã lập nên chiến tích lẫy lừng năm 1288.",
+      layoutMode: "STAT_CARD",
+    },
+    {
+      sceneId: "scene_default_03",
+      chapterIndex: 1,
+      chapterTitle: "Hồi 2: Trận Đồ Cọc Gỗ Thần Tốc",
+      startMs: 8500,
+      endMs: 14000,
+      text: "Lợi dụng quy luật thủy triều, hàng vạn cọc gỗ bịt sắt nhọn được cắm ngầm xuống lòng sông, tạo nên chiếc bẫy rồng vĩ đại nhấn chìm chiến thuyền Ô Mã Nhi.",
+      layoutMode: "BLUR_BG",
+    },
+    {
+      sceneId: "scene_default_04",
+      chapterIndex: 2,
+      chapterTitle: "Hồi 3: Khải Hoàn Đại Thắng",
+      startMs: 14000,
+      endMs: 20000,
+      text: "Sông Bạch Đằng nghìn thu lưu danh sử sách, khẳng định nền độc lập, tự chủ và ý chí quật cường vạn đại của non sông Việt Nam.",
+      layoutMode: "OUTRO_CARD",
+    },
+  ]);
   const [dynamicSubtitles, setDynamicSubtitles] = useState<SubtitleSegment[]>(
     subtitles || [
       {
@@ -94,6 +138,33 @@ export function VideoPlayer({
   );
   const [videoStatus, setVideoStatus] = useState<"READY" | "PROCESSING">("READY");
 
+  // Keep aspectRatio state in sync if prop changes
+  useEffect(() => {
+    if (aspectRatio) {
+      setEffectiveAspectRatio(aspectRatio);
+    }
+  }, [aspectRatio]);
+
+  // Keep videoUrl in sync if prop changes
+  useEffect(() => {
+    if (videoUrl) {
+      setEffectiveVideoUrl(videoUrl);
+    }
+  }, [videoUrl]);
+
+  // Two-way synchronization with document fullscreen state (solves Esc key trap)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = document.fullscreenElement === containerRef.current;
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
   // Hydrate project manifest dynamically when projectId changes
   useEffect(() => {
     if (!projectId) return;
@@ -108,6 +179,10 @@ export function VideoPlayer({
           setEffectiveTitle(data.metadata.topic || data.metadata.title);
         }
 
+        if (data.metadata?.aspectRatio || data.aspectRatio) {
+          setEffectiveAspectRatio(data.metadata?.aspectRatio || data.aspectRatio);
+        }
+
         if (data.videoUrl) {
           setEffectiveVideoUrl(data.videoUrl);
           setVideoStatus("READY");
@@ -115,37 +190,64 @@ export function VideoPlayer({
           setVideoStatus("PROCESSING");
         }
 
-        // Hydrate subtitles from timeline schema if not provided via props
-        if (!subtitles && data.schema?.timeline && Array.isArray(data.schema.timeline)) {
+        // Hydrate subtitles and transcript from timeline schema
+        if (data.schema?.timeline && Array.isArray(data.schema.timeline)) {
           let elapsedMs = 0;
           const parsedSubs: SubtitleSegment[] = [];
           const parsedAttrs: MediaAttribution[] = [];
+          const parsedTranscript: TranscriptScene[] = [];
 
-          for (const scene of data.schema.timeline) {
-            const sceneDurMs = Math.round(
-              (scene.audioDurationSeconds || scene.targetDurationSeconds || 5) * 1000
-            );
-            const startMs = elapsedMs;
-            const endMs = elapsedMs + sceneDurMs;
+          for (let sIdx = 0; sIdx < data.schema.timeline.length; sIdx++) {
+            const scene = data.schema.timeline[sIdx];
+            const fps = data.schema?.fps || 30;
+            const hasDirectTime = typeof scene.startTime === "number" && typeof scene.endTime === "number";
+            const startMs = hasDirectTime ? Math.round(scene.startTime * 1000) : elapsedMs;
+            const sceneDurMs = hasDirectTime
+              ? Math.max(1000, Math.round((scene.endTime - scene.startTime) * 1000))
+              : Math.round(
+                  (scene.durationInFrames
+                    ? scene.durationInFrames / fps
+                    : (scene.audioDurationSeconds || scene.targetDurationSeconds || 5)) * 1000
+                );
+            const endMs = startMs + sceneDurMs;
+            const vText = scene.voiceoverText || scene.text || "";
 
-            if (scene.voiceoverText) {
-              parsedSubs.push({
-                text: scene.voiceoverText,
+            if (vText) {
+              const chIdx = scene.chapterIndex ?? Math.floor(sIdx / 5);
+              const chTitle =
+                scene.overlayData?.title ||
+                data.schema?.chapters?.[chIdx]?.title ||
+                `Hồi ${chIdx + 1}`;
+
+              parsedTranscript.push({
+                sceneId: scene.id || scene.sceneId || `scene_${sIdx + 1}`,
+                chapterIndex: chIdx,
+                chapterTitle: chTitle,
                 startMs,
                 endMs,
-                words:
-                  scene.wordTimestamps?.map((w: any) => ({
-                    word: w.word,
-                    startMs: startMs + (w.startMs || 0),
-                    endMs: startMs + (w.endMs || 250),
-                  })) || [],
+                text: vText,
+                layoutMode: scene.layoutMode,
               });
+
+              if (!subtitles) {
+                parsedSubs.push({
+                  text: vText,
+                  startMs,
+                  endMs,
+                  words:
+                    scene.wordTimestamps?.map((w: any) => ({
+                      word: w.word,
+                      startMs: startMs + (w.startMs || 0),
+                      endMs: startMs + (w.endMs || 250),
+                    })) || [],
+                });
+              }
             }
 
-            if (scene.selectedAsset) {
+            if (!attributions && scene.selectedAsset) {
               parsedAttrs.push({
                 id: scene.selectedAsset.candidateId || scene.sceneId || `attr_${parsedAttrs.length + 1}`,
-                title: scene.selectedAsset.title || scene.voiceoverText?.slice(0, 45) || "Tư liệu sử liệu",
+                title: scene.selectedAsset.title || vText.slice(0, 45) || "Tư liệu sử liệu",
                 sourceType: scene.selectedAsset.sourceType || "HISTORICAL_IMAGE",
                 license: scene.selectedAsset.license || "PUBLIC_DOMAIN",
                 institution:
@@ -158,8 +260,9 @@ export function VideoPlayer({
             elapsedMs = endMs;
           }
 
-          if (parsedSubs.length > 0) setDynamicSubtitles(parsedSubs);
-          if (parsedAttrs.length > 0) setDynamicAttributions(parsedAttrs);
+          if (parsedTranscript.length > 0) setDynamicTranscript(parsedTranscript);
+          if (!subtitles && parsedSubs.length > 0) setDynamicSubtitles(parsedSubs);
+          if (!attributions && parsedAttrs.length > 0) setDynamicAttributions(parsedAttrs);
         }
       })
       .catch(() => {});
@@ -212,7 +315,7 @@ export function VideoPlayer({
         if (videoRef.current) {
           videoRef.current.muted = true;
           setIsMuted(true);
-          videoRef.current.play();
+          videoRef.current.play().catch(() => {});
         }
       });
       setIsPlaying(true);
@@ -234,14 +337,35 @@ export function VideoPlayer({
     }
   };
 
+  const handleSeekToMs = (ms: number) => {
+    const timeSec = ms / 1000;
+    if (videoRef.current && Number.isFinite(timeSec)) {
+      videoRef.current.currentTime = timeSec;
+      setCurrentTime(timeSec);
+    }
+  };
+
+  const speeds = [1, 1.25, 1.5, 2];
+  const cyclePlaybackSpeed = () => {
+    const nextIdx = (speeds.indexOf(playbackSpeed) + 1) % speeds.length;
+    const nextSpeed = speeds[nextIdx];
+    setPlaybackSpeed(nextSpeed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = nextSpeed;
+    }
+  };
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen?.().catch(() => {});
-      setIsFullscreen(true);
+      containerRef.current.requestFullscreen?.().catch(() => {
+        // Fallback for browsers with restricted requestFullscreen
+        setIsFullscreen(true);
+      });
     } else {
-      document.exitFullscreen?.().catch(() => {});
-      setIsFullscreen(false);
+      document.exitFullscreen?.().catch(() => {
+        setIsFullscreen(false);
+      });
     }
   };
 
@@ -297,53 +421,121 @@ export function VideoPlayer({
     );
   }
 
+  const isPortrait = effectiveAspectRatio === "9:16";
+
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col items-center justify-center bg-black/95 rounded-2xl overflow-hidden border border-primary/30 shadow-2xl group ${
-        isFullscreen ? "fixed inset-0 z-50 rounded-none bg-[#040405]" : ""
+      className={`relative flex flex-col items-center justify-center bg-black/95 rounded-2xl overflow-hidden border border-primary/30 shadow-2xl group select-none ${
+        isFullscreen ? "fixed inset-0 z-50 rounded-none bg-[#040405] h-screen w-screen" : ""
       } ${className}`}
     >
       {/* Video Canvas */}
-      <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-        <video
-          ref={videoRef}
-          src={effectiveVideoUrl}
-          playsInline
-          // @ts-ignore
-          webkit-playsinline="true"
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={handleLoadedMetadata}
-          onEnded={() => setIsPlaying(false)}
-          onClick={togglePlay}
-          className={`cursor-pointer ${
-            aspectRatio === "9:16"
-              ? "h-full max-w-sm object-contain"
-              : "w-full max-h-[70vh] object-contain"
-          }`}
-        />
+      <div className="relative w-full h-full flex items-center justify-center overflow-hidden py-2">
+        {/* 9:16 Portrait Mockup Container */}
+        {isPortrait ? (
+          <div className="relative h-full max-h-[70vh] aspect-[9/16] rounded-2xl overflow-hidden border-2 border-primary/40 shadow-[0_0_30px_rgba(212,175,55,0.15)] bg-lacquer-surface flex items-center justify-center">
+            <video
+              ref={videoRef}
+              src={effectiveVideoUrl}
+              playsInline
+              // @ts-ignore
+              webkit-playsinline="true"
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onEnded={() => setIsPlaying(false)}
+              onError={() => setHasVideoError(true)}
+              onClick={togglePlay}
+              className="w-full h-full object-cover cursor-pointer"
+            />
 
-        {/* Karaoke Subtitles Overlay */}
-        <KaraokeSubtitles
-          currentTimeMs={currentTime * 1000}
-          subtitles={dynamicSubtitles}
-          isVisible={isCcActive}
-        />
+            {/* Karaoke Subtitles Overlay inside portrait canvas */}
+            <KaraokeSubtitles
+              currentTimeMs={currentTime * 1000}
+              subtitles={dynamicSubtitles}
+              isVisible={isCcActive}
+            />
 
-        {/* Big Center Play Button when paused */}
-        {!isPlaying && (
-          <button
-            onClick={togglePlay}
-            className="absolute z-20 w-16 h-16 rounded-full bg-primary/90 text-primary-foreground flex items-center justify-center shadow-2xl shadow-gold-glow hover:scale-110 transition-all cursor-pointer border-2 border-gold-300"
-            aria-label="Phát video"
-          >
-            <Play className="w-7 h-7 fill-current ml-1" />
-          </button>
+            {/* Play Button Overlay */}
+            {!isPlaying && (
+              <button
+                onClick={togglePlay}
+                className="absolute z-20 w-14 h-14 rounded-full bg-primary/90 text-primary-foreground flex items-center justify-center shadow-2xl shadow-gold-glow hover:scale-110 transition-all cursor-pointer border-2 border-gold-300"
+                aria-label="Phát video"
+              >
+                <Play className="w-6 h-6 fill-current ml-1" />
+              </button>
+            )}
+          </div>
+        ) : (
+          /* 16:9 Landscape Canvas */
+          <div className="relative w-full h-full flex items-center justify-center">
+            <video
+              ref={videoRef}
+              src={effectiveVideoUrl}
+              playsInline
+              // @ts-ignore
+              webkit-playsinline="true"
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onEnded={() => setIsPlaying(false)}
+              onError={() => setHasVideoError(true)}
+              onClick={togglePlay}
+              className="w-full max-h-[68vh] object-contain cursor-pointer"
+            />
+
+            {/* Karaoke Subtitles Overlay */}
+            <KaraokeSubtitles
+              currentTimeMs={currentTime * 1000}
+              subtitles={dynamicSubtitles}
+              isVisible={isCcActive}
+            />
+
+            {/* Play Button Overlay */}
+            {!isPlaying && (
+              <button
+                onClick={togglePlay}
+                className="absolute z-20 w-16 h-16 rounded-full bg-primary/90 text-primary-foreground flex items-center justify-center shadow-2xl shadow-gold-glow hover:scale-110 transition-all cursor-pointer border-2 border-gold-300"
+                aria-label="Phát video"
+              >
+                <Play className="w-7 h-7 fill-current ml-1" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Video Error Fallback Overlay */}
+        {hasVideoError && (
+          <div className="absolute inset-0 z-40 bg-lacquer-surface/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-in fade-in-50">
+            <div className="w-12 h-12 rounded-full bg-destructive/10 border border-destructive/30 flex items-center justify-center mb-3">
+              <AlertTriangle className="w-6 h-6 text-destructive" />
+            </div>
+            <h4 className="text-sm font-headline font-bold text-gold-300">
+              Đang Chuẩn Bị Tệp Video
+            </h4>
+            <p className="text-xs text-text-muted mt-1.5 max-w-xs leading-relaxed">
+              Tệp video đang được hệ thống hoàn thiện hoặc mạng tải chậm.
+            </p>
+            <Button
+              onClick={() => {
+                setHasVideoError(false);
+                if (videoRef.current) {
+                  videoRef.current.load();
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="mt-4 border-primary/30 text-gold-300 hover:bg-primary/20 gap-1.5 text-xs"
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              <span>Thử nạp lại</span>
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Control Bar Overlay */}
-      <div className="w-full bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 flex flex-col gap-2 z-30 transition-opacity">
+      <div className="w-full bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 flex flex-col gap-2 z-30 transition-opacity shrink-0">
         {/* Progress Timeline Slider */}
         <div className="flex items-center gap-3">
           <span className="font-mono text-xs text-text-secondary tabular-nums">
@@ -393,16 +585,33 @@ export function VideoPlayer({
             </span>
           </div>
 
-          {/* Right: CC, Attributions, Download, Fullscreen */}
-          <div className="flex items-center gap-2">
+          {/* Right: CC, Transcript, Attributions, Speed, Download, Fullscreen */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Button
+              onClick={() => setIsTranscriptOpen(true)}
+              variant="ghost"
+              size="sm"
+              className={`h-8 text-xs gap-1 cursor-pointer transition-colors ${
+                isTranscriptOpen
+                  ? "text-gold-300 bg-primary/20 border border-primary/30"
+                  : "text-text-secondary hover:text-gold-300 hover:bg-primary/10"
+              }`}
+              aria-label="Xem toàn bộ kịch bản thuyết minh"
+              title="Xem toàn bộ kịch bản (Transcript)"
+            >
+              <ScrollText className="w-3.5 h-3.5 text-primary" />
+              <span className="hidden sm:inline font-medium">Kịch bản</span>
+            </Button>
+
             <Button
               onClick={() => setIsCcActive(!isCcActive)}
               variant="ghost"
               size="sm"
-              className={`h-8 text-xs gap-1 ${
-                isCcActive ? "text-gold-300 bg-primary/10" : "text-text-muted"
+              className={`h-8 text-xs gap-1 cursor-pointer ${
+                isCcActive ? "text-gold-300 bg-primary/10" : "text-text-muted hover:text-text-primary"
               }`}
               aria-label="Bật/tắt phụ đề Karaoke"
+              title="Bật/tắt phụ đề Karaoke"
             >
               <Subtitles className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Phụ đề</span>
@@ -412,18 +621,30 @@ export function VideoPlayer({
               onClick={() => setIsAttributionOpen(true)}
               variant="ghost"
               size="sm"
-              className="h-8 text-xs gap-1 text-text-secondary hover:text-gold-300"
+              className="h-8 text-xs gap-1 text-text-secondary hover:text-gold-300 cursor-pointer"
               aria-label="Xem kê khai bản quyền tư liệu"
+              title="Kê khai bản quyền tư liệu"
             >
               <FileText className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Tư liệu</span>
             </Button>
 
+            <button
+              type="button"
+              onClick={cyclePlaybackSpeed}
+              className="h-8 px-2 rounded-md text-xs font-mono text-text-secondary hover:text-gold-300 hover:bg-primary/10 transition-colors border border-primary/15 cursor-pointer"
+              title="Thay đổi tốc độ phát (1x / 1.25x / 1.5x / 2x)"
+              aria-label={`Tốc độ phát hiện tại: ${playbackSpeed}x. Bấm để thay đổi.`}
+            >
+              {playbackSpeed}x
+            </button>
+
             <a
               href={effectiveVideoUrl}
               download={`${projectId || "video"}.mp4`}
-              className="inline-flex items-center justify-center h-8 px-3 rounded-md text-xs font-medium bg-primary/10 hover:bg-primary/20 text-gold-300 border border-primary/20 gap-1.5 transition-colors"
+              className="inline-flex items-center justify-center h-8 px-2.5 sm:px-3 rounded-md text-xs font-medium bg-primary/10 hover:bg-primary/20 text-gold-300 border border-primary/20 gap-1.5 transition-colors"
               aria-label="Tải video 1080p về máy"
+              title="Tải video MP4 chất lượng cao"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Tải MP4</span>
@@ -433,7 +654,7 @@ export function VideoPlayer({
               onClick={toggleFullscreen}
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-text-secondary hover:text-gold-300"
+              className="h-8 w-8 text-text-secondary hover:text-gold-300 cursor-pointer"
               aria-label={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình (Cinema Mode)"}
             >
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
@@ -441,6 +662,16 @@ export function VideoPlayer({
           </div>
         </div>
       </div>
+
+      {/* Full Transcript Drawer */}
+      <TranscriptDrawer
+        isOpen={isTranscriptOpen}
+        onClose={() => setIsTranscriptOpen(false)}
+        projectTitle={effectiveTitle}
+        scenes={dynamicTranscript}
+        currentTimeMs={currentTime * 1000}
+        onSeekToMs={handleSeekToMs}
+      />
 
       {/* Attribution Drawer */}
       <AttributionDrawer

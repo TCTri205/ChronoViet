@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatContainer } from "@/components/chat/ChatContainer";
@@ -18,23 +17,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { MessageSquare, Film, X, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-const VideoPlayer = dynamic(
-  () => import("@/components/player/VideoPlayer").then((mod) => mod.VideoPlayer),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-full aspect-video bg-lacquer-surface border border-primary/20 rounded-lg flex items-center justify-center animate-pulse">
-        <div className="flex items-center gap-2 text-text-muted text-xs font-mono">
-          <Film className="w-4 h-4 text-primary animate-spin" />
-          <span>Đang nạp trình phát video...</span>
-        </div>
-      </div>
-    ),
-  }
-);
+import { MessageSquare, Film } from "lucide-react";
 
 export default function MasterWorkspacePage() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -43,8 +26,18 @@ export default function MasterWorkspacePage() {
   const [mobileActiveTab, setMobileActiveTab] = useState<"chat" | "studio">(
     "chat"
   );
-  const [isTheaterDockOpen, setIsTheaterDockOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState<boolean>(true);
+
+  // Sync isDesktop breakpoint (1024px = Tailwind lg) to avoid dual-mounting panels
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(media.matches);
+    const listener = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, []);
 
   // Restore active project from localStorage or query params
   useEffect(() => {
@@ -63,6 +56,7 @@ export default function MasterWorkspacePage() {
 
   const handleSelectProject = (projectId: string) => {
     setActiveProjectId(projectId);
+    setMobileActiveTab("studio");
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("projectId", projectId);
@@ -83,7 +77,6 @@ export default function MasterWorkspacePage() {
   const handleNewProject = () => {
     setActiveProjectId(null);
     setVideoTopic("");
-    setIsTheaterDockOpen(false);
     setMobileActiveTab("studio");
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
@@ -96,7 +89,6 @@ export default function MasterWorkspacePage() {
     if (activeProjectId === projectId) {
       setActiveProjectId(null);
       setVideoTopic("");
-      setIsTheaterDockOpen(false);
       if (typeof window !== "undefined") {
         const url = new URL(window.location.href);
         url.searchParams.delete("projectId");
@@ -122,11 +114,17 @@ export default function MasterWorkspacePage() {
   };
 
   const handleHandoverFromChat = (topic: string, conversationId?: string) => {
+    setActiveProjectId(null);
     setVideoTopic(topic);
     if (conversationId) {
       setActiveConversationId(conversationId);
     }
     setMobileActiveTab("studio");
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("projectId");
+      window.history.pushState({}, "", url.toString());
+    }
   };
 
   return (
@@ -217,92 +215,62 @@ export default function MasterWorkspacePage() {
           className="hidden sm:flex"
         />
 
-        {/* Desktop Split View (>= 1024px) */}
-        <div className="hidden lg:flex flex-1 h-full overflow-hidden">
-          <ResizablePanelGroup direction="horizontal">
-            {/* Left/Middle Column: Knowledge Chat Hub (45%) */}
-            <ResizablePanel defaultSize={45} minSize={30}>
+        {/* Desktop Split View (>= 1024px) vs Mobile Tabbed Container (< 1024px) */}
+        {/* Strictly conditional rendering to ensure only ONE instance of VideoGeneratorPanel and ChatContainer are mounted */}
+        {isDesktop ? (
+          <div className="flex flex-1 h-full overflow-hidden">
+            <ResizablePanelGroup direction="horizontal">
+              {/* Left/Middle Column: Knowledge Chat Hub (45%) */}
+              <ResizablePanel defaultSize={45} minSize={30}>
+                <ChatContainer
+                  activeConversationId={activeConversationId}
+                  onSelectConversation={setActiveConversationId}
+                  onHandoverToVideo={handleHandoverFromChat}
+                />
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              {/* Right Column: 1-Click Autonomous Video Generator & Showcase (55%) */}
+              <ResizablePanel defaultSize={55} minSize={35}>
+                <VideoGeneratorPanel
+                  initialTopic={videoTopic}
+                  initialConversationId={activeConversationId || undefined}
+                  activeProjectId={activeProjectId}
+                  onNewProject={handleNewProject}
+                  onProjectCreated={(id) => {
+                    setActiveProjectId(id);
+                  }}
+                  onProjectCompleted={() => {
+                    // VideoGeneratorPanel switches automatically to SHOWCASE
+                  }}
+                />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+        ) : (
+          <div className="flex-1 h-full overflow-hidden">
+            {mobileActiveTab === "chat" ? (
               <ChatContainer
                 activeConversationId={activeConversationId}
                 onSelectConversation={setActiveConversationId}
                 onHandoverToVideo={handleHandoverFromChat}
               />
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* Right Column: 1-Click Autonomous Video Generator (55%) */}
-            <ResizablePanel defaultSize={55} minSize={35}>
+            ) : (
               <VideoGeneratorPanel
                 initialTopic={videoTopic}
                 initialConversationId={activeConversationId || undefined}
                 activeProjectId={activeProjectId}
+                onNewProject={handleNewProject}
                 onProjectCreated={(id) => {
                   setActiveProjectId(id);
-                  setIsTheaterDockOpen(false);
                 }}
                 onProjectCompleted={() => {
-                  setIsTheaterDockOpen(true);
+                  // VideoGeneratorPanel switches automatically to SHOWCASE
                 }}
               />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </div>
-
-        {/* Mobile View (< 1024px) Tabbed Container */}
-        <div className="lg:hidden flex-1 h-full overflow-hidden">
-          {mobileActiveTab === "chat" ? (
-            <ChatContainer
-              activeConversationId={activeConversationId}
-              onSelectConversation={setActiveConversationId}
-              onHandoverToVideo={handleHandoverFromChat}
-            />
-          ) : (
-            <VideoGeneratorPanel
-              initialTopic={videoTopic}
-              initialConversationId={activeConversationId || undefined}
-              activeProjectId={activeProjectId}
-              onProjectCreated={(id) => {
-                setActiveProjectId(id);
-                setIsTheaterDockOpen(false);
-              }}
-              onProjectCompleted={() => {
-                setIsTheaterDockOpen(true);
-              }}
-            />
-          )}
-        </div>
-
-        {/* Floating Theater Dock (Slides up when active or completed) */}
-        {isTheaterDockOpen && activeProjectId && (
-          <div className="absolute bottom-4 right-4 z-40 w-full max-w-lg animate-in slide-in-from-bottom-6 duration-300 shadow-2xl">
-            <div className="relative">
-              <button
-                onClick={() => setIsTheaterDockOpen(false)}
-                className="absolute -top-3 -right-2 z-50 p-1 rounded-full bg-lacquer-elevated border border-primary/40 text-text-secondary hover:text-white shadow-lg cursor-pointer"
-                aria-label="Thu nhỏ trình phát"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-              <VideoPlayer
-                projectId={activeProjectId}
-                projectTitle={videoTopic || "Thước Phim Lịch Sử"}
-              />
-            </div>
+            )}
           </div>
-        )}
-
-        {/* Minimized Dock Button */}
-        {!isTheaterDockOpen && activeProjectId && (
-          <button
-            onClick={() => setIsTheaterDockOpen(true)}
-            className="fixed bottom-4 right-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-xs shadow-xl shadow-gold-glow/50 hover:brightness-110 cursor-pointer border border-gold-300"
-            aria-label="Mở lại trình phát video"
-          >
-            <Film className="w-4 h-4 fill-current" />
-            <span>Xem Video Thành Phẩm</span>
-            <ChevronUp className="w-3.5 h-3.5" />
-          </button>
         )}
       </main>
     </div>

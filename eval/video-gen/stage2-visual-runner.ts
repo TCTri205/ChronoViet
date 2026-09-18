@@ -193,6 +193,11 @@ export async function runStage2VisualEvaluation(
           introducedEntities: [],
           transitionHook: '',
         },
+        narrativeLedger: {
+          coveredMilestones: [],
+          introducedKeyFacts: [],
+          resolvedAliases: [],
+        },
         chapterScripts: tc.chapterScripts || {},
         factCheckLogs: [],
         scenes: tc.scenes || [],

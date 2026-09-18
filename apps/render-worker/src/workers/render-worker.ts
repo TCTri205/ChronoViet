@@ -151,8 +151,10 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
     paths = initProjectWorkspace(projectId);
     const outputPath = path.join(paths.outputDir, 'video.mp4');
 
-    // 2. Pre-download any remote assets
-    projectSchema = await ensureProjectAssetsReady(projectId, projectSchema);
+    // 2. Pre-download any remote assets & resolve local paths to media server HTTP URLs
+    const probePort = envConfig.WORKER_PROBE_PORT || 3001;
+    const mediaServerUrl = `http://127.0.0.1:${probePort}`;
+    projectSchema = await ensureProjectAssetsReady(projectId, projectSchema, { mediaServerUrl });
 
     const totalFrames = projectSchema.timeline.reduce(
       (acc: number, scene: any) => acc + (scene.durationInFrames || 90),
@@ -262,6 +264,9 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       try {
         await new Promise<void>((resolve, reject) => {
           const cliArgs = [
+            '--filter',
+            '@chronoviet/remotion-engine',
+            'exec',
             'remotion',
             'render',
             remotionEntry,
@@ -273,10 +278,10 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
             '--overwrite',
           ];
           const renderProcess = spawn(
-            'npx',
+            'pnpm',
             cliArgs,
             {
-              cwd: remotionPkgDir,
+              cwd: monorepoRoot,
               stdio: 'pipe',
             }
           );

@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import { BookOpen, ShieldCheck, Calendar, Bookmark, ExternalLink } from "lucide-react";
+import { BookOpen, ShieldCheck, Calendar, Bookmark, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { CitationItem } from "./CitationBadge";
@@ -28,10 +29,10 @@ export function HistoricalSourceModal({
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
-        side="right"
-        className="bg-lacquer-surface border-l border-primary/30 w-full sm:max-w-lg overflow-y-auto"
+        side="left"
+        className="bg-lacquer-surface border-r border-primary/30 w-full sm:max-w-lg overflow-y-auto z-50 shadow-2xl"
       >
-        <SheetHeader className="pb-4 border-b border-primary/15">
+        <SheetHeader className="pb-4 border-b border-primary/15 relative pr-8">
           <div className="flex items-center gap-2 mb-1">
             <Badge variant="citation" className="text-[11px]">
               Trích Dẫn [{citation.id}]
@@ -45,7 +46,7 @@ export function HistoricalSourceModal({
               </Badge>
             )}
           </div>
-          <SheetTitle className="text-xl font-headline text-gold-300">
+          <SheetTitle className="text-xl font-headline text-gold-300 leading-snug">
             {citation.sourceTitle}
           </SheetTitle>
           {citation.annalsName && (
@@ -89,7 +90,7 @@ export function HistoricalSourceModal({
               <span>Trích Đoạn Sử Liệu Nguyên Bản</span>
             </div>
             <div className="parchment-scroll p-4 rounded-lg text-sm leading-relaxed text-text-primary font-serif italic border border-primary/20 shadow-inner">
-              "{citation.originalExcerpt}"
+              &ldquo;{citation.originalExcerpt}&rdquo;
             </div>
           </div>
 

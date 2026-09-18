@@ -457,20 +457,29 @@ export async function keywordNode(state: ChronoGraphState): Promise<Partial<Chro
       const systemPrompt = `Bạn là Trilingual Visual Research Planning Agent của ChronoViet.
 Nhiệm vụ: Phân tích voiceover của từng cảnh phim lịch sử và tạo ra Search Tool Input chuẩn xác để tìm kiếm tư liệu ảnh lịch sử (trên Wikimedia Commons, Gallica BnF, Bảo tàng & Search Engines).
 
-QUY TẮC BẮT BUỘC VỀ ÁNH XẠ THỰC THỂ THỊ GIÁC (PHYSICAL ENTITY MAPPING):
-1. TUYỆT ĐỐI KHÔNG tìm kiếm các hành động trừu tượng, lời kể cảm thán hay sự kiện cá nhân không có tư liệu ảnh trực tiếp (Ví dụ: KHÔNG tìm "Trưng Trắc kết hôn với Thi Sách", "Vua mở mang bờ cõi", "Nhân dân ca ngợi công đức").
-2. BẮT BUỘC ÁNH XẠ sang các THỰC THỂ VẬT LÝ có thật trong kho lưu trữ, di tích, bảo tàng:
-   - Nhân vật & Sự kiện tiểu sử cổ đại: Ánh xạ sang Tranh dân gian truyền thống ("Tranh dân gian Đông Hồ Hai Bà Trưng cưỡi voi", "Tranh Nữ tướng Bà Triệu"), Đền thờ danh nhân ("Đền thờ Hai Bà Trưng Mê Linh", "Đền Hát Môn", "Đền thờ Thi Sách", "Thành cổ Luy Lâu"), hoặc Tượng thờ / Tượng đài ("Tượng Hai Bà Trưng", "Tượng đài Trưng Trắc").
-   - Cổ vật & Khảo cổ: "Trống đồng Đông Sơn", "Thạp đồng Đào Thịnh", "Mũi tên đồng Cổ Loa", "Rìu đồng Đông Sơn", "Cổ vật thời Hùng Vương", "Bảo tàng Lịch sử Quốc gia".
-   - Di tích & Đền đài: "Khu di tích Đền Hùng Phú Thọ", "Đền Thượng núi Nghĩa Lĩnh", "Thành Cổ Loa kinh đô Âu Lạc", "Đền thờ An Dương Vương", "Cố đô Hoa Lư".
-   - Mỹ thuật & Tượng đài: "Tượng vua Hùng", "Phù điêu lịch sử", "Tranh khắc gỗ dân gian", "Tượng đài danh nhân lịch sử".
-   - Bản đồ & Địa lý: "Bản đồ nước Văn Lang thời Hùng Vương", "Bản đồ Giao Chỉ thời Bắc thuộc", "Bản đồ thời kỳ Hồng Bàng".
-3. Xuất duy nhất 1 JSON object hợp lệ: { "queries": [ { "sceneId": "...", "primaryQuery": "...", "englishQuery": "...", "frenchQuery": "...", "visualType": "...", "historicalPeriod": "..." } ] }.
-4. "primaryQuery": từ khóa tiếng Việt tập trung vào cổ vật, di tích, đền thờ, tượng đài, tranh dân gian lịch sử (ví dụ: "Tranh dân gian Đông Hồ Hai Bà Trưng cưỡi voi ra trận" hoặc "Đền thờ Hai Bà Trưng Mê Linh").
-5. "englishQuery": từ khóa tiếng Anh tương ứng (ví dụ: "Dong Son bronze drum Hung Kings artifact" hoặc "Hai Ba Trung Temple Me Linh").
-6. "frenchQuery": từ khóa tiếng Pháp tương ứng (ví dụ: "Tambour de bronze Dong Son Tonkin" hoặc "Soeurs Trung insurrection").
-7. "visualType": chọn 1 trong: ['ARTIFACT', 'ARCHAEOLOGY', 'LANDSCAPE', 'PORTRAIT', 'BATTLE_SCENE', 'MAP_CHRONO', 'GENERAL_HISTORICAL'].
-8. Không thêm văn bản giải thích ngoài JSON.`;
+QUY TẮC BẮT BUỘC VỀ ĐA DẠNG HÓA VÀ ÁNH XẠ THỰC THỂ THỊ GIÁC (VISUAL DIVERSIFICATION & PHYSICAL MAPPING):
+1. CHỐNG ĐƠN ĐIỆU & CẤM LẶP TỪ KHÓA (ANTI-MONOTONY):
+   - TUYỆT ĐỐI KHÔNG sinh cùng một "primaryQuery" lặp đi lặp lại cho nhiều cảnh liên tiếp (ví dụ: cấm dùng "Quang Trung" hay "Trần Hưng Đạo" cho 5-10 cảnh liên tục).
+   - Mỗi cảnh PHẢI có một góc nhìn thị giác riêng biệt gắn liền với hành động, địa danh, hiện vật, vũ khí hoặc đối thủ được nhắc đến trong chính phân cảnh đó.
+   - Luân phiên đa dạng giữa các visualType: PORTRAIT (chân dung), BATTLE_SCENE (tranh trận chiến/phù điêu), ARTIFACT (hiện vật/vũ khí/chiếu chỉ/tiền đồng), LANDSCAPE (địa danh/phòng tuyến/đền thờ), MAP_CHRONO (bản đồ/địa đồ).
+
+2. CẤM TÌM KIẾM SỐ LƯỢNG TRỪU TƯỢNG (NO PURE QUANTITIES):
+   - TUYỆT ĐỐI KHÔNG xuất "primaryQuery" chỉ chứa con số hoặc số lượng lính trừu tượng như: "Quân số 10 vạn", "29 vạn quân", "100,000 soldiers", "5 đạo quân".
+   - BẮT BUỘC ánh xạ số lượng sang thực thể quân sự vật lý có thật: "Đội quân Tây Sơn", "Tượng binh voi chiến thời Tây Sơn", "Binh khí súng thần công thời Tây Sơn", "Tranh vẽ quân đội nhà Thanh Càn Long", "Bát Kỳ Mãn Thanh".
+
+3. ÁNH XẠ THỰC THỂ VẬT LÝ CỤ THỂ THEO BỐI CẢNH (PHYSICAL ENTITY MAPPING):
+   - Nhân vật & Sự kiện tiểu sử cổ đại: Tranh dân gian truyền thống (Ví dụ: "Tranh dân gian Đông Hồ [Tên nhân vật / sự kiện]"), Đền thờ danh nhân ("Đền thờ [Tên danh nhân / di tích]"), hoặc Tượng thờ / Tượng đài ("Tượng đài [Tên danh nhân]").
+   - Di tích chiến trường & Phòng tuyến: Ánh xạ sang địa danh di tích cụ thể ("Phòng tuyến Tam Điệp Biện Sơn", "Di tích Gò Đống Đa", "Chiến trường Rạch Gầm Xoài Mút", "Sông Bạch Đằng").
+   - Cổ vật & Vũ khí: "Bảo tàng [Tên bảo tàng/danh nhân]", "Súng thần công Tây Sơn", "Chiếu chỉ [Tên vua]", "Tiền đồng [Niên hiệu] thông bảo".
+   - Bản đồ & Tác chiến: "Bản đồ [Địa bàn / Chiến dịch] thế kỷ [XVIII/thế kỷ tương ứng]".
+
+4. ĐỊNH DẠNG ĐẦU RA:
+   - Xuất duy nhất 1 JSON object hợp lệ: { "queries": [ { "sceneId": "...", "primaryQuery": "...", "englishQuery": "...", "frenchQuery": "...", "visualType": "...", "historicalPeriod": "..." } ] }.
+   - "primaryQuery": từ khóa tiếng Việt tập trung vào cổ vật, di tích, đền thờ, tượng đài, tranh dân gian lịch sử tương ứng với nội dung phân cảnh.
+   - "englishQuery": bản dịch tiếng Anh chính xác tương ứng của primaryQuery (TUYỆT ĐỐI KHÔNG tự ý ghép thêm tên thời kỳ hay triều đại khác ngoài bối cảnh của phân cảnh).
+   - "frenchQuery": bản dịch tiếng Pháp tương ứng của primaryQuery (nếu áp dụng cho kho lưu trữ Gallica BnF).
+   - "visualType": chọn 1 trong: ['ARTIFACT', 'ARCHAEOLOGY', 'LANDSCAPE', 'PORTRAIT', 'BATTLE_SCENE', 'MAP_CHRONO', 'GENERAL_HISTORICAL'].
+   - Không thêm văn bản giải thích ngoài JSON.`;
 
       const userContent = `Chủ đề chung: "${state.userPrompt}"
 Thực thể lịch sử kiểm chứng: ${ragEntities.join(', ') || 'Không có'}
@@ -511,6 +520,7 @@ ${scenesSummary}`;
     }
   }
 
+  let lastPrimaryQuery = '';
   const updatedScenes: SceneGeneration[] = state.scenes.map((scene) => {
     if (scene.contentType !== 'IMAGE') return scene;
 
@@ -518,14 +528,28 @@ ${scenesSummary}`;
     const rawKeywords = extractSearchKeywordsFromText(scene.voiceoverText, allContextEntities, state.userPrompt);
 
     if (plannedQuery && plannedQuery.primaryQuery) {
-      const fallbackEnglish = translateHistoricalQueryToEnglish(plannedQuery.primaryQuery);
-      const fallbackFrench = translateHistoricalQueryToFrench(plannedQuery.primaryQuery);
+      let finalPrimaryQuery = plannedQuery.primaryQuery.trim();
+
+      // Anti-monotony diversification: If consecutive scenes produce the identical primary query,
+      // differentiate by injecting distinctive proper nouns or action terms from the scene's voiceover
+      if (finalPrimaryQuery.toLowerCase() === lastPrimaryQuery.toLowerCase()) {
+        const sceneSpecificNouns = rawKeywords.filter(
+          (k) => !finalPrimaryQuery.toLowerCase().includes(k.toLowerCase()) && !state.userPrompt.toLowerCase().includes(k.toLowerCase())
+        );
+        if (sceneSpecificNouns.length > 0) {
+          finalPrimaryQuery = `${finalPrimaryQuery} ${sceneSpecificNouns[0]}`;
+        }
+      }
+      lastPrimaryQuery = finalPrimaryQuery;
+
+      const fallbackEnglish = translateHistoricalQueryToEnglish(finalPrimaryQuery);
+      const fallbackFrench = translateHistoricalQueryToFrench(finalPrimaryQuery);
       const englishQuery = plannedQuery.englishQuery || fallbackEnglish;
       const frenchQuery = plannedQuery.frenchQuery || fallbackFrench;
       const visualType = plannedQuery.visualType || inferVisualTypeHeuristic(scene.voiceoverText);
       const historicalPeriod = plannedQuery.historicalPeriod || state.userPrompt;
       const facetQueries = generateFacetQueries(
-        plannedQuery.primaryQuery,
+        finalPrimaryQuery,
         englishQuery,
         frenchQuery,
         visualType,
@@ -534,7 +558,7 @@ ${scenesSummary}`;
 
       const keywords = Array.from(
         new Set([
-          plannedQuery.primaryQuery,
+          finalPrimaryQuery,
           ...(englishQuery ? [englishQuery] : []),
           ...(frenchQuery ? [frenchQuery] : []),
           ...rawKeywords,
@@ -545,7 +569,7 @@ ${scenesSummary}`;
         searchKeywords: keywords,
         searchParams: {
           sceneId: scene.sceneId,
-          primaryQuery: plannedQuery.primaryQuery,
+          primaryQuery: finalPrimaryQuery,
           englishQuery,
           frenchQuery,
           negativeQuery: DEFAULT_NEGATIVE_QUERY,

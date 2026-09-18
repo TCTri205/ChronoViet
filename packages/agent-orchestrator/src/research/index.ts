@@ -134,6 +134,71 @@ export async function executeImageSearchTool(
     }
   }
 
+  // Tier 2 Query Relaxation (Topic / Campaign / Figure Expansion)
+  if (candidates.length < targetLimit) {
+    const seenQueries = new Set(rawQueries.map((q) => q.toLowerCase()));
+    const tier2Queries = [
+      historicalPeriod?.trim(),
+      primaryQuery.replace(/^(?:Tranh vẽ|Tượng đài|Đền thờ|Di tích|Bản đồ|Lăng mộ|Cổ vật)\s+/gi, '').trim(),
+    ].filter((q): q is string => Boolean(q && q.length > 2 && !seenQueries.has(q.toLowerCase())));
+
+    for (const t2Query of tier2Queries) {
+      if (candidates.length >= targetLimit) break;
+      seenQueries.add(t2Query.toLowerCase());
+      const remainingNeeded = targetLimit - candidates.length;
+      try {
+        const chainResults = await searchWithProviderChain(providers, t2Query, remainingNeeded, {
+          aspectRatio,
+          minResolution,
+        });
+        for (const chainResult of chainResults) {
+          for (const cand of chainResult.candidates) {
+            const normalizedUrl = cand.imageUrl.trim().toLowerCase();
+            if (seenUrls.has(normalizedUrl)) continue;
+            seenUrls.add(normalizedUrl);
+            candidates.push({
+              ...cand,
+              candidateId: `cand_${sceneId}_${String(candidates.length + 1).padStart(2, '0')}`,
+            });
+            if (candidates.length >= targetLimit) break;
+          }
+          if (candidates.length >= targetLimit) break;
+        }
+      } catch (err: any) {
+        log.debug('research.tier2_query_error', `Tier 2 query error: "${t2Query}"`, { error: err.message });
+      }
+    }
+  }
+
+  // Tier 3 Query Relaxation (Epoch / Curated Artifact / Historical Map Safety Net)
+  if (candidates.length < targetLimit) {
+    const catalogProvider = new CuratedCatalogProvider();
+    const tier3Keywords = [
+      `${historicalPeriod || ''} ${primaryQuery}`.trim(),
+      historicalPeriod?.trim() || '',
+      'trống đồng đông sơn',
+    ].filter(Boolean);
+
+    for (const kw of tier3Keywords) {
+      if (candidates.length >= targetLimit) break;
+      try {
+        const catalogResults = await catalogProvider.search(kw, targetLimit - candidates.length);
+        for (const cand of catalogResults) {
+          const normalizedUrl = cand.imageUrl.trim().toLowerCase();
+          if (seenUrls.has(normalizedUrl)) continue;
+          seenUrls.add(normalizedUrl);
+          candidates.push({
+            ...cand,
+            candidateId: `cand_${sceneId}_${String(candidates.length + 1).padStart(2, '0')}`,
+          });
+          if (candidates.length >= targetLimit) break;
+        }
+      } catch (err: any) {
+        log.debug('research.tier3_catalog_error', `Tier 3 catalog search error: "${kw}"`, { error: err.message });
+      }
+    }
+  }
+
   log.debug('research.agent_tool_search_completed', `Agent Tool Search completed for ${sceneId}`, {
     sceneId,
     primaryQuery,

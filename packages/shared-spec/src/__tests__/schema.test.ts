@@ -150,4 +150,18 @@ describe('Shared Schemas Validation (Phase 1 SSOT)', () => {
     expect(expandedDynasty).toContain('person_nguyen_hue');
     expect(expandedDynasty).toContain('person_nguyen_lu');
   });
+
+  it('should validate NarrativeLedgerSchema correctly', async () => {
+    const { NarrativeLedgerSchema } = await import('../schema.js');
+    const validLedger = {
+      coveredMilestones: ['Sinh năm 1890 tại làng Sen', 'Ra đi tìm đường cứu nước năm 1911'],
+      introducedKeyFacts: ['Nguyễn Sinh Cung', 'Văn Ba'],
+      resolvedAliases: ['Bác Hồ', 'Nguyễn Ái Quốc'],
+      passedTimeAnchor: 1911,
+    };
+    const parsed = NarrativeLedgerSchema.parse(validLedger);
+    expect(parsed.coveredMilestones.length).toBe(2);
+    expect(parsed.passedTimeAnchor).toBe(1911);
+  });
 });
+

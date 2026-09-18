@@ -197,7 +197,7 @@ export async function downloadCandidateImage(
 ): Promise<DownloadedAssetResult> {
   const paths = initProjectWorkspace(projectId, options.customBaseDir);
   const candidateId = path.basename(candidate.candidateId).replace(/[^a-zA-Z0-9_-]/g, '') || `asset_${Date.now()}`;
-  const timeout = options.timeoutMs || envConfig.IMAGE_DOWNLOAD_TIMEOUT_MS || 2500;
+  const timeout = options.timeoutMs || envConfig.IMAGE_DOWNLOAD_TIMEOUT_MS || 25000;
   const userAgent = envConfig.IMAGE_DOWNLOAD_USER_AGENT || 'ChronoViet-VLM-Downloader/1.0 (https://chronoviet.vn; contact@chronoviet.vn)';
 
   // Determine file extension

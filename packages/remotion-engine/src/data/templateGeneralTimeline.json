@@ -11,8 +11,8 @@
     "fontFamily": "Georgia, serif",
     "accentGlow": "rgba(212, 175, 55, 0.35)"
   },
-  "audioUrl": "assets/voiceover.wav",
-  "bgmUrl": "assets/bgm.wav",
+  "audioUrl": "",
+  "bgmUrl": "",
   "bgmVolume": 0.25,
   "defaultLayoutMode": "BLUR_BG",
   "defaultFilterStyle": "HISTORICAL",

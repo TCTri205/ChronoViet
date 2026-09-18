@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import * as fs from 'fs';
 import {
   SseEvent,
+  classifyVideoDomain,
 } from '@chronoviet/shared-spec';
 import {
   getProjectPaths,
@@ -14,6 +15,13 @@ import {
   ChronoGraphState,
   defaultCheckpointer,
 } from '@chronoviet/agent-orchestrator';
+
+import {
+  getActivePipelineJob,
+  setActivePipelineJob,
+  deleteActivePipelineJob,
+  ActivePipelineJob,
+} from '@/lib/project-stream-coordinator';
 
 const log = createLogger({ service: 'web-api-sse' });
 
@@ -52,25 +60,63 @@ export async function GET(
 
     const existingCheckpoint = await defaultCheckpointer.loadLatestProjectState(projectId);
 
+    // Fast-path: If project is already COMPLETED or FAILED, return terminal event immediately without re-triggering pipeline
+    const isTerminal =
+      existingCheckpoint?.status === 'COMPLETED' ||
+      existingCheckpoint?.status === 'FAILED' ||
+      metadata.status === 'COMPLETED' ||
+      metadata.status === 'FAILED';
+
+    if (isTerminal) {
+      const finalStatus = (existingCheckpoint?.status || metadata.status) as any;
+      const sseStatus = finalStatus === 'COMPLETED' ? 'COMPLETED' : 'FAILED';
+      const terminalEvent: SseEvent = {
+        nodeName: finalStatus === 'COMPLETED' ? 'completed' : 'error',
+        update: (existingCheckpoint || {}) as Record<string, unknown>,
+        state: String(finalStatus),
+        status: sseStatus,
+        projectId,
+        timestamp: new Date().toISOString(),
+      };
+      const durationSec = (Date.now() - startTime) / 1000;
+      httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '2xx' });
+      httpRequestDurationSeconds.observe({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '2xx' }, durationSec);
+      return new Response(`data: ${JSON.stringify(terminalEvent)}\n\n`, {
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+          'x-request-id': correlationId,
+        },
+      });
+    }
+
     const initialState: Partial<ChronoGraphState> = existingCheckpoint || {
       projectId,
       userPrompt: metadata.topic || 'Historical Topic',
       targetDurationMinutes: metadata.targetDurationMinutes || 1,
-      videoType: metadata.videoType || 'BIOGRAPHY',
+      videoType: metadata.videoType ? metadata.videoType : classifyVideoDomain(metadata.topic || ''),
       templateId: metadata.templateId || 'HISTORICAL_DOCUMENTARY',
       status: 'INIT',
       currentStep: 0,
     };
 
+    const subscriberId = crypto.randomUUID();
     const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
+
+    let job = getActivePipelineJob(projectId);
+    if (!job) {
+      job = {
+        projectId,
+        subscribers: new Map(),
+        isFinished: false,
+      };
+      setActivePipelineJob(projectId, job);
+
+      // Launch single orchestrated pipeline asynchronously for all current and future subscribers
+      (async () => {
         try {
           for await (const { nodeName, update } of streamOrchestratorPipeline(initialState as ChronoGraphState, { threadId: projectId })) {
-            if (req.signal.aborted) {
-              reqLog.info('api.sse_client_disconnected', `Client disconnected from SSE stream for ${projectId}`);
-              break;
-            }
             const currentStatus = update.status || 'RUNNING';
             const sseStatus =
               currentStatus === 'COMPLETED'
@@ -90,7 +136,17 @@ export async function GET(
               timestamp: new Date().toISOString(),
             };
 
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+            job!.lastEvent = event;
+            const dataBytes = encoder.encode(`data: ${JSON.stringify(event)}\n\n`);
+            for (const sub of Array.from(job!.subscribers.values())) {
+              try {
+                sub.controller.enqueue(dataBytes);
+              } catch {}
+            }
+
+            if (sseStatus === 'COMPLETED' || sseStatus === 'FAILED') {
+              break;
+            }
           }
         } catch (streamErr: any) {
           httpRequestsTotal.inc({ method: 'GET', route: '/api/v1/projects/:id/stream', status_class: '5xx' });
@@ -105,10 +161,52 @@ export async function GET(
             projectId,
             timestamp: new Date().toISOString(),
           };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+          job!.lastEvent = errorEvent;
+          const errorBytes = encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`);
+          for (const sub of Array.from(job!.subscribers.values())) {
+            try {
+              sub.controller.enqueue(errorBytes);
+            } catch {}
+          }
         } finally {
-          controller.close();
+          job!.isFinished = true;
+          for (const sub of Array.from(job!.subscribers.values())) {
+            try {
+              sub.controller.close();
+            } catch {}
+          }
+          job!.subscribers.clear();
+          deleteActivePipelineJob(projectId);
         }
+      })();
+    } else {
+      reqLog.info('api.sse_attached_to_existing_stream', `Attached SSE subscriber to already running pipeline for ${projectId}`);
+    }
+
+    const currentJob = job;
+    const stream = new ReadableStream({
+      start(controller) {
+        // Catch-up: send latest event if available
+        if (currentJob.lastEvent) {
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(currentJob.lastEvent)}\n\n`));
+          } catch {}
+        }
+        if (currentJob.isFinished) {
+          try {
+            controller.close();
+          } catch {}
+          return;
+        }
+        currentJob.subscribers.set(subscriberId, {
+          id: subscriberId,
+          controller,
+          encoder,
+        });
+      },
+      cancel() {
+        currentJob.subscribers.delete(subscriberId);
+        reqLog.info('api.sse_subscriber_cancelled', `Client disconnected from SSE stream for ${projectId}`);
       },
     });
 

@@ -59,8 +59,17 @@ export const VersusCard: React.FC<VersusCardProps> = ({
   const nameFontSize = Math.round(32 * scale);
   const statFontSize = Math.round(17 * scale);
 
-  const rawLeft = leftSide || { name: '', stat: '', color: activeTheme.primaryColor };
-  const rawRight = rightSide || { name: '', stat: '', color: COLOR_PALETTE.vermilionRed };
+  const hasValidSides = Boolean(leftSide?.name || rightSide?.name);
+  const rawLeft = leftSide || (hasValidSides ? { name: '', stat: '', color: activeTheme.primaryColor } : {
+    name: 'BỐI CẢNH & THẾ TRẬN',
+    stat: cleanTitle || 'Chính nghĩa và ý chí dân tộc',
+    color: activeTheme.primaryColor,
+  });
+  const rawRight = rightSide || (hasValidSides ? { name: '', stat: '', color: COLOR_PALETTE.vermilionRed } : {
+    name: 'TƯƠNG QUAN LỰC LƯỢNG',
+    stat: 'Quyết định lịch sử mang tính bước ngoặt',
+    color: COLOR_PALETTE.vermilionRed,
+  });
 
   const left = {
     ...rawLeft,

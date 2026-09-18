@@ -261,6 +261,11 @@ export async function runStage4RenderEvaluation(
           introducedEntities: [],
           transitionHook: '',
         },
+        narrativeLedger: {
+          coveredMilestones: [],
+          introducedKeyFacts: [],
+          resolvedAliases: [],
+        },
         chapterScripts: tc.chapterScripts || {},
         factCheckLogs: [],
         scenes: tc.scenes || [],

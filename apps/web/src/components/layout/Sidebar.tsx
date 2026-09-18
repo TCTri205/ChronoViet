@@ -6,21 +6,19 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
   Scroll,
   Settings,
   Plus,
   Trash2,
   Pencil,
   MessageSquarePlus,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +65,21 @@ export interface SidebarProps {
   className?: string;
 }
 
+function getTopicInitials(topic: string): string {
+  const cleaned = topic
+    .trim()
+    .replace(/^(?:Trận|Cuộc|Chiến dịch|Chiến thắng|Khởi nghĩa|Hội nghị)\s+/i, "");
+  const words = cleaned.split(/\s+/).filter(Boolean);
+
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  if (words.length === 1 && words[0].length >= 2) {
+    return words[0].slice(0, 2).toUpperCase();
+  }
+  return "VN";
+}
+
 export function Sidebar({
   activeProjectId,
   activeConversationId,
@@ -101,6 +114,7 @@ export function Sidebar({
   } | null>(null);
   const [editNameInput, setEditNameInput] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Load actual project and conversation lists from API
   const fetchData = async () => {
@@ -150,9 +164,10 @@ export function Sidebar({
   }, []);
 
   // Handle Delete Confirmation Execution
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (!deleteTarget) return;
-    const { type, id } = deleteTarget;
+    const { type, id, name } = deleteTarget;
     setIsDeleting(true);
 
     try {
@@ -163,6 +178,11 @@ export function Sidebar({
           if (activeProjectId === id) {
             onDeleteProject ? onDeleteProject(id) : onSelectProject?.("");
           }
+          toast.success(`Đã xoá dự án "${name}"`);
+          setDeleteTarget(null);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          toast.error(data.error || `Xoá dự án "${name}" thất bại`);
         }
       } else {
         const res = await fetch(`/api/v1/conversations/${id}`, { method: "DELETE" });
@@ -171,13 +191,17 @@ export function Sidebar({
           if (activeConversationId === id) {
             onDeleteConversation ? onDeleteConversation(id) : onSelectConversation?.("");
           }
+          toast.success(`Đã xoá cuộc trò chuyện "${name}"`);
+          setDeleteTarget(null);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          toast.error(data.error || `Xoá cuộc trò chuyện "${name}" thất bại`);
         }
       }
-    } catch {
-      // failed gracefully
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi mạng khi kết nối tới máy chủ");
     } finally {
       setIsDeleting(false);
-      setDeleteTarget(null);
     }
   };
 
@@ -315,8 +339,35 @@ export function Sidebar({
         </button>
       </div>
 
-      {/* Tab Switcher (when expanded) */}
-      {!isCollapsed && (
+      {/* Tab Switcher: Expanded vs Collapsed Rail */}
+      {isCollapsed ? (
+        <div className="flex flex-col items-center gap-1 border-b border-primary/10 py-2">
+          <button
+            onClick={() => setActiveTab("projects")}
+            className={`w-10 h-9 rounded-lg flex items-center justify-center text-xs transition-colors ${
+              activeTab === "projects"
+                ? "bg-primary/20 text-gold-300 border border-primary/40 shadow-sm"
+                : "text-text-muted hover:text-text-primary hover:bg-lacquer-elevated"
+            }`}
+            aria-label="Xem danh sách dự án phim"
+            title="Dự án phim"
+          >
+            <Film className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setActiveTab("conversations")}
+            className={`w-10 h-9 rounded-lg flex items-center justify-center text-xs transition-colors ${
+              activeTab === "conversations"
+                ? "bg-primary/20 text-gold-300 border border-primary/40 shadow-sm"
+                : "text-text-muted hover:text-text-primary hover:bg-lacquer-elevated"
+            }`}
+            aria-label="Xem danh sách đoạn chat sử liệu"
+            title="Đoạn chat sử liệu"
+          >
+            <Scroll className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
         <div className="flex border-b border-primary/10 bg-lacquer-deep/40 text-xs">
           <button
             onClick={() => setActiveTab("projects")}
@@ -393,25 +444,30 @@ export function Sidebar({
             ) : (
               filteredProjects.map((proj) => {
                 const isActive = activeProjectId === proj.id;
+                const initials = getTopicInitials(proj.topic);
+
                 if (isCollapsed) {
                   return (
                     <Tooltip key={proj.id}>
                       <TooltipTrigger asChild>
                         <button
                           onClick={() => onSelectProject?.(proj.id)}
-                          className={`w-full h-11 rounded-lg flex items-center justify-center transition-colors ${
+                          className={`w-full h-11 rounded-lg flex flex-col items-center justify-center transition-colors ${
                             isActive
-                              ? "bg-primary/20 text-gold-300 border border-primary/40"
+                              ? "bg-primary/20 text-gold-300 border border-primary/40 shadow-sm"
                               : "text-text-secondary hover:bg-lacquer-elevated hover:text-text-primary"
                           }`}
                           aria-label={proj.topic}
                         >
-                          <Film className="w-4 h-4" />
+                          <Film className="w-3.5 h-3.5" />
+                          <span className="text-[9px] font-mono font-bold leading-none mt-0.5 text-gold-300">
+                            {initials}
+                          </span>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-semibold text-gold-300">{proj.topic}</span>
+                        <div className="flex flex-col gap-1 max-w-[220px]">
+                          <span className="font-semibold text-gold-300 truncate">{proj.topic}</span>
                           <div className="flex items-center gap-2 text-[10px]">
                             {getStatusBadge(proj.status)}
                             <span>{proj.aspectRatio || "16:9"}</span>
@@ -445,8 +501,8 @@ export function Sidebar({
                       </span>
                     </div>
 
-                    {/* Action Bar on Hover */}
-                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-lacquer-surface/90 backdrop-blur-sm rounded px-1 py-0.5 border border-primary/20">
+                    {/* Action Bar (Hover on desktop, subtly visible on mobile touch) */}
+                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-75 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-lacquer-surface/90 backdrop-blur-sm rounded px-1 py-0.5 border border-primary/20">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -495,6 +551,33 @@ export function Sidebar({
             ) : (
               filteredConversations.map((conv) => {
                 const isActive = activeConversationId === conv.id;
+
+                if (isCollapsed) {
+                  return (
+                    <Tooltip key={conv.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => onSelectConversation?.(conv.id)}
+                          className={`w-full h-11 rounded-lg flex items-center justify-center transition-colors relative ${
+                            isActive
+                              ? "bg-primary/20 text-gold-300 border border-primary/40 shadow-sm"
+                              : "text-text-secondary hover:bg-lacquer-elevated hover:text-text-primary"
+                          }`}
+                          aria-label={conv.title}
+                        >
+                          <Scroll className="w-4 h-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        <div className="flex flex-col gap-0.5 max-w-[200px]">
+                          <span className="font-semibold text-gold-300 truncate">{conv.title}</span>
+                          <span className="text-[10px] text-text-muted">{conv.updatedAt}</span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+
                 return (
                   <div
                     key={conv.id}
@@ -518,8 +601,8 @@ export function Sidebar({
                       </span>
                     </div>
 
-                    {/* Action Bar on Hover */}
-                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-lacquer-surface/90 backdrop-blur-sm rounded px-1 py-0.5 border border-primary/20">
+                    {/* Action Bar (Hover on desktop, subtly visible on mobile touch) */}
+                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-75 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-lacquer-surface/90 backdrop-blur-sm rounded px-1 py-0.5 border border-primary/20">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -556,16 +639,24 @@ export function Sidebar({
         </TooltipProvider>
       </div>
 
-      {/* Footer Info */}
+      {/* Footer Info & Interactive Settings Trigger */}
       <div className="p-3 border-t border-primary/10 flex items-center justify-between text-xs text-text-muted">
         {!isCollapsed && (
           <span className="text-[11px] font-mono">ChronoViet v1.5</span>
         )}
-        <Settings className="w-4 h-4 cursor-pointer hover:text-gold-300 transition-colors mx-auto" />
+        <button
+          type="button"
+          onClick={() => setIsSettingsOpen(true)}
+          className="p-1 rounded-md text-text-muted hover:text-gold-300 hover:bg-primary/15 transition-colors mx-auto cursor-pointer focus-visible:ring-1 focus-visible:ring-primary"
+          title="Thông tin hệ thống & Phím tắt bàn phím"
+          aria-label="Thông tin hệ thống và phím tắt bàn phím"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Delete Confirmation Modal */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !isDeleting) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -654,6 +745,87 @@ export function Sidebar({
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* System Settings & Shortcuts Dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="sm:max-w-md bg-lacquer-surface border border-primary/30 text-text-primary">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-lg text-gold-300 flex items-center gap-2">
+              <Settings className="w-4 h-4 text-primary" />
+              <span>Cấu Hình & Thông Tin Hệ Thống</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-text-secondary">
+              Kiến trúc hạ tầng ChronoViet AI Studio v1.5 & danh sách phím tắt điều khiển.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3 text-xs">
+            {/* System Info Box */}
+            <div className="p-3 rounded-lg bg-lacquer-deep/70 border border-primary/20 space-y-1.5 font-mono">
+              <div className="flex justify-between">
+                <span className="text-text-muted">Phiên bản:</span>
+                <span className="text-gold-300">ChronoViet Studio v1.5</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Đồ thị tri thức:</span>
+                <span className="text-text-primary">pgvector 1024d HNSW</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Giọng đọc thuyết minh:</span>
+                <span className="text-text-primary">VieNeu Neural TTS (Port 8080)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Xưởng render video:</span>
+                <span className="text-text-primary">Remotion 1080p Engine</span>
+              </div>
+            </div>
+
+            {/* Keyboard Shortcuts Box */}
+            <div className="space-y-2">
+              <span className="font-semibold text-gold-300 text-xs block font-headline">
+                Phím Tắt Thao Tác Nhanh
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div className="flex items-center justify-between p-2 rounded bg-lacquer-deep/50 border border-primary/10">
+                  <span className="text-text-secondary">Phát / Dừng video</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-black/40 border border-primary/30 font-mono text-[10px] text-gold-300">
+                    Space
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded bg-lacquer-deep/50 border border-primary/10">
+                  <span className="text-text-secondary">Bật / Tắt âm</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-black/40 border border-primary/30 font-mono text-[10px] text-gold-300">
+                    M
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded bg-lacquer-deep/50 border border-primary/10">
+                  <span className="text-text-secondary">Toàn màn hình</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-black/40 border border-primary/30 font-mono text-[10px] text-gold-300">
+                    F
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded bg-lacquer-deep/50 border border-primary/10">
+                  <span className="text-text-secondary">Đóng modal / Thoát</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-black/40 border border-primary/30 font-mono text-[10px] text-gold-300">
+                    Esc
+                  </kbd>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="heritage"
+              onClick={() => setIsSettingsOpen(false)}
+              className="w-full h-8 text-xs font-semibold"
+            >
+              Đã hiểu & Đóng
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </aside>

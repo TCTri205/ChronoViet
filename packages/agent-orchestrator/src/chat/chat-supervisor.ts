@@ -649,8 +649,10 @@ export async function* handleChatQueryStream(
 
     try {
       for await (const chunk of generateLLMCompletionStream(messages, {
-        temperature: 0.3,
+        temperature: 0.35,
         top_p: 0.9,
+        frequency_penalty: 0.3,
+        presence_penalty: 0.2,
         max_tokens: 800,
       })) {
         if (signal?.aborted) {
@@ -702,8 +704,10 @@ export async function* handleChatQueryStream(
 
     try {
       for await (const chunk of generateLLMCompletionStream(messages, {
-        temperature: 0.3,
+        temperature: 0.35,
         top_p: 0.9,
+        frequency_penalty: 0.3,
+        presence_penalty: 0.2,
         max_tokens: 1200,
       })) {
         if (signal?.aborted) {
@@ -773,8 +777,10 @@ export async function* handleChatQueryStream(
 
     try {
       for await (const chunk of generateLLMCompletionStream(messages, {
-        temperature: 0.3,
+        temperature: 0.35,
         top_p: 0.9,
+        frequency_penalty: 0.3,
+        presence_penalty: 0.2,
         max_tokens: 1000,
       })) {
         if (signal?.aborted) {
@@ -1168,8 +1174,10 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
 
   try {
     for await (const chunk of generateLLMCompletionStream(messages, {
-      temperature: 0.2,
+      temperature: 0.35,
       top_p: 0.9,
+      frequency_penalty: 0.3,
+      presence_penalty: 0.2,
       max_tokens: maxGenerationTokens,
     })) {
       if (signal?.aborted) {

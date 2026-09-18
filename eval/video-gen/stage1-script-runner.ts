@@ -145,6 +145,11 @@ export async function runStage1ScriptEvaluation(
           introducedEntities: [],
           transitionHook: '',
         },
+        narrativeLedger: {
+          coveredMilestones: [],
+          introducedKeyFacts: [],
+          resolvedAliases: [],
+        },
         chapterScripts: {},
         factCheckLogs: [],
         scenes: [],

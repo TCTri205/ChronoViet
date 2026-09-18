@@ -3,7 +3,14 @@
  * Breaks chapter scripts into 5s–25s scenes and assigns layout modes
  */
 
-import { LayoutMode, SceneGeneration } from '@chronoviet/shared-spec';
+import {
+  DOMAIN_LAYOUT_WHITELIST,
+  LayoutMode,
+  SceneGeneration,
+  VideoType,
+  isPureImageLayout,
+  getTargetWpm,
+} from '@chronoviet/shared-spec';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 import { isValidHistoricalEntity } from './chaptering-node.js';
 
@@ -12,11 +19,10 @@ const TEMPLATE_LAYOUTS: Record<string, LayoutMode[]> = {
   MODERN_NEWS: ['STAT_CARD', 'TIMELINE_CHRONO', 'FULL_COVER', 'HISTORICAL_FRAME'],
   HISTORICAL_DOCUMENTARY: [
     'HISTORICAL_FRAME',
-    'TIMELINE_CHRONO',
-    'QUOTE_SLIDE',
-    'STAT_CARD',
-    'CENTER_SCALE',
     'FULL_COVER',
+    'BLUR_BG',
+    'CENTER_SCALE',
+    'DOCUMENTARY_GRID',
   ],
 };
 
@@ -24,33 +30,120 @@ export function inferSemanticLayoutMode(
   text: string,
   templateId: string = 'HISTORICAL_DOCUMENTARY',
   fallbackIdx: number = 0,
-  availableLayouts: LayoutMode[] = TEMPLATE_LAYOUTS.HISTORICAL_DOCUMENTARY
+  availableLayouts: LayoutMode[] = TEMPLATE_LAYOUTS.HISTORICAL_DOCUMENTARY,
+  videoType?: VideoType
 ): LayoutMode {
   const lower = text.toLowerCase();
+  const allowedPool = videoType && DOMAIN_LAYOUT_WHITELIST[videoType]
+    ? new Set(DOMAIN_LAYOUT_WHITELIST[videoType])
+    : null;
 
-  // 1. Direct speech, proclamation or historical quote (up to 300 chars, non-greedy)
-  if (/["“'‘][^"”'’\n]{5,300}["”'’]|hịch tướng sĩ|bình ngô đại cáo|tuyên ngôn|lời thề|lời dặn|khẳng định rằng|lời nói của/i.test(text)) {
-    if (availableLayouts.includes('QUOTE_SLIDE')) return 'QUOTE_SLIDE';
+  // 1. Direct speech, proclamation or genuine historical quote enclosed in quotes or with direct proclamation verb + colon
+  // Requires actual quotation marks or explicit proclamation syntax (e.g. "khẳng định rằng: ...", "tuyên bố: ...")
+  const hasEnclosedQuotes = /["“'‘][^"”'’\n]{5,300}["”'’]/.test(text);
+  const hasDirectProclamation = /(?:tuyên ngôn|hịch tướng sĩ|bình ngô đại cáo|lời thề|lời kêu gọi|lời dặn|khẳng định rằng|tuyên bố rằng|dõng dạc nói)\s*:\s*["“'‘]?[^"”'’\n]{5,300}/i.test(text);
+
+  if (hasEnclosedQuotes || hasDirectProclamation) {
+    if (!allowedPool || allowedPool.has('QUOTE_SLIDE')) {
+      return 'QUOTE_SLIDE';
+    }
   }
 
-  // 2. Comparison / Versus confrontation
+  // 2. Explicit quantifiable military / resource / physical statistics (strictly paired with count units, NOT bare calendar years)
+  // e.g. "20 vạn quân", "500 chiến thuyền", "30 khẩu thần công", "55 ngày đêm", "1000 cây số"
+  const hasConcreteStats = /\b\d+\s*(?:vạn|nghìn|ngàn|triệu|tỷ)?\s*(?:quân\s+sĩ|binh\s+sĩ|vạn\s+quân|quân|binh|chiến\s+thuyền|thuyền\s+chiến|khẩu\s+pháo|khẩu\s+thần\s+công|khẩu\s+súng|máy\s+bay|xe\s+tăng|tàu\s+chiến|ngày\s+đêm|km|cây\s+số|vạn\s+dặm|chiến\s+sĩ|tử\s+sĩ|tù\s+binh|đồng\s+bào|người)\b/i.test(text);
+
+  if (hasConcreteStats) {
+    if (!allowedPool || allowedPool.has('STAT_CARD')) {
+      return 'STAT_CARD';
+    }
+  }
+
+  // 3. Comparison / Versus confrontation (Strictly forbidden for BIOGRAPHY and ARTIFACT)
   if (/so với|đối đầu|hai bên|tương quan lực lượng|địch và ta|quân ta.*quân địch|thủy chiến.*bộ chiến/i.test(lower)) {
-    if (availableLayouts.includes('VERSUS_CARD')) return 'VERSUS_CARD';
+    if (!allowedPool || allowedPool.has('VERSUS_CARD')) {
+      return 'VERSUS_CARD';
+    }
   }
 
-  // 3. Quantifiable statistics / Numbers / Dates
-  if (/(?:\d+\s*(?:vạn|nghìn|triệu|chiến thuyền|quân|binh sĩ|khẩu thần công|ngày đêm))|năm\s+\d{1,4}/i.test(text)) {
-    if (availableLayouts.includes('STAT_CARD')) return 'STAT_CARD';
-    if (availableLayouts.includes('TIMELINE_CHRONO')) return 'TIMELINE_CHRONO';
+  // 4. Character Profile (Exclusive for BIOGRAPHY when introducing identity, birth, titles, roles, or aliases)
+  if (videoType === 'BIOGRAPHY' && /sinh ra tại|quê quán|tên khai sinh|tên thật là|thân phụ|thân mẫu|thuở nhỏ|bí danh|danh xưng|chức vụ|tổng bí thư|chủ tịch nước|lãnh tụ/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('CHARACTER_PROFILE')) {
+      return 'CHARACTER_PROFILE';
+    }
   }
 
-  // 4. Chronological progression / Milestones
-  if (/tiến trình|giai đoạn|sau đó|tiếp theo|bước ngoặt|thời kỳ|thế kỷ/i.test(lower)) {
-    if (availableLayouts.includes('TIMELINE_CHRONO')) return 'TIMELINE_CHRONO';
+  // 5. Chronological progression / Milestones
+  if (/(?:tiến trình lịch sử|giai đoạn then chốt|bước ngoặt thời kỳ|từ năm\s+\d{3,4}\s+đến\s+(?:năm\s+)?\d{3,4})/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('TIMELINE_CHRONO')) {
+      return 'TIMELINE_CHRONO';
+    }
   }
 
-  // 5. Default: balanced round-robin from template layouts
-  return availableLayouts[fallbackIdx % availableLayouts.length];
+  // 6. Default: Visual-First round-robin across cinematic image layouts filtered by whitelist
+  let visualLayouts = availableLayouts.filter((l) => isPureImageLayout(l));
+  if (allowedPool) {
+    const whitelistedVisuals = visualLayouts.filter((l) => allowedPool.has(l));
+    if (whitelistedVisuals.length > 0) {
+      visualLayouts = whitelistedVisuals;
+    }
+  }
+  const pool = visualLayouts.length > 0 ? visualLayouts : availableLayouts;
+  const selectedLayout = pool[fallbackIdx % pool.length];
+
+  // If CENTER_SCALE is selected, verify word count <= 18 words to prevent visual overflow; otherwise fallback to HISTORICAL_FRAME / FULL_COVER
+  if (selectedLayout === 'CENTER_SCALE') {
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    if (wordCount > 18) {
+      return pool.find((l) => l === 'HISTORICAL_FRAME' || l === 'FULL_COVER') || pool[0];
+    }
+  }
+
+  return selectedLayout;
+}
+
+export function splitScriptIntoSentences(scriptText: string): string[] {
+  if (!scriptText || !scriptText.trim()) return [];
+
+  // 1. Prevent splitting on newlines after colons, semicolons, dashes, or dangling lists
+  let normalized = scriptText
+    .replace(/:\s*\n+/g, ': ')
+    .replace(/;\s*\n+/g, '; ')
+    .replace(/,\s*\n+/g, ', ')
+    .replace(/\n+\s*([a-zà-ỹ])/g, ' $1');
+
+  // 2. Context-Aware Abbreviation Masking
+  normalized = normalized.replace(/\b(GS|PGS|TS|ThS|TP|TX|TT)\.\s+(?=[A-ZÀ-Ỹ])/g, '$1__DOT__ ');
+  normalized = normalized.replace(/\b(v\.v)\.(?=\s*[,a-zà-ỹ])/gi, '$1__VVDOT__');
+
+  // 3. Split strictly on terminal punctuation followed by whitespace
+  const rawParts = normalized
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.replace(/__DOT__/g, '.').replace(/__VVDOT__/g, '.').trim())
+    .filter((s) => s.length > 0);
+
+  // 4. Clause boundary healing: merge dangling fragments and lowercase continuations
+  const healedSentences: string[] = [];
+  for (const part of rawParts) {
+    if (healedSentences.length > 0) {
+      const isFragment =
+        /^[a-zà-ỹ]/u.test(part) ||
+        /^(?:tiền|hậu|tả|hữu|trung quân|và|hoặc|nhưng|rồi|mà|với|cùng)(?:\s+|$)/iu.test(part) ||
+        part.length < 15;
+
+      const lastIdx = healedSentences.length - 1;
+      const prev = healedSentences[lastIdx];
+      const prevEndsWithColonOrComma = /[:;,–—]\s*$/.test(prev) || !/[.!?]$/.test(prev);
+
+      if (isFragment || prevEndsWithColonOrComma) {
+        healedSentences[lastIdx] = `${prev} ${part}`.replace(/\s+/g, ' ').trim();
+        continue;
+      }
+    }
+    healedSentences.push(part);
+  }
+
+  return healedSentences.filter((s) => s.length > 5);
 }
 
 export async function segmenterNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
@@ -61,7 +154,7 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
   });
 
   const availableLayouts = TEMPLATE_LAYOUTS[state.templateId || 'HISTORICAL_DOCUMENTARY'] || TEMPLATE_LAYOUTS.HISTORICAL_DOCUMENTARY;
-  const targetWpm = state.templateId === 'QUICK_SHORTS' ? 160 : (state.templateId === 'MODERN_NEWS' ? 150 : 145);
+  const targetWpm = getTargetWpm(state.templateId);
   const scenes: SceneGeneration[] = [];
   let globalSceneIdx = 0;
 
@@ -71,17 +164,7 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
     const chapterIdx = Number(key);
     const currentChapter = state.chapters?.[chapterIdx];
 
-    // Context-Aware Abbreviation Masking
-    // Mask titles followed by capital letters
-    let masked = scriptText.replace(/\b(GS|PGS|TS|ThS|TP|TX|TT)\.\s+(?=[A-ZÀ-Ỹ])/g, '$1__DOT__ ');
-    // Mask "v.v." followed by lowercase letters or commas, preserving genuine sentence endpoints
-    masked = masked.replace(/\b(v\.v)\.(?=\s*[,a-zà-ỹ])/gi, '$1__VVDOT__');
-
-    // Split sentences safely
-    const rawSentences = masked
-      .split(/(?<=[.!?\n])\s+/)
-      .map((s) => s.replace(/__DOT__/g, '.').replace(/__VVDOT__/g, '.').trim())
-      .filter((s) => s.length > 5);
+    const rawSentences = splitScriptIntoSentences(scriptText);
 
     // Group sentences into 5s-25s chunks (~15 - 45 words per scene)
     const sceneChunks: string[] = [];
@@ -115,11 +198,31 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
       sceneChunks.push(scriptText.trim());
     }
 
+    let chapterPureCodeCount = 0;
     for (let i = 0; i < sceneChunks.length; i++) {
       const voiceoverText = sceneChunks[i];
       const wordCount = voiceoverText.split(/\s+/).filter(Boolean).length;
       const targetDurationSeconds = Math.max(5, Math.min(25, Math.ceil(wordCount / (targetWpm / 60))));
-      const layoutMode = inferSemanticLayoutMode(voiceoverText, state.templateId, globalSceneIdx, availableLayouts);
+      let layoutMode = inferSemanticLayoutMode(voiceoverText, state.templateId, globalSceneIdx, availableLayouts, state.videoType);
+
+      // Throttling: In HISTORICAL_DOCUMENTARY, cap Pure Code layouts at max 1 per chapter (~85%+ visual scenes)
+      if (state.templateId === 'HISTORICAL_DOCUMENTARY' || !state.templateId) {
+        if (!isPureImageLayout(layoutMode)) {
+          if (chapterPureCodeCount >= 1) {
+            const rawVisualPool: LayoutMode[] = ['HISTORICAL_FRAME', 'FULL_COVER', 'BLUR_BG', 'CENTER_SCALE'];
+            const allowedPool = state.videoType && DOMAIN_LAYOUT_WHITELIST[state.videoType]
+              ? new Set(DOMAIN_LAYOUT_WHITELIST[state.videoType])
+              : null;
+            const visualPool = allowedPool
+              ? rawVisualPool.filter((l) => allowedPool.has(l))
+              : rawVisualPool;
+            const effectiveVisualPool = visualPool.length > 0 ? visualPool : rawVisualPool;
+            layoutMode = effectiveVisualPool[globalSceneIdx % effectiveVisualPool.length];
+          } else {
+            chapterPureCodeCount++;
+          }
+        }
+      }
 
       // Extract search keywords from scene text: capitalized proper nouns, chapter entities, and userPrompt
       const properNouns = Array.from(

@@ -25,7 +25,19 @@ const normalizePath = (url: string) => {
     url.startsWith('http://') ||
     url.startsWith('https://') ||
     url.startsWith('data:') ||
-    url.startsWith('blob:')
+    url.startsWith('blob:') ||
+    url.startsWith('file://')
+  ) {
+    return url;
+  }
+  // Absolute disk paths should not be passed to staticFile()
+  if (
+    url.startsWith('/Users') ||
+    url.startsWith('/home') ||
+    url.startsWith('/media') ||
+    url.startsWith('/tmp') ||
+    url.startsWith('/var') ||
+    /^[A-Za-z]:[\\/]/.test(url)
   ) {
     return url;
   }
@@ -124,7 +136,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            filter: `${filterCss} blur(22px) brightness(0.32) saturate(0.85)`,
+            filter: `${filterCss} blur(6px) brightness(0.60) saturate(0.95)`,
             transform: `rotate(${rotateDeg}deg) scale(${scale * 1.25}) translate(${translateX * 0.3}%, ${translateY * 0.3}%) translateZ(0)`,
             willChange: 'transform',
             opacity: 0.95,
@@ -134,7 +146,7 @@ export const SlideImage: React.FC<SlideImageProps> = ({
         <AbsoluteFill
           style={{
             background:
-              'radial-gradient(circle at 50% 50%, rgba(14, 12, 10, 0.4) 0%, rgba(14, 12, 10, 0.85) 75%, rgba(10, 8, 6, 0.95) 100%)',
+              'radial-gradient(circle at 50% 50%, rgba(14, 12, 10, 0.25) 0%, rgba(14, 12, 10, 0.70) 75%, rgba(10, 8, 6, 0.85) 100%)',
             pointerEvents: 'none',
           }}
         />

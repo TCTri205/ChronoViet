@@ -4,7 +4,7 @@
  * (Keyword Extraction -> Online Research -> VLM Inspection) concurrently via Promise.all.
  */
 
-import { SceneGeneration, VisualCandidate } from '@chronoviet/shared-spec';
+import { SceneGeneration, VisualCandidate, LayoutMode } from '@chronoviet/shared-spec';
 import {
   createLogger,
   envConfig,
@@ -79,17 +79,21 @@ export async function assetGenerationForkJoinNode(
       const inspectedScenes: SceneGeneration[] = [];
 
       const { resolveImageCandidates } = await import('../../research/index.js');
-      const { inspectSceneVisuals } = await import('@chronoviet/vlm-inspector');
+      const { inspectSceneVisuals, inferSemanticPureCodeLayout } = await import('@chronoviet/vlm-inspector');
+      const { matchCuratedCatalog } = await import('../../research/providers/curated-catalog.js');
+      const sharedUsedAssetHashes = new Set<string>();
+      const usedAssetHistory: Array<{ sceneIndex: number; candidate: VisualCandidate; layoutMode: LayoutMode }> = [];
+      const alternateLayouts: LayoutMode[] = ['HISTORICAL_FRAME', 'FULL_COVER', 'CENTER_SCALE', 'BLUR_BG'];
 
+      // Step B1: Pre-resolve candidates concurrently in batches
       for (let i = 0; i < scenesWithKeywords.length; i += vlmBatchSize) {
         const batch = scenesWithKeywords.slice(i, i + vlmBatchSize);
-        const batchResults = await Promise.all(
+        await Promise.all(
           batch.map(async (scene) => {
             if (scene.contentType !== 'IMAGE') {
-              return scene;
+              return;
             }
 
-            // 1. Check or resolve candidates for this scene
             let sceneResearch = aggregatedResearchResults[scene.sceneId];
             if (!sceneResearch || sceneResearch.candidates.length === 0) {
               const sceneLimit = scene.searchParams?.limit || candidateLimit;
@@ -134,25 +138,98 @@ export async function assetGenerationForkJoinNode(
               }
               aggregatedResearchResults[scene.sceneId] = sceneResearch;
             }
-
-            // 2. Immediately inspect candidates with VLM for this scene without waiting for other scenes
-            try {
-              const inspectRes = await inspectSceneVisuals(state.projectId, scene, sceneResearch.candidates, {
-                customBaseDir: state.customBaseDir,
-              });
-              return inspectRes.updatedScene;
-            } catch (vlmErr: any) {
-              nodeLog.warn('orchestrator.vlm_scene_fallback', `VLM inspection fallback for scene ${scene.sceneId}: ${vlmErr.message}`);
-              return {
-                ...scene,
-                contentType: 'PURE_CODE' as const,
-                usePureCodeFallback: true,
-                selectedAsset: undefined,
-              };
-            }
           })
         );
-        inspectedScenes.push(...batchResults);
+      }
+
+      // Step B2: Sequentially inspect candidates per scene to guarantee strict cross-scene deduplication
+      for (let sIdx = 0; sIdx < scenesWithKeywords.length; sIdx++) {
+        const scene = scenesWithKeywords[sIdx];
+        if (scene.contentType !== 'IMAGE') {
+          inspectedScenes.push(scene);
+          continue;
+        }
+
+        const sceneResearch = aggregatedResearchResults[scene.sceneId] || { candidates: [] };
+
+        try {
+          let inspectRes = await inspectSceneVisuals(state.projectId, scene, sceneResearch.candidates, {
+            customBaseDir: state.customBaseDir,
+            usedAssetHashes: sharedUsedAssetHashes,
+            preferSemanticLayout: true,
+          });
+
+          // Tier 2 Fallback: If primary search candidates all fail or are exhausted,
+          // query curated catalog for epoch-aligned historical assets before conceding to PURE_CODE
+          if (inspectRes.isPureCodeFallback) {
+            try {
+              const fallbackKeywords = `${scene.searchParams?.historicalPeriod || ''} ${state.userPrompt}`;
+              const catalogCandidates = matchCuratedCatalog(fallbackKeywords, candidateLimit);
+              const freshCatalogCandidates = catalogCandidates.filter(
+                (c) => !sharedUsedAssetHashes.has(c.imageUrl) && !(c.sha256 && sharedUsedAssetHashes.has(c.sha256))
+              );
+              if (freshCatalogCandidates.length > 0) {
+                const catalogRes = await inspectSceneVisuals(state.projectId, scene, freshCatalogCandidates, {
+                  customBaseDir: state.customBaseDir,
+                  usedAssetHashes: sharedUsedAssetHashes,
+                  preferSemanticLayout: true,
+                });
+                if (!catalogRes.isPureCodeFallback && catalogRes.selectedCandidate) {
+                  inspectRes = catalogRes;
+                }
+              }
+            } catch (catErr: any) {
+              nodeLog.debug('orchestrator.catalog_fallback_skip', `Catalog fallback skipped for scene ${scene.sceneId}: ${catErr.message}`);
+            }
+          }
+
+          // Tier 3: Smart Asset Repurposing with separation distance >= 2 scenes
+          if (inspectRes.isPureCodeFallback && usedAssetHistory.length > 0) {
+            const eligiblePastAssets = usedAssetHistory.filter((item) => sIdx - item.sceneIndex >= 2);
+            if (eligiblePastAssets.length > 0) {
+              const chosen = eligiblePastAssets[0];
+              const variedLayout = alternateLayouts[sIdx % alternateLayouts.length];
+              inspectRes = {
+                updatedScene: {
+                  ...scene,
+                  selectedAsset: chosen.candidate,
+                  layoutMode: variedLayout,
+                  contentType: 'IMAGE',
+                  usePureCodeFallback: false,
+                },
+                inspectedCandidates: [chosen.candidate],
+                selectedCandidate: chosen.candidate,
+                isPureCodeFallback: false,
+                selectedLayoutMode: variedLayout,
+              };
+              nodeLog.debug('orchestrator.asset_repurposed', `Repurposed asset for scene ${scene.sceneId} with layout ${variedLayout}`);
+            }
+          }
+
+          // Register selected candidate into shared used hashes & history
+          if (inspectRes.selectedCandidate) {
+            if (inspectRes.selectedCandidate.sha256) sharedUsedAssetHashes.add(inspectRes.selectedCandidate.sha256);
+            if (inspectRes.selectedCandidate.imageUrl) sharedUsedAssetHashes.add(inspectRes.selectedCandidate.imageUrl);
+            if (inspectRes.selectedCandidate.localPath) sharedUsedAssetHashes.add(inspectRes.selectedCandidate.localPath);
+            usedAssetHistory.push({
+              sceneIndex: sIdx,
+              candidate: inspectRes.selectedCandidate,
+              layoutMode: inspectRes.selectedLayoutMode || 'HISTORICAL_FRAME',
+            });
+          }
+
+          inspectedScenes.push(inspectRes.updatedScene);
+        } catch (vlmErr: any) {
+          nodeLog.warn('orchestrator.vlm_scene_fallback', `VLM inspection fallback for scene ${scene.sceneId}: ${vlmErr.message}`);
+          const fallbackLayout = inferSemanticPureCodeLayout(scene.voiceoverText, scene.sceneIndex ?? 0);
+          inspectedScenes.push({
+            ...scene,
+            layoutMode: fallbackLayout,
+            contentType: 'PURE_CODE' as const,
+            usePureCodeFallback: true,
+            selectedAsset: undefined,
+          });
+        }
       }
 
       const latencyMs = Math.round(performance.now() - branchStart);

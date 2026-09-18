@@ -108,6 +108,11 @@ function makeState(overrides: Partial<ChronoGraphState> = {}): ChronoGraphState 
       introducedEntities: [],
       transitionHook: '',
     },
+    narrativeLedger: {
+      coveredMilestones: [],
+      introducedKeyFacts: [],
+      resolvedAliases: [],
+    },
     chapterScripts: {},
     factCheckLogs: [],
     scenes: [makeScene()],

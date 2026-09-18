@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
   ProjectSummary,
+  classifyVideoDomain,
 } from '@chronoviet/shared-spec';
 import {
   initProjectWorkspace,
@@ -35,6 +36,17 @@ function extractTimestampFromDirName(name: string): number {
   return 0;
 }
 
+function isTestOrEvaluationDir(name: string): boolean {
+  return (
+    name.startsWith('test_') ||
+    name.startsWith('eval_') ||
+    name.startsWith('test-') ||
+    name.startsWith('temp_') ||
+    name === 'proj_gate_test' ||
+    name === 'test'
+  );
+}
+
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   const correlationId = req.headers.get('x-request-id') || crypto.randomUUID();
@@ -51,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     const projectId = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const targetDurationMinutes = Number(body.targetDurationMinutes) || 1;
-    const videoType = (body.videoType || 'BIOGRAPHY') as any;
+    const videoType = classifyVideoDomain(topic, body.videoType);
     const templateId = (body.templateId || 'HISTORICAL_DOCUMENTARY') as any;
 
     const conversationId = body.conversationId;
@@ -68,11 +80,14 @@ export async function POST(req: NextRequest) {
             `SELECT role, content FROM conversation_messages WHERE conversation_id = $1 ORDER BY created_at ASC`,
             [conversationId]
           );
-          historyTurns = rows.map((r: any) => ({
-            role: (r.role === 'assistant' || r.role === 'system' ? r.role : 'user') as 'user' | 'assistant' | 'system',
-            content: r.content,
-          }));
-        } else {
+          if (rows && rows.length > 0) {
+            historyTurns = rows.map((r: any) => ({
+              role: (r.role === 'assistant' || r.role === 'system' ? r.role : 'user') as 'user' | 'assistant' | 'system',
+              content: r.content,
+            }));
+          }
+        }
+        if (historyTurns.length === 0) {
           historyTurns = inMemoryStore.conversationMessages
             .filter((m: any) => m.conversationId === conversationId)
             .map((m: any) => ({
@@ -201,7 +216,7 @@ export async function GET(req: NextRequest) {
 
         await Promise.all(
           entries
-            .filter((e) => e.isDirectory())
+            .filter((e) => e.isDirectory() && !isTestOrEvaluationDir(e.name))
             .map(async (e) => {
               const metaPath = path.join(baseDir, e.name, 'metadata.json');
               const schemaPath = path.join(baseDir, e.name, 'project_schema.json');

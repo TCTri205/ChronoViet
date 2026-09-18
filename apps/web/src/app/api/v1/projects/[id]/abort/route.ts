@@ -9,6 +9,7 @@ import {
   httpRequestDurationSeconds,
   cancelRenderJob,
 } from '@chronoviet/infra';
+import { abortActivePipelineJob } from '@/lib/project-stream-coordinator';
 
 const log = createLogger({ service: 'web-api-abort' });
 const pubsub = new RedisPubSubManager();
@@ -60,6 +61,7 @@ export async function POST(
     }
     await cancelRenderJob(`render-${projectId}`).catch(() => {});
     await ResourceSentinel.releaseRenderLock(`render-${projectId}`).catch(() => {});
+    abortActivePipelineJob(projectId);
 
     reqLog.info('api.project_aborted', `Project ${projectId} generation successfully aborted`, { projectId, targetJobId });
 

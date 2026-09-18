@@ -4,7 +4,7 @@
  * asset download fidelity, license whitelist compliance, and VLM visual quality.
  */
 
-import { SceneGeneration, isPureImageLayout } from '@chronoviet/shared-spec';
+import { SceneGeneration, isPureImageLayout, getTargetWpm } from '@chronoviet/shared-spec';
 import { MetricScore, LatencyProfile, calculateLatencyPercentiles } from '../../shared/index.js';
 
 export interface VideoGenTestCase {
@@ -268,7 +268,7 @@ export function evaluateVideoGenCase(
   const actualWpm = durationMin > 0 ? Math.round(totalWordCount / durationMin) : 0;
 
   const templateId = (testCase as any).templateId || 'HISTORICAL_DOCUMENTARY';
-  const targetWpm = templateId === 'QUICK_SHORTS' ? 160 : (templateId === 'MODERN_NEWS' ? 150 : 145);
+  const targetWpm = getTargetWpm(templateId);
   const wpmDeviationPct = Math.round((Math.abs(actualWpm - targetWpm) / targetWpm) * 1000) / 10;
   const durationDeviationPct = targetDurationSec > 0
     ? Math.round((Math.abs(actualDurationSec - targetDurationSec) / targetDurationSec) * 1000) / 10

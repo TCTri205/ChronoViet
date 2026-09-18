@@ -58,12 +58,33 @@ export const TimelineChrono: React.FC<TimelineChronoProps> = ({
     extrapolateRight: 'clamp',
   });
 
-  // Default fallback milestones if none provided
-  const displayMilestones = milestones.length > 0 ? milestones : [
-    { time: 'Mùng 4 Tết', title: 'Áp sát đồn Ngọc Hồi', desc: 'Đêm mùng 4 Kỷ Dậu, quân Tây Sơn bao vây đồn địch' },
-    { time: 'Sáng Mùng 5', title: 'Tổng công phá đồn', desc: 'Dùng rơm bện khiên rơm nhúng nước chắn hỏa lực' },
-    { time: 'Mùng 5 Tết', title: 'Giải phóng Thăng Long', desc: 'Sầm Nghi Đống thắt cổ, Tôn Sĩ Nghị tháo chạy' },
-  ];
+  // Context-aware dynamic fallback milestones if none explicitly provided
+  const displayMilestones = React.useMemo(() => {
+    if (milestones && milestones.length > 0) {
+      return milestones;
+    }
+    // Extract year from title or subtitle if available (e.g. "Hội nghị Diên Hồng năm 1284" -> "Năm 1284")
+    const yearMatch = (title || subtitle || '').match(/\b(\d{3,4})\b/);
+    const primaryTime = yearMatch ? `Năm ${yearMatch[1]}` : 'Trọng tâm';
+
+    return [
+      {
+        time: 'Khởi đầu',
+        title: cleanSubtitle || 'Bối cảnh lịch sử',
+        desc: 'Tiền đề hình thành quyết sách',
+      },
+      {
+        time: primaryTime,
+        title: cleanTitle.length > 40 ? `${cleanTitle.slice(0, 37)}...` : (cleanTitle || 'Sự kiện chính'),
+        desc: 'Bước ngoặt lịch sử dân tộc',
+      },
+      {
+        time: 'Ý nghĩa',
+        title: 'Dấu ấn muôn đời',
+        desc: 'Bài học và di sản lịch sử',
+      },
+    ];
+  }, [milestones, title, subtitle, cleanTitle, cleanSubtitle]);
 
   return (
     <div

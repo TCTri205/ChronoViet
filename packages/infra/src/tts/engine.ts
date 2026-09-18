@@ -3,6 +3,7 @@ import path from 'path';
 import http from 'http';
 import { VieNeuTTSRequest, VieNeuTTSResponse, WordTimestamp, CaptionWord } from '@chronoviet/shared-spec';
 import { envConfig } from '../config.js';
+import { findMonorepoRoot } from '../workspace.js';
 import { createLogger, logFallbackAlert } from '../logger.js';
 import {
   ttsRequestsTotal,
@@ -14,28 +15,32 @@ const log = createLogger({ service: 'vieneu-tts' });
 
 /**
  * Quy đổi VieNeu Word Timestamps (ms) sang Remotion Caption Frames dựa trên FPS
+ * Hỗ trợ leadInFrames để tạo nhịp thở chuyển cảnh đồng bộ với audio start offset.
  */
 export function convertVieNeuTimestampsToCaptions(
   wordTimestamps: WordTimestamp[],
-  fps = 30
+  fps = 30,
+  leadInFrames = 0
 ): CaptionWord[] {
   return wordTimestamps.map((item) => ({
     word: item.word,
-    startFrame: Math.floor((item.startMs / 1000) * fps),
-    endFrame: Math.ceil((item.endMs / 1000) * fps),
+    startFrame: Math.floor((item.startMs / 1000) * fps) + leadInFrames,
+    endFrame: Math.ceil((item.endMs / 1000) * fps) + leadInFrames,
   }));
 }
 
 /**
  * Công thức tính durationInFrames dựa trên audioDurationMs thực tế từ VieNeu TTS:
- * durationInFrames = ceil(((audioDurationMs + paddingMs) / 1000) * FPS)
+ * durationInFrames = ceil(((audioDurationMs + paddingMs) / 1000) * FPS) + leadInFrames
  */
 export function calculateSceneDurationInFrames(
   audioDurationMs: number,
   paddingMs = 300,
-  fps = 30
+  fps = 30,
+  leadInFrames = 0
 ): number {
-  return Math.ceil(((audioDurationMs + paddingMs) / 1000) * fps);
+  const baseFrames = Math.ceil(((audioDurationMs + paddingMs) / 1000) * fps);
+  return baseFrames + leadInFrames;
 }
 
 export interface IVieNeuEngine {
@@ -110,8 +115,15 @@ export function createSyntheticWavBuffer(
 export class SyntheticTTSFallbackEngine implements IVieNeuEngine {
   private cacheDir: string;
 
-  constructor(cacheDir = path.resolve(process.cwd(), envConfig.AUDIO_CACHE_DIR)) {
-    this.cacheDir = cacheDir;
+  constructor(cacheDir?: string) {
+    if (cacheDir) {
+      this.cacheDir = cacheDir;
+    } else {
+      const root = findMonorepoRoot();
+      this.cacheDir = path.isAbsolute(envConfig.AUDIO_CACHE_DIR)
+        ? envConfig.AUDIO_CACHE_DIR
+        : path.resolve(root, envConfig.AUDIO_CACHE_DIR);
+    }
     if (!fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir, { recursive: true });
     }
@@ -269,7 +281,16 @@ export class VieNeuEngine implements IVieNeuEngine {
         requestText: normalizedRequest.text,
       });
 
-      throw new Error(`[VIENEU_TTS_ERROR] VieNeu-TTS service failed at ${this.pythonUrl}: ${reason}. Fallback is completely disabled.`);
+      if (envConfig.EVAL_STRICT) {
+        throw new Error(`[VIENEU_TTS_ERROR] VieNeu-TTS service failed at ${this.pythonUrl}: ${reason}. Fallback is completely disabled under EVAL_STRICT.`);
+      }
+
+      log.warn('tts.python_fallback_triggered', `VieNeu TTS failed (${reason}). Falling back to synthetic tone engine.`, {
+        reason,
+        pythonUrl: this.pythonUrl,
+      });
+
+      return this.fallbackEngine.synthesize(normalizedRequest);
     }
   }
 }

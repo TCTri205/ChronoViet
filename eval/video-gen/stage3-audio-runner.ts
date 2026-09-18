@@ -208,6 +208,11 @@ export async function runStage3AudioEvaluation(
           introducedEntities: [],
           transitionHook: '',
         },
+        narrativeLedger: {
+          coveredMilestones: [],
+          introducedKeyFacts: [],
+          resolvedAliases: [],
+        },
         chapterScripts: tc.chapterScripts || {},
         factCheckLogs: [],
         scenes: tc.scenes || [],

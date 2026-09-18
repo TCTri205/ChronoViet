@@ -2,11 +2,13 @@ import { Annotation } from '@langchain/langgraph';
 import {
   ChapterPlan,
   ChronoVideoProps,
+  GraphTripleItem,
   HistoricalContextEntity,
   OrchestratorStatus,
   SceneGeneration,
   VisualCandidate,
   WordTimestamp,
+  NarrativeLedger,
 } from '@chronoviet/shared-spec';
 import {
   ChronoLogger,
@@ -42,6 +44,8 @@ export interface RunningNarrativeState {
   establishedTone: string;
   introducedEntities: string[];
   transitionHook: string;
+  coveredMilestones?: string[];
+  introducedKeyFacts?: string[];
 }
 
 export interface FactCheckAuditEntry {
@@ -127,6 +131,20 @@ function mergeTelemetryAudits(
   return [...prev, ...next];
 }
 
+function mergeNarrativeLedger(
+  prev?: NarrativeLedger,
+  next?: NarrativeLedger
+): NarrativeLedger {
+  if (!next) return prev || { coveredMilestones: [], introducedKeyFacts: [], resolvedAliases: [] };
+  if (!prev) return next;
+  return {
+    coveredMilestones: Array.from(new Set([...(prev.coveredMilestones || []), ...(next.coveredMilestones || [])])),
+    introducedKeyFacts: Array.from(new Set([...(prev.introducedKeyFacts || []), ...(next.introducedKeyFacts || [])])),
+    resolvedAliases: Array.from(new Set([...(prev.resolvedAliases || []), ...(next.resolvedAliases || [])])),
+    passedTimeAnchor: next.passedTimeAnchor ?? prev.passedTimeAnchor,
+  };
+}
+
 export const ChronoGraphAnnotation = Annotation.Root({
   projectId: Annotation<string>({
     reducer: updateValue,
@@ -172,6 +190,7 @@ export const ChronoGraphAnnotation = Annotation.Root({
     verifiedContext: HistoricalContextEntity[];
     aliasTable: Record<string, string[]>;
     citations: string[];
+    triples?: GraphTripleItem[];
   } | undefined>({
     reducer: updateValue,
     default: () => undefined,
@@ -232,6 +251,14 @@ export const ChronoGraphAnnotation = Annotation.Root({
   telemetryAudit: Annotation<TelemetryAuditEntry[]>({
     reducer: mergeTelemetryAudits,
     default: () => [],
+  }),
+  narrativeLedger: Annotation<NarrativeLedger>({
+    reducer: mergeNarrativeLedger,
+    default: () => ({
+      coveredMilestones: [],
+      introducedKeyFacts: [],
+      resolvedAliases: [],
+    }),
   }),
 });
 

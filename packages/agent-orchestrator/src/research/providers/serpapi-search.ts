@@ -54,7 +54,7 @@ export class SerpApiImageSearchProvider implements ImageSearchProvider {
       await new Promise((resolve) => setTimeout(resolve, 50 + Math.floor(Math.random() * 70)));
 
       const controller = new AbortController();
-      const timeoutMs = (envConfig as any).SEARCH_PROVIDER_TIMEOUT_MS || 15000;
+      const timeoutMs = (envConfig as any).SEARCH_PROVIDER_TIMEOUT_MS || 25000;
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       const startTime = Date.now();
 

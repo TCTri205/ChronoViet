@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import http from 'http';
 import {
   createLogger,
@@ -5,6 +7,7 @@ import {
   getMetricsContentType,
   getMetricsSnapshot,
   formatErrorMessage,
+  findMonorepoRoot,
 } from '@chronoviet/infra';
 import { startTTSWorker } from './workers/tts-worker.js';
 import { startVLMWorker } from './workers/vlm-worker.js';
@@ -80,6 +83,71 @@ export function initializeAllWorkers() {
       } catch (err: any) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end(`Metrics error: ${err.message}`);
+        return;
+      }
+    }
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+      });
+      res.end();
+      return;
+    }
+
+    if (url.startsWith('/media/')) {
+      try {
+        const monorepoRoot = findMonorepoRoot();
+        const mediaRoot = path.resolve(monorepoRoot, 'media');
+        const cleanPath = decodeURIComponent(url.replace(/\?.*$/, ''));
+        const relativePath = cleanPath.slice('/media/'.length);
+        const targetFilePath = path.resolve(mediaRoot, relativePath);
+
+        // Path traversal protection
+        if (!targetFilePath.startsWith(mediaRoot)) {
+          res.writeHead(403, { 'Content-Type': 'text/plain' });
+          res.end('Access Denied');
+          return;
+        }
+
+        if (!fs.existsSync(targetFilePath) || !fs.statSync(targetFilePath).isFile()) {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Not Found');
+          return;
+        }
+
+        const ext = path.extname(targetFilePath).toLowerCase();
+        const mimeTypes: Record<string, string> = {
+          '.wav': 'audio/wav',
+          '.mp3': 'audio/mpeg',
+          '.ogg': 'audio/ogg',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.png': 'image/png',
+          '.webp': 'image/webp',
+          '.svg': 'image/svg+xml',
+          '.mp4': 'video/mp4',
+          '.json': 'application/json',
+        };
+        const contentType = mimeTypes[ext] || 'application/octet-stream';
+        const stat = fs.statSync(targetFilePath);
+
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Content-Length': stat.size,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+          'Cache-Control': 'public, max-age=3600',
+        });
+
+        const stream = fs.createReadStream(targetFilePath);
+        stream.pipe(res);
+        return;
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end(`Internal Server Error: ${err.message}`);
         return;
       }
     }

@@ -43,6 +43,8 @@ import {
   IntentClauseSchema,
   CompositeIntentResult,
   CompositeIntentResultSchema,
+  NarrativeLedger,
+  NarrativeLedgerSchema,
 } from './schema.js';
 
 export type {
@@ -72,6 +74,7 @@ export type {
   VideoHandoverMetadata,
   IntentClause,
   CompositeIntentResult,
+  NarrativeLedger,
 };
 export {
   getCanonicalEntityIdPrefix,
@@ -80,6 +83,7 @@ export {
   VideoHandoverMetadataSchema,
   IntentClauseSchema,
   CompositeIntentResultSchema,
+  NarrativeLedgerSchema,
 };
 
 // ============================================================================

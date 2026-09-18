@@ -4,10 +4,20 @@
  */
 
 import { callLlm, envConfig } from '@chronoviet/infra';
-import { CANONICAL_DYNASTY_BOUNDS, HISTORICAL_CHRONOLOGY, removeVietnameseTones } from '@chronoviet/shared-spec';
+import {
+  CANONICAL_DYNASTY_BOUNDS,
+  HISTORICAL_CHRONOLOGY,
+  removeVietnameseTones,
+  validateAdministrativeContainment,
+} from '@chronoviet/shared-spec';
 import { ChronoGraphState, FactCheckAuditEntry, getNodeLogger } from '../state.js';
 import { validateFolkloreHypothesisTone } from '../../guardrails/folklore-validator.js';
-import { evaluateNliEntailmentScore, evaluateNliWithLlmJudge, extractHistoricalTimeBounds } from '../../guardrails/nli-hallucination-judge.js';
+import {
+  evaluateNliEntailmentScore,
+  evaluateNliWithLlmJudge,
+  extractHistoricalTimeBounds,
+  isLegitimateHistoricalReference,
+} from '../../guardrails/nli-hallucination-judge.js';
 
 export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'fact_checker');
@@ -77,6 +87,30 @@ export async function factCheckerNode(state: ChronoGraphState): Promise<Partial<
               escalationTier = Math.max(escalationTier, 1);
               auditDetails = `Auto-corrected isolated alias '${alias}' to canonical '${canonical}'.`;
             }
+          }
+        }
+
+        // 1b. Administrative Containment & Geographic Fast-Path Check (Tier 1)
+        const geoCheck = validateAdministrativeContainment(script);
+        if (!geoCheck.valid && geoCheck.childName && geoCheck.claimedParentName) {
+          nodeLog.warn('orchestrator.administrative_mismatch_detected', `Geographical mismatch in chapter ${chapterIndex}: ${geoCheck.reason}`, {
+            childName: geoCheck.childName,
+            claimedParentName: geoCheck.claimedParentName,
+            actualProvince: geoCheck.actualProvince,
+            suggestedCorrection: geoCheck.suggestedCorrection,
+          });
+
+          // Attempt Tier 1 deterministic auto-correction if actualProvince/suggestedCorrection exists
+          if (geoCheck.suggestedCorrection && geoCheck.claimedParentName) {
+            const escapedClaimed = geoCheck.claimedParentName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const targetCorrection = geoCheck.suggestedCorrection;
+            const geoRegex = new RegExp(`\\b${escapedClaimed}\\b`, 'gi');
+            script = script.replace(geoRegex, targetCorrection);
+            escalationTier = Math.max(escalationTier, 1);
+            auditDetails = `Auto-corrected geographic containment: replaced mismatched '${geoCheck.claimedParentName}' with '${targetCorrection}' (${geoCheck.reason}).`;
+          } else {
+            escalationTier = Math.max(escalationTier, 2);
+            auditDetails = `Flagged geographic containment mismatch: ${geoCheck.reason}`;
           }
         }
 
@@ -234,6 +268,18 @@ QUY TẮC BẮT BUỘC:
           }
           const entityRecall = targetEntities.length > 0 ? matchedEntityCount / targetEntities.length : 1.0;
 
+          const plannedEntities = (chapterObj?.introducedEntities || []).filter(Boolean);
+          let matchedPlannedCount = 0;
+          for (const ent of plannedEntities) {
+            const entLower = ent.toLowerCase();
+            const aliases = aliasTable[ent] || [];
+            const isMatched = scriptLower.includes(entLower) || aliases.some((a) => a && scriptLower.includes(a.toLowerCase()));
+            if (isMatched) {
+              matchedPlannedCount++;
+            }
+          }
+          const plannedRecall = plannedEntities.length > 0 ? matchedPlannedCount / plannedEntities.length : 1.0;
+
           // Foreign era intrusion check: verify no conflicting out-of-epoch dynasties via SSOT
           let foreignDynastyIntrusion = false;
           let foreignDynastyDetail = '';
@@ -242,8 +288,7 @@ QUY TẮC BẮT BUỘC:
               const matchedAlias = dyn.aliases.find((a) => scriptLower.includes(a.toLowerCase()));
               if (matchedAlias) {
                 if (dyn.endYear < epochBounds.startYear - 50 || dyn.startYear > epochBounds.endYear + 50) {
-                  const comparativeRegex = new RegExp(`(?:như|kế thừa|tiếp nối|từ thời|khác với)\\s+(?:thời kỳ\\s+)?${matchedAlias}`, 'i');
-                  if (!comparativeRegex.test(scriptLower)) {
+                  if (!isLegitimateHistoricalReference(scriptLower, matchedAlias)) {
                     foreignDynastyIntrusion = true;
                     foreignDynastyDetail = `Phát hiện nhân vật/triều đại lệch thời kỳ: ${dyn.name} (${matchedAlias}).`;
                     break;
@@ -254,7 +299,10 @@ QUY TẮC BẮT BUỘC:
           }
 
           let nliResult;
-          const isGroundedAndClean = !dateAnomalyDetected && !foreignDynastyIntrusion && (entityRecall >= 0.5 || targetEntities.length === 0);
+          const isGroundedAndClean =
+            !dateAnomalyDetected &&
+            !foreignDynastyIntrusion &&
+            (entityRecall >= 0.5 || (plannedEntities.length > 0 && plannedRecall >= 0.5) || matchedEntityCount >= 2 || targetEntities.length === 0);
 
           if (isGroundedAndClean) {
             // Fast-path: Tier 1 & 2 passed with 0 LLM calls!
@@ -347,8 +395,7 @@ KỊCH BẢN CẦN VÁ LỖI (CHƯƠNG ${chapterIndex + 1}):
                   for (const dyn of CANONICAL_DYNASTY_BOUNDS) {
                     const matchedAlias = dyn.aliases.find((a) => patchedLower.includes(a.toLowerCase()));
                     if (matchedAlias && (dyn.endYear < epochBounds.startYear - 50 || dyn.startYear > epochBounds.endYear + 50)) {
-                      const comparativeRegex = new RegExp(`(?:như|kế thừa|tiếp nối|từ thời|khác với)\\s+(?:thời kỳ\\s+)?${matchedAlias}`, 'i');
-                      if (!comparativeRegex.test(patchedLower)) {
+                      if (!isLegitimateHistoricalReference(patchedLower, matchedAlias)) {
                         patchHasForeignIntrusion = true;
                         break;
                       }

@@ -194,9 +194,32 @@ def synthesize(req: VieNeuRequest, request: Request):
                         speaker_name = req.speakerId
 
             voice = tts_engine.get_preset_voice(speaker_name)
-            audio_data = tts_engine.infer(text=text, voice=voice)
             sr = getattr(tts_engine, "sample_rate", sample_rate)
-            if hasattr(tts_engine, "save") and callable(getattr(tts_engine, "save")):
+
+            # Optimization for long scenes: chunk by sentence to avoid exponential autoregressive slowdown
+            if len(words) > 35:
+                import re
+                raw_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+                if len(raw_sentences) > 1:
+                    audio_segments = []
+                    silence_gap = np.zeros(int(sr * 0.15), dtype=np.float32)
+                    for idx, s in enumerate(raw_sentences):
+                        seg = tts_engine.infer(text=s, voice=voice)
+                        if hasattr(seg, "cpu"):
+                            seg = seg.cpu().numpy()
+                        elif not isinstance(seg, np.ndarray):
+                            seg = np.array(seg, dtype=np.float32)
+                        seg = np.squeeze(seg)
+                        audio_segments.append(seg)
+                        if idx < len(raw_sentences) - 1:
+                            audio_segments.append(silence_gap)
+                    audio_data = np.concatenate(audio_segments)
+                else:
+                    audio_data = tts_engine.infer(text=text, voice=voice)
+            else:
+                audio_data = tts_engine.infer(text=text, voice=voice)
+
+            if hasattr(tts_engine, "save") and callable(getattr(tts_engine, "save")) and len(words) <= 35:
                 try:
                     tts_engine.save(audio_data, file_path)
                 except Exception:

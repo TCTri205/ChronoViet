@@ -4,12 +4,18 @@
  */
 
 import { callLlm, envConfig } from '@chronoviet/infra';
-import { HISTORICAL_CHRONOLOGY, removeVietnameseTones } from '@chronoviet/shared-spec';
+import {
+  HISTORICAL_CHRONOLOGY,
+  removeVietnameseTones,
+  sanitizeSentenceBoundaries,
+  getTargetWpm,
+  NarrativeLedger,
+} from '@chronoviet/shared-spec';
 import { ChronoGraphState, getNodeLogger, RunningNarrativeState, TelemetryAuditEntry } from '../state.js';
 import { deduplicateRepetitiveText } from '../../guardrails/stream-dedup.js';
-import { extractHistoricalEntitiesFromRag, isValidHistoricalEntity, cleanCrawlerText } from './chaptering-node.js';
+import { extractHistoricalEntitiesFromRag, isValidHistoricalEntity, cleanCrawlerText, canonicalizeEntityList } from './chaptering-node.js';
 
-function sanitizeVoiceoverScript(rawText: string): string {
+export function sanitizeVoiceoverScript(rawText: string): string {
   if (!rawText) return '';
   let cleaned = rawText
     // Remove markdown code fences (e.g. ```markdown ... ```)
@@ -25,21 +31,34 @@ function sanitizeVoiceoverScript(rawText: string): string {
     .replace(/^(?:MC|Người dẫn chuyện|Lời bình|Host)\s*:\s*/gim, '')
     // Remove markdown headers like #, ##, ###
     .replace(/^#{1,4}\s+.*$/gm, '')
+    // Remove Wikipedia section headers like == Header == or === Subheader ===
+    .replace(/={2,5}[^=\n]+={2,5}/g, '')
+    // Remove Wikipedia citation and reference tags like [1], [2], [cần dẫn nguồn]
+    .replace(/\[\d+\]/g, '')
+    .replace(/\[(?:cần dẫn nguồn|nguồn|sđd|tr\.)[^\]]*\]/gi, '')
     // Remove bold/markdown section labels like **Hồi 1 - Mở cảnh:** or Hồi 1: or Mở cảnh:
-    .replace(/^[ \t]*(?:\*{1,3})?(?:Hồi|Phần|Chương|Đoạn)\s*\d+[^\n*:]*(?::[^\n*]*\*\*|\*\*:?|[:–—\-])\s*/gim, '')
+    .replace(/(?:^|[ \t]+)(?:\*{1,3})?(?:Hồi|Phần|Chương|Đoạn)\s*\d+[^\n*:]*(?::[^\n*]*\*\*|\*\*:?|[:–—\-])\s*/gim, ' ')
     .replace(/^[ \t]*(?:\*{1,3})?(?:Hồi|Phần|Chương|Đoạn)\s*\d+[^\n]*$/gim, '')
-    .replace(/^[ \t]*(?:\*{1,3})?(?:Mở cảnh|Mở đầu|Diễn biến(?:\s*&\s*Cao trào)?|Cao trào|Đúc kết|Dư âm(?:\s*&\s*Bài học)?|Bài học)[^\n*:]*(?::[^\n*]*\*\*|\*\*:?|[:–—\-])\s*/gim, '')
+    .replace(/(?:^|[ \t]+)(?:\*{1,3})?(?:Mở cảnh|Mở đầu|Diễn biến(?:\s*&\s*Cao trào)?|Cao trào|Đúc kết|Dư âm(?:\s*&\s*Bài học)?|Bài học)[^\n*:]*(?::[^\n*]*\*\*|\*\*:?|[:–—\-])\s*/gim, ' ')
     .replace(/^[ \t]*(?:\*{1,3})?(?:Mở cảnh|Mở đầu|Diễn biến(?:\s*&\s*Cao trào)?|Cao trào|Đúc kết|Dư âm(?:\s*&\s*Bài học)?|Bài học)[^\n]*$/gim, '')
     // Remove prompt artifact leakage (e.g. "(2 câu, 44 từ)", "(~50 từ)", "(đúng 3 câu, 50 từ)")
     .replace(/\([^)]*\d+\s*(?:câu|từ)[^)]*\)/gi, '')
     // Remove structural prompt tags (e.g. "(Entry Hook)", "(Climax Focus)", "(Exit Hook)", "(Mở cảnh)", "(Cao trào)", "(Dư âm)")
     .replace(/\((?:Entry Hook|Climax Focus|Exit Hook|Mở đầu|Mở cảnh|Diễn biến|Cao trào|Đúc kết|Dư âm|Bài học)[^)]*\)/gi, '')
+    // Remove leaked meta-prompt instructions and prompt blueprint echoes
+    .replace(/(?:^|[.!?\s]+)Khắc họa ý nghĩa thời đại[^\n.!?]*?(?:theo exit hook|bài học lịch sử)[^\n.!?]*[.!?]?/gi, ' ')
+    .replace(/(?:^|[.!?\s]+)(?:Dẫn dắt không gian, thời gian|Miêu tả chi tiết mưu lược|Đoạn đúc kết & dư âm|chuyển tiếp mượt mà theo exit hook)[^\n.!?]*[.!?]?/gi, ' ')
+    .replace(/\b(?:theo exit hook|theo entry hook|theo blueprint)\b/gi, '')
     // Remove leading standalone tone markers like "Hào hùng, trang trọng." or "Hào hùng."
     .replace(/^(?:\*{1,3})?(?:Hào hùng|Trang trọng|Hùng tráng|Trầm lắng|Bi tráng)(?:,\s*(?:trang trọng|hào hùng|sâu lắng))?[.:]?(?:\*{1,3})?\s*/gim, '')
     // Remove markdown bold/italic tags around remaining standalone section names
     .replace(/\*\*(?:Bối cảnh|Diễn biến|Chiến lược|Dư âm|Kết luận)\*\*:?\s*/gi, '')
     // Remove Chinese characters (Hanzi) that may leak from multilingual LLM outputs
     .replace(/[\u4e00-\u9fa5]+/g, '')
+    // Remove accidental prompt instruction leakage at the very start
+    .replace(/^(?:Khởi nguồn từ bối cảnh [^,.\n]+ của )?(?:Kể lại|Hãy kể|Trình bày|Hãy trình bày|Tóm tắt|Phân tích|Viết về|Hãy viết về)\s+[^,.\n]+(?:,\s*|[.:]\s*)/i, '')
+    // Strip dangling enclosing quotes
+    .replace(/^["“”'«»]+|["“”'«»]+$/g, '')
     .trim();
 
   // Remove trailing incomplete transition phrases or connector prompts
@@ -47,38 +66,102 @@ function sanitizeVoiceoverScript(rawText: string): string {
     .replace(/(?:Tiếp theo là|Mối nối chuyển cảnh:?|Chuyển sang hồi tiếp theo:?|Tiếp tục diễn biến:?)\s*$/gi, '')
     .trim();
 
+  // Remove dangling truncated date or preposition tails (e.g. "vào năm 1.", "vào năm 19.", "tại.")
+  cleaned = cleaned
+    .replace(/(?:,\s*|\s+)(?:vào\s+năm\s+\d{1,3}|năm\s+\d{1,2}|tháng\s+\d{1,2}|ngày\s+\d{1,2}|vào\s+|tại\s+|trong\s+|khi\s+|do\s+|vì\s+|bởi\s+|và\s+|hoặc\s+|nhưng\s+|rồi\s+|với\s+)[.!?]?\s*$/gi, '.')
+    .trim();
+
   // Trim dangling incomplete sentence if truncated without terminal punctuation
-  if (cleaned.length > 50 && !/[.!?]["”']?\s*$/.test(cleaned)) {
+  if (cleaned.length > 30 && !/[.!?]["”']?\s*$/.test(cleaned)) {
     const lastPunct = Math.max(
       cleaned.lastIndexOf('.'),
       cleaned.lastIndexOf('!'),
       cleaned.lastIndexOf('?')
     );
-    if (lastPunct > 30) {
+    if (lastPunct > 20) {
       cleaned = cleaned.slice(0, lastPunct + 1).trim();
+    } else {
+      cleaned = `${cleaned}.`;
     }
   }
 
   // Deduplicate repeated sentences and paragraphs
   cleaned = deduplicateRepetitiveText(cleaned);
 
+  // Clean sentence boundaries (strips trailing cutoffs, ensures terminal punctuation)
+  cleaned = sanitizeSentenceBoundaries(cleaned);
+
   return cleaned.trim();
 }
 
-function synthesizeDeterministicHistoricalScript(
+export function stripChapterTitleEcho(text: string, title?: string): string {
+  if (!text || !title) return text;
+  let s = text.trim();
+  const lowerTitle = title.toLowerCase().trim();
+  if (s.toLowerCase().startsWith(lowerTitle)) {
+    s = s.slice(title.length).replace(/^[:–—\-.\s]+/, '').trim();
+  }
+  const firstSentenceMatch = s.match(/^([^.!?\n]+[.!?\n]?)/);
+  if (firstSentenceMatch) {
+    const firstSentenceText = firstSentenceMatch[1].replace(/[.!?\n]/g, '').trim().toLowerCase();
+    if (firstSentenceText === lowerTitle || (lowerTitle.includes(firstSentenceText) && firstSentenceText.length >= 10)) {
+      s = s.slice(firstSentenceMatch[0].length).trim();
+    }
+  }
+  return s;
+}
+
+export function normalizeHistoricalAnachronisms(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/\bquân Hà Nội\b/gi, 'nghĩa quân Tây Sơn')
+    .replace(/\bquân đội Hà Nội\b/gi, 'nghĩa quân Tây Sơn')
+    .replace(/\bchính quyền Hà Nội\b/gi, 'triều đình Tây Sơn');
+}
+
+export function synthesizeDeterministicHistoricalScript(
   chapterTitle: string,
   chapterSummary: string,
   selectedChunks: any[],
   targetDurationSeconds: number,
-  targetWpm = 145
+  targetWpm = 205
 ): string {
   const sentences: string[] = [];
+  const seenFingerprints = new Set<string>();
+
+  function getFingerprint(str: string): string {
+    return str.toLowerCase().replace(/[^a-z0-9à-ỹ]/g, '');
+  }
+
+  function addSentence(s: string): boolean {
+    const cleanS = sanitizeSentenceBoundaries(normalizeHistoricalAnachronisms(s.trim()));
+    if (!cleanS || cleanS.length < 15) return false;
+    const fp = getFingerprint(cleanS);
+    if (!fp || seenFingerprints.has(fp)) return false;
+
+    // Check near-duplicate substring overlap with existing sentences
+    for (const existingFp of seenFingerprints) {
+      if (existingFp.includes(fp) || fp.includes(existingFp)) {
+        return false;
+      }
+    }
+
+    seenFingerprints.add(fp);
+    sentences.push(cleanS);
+    return true;
+  }
+
   const targetWords = Math.max(20, Math.round((targetDurationSeconds / 60) * targetWpm));
   const maxWords = Math.round(targetWords * 1.12);
 
   // 1. Chapter context from verified outline summary
   if (chapterSummary && chapterSummary.trim()) {
-    sentences.push(chapterSummary.trim());
+    const cleanChapterSummary = sanitizeSentenceBoundaries(chapterSummary.trim());
+    if (cleanChapterSummary) {
+      // Strip any raw entity tag prefix (e.g. "Đảng Cộng sản Việt Nam: ...")
+      const stripped = cleanChapterSummary.replace(/^[A-ZÀ-Ỹa-zà-ỹ0-9\s]{2,40}:\s*/, '');
+      addSentence(stripped || cleanChapterSummary);
+    }
   }
 
   // 2. Verified historical facts from RAG chunks, filtered to narrative prose and strictly length-bounded
@@ -94,32 +177,38 @@ function synthesizeDeterministicHistoricalScript(
       .replace(/Theo (?:Tập sử liệu|sách|bản ghi|tư liệu).*?:/gi, '')
       .split(/(?<=[.!?])\s+/)
       .map((s: string) => s.trim())
-      .filter((s: string) => s.length > 15 && !s.startsWith('#') && !/^(?:Than ôi|Nguyên trước|Bấy giờ|Sử thần)/i.test(s));
+      .filter((s: string) => {
+        if (s.length < 15 || s.startsWith('#') || /^(?:Than ôi|Nguyên trước|Bấy giờ|Sử thần)/i.test(s)) return false;
+        const cleanedTail = s.replace(/(?:,\s*|\s+)(?:vào\s+năm\s+\d{1,3}|năm\s+\d{1,2}|tháng\s+\d{1,2}|vào|tại|trong|khi|do|vì|bởi|và|hoặc|nhưng|rồi|với)[.!?]?\s*$/gi, '');
+        return /[.!?]$/.test(cleanedTail);
+      })
+      .map((s: string) => {
+        return s
+          .replace(/(?:,\s*|\s+)(?:vào\s+năm\s+\d{1,3}|năm\s+\d{1,2}|tháng\s+\d{1,2}|ngày\s+\d{1,2}|vào|tại|trong|khi|do|vì|bởi|và|hoặc|nhưng|rồi|với)[.!?]?\s*$/gi, '.')
+          .trim();
+      });
 
     for (const s of rawSentences) {
       const sWords = s.split(/\s+/).filter(Boolean).length;
       if (currentWords + sWords <= maxWords) {
-        sentences.push(s);
-        currentWords += sWords;
-      } else if (currentWords < targetWords * 0.75) {
-        const words = s.split(/\s+/).filter(Boolean);
-        const allowedWords = maxWords - currentWords;
-        if (allowedWords >= 8) {
-          sentences.push(words.slice(0, allowedWords).join(' ') + '.');
-          currentWords += allowedWords;
+        if (addSentence(s)) {
+          currentWords += sWords;
         }
-        break;
       }
       if (currentWords >= targetWords) break;
     }
   }
 
-  // 3. Fallback narrative if still too short
-  if (sentences.length === 0 || currentWords < 15) {
-    sentences.push(`${chapterTitle} ghi dấu ấn sâu sắc trong tiến trình lịch sử dựng nước và giữ nước của dân tộc.`);
+  // 3. Fallback narrative enrichment if still below target words
+  if (sentences.length === 0 || currentWords < Math.round(targetWords * 0.75)) {
+    const historicalEnrichment = `Giai đoạn này không chỉ khẳng định tầm vóc lịch sử của ${chapterTitle}, mà còn để lại bài học sâu sắc cho hậu thế trong sự nghiệp dựng nước và giữ nước.`;
+    if (addSentence(historicalEnrichment)) {
+      currentWords += historicalEnrichment.split(/\s+/).filter(Boolean).length;
+    }
   }
 
-  return sentences.join(' ');
+  const combinedScript = deduplicateRepetitiveText(sentences.join(' '));
+  return sanitizeSentenceBoundaries(normalizeHistoricalAnachronisms(combinedScript));
 }
 
 function computeEpochBounds(
@@ -237,7 +326,7 @@ export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial
 
   const verifiedEntities = state.ragContext?.verifiedContext || [];
   const epochInfo = computeEpochBounds(verifiedEntities, state.userPrompt, (state as any).epoch);
-  const targetWpm = state.templateId === 'QUICK_SHORTS' ? 160 : (state.templateId === 'MODERN_NEWS' ? 150 : 145);
+  const targetWpm = getTargetWpm(state.templateId);
 
   const isLocalSingleSlot = envConfig.USE_LOCAL_LLM || (envConfig.LOCAL_LLM_MAX_CONCURRENCY || 1) <= 1;
   const maxLlmConcurrency = isLocalSingleSlot ? 1 : Math.max(1, envConfig.LOCAL_LLM_MAX_CONCURRENCY || 4);
@@ -272,22 +361,56 @@ export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial
     const chapterTitleLower = chapter.title.toLowerCase().trim();
     const chapterEntitiesLower = (chapter.introducedEntities || []).map((e) => e.toLowerCase().trim()).filter(Boolean);
 
-    // Rank verified chunks by relevance to chapter title, summary, key events, and entities
-    const relevantChunks = verifiedEntities.filter((chunk) => {
+    // Extract years mentioned in this chapter's context
+    const chapterText = `${chapter.title} ${chapter.summary} ${chapter.entryHook || ''} ${(chapter.keyEvents || []).join(' ')}`;
+    const chapterYears = Array.from(chapterText.matchAll(/\b(1?\d{3,4})\b/g))
+      .map((m) => parseInt(m[1], 10))
+      .filter((y) => y >= 100 && y <= 2100);
+
+    // Rank verified chunks by relevance to chapter title, summary, key events, entities, and temporal alignment
+    const scoredChunks = verifiedEntities.map((chunk) => {
+      let score = 0;
       const summaryLower = (chunk.summary || '').toLowerCase();
       const titleLower = (chunk.title || '').toLowerCase();
       const nameLower = (chunk.canonicalName || '').toLowerCase();
 
-      const inChapterEntities = chapterEntitiesLower.some((ce) => summaryLower.includes(ce) || titleLower.includes(ce) || nameLower.includes(ce));
-      const inTitle = chapterTitleLower.split(/\s+/).some((w) => w.length > 3 && summaryLower.includes(w));
-      const inEvents = keyEventLower.some((ev) => summaryLower.includes(ev) || ev.includes(nameLower));
-      const inSummary = chapter.summary.toLowerCase().split(/\s+/).some((w) => w.length > 4 && summaryLower.includes(w));
-      return inChapterEntities || inTitle || inEvents || inSummary;
+      if (chapterEntitiesLower.some((ce) => summaryLower.includes(ce) || titleLower.includes(ce) || nameLower.includes(ce))) {
+        score += 5;
+      }
+      if (chapterTitleLower.split(/\s+/).some((w) => w.length > 3 && summaryLower.includes(w))) {
+        score += 3;
+      }
+      if (keyEventLower.some((ev) => summaryLower.includes(ev) || ev.includes(nameLower))) {
+        score += 4;
+      }
+      if (chapter.summary && chapter.summary.toLowerCase().split(/\s+/).some((w) => w.length > 4 && summaryLower.includes(w))) {
+        score += 3;
+      }
+      if (chapterYears.length > 0) {
+        const cStart = chunk.timeStart ?? chunk.timeEnd;
+        const cEnd = chunk.timeEnd ?? chunk.timeStart;
+        if (cStart !== undefined && cEnd !== undefined) {
+          if (chapterYears.some((cy) => cy >= cStart - 15 && cy <= cEnd + 15)) {
+            score += 6;
+          }
+        } else if (chapterYears.some((cy) => summaryLower.includes(String(cy)))) {
+          score += 4;
+        }
+      }
+      return { chunk, score };
     });
+
+    scoredChunks.sort((a, b) => b.score - a.score);
+    const relevantChunks = scoredChunks.filter((sc) => sc.score > 0).map((sc) => sc.chunk);
+
+    // 1. Prioritize chapter.chapterChunks if present (from ChapterRAGRouter)
+    const baseChunks = (chapter.chapterChunks && chapter.chapterChunks.length > 0)
+      ? chapter.chapterChunks
+      : relevantChunks;
 
     // Combine relevant chunks and general verified chunks, deduplicating by chunkId / content snippet
     const chunkCandidates = [
-      ...relevantChunks,
+      ...baseChunks,
       ...verifiedEntities,
     ];
     const seenChunkKeys = new Set<string>();
@@ -308,7 +431,7 @@ Nhiệm vụ: Viết lời bình dẫn chuyện (Voiceover Narration) cho từng
 QUY TẮC CẤU TRÚC KỊCH BẢN 1-PASS CHUẨN XÁC:
 - Đoạn mở đầu (~30% số từ, đúng ${numOpeningSentences} câu): Dẫn dắt không gian, thời gian, nguyên nhân và tiền đề lịch sử theo entry hook.
 - Đoạn diễn biến & cao trào (~50% số từ, đúng ${numClimaxSentences} câu): Miêu tả chi tiết mưu lược, biến cố, hành động của các nhân vật và quyết sách lịch sử.
-- Đoạn đúc kết & dư âm (~20% số từ, đúng ${numLegacySentences} câu): Khắc họa ý nghĩa thời đại, cảm xúc hào hùng, bài học lịch sử và chuyển tiếp mượt mà theo exit hook.
+- Đoạn đúc kết & dư âm (~20% số từ, đúng ${numLegacySentences} câu): Khắc họa tầm vóc lịch sử, giá trị trường tồn và niềm tự hào dân tộc.
 - TỔNG CỘNG: Viết chính xác ${targetSentences} câu văn xuôi trọn vẹn (khoảng 16-22 từ/câu) để tổng độ dài đạt đúng ${minWords} - ${maxWords} từ tiếng Việt.
 
 QUY TẮC BẢO TOÀN NIÊN ĐẠI & TRÁNH HALLUCINATION:
@@ -319,6 +442,9 @@ QUY TẮC BẢO TOÀN NIÊN ĐẠI & TRÁNH HALLUCINATION:
 - ĐỊNH DANH ĐÚNG VAI TRÒ LỊCH SỬ: Nhân vật/quân đội Đại Việt (Việt Nam) là phe kháng chiến/chính nghĩa; các chủ tướng xâm lược là quân địch bị tiêu diệt hoặc tháo chạy; các tướng giặc bị bắt làm tù binh TUYỆT ĐỐI KHÔNG viết thành tướng chỉ huy của phe ta.
 - BẢO TOÀN KẾT CỤC LỊCH SỬ CHUẨN XÁC: Tôn trọng sự thật lịch sử về sự hy sinh anh dũng và tấm gương kiên trung, bất khuất của các anh hùng dân tộc tuẫn tiết vì nghĩa lớn. TUYỆT ĐỐI KHÔNG bịa đặt kết quả 'toàn thắng mở nền độc lập' sai lệch với tư liệu RAG.
 - TUYỆT ĐỐI KHÔNG lặp lại các câu tụng ca sáo rỗng hoặc khuôn mẫu chung chung như: 'khẳng định vị thế độc lập', 'đánh dấu bước ngoặt lịch sử', 'bảo vệ non sông'. Hãy miêu tả trực tiếp HÀNH ĐỘNG, SỰ KIỆN, MƯU LƯỢC và BIẾN CỐ cụ thể gắn với các nhân vật và hiện vật.
+- QUY TẮC BẢN THỂ & DANH XƯNG NHÂN VẬT (COREFERENCE & ALIAS DISAMBIGUATION):
+  + Các danh xưng, tên khai sinh hoặc bí danh của cùng một nhân vật lịch sử qua từng thời kỳ (ví dụ: Nguyễn Sinh Cung thời niên thiếu, Nguyễn Tất Thành khi dạy học/ra đi tìm đường cứu nước, Văn Ba khi làm việc trên tàu, Nguyễn Ái Quốc khi hoạt động quốc tế, Hồ Chí Minh khi về nước lãnh đạo cách mạng) CHÍNH LÀ CÙNG MỘT NGƯỜI DUY NHẤT.
+  + TUYỆT ĐỐI KHÔNG viết thành "học hỏi từ...", "kế thừa từ...", "gặp gỡ..." đối với các bí danh của chính nhân vật! Hãy sử dụng đúng danh xưng phù hợp với giai đoạn lịch sử của chương đó.
 
 QUY TẮC BẮT BUỘC DÀNH CHO GIỌNG ĐỌC TTS (LOCAL LLM COMPLIANCE):
 1. TUYỆT ĐỐI KHÔNG chèn tiêu đề đoạn, KHÔNG viết các nhãn cấu trúc như: "Hồi 1:", "Mở cảnh:", "Diễn biến:", "Cao trào:", "Dư âm:", "Bài học:", "Hào hùng, trang trọng." vào văn bản.
@@ -372,7 +498,7 @@ QUY TẮC BẮT BUỘC DÀNH CHO GIỌNG ĐỌC TTS (LOCAL LLM COMPLIANCE):
       userPromptEntities.some((u) => `${chapter.title} ${chapter.summary} ${(chapter.keyEvents || []).join(' ')} ${(chapter.introducedEntities || []).join(' ')}`.toLowerCase().includes(u.toLowerCase()));
     const promptCoreEntities = isRelevantToPromptEntities ? userPromptEntities : [];
 
-    const coreChapterEntities = Array.from(
+    const rawCoreList = Array.from(
       new Set([
         ...promptCoreEntities,
         ...chapterAssignedEntities,
@@ -382,6 +508,8 @@ QUY TẮC BẮT BUỘC DÀNH CHO GIỌNG ĐỌC TTS (LOCAL LLM COMPLIANCE):
       ])
     ).filter(isValidHistoricalEntity).slice(0, 8);
 
+    const { canonicalEntities: coreChapterEntities, aliasGroups } = canonicalizeEntityList(rawCoreList);
+
     const otherEntities = Array.from(
       new Set([
         ...userPromptEntities,
@@ -390,6 +518,11 @@ QUY TẮC BẮT BUỘC DÀNH CHO GIỌNG ĐỌC TTS (LOCAL LLM COMPLIANCE):
         ...allHistoricalEntities,
       ])
     ).filter((e) => isValidHistoricalEntity(e) && !coreChapterEntities.includes(e)).slice(0, 8);
+
+    const aliasGuidanceLines = Object.entries(aliasGroups).map(
+      ([cName, aliases]) => `- ${cName}: Các bí danh / danh xưng theo từng thời kỳ gồm [${aliases.join(', ')}]. Tất cả là một nhân vật duy nhất.`
+    );
+    const aliasGuidanceText = aliasGuidanceLines.length > 0 ? `\nLƯU Ý ĐỒNG NHẤT BẢN THỂ & BÍ DANH:\n${aliasGuidanceLines.join('\n')}` : '';
 
     const coreEntityText = coreChapterEntities.length > 0 ? coreChapterEntities.join(', ') : state.userPrompt;
     const otherEntityText = otherEntities.length > 0 ? otherEntities.join(', ') : '';
@@ -408,6 +541,33 @@ NGỮ CẢNH CHUYỂN TIẾP (2 câu cuối của chương trước): "${previou
 QUY TẮC CHUYỂN TIẾP BẮT BUỘC: TUYỆT ĐỐI KHÔNG lặp lại nguyên văn câu chữ, KHÔNG mở đầu bằng việc tóm tắt lại các sự kiện vừa nêu trên. Bắt đầu ngay bằng hành động, tình thế hoặc quyết sách tiếp theo của nhân vật trong chương này. (LƯU Ý: Các nhân vật lịch sử, địa danh và niên đại trọng tâm vẫn tiếp tục xuất hiện tự nhiên xuyên suốt các chương).\n`;
     }
 
+    const cleanChapterSummary = sanitizeSentenceBoundaries(chapter.summary || '');
+
+    // Extract covered milestones from preceding chapters to prevent narrative degeneracy
+    const coveredMilestones: string[] = [];
+    for (let j = 0; j < i; j++) {
+      if (state.chapters[j]) {
+        coveredMilestones.push(`Chương ${j + 1} (${state.chapters[j].title}): ${state.chapters[j].summary}`);
+        if (state.chapters[j].keyEvents && state.chapters[j].keyEvents.length > 0) {
+          coveredMilestones.push(`Sự kiện đã kể: ${state.chapters[j].keyEvents.join(', ')}`);
+        }
+      }
+      if (chapterScripts[j]) {
+        const sentences = chapterScripts[j].split(/(?<=[.!?])\s+/).filter((s) => s.length > 20);
+        if (sentences.length > 0) {
+          coveredMilestones.push(`Mở đầu đã kể: "${sentences[0]}"`);
+        }
+      }
+    }
+
+    const antiDegeneracyNotice = coveredMilestones.length > 0
+      ? `\n\n⚠️ QUY TẮC CHỐNG LẶP LẠI (CROSS-CHAPTER ANTI-DEGENERACY):
+- CÁC MỐC SỰ KIỆN & THÔNG TIN ĐÃ ĐƯỢC KỂ Ở CÁC CHƯƠNG TRƯỚC:
+${coveredMilestones.slice(-6).map((m) => `  * ${m}`).join('\n')}
+- TUYỆT ĐỐI KHÔNG giới thiệu lại từ đầu quê quán, năm sinh, phụ mẫu hay hoàn cảnh ban đầu nếu đã được kể ở chương trước.
+- BẮT BUỘC tiếp nối mạch truyện từ đúng mốc thời gian của chương ${i + 1} (${chapter.title}), giữ vững dòng chảy lịch sử tiến về phía trước.`
+      : '';
+
     const keyEventsText = (Array.isArray(chapter.keyEvents) && chapter.keyEvents.length > 0)
       ? chapter.keyEvents.join(', ')
       : chapter.title;
@@ -415,10 +575,10 @@ QUY TẮC CHUYỂN TIẾP BẮT BUỘC: TUYỆT ĐỐI KHÔNG lặp lại nguyê
     const userMessage = `Hãy viết lời dẫn chuyện cho Chương ${i + 1}: "${chapter.title}".
 Chủ đề video chính: "${state.userPrompt}" (Thể loại: ${state.videoType})
 Bối cảnh & Niên đại bắt buộc: ${epochInfo.epochDesc}
-Tóm tắt nội dung chương: ${chapter.summary}
+Tóm tắt nội dung chương: ${cleanChapterSummary || keyEventsText}
 Sự kiện trọng tâm (Key Events): ${keyEventsText}
 Thời lượng mục tiêu: ${chapterDurationSec} giây.
-${transitionDirective}
+${transitionDirective}${antiDegeneracyNotice}
 BLUEPRINT MẠCH TRUYỆN:
 - Ý mở đầu (Entry Hook): "${cleanEntryHook}".
 - Trọng tâm kịch tính (Climax Focus): "${climaxFocus}".
@@ -431,24 +591,29 @@ YÊU CẦU ĐỘ DÀI VÀ CẤU TRÚC CÂU (BẮT BUỘC ~${targetWords} từ, d
 - Đoạn 3: Đúc kết & Dư âm (Ý nghĩa lịch sử, bài học): đúng ${numLegacySentences} câu (~${wordsLegacy} từ).
 Mỗi câu văn phải viết trọn vẹn (khoảng 16-22 từ/câu), giàu tính điện ảnh và chuẩn xác sử liệu.
 
-DANH SÁCH THỰC THỂ CỐT LÕI CỦA CHƯƠNG NÀY (BẮT BUỘC XUẤT HIỆN TRONG LỜI BÌNH):
+DANH SÁCH THỰC THỂ CỐT LÕI CỦA CHƯƠNG NÀY:
 ${coreEntityText}
+${aliasGuidanceText}
 ${otherEntityText ? `\nDANH SÁCH THỰC THỂ BỔ TRỢ CÓ THỂ KẾT HỢP:\n${otherEntityText}` : ''}
 
 TƯ LIỆU LỊCH SỬ XÁC THỰC TỪ CHRONO-RAG:
 ${ragGroundingText}
 
 QUY TẮC MẠCH TRUYỆN & RÀNG BUỘC THỰC THỂ:
-- RÀNG BUỘC BẮT BUỘC: Mỗi thực thể trong 'DANH SÁCH THỰC THỂ CỐT LÕI' BẮT BUỘC PHẢI xuất hiện bằng danh từ riêng chuẩn xác ít nhất 1 lần trong lời bình của chương này.
-- BẮT BUỘC GỌI ĐÍCH DANH THỰC THỂ: TUYỆT ĐỐI KHÔNG dùng đại từ thay thế mơ hồ (như "vị tướng ấy", "nơi đây", "đội quân ta", "bài thơ ấy", "ngọn đồi ấy", "loại vũ khí ấy") mà phải xưng danh cụ thể từ 'DANH SÁCH THỰC THỂ CỐT LÕI' và 'TƯ LIỆU LỊCH SỬ XÁC THỰC' của chương này.
+- BẮT BUỘC GỌI ĐÍCH DANH THỰC THỂ: Lời bình BẮT BUỘC gọi đích danh các nhân vật, địa danh và sự kiện trọng tâm của chương bằng danh từ riêng chuẩn xác, tránh dùng đại từ thay thế mơ hồ.
+- BẢO TOÀN DANH XƯNG & BÍ DANH: TUYỆT ĐỐI KHÔNG viết thành "học hỏi từ...", "kế thừa từ..." đối với các bí danh của chính nhân vật chính.
+- TUYỆT ĐỐI KHÔNG cưỡng ép đưa các địa danh hoặc nhân vật không thuộc bối cảnh hoặc thời kỳ của chương vào kịch bản.
 - BẮT BUỘC bám sát sự kiện trọng tâm của chương: "${keyEventsText}". Nêu chính xác niên đại, năm lịch sử diễn ra sự kiện theo tư liệu; TUYỆT ĐỐI KHÔNG nhầm lẫn sang năm hoặc sự kiện của thời kỳ khác.
+- BẢO TOÀN PHÂN ĐOẠN LỊCH SỬ TUYẾN TÍNH: Lời bình của Chương ${i + 1} TUYỆT ĐỐI KHÔNG lặp lại các diễn biến, sự kiện hoặc mốc thời gian đã thuộc về các chương khác. Chỉ tập trung miêu tả đúng chặng đường lịch sử của chương này.
 - TUYỆT ĐỐI KHÔNG đưa vào các nhân vật hoặc triều đại lịch sử khác ngoài bối cảnh "${epochInfo.epochDesc}".
 - TUYỆT ĐỐI KHÔNG đưa các thuật ngữ, chiến lược hoặc tuyến đường của các thời kỳ khác vào kịch bản (ví dụ: không đưa thuật ngữ thời chống Mỹ vào thời chống Pháp hoặc thời phong kiến).
 - TUYỆT ĐỐI KHÔNG viết các câu tụng ca sáo rỗng hoặc khuôn mẫu chung chung ("khẳng định vị thế độc lập", "đánh dấu bước ngoặt lịch sử", "bảo vệ non sông"). Hãy miêu tả trực tiếp HÀNH ĐỘNG, SỰ KIỆN, MƯU LƯỢC và BIẾN CỐ cụ thể gắn với các nhân vật và hiện vật.
 
+- GIỚI HẠN ĐỘ DÀI BẮT BUỘC: Lời bình chương này BẮT BUỘC có độ dài trong khoảng từ ${minWords} đến ${maxWords} từ tiếng Việt (mục tiêu chuẩn: ${targetWords} từ). TUYỆT ĐỐI KHÔNG viết dưới ${minWords} từ và TUYỆT ĐỐI KHÔNG viết quá ${maxWords} từ.
+
 NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiếp, KHÔNG viết bất kỳ tiêu đề hoặc nhãn cấu trúc nào. Bắt đầu viết:`;
 
-    const estimatedMaxTokens = Math.min(2048, Math.max(512, Math.round(targetWords * 3) + 512));
+    const estimatedMaxTokens = Math.min(2048, Math.max(512, Math.round(maxWords * 2.8)));
     let cleanedScript = '';
 
     try {
@@ -483,7 +648,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
         rawContent = retryRes.content || '';
       }
 
-      cleanedScript = sanitizeVoiceoverScript(rawContent);
+      cleanedScript = stripChapterTitleEcho(sanitizeVoiceoverScript(rawContent), chapter.title);
 
       let words = cleanedScript.split(/\s+/).filter(Boolean);
       let wordCount = words.length;
@@ -517,7 +682,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
             maxTokens: estimatedMaxTokens,
             timeoutMs: envConfig.LOCAL_LLM_TIMEOUT_MS || 60000,
           });
-          const retryCleaned = sanitizeVoiceoverScript(retryRes.content);
+          const retryCleaned = stripChapterTitleEcho(sanitizeVoiceoverScript(retryRes.content), chapter.title);
           if (retryCleaned && retryCleaned.split(/\s+/).filter(Boolean).length > wordCount) {
             cleanedScript = retryCleaned;
             words = cleanedScript.split(/\s+/).filter(Boolean);
@@ -539,9 +704,10 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
         });
 
         const isTooShort = actualWpm < minWpmAllowed;
+        const wordsDiff = Math.abs(wordCount - targetWords);
         const deltaInstruction = isTooShort
-          ? `Văn bản hiện tại (${wordCount} từ) quá ngắn so với thời lượng ${chapterDurationSec}s (yêu cầu ${minWords} - ${maxWords} từ, chuẩn ${targetWpm} WPM). Hãy mở rộng thêm chi tiết bối cảnh lịch sử, khắc họa sâu sắc hơn diễn biến/chiến lược và làm nổi bật dư âm ý nghĩa lịch sử để đạt đúng ~${targetWords} từ.`
-          : `Văn bản hiện tại (${wordCount} từ) quá dài so với thời lượng ${chapterDurationSec}s (yêu cầu ${minWords} - ${maxWords} từ, chuẩn ${targetWpm} WPM). Hãy cô đọng lại các câu văn rườm rà, lược bỏ từ ngữ dư thừa nhưng TUYỆT ĐỐI giữ nguyên toàn bộ sự kiện, nhân vật và niên đại lịch sử để đạt đúng ~${targetWords} từ.`;
+          ? `Văn bản hiện tại (${wordCount} từ) quá ngắn so với thời lượng ${chapterDurationSec}s (chuẩn ${targetWpm} WPM). Cần viết thêm khoảng ${wordsDiff} từ, khắc họa sâu sắc hơn diễn biến và ý nghĩa lịch sử để đạt trong khoảng ${minWords} - ${maxWords} từ (mục tiêu: ~${targetWords} từ).`
+          : `Văn bản hiện tại (${wordCount} từ) quá dài so với thời lượng ${chapterDurationSec}s (chuẩn ${targetWpm} WPM). Cần cắt giảm bớt khoảng ${wordsDiff} từ. QUY TẮC BẮT BUỘC: Bản sửa PHẢI có độ dài từ ${minWords} đến ${maxWords} từ (mục tiêu: ~${targetWords} từ). TUYỆT ĐỐI KHÔNG cắt ngắn dưới ${minWords} từ thành dạng tóm tắt đại ý. Giữ nguyên toàn bộ nhân vật, sự kiện và niên đại lịch sử cốt lõi.`;
 
         const compactGrounding = selectedChunks.slice(0, 3).map((c) => `- [${c.canonicalName}]: ${cleanCrawlerText(c.summary)}`).join('\n');
         const chapterEntitiesStr = (coreChapterEntities.slice(0, 5).length > 0 ? coreChapterEntities.slice(0, 5) : [state.userPrompt]).join(', ');
@@ -552,7 +718,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
               { role: 'system', content: systemMessage },
               {
                 role: 'user',
-                content: `BỐI CẢNH SỬ LIỆU BẮT BUỘC (COMPACT INVARIANT FRAME):\n- Niên đại trọng tâm: ${epochInfo.epochDesc}\n- Chương ${i + 1}: "${chapter.title}"\n- Tóm tắt sự kiện chương: ${chapter.summary || keyEventsText}\n- Thực thể cốt lõi bắt buộc bảo tồn: ${chapterEntitiesStr}\n- Tư liệu RAG xác thực:\n${compactGrounding}\n\nDưới đây là bản thảo lời bình hiện tại của Chương ${i + 1}:\n"""\n${cleanedScript}\n"""\n\nYÊU CẦU TINH CHỈNH TỐC ĐỘ ĐỌC (PACING CALIBRATION):\n${deltaInstruction}\nBắt buộc kết quả mới phải có độ dài từ ${minWords} đến ${maxWords} từ tiếng Việt (chính xác khoảng ${targetWords} từ) để đọc vừa vặn trong ${chapterDurationSec} giây. TUYỆT ĐỐI KHÔNG viết vượt quá ${maxWords} từ.\nTUYỆT ĐỐI KHÔNG đưa vào các nhân vật hoặc triều đại khác ngoài bối cảnh "${epochInfo.epochDesc}".\n\nChỉ xuất văn bản lời bình hoàn chỉnh (văn xuôi thuần túy, KHÔNG tiêu đề) sau khi tinh chỉnh:`,
+                content: `BỐI CẢNH SỬ LIỆU BẮT BUỘC (COMPACT INVARIANT FRAME):\n- Niên đại trọng tâm: ${epochInfo.epochDesc}\n- Chương ${i + 1}: "${chapter.title}"\n- Tóm tắt sự kiện chương: ${cleanChapterSummary || keyEventsText}\n- Thực thể cốt lõi bắt buộc bảo tồn: ${chapterEntitiesStr}\n- Tư liệu RAG xác thực:\n${compactGrounding}\n\nDưới đây là bản thảo lời bình hiện tại của Chương ${i + 1}:\n"""\n${cleanedScript}\n"""\n\nYÊU CẦU TINH CHỈNH TỐC ĐỘ ĐỌC (PACING CALIBRATION):\n${deltaInstruction}\nBắt buộc kết quả mới phải có độ dài từ ${minWords} đến ${maxWords} từ tiếng Việt (chính xác khoảng ${targetWords} từ) để đọc vừa vặn trong ${chapterDurationSec} giây. TUYỆT ĐỐI KHÔNG viết vượt quá ${maxWords} từ.\nTUYỆT ĐỐI KHÔNG đưa vào các nhân vật hoặc triều đại khác ngoài bối cảnh "${epochInfo.epochDesc}".\n\nChỉ xuất văn bản lời bình hoàn chỉnh (văn xuôi thuần túy, KHÔNG tiêu đề) sau khi tinh chỉnh:`,
               },
             ],
             temperature: 0.1,
@@ -566,13 +732,13 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
             let refinedWords = processedRefined.split(/\s+/).filter(Boolean).length;
 
             // If refined text is too long, bound it cleanly at sentence boundary
-            if (refinedWords > maxWords * 1.15) {
+            if (refinedWords > maxWords * 1.08) {
               const sentences = processedRefined.split(/(?<=[.!?])\s+/);
               let curW = 0;
               const kept: string[] = [];
               for (const s of sentences) {
                 const w = s.split(/\s+/).filter(Boolean).length;
-                if (curW + w <= maxWords * 1.15 || kept.length === 0) {
+                if (curW + w <= maxWords * 1.05 || kept.length === 0) {
                   kept.push(s);
                   curW += w;
                 } else {
@@ -591,10 +757,12 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
 
             // Accept refinement if:
             // 1. Original was a stub (< 25 words or WPM < 50% target) and refinement is substantial (>= minWords * 0.6)
-            // 2. Or refined WPM deviation improved over original deviation
+            // 2. Or refined WPM deviation improved over original deviation and is within reasonable floor
             const isOriginalStub = wordCount < 25 || actualWpm < minWpmAllowed * 0.5;
             const isRefinementSubstantial = refinedWords >= minWords * 0.6;
-            const shouldAccept = (isOriginalStub && isRefinementSubstantial) || (refinedDeviation < originalDeviation);
+            const shouldAccept =
+              (isOriginalStub && isRefinementSubstantial) ||
+              (refinedDeviation < originalDeviation && refinedWords >= minWords * 0.75);
 
             if (shouldAccept) {
               cleanedScript = processedRefined;
@@ -619,6 +787,34 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
                 refinedWpm,
                 targetWpm,
               });
+
+              // Deterministic sentence-boundary pruning fallback:
+              // If refinement was rejected or over-shortened, but original text was over-long,
+              // deterministically bound original text down to maxWords at clean sentence boundaries.
+              if (actualWpm > maxWpmAllowed) {
+                const sentences = cleanedScript.split(/(?<=[.!?])\s+/);
+                let curW = 0;
+                const kept: string[] = [];
+                for (const s of sentences) {
+                  const w = s.split(/\s+/).filter(Boolean).length;
+                  if (curW + w <= maxWords || kept.length === 0) {
+                    kept.push(s);
+                    curW += w;
+                  } else {
+                    break;
+                  }
+                }
+                if (kept.length > 0 && curW >= minWords * 0.75) {
+                  cleanedScript = kept.join(' ');
+                  const prunedWpm = durationMin > 0 ? Math.round(curW / durationMin) : 0;
+                  nodeLog.info('orchestrator.scriptwriter_deterministic_prune', `Applied sentence boundary pruning fallback for chapter ${i}: ${actualWpm} -> ${prunedWpm} WPM`, {
+                    chapterIndex: i,
+                    originalWpm: actualWpm,
+                    prunedWpm,
+                    targetWpm,
+                  });
+                }
+              }
             }
           }
         } catch (refineErr: any) {
@@ -626,18 +822,18 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
         }
       }
 
-      let finalScript = cleanedScript || sanitizeVoiceoverScript(rawContent);
+      let finalScript = stripChapterTitleEcho(cleanedScript || sanitizeVoiceoverScript(rawContent), chapter.title);
       finalScript = deduplicateRepetitiveText(finalScript);
 
-      // Enforce hard word limit: Never let a chapter script exceed maxWords * 1.25
+      // Enforce hard word limit: Never let a chapter script exceed maxWords * 1.12
       const finalWords = finalScript.split(/\s+/).filter(Boolean);
-      if (finalWords.length > maxWords * 1.25) {
+      if (finalWords.length > maxWords * 1.12) {
         const sentences = finalScript.split(/(?<=[.!?])\s+/);
         let curW = 0;
         const kept: string[] = [];
         for (const s of sentences) {
           const w = s.split(/\s+/).filter(Boolean).length;
-          if (curW + w <= maxWords * 1.15 || kept.length === 0) {
+          if (curW + w <= maxWords || kept.length === 0) {
             kept.push(s);
             curW += w;
           } else {
@@ -645,7 +841,35 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
           }
         }
         if (kept.length > 0 && curW >= minWords * 0.7) {
-          finalScript = kept.join(' ');
+          finalScript = sanitizeSentenceBoundaries(kept.join(' '));
+        }
+      }
+
+      if (finalScript) {
+        finalScript = sanitizeSentenceBoundaries(finalScript);
+      }
+
+      // Cross-chapter verbatim sentence deduplication guardrail
+      if (i > 0 && finalScript) {
+        const prevSentencesSet = new Set<string>();
+        for (let j = 0; j < i; j++) {
+          if (chapterScripts[j]) {
+            const sList = chapterScripts[j].split(/(?<=[.!?])\s+/).map((s) => s.trim().toLowerCase());
+            for (const s of sList) {
+              if (s.length > 25) prevSentencesSet.add(s);
+            }
+          }
+        }
+
+        if (prevSentencesSet.size > 0) {
+          const curSentences = finalScript.split(/(?<=[.!?])\s+/);
+          const filteredSentences = curSentences.filter((s) => {
+            const sLower = s.trim().toLowerCase();
+            return !prevSentencesSet.has(sLower);
+          });
+          if (filteredSentences.length >= 2) {
+            finalScript = sanitizeSentenceBoundaries(filteredSentences.join(' '));
+          }
         }
       }
 
@@ -659,7 +883,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
         });
         return synthesizeDeterministicHistoricalScript(
           chapter.title,
-          chapter.summary,
+          cleanChapterSummary,
           selectedChunks,
           chapterDurationSec,
           targetWpm
@@ -682,7 +906,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
       });
       return synthesizeDeterministicHistoricalScript(
         chapter.title,
-        chapter.summary,
+        cleanChapterSummary,
         selectedChunks,
         chapterDurationSec,
         targetWpm
@@ -730,6 +954,14 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
     establishedTone: lastChapter?.establishedTone || state.runningNarrativeState?.establishedTone || 'Hùng tráng',
     introducedEntities: Array.from(new Set([...existingIntroduced, ...allIntroduced])).slice(-15),
     transitionHook: lastChapter?.transitionHook || lastChapter?.exitHook || '',
+    coveredMilestones: state.chapters.map((c) => `${c.title}: ${c.summary}`),
+    introducedKeyFacts: Array.from(new Set(state.chapters.flatMap((c) => c.keyEvents || []))),
+  };
+
+  const updatedNarrativeLedger: NarrativeLedger = {
+    coveredMilestones: state.chapters.map((c) => `${c.title}: ${c.summary}`),
+    introducedKeyFacts: Array.from(new Set(state.chapters.flatMap((c) => c.keyEvents || []))),
+    resolvedAliases: Array.from(new Set(state.chapters.flatMap((c) => c.introducedEntities || []))),
   };
 
   return {
@@ -737,6 +969,7 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
     currentStep: 4,
     chapterScripts,
     runningNarrativeState: aggregatedNarrativeState,
+    narrativeLedger: updatedNarrativeLedger,
     telemetryAudit,
   };
 }

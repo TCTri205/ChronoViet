@@ -6,20 +6,10 @@
 
 import { SceneGeneration, VisualCandidate, LayoutMode, isPureImageLayout } from '@chronoviet/shared-spec';
 import { envConfig, getAdaptiveConcurrency } from '@chronoviet/infra';
-import { inspectSceneVisuals } from '@chronoviet/vlm-inspector';
+import { inspectSceneVisuals, inferSemanticPureCodeLayout } from '@chronoviet/vlm-inspector';
 import { ChronoGraphState, getNodeLogger } from '../state.js';
 
 const VLM_SCENE_TIMEOUT_MS = (envConfig as any).VLM_SCENE_TIMEOUT_MS || 180000;
-
-const PURE_CODE_LAYOUT_ROTATION: LayoutMode[] = [
-  'TIMELINE_CHRONO',
-  'QUOTE_SLIDE',
-  'STAT_CARD',
-  'BULLET_HIGHLIGHT',
-  'VERSUS_CARD',
-  'POEM_RECITING',
-  'CHAPTER_CARD',
-];
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutFallback: T): Promise<T> {
   return Promise.race([
@@ -37,45 +27,52 @@ export async function vlmInspectionNode(state: ChronoGraphState): Promise<Partia
   });
 
   const updatedScenes: SceneGeneration[] = [];
+  const usedAssetHashes = new Set<string>();
 
-  for (let i = 0; i < state.scenes.length; i += vlmBatchSize) {
-    const batch = state.scenes.slice(i, i + vlmBatchSize);
-    const batchResults = await Promise.all(
-      batch.map(async (scene, batchIdx) => {
-        const sceneIdx = typeof scene.sceneIndex === 'number' ? scene.sceneIndex : (i + batchIdx);
-        const safeFallbackLayout: LayoutMode = (!scene.layoutMode || isPureImageLayout(scene.layoutMode))
-          ? PURE_CODE_LAYOUT_ROTATION[sceneIdx % PURE_CODE_LAYOUT_ROTATION.length]
-          : (scene.layoutMode as LayoutMode);
+  for (let i = 0; i < state.scenes.length; i++) {
+    const scene = state.scenes[i];
+    const sceneIdx = typeof scene.sceneIndex === 'number' ? scene.sceneIndex : i;
+    const safeFallbackLayout: LayoutMode = (!scene.layoutMode || isPureImageLayout(scene.layoutMode))
+      ? inferSemanticPureCodeLayout(scene.voiceoverText, sceneIdx, state.videoType)
+      : (scene.layoutMode as LayoutMode);
 
-        const fallbackScene: SceneGeneration = {
-          ...scene,
-          layoutMode: safeFallbackLayout,
-          contentType: 'PURE_CODE',
-          usePureCodeFallback: true,
-          selectedAsset: undefined,
-        };
+    const fallbackScene: SceneGeneration = {
+      ...scene,
+      layoutMode: safeFallbackLayout,
+      contentType: 'PURE_CODE',
+      usePureCodeFallback: true,
+      selectedAsset: undefined,
+    };
 
-        try {
-          const inspectionTask = (async (): Promise<SceneGeneration> => {
-            // Use researchResults produced by the Research Agent (Micro-Step 1C) when available
-            const candidatePool: VisualCandidate[] = state.researchResults?.[scene.sceneId]?.candidates || scene.candidates || [];
-            const result = await inspectSceneVisuals(state.projectId, scene, candidatePool, {
-              customBaseDir: state.customBaseDir,
-            });
-            return result.updatedScene;
-          })();
+    try {
+      const inspectionTask = (async (): Promise<SceneGeneration> => {
+        // Use researchResults produced by the Research Agent (Micro-Step 1C) when available
+        const candidatePool: VisualCandidate[] = state.researchResults?.[scene.sceneId]?.candidates || scene.candidates || [];
+        const result = await inspectSceneVisuals(state.projectId, scene, candidatePool, {
+          customBaseDir: state.customBaseDir,
+          usedAssetHashes,
+          preferSemanticLayout: true,
+          videoType: state.videoType,
+        });
 
-          return await withTimeout(inspectionTask, VLM_SCENE_TIMEOUT_MS, fallbackScene);
-        } catch (err: any) {
-          nodeLog.warn('orchestrator.vlm_inspection_error_fallback', `VLM inspection error for scene ${scene.sceneId}: ${err.message}. Falling back to PURE_CODE.`, {
-            sceneId: scene.sceneId,
-            error: err,
-          });
-          return fallbackScene;
+        if (result.selectedCandidate) {
+          if (result.selectedCandidate.sha256) usedAssetHashes.add(result.selectedCandidate.sha256);
+          if (result.selectedCandidate.imageUrl) usedAssetHashes.add(result.selectedCandidate.imageUrl);
+          if (result.selectedCandidate.localPath) usedAssetHashes.add(result.selectedCandidate.localPath);
         }
-      })
-    );
-    updatedScenes.push(...batchResults);
+
+        return result.updatedScene;
+      })();
+
+      const inspectedScene = await withTimeout(inspectionTask, VLM_SCENE_TIMEOUT_MS, fallbackScene);
+      updatedScenes.push(inspectedScene);
+    } catch (err: any) {
+      nodeLog.warn('orchestrator.vlm_inspection_error_fallback', `VLM inspection error for scene ${scene.sceneId}: ${err.message}. Falling back to PURE_CODE.`, {
+        sceneId: scene.sceneId,
+        error: err,
+      });
+      updatedScenes.push(fallbackScene);
+    }
   }
 
   return {

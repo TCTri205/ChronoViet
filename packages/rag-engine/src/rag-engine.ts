@@ -49,7 +49,7 @@ const log = createLogger({ service: 'rag-engine' });
 export const GRAPH_BOOST_SCALE = 0.05;
 export const GRAPH_BRANCH_TIMEOUT_MS = process.env.GRAPH_BRANCH_TIMEOUT_MS
   ? parseInt(process.env.GRAPH_BRANCH_TIMEOUT_MS, 10)
-  : 350;
+  : 800;
 export const GRAPH_BRANCH_MAX_NODES = 50;
 export const GRAPH_ONLY_CHUNK_CAP = 10;
 export const MIN_RELEVANCE_SCORE_CUTOFF = 0.15;
@@ -454,7 +454,8 @@ export class ChronoRagEngine implements IRagEngine {
       candidateMap.set(cand.chunkId, { ...cand });
     }
 
-    if (!timedOut) {
+    const hasGraphChunks = graphChunks && graphChunks.length > 0;
+    if (!timedOut || hasGraphChunks) {
       for (const gCand of graphChunks) {
         const existing = candidateMap.get(gCand.chunkId);
         const graphBoost = GRAPH_BOOST_SCALE * (gCand.graphScore ?? 0.5);
@@ -472,6 +473,12 @@ export class ChronoRagEngine implements IRagEngine {
             score: 0.010 * (graphConf / Math.max(1, hop)),
           });
         }
+      }
+      if (timedOut && hasGraphChunks) {
+        log.info('rag.graph_branch_partial_retained', 'Graph branch timed out but retained partial graph chunks for fusion', {
+          graphChunksCount: graphChunks.length,
+          timeoutMs: GRAPH_BRANCH_TIMEOUT_MS,
+        });
       }
     } else {
       log.warn('rag.graph_branch_timeout', 'Graph branch timed out; skipping graph fusion', {

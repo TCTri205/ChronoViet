@@ -44,11 +44,12 @@ export function findMonorepoRoot(startDir: string = process.cwd()): string {
 
 export function getDefaultProjectsBaseDir(): string {
   const root = findMonorepoRoot();
-  if (envConfig.PROJECTS_MEDIA_ROOT) {
-    if (path.isAbsolute(envConfig.PROJECTS_MEDIA_ROOT)) {
-      return envConfig.PROJECTS_MEDIA_ROOT;
+  const configuredRoot = process.env.PROJECTS_MEDIA_ROOT || envConfig.PROJECTS_MEDIA_ROOT;
+  if (configuredRoot) {
+    if (path.isAbsolute(configuredRoot)) {
+      return configuredRoot;
     }
-    return path.resolve(root, envConfig.PROJECTS_MEDIA_ROOT);
+    return path.resolve(root, configuredRoot);
   }
   // If running in Docker / Linux with /media/projects available and writable
   if (fs.existsSync('/media/projects')) {
@@ -60,11 +61,12 @@ export function getDefaultProjectsBaseDir(): string {
     }
   }
 
-  if (envConfig.MEDIA_DIR) {
-    if (path.isAbsolute(envConfig.MEDIA_DIR)) {
-      return path.join(envConfig.MEDIA_DIR, 'projects');
+  const mediaDir = process.env.MEDIA_DIR || envConfig.MEDIA_DIR;
+  if (mediaDir) {
+    if (path.isAbsolute(mediaDir)) {
+      return path.join(mediaDir, 'projects');
     }
-    return path.resolve(root, envConfig.MEDIA_DIR, 'projects');
+    return path.resolve(root, mediaDir, 'projects');
   }
 
   return path.resolve(root, 'media/projects');
@@ -242,6 +244,7 @@ export async function ensureProjectAssetsReady(
     timeoutMs?: number;
     maxFileSizeBytes?: number;
     customBaseDir?: string;
+    mediaServerUrl?: string;
   } = {}
 ): Promise<ChronoVideoProps> {
   const paths = initProjectWorkspace(projectId, options.customBaseDir);
@@ -249,6 +252,21 @@ export async function ensureProjectAssetsReady(
   const maxBytes = options.maxFileSizeBytes ?? 50 * 1024 * 1024; // 50MB max per asset
 
   let modified = false;
+
+  const toMediaHttpUrl = (localPath: string): string => {
+    if (!options.mediaServerUrl || !localPath) return localPath;
+    try {
+      const monorepoRoot = findMonorepoRoot();
+      const mediaRoot = path.resolve(monorepoRoot, 'media');
+      const resolved = path.resolve(localPath);
+      if (resolved.startsWith(mediaRoot)) {
+        const rel = path.relative(mediaRoot, resolved).split(path.sep).join('/');
+        const baseUrl = options.mediaServerUrl.replace(/\/+$/, '');
+        return `${baseUrl}/media/${rel}`;
+      }
+    } catch {}
+    return localPath;
+  };
 
   const downloadAsset = async (remoteUrl: string, destDir: string, prefix: string, defaultExt: string): Promise<string | null> => {
     try {
@@ -287,21 +305,43 @@ export async function ensureProjectAssetsReady(
     return null;
   };
 
-  // 1. Top-Level Composite Audio Pre-download
-  if (schema.audioUrl && /^https?:\/\//i.test(schema.audioUrl)) {
-    const localPath = await downloadAsset(schema.audioUrl, paths.audioDir, 'composite_audio', 'wav');
-    if (localPath) {
-      schema.audioUrl = localPath;
+  // 1. Top-Level Composite Audio Pre-download & Conversion
+  if (schema.audioUrl) {
+    if (/^https?:\/\//i.test(schema.audioUrl)) {
+      const localPath = await downloadAsset(schema.audioUrl, paths.audioDir, 'composite_audio', 'wav');
+      if (localPath) {
+        schema.audioUrl = toMediaHttpUrl(localPath);
+        modified = true;
+      }
+    } else if (schema.audioUrl === 'assets/voiceover.wav' || (!fs.existsSync(schema.audioUrl) && !schema.audioUrl.startsWith('/media/'))) {
+      schema.audioUrl = undefined;
       modified = true;
+    } else if (fs.existsSync(schema.audioUrl)) {
+      const httpUrl = toMediaHttpUrl(schema.audioUrl);
+      if (httpUrl !== schema.audioUrl) {
+        schema.audioUrl = httpUrl;
+        modified = true;
+      }
     }
   }
 
-  // 2. Top-Level BGM Pre-download
-  if (schema.bgmUrl && /^https?:\/\//i.test(schema.bgmUrl)) {
-    const localPath = await downloadAsset(schema.bgmUrl, paths.audioDir, 'bgm', 'mp3');
-    if (localPath) {
-      schema.bgmUrl = localPath;
+  // 2. Top-Level BGM Pre-download & Conversion
+  if (schema.bgmUrl) {
+    if (/^https?:\/\//i.test(schema.bgmUrl)) {
+      const localPath = await downloadAsset(schema.bgmUrl, paths.audioDir, 'bgm', 'mp3');
+      if (localPath) {
+        schema.bgmUrl = toMediaHttpUrl(localPath);
+        modified = true;
+      }
+    } else if (schema.bgmUrl === 'assets/bgm.wav' || (!fs.existsSync(schema.bgmUrl) && !schema.bgmUrl.startsWith('/media/'))) {
+      schema.bgmUrl = undefined;
       modified = true;
+    } else if (fs.existsSync(schema.bgmUrl)) {
+      const httpUrl = toMediaHttpUrl(schema.bgmUrl);
+      if (httpUrl !== schema.bgmUrl) {
+        schema.bgmUrl = httpUrl;
+        modified = true;
+      }
     }
   }
 
@@ -309,21 +349,37 @@ export async function ensureProjectAssetsReady(
   for (let i = 0; i < schema.timeline.length; i++) {
     const scene = schema.timeline[i];
 
-    // Remote Audio Pre-download
-    if (scene.sceneAudioUrl && /^https?:\/\//i.test(scene.sceneAudioUrl)) {
-      const localAudio = await downloadAsset(scene.sceneAudioUrl, paths.audioDir, `scene_${i}_audio`, 'wav');
-      if (localAudio) {
-        scene.sceneAudioUrl = localAudio;
-        modified = true;
+    // Scene Audio Pre-download & Conversion
+    if (scene.sceneAudioUrl) {
+      if (/^https?:\/\//i.test(scene.sceneAudioUrl)) {
+        const localAudio = await downloadAsset(scene.sceneAudioUrl, paths.audioDir, `scene_${i}_audio`, 'wav');
+        if (localAudio) {
+          scene.sceneAudioUrl = toMediaHttpUrl(localAudio);
+          modified = true;
+        }
+      } else if (fs.existsSync(scene.sceneAudioUrl)) {
+        const httpUrl = toMediaHttpUrl(scene.sceneAudioUrl);
+        if (httpUrl !== scene.sceneAudioUrl) {
+          scene.sceneAudioUrl = httpUrl;
+          modified = true;
+        }
       }
     }
 
-    // Remote Asset/Image Pre-download
-    if (scene.assetUrl && /^https?:\/\//i.test(scene.assetUrl)) {
-      const localAsset = await downloadAsset(scene.assetUrl, paths.assetsDir, `asset_${i}`, 'jpg');
-      if (localAsset) {
-        scene.assetUrl = localAsset;
-        modified = true;
+    // Scene Asset/Image Pre-download & Conversion
+    if (scene.assetUrl) {
+      if (/^https?:\/\//i.test(scene.assetUrl)) {
+        const localAsset = await downloadAsset(scene.assetUrl, paths.assetsDir, `asset_${i}`, 'jpg');
+        if (localAsset) {
+          scene.assetUrl = toMediaHttpUrl(localAsset);
+          modified = true;
+        }
+      } else if (fs.existsSync(scene.assetUrl)) {
+        const httpUrl = toMediaHttpUrl(scene.assetUrl);
+        if (httpUrl !== scene.assetUrl) {
+          scene.assetUrl = httpUrl;
+          modified = true;
+        }
       }
     }
   }
