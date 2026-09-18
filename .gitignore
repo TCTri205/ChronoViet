@@ -49,6 +49,7 @@ playwright-report/
 !.vscode/extensions.json
 
 agent-rules/
+
 .codegraph/
 
 # AI Models & Large Binary Weights

@@ -112,7 +112,35 @@ export function inferSemanticPureCodeLayout(
     }
   }
 
-  // 4. Chronological progression / Milestones / Chronological range
+  // 4. Artifact Tag (Exclusive for ARTIFACT when presenting museum artifact profile or technical specs)
+  if (videoType === 'ARTIFACT' && /hiện vật trưng bày|hồ sơ bảo vật|thông số hiện vật|trưng bày tại bảo tàng/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('MUSEUM_TAG')) {
+      return 'MUSEUM_TAG';
+    }
+  }
+
+  // 5. Royal Decree (For DYNASTY when presenting official edicts or capital transfer proclamations)
+  if (videoType === 'DYNASTY' && /toàn văn chiếu|trích nguyên văn chiếu|ban chiếu dời đô|chiếu truyền ngôi/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('ROYAL_DECREE')) {
+      return 'ROYAL_DECREE';
+    }
+  }
+
+  // 6. Split Theory (Exclusive for MYSTERY when presenting contrasting hypotheses or historical debates)
+  if (videoType === 'MYSTERY' && /hai luồng giả thuyết|các giả thuyết đối lập|tranh luận sử học về/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('SPLIT_THEORY')) {
+      return 'SPLIT_THEORY';
+    }
+  }
+
+  // 7. Tactical Map (For BATTLE when describing tactical map or march deployment diagram)
+  if (videoType === 'BATTLE' && /sơ đồ tác chiến|bản đồ tác chiến|bản đồ hành quân|sơ đồ thế trận/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('MAP_TACTICAL')) {
+      return 'MAP_TACTICAL';
+    }
+  }
+
+  // 8. Chronological progression / Milestones / Chronological range
   if (/(?:tiến trình lịch sử|giai đoạn then chốt|bước ngoặt thời kỳ|mốc thời gian|từ năm\s+\d+.*đến\s+năm\s+\d+|giai đoạn\s+\d+[\s–—\-]+\d+)/i.test(lower)) {
     if (!allowedPool || allowedPool.has('TIMELINE_CHRONO')) {
       return 'TIMELINE_CHRONO';
@@ -196,10 +224,12 @@ async function evaluateSingleCandidate(
     );
 
     const scoreThreshold = envConfig.VLM_SCORE_THRESHOLD ?? 60;
+    // Intrinsic quality pass: does the image meet historical and technical quality standards?
+    const intrinsicPass = scoreResult.passed && (scoreResult.totalScore >= scoreThreshold);
     // Apply frequency penalty if asset has already been used in an earlier scene
     const usedPenalty = context.isUsed ? 35 : 0;
     const finalScore = Math.max(0, scoreResult.totalScore - usedPenalty);
-    const passed = scoreResult.passed && (finalScore >= scoreThreshold);
+    const passed = intrinsicPass;
 
     return {
       evaluated: {
@@ -435,7 +465,7 @@ export async function inspectSceneVisuals(
           score: evaluated.score?.overallScore,
         });
         break; // Stop immediately on fresh passing candidate!
-      } else if (!backupUsedCandidate) {
+      } else if (!backupUsedCandidate || (evaluated.score?.overallScore ?? 0) > (backupUsedCandidate.score?.overallScore ?? 0)) {
         backupUsedCandidate = evaluated;
         log.debug('vlm.used_candidate_backup', `Candidate ${evaluated.candidateId} passed with frequency penalty; holding as backup while seeking fresh candidate`, {
           sceneId: scene.sceneId,

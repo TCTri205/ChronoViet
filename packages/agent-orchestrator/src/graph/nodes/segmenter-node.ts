@@ -73,7 +73,35 @@ export function inferSemanticLayoutMode(
     }
   }
 
-  // 5. Chronological progression / Milestones
+  // 5. Artifact Tag & Inspection (Exclusive for ARTIFACT when presenting museum artifact profile or technical specs)
+  if (videoType === 'ARTIFACT' && /hiện vật trưng bày|hồ sơ bảo vật|thông số hiện vật|trưng bày tại bảo tàng/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('MUSEUM_TAG')) {
+      return 'MUSEUM_TAG';
+    }
+  }
+
+  // 6. Royal Decree (For DYNASTY when presenting official edicts or capital transfer proclamations)
+  if (videoType === 'DYNASTY' && /toàn văn chiếu|trích nguyên văn chiếu|ban chiếu dời đô|chiếu truyền ngôi/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('ROYAL_DECREE')) {
+      return 'ROYAL_DECREE';
+    }
+  }
+
+  // 7. Split Theory (Exclusive for MYSTERY when presenting contrasting hypotheses or historical debates)
+  if (videoType === 'MYSTERY' && /hai luồng giả thuyết|các giả thuyết đối lập|tranh luận sử học về/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('SPLIT_THEORY')) {
+      return 'SPLIT_THEORY';
+    }
+  }
+
+  // 8. Tactical Map (For BATTLE when describing tactical map or march deployment diagram)
+  if (videoType === 'BATTLE' && /sơ đồ tác chiến|bản đồ tác chiến|bản đồ hành quân|sơ đồ thế trận/i.test(lower)) {
+    if (!allowedPool || allowedPool.has('MAP_TACTICAL')) {
+      return 'MAP_TACTICAL';
+    }
+  }
+
+  // 9. Chronological progression / Milestones
   if (/(?:tiến trình lịch sử|giai đoạn then chốt|bước ngoặt thời kỳ|từ năm\s+\d{3,4}\s+đến\s+(?:năm\s+)?\d{3,4})/i.test(lower)) {
     if (!allowedPool || allowedPool.has('TIMELINE_CHRONO')) {
       return 'TIMELINE_CHRONO';
@@ -166,13 +194,13 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
 
     const rawSentences = splitScriptIntoSentences(scriptText);
 
-    // Group sentences into 5s-25s chunks (~15 - 45 words per scene)
+    // Group sentences into 8s-25s chunks (~30 - 65 words per scene, ideal for documentary visual pacing)
     const sceneChunks: string[] = [];
     let currentChunk = '';
 
     for (const sentence of rawSentences) {
       const combinedWords = (currentChunk ? `${currentChunk} ${sentence}` : sentence).split(/\s+/).filter(Boolean).length;
-      if (currentChunk && combinedWords > 35) {
+      if (currentChunk && combinedWords > 52) {
         sceneChunks.push(currentChunk.trim());
         currentChunk = sentence;
       } else {
@@ -183,12 +211,12 @@ export async function segmenterNode(state: ChronoGraphState): Promise<Partial<Ch
       sceneChunks.push(currentChunk.trim());
     }
 
-    // Merge short dangling sentence (< 8 words or < 2.5s) into previous scene to avoid < 3.0s scenes
+    // Merge short dangling sentence (< 14 words or < 3.5s) into previous scene to avoid rapid micro-scenes
     if (sceneChunks.length > 1) {
       const lastIdx = sceneChunks.length - 1;
       const lastWords = sceneChunks[lastIdx].split(/\s+/).filter(Boolean).length;
       const lastSec = lastWords / (targetWpm / 60);
-      if (lastWords < 8 || lastSec < 2.5) {
+      if (lastWords < 14 || lastSec < 3.5) {
         const dangling = sceneChunks.pop()!;
         sceneChunks[sceneChunks.length - 1] = `${sceneChunks[sceneChunks.length - 1]} ${dangling}`.trim();
       }

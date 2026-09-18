@@ -27,7 +27,7 @@ import { segmenterNode } from './nodes/segmenter-node.js';
 import { assetGenerationForkJoinNode } from './nodes/asset-generation-node.js';
 import { durationReconciliationNode } from './nodes/reconciler-node.js';
 import { packagerNode } from './nodes/packager-node.js';
-import { GraphTripleItem } from '@chronoviet/shared-spec';
+import { GraphTripleItem, classifyVideoDomain } from '@chronoviet/shared-spec';
 
 const log = createLogger({ service: 'agent-orchestrator' });
 
@@ -142,10 +142,13 @@ export function buildOrchestratorGraph() {
           }
         }
 
+        const videoType = classifyVideoDomain(state.userPrompt, state.videoType);
+
         return {
           currentStep: 2,
           status: 'RAG_RETRIEVED',
           ragContext,
+          videoType,
           telemetryAudit,
         };
       });

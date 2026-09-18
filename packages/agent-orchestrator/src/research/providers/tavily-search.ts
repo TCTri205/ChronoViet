@@ -30,7 +30,7 @@ export class TavilyImageSearchProvider implements ImageSearchProvider {
   async search(keywords: string, limit: number, _options?: ImageSearchProviderOptions): Promise<VisualCandidate[]> {
     const runSearchWithKey = async (apiKey: string): Promise<VisualCandidate[]> => {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 8000);
+      const timer = setTimeout(() => controller.abort(), 12000);
       const startTime = Date.now();
 
       try {
@@ -118,7 +118,7 @@ export class TavilyImageSearchProvider implements ImageSearchProvider {
         return [];
       }
 
-      return await executeWithKeyRotation('tavily', (key: string) => runSearchWithKey(key));
+      return await executeWithKeyRotation('tavily', (key: string) => runSearchWithKey(key), { maxRetries: 2 });
     } catch (err: any) {
       log.warn('research.tavily_search_failed', `Tavily search failed for "${keywords}": ${err.message}`, {
         keywords,

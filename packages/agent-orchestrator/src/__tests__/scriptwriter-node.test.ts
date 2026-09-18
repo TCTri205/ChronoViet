@@ -3,6 +3,7 @@ import {
   scriptwriterNode,
   sanitizeVoiceoverScript,
   synthesizeDeterministicHistoricalScript,
+  getDomainChapterRoleGuidance,
 } from '../graph/nodes/scriptwriter-node.js';
 import { ChronoGraphState } from '../graph/state.js';
 
@@ -176,6 +177,74 @@ describe('Scriptwriter Node & Voiceover Sanitizer', () => {
       expect(result.chapterScripts).toBeDefined();
       expect(result.chapterScripts![1]).toBeDefined();
       expect(result.narrativeLedger?.coveredMilestones.length).toBe(2);
+    });
+  });
+
+  describe('getDomainChapterRoleGuidance across all 5 historical domains', () => {
+    it('produces biography-specific arc for BIOGRAPHY domain without military jargon', () => {
+      const firstChapter = getDomainChapterRoleGuidance('BIOGRAPHY', true, false, true);
+      expect(firstChapter).toContain('THÂN THẾ, XUẤT THÂN & HOÀI BÃO');
+      expect(firstChapter).not.toContain('hạ thành');
+      expect(firstChapter).not.toContain('quân địch');
+
+      const middleChapter = getDomainChapterRoleGuidance('BIOGRAPHY', false, false, true);
+      expect(middleChapter).toContain('HÀNH TRÌNH, BIẾN CỐ & CỐNG HIẾN KIỆT XUẤT');
+
+      const lastChapter = getDomainChapterRoleGuidance('BIOGRAPHY', false, true, true);
+      expect(lastChapter).toContain('CHẶNG ĐƯỜNG CUỐI ĐỜI, SỰ RA ĐI & DI SẢN BẤT TỬ');
+    });
+
+    it('produces artifact-specific arc for ARTIFACT domain without battle commands', () => {
+      const firstChapter = getDomainChapterRoleGuidance('ARTIFACT', true, false, true);
+      expect(firstChapter).toContain('NGUỒN GỐC & ĐỈNH CAO CHẾ TÁC');
+      expect(firstChapter).not.toContain('toàn quân');
+
+      const middleChapter = getDomainChapterRoleGuidance('ARTIFACT', false, false, true);
+      expect(middleChapter).toContain('GIẢI MÃ HOA VĂN & ĐỜI SỐNG CỔ ĐẠI');
+
+      const lastChapter = getDomainChapterRoleGuidance('ARTIFACT', false, true, true);
+      expect(lastChapter).toContain('HÀNH TRÌNH LƯU LẠC, KHẢO CỔ & DI SẢN TRƯỜNG TỒN');
+    });
+
+    it('produces dynasty-specific arc for DYNASTY domain', () => {
+      const firstChapter = getDomainChapterRoleGuidance('DYNASTY', true, false, true);
+      expect(firstChapter).toContain('LẬP TRIỀU, ĐỊNH ĐÔ & KHAI MỞ VẬN NƯỚC');
+
+      const middleChapter = getDomainChapterRoleGuidance('DYNASTY', false, false, true);
+      expect(middleChapter).toContain('THỊNH TRỊ, CẢI CÁCH & BIẾN CỐ VƯƠNG TRIỀU');
+
+      const lastChapter = getDomainChapterRoleGuidance('DYNASTY', false, true, true);
+      expect(lastChapter).toContain('BIẾN ĐỘNG VẬN NƯỚC, CHUYỂN GIAO & BÀI HỌC TRỊ QUỐC');
+    });
+
+    it('produces mystery-specific arc for MYSTERY domain', () => {
+      const firstChapter = getDomainChapterRoleGuidance('MYSTERY', true, false, true);
+      expect(firstChapter).toContain('BIẾN CỐ BẤT NGỜ & HIỆN TRƯỜNG BÍ ẨN');
+
+      const middleChapter = getDomainChapterRoleGuidance('MYSTERY', false, false, true);
+      expect(middleChapter).toContain('MANH MỐI, UẨN KHÚC & TRANH LUẬN SỬ HỌC');
+
+      const lastChapter = getDomainChapterRoleGuidance('MYSTERY', false, true, true);
+      expect(lastChapter).toContain('SỰ THẬT MINH OAN, NHẬN ĐỊNH SỬ HỌC & BÀI HỌC NHÂN TÂM');
+    });
+
+    it('produces tactical campaign arc for BATTLE domain', () => {
+      const firstChapter = getDomainChapterRoleGuidance('BATTLE', true, false, true);
+      expect(firstChapter).toContain('BỐI CẢNH & KHỞI PHÁT');
+
+      const middleChapter = getDomainChapterRoleGuidance('BATTLE', false, false, true);
+      expect(middleChapter).toContain('HÀNH QUÂN, SÁCH LƯỢC & CHIẾN TRẬN');
+
+      const lastChapter = getDomainChapterRoleGuidance('BATTLE', false, true, true);
+      expect(lastChapter).toContain('QUYẾT CHIẾN ĐỈNH ĐIỂM, ĐẠI THẮNG & DI SẢN');
+    });
+
+    it('handles single-chapter videos across domains', () => {
+      const bioSingle = getDomainChapterRoleGuidance('BIOGRAPHY', true, true, false);
+      expect(bioSingle).toContain('TOÀN BỘ CUỘC ĐỜI & SỰ NGHIỆP (CHƯƠNG ĐƠN)');
+
+      const artifactSingle = getDomainChapterRoleGuidance('ARTIFACT', true, true, false);
+      expect(artifactSingle).toContain('TOÀN BỘ HÀNH TRÌNH DI SẢN (CHƯƠNG ĐƠN)');
     });
   });
 });

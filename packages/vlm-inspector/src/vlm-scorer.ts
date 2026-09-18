@@ -61,6 +61,7 @@ QUY TẮC THẨM ĐỊNH LỊCH SỬ & CHỐNG LỆCH THỜI ĐẠI (ANTI-ANACHR
 4. focalPoint ([x, y]):
    - Tọa độ số thực chuẩn hóa từ 0.0 đến 1.0 của chủ thể chính trong bức ảnh (mặc định [0.5, 0.4] với chân dung, [0.5, 0.5] với hiện vật/phong cảnh). TUYỆT ĐỐI KHÔNG dùng dạng phần trăm 0-100.
 
+Trọng tâm: TUYỆT ĐỐI KHÔNG dùng dấu ngoặc kép bên trong các chuỗi văn bản của mảng reasons (dùng dấu nháy đơn nếu cần trích dẫn tên tác phẩm).
 Trả về DUY NHẤT một JSON object hợp lệ:
 {
   "historicalContextScore": number,
@@ -90,30 +91,45 @@ export function extractAndParseJson(
   try {
     parsedJson = JSON.parse(jsonStr);
   } catch (err: any) {
-    log.warn('vlm.json_parse_fallback', `Failed to parse VLM response JSON directly: ${err.message}`, {
-      rawText: rawText.substring(0, 300),
-      scorerType,
-    });
-    // Fallback: Attempt heuristic regex extraction of score numbers
-    const hMatch = rawText.match(/historicalContextScore["'\s:]+(\d+)/i) || rawText.match(/historical[_\s]context["'\s:]+(\d+)/i);
-    const nMatch = rawText.match(/visualNoiseScore["'\s:]+(\d+)/i) || rawText.match(/visual[_\s]noise["'\s:]+(\d+)/i);
-    const aMatch = rawText.match(/artisticFitScore["'\s:]+(\d+)/i) || rawText.match(/artistic[_\s]fit["'\s:]+(\d+)/i);
+    // Attempt quotation repair for unescaped inner quotes in reasons array
+    let repairedParsed = false;
+    try {
+      const repaired = jsonStr.replace(/"reasons"\s*:\s*\[([\s\S]*?)\]/g, (_match, inner) => {
+        const sanitizedInner = inner.replace(/"([^"]*)"/g, (_m: string, content: string) => {
+          return `"${content.replace(/"/g, "'")}"`;
+        });
+        return `"reasons": [${sanitizedInner}]`;
+      });
+      parsedJson = JSON.parse(repaired);
+      repairedParsed = true;
+    } catch {}
 
-    parsedJson = {
-      historicalContextScore: hMatch ? Number(hMatch[1]) : 20,
-      visualNoiseScore: nMatch ? Number(nMatch[1]) : 20,
-      artisticFitScore: aMatch ? Number(aMatch[1]) : 20,
-      reasons: [`Trích xuất heuristic từ ${scorerType}`],
-    };
+    if (!repairedParsed) {
+      log.warn('vlm.json_parse_fallback', `Failed to parse VLM response JSON directly: ${err.message}`, {
+        rawText: rawText.substring(0, 300),
+        scorerType,
+      });
+      // Fallback: Attempt heuristic regex extraction of score numbers
+      const hMatch = rawText.match(/historicalContextScore["'\s:]+(\d+)/i) || rawText.match(/historical[_\s]context["'\s:]+(\d+)/i);
+      const nMatch = rawText.match(/visualNoiseScore["'\s:]+(\d+)/i) || rawText.match(/visual[_\s]noise["'\s:]+(\d+)/i);
+      const aMatch = rawText.match(/artisticFitScore["'\s:]+(\d+)/i) || rawText.match(/artistic[_\s]fit["'\s:]+(\d+)/i);
+
+      parsedJson = {
+        historicalContextScore: hMatch ? Number(hMatch[1]) : 0,
+        visualNoiseScore: nMatch ? Number(nMatch[1]) : 0,
+        artisticFitScore: aMatch ? Number(aMatch[1]) : 0,
+        reasons: [`Trích xuất heuristic từ ${scorerType}`],
+      };
+    }
   }
 
   let rawH = Number(parsedJson.historicalContextScore ?? parsedJson.historical_context_score);
   let rawN = Number(parsedJson.visualNoiseScore ?? parsedJson.visual_noise_score);
   let rawA = Number(parsedJson.artisticFitScore ?? parsedJson.artistic_fit_score);
 
-  if (isNaN(rawH)) rawH = 20;
-  if (isNaN(rawN)) rawN = 20;
-  if (isNaN(rawA)) rawA = 20;
+  if (isNaN(rawH)) rawH = 0;
+  if (isNaN(rawN)) rawN = 0;
+  if (isNaN(rawA)) rawA = 0;
 
   // Scale 0..1 normalized scores to target bounds: [40, 30, 30]
   if (rawH > 0 && rawH <= 1.0) rawH = Math.round(rawH * 40);
@@ -257,6 +273,7 @@ export async function scoreImageWithLocalVLM(
       ],
       temperature: 0.1,
       max_tokens: 1024,
+      response_format: { type: 'json_object' },
     }),
     signal: AbortSignal.timeout(60000),
   });

@@ -872,6 +872,17 @@ export async function executeWithKeyRotation<T>(
         error: err instanceof Error ? err.message : String(err),
       });
 
+      // Fast-fail key rotation on client timeouts / abort errors to prevent multiplying latency by total keys
+      const isAbortOrTimeout = err?.name === 'AbortError' || /This operation was aborted|timeout|ETIMEDOUT/i.test(err?.message || '');
+      if (isAbortOrTimeout) {
+        log.warn('rotator.abort_failfast', `Fast-failing key rotation for provider [${provider}] due to timeout/abort error`, {
+          provider,
+          attempt,
+          maskedKey: maskApiKey(key),
+        });
+        throw err;
+      }
+
       if (options.onRetry && attempt < maxAttempts) {
         try {
           const nextKeyCandidate = rotator.getNextKey() || '';

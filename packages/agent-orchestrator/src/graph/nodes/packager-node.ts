@@ -7,6 +7,8 @@ import {
   CaptionWord,
   ChronoVideoProps,
   GraphTripleItem,
+  HISTORICAL_PERSON_DICTIONARY,
+  CORE_ORGS,
   LayoutMode,
   TimelineScene,
   VideoDomain,
@@ -50,6 +52,12 @@ export function resolveDynamicVersusSides(
   if (mainEntity) {
     const resolvedProtagonist = resolveCanonicalEntity(mainEntity);
     allyName = resolvedProtagonist.canonicalName || mainEntity;
+    const personEntry = Object.values(HISTORICAL_PERSON_DICTIONARY).find(
+      (p) => p.canonicalName.toLowerCase() === allyName.toLowerCase() || p.aliases?.some((a) => a.toLowerCase() === allyName.toLowerCase())
+    );
+    if (personEntry?.dynasty) {
+      allyStat = `Quân dân ${personEntry.dynasty}`;
+    }
   }
 
   // Fallback protagonist if mainEntity is generic or empty
@@ -321,6 +329,74 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
       }
     }
 
+    // Extract artifactInfo if layout is MUSEUM_TAG or ARTIFACT_INSPECT
+    let artifactInfo: { origin?: string; material?: string; period?: string; location?: string; dimensions?: string } | undefined = undefined;
+    if (scene.layoutMode === 'MUSEUM_TAG' || scene.layoutMode === 'ARTIFACT_INSPECT') {
+      const matMatch = scene.voiceoverText.match(/\b(đồng thau|hợp kim đồng|đồng|đá|gốm|sắt|vàng|bạc|ngọc|gỗ)\b/i);
+      const dimMatch = scene.voiceoverText.match(/\b(đường kính\s*[:\d.,]+(?:\s*cm|\s*mm|\s*m)?|cao\s*[:\d.,]+(?:\s*cm|\s*mm|\s*m)?|nặng\s*[:\d.,]+(?:\s*kg|\s*tấn)?)\b/i);
+      const locMatch = scene.voiceoverText.match(/\b(khai quật tại\s*[^.,;\n]+|tìm thấy tại\s*[^.,;\n]+|lưu giữ tại\s*[^.,;\n]+|Bảo tàng\s*[^.,;\n]+)\b/i);
+      const periodMatch = scene.voiceoverText.match(/\b(thế kỷ\s+[IVXLCDM\d]+(?:\s*TCN|\s*trước công nguyên)?|thời kỳ\s*[^.,;\n]+|văn hóa\s*[^.,;\n]+)\b/i);
+
+      artifactInfo = {
+        material: matMatch ? matMatch[1].trim() : 'Kim loại / Hợp kim cổ truyền',
+        dimensions: dimMatch ? dimMatch[1].trim() : 'Hiện vật bảo tồn nguyên bản',
+        origin: locMatch ? locMatch[1].trim() : 'Di chỉ khảo cổ học Việt Nam',
+        period: periodMatch ? periodMatch[1].trim() : (chapterTitle || 'Thời kỳ lịch sử'),
+        location: 'Bảo tàng Lịch sử Quốc gia',
+      };
+    }
+
+    // Extract theories if layout is SPLIT_THEORY
+    let theories: { title: string; desc: string; probability?: string }[] | undefined = undefined;
+    if (scene.layoutMode === 'SPLIT_THEORY') {
+      const sentences = scene.voiceoverText.split(/(?<=[.!?])\s+/).filter(Boolean);
+      if (sentences.length >= 2) {
+        theories = [
+          {
+            title: 'GIẢ THUYẾT 1: QUAN ĐIỂM CHÍNH THỐNG',
+            desc: sentences[0].slice(0, 150),
+            probability: '50% Khả năng',
+          },
+          {
+            title: 'GIẢ THUYẾT 2: KHẢO CỨU ĐỐI LẬP',
+            desc: sentences.slice(1).join(' ').slice(0, 150),
+            probability: '50% Khả năng',
+          },
+        ];
+      } else {
+        theories = [
+          {
+            title: 'GIẢ THUYẾT A: SỬ SÁCH TRUYỀN THỐNG',
+            desc: scene.voiceoverText.slice(0, 120),
+            probability: 'Ghi nhận trong chính sử',
+          },
+          {
+            title: 'GIẢ THUYẾT B: KHẢO CỨU HIỆN ĐẠI',
+            desc: 'Quan điểm phản biện từ các nhà nghiên cứu lịch sử hiện đại.',
+            probability: 'Giả thuyết mở rộng',
+          },
+        ];
+      }
+    }
+
+    // Extract bulletPoints if layout is BULLET_HIGHLIGHT or OUTRO_CARD
+    let bulletPoints: string[] | undefined = undefined;
+    if (scene.layoutMode === 'BULLET_HIGHLIGHT' || scene.layoutMode === 'OUTRO_CARD') {
+      const candidateSentences = scene.voiceoverText
+        .split(/(?<=[.!?])\s+/)
+        .map((s) => s.replace(/["“”'‘’]/g, '').trim())
+        .filter((s) => s.length >= 10);
+      if (candidateSentences.length > 0) {
+        bulletPoints = candidateSentences.slice(0, 3);
+      } else {
+        bulletPoints = [
+          chapterTitle || 'Dấu ấn lịch sử',
+          'Bước ngoặt thời đại',
+          'Di sản muôn đời',
+        ];
+      }
+    }
+
     const overlaySubtitle = chapterTitle
       ? `Hồi ${chapterNumber}: ${chapterTitle}`
       : (state.userPrompt || 'Tư liệu lịch sử');
@@ -339,6 +415,9 @@ export async function packagerNode(state: ChronoGraphState): Promise<Partial<Chr
       milestones,
       leftSide,
       rightSide,
+      artifactInfo,
+      theories,
+      bulletPoints,
       position: 'CENTER' as const,
     };
 

@@ -799,18 +799,24 @@ export function enrichMacroBeatsToChapterPlans(
       }
     }
 
-    // Third pass: heuristic narrative role matching
+    // Third pass: heuristic narrative role matching & entity metadata
     if (targetChapterIdx === -1 && chapters.length >= 3) {
+      const resolvedUnassigned = resolveCanonicalEntity(unassigned);
+      const isAdversaryEntity =
+        (resolvedUnassigned as any).role === 'ADVERSARY' ||
+        (resolvedUnassigned as any).entityType === 'INVADING_FORCE' ||
+        /man_thanh|nguyen_mong|nam_han|tong|phap|my|xiem|minh/i.test(resolvedUnassigned.entityId || '') ||
+        /tướng giặc|chủ tướng địch|tổng đốc|thực dân|quân xâm lược/i.test((resolvedUnassigned as any).role || '') ||
+        /de castries|đờ cát|tô định|lưu hoàng tháo|hầu nhân bảo|quách quỳ|thoát hoan|ô mã nhi|liễu thăng|vương thông|tôn sĩ nghị|sầm nghi đống|navarre|garnier|rivière|leclerc/i.test(uLower);
       const isTreatyOrResolution = /hiệp định|hòa ước|hiệp ước|đình chiến|giảng hòa|tuyên ngôn|di chúc|bình ngô đại cáo/i.test(uLower);
       const isTacticsOrPreparation = /kéo pháo|vườn không|tiên phát|đánh chắc|cọc ngầm|chiếu cần vương|hịch tướng sĩ/i.test(uLower);
-      const isAdversaryGeneral = /de castries|đờ cát|tô định|lưu hoàng tháo|hầu nhân bảo|quách quỳ|thoát hoan|ô mã nhi|liễu thăng|vương thông|tôn sĩ nghị|sầm nghi đống|navarre/i.test(uLower);
       const isStrongholdBattle = /đồi|cứ điểm|cao điểm|đồn|phòng tuyến/i.test(uLower);
 
       if (isTreatyOrResolution) {
         targetChapterIdx = chapters.length - 1;
       } else if (isTacticsOrPreparation) {
         targetChapterIdx = Math.min(1, chapters.length - 1);
-      } else if (isAdversaryGeneral) {
+      } else if (isAdversaryEntity) {
         targetChapterIdx = climaxChapterIdx;
       } else if (isStrongholdBattle) {
         targetChapterIdx = Math.floor(chapters.length / 2);
@@ -871,12 +877,11 @@ export function enrichMacroBeatsToChapterPlans(
   return chapters;
 }
 
-
 export async function chapteringNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'chaptering');
-  nodeLog.info('orchestrator.chaptering_started', `Starting Chaptering Agent for topic: ${state.userPrompt}`, {
+  nodeLog.info('orchestrator.chaptering_started', `Starting Chaptering & Outline for topic "${state.userPrompt}"`, {
     projectId: state.projectId,
-    durationMin: state.targetDurationMinutes,
+    videoType: state.videoType,
   });
 
   const totalTargetSec = Math.max(60, Math.round((state.targetDurationMinutes || 2) * 60));
@@ -894,48 +899,74 @@ export async function chapteringNode(state: ChronoGraphState): Promise<Partial<C
         : Math.min(6, Math.round(totalTargetSec / 50))));
   const secPerChapter = Math.round(totalTargetSec / numChapters);
 
+  // Extract core entities and summary from RAG context
+  const ragSummary = state.ragContext?.verifiedContext
+    ?.slice(0, 8)
+    ?.map((c) => {
+      const cleanSummary = cleanCrawlerText(c.summary || '');
+      return `- ${c.canonicalName} (${c.title || 'Thời kỳ lịch sử'}): ${cleanSummary}`;
+    })
+    ?.join('\n') || 'Không có tư liệu tóm tắt';
+
   const allHistoricalEntities = extractHistoricalEntitiesFromRag(state.ragContext, state.userPrompt);
   const userPromptEntities = extractHistoricalEntitiesFromRag(
     { verifiedContext: [], aliasTable: {}, citations: [] },
     state.userPrompt
   );
-  const ragSummary = state.ragContext?.verifiedContext?.slice(0, 8).map((e) => `- [${e.title || e.canonicalName}]: ${cleanCrawlerText(e.summary)}`).join('\n') || 'Không có dữ liệu chi tiết.';
 
-  // Phase 1: Macro Chrono-Beats Generator (~80-120 output tokens)
-  const systemMessage = `Bạn là Chaptering & Outline Agent chuyên nghiệp của nền tảng ChronoViet.
-Nhiệm vụ: Phân chia chủ đề lịch sử thành dàn ý vĩ mô (Macro Chrono-Beats) gồm CHÍNH XÁC ${numChapters} hồi kịch bản cô đọng, giàu tính điện ảnh và chuẩn xác sử liệu.
+  const domainChapteringGuidance = state.videoType === 'BIOGRAPHY'
+    ? `      + Hồi 1 (Thân thế, Xuất thân & Hoài bão): Nguồn cội gia đình, quê hương, bối cảnh thời cuộc thời niên thiếu, những bước ngoặt đầu đời định hình nhân cách và lý tưởng. (TUYỆT ĐỐI KHÔNG kể trước sự nghiệp đỉnh cao hay sự ra đi ở cuối đời).
+      + Các Hồi giữa (Hành trình, Biến cố & Cống hiến kiệt xuất): Quá trình hoạt động, dấn thân vượt qua gian nan thử thách, các quyết sách/tác phẩm/chiến công và đóng góp lớn lao nhất.
+      + Hồi cuối (Chặng đường cuối đời, Sự ra đi & Di sản bất tử): Những năm tháng cuối đời, sự ra đi/tuẫn tiết vì đại nghĩa của nhân vật, đúc kết tầm vóc lịch sử, nhân cách và di sản trường tồn trong lòng dân tộc.`
+    : state.videoType === 'ARTIFACT'
+    ? `      + Hồi 1 (Nguồn gốc ra đời & Đỉnh cao chế tác): Niên đại xuất hiện, bối cảnh nền văn minh lịch sử, kỹ thuật đúc/chế tác tinh xảo độc nhất vô nhị. (TUYỆT ĐỐI KHÔNG kể trước việc phát hiện khảo cổ thời hiện đại ở Hồi 1).
+      + Các Hồi giữa (Giải mã biểu tượng & Đời sống đương thời): Phân tích chi tiết hoa văn, ý nghĩa biểu tượng tâm linh, nghi lễ và đời sống xã hội phản ánh qua hiện vật.
+      + Hồi cuối (Hành trình lưu lạc, Khảo cổ & Biểu tượng trường tồn): Biến cố thăng trầm theo thời gian, phát hiện khảo cổ học thời hiện đại, giá trị Bảo vật Quốc gia và niềm tự hào bản sắc dân tộc.`
+    : state.videoType === 'DYNASTY'
+    ? `      + Hồi 1 (Lập triều, Định đô & Khai mở vận nước): Tiền đề lịch sử, sự chuyển giao quyền lực hoặc cuộc dời đô mở ra trang sử mới. (TUYỆT ĐỐI KHÔNG kể trước sự suy vong của triều đại).
+      + Các Hồi giữa (Thịnh trị, Cải cách & Biến cố vương triều): Phát triển văn hóa, kinh tế, thể chế, các cải cách trọng yếu và đương đầu với thử thách đối nội/đối ngoại.
+      + Hồi cuối (Khủng hoảng, Chuyển giao & Bài học trị quốc): Giai đoạn thoái trào, chuyển giao vương triều và bài học lịch sử để lại cho hậu thế.`
+    : state.videoType === 'MYSTERY'
+    ? `      + Hồi 1 (Khởi nguồn vụ việc & Bối cảnh then chốt): Biến cố bất ngờ, hiện trường, các nhân vật trung tâm và mâu thuẫn châm ngòi bí ẩn. (TUYỆT ĐỐI KHÔNG tiết lộ kết luận/lời giải ở Hồi 1).
+      + Các Hồi giữa (Manh mối, Giả thuyết & Tranh luận sử học): Những uẩn khúc cung đình, mâu thuẫn giữa các nguồn sử liệu và các luồng kiến giải đối lập.
+      + Hồi cuối (Sự thật minh oan, Đánh giá lịch sử & Bài học nhân tâm): Soi chiếu của sử học hiện đại, bài học đắt giá về quyền lực, nhân tâm và sự công minh của lịch sử.`
+    : `      + Hồi 1 (Khởi nguồn & Căn nguyên): Bối cảnh thời cuộc, nguy cơ xâm lăng/ách áp bức, biến cố trực tiếp châm ngòi và quyết tâm đứng lên. (TUYỆT ĐỐI KHÔNG kể kết quả chiến thắng, việc hạ thành hay giải phóng ở Hồi 1).
+      + Các Hồi giữa (Tụ nghĩa, Chuyển quân & Các trận chiến bản lề): Lời hiệu triệu, hội tụ lực lượng, mưu lược tác chiến, các mũi tiến công và bước ngoặt chuyển biến của chiến trường.
+      + Hồi cuối (Trận quyết chiến, Toàn thắng & Di sản trường tồn): Quét sạch quân thù, khôi phục giang sơn, định đô/xây dựng nền tự chủ và đúc kết ý nghĩa lịch sử vĩnh cửu.`;
+
+  const systemMessage = `Bạn là Chaptering & Narrative Planning Agent của hệ thống ChronoViet.
+Nhiệm vụ: Phân chia chủ đề lịch sử và tư liệu Chrono-RAG thành ĐÚNG ${numChapters} HỒI (Chapters), mỗi hồi tương ứng ~${secPerChapter} giây (${Math.round((secPerChapter / 60) * getTargetWpm(state.templateId))} từ) để tạo thành một video tài liệu hoàn chỉnh, liền mạch, cuốn hút.
+
 QUY TẮC BẮT BUỘC:
-1. Xuất duy nhất 1 JSON object hợp lệ theo schema:
+1. Xuất duy nhất 1 JSON object:
 {
   "chapterBeats": [
     {
       "chapterIndex": 0,
-      "title": "<Tên chương cụ thể chứa tên nhân vật / địa danh / sự kiện lịch sử>",
-      "timeAnchor": "<Mốc thời gian cụ thể (ví dụ: 'Năm 981', 'Mùa xuân 1428', 'Tháng 3/1954')>",
-      "mainEvent": "<1 câu súc tích 10-25 từ mô tả trọng tâm mưu lược, biến cố hoặc hành động lịch sử>"
+      "title": "Hồi 1: Tiêu đề Hồi ngắn gọn, cuốn hút",
+      "timeAnchor": "Mốc thời gian (ví dụ: 'Năm 1285' hoặc 'Mùa xuân 1789')",
+      "mainEvent": "Sự kiện lịch sử trung tâm của Hồi này",
+      "entryHook": "Câu mở đầu hấp dẫn, tạo sự tò mò",
+      "climaxFocus": "Điểm nhấn kịch tính/cao trào của Hồi",
+      "exitHook": "Câu kết nối chuyển tiếp mượt mà sang Hồi tiếp theo",
+      "establishedTone": "Hào hùng / Trầm lắng / Bi tráng / Trang trọng"
     }
   ]
 }
-với ĐỦ ${numChapters} hồi (từ chapterIndex 0 đến ${numChapters - 1}).
 2. Không thêm bất kỳ văn bản nào ngoài JSON.
 3. TIÊU ĐỀ CHƯƠNG BẮT BUỘC GẮN VỚI SỰ KIỆN LỊCH SỬ CỤ THỂ (HISTORICAL EVENT ANCHORS):
    - TIÊU ĐỀ MỖI HỒI BẮT BUỘC PHẢI KHÁC NHAU HOÀN TOÀN, phản ánh sự phát triển tuyến tính của dòng lịch sử (TUYỆT ĐỐI KHÔNG dùng cùng một tiêu đề cho nhiều hồi).
    - TUYỆT ĐỐI KHÔNG đặt tiêu đề chung chung như: 'Bối cảnh và Nguy cơ', 'Sách lược và chuẩn bị', 'Trận quyết chiến', 'Di sản và Dư âm'.
    - Tiêu đề BẮT BUỘC chứa tên nhân vật, chiến dịch, địa danh hoặc sự kiện lịch sử cụ thể theo từng giai đoạn.
-4. QUY TẮC MẠCH TRUYỆN THEO THỂ LOẠI (TOPIC & HISTORICAL ARC FIDELITY):
-   - Nhân vật/Danh nhân (BIOGRAPHY): Phân chia ${numChapters} hồi theo các chặng đường niên đại TUYẾN TÍNH KHÔNG TRÙNG LẶP:
-     + Hồi đầu (bối cảnh quê hương, thời niên thiếu, lý tưởng ban đầu) -> Các hồi giữa (hành trình bôn ba tìm đường, thử thách, quyết sách bước ngoặt, đỉnh cao sự nghiệp) -> Hồi cuối (kháng chiến, di sản trường tồn, tầm vóc lịch sử).
-     + MỖI HỒI CHỈ TẬP TRUNG vào sự kiện của giai đoạn đó, TUYỆT ĐỐI KHÔNG lặp lại các sự kiện (như năm sinh, Tuyên ngôn Độc lập, số lượng bí danh) xuyên suốt các hồi khác nhau.
-     + TUYỆT ĐỐI KHÔNG dùng các từ tiêu cực hoặc bất cẩn như 'Kết cục', 'Hạ màn' cho các anh hùng dân tộc, danh nhân lịch sử. TUYỆT ĐỐI KHÔNG bịa đặt chiến thắng cho nhân vật tuẫn tiết.
-   - Triều đại (DYNASTY): Khởi lập và định đô -> Thời kỳ hưng thịnh và võ công văn trị -> Biến cố, chuyển giao và di sản.
-   - Chiến dịch & Trận đánh (BATTLE): BẮT BUỘC tuân thủ mạch kịch bản chiến dịch quân sự 5 nhịp kinh điển (Campaign Arc):
-     + Beat 1 (Bối cảnh nguy biến & Mệnh lệnh lịch sử): Tương quan lực lượng, quân thù chiếm đóng kinh thành, thế trận hiểm nghèo, mệnh lệnh xuất quân.
-     + Beat 2 (Hiệu triệu, Tuyển binh & Hành quân thần tốc): Lên ngôi Hoàng đế/Nhận quyền chỉ huy, tuyển binh, duyệt binh, hành quân chớp nhoáng hội quân tại phòng tuyến then chốt.
-     + Beat 3 (Kế sách công kích & Hịch xuất quân): Mở tiệc khao quân đón Tết sớm, lời hiệu triệu đanh thép, chia 5 đạo quân bí mật áp sát cứ điểm.
-     + Beat 4 (Bão lửa Quyết chiến & Đột kích cứ điểm): Phá tan các tiền đồn phòng ngự trọng yếu (Hà Hồi, Ngọc Hồi, Đống Đa), bao vây tiêu diệt đại bản doanh, tiến thẳng vào giải phóng kinh thành.
-     + Beat 5 (Đại thắng khải hoàn & Di sản nghệ thuật quân sự): Tướng giặc tháo chạy/đầu hàng, thu phục non sông, nghệ thuật quân sự đỉnh cao và bài học cho muôn đời sau.
-     + TUYỆT ĐỐI KHÔNG đưa các chi tiết tiểu sử cuộc đời (như năm sinh, thời niên thiếu, quê quán, lý tưởng thuở nhỏ) vào kịch bản chiến dịch/trận đánh cụ thể.
-   - Áng văn, chiếu hịch, tư tưởng, văn kiện: BẮT BUỘC dành Hồi mở đầu hoặc Hồi chuẩn bị khắc họa trực tiếp hoàn cảnh ra đời, khí phách và tác động hiệu triệu của áng văn/văn kiện đó.
+4. QUY TẮC MẠCH TRUYỆN THEO THỂ LOẠI (TOPIC & HISTORICAL ARC FIDELITY - ${state.videoType}):
+   - Phân chia ${numChapters} hồi theo tiến trình niên đại TUYẾN TÍNH KHÔNG TRÙNG LẶP. Mỗi hồi đại diện cho một chặng đường lịch sử riêng biệt:
+${domainChapteringGuidance}
+   - QUY TẮC ĐẶT TIÊU ĐỀ HỒI (CHƯƠNG):
+     + Tiêu đề BẮT BUỘC phải sáng tạo, hấp dẫn và gắn chặt với sự kiện lịch sử CỦA CHỦ ĐỀ HIỆN TẠI (ví dụ: 'Hồi 1: Nỗi hờn sông Mê và Ách bạo ngược Tô Định', 'Hồi 2: Lời thề Hát Môn và Tiếng trống đồng tụ nghĩa', 'Hồi 3: Bão lửa giáp công hạ thành Luy Lâu', 'Hồi 4: Nền độc lập Trưng Vương và Di sản muôn đời'...).
+     + TUYỆT ĐỐI KHÔNG copy các nhãn khuôn mẫu chung chung như 'Bối cảnh và Nguy cơ', 'Hiệu triệu, Tuyển binh & Hành quân thần tốc', 'Kế sách công kích & Hịch xuất quân', 'Đại thắng khải hoàn & Di sản'.
+   - BẢO TOÀN PHÂN VÙNG THỜI GIAN & SỰ KIỆN (TEMPORAL BOUNDARY INTEGRITY):
+     + Mỗi Hồi có một phạm vi sự kiện RIÊNG BIỆT.
+     + Hồi trước TUYỆT ĐỐI KHÔNG được kể lấn sang các sự kiện, chiến thắng hoặc kết cục thuộc về các Hồi sau!
    - Trật tự thời gian tuyến tính từ sớm đến muộn. Đúng vai trò chính nghĩa (Đại Việt/Việt Nam) và quân xâm lược.`;
 
   const userContent = `Chủ đề: "${state.userPrompt}"
@@ -1083,13 +1114,13 @@ Hãy xuất JSON { "chapterBeats": [...] } gồm ĐỦ ${numChapters} hồi:`;
       metadata: { error: err.message },
     });
 
-    // Deterministic fallback macro-beats
+    // Deterministic fallback macro-beats across all 5 domains
     const fallbackBeats: ChapterMacroBeat[] = [];
     if (state.videoType === 'BATTLE') {
       const battleBeats = [
         {
           title: `Hồi 1: Nguy biến Lịch sử & Thế trận Hiểm nghèo (${state.userPrompt})`,
-          mainEvent: `Quân xâm lược tràn sang chiếm đóng kinh thành, tạo nên bối cảnh nguy biến buộc nghĩa quân phải hành động khẩn cấp trong ${state.userPrompt}.`,
+          mainEvent: `Quân xâm lược tràn sang tạo nên bối cảnh nguy biến buộc nghĩa quân phải hành động khẩn cấp trong ${state.userPrompt}.`,
         },
         {
           title: `Hồi 2: Hiệu triệu Binh sĩ & Hành quân Thần tốc (${state.userPrompt})`,
@@ -1097,11 +1128,11 @@ Hãy xuất JSON { "chapterBeats": [...] } gồm ĐỦ ${numChapters} hồi:`;
         },
         {
           title: `Hồi 3: Mưu lược Giáp công & Hịch Xuất quân (${state.userPrompt})`,
-          mainEvent: `Kế sách mở tiệc khao quân đón Tết sớm, hạ lệnh tiến công 5 cánh quân chia lửa quyết chiến tiêu diệt giặc.`,
+          mainEvent: `Hoạch định phương án tác chiến then chốt, củng cố thế trận và hạ lệnh xuất quân chia lửa quyết chiến tiêu diệt giặc.`,
         },
         {
           title: `Hồi 4: Bão lửa Quyết chiến Phá tan Cứ điểm (${state.userPrompt})`,
-          mainEvent: `Đột kích công phá dũng mãnh các cứ điểm then chốt, tiêu diệt sào huyệt quân địch, tiến thẳng vào giải phóng kinh thành.`,
+          mainEvent: `Đột kích công phá dũng mãnh các cứ điểm then chốt, tiêu diệt sào huyệt quân địch, tiến thẳng vào giải phóng chiến trường.`,
         },
         {
           title: `Hồi 5: Đại thắng Khải hoàn & Tầm vóc Lịch sử (${state.userPrompt})`,
@@ -1110,6 +1141,134 @@ Hãy xuất JSON { "chapterBeats": [...] } gồm ĐỦ ${numChapters} hồi:`;
       ];
       for (let i = 0; i < numChapters; i++) {
         const beatTemplate = battleBeats[Math.min(i, battleBeats.length - 1)];
+        fallbackBeats.push({
+          chapterIndex: i,
+          title: numChapters === 5 ? beatTemplate.title : `Hồi ${i + 1}: ${beatTemplate.title}`,
+          timeAnchor: '',
+          mainEvent: beatTemplate.mainEvent,
+        });
+      }
+    } else if (state.videoType === 'BIOGRAPHY') {
+      const bioBeats = [
+        {
+          title: `Hồi 1: Bối cảnh Quê hương & Thời Niên thiếu (${state.userPrompt})`,
+          mainEvent: `Xuất thân, quê hương và những năm tháng ấu thơ hun đúc chí lớn của ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 2: Hành trình Thử thách & Nuôi dưỡng Lý tưởng (${state.userPrompt})`,
+          mainEvent: `Dấn thân vào phong trào yêu nước, vượt qua muôn vàn gian khổ thử thách để rèn luyện chí hướng.`,
+        },
+        {
+          title: `Hồi 3: Quyết sách Bước ngoặt & Trọng trách Lịch sử (${state.userPrompt})`,
+          mainEvent: `Đưa ra những quyết sách lịch sử mang tính bước ngoặt xoay chuyển cục diện của ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 4: Đỉnh cao Cống hiến & Sự nghiệp Vĩ đại (${state.userPrompt})`,
+          mainEvent: `Những cống hiến hiển hách và dấu ấn vĩ đại nhất trong sự nghiệp của ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 5: Tầm vóc Bất tử & Di sản Tri ân (${state.userPrompt})`,
+          mainEvent: `Tấm gương sáng ngời, di sản trường tồn và lòng tri ân sâu sắc của toàn thể non sông dân tộc.`,
+        },
+      ];
+      for (let i = 0; i < numChapters; i++) {
+        const beatTemplate = bioBeats[Math.min(i, bioBeats.length - 1)];
+        fallbackBeats.push({
+          chapterIndex: i,
+          title: numChapters === 5 ? beatTemplate.title : `Hồi ${i + 1}: ${beatTemplate.title}`,
+          timeAnchor: '',
+          mainEvent: beatTemplate.mainEvent,
+        });
+      }
+    } else if (state.videoType === 'DYNASTY') {
+      const dynastyBeats = [
+        {
+          title: `Hồi 1: Khởi lập Vương triều & Quyết sách Định đô (${state.userPrompt})`,
+          mainEvent: `Bối cảnh lập quốc, khai mở triều đại và quyết sách định đô trọng đại của ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 2: Võ công Oanh liệt & Củng cố Biên cương (${state.userPrompt})`,
+          mainEvent: `Chinh phục thử thách, đánh tan thù trong giặc ngoài và củng cố chủ quyền quốc gia vững chắc.`,
+        },
+        {
+          title: `Hồi 3: Văn trị Đỉnh cao & Thành tựu Kỷ nguyên (${state.userPrompt})`,
+          mainEvent: `Thời kỳ hưng thịnh rực rỡ về văn hóa, giáo dục, pháp luật và kinh tế của ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 4: Biến cố Lịch sử & Thách thức Chuyển giao (${state.userPrompt})`,
+          mainEvent: `Những biến động thời cuộc, chính sách cải cách và bước ngoặt chuyển giao quyền lực.`,
+        },
+        {
+          title: `Hồi 5: Dấu ấn Thời đại & Di sản Trường tồn (${state.userPrompt})`,
+          mainEvent: `Tổng kết những giá trị văn minh cốt lõi và di sản ngàn năm để lại cho hậu thế.`,
+        },
+      ];
+      for (let i = 0; i < numChapters; i++) {
+        const beatTemplate = dynastyBeats[Math.min(i, dynastyBeats.length - 1)];
+        fallbackBeats.push({
+          chapterIndex: i,
+          title: numChapters === 5 ? beatTemplate.title : `Hồi ${i + 1}: ${beatTemplate.title}`,
+          timeAnchor: '',
+          mainEvent: beatTemplate.mainEvent,
+        });
+      }
+    } else if (state.videoType === 'MYSTERY') {
+      const mysteryBeats = [
+        {
+          title: `Hồi 1: Biến cố Bất ngờ & Hiện trường Uẩn khúc (${state.userPrompt})`,
+          mainEvent: `Sự kiện chấn động, bối cảnh hiện trường và những uẩn khúc lịch sử ban đầu của ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 2: Mâu thuẫn Thời cuộc & Những Động cơ Tiềm ẩn (${state.userPrompt})`,
+          mainEvent: `Phân tích bối cảnh chính trị phức tạp, xung đột quyền lực và các mối quan hệ then chốt.`,
+        },
+        {
+          title: `Hồi 3: Giả thuyết Sử học & Những Manh mối Đầu tiên (${state.userPrompt})`,
+          mainEvent: `Phân tích luận điểm, chứng cứ và lời đồn đại được sử sách ghi chép qua các thời kỳ.`,
+        },
+        {
+          title: `Hồi 4: Giả thuyết Đối lập & Luận cứ Sử liệu Hiện đại (${state.userPrompt})`,
+          mainEvent: `So sánh đối chiếu các quan điểm phản biện của giới nghiên cứu sử học hiện đại.`,
+        },
+        {
+          title: `Hồi 5: Giải mã Lịch sử & Bài học Cho Muôn Đời (${state.userPrompt})`,
+          mainEvent: `Đúc kết sự thật lịch sử, giải tỏa oan khuất và bài học chiêm nghiệm cho mai sau.`,
+        },
+      ];
+      for (let i = 0; i < numChapters; i++) {
+        const beatTemplate = mysteryBeats[Math.min(i, mysteryBeats.length - 1)];
+        fallbackBeats.push({
+          chapterIndex: i,
+          title: numChapters === 5 ? beatTemplate.title : `Hồi ${i + 1}: ${beatTemplate.title}`,
+          timeAnchor: '',
+          mainEvent: beatTemplate.mainEvent,
+        });
+      }
+    } else if (state.videoType === 'ARTIFACT') {
+      const artifactBeats = [
+        {
+          title: `Hồi 1: Phát lộ Khảo cổ & Vị trí Khai quật (${state.userPrompt})`,
+          mainEvent: `Hoàn cảnh phát hiện, vị trí địa lý và dấu tích khảo cổ đầu tiên của ${state.userPrompt}.`,
+        },
+        {
+          title: `Hồi 2: Niên đại Lịch sử & Tinh hoa Đúc chế (${state.userPrompt})`,
+          mainEvent: `Xác định niên đại, chất liệu kim khí/gốm đá và kỹ thuật chế tác đỉnh cao của cổ nhân.`,
+        },
+        {
+          title: `Hồi 3: Giải mã Hoa văn & Biểu tượng Văn hóa (${state.userPrompt})`,
+          mainEvent: `Ý nghĩa hoa văn, hình tượng con người, sinh hoạt và thế giới quan thời cổ đại.`,
+        },
+        {
+          title: `Hồi 4: Công năng Lịch sử & Đời sống Xã hội (${state.userPrompt})`,
+          mainEvent: `Vai trò của bảo vật trong đời sống tâm linh, quyền lực quân sự và cấu trúc xã hội thời kỳ đó.`,
+        },
+        {
+          title: `Hồi 5: Giá trị Bảo tồn & Tầm vóc Bảo vật Quốc gia (${state.userPrompt})`,
+          mainEvent: `Vị thế bảo vật quốc gia, niềm tự hào văn minh và công tác bảo tồn di sản cho tương lai.`,
+        },
+      ];
+      for (let i = 0; i < numChapters; i++) {
+        const beatTemplate = artifactBeats[Math.min(i, artifactBeats.length - 1)];
         fallbackBeats.push({
           chapterIndex: i,
           title: numChapters === 5 ? beatTemplate.title : `Hồi ${i + 1}: ${beatTemplate.title}`,

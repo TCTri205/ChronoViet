@@ -11,16 +11,21 @@ Guidelines, operational constraints, and verification protocols for AI Agents an
      - Architecture: [`docs/architecture/`](docs/architecture/)
      - Modules: [`docs/modules/`](docs/modules/)
      - Specifications: [`docs/SystemOverview.md`](docs/SystemOverview.md), [`docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md`](docs/specs/REMOTION_CONTENT_FORMATS_SPEC.md), [`docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md`](docs/specs/EVAL_REMOTION_TECHNICAL_SPEC.md), [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
+     - Operational Rules & Standards: [`agent-rules/`](agent-rules/) ([`endpoint_development.md`](agent-rules/endpoint_development.md), [`worker_development.md`](agent-rules/worker_development.md), [`error_handling.md`](agent-rules/error_handling.md), [`paginator.md`](agent-rules/paginator.md), [`git_commit.md`](agent-rules/git_commit.md))
 2. **Single Source of Truth (SSOT):**
    - Declare all cross-module data contracts, Zod schemas, and shared TypeScript interfaces centrally in [`packages/shared-spec`](packages/shared-spec). Never duplicate schemas across child packages. Encapsulate module-private types within their respective packages.
-3. **Production-Ready & Anti-Overfitting:**
-   - Ensure generic, robust, and performant implementations.
-   - Do NOT hardcode logic, make narrow assumptions, or loosen test/eval assertions and fixtures to artificially inflate benchmark scores or force tests to pass.
+3. **Production-Ready, Lean Code & Anti-Overengineering (YAGNI):**
+   - Deliver the simplest maintainable solution (YAGNI). Strictly avoid speculative abstractions, redundant wrapper layers, or bespoke controller mediators when direct function calls and route handlers suffice.
+   - Prefer native platform and language capabilities (e.g. native `fetch`, `crypto.randomUUID()`, `ReadableStream`) before adding external dependencies or custom utility classes.
+   - Actively eliminate dead code, unused parameters, redundant intermediary DTOs, and orphaned types during development and refactoring.
+   - Ensure generic, robust, and performant implementations. Do NOT hardcode logic, make narrow assumptions, or loosen test/eval assertions and fixtures to artificially inflate benchmark scores or force tests to pass.
    - Restrict the use of brittle rule-based heuristics, ad-hoc regex patching, and handcrafted pattern matching to bypass edge cases or force compliance; rely on robust semantic modeling, prompt engineering, or structured schema validation instead.
-4. **Stateless Runtime:**
-   - Keep application state stateless. Persistent data resides in PostgreSQL (pgvector), Redis, and volume storage (`/media`).
+4. **Stateless Runtime & Dual-Mode Resilience:**
+   - Keep application state stateless. Persistent data resides in PostgreSQL (`pgvector`), Redis, and volume storage (`/media`).
+   - Implement graceful degradation: When PostgreSQL is offline/standalone, fall back seamlessly to `inMemoryStore` where supported.
+   - Observability: Always propagate `correlationId` via `x-request-id` headers and structured logs (`createLogger`), and record Prometheus metrics (`httpRequestsTotal`, `httpRequestDurationSeconds`).
 5. **Language Boundary:**
-   - Write all code, technical comments, TypeScript types, documentation, and commit messages in **English**.
+   - Write all code, technical comments, TypeScript types, documentation, and commit messages in **English** (following [`agent-rules/git_commit.md`](agent-rules/git_commit.md)).
    - Keep historical domain knowledge, video scripts, audio narration texts, and user-facing historical content in **Vietnamese**.
 
 ---
@@ -42,8 +47,9 @@ Guidelines, operational constraints, and verification protocols for AI Agents an
 - **Approval Before Execution:** Present an implementation summary (affected files, approach, risks) for user confirmation before executing non-trivial edits or structural refactors.
 - **Clarification:** Ask for clarification immediately if requirements are ambiguous. Do NOT make unvalidated assumptions.
 - **Minimal Scope:** Deliver the simplest maintainable solution. Modify only files strictly within the requested task scope.
-- **Targeted Testing:** Execute only test runners relevant to the modified package (e.g., `pnpm --filter @chronoviet/remotion-engine eval` or targeted `vitest`) during active iteration.
-- **Doc Synchronization:** Update corresponding Markdown documentation in `docs/` immediately when modifying public APIs, schemas, or module behaviors.
+- **Lean Refactoring Mandate:** When auditing or refactoring existing code, prioritize simplifying call paths, eliminating dead code, removing redundant wrappers, and consolidating duplicate schemas into [`packages/shared-spec`](packages/shared-spec).
+- **Targeted Testing:** Execute only test runners relevant to the modified package (e.g., `pnpm --filter @chronoviet/web test` or `pnpm --filter @chronoviet/remotion-engine eval`) during active iteration.
+- **Doc Synchronization:** Update corresponding Markdown documentation in `docs/` and `agent-rules/` immediately when modifying public APIs, schemas, or module behaviors.
 
 ---
 

@@ -1276,6 +1276,30 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
   },
 ];
 
+export function toCanonicalWikimediaUrl(url: string): string {
+  if (!url) return url;
+  if (url.includes('upload.wikimedia.org/wikipedia/commons/')) {
+    const filename = url.split('/').pop();
+    if (filename) {
+      return `https://commons.wikimedia.org/wiki/Special:FilePath/${filename}`;
+    }
+  }
+  return url;
+}
+
+const ANCIENT_ERA_KEYWORDS = [
+  'hùng vương', 'văn lang', 'âu lạc', 'an dương vương', 'cổ loa', 'đông sơn', 'trống đồng',
+  'hai bà trưng', 'trưng trắc', 'trưng nhị', 'mê linh', 'hát môn', 'bà triệu',
+  'lý bí', 'lý nam đế', 'vạn xuân', 'triệu quang phục', 'mai hắc đế', 'phùng hưng',
+  'khúc thừa dụ', 'đại la', 'bắc thuộc'
+];
+
+const MODERN_ERA_KEYWORDS = [
+  'cách mạng tháng tám', '1945', '1954', '1975', 'điện biên phủ', 'dinh độc lập',
+  'chiến dịch hồ chí minh', 'hồ chí minh', 'hà nội 1945', 'ba đình', 'giải phóng miền nam',
+  'kháng chiến chống mỹ', 'kháng chiến chống pháp', 'cần vương', 'yên thế', 'pháp thuộc', 'cầu long biên'
+];
+
 /**
  * Strict Semantic/Epoch Matcher for Curated Catalog.
  * Anti-Anachronism Principle (ADR-5): If no verified curated asset matches the
@@ -1284,15 +1308,39 @@ export const HISTORICAL_FALLBACK_CATALOG: CuratedHistoricalAsset[] = [
  */
 export function matchCuratedCatalog(
   keywords: string,
-  limit: number = 6
+  limit: number = 6,
+  targetPeriodOrEpoch?: string
 ): VisualCandidate[] {
   const cleanKeywords = stripNegativeSearchTerms(keywords);
   if (!cleanKeywords) return [];
   const lowerKw = cleanKeywords.toLowerCase();
+  const lowerPeriod = (targetPeriodOrEpoch || '').toLowerCase();
+  const fullContext = `${lowerKw} ${lowerPeriod}`;
   const tokens = lowerKw.split(/[\s,.-]+/).filter((t) => t.length > 2 && !["anime", "cartoon", "watermark", "game", "render", "stock", "fictional"].includes(t));
+
+  const isAncientContext = ANCIENT_ERA_KEYWORDS.some((kw) => fullContext.includes(kw)) ||
+    lowerPeriod.includes('bắc thuộc') || lowerPeriod.includes('văn lang') || lowerPeriod.includes('âu lạc');
+  const isModernContext = MODERN_ERA_KEYWORDS.some((kw) => fullContext.includes(kw)) ||
+    lowerPeriod.includes('hiện đại') || lowerPeriod.includes('cận đại') || lowerPeriod.includes('1945') || lowerPeriod.includes('1975');
 
   const scored = HISTORICAL_FALLBACK_CATALOG.map((item) => {
     let score = 0;
+
+    // Strict Epoch Gate (Anti-Anachronism ADR-5)
+    if (isAncientContext && (item.epochKey === 'EPOCH_CAN_DAI' || item.epochKey === 'EPOCH_HIEN_DAI')) {
+      return { item, score: -100 }; // Never match 20th-century assets to ancient events
+    }
+    if (isModernContext && (item.epochKey === 'EPOCH_HONG_BANG_VAN_LANG' || item.epochKey === 'EPOCH_BAC_THUOC')) {
+      return { item, score: -100 }; // Never match bronze age / ancient assets to modern events
+    }
+
+    if (isAncientContext && (item.epochKey === 'EPOCH_BAC_THUOC' || item.epochKey === 'EPOCH_HONG_BANG_VAN_LANG')) {
+      score += 3;
+    }
+    if (isModernContext && (item.epochKey === 'EPOCH_CAN_DAI' || item.epochKey === 'EPOCH_HIEN_DAI')) {
+      score += 3;
+    }
+
     // Exact topic match
     if (lowerKw.includes(item.topicKey.replace(/_/g, " "))) {
       score += 5;
@@ -1325,7 +1373,7 @@ export function matchCuratedCatalog(
 
   return matchingResults.slice(0, limit).map((item, idx) => ({
     candidateId: `cand_catalog_${idx + 1}`,
-    imageUrl: item.imageUrl,
+    imageUrl: toCanonicalWikimediaUrl(item.imageUrl),
     sourceUrl: item.sourceUrl,
     title: item.title,
     author: item.author,
@@ -1342,7 +1390,7 @@ export function matchCuratedCatalog(
 export class CuratedCatalogProvider implements ImageSearchProvider {
   readonly name = "catalog";
 
-  async search(keywords: string, limit: number, _options?: ImageSearchProviderOptions): Promise<VisualCandidate[]> {
-    return matchCuratedCatalog(keywords, limit);
+  async search(keywords: string, limit: number, options?: ImageSearchProviderOptions): Promise<VisualCandidate[]> {
+    return matchCuratedCatalog(keywords, limit, (options as any)?.historicalPeriod);
   }
 }

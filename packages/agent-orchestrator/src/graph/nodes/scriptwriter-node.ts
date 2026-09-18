@@ -10,6 +10,7 @@ import {
   sanitizeSentenceBoundaries,
   getTargetWpm,
   NarrativeLedger,
+  VideoType,
 } from '@chronoviet/shared-spec';
 import { ChronoGraphState, getNodeLogger, RunningNarrativeState, TelemetryAuditEntry } from '../state.js';
 import { deduplicateRepetitiveText } from '../../guardrails/stream-dedup.js';
@@ -111,12 +112,24 @@ export function stripChapterTitleEcho(text: string, title?: string): string {
   return s;
 }
 
-export function normalizeHistoricalAnachronisms(text: string): string {
+export function normalizeHistoricalAnachronisms(text: string, epochKey?: string): string {
   if (!text) return text;
-  return text
-    .replace(/\bquân Hà Nội\b/gi, 'nghĩa quân Tây Sơn')
-    .replace(/\bquân đội Hà Nội\b/gi, 'nghĩa quân Tây Sơn')
-    .replace(/\bchính quyền Hà Nội\b/gi, 'triều đình Tây Sơn');
+  // Anachronism correction is bounded to 18th century Tây Sơn era contexts
+  // to avoid corrupting 20th century modern history (e.g. 1946, 1972)
+  const isTaySonContext =
+    epochKey === 'EPOCH_TAY_SON' ||
+    /tây\s+sơn|quang\s+trung|nguyễn\s+huệ|ngọc\s+hồi|đống\s+đa|kỷ\s+dậu\s+1789|chiến\s+dịch\s+1789|xuân\s+1789/i.test(
+      text
+    );
+
+  if (isTaySonContext) {
+    return text
+      .replace(/\bquân Hà Nội\b/gi, 'nghĩa quân Tây Sơn')
+      .replace(/\bquân đội Hà Nội\b/gi, 'nghĩa quân Tây Sơn')
+      .replace(/\bchính quyền Hà Nội\b/gi, 'triều đình Tây Sơn');
+  }
+
+  return text;
 }
 
 export function synthesizeDeterministicHistoricalScript(
@@ -300,6 +313,151 @@ function computeEpochBounds(
   return { epochDesc, minYear, maxYear };
 }
 
+export function getDomainChapterRoleGuidance(
+  videoType: VideoType | string | undefined,
+  isFirstChapter: boolean,
+  isLastChapter: boolean,
+  isMultiChapter: boolean
+): string {
+  if (!isMultiChapter) {
+    if (videoType === 'BIOGRAPHY') {
+      return `VAI TRÒ NGHỆ THUẬT: TOÀN BỘ CUỘC ĐỜI & SỰ NGHIỆP (CHƯƠNG ĐƠN)
+- Đoạn mở đầu (~30% số từ): Nguồn cội gia đình, bối cảnh thời cuộc và lý tưởng ban đầu.
+- Đoạn diễn biến (~50% số từ): Hành trình cống hiến, vượt qua gian nan và những dấu ấn, đóng góp lớn nhất.
+- Đoạn đúc kết (~20% số từ): Tầm vóc lịch sử, nhân cách và di sản trường tồn.`;
+    }
+    if (videoType === 'ARTIFACT') {
+      return `VAI TRÒ NGHỆ THUẬT: TOÀN BỘ HÀNH TRÌNH DI SẢN (CHƯƠNG ĐƠN)
+- Đoạn mở đầu (~30% số từ): Nguồn gốc ra đời, niên đại khảo cổ và kỹ thuật chế tác.
+- Đoạn diễn biến (~50% số từ): Ý nghĩa biểu tượng hoa văn, đời sống văn hóa - tâm linh đương thời.
+- Đoạn đúc kết (~20% số từ): Phát hiện khảo cổ, giá trị bảo vật quốc gia và bản sắc dân tộc.`;
+    }
+    if (videoType === 'DYNASTY') {
+      return `VAI TRÒ NGHỆ THUẬT: TOÀN CẢNH TRIỀU ĐẠI (CHƯƠNG ĐƠN)
+- Đoạn mở đầu (~30% số từ): Tiền đề thành lập vương triều, định đô và khai mở vận nước.
+- Đoạn diễn biến (~50% số từ): Thời kỳ thịnh trị, cải cách chính trị - văn hóa và chiến công giữ nước.
+- Đoạn đúc kết (~20% số từ): Chuyển giao lịch sử và bài học trị quốc để lại cho ngàn đời.`;
+    }
+    if (videoType === 'MYSTERY') {
+      return `VAI TRÒ NGHỆ THUẬT: TOÀN BỘ KỲ ÁN & BÍ ẨN (CHƯƠNG ĐƠN)
+- Đoạn mở đầu (~30% số từ): Hiện trường vụ việc, bối cảnh và mâu thuẫn châm ngòi bí ẩn.
+- Đoạn diễn biến (~50% số từ): Các manh mối, uẩn khúc cung đình và giả thuyết tranh luận.
+- Đoạn đúc kết (~20% số từ): Sự thật sáng tỏ, bài học về nhân tâm và công lý lịch sử.`;
+    }
+    return `VAI TRÒ NGHỆ THUẬT: TOÀN BỘ MẠCH TRUYỆN (CHƯƠNG ĐƠN)
+- Đoạn mở đầu (~30% số từ): Bối cảnh, nguyên nhân và phát động phong trào.
+- Đoạn diễn biến & cao trào (~50% số từ): Các trận đánh khốc liệt, mưu lược và đòn quyết định.
+- Đoạn đúc kết (~20% số từ): Thắng lợi, bài học lịch sử và di sản trường tồn.`;
+  }
+
+  if (isFirstChapter) {
+    if (videoType === 'BIOGRAPHY') {
+      return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG MỞ ĐẦU (THÂN THẾ, XUẤT THÂN & HOÀI BÃO)
+- Đoạn mở đầu (~35% số từ): Nguồn cội gia đình, quê hương, bối cảnh thời cuộc thời niên thiếu theo entry hook.
+- Đoạn diễn biến (~45% số từ): Những năm tháng trưởng thành, biến cố đầu đời định hình nhân cách và chí hướng.
+- Đoạn chuyển tiếp (~20% số từ): Bước ngoặt dấn thân, mở ra chặng đường cống hiến đầy chông gai phía trước.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG kể trước đỉnh cao sự nghiệp, thành tựu lớn hay sự ra đi ở cuối đời của nhân vật.`;
+    }
+    if (videoType === 'ARTIFACT') {
+      return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG MỞ ĐẦU (NGUỒN GỐC & ĐỈNH CAO CHẾ TÁC)
+- Đoạn mở đầu (~35% số từ): Không gian văn hóa, niên đại khảo cổ và bối cảnh xuất hiện của hiện vật theo entry hook.
+- Đoạn diễn biến (~45% số từ): Kỹ thuật đúc/chế tác tinh xảo, tài hoa và trí tuệ của các nghệ nhân cổ xưa.
+- Đoạn chuyển tiếp (~20% số từ): Vẻ đẹp hoàn mỹ của hiện vật, mở ra hành trình khám phá các tầng biểu tượng văn hóa.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG kể trước việc khai quật/phát hiện khảo cổ thời hiện đại ở chương 1.`;
+    }
+    if (videoType === 'DYNASTY') {
+      return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG MỞ ĐẦU (LẬP TRIỀU, ĐỊNH ĐÔ & KHAI MỞ VẬN NƯỚC)
+- Đoạn mở đầu (~35% số từ): Bối cảnh thời thế, khủng hoảng tiền triều và tiền đề lập vương triều mới theo entry hook.
+- Đoạn diễn biến (~45% số từ): Sự kiện định đô hoặc chuyển giao quyền lực lịch sử, đặt nền móng thể chế.
+- Đoạn chuyển tiếp (~20% số từ): Khai mở vận nước mới, sẵn sàng cho công cuộc kiến thiết quốc gia.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG kể trước sự suy vong của triều đại.`;
+    }
+    if (videoType === 'MYSTERY') {
+      return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG MỞ ĐẦU (BIẾN CỐ BẤT NGỜ & HIỆN TRƯỜNG BÍ ẨN)
+- Đoạn mở đầu (~35% số từ): Bối cảnh lịch sử, hiện trường vụ việc và sự kiện châm ngòi bí ẩn theo entry hook.
+- Đoạn diễn biến (~45% số từ): Biến cố bất ngờ xảy ra, các nhân vật trung tâm và mâu thuẫn ban đầu.
+- Đoạn chuyển tiếp (~20% số từ): Nỗi bàng hoàng của triều đình/dân chúng, mở ra những nghi vấn chưa có lời giải.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG tiết lộ kết luận hay sự thật minh oan ở chương 1.`;
+    }
+    return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG MỞ ĐẦU (BỐI CẢNH & KHỞI PHÁT)
+- Đoạn mở đầu (~35% số từ): Dẫn dắt không gian, thời gian, nguồn cơn áp bức, nguyên nhân phẫn uất và ý chí kiên cường theo entry hook.
+- Đoạn diễn biến & bùng nổ (~45% số từ): Tụ nghĩa tập hợp lực lượng, truyền hịch/lời thề xuất quân, khí thế quật khởi sục sôi.
+- Đoạn chuyển tiếp (~20% số từ): Toàn quân rầm rộ tiến binh, mở đầu trang sử hào hùng, sẵn sàng cho các trận đánh tiếp theo.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG kể trước kết quả đại thắng chung cuộc, KHÔNG hạ thành chiếm ải tối hậu hay xưng vương của các chương sau. Kết thúc chương ở thế tiến công bừng bừng chí khí.`;
+  }
+
+  if (isLastChapter) {
+    if (videoType === 'BIOGRAPHY') {
+      return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG KẾT (CHẶNG ĐƯỜNG CUỐI ĐỜI, SỰ RA ĐI & DI SẢN BẤT TỬ)
+- Đoạn mở đầu (~25% số từ): Bước vào những năm tháng cuối đời hoặc thử thách cam go nhất của cuộc đời nhân vật.
+- Đoạn diễn biến & cao trào (~50% số từ): Tinh thần cống hiến trọn đời, sự ra đi/tuẫn tiết vì đại nghĩa của nhân vật.
+- Đoạn đúc kết & dư âm (~25% số từ): Tầm vóc lịch sử, nhân cách cao cả và di sản bất tử trường tồn trong lòng dân tộc.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG lặp lại nguồn cội xuất thân từ chương 1. Tập trung trọn vẹn vào tầm vóc và dư âm lịch sử.`;
+    }
+    if (videoType === 'ARTIFACT') {
+      return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG KẾT (HÀNH TRÌNH LƯU LẠC, KHẢO CỔ & DI SẢN TRƯỜNG TỒN)
+- Đoạn mở đầu (~25% số từ): Trải qua thăng trầm biến thiên qua hàng thế kỷ.
+- Đoạn diễn biến & cao trào (~50% số từ): Hành trình lưu lạc, phát hiện khảo cổ học thời hiện đại và sự vinh danh Bảo vật Quốc gia.
+- Đoạn đúc kết & dư âm (~25% số từ): Giá trị văn hóa trường tồn, niềm tự hào dân tộc và bài học bảo tồn di sản cho hậu thế.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG lặp lại bối cảnh chế tác ban đầu từ chương 1.`;
+    }
+    if (videoType === 'DYNASTY') {
+      return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG KẾT (BIẾN ĐỘNG VẬN NƯỚC, CHUYỂN GIAO & BÀI HỌC TRỊ QUỐC)
+- Đoạn mở đầu (~25% số từ): Giai đoạn biến động cuối triều đại, thử thách vận mệnh non sông.
+- Đoạn diễn biến & cao trào (~50% số từ): Sự chuyển giao quyền lực hoặc chuyển mình sang thời kỳ lịch sử mới.
+- Đoạn đúc kết & dư âm (~25% số từ): Đúc kết đóng góp lịch sử của triều đại và bài học trị quốc để lại cho ngàn đời.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG lặp lại bối cảnh lập triều ban đầu từ chương 1.`;
+    }
+    if (videoType === 'MYSTERY') {
+      return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG KẾT (SỰ THẬT MINH OAN, NHẬN ĐỊNH SỬ HỌC & BÀI HỌC NHÂN TÂM)
+- Đoạn mở đầu (~25% số từ): Những manh mối cuối cùng được đặt cạnh nhau dưới ánh sáng tư liệu.
+- Đoạn diễn biến & cao trào (~50% số từ): Sự thật lịch sử được sáng tỏ, giải tỏa nỗi oan khuất hoặc nhận định công minh của sử học.
+- Đoạn đúc kết & dư âm (~25% số từ): Bài học sâu sắc về nhân tâm, quyền lực và sự thật lịch sử vĩnh cửu.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG lặp lại hiện trường ban đầu từ chương 1.`;
+    }
+    return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG KẾT (QUYẾT CHIẾN ĐỈNH ĐIỂM, ĐẠI THẮNG & DI SẢN)
+- Đoạn mở đầu (~25% số từ): Khí thế hành quân dâng cao, thế trận quyết định đã cận kề.
+- Đoạn diễn biến & cao trào (~50% số từ): Trận quyết chiến đỉnh điểm, mưu lược sấm sét tiêu diệt quân địch, quét sạch quân thù, khôi phục độc lập non sông.
+- Đoạn đúc kết & dư âm (~25% số từ): Xưng vương/định đô hoặc kiến thiết thái bình, đúc kết tầm vóc lịch sử trường tồn và niềm tự hào muôn đời.
+- QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG lặp lại nguyên nhân bộc phát từ chương 1. Tập trung trọn vẹn vào đòn sấm sét quyết định và dư âm hào hùng.`;
+  }
+
+  // Middle chapters:
+  if (videoType === 'BIOGRAPHY') {
+    return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG GIỮA (HÀNH TRÌNH, BIẾN CỐ & CỐNG HIẾN KIỆT XUẤT)
+- Đoạn mở đầu (~30% số từ): Nối tiếp hành trình từ chương trước, dấn thân vào những chặng đường thử thách mới.
+- Đoạn diễn biến & cao trào (~50% số từ): Những biến cố thăng trầm, mưu trí/bản lĩnh kiên cường, và các thành tựu hoặc cống hiến lớn lao.
+- Đoạn chuyển tiếp (~20% số từ): Khẳng định uy tín và tầm ảnh hưởng lịch sử, mở ra chặng đường tiếp theo.
+- QUY TẮC BẮT BUỘC: Nối tiếp mạch truyện tuyến tính. TUYỆT ĐỐI KHÔNG kể lại xuất thân ban đầu và KHÔNG kể trước sự ra đi ở cuối đời.`;
+  }
+  if (videoType === 'ARTIFACT') {
+    return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG GIỮA (GIẢI MÃ HOA VĂN & ĐỜI SỐNG CỔ ĐẠI)
+- Đoạn mở đầu (~30% số từ): Nối tiếp vẻ đẹp chế tác, đi sâu vào cấu trúc và bố cục hiện vật.
+- Đoạn diễn biến & cao trào (~50% số từ): Giải mã các tầng hoa văn, biểu tượng nghệ thuật, nghi lễ tâm linh và đời sống xã hội cổ xưa.
+- Đoạn chuyển tiếp (~20% số từ): Khẳng định đỉnh cao trí tuệ văn minh thời kỳ, mở ra giai đoạn tiếp theo.
+- QUY TẮC BẮT BUỘC: Nối tiếp mạch câu chuyện. TUYỆT ĐỐI KHÔNG kể lại nguồn gốc ban đầu và KHÔNG kể trước việc khảo cổ thời hiện đại.`;
+  }
+  if (videoType === 'DYNASTY') {
+    return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG GIỮA (THỊNH TRỊ, CẢI CÁCH & BIẾN CỐ VƯƠNG TRIỀU)
+- Đoạn mở đầu (~30% số từ): Nối tiếp thế nước mới lập, triển khai các chính sách trị quốc.
+- Đoạn diễn biến & cao trào (~50% số từ): Giai đoạn thịnh trị rực rỡ, các cải cách kinh tế - luật pháp - văn hóa hoặc chiến công giữ nước.
+- Đoạn chuyển tiếp (~20% số từ): Vận nước chuyển biến, đón nhận những thử thách mới.
+- QUY TẮC BẮT BUỘC: Nối tiếp mạch tuyến tính. TUYỆT ĐỐI KHÔNG kể lại bối cảnh lập triều và KHÔNG kết thúc vương triều sớm.`;
+  }
+  if (videoType === 'MYSTERY') {
+    return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG GIỮA (MANH MỐI, UẨN KHÚC & TRANH LUẬN SỬ HỌC)
+- Đoạn mở đầu (~30% số từ): Nối tiếp sau biến cố, lần theo các dấu vết và nhân chứng lịch sử.
+- Đoạn diễn biến & cao trào (~50% số từ): Những mâu thuẫn đối lập, các giả thuyết tranh cãi gay gắt trong sử sách.
+- Đoạn chuyển tiếp (~20% số từ): Căng thẳng dâng cao trước thời khắc sự thật dần hé lộ.
+- QUY TẮC BẮT BUỘC: Nối tiếp mạch truyện. TUYỆT ĐỐI KHÔNG đưa ra kết luận chung cuộc khi câu chuyện chưa ngã ngũ.`;
+  }
+  return `VAI TRÒ NGHỆ THUẬT: CHƯƠNG GIỮA (HÀNH QUÂN, SÁCH LƯỢC & CHIẾN TRẬN)
+- Đoạn mở đầu (~30% số từ): Nối tiếp đà tiến quân từ chương trước, triển khai binh lực và sách lược tiến công.
+- Đoạn diễn biến & cao trào (~50% số từ): Các trận đụng độ dữ dội, mưu lược sắc bén, sự phối hợp chiến thuật và biến cố chiến trường ác liệt.
+- Đoạn chuyển biến thế trận (~20% số từ): Quân giặc hoang mang lui bước, thế trận xoay chuyển nghiêng hẳn về phe ta, dọn đường cho trận quyết chiến.
+- QUY TẮC BẮT BUỘC: Giữ vững tính tuyến tính lịch sử. TUYỆT ĐỐI KHÔNG kể lại nguyên nhân bộc phát ban đầu và TUYỆT ĐỐI KHÔNG đúc kết kết quả toàn cuộc.`;
+}
+
 export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial<ChronoGraphState>> {
   const nodeLog = getNodeLogger(state, 'scriptwriter');
   nodeLog.info('orchestrator.scriptwriting_started', `Starting Parallel Scriptwriter Agent for ${state.chapters.length} chapters`, {
@@ -341,6 +499,17 @@ export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial
     }
 
     const chapter = state.chapters[i];
+    const isFirstChapter = i === 0;
+    const isLastChapter = i === state.chapters.length - 1;
+    const isMultiChapter = state.chapters.length > 1;
+
+    const chapterRoleGuidance = getDomainChapterRoleGuidance(
+      state.videoType,
+      isFirstChapter,
+      isLastChapter,
+      isMultiChapter
+    );
+
     const chapterDurationSec = Math.max(15, chapter.targetDurationSeconds || 30);
     // Template-aware WPM word count calibration
     const targetWords = Math.max(25, Math.round(chapterDurationSec * (targetWpm / 60)));
@@ -408,10 +577,15 @@ export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial
       ? chapter.chapterChunks
       : relevantChunks;
 
-    // Combine relevant chunks and general verified chunks, deduplicating by chunkId / content snippet
+    // Combine relevant chunks. For early/middle chapters, avoid dumping all global verifiedEntities
+    // to prevent spoiler leakage (e.g. concluding victory chunks into Chapter 1).
+    const fallbackEntities = (isLastChapter || baseChunks.length < 3)
+      ? (relevantChunks.length > 0 ? relevantChunks : verifiedEntities)
+      : relevantChunks;
+
     const chunkCandidates = [
       ...baseChunks,
-      ...verifiedEntities,
+      ...fallbackEntities,
     ];
     const seenChunkKeys = new Set<string>();
     const selectedChunks = chunkCandidates.filter((chunk) => {
@@ -428,11 +602,9 @@ export async function scriptwriterNode(state: ChronoGraphState): Promise<Partial
 
     const systemMessage = `Bạn là Nhà biên kịch Lịch sử Chuyên nghiệp của nền tảng ChronoViet.
 Nhiệm vụ: Viết lời bình dẫn chuyện (Voiceover Narration) cho từng chương video lịch sử đạt chuẩn nhịp độ ${targetWpm} WPM.
-QUY TẮC CẤU TRÚC KỊCH BẢN 1-PASS CHUẨN XÁC:
-- Đoạn mở đầu (~30% số từ, đúng ${numOpeningSentences} câu): Dẫn dắt không gian, thời gian, nguyên nhân và tiền đề lịch sử theo entry hook.
-- Đoạn diễn biến & cao trào (~50% số từ, đúng ${numClimaxSentences} câu): Miêu tả chi tiết mưu lược, biến cố, hành động của các nhân vật và quyết sách lịch sử.
-- Đoạn đúc kết & dư âm (~20% số từ, đúng ${numLegacySentences} câu): Khắc họa tầm vóc lịch sử, giá trị trường tồn và niềm tự hào dân tộc.
-- TỔNG CỘNG: Viết chính xác ${targetSentences} câu văn xuôi trọn vẹn (khoảng 16-22 từ/câu) để tổng độ dài đạt đúng ${minWords} - ${maxWords} từ tiếng Việt.
+QUY TẮC CẤU TRÚC KỊCH BẢN THEO VỊ TRÍ MẠCH TRUYỆN:
+${chapterRoleGuidance}
+- TỔNG CỘNG: Viết chính xác khoảng ${targetSentences} câu văn xuôi trọn vẹn (khoảng 16-22 từ/câu) để tổng độ dài đạt đúng ${minWords} - ${maxWords} từ tiếng Việt.
 
 QUY TẮC BẢO TOÀN NIÊN ĐẠI & TRÁNH HALLUCINATION:
 - Niên đại trọng tâm của video: ${epochInfo.epochDesc}.
@@ -585,10 +757,8 @@ BLUEPRINT MẠCH TRUYỆN:
 - Ý chuyển tiếp kết thúc (Exit Hook): "${exitHook}".
 - Giọng văn chủ đạo: ${chapter.establishedTone || state.runningNarrativeState?.establishedTone || 'Hào hùng, trang trọng'}.
 
-YÊU CẦU ĐỘ DÀI VÀ CẤU TRÚC CÂU (BẮT BUỘC ~${targetWords} từ, dải chuẩn ${targetWpm} WPM: ${minWords} - ${maxWords} từ, tổng cộng khoảng ${targetSentences} câu):
-- Đoạn 1: Mở đầu (Bối cảnh & Tiền đề): đúng ${numOpeningSentences} câu (~${wordsContext} từ).
-- Đoạn 2: Diễn biến & Cao trào (Sách lược, biến cố, hành động): đúng ${numClimaxSentences} câu (~${wordsClimax} từ).
-- Đoạn 3: Đúc kết & Dư âm (Ý nghĩa lịch sử, bài học): đúng ${numLegacySentences} câu (~${wordsLegacy} từ).
+YÊU CẦU ĐỘ DÀI VÀ MẠCH TRUYỆN CHƯƠNG ${i + 1}/${state.chapters.length} (BẮT BUỘC ~${targetWords} từ, dải chuẩn ${targetWpm} WPM: ${minWords} - ${maxWords} từ, tổng cộng khoảng ${targetSentences} câu):
+${chapterRoleGuidance}
 Mỗi câu văn phải viết trọn vẹn (khoảng 16-22 từ/câu), giàu tính điện ảnh và chuẩn xác sử liệu.
 
 DANH SÁCH THỰC THỂ CỐT LÕI CỦA CHƯƠNG NÀY:
@@ -604,7 +774,21 @@ QUY TẮC MẠCH TRUYỆN & RÀNG BUỘC THỰC THỂ:
 - BẢO TOÀN DANH XƯNG & BÍ DANH: TUYỆT ĐỐI KHÔNG viết thành "học hỏi từ...", "kế thừa từ..." đối với các bí danh của chính nhân vật chính.
 - TUYỆT ĐỐI KHÔNG cưỡng ép đưa các địa danh hoặc nhân vật không thuộc bối cảnh hoặc thời kỳ của chương vào kịch bản.
 - BẮT BUỘC bám sát sự kiện trọng tâm của chương: "${keyEventsText}". Nêu chính xác niên đại, năm lịch sử diễn ra sự kiện theo tư liệu; TUYỆT ĐỐI KHÔNG nhầm lẫn sang năm hoặc sự kiện của thời kỳ khác.
-- BẢO TOÀN PHÂN ĐOẠN LỊCH SỬ TUYẾN TÍNH: Lời bình của Chương ${i + 1} TUYỆT ĐỐI KHÔNG lặp lại các diễn biến, sự kiện hoặc mốc thời gian đã thuộc về các chương khác. Chỉ tập trung miêu tả đúng chặng đường lịch sử của chương này.
+- BẢO TOÀN PHÂN ĐOẠN LỊCH SỬ TUYẾN TÍNH: Lời bình của Chương ${i + 1} TUYỆT ĐỐI KHÔNG lặp lại các diễn biến, sự kiện hoặc mốc thời gian đã thuộc về các chương khác. Chỉ tập trung miêu tả đúng chặng đường lịch sử của chương này. ${
+  isFirstChapter && isMultiChapter
+    ? (state.videoType === 'BIOGRAPHY'
+        ? 'ĐẶC BIỆT: Đây là Chương 1, TUYỆT ĐỐI KHÔNG kể trước đỉnh cao sự nghiệp hay sự ra đi ở cuối đời của nhân vật!'
+        : state.videoType === 'ARTIFACT'
+        ? 'ĐẶC BIỆT: Đây là Chương 1, TUYỆT ĐỐI KHÔNG kể trước việc phát hiện khảo cổ thời hiện đại!'
+        : state.videoType === 'DYNASTY'
+        ? 'ĐẶC BIỆT: Đây là Chương 1, TUYỆT ĐỐI KHÔNG kể trước sự suy vong của triều đại!'
+        : state.videoType === 'MYSTERY'
+        ? 'ĐẶC BIỆT: Đây là Chương 1, TUYỆT ĐỐI KHÔNG tiết lộ kết luận hay sự thật minh oan!'
+        : 'ĐẶC BIỆT: Đây là Chương 1, TUYỆT ĐỐI KHÔNG kể trước chiến thắng cuối cùng, hạ thành, đuổi giặc hay lên ngôi của các chương sau!')
+    : !isLastChapter && isMultiChapter
+    ? 'ĐẶC BIỆT: Đây là chương giữa, TUYỆT ĐỐI KHÔNG kể lại bối cảnh khởi đầu và KHÔNG kết thúc câu chuyện!'
+    : ''
+}
 - TUYỆT ĐỐI KHÔNG đưa vào các nhân vật hoặc triều đại lịch sử khác ngoài bối cảnh "${epochInfo.epochDesc}".
 - TUYỆT ĐỐI KHÔNG đưa các thuật ngữ, chiến lược hoặc tuyến đường của các thời kỳ khác vào kịch bản (ví dụ: không đưa thuật ngữ thời chống Mỹ vào thời chống Pháp hoặc thời phong kiến).
 - TUYỆT ĐỐI KHÔNG viết các câu tụng ca sáo rỗng hoặc khuôn mẫu chung chung ("khẳng định vị thế độc lập", "đánh dấu bước ngoặt lịch sử", "bảo vệ non sông"). Hãy miêu tả trực tiếp HÀNH ĐỘNG, SỰ KIỆN, MƯU LƯỢC và BIẾN CỐ cụ thể gắn với các nhân vật và hiện vật.
@@ -706,8 +890,8 @@ NHẮC LẠI: Chỉ xuất văn xuôi thuần túy để đọc TTS trực tiế
         const isTooShort = actualWpm < minWpmAllowed;
         const wordsDiff = Math.abs(wordCount - targetWords);
         const deltaInstruction = isTooShort
-          ? `Văn bản hiện tại (${wordCount} từ) quá ngắn so với thời lượng ${chapterDurationSec}s (chuẩn ${targetWpm} WPM). Cần viết thêm khoảng ${wordsDiff} từ, khắc họa sâu sắc hơn diễn biến và ý nghĩa lịch sử để đạt trong khoảng ${minWords} - ${maxWords} từ (mục tiêu: ~${targetWords} từ).`
-          : `Văn bản hiện tại (${wordCount} từ) quá dài so với thời lượng ${chapterDurationSec}s (chuẩn ${targetWpm} WPM). Cần cắt giảm bớt khoảng ${wordsDiff} từ. QUY TẮC BẮT BUỘC: Bản sửa PHẢI có độ dài từ ${minWords} đến ${maxWords} từ (mục tiêu: ~${targetWords} từ). TUYỆT ĐỐI KHÔNG cắt ngắn dưới ${minWords} từ thành dạng tóm tắt đại ý. Giữ nguyên toàn bộ nhân vật, sự kiện và niên đại lịch sử cốt lõi.`;
+          ? `Văn bản hiện tại (${wordCount} từ) quá ngắn so với thời lượng ${chapterDurationSec}s (chuẩn ${targetWpm} WPM). Cần viết thêm khoảng ${wordsDiff} từ, khắc họa sâu sắc hơn không khí thời đại, bối cảnh chiến trường, cảm xúc và mưu lược nhân vật để đạt trong khoảng ${minWords} - ${maxWords} từ (mục tiêu: ~${targetWords} từ). TUYỆT ĐỐI KHÔNG lặp lại các sự kiện đã nói, KHÔNG kể nhảy cóc sang sự kiện của chương khác.`
+          : `Văn bản hiện tại (${wordCount} từ) quá dài so với thời lượng ${chapterDurationSec}s (chuẩn ${targetWpm} WPM). Cần cắt giảm bớt khoảng ${wordsDiff} từ, cô đọng lời văn giàu sức gợi. QUY TẮC BẮT BUỘC: Bản sửa PHẢI có độ dài từ ${minWords} đến ${maxWords} từ (mục tiêu: ~${targetWords} từ). TUYỆT ĐỐI KHÔNG cắt ngắn dưới ${minWords} từ thành dạng tóm tắt đại ý. Giữ nguyên toàn bộ nhân vật, sự kiện và niên đại lịch sử cốt lõi.`;
 
         const compactGrounding = selectedChunks.slice(0, 3).map((c) => `- [${c.canonicalName}]: ${cleanCrawlerText(c.summary)}`).join('\n');
         const chapterEntitiesStr = (coreChapterEntities.slice(0, 5).length > 0 ? coreChapterEntities.slice(0, 5) : [state.userPrompt]).join(', ');

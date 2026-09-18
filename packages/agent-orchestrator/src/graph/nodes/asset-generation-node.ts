@@ -164,7 +164,7 @@ export async function assetGenerationForkJoinNode(
           if (inspectRes.isPureCodeFallback) {
             try {
               const fallbackKeywords = `${scene.searchParams?.historicalPeriod || ''} ${state.userPrompt}`;
-              const catalogCandidates = matchCuratedCatalog(fallbackKeywords, candidateLimit);
+              const catalogCandidates = matchCuratedCatalog(fallbackKeywords, candidateLimit, scene.searchParams?.historicalPeriod);
               const freshCatalogCandidates = catalogCandidates.filter(
                 (c) => !sharedUsedAssetHashes.has(c.imageUrl) && !(c.sha256 && sharedUsedAssetHashes.has(c.sha256))
               );
@@ -183,11 +183,11 @@ export async function assetGenerationForkJoinNode(
             }
           }
 
-          // Tier 3: Smart Asset Repurposing with separation distance >= 2 scenes
+          // Tier 3: Smart Asset Repurposing with separation distance >= 2 scenes (Round-Robin LRU Rotation)
           if (inspectRes.isPureCodeFallback && usedAssetHistory.length > 0) {
             const eligiblePastAssets = usedAssetHistory.filter((item) => sIdx - item.sceneIndex >= 2);
             if (eligiblePastAssets.length > 0) {
-              const chosen = eligiblePastAssets[0];
+              const chosen = eligiblePastAssets[sIdx % eligiblePastAssets.length];
               const variedLayout = alternateLayouts[sIdx % alternateLayouts.length];
               inspectRes = {
                 updatedScene: {
