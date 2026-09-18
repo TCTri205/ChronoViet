@@ -63,11 +63,30 @@ packages/shared-spec/
 │   ├── config.ts              # System limits, thresholds & timeouts
 │   ├── dictionaries.ts        # Historical honorifics, can-chi, stopwords & spelling maps
 │   ├── env.ts                 # Zod schema for environment variables
-│   ├── historical-entities.ts # Master canonical entities & epochs catalog
+│   ├── historical-entities.ts # Master facade re-exporting ./entities/* & text-utils
 │   ├── index.ts               # Main package export entrypoint
 │   ├── interfaces.ts          # Pure TypeScript interfaces & data contracts
 │   ├── realtime.ts            # SSE and WebSocket streaming event schemas
-│   ├── schema.ts              # Central Zod validation schemas (v4.1 SSOT)
+│   ├── schema.ts              # Central facade re-exporting ./schema/*
+│   ├── text-utils.ts          # SSOT Vietnamese text normalization & boundary sanitizers
+│   ├── schema/                # Modular Zod validation schemas
+│   │   ├── chat.ts            # NotebookLM chat & supervisor schemas
+│   │   ├── entities.ts        # Canonical entities, aliases, audit log schemas
+│   │   ├── ingestion.ts       # Chunk metadata, triple extraction, benchmarks
+│   │   ├── video.ts           # ChronoVideoScript v4.1, scenes, layouts, tts schemas
+│   │   └── index.ts           # Schema aggregator facade
+│   ├── entities/              # Domain entities, taxonomies & resolvers
+│   │   ├── admin-hierarchy.ts # Administrative hierarchy dictionary & helpers
+│   │   ├── containment-validator.ts # Geographic containment validation
+│   │   ├── lexicons.ts        # Core organizations, events, artifacts, docs
+│   │   ├── locations.ts       # Canonical location dictionary & mappings
+│   │   ├── persons.ts         # Canonical historical persons dictionary
+│   │   ├── resolvers.ts       # Entity resolution, entity-type inference
+│   │   ├── types.ts           # Domain entity TypeScript interfaces
+│   │   └── index.ts           # Entities aggregator facade
+│   ├── nlp/                   # Pure TypeScript NLP & Candidate Extractors
+│   │   ├── vietnamese-ner.ts  # 3-Layer pure TS Vietnamese Historical NER engine
+│   │   └── index.ts           # NLP aggregator facade
 │   └── __tests__/             # Contract validation test suites (Vitest)
 ├── package.json
 └── tsconfig.json

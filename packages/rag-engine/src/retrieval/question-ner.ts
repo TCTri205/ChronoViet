@@ -21,8 +21,8 @@ import {
   ExtractedQueryInfo,
   HistoricalTemporalInfo,
   HistoricalPremiseValidationResult,
+  extractHistoricalCandidateSpans,
 } from '@chronoviet/shared-spec';
-import { extractHistoricalCandidateSpans } from '@chronoviet/data-ingestion';
 import { globalCacheManager } from './cache-manager.js';
 
 export type {

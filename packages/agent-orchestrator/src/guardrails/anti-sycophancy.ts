@@ -4,7 +4,13 @@
  * and generates strict refusal & verification guidance for LLM prompts.
  */
 
-import { resolveCanonicalEntity, isKnownMasterEntity, HistoricalEntityInfo, HISTORICAL_PERSON_DICTIONARY } from '@chronoviet/shared-spec';
+import {
+  resolveCanonicalEntity,
+  isKnownMasterEntity,
+  HistoricalEntityInfo,
+  HISTORICAL_PERSON_DICTIONARY,
+  extractHistoricalCandidateSpans,
+} from '@chronoviet/shared-spec';
 
 export interface PremiseAnalysisResult {
   isLeadingQuestion: boolean;
@@ -85,7 +91,30 @@ export function extractRecognizedOrProperNounEntities(query: string): string[] {
     'không', 'chăng', 'hả', 'nhỉ', 'và', 'với', 'cùng', 'hai', 'người',
   ]);
 
-  // 1. First pass: recognized master entities from shared-spec (8 words down to 1)
+  // 1. First pass: recognized candidate spans from shared-spec NER (Gazetteer + honorifics + proper nouns)
+  const candidateSpans = extractHistoricalCandidateSpans(query);
+  for (const spanObj of candidateSpans) {
+    const span = cleanEntitySpan(spanObj.text.trim());
+    const lower = span.toLowerCase();
+    if (STOPWORDS.has(lower)) continue;
+    if (span.length < 3 || lower === 'bạn' || lower === 'ban') continue;
+
+    if (!recognized.some((r) => r.toLowerCase() === lower)) {
+      recognized.push(span);
+      // Mark covered token indices
+      const spanClean = span.replace(/[,;!?.:~"'/()\\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const spanTokens = spanClean.split(' ').filter(Boolean);
+      for (let i = 0; i <= tokens.length - spanTokens.length; i++) {
+        const slice = tokens.slice(i, i + spanTokens.length).join(' ').toLowerCase();
+        if (slice === spanTokens.join(' ').toLowerCase()) {
+          for (let k = 0; k < spanTokens.length; k++) coveredIndices.add(i + k);
+          break;
+        }
+      }
+    }
+  }
+
+  // Also check direct multi-word master entities
   for (let len = Math.min(8, n); len >= 1; len--) {
     for (let i = 0; i <= n - len; i++) {
       if (Array.from({ length: len }, (_, k) => i + k).some((idx) => coveredIndices.has(idx))) continue;
@@ -94,7 +123,7 @@ export function extractRecognizedOrProperNounEntities(query: string): string[] {
       if (STOPWORDS.has(lower)) continue;
       if (len === 1 && (span.length < 3 || lower === 'bạn' || lower === 'ban')) continue;
 
-      if (isKnownMasterEntity(span)) {
+      if (isKnownMasterEntity(span) && !recognized.some((r) => r.toLowerCase() === lower)) {
         recognized.push(span);
         for (let k = 0; k < len; k++) coveredIndices.add(i + k);
       }

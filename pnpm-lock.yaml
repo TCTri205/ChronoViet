@@ -277,9 +277,6 @@ importers:
 
   packages/rag-engine:
     dependencies:
-      '@chronoviet/data-ingestion':
-        specifier: workspace:*
-        version: link:../data-ingestion
       '@chronoviet/infra':
         specifier: workspace:*
         version: link:../infra
@@ -287,6 +284,9 @@ importers:
         specifier: workspace:*
         version: link:../shared-spec
     devDependencies:
+      '@chronoviet/data-ingestion':
+        specifier: workspace:*
+        version: link:../data-ingestion
       typescript:
         specifier: ^5.3.3
         version: 5.9.3

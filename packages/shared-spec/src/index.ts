@@ -4,3 +4,6 @@ export * from './config.js';
 export * from './historical-entities.js';
 export * from './dictionaries.js';
 export * from './realtime.js';
+export * from './text-utils.js';
+export * from './nlp/index.js';
+export * from './entities/index.js';

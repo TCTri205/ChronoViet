@@ -1,0 +1,850 @@
+/**
+ * Dual-Branch Ingestion Pipeline Subroutines
+ * Decomposed stages for Vector & Knowledge Graph processing, and database/in-memory persistence.
+ */
+
+import {
+  resolveHistoricalEpochs,
+  resolveCanonicalEntity,
+  resolveLocationMapping,
+  isKnownMasterEntity,
+} from '@chronoviet/shared-spec';
+import {
+  createLogger,
+  envConfig,
+  query,
+  withTransaction,
+  inMemoryStore,
+  DbEntity,
+  DbDocumentChunk,
+  DbQuarantineTriple,
+  DbUnmappedEntity,
+  generateEmbeddingsBatch,
+  hybridInferenceDispatcher,
+  formatConciseError,
+} from '@chronoviet/infra';
+import { IngestionMetricsCollector } from '../diagnostics/index.js';
+import { ProcessedHierarchicalChunk } from '../chunking/hierarchical-chunker.js';
+import {
+  extractTriplesFromText,
+  extractTriplesFromTextAsync,
+  ExtractedTriple,
+} from '../triple-extractor.js';
+import { extractionCache } from '../cache/extraction-cache.js';
+import type { DualBranchSeedOptions } from './dual-branch-seeder.js';
+
+const log = createLogger({ service: 'data-ingestion' });
+
+export const CONFIDENCE_PRODUCTION_THRESHOLD = 0.85;
+export const EMBEDDING_SUB_BATCH_SIZE = 64;
+
+export interface ChunkEmbeddingItem {
+  chunk: ProcessedHierarchicalChunk;
+  embedding: number[];
+}
+
+export interface ProcessedGraphData {
+  allTriples: ExtractedTriple[];
+  entityMap: Map<string, DbEntity>;
+  productionTriplesMap: Map<string, ExtractedTriple>;
+  quarantineTriplesList: DbQuarantineTriple[];
+  unmappedEntitiesMap: Map<string, DbUnmappedEntity>;
+  chunkEntityMap: Map<string, Set<string>>;
+  failedExtractionChunkIds: string[];
+}
+
+export interface PrepareEmbeddingsParams {
+  allChunks: ProcessedHierarchicalChunk[];
+  isGraphOnly: boolean;
+  metricsCollector: IngestionMetricsCollector;
+  docPrefix: string;
+  correlationId: string;
+}
+
+export interface ProcessGraphParams {
+  parentChunks: ProcessedHierarchicalChunk[];
+  childChunks: ProcessedHierarchicalChunk[];
+  allChunks: ProcessedHierarchicalChunk[];
+  isVectorOnly: boolean;
+  docPrefix: string;
+  correlationId: string;
+  options?: DualBranchSeedOptions;
+  metricsCollector: IngestionMetricsCollector;
+}
+
+export interface PersistPostgresParams {
+  entityMap: Map<string, DbEntity>;
+  productionTriplesMap: Map<string, ExtractedTriple>;
+  quarantineTriplesList: DbQuarantineTriple[];
+  unmappedEntitiesMap: Map<string, DbUnmappedEntity>;
+  chunkEmbeddings: ChunkEmbeddingItem[];
+  chunkEntityMap: Map<string, Set<string>>;
+  isVectorOnly: boolean;
+  isGraphOnly: boolean;
+  options?: DualBranchSeedOptions;
+}
+
+export interface PersistInMemoryParams {
+  entityMap: Map<string, DbEntity>;
+  productionTriplesMap: Map<string, ExtractedTriple>;
+  quarantineTriplesList: DbQuarantineTriple[];
+  unmappedEntitiesMap: Map<string, DbUnmappedEntity>;
+  chunkEmbeddings: ChunkEmbeddingItem[];
+  chunkEntityMap: Map<string, Set<string>>;
+}
+
+/**
+ * 1. Generates BGE-M3 vector embeddings for chunks in bounded sub-batches.
+ */
+export async function prepareVectorChunksAndEmbeddings(
+  params: PrepareEmbeddingsParams
+): Promise<ChunkEmbeddingItem[]> {
+  const { allChunks, isGraphOnly, metricsCollector, docPrefix, correlationId } = params;
+  metricsCollector.startStage('embedding');
+  const chunkEmbeddings: ChunkEmbeddingItem[] = [];
+
+  if (!isGraphOnly && allChunks.length > 0) {
+    const chunkTexts = allChunks.map((c) => c.textContent);
+    const totalBatches = Math.max(1, Math.ceil(chunkTexts.length / EMBEDDING_SUB_BATCH_SIZE));
+
+    for (let b = 0; b < chunkTexts.length; b += EMBEDDING_SUB_BATCH_SIZE) {
+      const batchIndex = Math.floor(b / EMBEDDING_SUB_BATCH_SIZE) + 1;
+      const subBatchTexts = chunkTexts.slice(b, b + EMBEDDING_SUB_BATCH_SIZE);
+      const subBatchChunks = allChunks.slice(b, b + EMBEDDING_SUB_BATCH_SIZE);
+      const batchStartTime = Date.now();
+
+      const vectors = await generateEmbeddingsBatch(subBatchTexts);
+      const batchDurationMs = Date.now() - batchStartTime;
+      metricsCollector.recordVectors(subBatchTexts.length, batchDurationMs);
+
+      for (let i = 0; i < subBatchChunks.length; i++) {
+        chunkEmbeddings.push({ chunk: subBatchChunks[i], embedding: vectors[i] });
+      }
+
+      const vectorsPerSec =
+        batchDurationMs > 0 ? Number(((subBatchTexts.length / batchDurationMs) * 1000).toFixed(2)) : 0;
+
+      log.info(
+        'embedding.batch_completed',
+        `${docPrefix}Generated embeddings sub-batch [${batchIndex}/${totalBatches}] (${subBatchTexts.length} vectors) in ${batchDurationMs}ms (${vectorsPerSec} vec/s)`,
+        {
+          correlationId,
+          batchIndex,
+          totalBatches,
+          batchSize: subBatchTexts.length,
+          durationMs: batchDurationMs,
+          vectorsPerSec,
+        }
+      );
+    }
+  }
+
+  metricsCollector.endStage('embedding');
+  return chunkEmbeddings;
+}
+
+/**
+ * 2. Extracts, canonicalizes, and classifies triples into production or quarantine graphs.
+ */
+export async function processKnowledgeGraphTriples(
+  params: ProcessGraphParams
+): Promise<ProcessedGraphData> {
+  const {
+    parentChunks,
+    childChunks,
+    allChunks,
+    isVectorOnly,
+    docPrefix,
+    correlationId,
+    options,
+    metricsCollector,
+  } = params;
+
+  const allTriples: ExtractedTriple[] = [];
+  const entityMap = new Map<string, DbEntity>();
+  const productionTriplesMap = new Map<string, ExtractedTriple>();
+  const quarantineTriplesList: DbQuarantineTriple[] = [];
+  const unmappedEntitiesMap = new Map<string, DbUnmappedEntity>();
+  const chunkEntityMap = new Map<string, Set<string>>(); // chunkId -> Set of entityIds
+
+  interface ChunkExtractionResult {
+    chunk: ProcessedHierarchicalChunk;
+    triples: ExtractedTriple[];
+  }
+
+  const chunkResults: ChunkExtractionResult[] = new Array(allChunks.length);
+  const failedExtractionChunkIds: string[] = [];
+
+  metricsCollector.startStage('extraction');
+
+  // Stage 1 Fast-Path NER for Parent Chunks (2,000–3,000 words) — Entity linking only (No unverified rule triples for KG)
+  log.info(
+    'dual_branch_seeder.parent_chunks_ner',
+    `${docPrefix}Processed ${parentChunks.length} parent chunks via Stage 1 Fast-Path NER (<1ms/chunk)`,
+    { correlationId, parentChunksCount: parentChunks.length }
+  );
+  for (let i = 0; i < parentChunks.length; i++) {
+    const parentChunk = parentChunks[i];
+    const parentTriples = extractTriplesFromText(parentChunk.textContent);
+    chunkResults[i] = { chunk: parentChunk, triples: parentTriples };
+  }
+
+  if (isVectorOnly) {
+    // Fast Path: Stage 1 Pure TS NER for Child Chunks (Bypass LLM, Vector only)
+    log.info(
+      'dual_branch_seeder.stage_vector_only',
+      `${docPrefix}Stage 1 (Vector): Extracting Fast NER candidate entities for ${childChunks.length} child chunks (LLM bypassed)`,
+      { correlationId, childChunksCount: childChunks.length }
+    );
+    for (let i = 0; i < childChunks.length; i++) {
+      const childChunk = childChunks[i];
+      const childTriples = extractTriplesFromText(childChunk.textContent);
+      chunkResults[parentChunks.length + i] = { chunk: childChunk, triples: childTriples };
+    }
+  } else if (childChunks.length > 0) {
+    // Stage 2 (or Full): Parallel Child Chunk Triple Extraction via LLM / Cache
+    const uncachedItems: { childIdx: number; chunk: ProcessedHierarchicalChunk }[] = [];
+    let initialCachedCount = 0;
+
+    for (let i = 0; i < childChunks.length; i++) {
+      const chunk = childChunks[i];
+      const resultIdx = parentChunks.length + i;
+
+      if (!options?.skipCache) {
+        const cached = await extractionCache.get(chunk.textContent);
+        if (cached !== null && Array.isArray(cached)) {
+          chunkResults[resultIdx] = { chunk, triples: cached };
+          initialCachedCount++;
+          metricsCollector.recordCache(true);
+          continue;
+        }
+      }
+
+      uncachedItems.push({ childIdx: i, chunk });
+    }
+
+    const cachedPercent = ((initialCachedCount / childChunks.length) * 100).toFixed(1);
+
+    if (initialCachedCount > 0) {
+      log.info(
+        'dual_branch_seeder.cache_preload',
+        `${docPrefix}Resume Check: Restored ${initialCachedCount}/${childChunks.length} child chunks from disk cache (${cachedPercent}%)`,
+        {
+          correlationId,
+          cachedCount: initialCachedCount,
+          totalCount: childChunks.length,
+          remainingCount: uncachedItems.length,
+          cachedPercent: Number(cachedPercent),
+        }
+      );
+    }
+
+    if (uncachedItems.length === 0) {
+      log.info(
+        'dual_branch_seeder.all_chunks_cached',
+        `${docPrefix}All ${childChunks.length} child chunks successfully restored from cache (LLM extraction completely bypassed)`,
+        { correlationId, childChunksCount: childChunks.length }
+      );
+    } else {
+      const activeTargetsCount = hybridInferenceDispatcher.getActiveTargets('llm').length;
+      const isLocalOnlyMode =
+        envConfig.INFERENCE_ROUTING_MODE === 'local_only' ||
+        (!envConfig.ENABLE_CLOUD_FALLBACK && envConfig.USE_LOCAL_LLM) ||
+        activeTargetsCount <= 1;
+
+      const concurrency = isLocalOnlyMode
+        ? Math.min(
+            16,
+            Math.max(
+              1,
+              envConfig.LOCAL_LLM_EXTRACTION_PARALLEL || envConfig.LOCAL_LLM_MAX_CONCURRENCY || 4
+            )
+          )
+        : Math.min(16, Math.max(1, activeTargetsCount));
+
+      log.info(
+        'dual_branch_seeder.extract_triples_parallel',
+        `${docPrefix}Extracting triples for remaining ${uncachedItems.length}/${childChunks.length} child chunks with concurrency=${concurrency} (activeTargets=${activeTargetsCount})`,
+        {
+          correlationId,
+          remainingCount: uncachedItems.length,
+          childChunksCount: childChunks.length,
+          concurrency,
+          activeTargetsCount,
+        }
+      );
+
+      let nextUncachedIndex = 0;
+      let completedUncachedChunks = 0;
+
+      async function childExtractionWorker() {
+        while (nextUncachedIndex < uncachedItems.length) {
+          const itemIdx = nextUncachedIndex++;
+          const { childIdx, chunk } = uncachedItems[itemIdx];
+          const resultIdx = parentChunks.length + childIdx;
+          const chunkStartTime = Date.now();
+
+          try {
+            const triples = await extractTriplesFromTextAsync(chunk.textContent, {
+              ...options,
+              chunkId: chunk.id,
+            });
+            chunkResults[resultIdx] = { chunk, triples };
+            completedUncachedChunks++;
+
+            const meta = (triples as any)?._meta;
+            const isCached = meta?.cached === true;
+            metricsCollector.recordCache(isCached);
+
+            const totalCompleted = initialCachedCount + completedUncachedChunks;
+            const percent = ((totalCompleted / childChunks.length) * 100).toFixed(1);
+            const providerName = meta?.provider || (isCached ? 'CACHED' : 'LOCAL_LLM');
+            const modelName = meta?.model ? ` (${meta.model})` : '';
+            const chunkDurationMs = meta?.durationMs ?? Date.now() - chunkStartTime;
+            const chunkSec = (chunkDurationMs / 1000).toFixed(1);
+
+            log.info(
+              'dual_branch_seeder.chunk_success',
+              `${docPrefix}Child Chunk [${totalCompleted}/${childChunks.length}] (${percent}%) -> ${triples.length} triples via [${providerName}${modelName}] in ${chunkSec}s`,
+              {
+                correlationId,
+                chunkIndex: totalCompleted,
+                childChunksCount: childChunks.length,
+                chunkId: chunk.id,
+                triplesCount: triples.length,
+                provider: providerName,
+                model: meta?.model || 'UNKNOWN',
+                strategy: meta?.strategy || 'ensemble_ai',
+                durationMs: chunkDurationMs,
+              }
+            );
+          } catch (err: any) {
+            completedUncachedChunks++;
+            const totalCompleted = initialCachedCount + completedUncachedChunks;
+            const percent = ((totalCompleted / childChunks.length) * 100).toFixed(1);
+            const conciseErrMsg = formatConciseError(err);
+            failedExtractionChunkIds.push(chunk.id);
+
+            const isStrictQuality =
+              options?.strict !== false &&
+              (options?.strict === true || envConfig.EVAL_STRICT || !options?.allowFallback);
+
+            if (isStrictQuality) {
+              log.error(
+                'dual_branch_seeder.chunk_failed_strict',
+                `Child Chunk [${totalCompleted}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}] in STRICT mode: ${conciseErrMsg}. (Rule fallback rejected to maintain knowledge integrity)`,
+                {
+                  correlationId,
+                  chunkIndex: totalCompleted,
+                  childChunksCount: childChunks.length,
+                  chunkId: chunk.id,
+                  error: conciseErrMsg,
+                }
+              );
+              chunkResults[resultIdx] = { chunk, triples: [] };
+            } else {
+              const fallbackTriples = extractTriplesFromText(chunk.textContent);
+              log.warn(
+                'dual_branch_seeder.chunk_failed_salvaged',
+                `Child Chunk [${totalCompleted}/${childChunks.length}] (${percent}%) -> LLM extraction failed for [${chunk.id}]: ${conciseErrMsg}. Salvaged ${fallbackTriples.length} rule-based triples (--allow-fallback).`,
+                {
+                  correlationId,
+                  chunkIndex: totalCompleted,
+                  childChunksCount: childChunks.length,
+                  chunkId: chunk.id,
+                  error: conciseErrMsg,
+                  salvagedCount: fallbackTriples.length,
+                }
+              );
+              chunkResults[resultIdx] = { chunk, triples: fallbackTriples };
+            }
+          }
+        }
+      }
+
+      const workerCount = Math.min(concurrency, uncachedItems.length);
+      const workers = Array.from({ length: workerCount }, () => childExtractionWorker());
+      await Promise.all(workers);
+    }
+  }
+
+  metricsCollector.endStage('extraction');
+
+  // Single-Thread Deterministic Aggregation
+  for (const item of chunkResults) {
+    if (!item) continue;
+    const { chunk, triples } = item;
+    allTriples.push(...triples);
+
+    const chunkEntityIds = new Set<string>();
+
+    for (const t of triples) {
+      const srcEntity = resolveCanonicalEntity(t.sourceEntityName);
+      const isSrcMaster = isKnownMasterEntity(t.sourceEntityName);
+      if (!isSrcMaster) {
+        const existing = unmappedEntitiesMap.get(srcEntity.entityId);
+        unmappedEntitiesMap.set(srcEntity.entityId, {
+          id: srcEntity.entityId,
+          raw_name: t.sourceEntityName,
+          inferred_type: srcEntity.type,
+          occurrence_count: (existing?.occurrence_count || 0) + 1,
+          sample_context: chunk.textContent.slice(0, 300),
+          chunk_id: chunk.id,
+          status: 'PENDING_TRIAGE',
+        });
+      }
+
+      let isTgtMaster = false;
+      let tgtEntity: ReturnType<typeof resolveCanonicalEntity> | null = null;
+      if (t.targetEntityId !== 'doc:historical_context') {
+        tgtEntity = resolveCanonicalEntity(t.targetEntityName);
+        isTgtMaster = isKnownMasterEntity(t.targetEntityName);
+        if (!isTgtMaster) {
+          const existing = unmappedEntitiesMap.get(tgtEntity.entityId);
+          unmappedEntitiesMap.set(tgtEntity.entityId, {
+            id: tgtEntity.entityId,
+            raw_name: t.targetEntityName,
+            inferred_type: tgtEntity.type,
+            occurrence_count: (existing?.occurrence_count || 0) + 1,
+            sample_context: chunk.textContent.slice(0, 300),
+            chunk_id: chunk.id,
+            status: 'PENDING_TRIAGE',
+          });
+        }
+      }
+
+      // Quality Validation Gate: Route to Quarantine or Production Graph
+      if (tgtEntity && srcEntity.entityId === tgtEntity.entityId) {
+        metricsCollector.recordQuarantine('SELF_LOOP');
+        quarantineTriplesList.push({
+          source_entity_id: srcEntity.entityId,
+          target_entity_id: tgtEntity.entityId,
+          source_name: t.sourceEntityName,
+          target_name: t.targetEntityName,
+          relation_type: t.relationType,
+          confidence: t.confidence,
+          chunk_id: chunk.id,
+          reason: 'SELF_LOOP',
+          status: 'REJECTED',
+          metadata: { note: 'Self-loop relationship excluded from production graph' },
+        });
+      } else if (t.confidence < CONFIDENCE_PRODUCTION_THRESHOLD) {
+        metricsCollector.recordQuarantine('LOW_CONFIDENCE');
+        quarantineTriplesList.push({
+          source_entity_id: srcEntity.entityId,
+          target_entity_id: tgtEntity?.entityId || t.targetEntityId,
+          source_name: t.sourceEntityName,
+          target_name: t.targetEntityName,
+          relation_type: t.relationType,
+          confidence: t.confidence,
+          chunk_id: chunk.id,
+          reason: 'LOW_CONFIDENCE',
+          status: 'PENDING_REVIEW',
+          metadata: { threshold: CONFIDENCE_PRODUCTION_THRESHOLD },
+        });
+      } else if (t.targetEntityId === 'doc:historical_context' || !tgtEntity) {
+        metricsCollector.recordQuarantine('DANGLING_RELATION');
+        quarantineTriplesList.push({
+          source_entity_id: srcEntity.entityId,
+          target_entity_id: t.targetEntityId,
+          source_name: t.sourceEntityName,
+          target_name: t.targetEntityName,
+          relation_type: t.relationType,
+          confidence: t.confidence,
+          chunk_id: chunk.id,
+          reason: 'DANGLING_RELATION',
+          status: 'PENDING_REVIEW',
+        });
+      } else {
+        // High-confidence Verified Production Triple
+        const key = `${srcEntity.entityId}|${tgtEntity.entityId}|${t.relationType}`;
+        const existing = productionTriplesMap.get(key);
+        if (!existing || t.confidence > existing.confidence) {
+          productionTriplesMap.set(key, {
+            ...t,
+            sourceEntityId: srcEntity.entityId,
+            targetEntityId: tgtEntity.entityId,
+          });
+        }
+
+        // Register Production Entities
+        entityMap.set(srcEntity.entityId, {
+          id: srcEntity.entityId,
+          name: srcEntity.canonicalName,
+          type: srcEntity.type,
+          aliases: srcEntity.aliases,
+          metadata: {},
+        });
+        chunkEntityIds.add(srcEntity.entityId);
+
+        entityMap.set(tgtEntity.entityId, {
+          id: tgtEntity.entityId,
+          name: tgtEntity.canonicalName,
+          type: tgtEntity.type,
+          aliases: tgtEntity.aliases,
+          metadata: {},
+        });
+        chunkEntityIds.add(tgtEntity.entityId);
+      }
+    }
+
+    // Process chunk location mapping if present
+    if (chunk.metadata.location) {
+      const locMapping = resolveLocationMapping(chunk.metadata.location);
+      if (locMapping) {
+        const canonicalLoc = resolveCanonicalEntity(locMapping.canonicalModernName);
+        entityMap.set(canonicalLoc.entityId, {
+          id: canonicalLoc.entityId,
+          name: canonicalLoc.canonicalName,
+          type: canonicalLoc.type,
+          aliases: canonicalLoc.aliases,
+          metadata: { historicalName: locMapping.historicalName, dynasty: locMapping.dynasty },
+        });
+        chunkEntityIds.add(canonicalLoc.entityId);
+      }
+    }
+
+    // Include keyFigures if present in chunk metadata
+    if (chunk.metadata.keyFigures) {
+      for (const figure of chunk.metadata.keyFigures) {
+        const figureEntity = resolveCanonicalEntity(figure);
+        entityMap.set(figureEntity.entityId, {
+          id: figureEntity.entityId,
+          name: figureEntity.canonicalName,
+          type: figureEntity.type,
+          aliases: figureEntity.aliases,
+          metadata: {},
+        });
+        chunkEntityIds.add(figureEntity.entityId);
+      }
+    }
+
+    chunkEntityMap.set(chunk.id, chunkEntityIds);
+  }
+
+  return {
+    allTriples,
+    entityMap,
+    productionTriplesMap,
+    quarantineTriplesList,
+    unmappedEntitiesMap,
+    chunkEntityMap,
+    failedExtractionChunkIds,
+  };
+}
+
+/**
+ * 3. Persists entities, relationships, quarantine items, document chunks, and embeddings to PostgreSQL.
+ */
+export async function persistToPostgresTransaction(params: PersistPostgresParams): Promise<void> {
+  const {
+    entityMap,
+    productionTriplesMap,
+    quarantineTriplesList,
+    unmappedEntitiesMap,
+    chunkEmbeddings,
+    chunkEntityMap,
+    isVectorOnly,
+    isGraphOnly,
+    options,
+  } = params;
+
+  await withTransaction(async (execQuery: any) => {
+    // 3a. Batch Ingest Graph Entities (200 entities per batch)
+    const allEntities = Array.from(entityMap.values());
+    for (let i = 0; i < allEntities.length; i += 200) {
+      const batch = allEntities.slice(i, i + 200);
+      const values: unknown[] = [];
+      const valueRows: string[] = [];
+      batch.forEach((entity, idx) => {
+        const offset = idx * 5;
+        valueRows.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5})`);
+        values.push(entity.id, entity.name, entity.type, entity.aliases, JSON.stringify(entity.metadata));
+      });
+      if (valueRows.length > 0) {
+        await execQuery(
+          `INSERT INTO entities (id, name, type, aliases, metadata)
+           VALUES ${valueRows.join(', ')}
+           ON CONFLICT (id) DO UPDATE SET aliases = EXCLUDED.aliases;`,
+          values
+        );
+      }
+    }
+
+    // 3b, 3c, 3d: Graph Relations, Quarantine, Unmapped Entities (Bypass if vector-only)
+    if (!isVectorOnly) {
+      // 3b. Batch Ingest Verified Graph Relationships (Triples) (200 triples per batch)
+      const validTriples = Array.from(productionTriplesMap.values());
+
+      for (let i = 0; i < validTriples.length; i += 200) {
+        const batch = validTriples.slice(i, i + 200);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach((triple, idx) => {
+          const offset = idx * 4;
+          valueRows.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`);
+          values.push(triple.sourceEntityId, triple.targetEntityId, triple.relationType, triple.confidence);
+        });
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO relationships (source_entity_id, target_entity_id, relation_type, confidence)
+             VALUES ${valueRows.join(', ')}
+             ON CONFLICT (source_entity_id, target_entity_id, relation_type) DO UPDATE SET confidence = EXCLUDED.confidence;`,
+            values
+          );
+        }
+      }
+
+      // 3c. Batch Ingest Quarantine Triples (200 per batch)
+      if (quarantineTriplesList.length > 0) {
+        const chunkIds = Array.from(
+          new Set(
+            quarantineTriplesList
+              .map((qt) => qt.chunk_id)
+              .filter((id): id is string => Boolean(id))
+          )
+        );
+        if (chunkIds.length > 0) {
+          await execQuery(`DELETE FROM quarantine_triples WHERE chunk_id = ANY($1::text[]);`, [chunkIds]);
+        }
+      }
+      for (let i = 0; i < quarantineTriplesList.length; i += 200) {
+        const batch = quarantineTriplesList.slice(i, i + 200);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach((qt, idx) => {
+          const offset = idx * 10;
+          valueRows.push(
+            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10})`
+          );
+          values.push(
+            qt.source_entity_id || null,
+            qt.target_entity_id || null,
+            qt.source_name || null,
+            qt.target_name || null,
+            qt.relation_type || null,
+            qt.confidence,
+            qt.chunk_id || null,
+            qt.reason,
+            qt.status || 'PENDING_REVIEW',
+            JSON.stringify(qt.metadata || {})
+          );
+        });
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO quarantine_triples (
+              source_entity_id, target_entity_id, source_name, target_name,
+              relation_type, confidence, chunk_id, reason, status, metadata
+             ) VALUES ${valueRows.join(', ')};`,
+            values
+          );
+        }
+      }
+
+      // 3d. Batch Ingest Unmapped Entities (200 per batch)
+      const allUnmapped = Array.from(unmappedEntitiesMap.values());
+      for (let i = 0; i < allUnmapped.length; i += 200) {
+        const batch = allUnmapped.slice(i, i + 200);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach((ue, idx) => {
+          const offset = idx * 7;
+          valueRows.push(
+            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`
+          );
+          values.push(
+            ue.id,
+            ue.raw_name,
+            ue.inferred_type,
+            ue.occurrence_count || 1,
+            ue.sample_context || null,
+            ue.chunk_id || null,
+            ue.status || 'PENDING_TRIAGE'
+          );
+        });
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO unmapped_entities (id, raw_name, inferred_type, occurrence_count, sample_context, chunk_id, status)
+             VALUES ${valueRows.join(', ')}
+             ON CONFLICT (id) DO UPDATE SET occurrence_count = unmapped_entities.occurrence_count + EXCLUDED.occurrence_count, updated_at = CURRENT_TIMESTAMP;`,
+            values
+          );
+        }
+      }
+    }
+
+    // 3e. Batch Ingest Document Chunks & Vector Embeddings (100 chunks per batch) (Bypass if graph-only)
+    if (!isGraphOnly) {
+      for (let i = 0; i < chunkEmbeddings.length; i += 100) {
+        const batch = chunkEmbeddings.slice(i, i + 100);
+        const values: unknown[] = [];
+        const valueRows: string[] = [];
+        batch.forEach(({ chunk, embedding }, idx) => {
+          const offset = idx * 14;
+          const epochIds =
+            chunk.metadata.epochIds && chunk.metadata.epochIds.length > 0
+              ? chunk.metadata.epochIds
+              : resolveHistoricalEpochs(chunk.metadata.timeStart, chunk.metadata.timeEnd);
+
+          valueRows.push(
+            `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}::vector, $${offset + 14}::jsonb)`
+          );
+          values.push(
+            chunk.id,
+            chunk.title,
+            chunk.textContent,
+            chunk.metadata.dynasty,
+            epochIds,
+            chunk.metadata.sourceReliability,
+            chunk.metadata.parentChunkId || null,
+            chunk.metadata.timeStart || null,
+            chunk.metadata.timeEnd || null,
+            chunk.metadata.keyFigures || [],
+            chunk.metadata.location || null,
+            chunk.metadata.pageNumber || null,
+            JSON.stringify(embedding),
+            JSON.stringify(chunk.metadata || {})
+          );
+        });
+
+        if (valueRows.length > 0) {
+          await execQuery(
+            `INSERT INTO document_chunks (
+              id, title, text_content, dynasty, epoch_ids, source_reliability, parent_chunk_id,
+              time_start, time_end, key_figures, location, page_number, embedding, metadata
+             )
+             VALUES ${valueRows.join(', ')}
+             ON CONFLICT (id) DO UPDATE SET
+               title = EXCLUDED.title,
+               text_content = EXCLUDED.text_content,
+               dynasty = EXCLUDED.dynasty,
+               epoch_ids = EXCLUDED.epoch_ids,
+               source_reliability = EXCLUDED.source_reliability,
+               parent_chunk_id = EXCLUDED.parent_chunk_id,
+               time_start = EXCLUDED.time_start,
+               time_end = EXCLUDED.time_end,
+               key_figures = EXCLUDED.key_figures,
+               location = EXCLUDED.location,
+               page_number = EXCLUDED.page_number,
+               embedding = EXCLUDED.embedding,
+               metadata = EXCLUDED.metadata;`,
+            values
+          );
+        }
+      }
+    }
+
+    // 3f. Batch Ingest Entity-Chunk Cross-Links (500 cross-links per batch)
+    const entityChunkSet = new Set<string>();
+    const allEntityChunks: { entityId: string; chunkId: string }[] = [];
+    for (const [chunkId, entityIds] of chunkEntityMap.entries()) {
+      for (const entityId of entityIds) {
+        const key = `${entityId}|${chunkId}`;
+        if (!entityChunkSet.has(key)) {
+          entityChunkSet.add(key);
+          allEntityChunks.push({ entityId, chunkId });
+        }
+      }
+    }
+    for (let i = 0; i < allEntityChunks.length; i += 500) {
+      const batch = allEntityChunks.slice(i, i + 500);
+      const values: unknown[] = [];
+      const valueRows: string[] = [];
+      batch.forEach((ec, idx) => {
+        const offset = idx * 2;
+        valueRows.push(`($${offset + 1}, $${offset + 2})`);
+        values.push(ec.entityId, ec.chunkId);
+      });
+      if (valueRows.length > 0) {
+        await execQuery(
+          `INSERT INTO entity_chunks (entity_id, chunk_id)
+           VALUES ${valueRows.join(', ')}
+           ON CONFLICT DO NOTHING;`,
+          values
+        );
+      }
+    }
+  });
+
+  // Refresh Materialized Views on PostgreSQL for instant GraphRAG lineage traversal (unless skipped in bulk batch mode)
+  if (!options?.skipMvRefresh && !isVectorOnly && productionTriplesMap.size > 0) {
+    try {
+      await query(`REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dynasty_lineage_paths;`);
+    } catch {
+      try {
+        await query(`REFRESH MATERIALIZED VIEW mv_dynasty_lineage_paths;`);
+      } catch {
+        // Graceful fallback if view is not initialized
+      }
+    }
+  }
+}
+
+/**
+ * 4. Fallback in-memory persistence for testing and evaluation environments without live Postgres.
+ */
+export function persistToInMemoryStore(params: PersistInMemoryParams): void {
+  const {
+    entityMap,
+    productionTriplesMap,
+    quarantineTriplesList,
+    unmappedEntitiesMap,
+    chunkEmbeddings,
+    chunkEntityMap,
+  } = params;
+
+  for (const entity of entityMap.values()) {
+    inMemoryStore.entities.set(entity.id, entity);
+  }
+
+  for (const triple of productionTriplesMap.values()) {
+    inMemoryStore.relationships.push({
+      id: inMemoryStore.nextRelId++,
+      source_entity_id: triple.sourceEntityId,
+      target_entity_id: triple.targetEntityId,
+      relation_type: triple.relationType,
+      confidence: triple.confidence,
+    });
+  }
+
+  inMemoryStore.quarantineTriples.push(...quarantineTriplesList);
+  for (const [id, ue] of unmappedEntitiesMap.entries()) {
+    const existing = inMemoryStore.unmappedEntities.get(id);
+    inMemoryStore.unmappedEntities.set(id, {
+      ...ue,
+      occurrence_count: (existing?.occurrence_count || 0) + (ue.occurrence_count || 1),
+    });
+  }
+
+  for (const { chunk, embedding } of chunkEmbeddings) {
+    const epochIds =
+      chunk.metadata.epochIds && chunk.metadata.epochIds.length > 0
+        ? chunk.metadata.epochIds
+        : resolveHistoricalEpochs(chunk.metadata.timeStart, chunk.metadata.timeEnd);
+
+    const dbChunk: DbDocumentChunk = {
+      id: chunk.id,
+      title: chunk.title,
+      text_content: chunk.textContent,
+      dynasty: chunk.metadata.dynasty,
+      epoch_ids: epochIds,
+      source_reliability: chunk.metadata.sourceReliability,
+      parent_chunk_id: chunk.metadata.parentChunkId,
+      time_start: chunk.metadata.timeStart,
+      time_end: chunk.metadata.timeEnd,
+      key_figures: chunk.metadata.keyFigures,
+      location: chunk.metadata.location,
+      page_number: chunk.metadata.pageNumber,
+      embedding,
+    };
+    inMemoryStore.documentChunks.set(chunk.id, dbChunk);
+
+    const specificEntityIds = chunkEntityMap.get(chunk.id) || new Set<string>();
+    for (const entityId of specificEntityIds) {
+      inMemoryStore.entityChunks.push({
+        entity_id: entityId,
+        chunk_id: chunk.id,
+      });
+    }
+  }
+}

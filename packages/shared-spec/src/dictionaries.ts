@@ -373,15 +373,5 @@ export const CANONICAL_DYNASTY_BOUNDS: CanonicalDynastyBound[] = [
   { dynastyKey: 'nguyen', name: 'Nhà Nguyễn', aliases: ['nhà nguyễn', 'triều nguyễn', 'vua gia long', 'vua minh mạng', 'vua tự đức'], startYear: 1802, endYear: 1945 },
 ];
 
-/**
- * Strips Vietnamese diacritics / tone marks, preserving ASCII characters
- */
-export function removeVietnameseTones(str: string): string {
-  if (!str) return '';
-  return str
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D');
-}
+export { removeVietnameseTones } from './text-utils.js';
 

@@ -9,8 +9,8 @@ import {
   GroundedClaimItem,
   VisualAnchorSuggestion,
   splitSentences,
+  extractHistoricalCandidateSpans,
 } from '@chronoviet/shared-spec';
-import { extractHistoricalCandidateSpans } from '@chronoviet/data-ingestion';
 import {
   extractQueryEntities,
   extractHistoricalYears,

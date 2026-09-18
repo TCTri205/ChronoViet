@@ -15,6 +15,18 @@
     "./interfaces": {
       "types": "./dist/interfaces.d.ts",
       "default": "./dist/interfaces.js"
+    },
+    "./entities": {
+      "types": "./dist/entities/index.d.ts",
+      "default": "./dist/entities/index.js"
+    },
+    "./nlp": {
+      "types": "./dist/nlp/index.d.ts",
+      "default": "./dist/nlp/index.js"
+    },
+    "./text-utils": {
+      "types": "./dist/text-utils.d.ts",
+      "default": "./dist/text-utils.js"
     }
   },
   "scripts": {
