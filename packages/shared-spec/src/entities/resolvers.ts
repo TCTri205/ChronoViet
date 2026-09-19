@@ -22,41 +22,148 @@ function normalizeKey(str: string): string {
     .trim();
 }
 
+// 1. EVENT_BATTLE keywords / prefixes
+const EVENT_PREFIXES = new Set([
+  'trận', 'chiến dịch', 'cuộc khởi nghĩa', 'khởi nghĩa', 'biến cố', 'hội nghị', 'hội thề',
+  'sáng lập', 'dựng nước', 'chiến thắng', 'đại thắng', 'dẹp loạn', 'phong trào', 'tổng tiến công',
+]);
+
+// 2. LOCATION keywords / prefixes & specific historical locations / provinces
+const LOCATION_PREFIXES = new Set([
+  'văn hóa', 'di chỉ', 'khu di tích', 'di tích', 'khu mộ', 'mái đá', 'hang', 'sông', 'núi', 'ải',
+  'thành', 'đô', 'trấn', 'phủ', 'huyện', 'tỉnh', 'làng', 'xã', 'đàng', 'điện', 'lầu', 'các',
+  'cửa', 'cầu', 'cung', 'đồn', 'bến', 'cảng', 'đèo', 'lăng', 'miếu', 'đền', 'chùa',
+  'quảng trường', 'dinh', 'hoàng thành', 'kinh thành', 'cố đô', 'quần đảo', 'bán đảo',
+  'địa đạo', 'đường mòn', 'đoài', 'xứ', 'kinh bắc', 'sơn nam', 'ái châu', 'hoan châu',
+  'trấn man', 'bắc hà', 'nam hà', 'trung kỳ', 'bắc kỳ', 'nam kỳ', 'giao châu', 'mỏ cày',
+  'dinh độc lập', 'thủy điện',
+]);
+
+const LOCATION_NAMES = new Set([
+  'đông kinh', 'đông quan', 'thăng long', 'hà nội', 'phong châu', 'mê linh', 'hát môn', 'luy lâu',
+  'phú xuân', 'mường thanh', 'ngọc hồi', 'đống đa', 'chi lăng', 'xương giang', 'bạch đằng',
+  'như nguyệt', 'cổ loa', 'tây đô', 'hoa lư', 'huế', 'sài gòn', 'gia định',
+  'hồ hoàn kiếm', 'hồ tây', 'hồ ba bể', 'hồ gươm', 'hồ trúc bạch', 'hồ kẻ gỗ', 'hồ dầu tiếng', 'hồ trị an', 'hồ thủy điện',
+  'thanh hóa', 'thái bình', 'quảng ninh', 'nghệ an', 'hải phòng', 'nam định', 'hải dương', 'bắc ninh',
+  'bắc giang', 'lạng sơn', 'cao bằng', 'hà giang', 'yên bái', 'tuyên quang', 'phú thọ', 'vĩnh phúc',
+  'hà nam', 'ninh bình', 'hà tĩnh', 'quảng bình', 'quảng trị', 'quảng nam', 'đà nẵng', 'quảng ngãi',
+  'bình định', 'phú yên', 'khánh hòa', 'ninh thuận', 'bình thuận', 'kon tum', 'gia lai', 'đắk lắk',
+  'đắk nông', 'lâm đồng', 'bình phước', 'tây ninh', 'bình dương', 'đồng nai', 'bà rịa', 'long an',
+  'tiền giang', 'bến tre', 'trà vinh', 'vĩnh long', 'đồng tháp', 'an giang', 'kiên giang', 'cần thơ',
+  'hậu giang', 'sóc trăng', 'bạc liêu', 'cà mau', 'điện biên', 'lai châu', 'sơn la', 'hòa bình',
+  'lào cai', 'đông anh', 'phú điền', 'đường lâm', 'tân sở', 'phùng nguyên', 'đồng đậu', 'gò mun',
+  'sa huỳnh', 'óc eo', 'hang xóm trại', 'mái đá làng vành', 'mỹ sơn', 'ba thê', 'việt nam', 'nông cống',
+]);
+
+// 3. ARTIFACT keywords
+const ARTIFACT_KEYWORDS = new Set([
+  'ngọc ấn', 'kim ấn', 'quốc ấn', 'ấn tín', 'văn bia', 'tấm bia', 'sắc phong', 'trống đồng',
+  'vũ khí', 'bảo vật', 'thần khí', 'nỏ thần', 'nỏ', 'xe tăng', 'thông bảo', 'súng thần cơ', 'thái bình hưng bảo',
+]);
+
+// 4. DOCUMENT_CULTURE keywords
+const DOCUMENT_KEYWORDS = new Set([
+  'bình ngô', 'hịch tướng sĩ', 'hịch', 'chiếu', 'đại cáo', 'tuyên ngôn', 'bản kỷ', 'tác phẩm',
+  'bộ luật', 'luật hồng đức', 'hình luật', 'hình thư', 'hiệp định', 'toàn thư', 'cương mục',
+  'thực lục', 'tiêu án', 'chí lược', 'văn tập', 'bài thơ', 'hòa ước', 'sớ', 'lời kêu gọi',
+  'hoàng lê nhất thống chí', 'lĩnh nam chích quái', 'thiền uyển tập anh', 'truyện kiều',
+  'đề cương', 'thi nhân', 'tình già',
+]);
+
+// 5. DYNASTY_ERA keywords
+const DYNASTY_KEYWORDS = new Set([
+  'triều', 'nhà', 'thời', 'kỷ', 'kỷ nguyên', 'hồng bàng', 'văn lang', 'âu lạc', 'vạn xuân',
+  'đại cồ việt', 'đại việt', 'đại nam', 'đại ngu', 'đông sơn', 'xiêm la', 'đông ngô', 'đông hán',
+  'tiền lý', 'lê sơ', 'việt nam dân chủ cộng hòa', 'đàng trong', 'đàng ngoài', 'chúa trịnh', 'chúa nguyễn',
+]);
+
+// 6. HISTORICAL_PERSON titles / honorifics / names
+const PERSON_TITLES_AND_HONORIFICS = new Set([
+  'vua', 'hoàng đế', 'thái tử', 'thái thượng hoàng', 'chúa', 'đại vương', 'vương',
+  'lạc long quân', 'kinh dương vương', 'hùng vương', 'thánh gióng', 'an dương vương',
+  'thục phán', 'cao lỗ', 'bà triệu', 'triệu thị trinh', 'hai bà trưng', 'trưng trắc', 'trưng nhị',
+  'thái sư', 'thái úy', 'tiết chế', 'quốc công', 'đại tướng', 'tướng', 'đô đốc', 'nữ tướng',
+  'trạng trình', 'trạng nguyên', 'sử quan', 'chủ tịch', 'thủ tướng', 'bác', 'thiền sư',
+  'trưởng lão', 'đại sư', 'quốc sư', 'cư sĩ', 'thượng tọa', 'hòa thượng', 'đạo sĩ',
+  'công chúa', 'hoàng hậu', 'quốc mẫu', 'thứ phi', 'ái phi', 'thái phi', 'hưng đạo',
+  'bắc bình', 'bình định', 'vạn thắng', 'tiền ngô', 'triệu việt', 'bố cái', 'mai hắc đế',
+  'lý nam đế', 'đức thánh',
+]);
+
+const VIETNAMESE_SURNAMES = new Set([
+  'nguyễn', 'trần', 'lê', 'phạm', 'hoàng', 'huỳnh', 'phan', 'vũ', 'võ', 'đặng', 'bùi', 'đỗ',
+  'hồ', 'ngô', 'dương', 'lý', 'đinh', 'đoàn', 'lâm', 'trịnh', 'mai', 'đào', 'cao', 'hà',
+  'lưu', 'lương', 'thái', 'châu', 'tạ', 'phùng', 'tô', 'vương', 'quách', 'nhâm', 'tôn', 'trương', 'khuất',
+]);
+
+// 7. ORGANIZATION keywords
+const ORGANIZATION_KEYWORDS = new Set([
+  'nghĩa quân', 'quân đội', 'thủy quân', 'liên quân', 'quân đoàn', 'quân khu', 'quân chủng',
+  'hội', 'viện', 'quán', 'đoàn', 'tập đoàn', 'triều đình', 'nghĩa sĩ', 'đảng', 'thiền phái',
+  'quốc sử quán', 'đội hoàng sa', 'hải đội', 'ngô gia văn phái',
+]);
+
+function matchesKeywordSet(norm: string, words: string[], keywordSet: Set<string>): boolean {
+  for (const kw of keywordSet) {
+    if (kw.includes(' ')) {
+      const idx = norm.indexOf(kw);
+      if (idx !== -1) {
+        const prevChar = idx > 0 ? norm[idx - 1] : ' ';
+        const nextChar = idx + kw.length < norm.length ? norm[idx + kw.length] : ' ';
+        if (/\s|[.,/#!$%^&*;:{}=\-_`~()]/.test(prevChar) && /\s|[.,/#!$%^&*;:{}=\-_`~()]/.test(nextChar)) {
+          return true;
+        }
+      }
+    } else {
+      if (words.includes(kw)) return true;
+    }
+  }
+  return false;
+}
+
 /**
- * Infers normalized entity taxonomy type from textual name clues
+ * Infers normalized entity taxonomy type from textual name clues using O(1) Set lookups
  */
 export function inferEntityTypeFromName(name: string): EntityType {
   const norm = name.toLowerCase().trim();
-  if (/(?:^|\s)(trận|chiến dịch|cuộc khởi nghĩa|khởi nghĩa|biến cố|hội nghị|hội thề|sáng lập|dựng nước|chiến thắng|đại thắng|dẹp loạn|phong trào|tổng tiến công)(?:$|\s)/i.test(norm)) {
+  const words = norm.split(/\s+/).filter(Boolean);
+
+  if (matchesKeywordSet(norm, words, EVENT_PREFIXES)) {
     return 'EVENT_BATTLE';
   }
+
   // Archaeology / Historical Sites / Culture / Locations (Check BEFORE generic surnames)
-  if (/(?:^|\s)(văn hóa|di chỉ|khu di tích|di tích|khu mộ|mái đá|hang|sông|núi|ải|thành|đô|trấn|phủ|huyện|tỉnh|làng|xã|đàng|đông kinh|đông quan|thăng long|hà nội|phong châu|mê linh|hát môn|luy lâu|phú xuân|mường thanh|ngọc hồi|đống đa|chi lăng|xương giang|bạch đằng|như nguyệt|cổ loa|tây đô|hoa lư|huế|sài gòn|gia định|điện|lầu|các|cửa|cầu|cung|đồn|bến|cảng|đèo|hồ\s+(?:hoàn\s+kiếm|tây|ba\s+bể|gươm|trúc\s+bạch|kẻ\s+gỗ|dầu\s+tiếng|trị\s+an|thủy\s+điện|nước)|lăng|miếu|đền|chùa|quảng trường|dinh|hoàng thành|kinh thành|cố đô|quần đảo|bán đảo|địa đạo|đường mòn|đoài|xứ|kinh bắc|sơn nam|ái châu|hoan châu|trấn man|bắc hà|nam hà|trung kỳ|bắc kỳ|nam kỳ|thanh hóa|thái bình|quảng ninh|nghệ an|hải phòng|nam định|hải dương|bắc ninh|bắc giang|lạng sơn|cao bằng|hà giang|yên bái|tuyên quang|phú thọ|vĩnh phúc|hà nam|ninh bình|hà tĩnh|quảng bình|quảng trị|quảng nam|đà nẵng|quảng ngãi|bình định|phú yên|khánh hòa|ninh thuận|bình thuận|kon tum|gia lai|đắk lắk|đắk nông|lâm đồng|bình phước|tây ninh|bình dương|đồng nai|bà rịa|long an|tiền giang|bến tre|trà vinh|vĩnh long|đồng tháp|an giang|kiên giang|cần thơ|hậu giang|sóc trăng|bạc liêu|cà mau|điện biên|lai châu|sơn la|hòa bình|lào cai|đông anh|phú điền|đường lâm|tân sở|giao châu|mỏ cày|dinh độc lập|thủy điện|phùng nguyên|đồng đậu|gò mun|sa huỳnh|óc eo|hang xóm trại|mái đá làng vành|mỹ sơn|ba thê|việt nam|nông cống)(?:$|\s)/i.test(norm)) {
+  if (matchesKeywordSet(norm, words, LOCATION_PREFIXES) || matchesKeywordSet(norm, words, LOCATION_NAMES)) {
     return 'LOCATION';
   }
-  if (/(?:^|\s)(ngọc ấn|kim ấn|quốc ấn|ấn tín|văn bia|tấm bia|sắc phong|trống đồng|vũ khí|bảo vật|thần khí|nỏ thần|nỏ|xe tăng|thông bảo|súng thần cơ|thái bình hưng bảo)(?:$|\s)/i.test(norm)) {
+
+  if (matchesKeywordSet(norm, words, ARTIFACT_KEYWORDS)) {
     return 'ARTIFACT';
   }
-  if (/(?:^|\s)(bình ngô|hịch tướng sĩ|hịch|chiếu|đại cáo|tuyên ngôn|bản kỷ|tác phẩm|bộ luật|luật hồng đức|hình luật|hình thư|hiệp định|toàn thư|cương mục|thực lục|tiêu án|chí lược|văn tập|bài thơ|hòa ước|sớ|lời kêu gọi|hoàng lê nhất thống chí|lĩnh nam chích quái|thiền uyển tập anh|truyện kiều|đề cương|thi nhân|tình già)(?:$|\s)/i.test(norm)) {
+
+  if (matchesKeywordSet(norm, words, DOCUMENT_KEYWORDS)) {
     return 'DOCUMENT_CULTURE';
   }
-  if (/(?:^|\s)(triều|nhà|thời|kỷ|kỷ nguyên|hồng bàng|văn lang|âu lạc|vạn xuân|đại cồ việt|đại việt|đại nam|đại ngu|đông sơn|xiêm la|đông ngô|đông hán|tiền lý|lê sơ|việt nam dân chủ cộng hòa|đàng trong|đàng ngoài|chúa trịnh|chúa nguyễn)(?:$|\s)/i.test(norm)) {
+
+  if (matchesKeywordSet(norm, words, DYNASTY_KEYWORDS)) {
     return 'DYNASTY_ERA';
   }
+
   // 5. Person checks (Feudal honorifics, deity titles, historical founders, ranks)
-  if (/(?:^|\s)(vua|hoàng\s+đế|thái\s+tử|thái\s+thượng\s+hoàng|chúa|đại\s+vương|vương|lạc\s+long\s+quân|kinh\s+dương\s+vương|hùng\s+vương|thánh\s+gióng|an\s+dương\s+vương|thục\s+phán|cao\s+lỗ|bà\s+triệu|triệu\s+thị\s+trinh|hai\s+bà\s+trưng|trưng\s+trắc|trưng\s+nhị|thái\s+sư|thái\s+úy|tiết\s+chế|quốc\s+công|đại\s+tướng|tướng|đô\s+đốc|nữ\s+tướng|trạng\s+trình|trạng\s+nguyên|sử\s+quan|chủ\s+tịch|thủ\s+tướng|bác|thiền\s+sư|trưởng\s+lão|đại\s+sư|quốc\s+sư|cư\s+sĩ|thượng\s+tọa|hòa\s+thượng|đạo\s+sĩ|công\s+chúa|hoàng\s+hậu|quốc\s+mẫu|thứ\s+phi|ái\s+phi|thái\s+phi|hưng\s+đạo|bắc\s+bình|bình\s+định|vạn\s+thắng|tiền\s+ngô|triệu\s+việt|bố\s+cái|mai\s+hắc\s+đế|lý\s+nam\s+đế|đức\s+thánh)(?:$|\s)/i.test(norm)) {
+  if (matchesKeywordSet(norm, words, PERSON_TITLES_AND_HONORIFICS)) {
     return 'HISTORICAL_PERSON';
   }
-  const words = norm.split(/\s+/);
+
   const firstWord = words[0];
-  const viSurnames = ['nguyễn', 'trần', 'lê', 'phạm', 'hoàng', 'huỳnh', 'phan', 'vũ', 'võ', 'đặng', 'bùi', 'đỗ', 'hồ', 'ngô', 'dương', 'lý', 'đinh', 'đoàn', 'lâm', 'trịnh', 'mai', 'đào', 'cao', 'hà', 'lưu', 'lương', 'thái', 'châu', 'tạ', 'phùng', 'tô', 'vương', 'quách', 'nhâm', 'tôn', 'trương', 'khuất'];
-  if (words.length >= 2 && words.length <= 6 && viSurnames.includes(firstWord)) {
+  if (words.length >= 2 && words.length <= 6 && firstWord && VIETNAMESE_SURNAMES.has(firstWord)) {
     return 'HISTORICAL_PERSON';
   }
+
   // 6. Organization checks (Strict multi-word or explicit institution keywords)
-  if (/(?:^|\s)(nghĩa\s+quân|quân\s+đội|thủy\s+quân|liên\s+quân|quân\s+đoàn|quân\s+khu|quân\s+chủng|hội|viện|quán|đoàn|tập\s+đoàn|triều\s+đình|nghĩa\s+sĩ|đảng|thiền\s+phái|quốc\s+sử\s+quán|đội\s+hoàng\s+sa|hải\s+đội|ngô\s+gia\s+văn\s+phái)(?:$|\s)/i.test(norm)) {
+  if (matchesKeywordSet(norm, words, ORGANIZATION_KEYWORDS)) {
     return 'ORGANIZATION';
   }
+
   return 'UNKNOWN';
 }
 
@@ -134,7 +241,13 @@ export const CORE_ORGS: Array<{ id: string; name: string; aliases: string[] }> =
   { id: 'org_tu_luc_van_doan', name: 'Tự Lực Văn Đoàn', aliases: ['Tự Lực văn đoàn', 'nhóm Tự Lực Văn Đoàn', 'Tự Lực Văn đoàn'] },
 ];
 
-export const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[]; timeRange?: { start?: number; end?: number } }> = [
+export const CORE_EVENTS: Array<{
+  id: string;
+  name: string;
+  aliases: string[];
+  timeRange?: { start?: number; end?: number };
+  misconceptions?: import('./types.js').HistoricalMisconception[];
+}> = [
   { id: 'event_dung_nuoc_van_lang', name: 'Sáng lập nhà nước Văn Lang', aliases: ['Dựng nước Văn Lang', 'Sáng lập Văn Lang'], timeRange: { start: -2879, end: -258 } },
   { id: 'event_khoi_nghia_hai_ba_trung', name: 'Khởi nghĩa Hai Bà Trưng', aliases: ['Khởi nghĩa Mê Linh'], timeRange: { start: 40, end: 43 } },
   { id: 'event_khoi_nghia_ba_trieu', name: 'Khởi nghĩa Bà Triệu', aliases: [], timeRange: { start: 248, end: 248 } },
@@ -165,7 +278,31 @@ export const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[]; t
   { id: 'event_duy_tan_phan_chu_trinh', name: 'Phong trào Duy Tân', aliases: ['Duy Tân'], timeRange: { start: 1906, end: 1908 } },
   { id: 'event_khoi_nghia_yen_bai', name: 'Khởi nghĩa Yên Bái', aliases: ['cuộc Khởi nghĩa Yên Bái'], timeRange: { start: 1930, end: 1930 } },
   { id: 'event_dong_khoi', name: 'Phong trào Đồng Khởi', aliases: ['Đồng khởi', 'Đồng Khởi', 'Phong trào Đồng Khởi năm 1960', 'phong trào Đồng khởi năm 1960', 'phong trào Đồng khởi', 'Đồng khởi 1960', 'event_dong_khoi_1960'], timeRange: { start: 1960, end: 1960 } },
-  { id: 'event_linebacker_2', name: 'Trận Điện Biên Phủ trên không', aliases: ['Điện Biên Phủ trên không', 'Trận Điện Biên Phủ trên không năm 1972', 'Điện Biên Phủ trên không 1972', 'event_dien_bien_phu_tren_khong_1972', 'Linebacker II'], timeRange: { start: 1972, end: 1972 } },
+  {
+    id: 'event_linebacker_2',
+    name: 'Trận Điện Biên Phủ trên không',
+    aliases: [
+      'Điện Biên Phủ trên không',
+      'Trận Điện Biên Phủ trên không năm 1972',
+      'Điện Biên Phủ trên không 1972',
+      'event_dien_bien_phu_tren_khong_1972',
+      'Linebacker II',
+      'Chiến dịch Linebacker II',
+      'chiến dịch Linebacker II',
+      'Chiến dịch Linebacker 2',
+      'Linebacker 2',
+    ],
+    timeRange: { start: 1972, end: 1972 },
+    misconceptions: [
+      {
+        id: 'misc_linebacker_ii_dates',
+        triggerKeywords: ['kéo dài', 'năm 1973', 'sang năm 1973', 'tháng 1 năm 1973', 'tháng 1/1973', 'kéo dài sang 1973'],
+        explanation:
+          'Chiến dịch "Điện Biên Phủ trên không" (Linebacker II) diễn ra chính xác trong 12 ngày đêm từ ngày 18/12/1972 đến ngày 30/12/1972 (khi Tổng thống Nixon tuyên bố ngừng ném bom từ vĩ tuyến 20 trở ra Bắc). Chiến dịch kết thúc trọn vẹn trong năm 1972, không kéo dài sang năm 1973. Thắng lợi buộc Mỹ phải ký kết Hiệp định Paris vào ngày 27/01/1973.',
+        relatedEntityIds: ['event_linebacker_2'],
+      },
+    ],
+  },
   { id: 'event_gac_ma_1988', name: 'Trận Gạc Ma', aliases: ['Gạc Ma'], timeRange: { start: 1988, end: 1988 } },
   { id: 'event_dong_bo_dau_1258', name: 'Chiến thắng Đông Bộ Đầu năm 1258', aliases: ['Trận Đông Bộ Đầu', 'Đông Bộ Đầu 1258'], timeRange: { start: 1258, end: 1258 } },
   { id: 'event_khoi_nghia_ba_dinh', name: 'Khởi nghĩa Ba Đình', aliases: ['căn cứ Ba Đình'], timeRange: { start: 1886, end: 1887 } },
@@ -190,7 +327,12 @@ export const CORE_EVENTS: Array<{ id: string; name: string; aliases: string[]; t
   { id: 'concept_khoa_cu', name: 'Khoa cử', aliases: ['khoa cử', 'chế độ khoa cử', 'khoa thi', 'khoa bảng', 'thi cử'], timeRange: { start: 1075, end: 1919 } },
 ];
 
-export const CORE_ARTIFACTS: Array<{ id: string; name: string; aliases: string[] }> = [
+export const CORE_ARTIFACTS: Array<{
+  id: string;
+  name: string;
+  aliases: string[];
+  misconceptions?: import('./types.js').HistoricalMisconception[];
+}> = [
   { id: 'artifact_trong_dong_dong_son', name: 'Trống đồng Đông Sơn', aliases: ['Trống đồng Ngọc Lũ', 'Trống đồng Sông Đà', 'Trống đồng Hoàng Hạ'] },
   { id: 'artifact_no_lien_chau', name: 'Nỏ Liên Châu', aliases: ['Nỏ thần', 'Nỏ thần Liên Châu'] },
   { id: 'artifact_thong_bao_hoi_sao', name: 'Thông Bảo Hội Sao', aliases: ['tiền Thông Bảo Hội Sao', 'Thông bảo hội sao', 'tiền giấy Thông bảo hội sao', 'tiền giấy'] },
@@ -199,6 +341,20 @@ export const CORE_ARTIFACTS: Array<{ id: string; name: string; aliases: string[]
   { id: 'artifact_sung_than_co', name: 'súng Thần cơ Thương pháo', aliases: ['Súng Thần Cơ', 'súng Thần cơ'] },
   { id: 'artifact_cuu_dinh', name: 'Cửu Đỉnh', aliases: ['Cửu đỉnh', 'Cửu Đỉnh Huế'] },
   { id: 'artifact_sung_truong_cao_thang', name: 'Súng trường kiểu Pháp', aliases: ['súng trường kiểu Pháp', 'súng trường Cao Thắng', 'súng trường 1874', 'súng trường'] },
+  {
+    id: 'artifact_sam2',
+    name: 'Tên lửa SAM-2',
+    aliases: ['SAM-2', 'tên lửa SAM-2', 'SAM 2', 'tên lửa phòng không SAM-2', 'tên lửa SAM', 'đạn tên lửa SAM-2', 'SAM-3'],
+    misconceptions: [
+      {
+        id: 'misc_sam2_reuse',
+        triggerKeywords: ['thu hồi', 'tái sử dụng', 'bắn lại', 'bắn xong', 'tên lửa giả'],
+        explanation:
+          'Tên lửa phòng không (SAM-2 / SAM-3) và đạn pháo hạng nặng là vũ khí tiêu hao một lần (single-use expendable ordnance), khi đã phóng đi hoặc phát nổ thì không thể thu hồi để tái sử dụng hay bắn lại. Xưởng/Nhà máy A31 là nơi bảo dưỡng, nâng cấp khí tài radar dẫn đường (như đài Fan Song/P-12) và kiểm tra, lắp ráp, hiệu chỉnh tham số quả đạn trước khi phóng, hoàn toàn không có việc thu hồi tên lửa đã bắn.',
+        relatedEntityIds: ['artifact_sam2'],
+      },
+    ],
+  },
 ];
 
 export const CORE_DOCS: Array<{
@@ -845,9 +1001,9 @@ export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo 
   const directOrg = CORE_ORGS.find((o) => o.id === inputName || o.aliases.some((a) => a.toLowerCase() === inputName.toLowerCase()) || o.name.toLowerCase() === inputName.toLowerCase());
   if (directOrg) return { entityId: directOrg.id, canonicalName: directOrg.name, type: 'ORGANIZATION', aliases: directOrg.aliases };
   const directEv = CORE_EVENTS.find((e) => e.id === inputName || e.aliases.some((a) => a.toLowerCase() === inputName.toLowerCase()) || e.name.toLowerCase() === inputName.toLowerCase());
-  if (directEv) return { entityId: directEv.id, canonicalName: directEv.name, type: 'EVENT_BATTLE', aliases: directEv.aliases, timeRange: directEv.timeRange };
+  if (directEv) return { entityId: directEv.id, canonicalName: directEv.name, type: 'EVENT_BATTLE', aliases: directEv.aliases, timeRange: directEv.timeRange, misconceptions: directEv.misconceptions };
   const directArt = CORE_ARTIFACTS.find((a) => a.id === inputName || a.aliases.some((a) => a.toLowerCase() === inputName.toLowerCase()) || a.name.toLowerCase() === inputName.toLowerCase());
-  if (directArt) return { entityId: directArt.id, canonicalName: directArt.name, type: 'ARTIFACT', aliases: directArt.aliases };
+  if (directArt) return { entityId: directArt.id, canonicalName: directArt.name, type: 'ARTIFACT', aliases: directArt.aliases, misconceptions: directArt.misconceptions };
   const directDoc = CORE_DOCS.find((d) => d.id === inputName || d.aliases.some((a) => a.toLowerCase() === inputName.toLowerCase()) || d.name.toLowerCase() === inputName.toLowerCase());
   if (directDoc) {
     return {
@@ -887,10 +1043,10 @@ export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo 
   if (foundOrg) return { entityId: foundOrg.id, canonicalName: foundOrg.name, type: 'ORGANIZATION', aliases: foundOrg.aliases };
 
   const foundEvent = CORE_EVENTS.find((e) => e.id === aliasMapping.canonicalId || e.aliases.includes(aliasMapping.canonicalId) || e.name.toLowerCase() === aliasMapping.canonicalName.toLowerCase());
-  if (foundEvent) return { entityId: foundEvent.id, canonicalName: foundEvent.name, type: 'EVENT_BATTLE', aliases: foundEvent.aliases, timeRange: foundEvent.timeRange };
+  if (foundEvent) return { entityId: foundEvent.id, canonicalName: foundEvent.name, type: 'EVENT_BATTLE', aliases: foundEvent.aliases, timeRange: foundEvent.timeRange, misconceptions: foundEvent.misconceptions };
 
   const foundArt = CORE_ARTIFACTS.find((a) => a.id === aliasMapping.canonicalId || a.aliases.includes(aliasMapping.canonicalId) || a.name.toLowerCase() === aliasMapping.canonicalName.toLowerCase());
-  if (foundArt) return { entityId: foundArt.id, canonicalName: foundArt.name, type: 'ARTIFACT', aliases: foundArt.aliases };
+  if (foundArt) return { entityId: foundArt.id, canonicalName: foundArt.name, type: 'ARTIFACT', aliases: foundArt.aliases, misconceptions: foundArt.misconceptions };
 
   const foundDoc = CORE_DOCS.find((d) => d.id === aliasMapping.canonicalId || d.aliases.includes(aliasMapping.canonicalId) || d.name.toLowerCase() === aliasMapping.canonicalName.toLowerCase());
   if (foundDoc) {
@@ -917,6 +1073,84 @@ export function resolveCanonicalEntity(inputName: string): HistoricalEntityInfo 
     type: inferredType,
     aliases: [inputName.trim()],
   };
+}
+
+const CANONICAL_ADVERSARY_NAMES = new Set([
+  'thoat hoan',
+  'o ma nhi',
+  'toa do',
+  'to dinh',
+  'ma vien',
+  'vuong thong',
+  'lieu thang',
+  'truong phu',
+  'moc thanh',
+  'sam nghi dong',
+  'ton si nghi',
+  'de castries',
+  'do cat',
+  'navarre',
+  'christian de castries',
+  'henri navarre',
+  'luu hoang thao',
+  'hau nhan bao',
+  'quach quy',
+  'cao bien',
+  'ton hao',
+  'garnier',
+  'francis garnier',
+  'riviere',
+  'henri riviere',
+  'leclerc',
+  'philippe leclerc',
+  'trieu phung huan',
+  'quach quan bien',
+  'tran thiem binh',
+]);
+
+/**
+ * Checks whether an entity or person name belongs to an invading foreign commander or adversary figure (SSOT)
+ */
+export function isAdversaryPerson(nameOrEntity: string | HistoricalEntityInfo): boolean {
+  if (!nameOrEntity) return false;
+  if (typeof nameOrEntity !== 'string') {
+    if (nameOrEntity.role === 'ADVERSARY') return true;
+    const normCanon = removeVietnameseAccents(nameOrEntity.canonicalName.toLowerCase()).trim();
+    if (CANONICAL_ADVERSARY_NAMES.has(normCanon)) return true;
+    const normId = removeVietnameseAccents(nameOrEntity.entityId.toLowerCase()).replace(/^(?:person_|org_)/, '').replace(/_/g, ' ').trim();
+    if (CANONICAL_ADVERSARY_NAMES.has(normId)) return true;
+    return false;
+  }
+
+  const raw = nameOrEntity.trim();
+  const lower = raw.toLowerCase();
+  const unaccented = removeVietnameseAccents(lower).trim();
+
+  // Strip common honorifics
+  const stripped = unaccented.replace(/^(?:tuong|tong doc|chu tuong|quan|thai thu|tran nam vuong|tuong quan|dai tuong|si quan)\s+/, '');
+
+  if (CANONICAL_ADVERSARY_NAMES.has(unaccented) || CANONICAL_ADVERSARY_NAMES.has(stripped)) {
+    return true;
+  }
+
+  if (/(?:tuong giac|chu tuong dich|tong doc man thanh|thuc dan phap|tuong mong|tuong de castries|chi huy phap)/i.test(unaccented)) {
+    return true;
+  }
+
+  if (raw.startsWith('person_') || raw.startsWith('org_')) {
+    const slug = raw.replace(/^(?:person_|org_)/, '').replace(/_/g, ' ');
+    const unaccentedSlug = removeVietnameseAccents(slug).trim();
+    if (CANONICAL_ADVERSARY_NAMES.has(unaccentedSlug)) return true;
+  }
+
+  const resolved = resolveCanonicalEntity(raw);
+  if (resolved) {
+    if (resolved.role === 'ADVERSARY') return true;
+    const resolvedUnacc = removeVietnameseAccents(resolved.canonicalName.toLowerCase()).trim();
+    if (CANONICAL_ADVERSARY_NAMES.has(resolvedUnacc)) return true;
+  }
+
+  return false;
 }
 
 /**

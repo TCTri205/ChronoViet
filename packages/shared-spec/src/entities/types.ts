@@ -57,6 +57,8 @@ export interface HistoricalEntityInfo {
   timeRange?: { start?: number; end?: number };
   dynasty?: string;
   isMythological?: boolean;
+  role?: 'HERO' | 'MONARCH' | 'GENERAL' | 'SCHOLAR' | 'ADVERSARY' | 'OTHER' | string;
+  misconceptions?: HistoricalMisconception[];
   namingMetadata?: HistoricalPersonNamingMetadata;
   docMetadata?: HistoricalDocMetadata;
 }

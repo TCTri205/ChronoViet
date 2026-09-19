@@ -222,6 +222,15 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Lê Hoàn', 'Vua Lê Đại Hành', 'Lê Đại Hành Hoàng Đế'],
     timeRange: { start: 941, end: 1005 },
     dynasty: 'Nhà Tiền Lê',
+    misconceptions: [
+      {
+        id: 'misc_le_hoan_ly_dynasty',
+        triggerKeywords: ['nhà lý', 'thuộc nhà lý', 'vua nhà lý', 'triều lý', 'triều nhà lý'],
+        explanation:
+          'Lê Hoàn (Lê Đại Hành) là vị hoàng đế sáng lập triều Tiền Lê (trị vì 980 - 1005), lãnh đạo quân dân Đại Cồ Việt đánh tan quân Tống xâm lược trong trận Bạch Đằng năm 981. Triều Lý thành lập năm 1009 bởi Lý Thái Tổ (Lý Công Uẩn), sau khi triều Tiền Lê kết thúc, hoàn toàn không liên quan đến chiến thắng năm 981.',
+        relatedEntityIds: ['person_le_dai_hanh', 'person_ly_thai_to'],
+      },
+    ],
     namingMetadata: {
       birthName: 'Lê Hoàn',
       templeName: 'Lê Đại Hành',
@@ -479,6 +488,28 @@ export const HISTORICAL_PERSON_DICTIONARY: Record<string, HistoricalEntityInfo> 
     aliases: ['Lê Quý Ly', 'Vua Hồ Quý Ly'],
     timeRange: { start: 1336, end: 1407 },
     dynasty: 'Nhà Hồ',
+  },
+  'person_tran_thiem_binh': {
+    entityId: 'person_tran_thiem_binh',
+    canonicalName: 'Trần Thiêm Bình',
+    type: 'HISTORICAL_PERSON',
+    aliases: ['Nguyễn Khang', 'Trần Khang', 'kẻ mạo danh Trần Thiêm Bình'],
+    timeRange: { start: 1370, end: 1406 },
+    dynasty: 'Nhà Trần',
+    role: 'ADVERSARY',
+    misconceptions: [
+      {
+        id: 'misc_tran_thiem_binh_usurpation',
+        triggerKeywords: ['cướp ngôi', 'phế truất', 'thay thế', 'lật đổ', 'làm vua', 'bị phế', 'nhà trần'],
+        explanation:
+          'Người bị Hồ Quý Ly truất ngôi năm 1400 là vua Trần Thiếu Đế (vị vua cuối cùng của triều Trần). Trần Thiêm Bình (tên thật là Nguyễn Khang) là gia nô mạo xưng tôn thất nhà Trần chạy sang cầu viện nhà Minh mượn cớ xâm lược Đại Ngu, KHÔNG PHẢI là vua và KHÔNG PHẢI người bị Hồ Quý Ly cướp ngôi.',
+        relatedEntityIds: ['person_ho_quy_ly', 'person_tran_thieu_de'],
+      },
+    ],
+    namingMetadata: {
+      birthName: 'Nguyễn Khang',
+      courtesyOrCommonName: 'Trần Thiêm Bình',
+    },
   },
   'person_ho_nguyen_trung': {
     entityId: 'person_ho_nguyen_trung',

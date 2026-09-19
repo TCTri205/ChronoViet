@@ -4,6 +4,7 @@ import {
   resolveCanonicalEntity,
   isKnownMasterEntity,
   validateAdministrativeContainment,
+  isAdversaryPerson,
 } from '../historical-entities.js';
 
 describe('Historical Entities & Landmark Aliases (Task 2)', () => {
@@ -87,5 +88,48 @@ describe('Administrative Containment & Geographic Hierarchy (Task 2)', () => {
     expect(invalidRes.valid).toBe(false);
     expect(invalidRes.childName).toBe('Hoa Lư');
     expect(invalidRes.suggestedCorrection).toBe('Ninh Bình');
+  });
+});
+
+describe('Taxonomy Inference & Adversary Helper (Phase 1)', () => {
+  it('should correctly infer entity types across taxonomy classes', () => {
+    const person = resolveCanonicalEntity('Trần Quốc Tuấn');
+    expect(person.type).toBe('HISTORICAL_PERSON');
+
+    const loc = resolveCanonicalEntity('Kinh thành Thăng Long');
+    expect(loc.type).toBe('LOCATION');
+
+    const event = resolveCanonicalEntity('Chiến dịch Điện Biên Phủ');
+    expect(['EVENT', 'EVENT_BATTLE']).toContain(event.type);
+
+    const artifact = resolveCanonicalEntity('Trống đồng Đông Sơn');
+    expect(artifact.type).toBe('ARTIFACT');
+
+    const doc = resolveCanonicalEntity('Hịch tướng sĩ');
+    expect(doc.type).toBe('DOCUMENT_CULTURE');
+  });
+
+  it('should identify canonical adversary figures', () => {
+    expect(isAdversaryPerson('Thoát Hoan')).toBe(true);
+    expect(isAdversaryPerson('Ô Mã Nhi')).toBe(true);
+    expect(isAdversaryPerson('Sầm Nghi Đống')).toBe(true);
+    expect(isAdversaryPerson('De Castries')).toBe(true);
+    expect(isAdversaryPerson('Trần Hưng Đạo')).toBe(false);
+    expect(isAdversaryPerson('Nguyễn Huệ')).toBe(false);
+  });
+
+  it('should resolve canonical misconceptions for historical entities', () => {
+    const leDaiHanh = resolveCanonicalEntity('Lê Đại Hành');
+    expect(leDaiHanh.misconceptions).toBeDefined();
+    expect(leDaiHanh.misconceptions?.length).toBeGreaterThan(0);
+    expect(leDaiHanh.misconceptions?.[0].triggerKeywords).toContain('nhà lý');
+
+    const tranThiemBinh = resolveCanonicalEntity('Trần Thiêm Bình');
+    expect(tranThiemBinh.misconceptions).toBeDefined();
+    expect(tranThiemBinh.misconceptions?.[0].triggerKeywords).toContain('cướp ngôi');
+
+    const linebacker = resolveCanonicalEntity('Chiến dịch Linebacker II');
+    expect(linebacker.misconceptions).toBeDefined();
+    expect(linebacker.misconceptions?.[0].triggerKeywords).toContain('năm 1973');
   });
 });
