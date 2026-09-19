@@ -17,3 +17,4 @@ export * from './historical-ingest.js';
 export * from './config/concurrency-tuner.js';
 export * from './eval-preflight.js';
 export * from './eval-cleaner.js';
+export * from './utils/json-repair.js';

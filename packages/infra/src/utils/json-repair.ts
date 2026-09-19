@@ -198,3 +198,5 @@ export function parseLlmJson<T = any>(rawText: string): T {
     }
   }
 }
+
+export const parseLlmJsonCompletion = parseLlmJson;

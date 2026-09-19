@@ -84,6 +84,11 @@ export interface DbUnmappedEntity {
 
 // In-Memory Database Fallback Store
 class InMemoryRagStore {
+  static readonly MAX_CONVERSATIONS = 200;
+  static readonly MAX_MESSAGES = 2000;
+  static readonly MAX_AUDIT_LOGS = 1000;
+  static readonly MAX_QUARANTINE = 500;
+
   entities = new Map<string, DbEntity>();
   relationships: DbRelationship[] = [];
   documentChunks = new Map<string, DbDocumentChunk>();
@@ -97,6 +102,37 @@ class InMemoryRagStore {
   nextRelId = 1;
   nextAuditLogId = 1;
   nextQuarantineId = 1;
+
+  addConversation(id: string, data: any) {
+    if (this.conversations.size >= InMemoryRagStore.MAX_CONVERSATIONS && !this.conversations.has(id)) {
+      const oldestKey = this.conversations.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.conversations.delete(oldestKey);
+      }
+    }
+    this.conversations.set(id, data);
+  }
+
+  addMessage(msg: any) {
+    this.conversationMessages.push(msg);
+    if (this.conversationMessages.length > InMemoryRagStore.MAX_MESSAGES) {
+      this.conversationMessages.splice(0, this.conversationMessages.length - InMemoryRagStore.MAX_MESSAGES);
+    }
+  }
+
+  addAuditLog(logEntry: DbEntityAuditLog) {
+    this.auditLogs.push(logEntry);
+    if (this.auditLogs.length > InMemoryRagStore.MAX_AUDIT_LOGS) {
+      this.auditLogs.splice(0, this.auditLogs.length - InMemoryRagStore.MAX_AUDIT_LOGS);
+    }
+  }
+
+  addQuarantineTriple(triple: DbQuarantineTriple) {
+    this.quarantineTriples.push(triple);
+    if (this.quarantineTriples.length > InMemoryRagStore.MAX_QUARANTINE) {
+      this.quarantineTriples.splice(0, this.quarantineTriples.length - InMemoryRagStore.MAX_QUARANTINE);
+    }
+  }
 
   clear() {
     this.entities.clear();
@@ -315,7 +351,7 @@ export async function logEntityAuditAction(
       [params.entity_id, params.action_type, modifiedBy, prevState, newState, params.rationale || '']
     );
   } else {
-    inMemoryStore.auditLogs.push({
+    inMemoryStore.addAuditLog({
       log_id: inMemoryStore.nextAuditLogId++,
       entity_id: params.entity_id,
       action_type: params.action_type,
@@ -362,7 +398,7 @@ export async function ensureConversationExists(
 
   // Fallback to in-memory store
   if (!inMemoryStore.conversations.has(conversationId)) {
-    inMemoryStore.conversations.set(conversationId, {
+    inMemoryStore.addConversation(conversationId, {
       id: conversationId,
       title: safeTitle,
       mode,
