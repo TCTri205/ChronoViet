@@ -15,6 +15,7 @@ import {
   sanitizeSentenceBoundaries,
   resolveCanonicalEntity,
   getTargetWpm,
+  isAdversaryPerson,
 } from '@chronoviet/shared-spec';
 import { callLlm, envConfig, parseLlmJson } from '@chronoviet/infra';
 import { ChronoGraphState, getNodeLogger, TelemetryAuditEntry } from '../state.js';
@@ -296,11 +297,12 @@ export function enrichMacroBeatsToChapterPlans(
     if (targetChapterIdx === -1 && chapters.length >= 3) {
       const resolvedUnassigned = resolveCanonicalEntity(unassigned);
       const isAdversaryEntity =
+        isAdversaryPerson(resolvedUnassigned) ||
+        isAdversaryPerson(unassigned) ||
         (resolvedUnassigned as any).role === 'ADVERSARY' ||
         (resolvedUnassigned as any).entityType === 'INVADING_FORCE' ||
         /man_thanh|nguyen_mong|nam_han|tong|phap|my|xiem|minh/i.test(resolvedUnassigned.entityId || '') ||
-        /tướng giặc|chủ tướng địch|tổng đốc|thực dân|quân xâm lược/i.test((resolvedUnassigned as any).role || '') ||
-        /de castries|đờ cát|tô định|lưu hoàng tháo|hầu nhân bảo|quách quỳ|thoát hoan|ô mã nhi|liễu thăng|vương thông|tôn sĩ nghị|sầm nghi đống|navarre|garnier|rivière|leclerc/i.test(uLower);
+        /tướng giặc|chủ tướng địch|tổng đốc|thực dân|quân xâm lược/i.test((resolvedUnassigned as any).role || '');
       const isTreatyOrResolution = /hiệp định|hòa ước|hiệp ước|đình chiến|giảng hòa|tuyên ngôn|di chúc|bình ngô đại cáo/i.test(uLower);
       const isTacticsOrPreparation = /kéo pháo|vườn không|tiên phát|đánh chắc|cọc ngầm|chiếu cần vương|hịch tướng sĩ/i.test(uLower);
       const isStrongholdBattle = /đồi|cứ điểm|cao điểm|đồn|phòng tuyến/i.test(uLower);

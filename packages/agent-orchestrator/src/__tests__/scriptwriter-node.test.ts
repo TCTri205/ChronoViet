@@ -5,6 +5,10 @@ import {
   synthesizeDeterministicHistoricalScript,
   getDomainChapterRoleGuidance,
 } from '../graph/nodes/scriptwriter-node.js';
+import {
+  stripChapterTitleEcho,
+  normalizeHistoricalAnachronisms,
+} from '../graph/helpers/script-sanitizer.js';
 import { ChronoGraphState } from '../graph/state.js';
 
 // Mock callLlm for deterministic testing
@@ -247,4 +251,33 @@ describe('Scriptwriter Node & Voiceover Sanitizer', () => {
       expect(artifactSingle).toContain('TOÀN BỘ HÀNH TRÌNH DI SẢN (CHƯƠNG ĐƠN)');
     });
   });
+
+  describe('stripChapterTitleEcho', () => {
+    it('should strip echoed chapter title when followed by colon or dash delimiter', () => {
+      const title = 'Đại Thắng Mùa Xuân';
+      const textWithColon = 'Đại Thắng Mùa Xuân: Quân Tây Sơn tiến vào Thăng Long giải phóng kinh thành.';
+      expect(stripChapterTitleEcho(textWithColon, title)).toBe('Quân Tây Sơn tiến vào Thăng Long giải phóng kinh thành.');
+
+      const textWithDash = 'Đại Thắng Mùa Xuân - Năm 1789 vang danh sử sách.';
+      expect(stripChapterTitleEcho(textWithDash, title)).toBe('Năm 1789 vang danh sử sách.');
+    });
+
+    it('should NOT strip title when title is grammatical subject without headline delimiter', () => {
+      const title = 'Quang Trung';
+      const text = 'Quang Trung là vị anh hùng kiệt xuất của dân tộc Việt Nam.';
+      expect(stripChapterTitleEcho(text, title)).toBe('Quang Trung là vị anh hùng kiệt xuất của dân tộc Việt Nam.');
+    });
+  });
+
+  describe('normalizeHistoricalAnachronisms', () => {
+    it('should replace anachronistic terms for Tay Son epoch from shared spec', () => {
+      const text = 'Vào năm 1789, quân Hà Nội và chính quyền Hà Nội đã chuẩn bị quyết chiến.';
+      const normalized = normalizeHistoricalAnachronisms(text, 'EPOCH_TAY_SON');
+      expect(normalized).toContain('nghĩa quân Tây Sơn');
+      expect(normalized).toContain('triều đình Tây Sơn');
+      expect(normalized).not.toContain('quân Hà Nội');
+      expect(normalized).not.toContain('chính quyền Hà Nội');
+    });
+  });
 });
+

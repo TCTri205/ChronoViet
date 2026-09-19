@@ -1,4 +1,9 @@
-import { resolveCanonicalEntity, removeVietnameseAccents, isKnownMasterEntity } from '@chronoviet/shared-spec';
+import {
+  resolveCanonicalEntity,
+  removeVietnameseAccents,
+  isKnownMasterEntity,
+  isAdversaryPerson,
+} from '@chronoviet/shared-spec';
 
 export interface ChatTurnContext {
   role: 'user' | 'assistant' | 'system';
@@ -15,26 +20,6 @@ export interface ConversationDialogueState {
   primaryEntity?: string;
   contextBanner?: string;
 }
-
-const KNOWN_ADVERSARY_PERSONS = new Set([
-  'thoát hoan',
-  'ô mã nhi',
-  'toa đô',
-  'tô định',
-  'mã viện',
-  'vương thông',
-  'liễu thăng',
-  'trương phụ',
-  'mộc thạnh',
-  'sầm nghi đống',
-  'tôn sĩ nghị',
-  'de castries',
-  'navarre',
-  'christian de castries',
-  'henri navarre',
-  'tôn hạo',
-  'cao biền',
-]);
 
 const DOCUMENT_KEYWORDS = /(?:chiếu|hịch|cáo|sách|thư|tập|ký|lục|tuyên\s*ngôn)/i;
 
@@ -87,7 +72,7 @@ export function extractDialogueState(
     }
 
     if (resolved.type === 'HISTORICAL_PERSON' || /^[A-ZÀ-Ỹ][a-zà-ỹ]+(?:\s+[A-ZÀ-Ỹ][a-zà-ỹ]+)+$/.test(clean)) {
-      if (KNOWN_ADVERSARY_PERSONS.has(lower) || /(?:tướng\s*giặc|thái\s*thú|chỉ\s*huy\s*pháp|tướng\s*mông)/i.test(clean)) {
+      if (isAdversaryPerson(resolved) || isAdversaryPerson(clean) || /(?:tướng\s*giặc|thái\s*thú|chỉ\s*huy\s*pháp|tướng\s*mông)/i.test(clean)) {
         if (!adversaryEntities.includes(canonical)) adversaryEntities.push(canonical);
       } else {
         if (!veneratedEntities.includes(canonical)) veneratedEntities.push(canonical);

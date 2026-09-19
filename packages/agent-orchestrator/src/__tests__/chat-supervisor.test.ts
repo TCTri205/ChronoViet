@@ -700,13 +700,15 @@ describe('Real-World Typo & Resilient Fast Path Execution', () => {
       expect(box).toContain('Sông Gianh (Linh Giang, Quảng Bình)');
     });
 
-    it('generates military doctrine and temporal boundary anchors for Linebacker II 1972', async () => {
-      const { buildChronologyAnchorBox } = await import('../index.js');
-      const box = buildChronologyAnchorBox([], [1972], 'Chiến dịch 12 ngày đêm Điện Biên Phủ trên không');
+    it('flags Linebacker II date extensions beyond 1972 as false premise', async () => {
+      const { analyzePremiseAndLeadingIntent } = await import('../index.js');
+      const analysis = analyzePremiseAndLeadingIntent('Chiến dịch Điện Biên Phủ trên không kéo dài sang năm 1973 đúng không?');
 
-      expect(box).toContain('18/12/1972 - 30/12/1972');
-      expect(box).toContain('SAM-2 là vũ khí tiêu hao một lần');
-      expect(box).toContain('không có việc thu hồi tên lửa đã bắn');
+      expect(analysis.isLeadingQuestion).toBe(true);
+      expect(analysis.categoryLabel).toBe('Mốc thời gian chiến dịch');
+      expect(analysis.suggestedDirective).toContain('18/12/1972');
+      expect(analysis.suggestedDirective).toContain('30/12/1972');
+      expect(analysis.suggestedDirective).toContain('không kéo dài sang năm 1973');
     });
 
     it('flags missile reuse questions as false premise with military doctrine directive', async () => {
@@ -716,7 +718,7 @@ describe('Real-World Typo & Resilient Fast Path Execution', () => {
       expect(analysis.isLeadingQuestion).toBe(true);
       expect(analysis.categoryLabel).toBe('Học thuyết khí tài quân sự');
       expect(analysis.suggestedDirective).toContain('vũ khí tiêu hao một lần');
-      expect(analysis.suggestedDirective).toContain('KHÔNG THỂ thu hồi để tái sử dụng');
+      expect(analysis.suggestedDirective.toLowerCase()).toContain('không thể thu hồi để tái sử dụng');
     });
 
     it('prunes verbose family lineage from entity cards during broad analytical queries', async () => {

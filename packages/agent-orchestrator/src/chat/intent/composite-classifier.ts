@@ -165,13 +165,13 @@ export function hasHistoricalDomainSignals(text: string): boolean {
   const centuryRegex = new RegExp(`(?:thế\\s*kỷ|thế\\s*kỉ|tk)\\s*(?:thứ\\s*)?(?:[ivxlcdm]+|\\d{1,2})${B_DELIM}`, 'i');
   if (centuryRegex.test(text)) return true;
 
-  const dynastyRegex = new RegExp(`(?:thời\\s*kỳ|triều\s*đại|niên\\s*hiệu|đời\\s*vua|nhà\\s+(?:lý|trần|lê|nguyễn|hồ|tiền\\s*lê|hậu\\s*lê|ngô|đinh|tây\\s*sơn|mạc))${B_DELIM}`, 'i');
+  const dynastyRegex = new RegExp(`(?:thời\\s*kỳ|triều\\s*đại|niên\\s*hiệu|đời\\s*vua|nhà\\s+(?:lý|trần|lê|nguyễn|hồ|tiền\\s*lê|hậu\\s*lê|ngô|đinh|tây\\s*sơn|mạc)|việt\\s+nam\\s+dân\\s+chủ\\s+cộng\\s+hòa|đàng\\s+trong|đàng\\s+ngoài)${B_DELIM}`, 'i');
   if (dynastyRegex.test(text)) return true;
 
-  const roleRegex = new RegExp(`(?:vua|hoàng\\s*đế|thái\\s*thượng\\s*hoàng|chúa\\s+(?:trịnh|nguyễn)|danh\\s*tướng|tướng\\s*quân|tổng\\s*đốc|kinh\\s*thành|sử\\s*ký|chính\\s*sử|dã\\s*sử|lịch\\s*sử)${B_DELIM}`, 'i');
+  const roleRegex = new RegExp(`(?:vua|hoàng\\s*đế|thái\\s*thượng\\s*hoàng|chúa\\s+(?:trịnh|nguyễn)|danh\\s*tướng|tướng\\s*quân|tổng\\s*đốc|kinh\\s*thành|sử\\s*ký|chính\\s*sử|dã\\s*sử|lịch\\s*sử|bộ\\s+đội|chiến\\s+sĩ)${B_DELIM}`, 'i');
   if (roleRegex.test(text)) return true;
 
-  const warfareRegex = new RegExp(`(?:chiến\\s*dịch|trận\\s*đánh|khởi\\s*nghĩa|chiến\\s*thắng|đại\\s*thắng|đại\\s*phá|cọc\\s*ngầm|chiếu\\s*dời\\s*đô|hịch\\s*tướng\\s*sĩ|bình\\s*ngô\\s*đại\\s*cáo|bài\\s*binh\\s*bố\\s*trận|mai\\s*phục|thủy\\s*chiến)${B_DELIM}`, 'i');
+  const warfareRegex = new RegExp(`(?:chiến\\s*dịch|trận\\s*đánh|khởi\\s*nghĩa|chiến\\s*thắng|đại\\s*thắng|đại\\s*phá|cọc\\s*ngầm|chiếu\\s*dời\\s*đô|hịch\\s*tướng\\s*sĩ|bình\\s*ngô\\s*đại\\s*cáo|bài\\s*binh\\s*bố\\s*trận|mai\\s*phục|thủy\\s*chiến|kháng\\s*chiến|chống\\s*pháp|chống\\s*mỹ|mặt\\s*trận|giải\\s*phóng|tổng\\s*tiến\\s*công)${B_DELIM}`, 'i');
   if (warfareRegex.test(text)) return true;
 
   return false;
@@ -277,25 +277,10 @@ export function classifyChatIntent(query: string): IntentClassificationResult {
     }
 
     for (const pattern of PURE_CHITCHAT_PATTERNS) {
-      if (pattern.test(cleanQuery) || pattern.test(trimmed)) {
+      if (pattern.test(cleanQuery) || pattern.test(trimmed) || pattern.test(cleanShadow) || pattern.test(shadow)) {
         return {
           intent: 'CHITCHAT',
           confidence: 0.95,
-          signals: {
-            hasChitchatGreeting: true,
-            hasVideoGeneration: false,
-            hasOutOfDomainTopic: false,
-            isCoReferenceIdentity: false,
-          },
-        };
-      }
-    }
-
-    for (const pattern of SHADOW_CHITCHAT_PATTERNS) {
-      if (pattern.test(cleanShadow) || pattern.test(shadow)) {
-        return {
-          intent: 'CHITCHAT',
-          confidence: 0.92,
           signals: {
             hasChitchatGreeting: true,
             hasVideoGeneration: false,

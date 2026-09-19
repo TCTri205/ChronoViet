@@ -21,6 +21,8 @@ import {
   ChatMessage,
   envConfig,
   ragTimeoutsTotal,
+  parseLlmJsonCompletion,
+  repairJsonUnescapedQuotes,
 } from '@chronoviet/infra';
 import { ChronoRagEngine, groundClaims, ChunkInfo } from '@chronoviet/rag-engine';
 import {
@@ -108,17 +110,17 @@ async function arbitrateAmbiguousQueryWithLLM(
       ? `\nNgữ cảnh hội thoại trước đó:\n${recentHistoryContext}\n`
       : '';
     const prompt = `Bạn là bộ phân loại ý định ngữ nghĩa cho hệ thống ChronoViet AI (Trợ lý Lịch sử Việt Nam).
-Hãy phân tích câu truy vấn sau của người dùng và trả về DUY NHẤT một JSON hợp lệ:
+Phân tích câu truy vấn sau của người dùng và trả về DUY NHẤT một JSON hợp lệ:
 Câu truy vấn: "${query}"${historyBlock}
 
 Yêu cầu phân loại:
-1. is_historical: true nếu câu hỏi đề cập hoặc hướng đến lịch sử Việt Nam, nhân vật, sự kiện, triều đại, quan hệ họ hàng lịch sử (kể cả nhân vật hư cấu hoặc nghi vấn); false nếu là trò chuyện thông thường, tán gẫu đời sống hiện đại, hoặc ngoài phạm vi lịch sử.
+1. is_historical: true nếu câu hỏi liên quan đến lịch sử Việt Nam, nhân vật, sự kiện, triều đại, thân tộc; false nếu là trò chuyện thông thường hoặc ngoài phạm vi.
 2. intent: "HISTORICAL_QUERY" | "CHITCHAT" | "OUT_OF_DOMAIN" | "VIDEO_INTENT".
-3. sub_intent: "GENEALOGY_RELATION" (nếu hỏi quan hệ dòng họ/anh em/cha con) | "FACTOID_LOOKUP" (ngày tháng/nơi chốn/danh tính) | "BATTLE_TACTICS" (trận đánh/kế sách) | "GENERAL_OVERVIEW".
-4. suspected_fake_or_unverified_entities: danh sách tên các nhân vật trong câu hỏi có thể là hư cấu, không có trong chính sử, hoặc chưa được xác thực (ví dụ: ["Nguyễn Ảo Danh"]).
-5. verified_or_implicit_entities: danh sách tên các nhân vật có thật hoặc ngầm định được suy ra từ câu hỏi.
+3. sub_intent: "GENEALOGY_RELATION" | "FACTOID_LOOKUP" | "BATTLE_TACTICS" | "GENERAL_OVERVIEW".
+4. suspected_fake_or_unverified_entities: danh sách nhân vật hư cấu hoặc chưa xác thực (nếu có).
+5. verified_or_implicit_entities: danh sách nhân vật có thật hoặc ngầm định.
 
-Chỉ xuất JSON thuần theo cấu trúc sau, không kèm bất kỳ giải thích nào khác:
+Định dạng JSON bắt buộc:
 {
   "is_historical": boolean,
   "intent": "HISTORICAL_QUERY" | "CHITCHAT" | "OUT_OF_DOMAIN",
@@ -132,15 +134,16 @@ Chỉ xuất JSON thuần theo cấu trúc sau, không kèm bất kỳ giải th
       {
         task: 'general', // Routes to Primary LLM (Qwen 3.5 9B, Port 8092)
         temperature: 0.1,
-        max_tokens: 120,
-        timeoutMs: 4500,
+        max_tokens: 200,
+        timeoutMs: 6500,
       }
     );
 
     const raw = res.content.trim();
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+    const repaired = repairJsonUnescapedQuotes(raw);
+    const parsed = parseLlmJsonCompletion<any>(repaired);
+
+    if (parsed && typeof parsed === 'object') {
       log.info('chat.arbiter_success', `Tier 2 Arbiter completed in ${Date.now() - arbiterStartTime}ms`, {
         is_historical: parsed.is_historical,
         intent: parsed.intent,
@@ -531,6 +534,8 @@ export async function* handleChatQueryStream(
     ? 500
     : classification.subIntent === 'GENEALOGY_RELATION' || isEntityIdentity
     ? 750
+    : isBroadAnalyticalQuery
+    ? 1400
     : classification.subIntent === 'BATTLE_TACTICS'
     ? 1200
     : 1000;
@@ -749,7 +754,7 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
     ...prunedHistory.map((h) => ({ role: h.role, content: h.content })),
     { role: 'user', content: userTurnWithContext },
   ];
-  const maxPromptBudget = isLeanIdentity ? 2500 : (isBroadAnalyticalQuery ? 3500 : 5000);
+  const maxPromptBudget = isLeanIdentity ? 2500 : (isBroadAnalyticalQuery ? 5500 : 5000);
   const messages = clampTotalPromptMessages(rawMessages, maxPromptBudget);
 
   let fullResponse = '';
@@ -763,10 +768,12 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
 
   let openingBuffer = '';
   let isOpeningFlushed = false;
-  const PUNCTUATION_END = /[.!?\n]/;
+  const isCoRefQuery = Boolean(premiseAnalysis.isSameEntityCoReference);
+  const openingCharThreshold = isCoRefQuery ? 280 : 100;
+  const sentenceBoundaryMatch = isCoRefQuery ? /(?:[.!?\n].*?[.!?\n])/ : /[.!?\n]/;
 
   const flushOpeningBuffer = (): string => {
-    let openingText = openingBuffer;
+    let openingText = sanitizePromptDirectivesLeakage(openingBuffer);
     if (premiseAnalysis.isSameEntityCoReference && premiseAnalysis.detectedEntities.length >= 2) {
       const e1 = premiseAnalysis.detectedEntities[0];
       const e2 = premiseAnalysis.detectedEntities[1];
@@ -784,10 +791,10 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
 
   try {
     for await (const chunk of generateLLMCompletionStream(messages, {
-      temperature: 0.35,
-      top_p: 0.9,
-      frequency_penalty: 0.3,
-      presence_penalty: 0.2,
+      temperature: 0.28,
+      top_p: 0.88,
+      frequency_penalty: 0.12,
+      presence_penalty: 0.08,
       max_tokens: maxGenerationTokens,
     })) {
       if (signal?.aborted) {
@@ -804,7 +811,7 @@ Các tên/nhân vật sau xuất hiện trong câu hỏi nhưng chưa có ghi ch
       if (loopCheck.shouldEmit && loopCheck.cleanChunk) {
         if (!isOpeningFlushed) {
           openingBuffer += loopCheck.cleanChunk;
-          if (PUNCTUATION_END.test(openingBuffer) || openingBuffer.length >= 100) {
+          if (sentenceBoundaryMatch.test(openingBuffer) || openingBuffer.length >= openingCharThreshold) {
             const cleanOpening = flushOpeningBuffer();
             fullResponse += cleanOpening;
             yield { type: 'token', content: cleanOpening };

@@ -38,14 +38,8 @@ export const BOT_IDENTITY_PATTERNS = [
   /^(?:ai\s+đấy|ai\s+đó|ai\s+thế|ai\s+vậy|ai\s+day|ai\s+the|ai\s+vay)(?:\s*\?)?$/i,
 ];
 
-// Unaccented shadow matches for greetings and identity
-export const SHADOW_CHITCHAT_PATTERNS = [
-  /^(?:(?:cho\s+(?:minh|toi|em)\s+hoi|lam\s+on\s+cho\s+biet)\s*,?\s*)?(?:xin\s+)?chao(?:\s+(?:ban|bot|ad|admin|em|anh|chi|moi\s+nguoi|chronoviet|nhe|nha|a|\w+))?$/i,
-  /^(?:rat\s+)?(?:cam\s+on|thanks)(?:\s+(?:ban|bot|ad|admin|nhi\s*eu|nhe|nha|a|\w+)){0,4}$/i,
-  /^(?:tam\s+biet|bye|goodbye)(?:\s+(?:ban|bot|ad|admin|nhe|nha|a))?$/i,
-  /^(?:(?:cho\s+(?:minh|toi|em)\s+hoi|lam\s+on\s+cho\s+biet)\s*,?\s*)?(?:(?:xin\s+)?chao|hello|hi|hey|alo|halo)?\s*,?\s*(?:ban|bot|chronoviet)\s+la\s+ai(?:\s+(?:the|vay|ha|\?))?$/i,
-  /^(?:(?:cho\s+(?:minh|toi|em)\s+hoi|lam\s+on\s+cho\s+biet)\s*,?\s*)?(?:(?:xin\s+)?chao|hello|hi|hey|alo|halo)?\s*,?\s*(?:ban|bot|chronoviet)\s+ten\s+(?:la\s+)?gi(?:\s+(?:the|vay|ha|\?))?$/i,
-];
+// Shadow chitchat patterns (normalized via text-utils removeVietnameseAccents)
+export const SHADOW_CHITCHAT_PATTERNS: RegExp[] = [];
 
 // Pleasantry Prefix Regex
 export const PLEASANTRY_PREFIX_REGEX = /^(?:xin\s+chào|chào\s+(?:bạn|bot|ad|admin|em|anh|chị|mọi\s+người|cả\s+nhà|chronoviet|ai)?|chào|hello|hi|hey|alo|halo|cho\s+(?:mình|tôi|em)\s+hỏi|làm\s+ơn\s+cho\s+biết|phiền\s+bạn)(?:[\s,;:!?-]+)/i;

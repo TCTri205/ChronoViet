@@ -1,4 +1,4 @@
-import { sanitizeSentenceBoundaries } from '@chronoviet/shared-spec';
+import { sanitizeSentenceBoundaries, EPOCH_TERMINOLOGY_REPLACEMENTS } from '@chronoviet/shared-spec';
 import { deduplicateRepetitiveText } from '../../guardrails/stream-dedup.js';
 
 /**
@@ -92,12 +92,15 @@ export function stripChapterTitleEcho(text: string, title?: string): string {
   let s = text.trim();
   const lowerTitle = title.toLowerCase().trim();
   if (s.toLowerCase().startsWith(lowerTitle)) {
-    s = s.slice(title.length).replace(/^[:–—\-.\s]+/, '').trim();
+    const afterTitle = s.slice(title.length);
+    if (/^\s*[:–—\-\n]/.test(afterTitle)) {
+      s = afterTitle.replace(/^[:–—\-.\s\n]+/, '').trim();
+    }
   }
   const firstSentenceMatch = s.match(/^([^.!?\n]+[.!?\n]?)/);
   if (firstSentenceMatch) {
     const firstSentenceText = firstSentenceMatch[1].replace(/[.!?\n]/g, '').trim().toLowerCase();
-    if (firstSentenceText === lowerTitle || (lowerTitle.includes(firstSentenceText) && firstSentenceText.length >= 10)) {
+    if (firstSentenceText === lowerTitle) {
       s = s.slice(firstSentenceMatch[0].length).trim();
     }
   }
@@ -109,18 +112,25 @@ export function stripChapterTitleEcho(text: string, title?: string): string {
  */
 export function normalizeHistoricalAnachronisms(text: string, epochKey?: string): string {
   if (!text) return text;
+  let result = text;
+
+  if (epochKey && EPOCH_TERMINOLOGY_REPLACEMENTS[epochKey]) {
+    for (const rule of EPOCH_TERMINOLOGY_REPLACEMENTS[epochKey]) {
+      result = result.replace(rule.pattern, rule.canonicalTerm);
+    }
+  }
+
   const isTaySonContext =
     epochKey === 'EPOCH_TAY_SON' ||
     /tây\s+sơn|quang\s+trung|nguyễn\s+huệ|ngọc\s+hồi|đống\s+đa|kỷ\s+dậu\s+1789|chiến\s+dịch\s+1789|xuân\s+1789/i.test(
-      text
+      result
     );
 
-  if (isTaySonContext) {
-    return text
-      .replace(/\bquân Hà Nội\b/gi, 'nghĩa quân Tây Sơn')
-      .replace(/\bquân đội Hà Nội\b/gi, 'nghĩa quân Tây Sơn')
-      .replace(/\bchính quyền Hà Nội\b/gi, 'triều đình Tây Sơn');
+  if (isTaySonContext && EPOCH_TERMINOLOGY_REPLACEMENTS['EPOCH_TAY_SON']) {
+    for (const rule of EPOCH_TERMINOLOGY_REPLACEMENTS['EPOCH_TAY_SON']) {
+      result = result.replace(rule.pattern, rule.canonicalTerm);
+    }
   }
 
-  return text;
+  return result;
 }

@@ -8,8 +8,10 @@ import {
   resolveCanonicalEntity,
   isKnownMasterEntity,
   HistoricalEntityInfo,
+  HistoricalMisconception,
   HISTORICAL_PERSON_DICTIONARY,
   extractHistoricalCandidateSpans,
+  removeVietnameseAccents,
 } from '@chronoviet/shared-spec';
 
 export interface PremiseAnalysisResult {
@@ -478,6 +480,12 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
     }
   }
 
+  // 1c. Generic Entity Misconceptions & False Premise Guardrail (Data-Driven SSOT)
+  const misconceptionResult = checkEntityMisconceptions(trimmed, spotted);
+  if (misconceptionResult) {
+    return misconceptionResult;
+  }
+
   // 2. Dynasty / Monarch leading question check
   for (const pattern of DYNASTY_PATTERNS) {
     const match = trimmed.match(pattern);
@@ -554,60 +562,93 @@ export function analyzePremiseAndLeadingIntent(query: string): PremiseAnalysisRe
     }
   }
 
-  // 7. Military Ordnance Reuse / Field Repair Conflation Check (Task 4)
-  const MISSILE_REUSE_PATTERN = /(?:thu\s*hồi.*tên\s*lửa|tái\s*sử\s*dụng.*tên\s*lửa|bắn\s+lại.*tên\s*lửa|tên\s*lửa.*bắn\s+xong.*thu\s*hồi|bắn\s+tên\s*lửa\s+giả)/i;
-  if (MISSILE_REUSE_PATTERN.test(trimmed)) {
-    return {
-      isLeadingQuestion: true,
-      questionType: 'EVENT',
-      categoryLabel: 'Học thuyết khí tài quân sự',
-      detectedEntities: spotted,
-      suggestedDirective: 'BẮT BUỘC BÁC BỎ SAI LỆCH VỀ TÁI SỬ DỤNG VŨ KHÍ: BẮT BUỘC câu đầu tiên phải bác bỏ dứt khoát tiền đề sai lệch. Tên lửa phòng không (SAM-2) và đạn pháo hạng nặng là vũ khí tiêu hao một lần, khi đã bắn ra/phát nổ thì KHÔNG THỂ thu hồi để tái sử dụng hay bắn lại. Xưởng/Nhà máy A31 là nơi bảo dưỡng, nâng cấp khí tài radar dẫn đường (như đài Fan Song/P-12) và kiểm tra, lắp ráp, hiệu chỉnh tham số quả đạn trước khi phóng, hoàn toàn không có việc thu hồi tên lửa đã bắn.',
-    };
-  }
-
-  // 8. Linebacker II Campaign Temporal Bounds Check (Task 4)
-  const LINEBACKER_DATE_MISMATCH_PATTERN = /(?:12\s+ngày\s+đêm|điện\s+biên\s+phủ\s+trên\s+không|linebacker\s*(?:ii|2)).*(?:kéo\s+dài|diễn\s+ra|tháng\s+1|năm\s+1973|sang\s+năm\s+1973)/i;
-  if (LINEBACKER_DATE_MISMATCH_PATTERN.test(trimmed)) {
-    return {
-      isLeadingQuestion: true,
-      questionType: 'CHRONOLOGY',
-      categoryLabel: 'Mốc thời gian chiến dịch',
-      detectedEntities: spotted,
-      suggestedDirective: 'BẮT BUỘC KHỐNG CHẾ MỐC THỜI GIAN CHIẾN DỊCH 12 NGÀY ĐÊM: Chiến dịch diễn ra chính xác từ ngày 18/12/1972 đến ngày 30/12/1972 (khi Tổng thống Nixon tuyên bố ngừng ném bom từ vĩ tuyến 20 trở ra Bắc). Chiến dịch kết thúc trọn vẹn trong năm 1972, không kéo dài sang năm 1973. Thắng lợi của chiến dịch buộc Mỹ phải ký kết Hiệp định Paris vào ngày 27/01/1973.',
-    };
-  }
-
-  // 9. Trần Thiêm Bình false usurpation premise check (Task 3)
-  const TRAN_THIEM_BINH_PATTERN = /(?:cướp\s+ngôi|phế\s+truất|thay\s+thế|lật\s+đổ).*Trần\s+Thiêm\s+Bình|Trần\s+Thiêm\s+Bình.*(?:cướp\s+ngôi|làm\s+vua|bị\s+phế|nhà\s+trần)/i;
-  if (TRAN_THIEM_BINH_PATTERN.test(trimmed)) {
-    return {
-      isLeadingQuestion: true,
-      questionType: 'DYNASTY',
-      categoryLabel: 'Chính biến vương triều',
-      detectedEntities: spotted,
-      suggestedDirective: 'BẮT BUỘC BÁC BỎ TIỀN ĐỀ VỀ TRẦN THIÊM BÌNH: BẮT BUỘC câu đầu tiên phải bác bỏ dứt khoát. Người bị Hồ Quý Ly truất ngôi năm 1400 là vua Trần Thiếu Đế (vị vua cuối cùng của nhà Trần). Trần Thiêm Bình (tên thật là Nguyễn Khang) là gia nô mạo xưng tôn thất nhà Trần chạy sang cầu viện nhà Minh, KHÔNG PHẢI là vua và KHÔNG PHẢI người bị Hồ Quý Ly cướp ngôi.',
-    };
-  }
-
-  // 10. Lê Hoàn vs Nhà Lý false dynasty premise check (Task 3)
-  const LE_HOAN_LY_PATTERN = /(?:Lê\s+Hoàn|Lê\s+Đại\s+Hành).*(?:thuộc|của|vua)?\s*nhà\s+Lý|nhà\s+Lý.*(?:năm\s+981|Bạch\s+Đằng\s+981|Lê\s+Hoàn)/i;
-  if (LE_HOAN_LY_PATTERN.test(trimmed)) {
-    return {
-      isLeadingQuestion: true,
-      questionType: 'DYNASTY',
-      categoryLabel: 'Quy thuộc triều đại',
-      detectedEntities: spotted,
-      suggestedDirective: 'BẮT BUỘC BÁC BỎ TIỀN ĐỀ VỀ LÊ HOÀN VÀ NHÀ LÝ: BẮT BUỘC câu đầu tiên khẳng định Lê Hoàn thuộc triều Tiền Lê (trị vì 980-1005). Chiến thắng Bạch Đằng năm 981 là chiến công oanh liệt của triều Tiền Lê. Nhà Lý thành lập năm 1009 bởi Lý Thái Tổ (Lý Công Uẩn), sau khi triều Tiền Lê kết thúc, nên không liên quan đến chiến thắng năm 981.',
-    };
-  }
-
   return {
     isLeadingQuestion: false,
     questionType: 'GENERAL',
     detectedEntities: spotted,
     suggestedDirective: '',
   };
+}
+
+/**
+ * Generic Data-Driven Misconception Check (SSOT)
+ * Scans recognized entities and matches their structured misconceptions against the user query.
+ */
+function checkEntityMisconceptions(query: string, spottedEntities: string[]): PremiseAnalysisResult | null {
+  const lowerQuery = query.toLowerCase();
+  const unaccentedQuery = removeVietnameseAccents(lowerQuery);
+
+  const candidateEntities: HistoricalEntityInfo[] = [];
+  const seenIds = new Set<string>();
+
+  for (const ent of spottedEntities) {
+    const canon = resolveCanonicalEntity(ent);
+    if (canon && canon.entityId && !seenIds.has(canon.entityId)) {
+      seenIds.add(canon.entityId);
+      candidateEntities.push(canon);
+    }
+  }
+
+  // Also check candidate mentions from known entities with misconceptions
+  const checkExtraEntities = ['event_linebacker_2', 'artifact_sam2', 'person_tran_thiem_binh', 'person_le_dai_hanh', 'person_quang_trung'];
+  for (const id of checkExtraEntities) {
+    if (!seenIds.has(id)) {
+      const canon = resolveCanonicalEntity(id);
+      if (canon && canon.entityId) {
+        const isMentioned = [canon.canonicalName, ...(canon.aliases || [])].some((alias) => {
+          const aLower = alias.toLowerCase();
+          return lowerQuery.includes(aLower) || unaccentedQuery.includes(removeVietnameseAccents(aLower));
+        });
+        if (isMentioned) {
+          seenIds.add(id);
+          candidateEntities.push(canon);
+        }
+      }
+    }
+  }
+
+  for (const entity of candidateEntities) {
+    const allMisconceptions: HistoricalMisconception[] = [
+      ...(entity.misconceptions || []),
+      ...(entity.namingMetadata?.misconceptions || []),
+    ];
+
+    for (const misc of allMisconceptions) {
+      const matched = misc.triggerKeywords.some((kw) => {
+        const kwLower = kw.toLowerCase();
+        return lowerQuery.includes(kwLower) || unaccentedQuery.includes(removeVietnameseAccents(kwLower));
+      });
+
+      if (matched) {
+        let questionType: 'EVENT' | 'DYNASTY' | 'CHRONOLOGY' | 'IDENTITY' | 'GENERAL' = 'GENERAL';
+        let categoryLabel = 'Đính chính sai lệch sử liệu';
+
+        if (entity.type === 'EVENT_BATTLE') {
+          questionType = misc.id.includes('date') ? 'CHRONOLOGY' : 'EVENT';
+          categoryLabel = misc.id.includes('date') ? 'Mốc thời gian chiến dịch' : 'Sự kiện chiến dịch';
+        } else if (entity.type === 'ARTIFACT') {
+          questionType = 'EVENT';
+          categoryLabel = 'Học thuyết khí tài quân sự';
+        } else if (misc.id.includes('dynasty') || misc.id.includes('usurpation')) {
+          questionType = 'DYNASTY';
+          categoryLabel = misc.id.includes('usurpation') ? 'Chính biến vương triều' : 'Quy thuộc triều đại';
+        } else if (entity.type === 'HISTORICAL_PERSON') {
+          questionType = 'IDENTITY';
+          categoryLabel = 'Nhân vật & Thân tộc';
+        }
+
+        return {
+          isLeadingQuestion: true,
+          questionType,
+          categoryLabel,
+          detectedEntities: Array.from(new Set([entity.canonicalName, ...spottedEntities])),
+          suggestedDirective: `BẮT BUỘC ĐÍNH CHÍNH SAI LỆCH SỬ LIỆU VỀ ${entity.canonicalName.toUpperCase()}: BẮT BUỘC câu đầu tiên phải khẳng định hoặc bác bỏ dứt khoát tiền đề sai lệch. ${misc.explanation}`,
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 export interface CoReferenceInvariantResult {

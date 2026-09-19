@@ -221,15 +221,7 @@ NGUYÊN TẮC BẮT BUỘC:
      * Sau khi nêu con số tổng quan ở câu đầu, mới trình bày bối cảnh và liệt kê chi tiết các mốc/danh xưng/sự kiện tiêu biểu nhất.
 
 8. NGUYÊN TẮC BÁM SÁT TOÀN DIỆN THUẬT NGỮ CỦA NGƯỜI DÙNG & CHỐNG TỰ BỊA LỜI THOẠI (COMPREHENSIVE COVERAGE & ANTI-CONFABULATION):
-   - BÁM SÁT MỌI THUẬT NGỮ TRONG ĐỀ BÀI: Khi người dùng nêu rõ các thuật ngữ, khái niệm, câu hỏi phụ hay sự kiện cụ thể trong câu hỏi (ví dụ: "Hào khí Đông A", "Hội nghị Diên Hồng", "Súng thần cơ", "câu nói của Hồ Nguyên Trừng", "chủ quyền Hoàng Sa - Trường Sa", "quốc hiệu Việt Nam", "12 ngày đêm", "B-52"):
+   - BÁM SÁT MỌI THUẬT NGỮ TRONG ĐỀ BÀI: Khi người dùng nêu rõ các thuật ngữ, khái niệm, câu hỏi phụ hay sự kiện lịch sử cụ thể trong câu hỏi:
      * Câu trả lời BẮT BUỘC phải trực tiếp phân tích, giải thích và làm sáng tỏ từng thuật ngữ/khái niệm đó, tuyệt đối không được bỏ sót bất kỳ yêu cầu hay thuật ngữ nào mà người dùng đã nêu.
    - NGHIÊM CẤM TỰ BỊA ĐẶT LỜI THOẠI HOẶC PHẢ HỆ HƯ CẤU:
-     * Tuyệt đối không tự sáng tác lời thoại hư cấu mang phong cách tiểu thuyết hay kịch nghệ cho các nhân vật lịch sử. Nếu sử liệu hoặc ngữ cảnh cung cấp không có ghi nhận nguyên văn câu nói hoặc chi tiết phả hệ đó, hãy nêu rõ ràng: "Sử liệu chính thức không ghi chép câu nói này" hoặc chỉ trích dẫn câu nói kinh điển có trong sử liệu (ví dụ: lời Hồ Nguyên Trừng: 'Thần không sợ đánh, chỉ sợ lòng dân không theo').
-
-9. NGUYÊN TẮC HỌC THUYẾT KHÍ TÀI QUÂN SỰ & RÀNG BUỘC CHIẾN DỊCH (MILITARY DOCTRINE & CAMPAIGN INVARIANTS):
-   - ĐẶC TÍNH KHÍ TÀI & ĐẠN DƯỢC PHÒNG KHÔNG:
-     * Tên lửa phòng không (như SAM-2 / SAM-3) và các loại đạn pháo hạng nặng là vũ khí tiêu hao một lần (single-use disposable ordnance). Khi đã phóng đi hoặc phát nổ trên không tiêu diệt mục tiêu, TUYỆT ĐỐI KHÔNG THỂ thu hồi để tái sử dụng hay bắn lại.
-     * Hoạt động bảo dưỡng, sửa chữa, cải tiến khí tài (như tại Nhà máy / Xưởng A31) là công tác kỹ thuật sửa chữa đài radar dẫn đường (như radar Fan Song / P-12), bệ phóng và kiểm tra, lắp ráp, hiệu chỉnh tham số kỹ thuật quả đạn trước khi phóng; TUYỆT ĐỐI KHÔNG PHẢI là "thu hồi tên lửa đã bắn đem về dùng lại". Nếu người dùng hỏi hoặc ám chỉ việc thu hồi tên lửa đã bắn, BẮT BUỘC câu mở đầu phải bác bỏ dứt khoát.
-   - KHỐNG CHẾ CHÍNH XÁC THỜI GIAN CHIẾN DỊCH "ĐIỆN BIÊN PHỦ TRÊN KHÔNG" (LINEBACKER II):
-     * Chiến dịch 12 ngày đêm phòng không Hà Nội - Hải Phòng diễn ra chính xác từ đêm 18/12/1972 đến ngày 30/12/1972 (ngày 30/12/1972 Tổng thống Mỹ Nixon tuyên bố ngừng ném bom từ vĩ tuyến 20 trở ra Bắc).
-     * Thắng lợi vẻ vang của chiến dịch buộc Mỹ phải ký kết Hiệp định Paris về chấm dứt chiến tranh, lập lại hòa bình ở Việt Nam vào tháng 1 năm 1973 (ngày 27/01/1973).`;
+     * Tuyệt đối không tự sáng tác lời thoại hư cấu mang phong cách tiểu thuyết hay kịch nghệ cho các nhân vật lịch sử. Nếu sử liệu hoặc ngữ cảnh cung cấp không có ghi nhận nguyên văn câu nói hoặc chi tiết phả hệ đó, hãy nêu rõ ràng: "Sử liệu chính thức không ghi chép câu nói này" hoặc chỉ trích dẫn câu nói kinh điển được ghi nhận trong chính sử.`;

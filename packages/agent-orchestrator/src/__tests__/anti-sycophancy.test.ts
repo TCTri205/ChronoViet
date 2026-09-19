@@ -151,6 +151,44 @@ describe('Anti-Sycophancy & Invariant Semantic Verification', () => {
       expect(result.suggestedDirective).toContain('Trần Thái Tông');
       expect(result.suggestedDirective).not.toContain('ĐÍNH CHÍNH DANH TÍNH CÙNG MỘT NGƯỜI');
     });
+
+    it('detects Tran Thiem Binh usurpation misconception dynamically from entity metadata', () => {
+      const result = analyzePremiseAndLeadingIntent('Hồ Quý Ly đã cướp ngôi của Trần Thiêm Bình đúng không?');
+      expect(result.isLeadingQuestion).toBe(true);
+      expect(result.questionType).toBe('DYNASTY');
+      expect(result.categoryLabel).toBe('Chính biến vương triều');
+      expect(result.suggestedDirective).toContain('TRẦN THIÊM BÌNH');
+      expect(result.suggestedDirective).toContain('Trần Thiếu Đế');
+      expect(result.suggestedDirective).toContain('Nguyễn Khang');
+    });
+
+    it('detects Le Hoan vs Nha Ly misconception dynamically from entity metadata', () => {
+      const result = analyzePremiseAndLeadingIntent('Lê Hoàn thuộc nhà Lý phải không?');
+      expect(result.isLeadingQuestion).toBe(true);
+      expect(result.questionType).toBe('DYNASTY');
+      expect(result.suggestedDirective).toContain('LÊ ĐẠI HÀNH');
+      expect(result.suggestedDirective).toContain('triều Tiền Lê');
+      expect(result.suggestedDirective).toContain('Lý Thái Tổ');
+    });
+
+    it('detects SAM-2 missile reuse misconception dynamically from artifact metadata', () => {
+      const result = analyzePremiseAndLeadingIntent('Xưởng A31 có thu hồi tên lửa SAM-2 đã bắn để tái sử dụng không?');
+      expect(result.isLeadingQuestion).toBe(true);
+      expect(result.questionType).toBe('EVENT');
+      expect(result.categoryLabel).toBe('Học thuyết khí tài quân sự');
+      expect(result.suggestedDirective).toContain('vũ khí tiêu hao một lần');
+      expect(result.suggestedDirective.toLowerCase()).toContain('không thể thu hồi để tái sử dụng');
+    });
+
+    it('detects Linebacker II 1973 temporal boundary misconception dynamically from event metadata', () => {
+      const result = analyzePremiseAndLeadingIntent('Chiến dịch Điện Biên Phủ trên không kéo dài sang năm 1973 đúng không?');
+      expect(result.isLeadingQuestion).toBe(true);
+      expect(result.questionType).toBe('CHRONOLOGY');
+      expect(result.categoryLabel).toBe('Mốc thời gian chiến dịch');
+      expect(result.suggestedDirective).toContain('18/12/1972');
+      expect(result.suggestedDirective).toContain('30/12/1972');
+      expect(result.suggestedDirective).toContain('không kéo dài sang năm 1973');
+    });
   });
 
   describe('verifyCoReferenceInvariant', () => {
